@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using GPUInstancerPro;
 using System;
@@ -68,24 +69,23 @@ namespace DCL.Landscape
         {
             position.x = (parcel.x + (instance.PositionX * (1f / 255f))) * terrainData.parcelSize;
             position.z = (parcel.y + (instance.PositionZ * (1f / 255f))) * terrainData.parcelSize;
+            LandscapeAsset prototype = terrainData.treeAssets[instance.PrototypeIndex];
 
-            if (OverlapsOccupiedParcel(float2(position.x, position.z),
-                    terrainData.treeAssets[instance.PrototypeIndex].radius))
+            scale = prototype.randomization
+                             .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
+                             .xyx;
+
+            if (OverlapsOccupiedParcel(float2(position.x, position.z), prototype.radius * scale.x))
             {
                 position.y = 0f;
                 rotation = default(Quaternion);
-                scale = default(Vector3);
                 return false;
             }
 
-            position.y = TerrainGenerator.GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, terrainData.parcelSize, occupancyFloor, maxHeight);
+            position.y = TerrainGenerator.GetParcelNoiseHeight(position.x, position.z, occupancyMapData,
+                occupancyMapSize, terrainData.parcelSize, occupancyFloor, maxHeight);
 
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
-
-            scale = terrainData.treeAssets[instance.PrototypeIndex]
-                               .randomization
-                               .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
-                               .xyx;
 
             return true;
         }
