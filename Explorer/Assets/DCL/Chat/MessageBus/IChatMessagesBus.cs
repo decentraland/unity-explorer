@@ -19,6 +19,16 @@ namespace DCL.Chat.MessageBus
 
     public static class ChatMessageBusExtensions
     {
+        /// <summary>
+        ///     Sends a chat message with the timestamp automatically set to the current UTC time.
+        ///     This is a convenience overload to avoid repeating DateTime.UtcNow.ToOADate() everywhere.
+        /// </summary>
+        public static void Send(this IChatMessagesBus messagesBus, ChatChannel channel, string message, ChatMessageOrigin origin, string topic = "")
+        {
+            double timestamp = DateTime.UtcNow.ToOADate();
+            messagesBus.Send(channel, message, origin, timestamp, topic);
+        }
+        
         public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
             new SelfResendChatMessageBus(messagesBus, web3IdentityCache, messageFactory);
 
