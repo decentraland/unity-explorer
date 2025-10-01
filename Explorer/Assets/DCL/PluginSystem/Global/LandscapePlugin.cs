@@ -54,6 +54,7 @@ namespace DCL.PluginSystem.Global
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
             LandscapeParcelData landscapeParcelData,
+            LandscapeParcelController landscapeParcelController,
             bool enableLandscape,
             bool isZone)
         {
@@ -67,12 +68,7 @@ namespace DCL.PluginSystem.Global
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
             this.landscapeParcelData = landscapeParcelData;
-
-            landscapeParcelController = new LandscapeParcelController(
-                assetsProvisioner,
-                new LandscapeParcelService(webRequestController, isZone),
-                landscapeParcelData
-            );
+            this.landscapeParcelController = landscapeParcelController;
 
             // gpuiWrapper = new GPUIWrapper();
         }
