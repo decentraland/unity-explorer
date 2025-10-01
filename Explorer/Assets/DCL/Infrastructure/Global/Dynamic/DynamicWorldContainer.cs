@@ -17,6 +17,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
@@ -108,6 +109,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.NotificationsBus;
+using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
@@ -296,6 +298,8 @@ namespace Global.Dynamic
             ISystemClipboard clipboard = new UnityClipboard();
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
+
+            ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -615,6 +619,7 @@ namespace Global.Dynamic
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
+            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -663,8 +668,6 @@ namespace Global.Dynamic
                 staticContainer.RealmData);
 
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-
-            IEventBus eventBus = new EventBus(true);
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
@@ -771,7 +774,8 @@ namespace Global.Dynamic
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    bootstrapContainer.Environment),
+                    bootstrapContainer.Environment,
+                    chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,
                     assetsProvisioner,
@@ -926,7 +930,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         roomHub,
-                        mainUIView,
+                        mainUIView.ChatMainView.VoiceChatPanelView,
                         voiceChatContainer,
                         profileRepositoryWrapper,
                         entityParticipantTable,
@@ -935,8 +939,8 @@ namespace Global.Dynamic
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
-                        debugBuilder
-                    )
+                        chatSharedAreaEventBus,
+                        debugBuilder)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -1077,8 +1081,7 @@ namespace Global.Dynamic
                         cameraReelStorageService,
                         entityParticipantTable,
                         staticContainer.ScenesCache,
-                        eventBus,
-                        translationSettings
+                        eventBus, translationSettings
                     )
                 );
 

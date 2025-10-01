@@ -56,7 +56,6 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
@@ -95,8 +94,7 @@ namespace DCL.Settings.Configuration
                     chatSettingsAsset,
                     settingsEventListener),
 
-                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance,
-                    voiceChatSettings),
+                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance),
                 
                 DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
                     chatSettingsAsset,
@@ -109,7 +107,5 @@ namespace DCL.Settings.Configuration
             controller.SetView(viewInstance);
             return controller;
         }
-
- 
     }
 }

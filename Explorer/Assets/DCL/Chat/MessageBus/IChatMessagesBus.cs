@@ -39,7 +39,7 @@ namespace DCL.Chat.MessageBus
                 messagesBus.Send(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL, DateTime.UtcNow.ToOADate());
             }
 
-            debugContainerBuilder.TryAddWidget("Chat")?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);
+            debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CHAT)?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);
 
             return messagesBus;
         }

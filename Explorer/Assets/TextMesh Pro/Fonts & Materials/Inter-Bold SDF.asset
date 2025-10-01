@@ -4942,7 +4942,7 @@ Texture2D:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
   m_IsAlphaChannelOptional: 0
-  serializedVersion: 3
+  serializedVersion: 4
   m_Width: 1024
   m_Height: 1024
   m_CompleteImageSize: 1048576
@@ -5040,7 +5040,7 @@ Material:
     - _GlowOffset: 0
     - _GlowOuter: 0.05
     - _GlowPower: 0.75
-    - _GradientScale: 6
+    - _GradientScale: 32
     - _LightAngle: 3.1416
     - _MaskSoftnessX: 0
     - _MaskSoftnessY: 0
@@ -5050,9 +5050,9 @@ Material:
     - _OutlineWidth: 0
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
-    - _ScaleRatioA: 0.8333333
-    - _ScaleRatioB: 0.6770833
-    - _ScaleRatioC: 0.6770833
+    - _ScaleRatioA: 0.96875
+    - _ScaleRatioB: 0.7871094
+    - _ScaleRatioC: 0.7871094
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0

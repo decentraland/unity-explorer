@@ -3,11 +3,14 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace DCL.Settings.ModuleViews
 {
     public class SettingsDropdownModuleView : SettingsModuleView<SettingsDropdownModuleView.Config>
     {
+        public UnityEvent<bool> showStatusUpdated = new ();
+
         [Serializable]
         public class Config : SettingsModuleViewConfiguration
         {
@@ -39,6 +42,16 @@ namespace DCL.Settings.ModuleViews
 
             if (DropdownView.Dropdown.options.Count > configuration.defaultOptionIndex && configuration.defaultOptionIndex >= 0)
                 DropdownView.Dropdown.value = configuration.defaultOptionIndex;
+        }
+
+        private void OnEnable()
+        {
+            showStatusUpdated.Invoke(true);
+        }
+
+        private void OnDisable()
+        {
+            showStatusUpdated.Invoke(false);
         }
     }
 }
