@@ -32,6 +32,10 @@ namespace DCL.InWorldCamera.Systems
         {
             if (!World.Get<CameraComponent>(camera).CameraInputChangeEnabled) return;
 
+            // Если MCP контролирует камеру - пропускаем user input
+            if (World.Has<MCPCameraControlComponent>(camera))
+                return;
+
             if (inputSchema.CameraReel.triggered || inputSchema.Close.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
 

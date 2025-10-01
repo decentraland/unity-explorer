@@ -40,6 +40,7 @@ using Button = UnityEngine.UI.Button;
 using CaptureScreenshotSystem = DCL.InWorldCamera.Systems.CaptureScreenshotSystem;
 using EmitInWorldCameraInputSystem = DCL.InWorldCamera.Systems.EmitInWorldCameraInputSystem;
 using MoveInWorldCameraSystem = DCL.InWorldCamera.Systems.MoveInWorldCameraSystem;
+using MCPCameraControlSystem = DCL.InWorldCamera.Systems.MCPCameraControlSystem;
 using ToggleInWorldCameraActivitySystem = DCL.InWorldCamera.Systems.ToggleInWorldCameraActivitySystem;
 
 namespace DCL.PluginSystem.Global
@@ -192,6 +193,7 @@ namespace DCL.PluginSystem.Global
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, DCLInput.Instance.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, DCLInput.Instance.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
+            MCPCameraControlSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
