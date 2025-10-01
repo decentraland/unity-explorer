@@ -149,7 +149,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
         }
     }
