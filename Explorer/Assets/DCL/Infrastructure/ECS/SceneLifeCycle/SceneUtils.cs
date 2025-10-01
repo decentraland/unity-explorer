@@ -43,14 +43,16 @@ namespace ECS.SceneLifeCycle
             }
         }
 
-        public static EmptySceneComponent CreateEmptyScene(Vector2Int parcel, ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
-        {
-            scenesCache.AddNonRealScene(parcel);
+        // TODO Remove
 
-            if (sceneReadinessReportQueue.TryDequeue(parcel, out PooledLoadReportList? reports))
-                ReportProgressFinished(reports);
-
-            return EmptySceneComponent.Create();
-        }
+        // public static EmptySceneComponent CreateEmptyScene(Vector2Int parcel, ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
+        // {
+        //     scenesCache.AddNonRealScene(parcel);
+        //
+        //     if (sceneReadinessReportQueue.TryDequeue(parcel, out PooledLoadReportList? reports))
+        //         ReportProgressFinished(reports);
+        //
+        //     return EmptySceneComponent.Create();
+        // }
     }
 }

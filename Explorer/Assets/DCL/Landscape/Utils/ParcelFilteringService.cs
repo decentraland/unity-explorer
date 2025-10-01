@@ -1,5 +1,6 @@
 using DCL.Landscape.Parcel;
 using DCL.Landscape.Settings;
+using Unity.Collections;
 using Unity.Mathematics;
 using Utility;
 

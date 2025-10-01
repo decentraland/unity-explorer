@@ -38,7 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
         /// </summary>
-        protected void TryCreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, NativeHashSet<int2> processedParcels)
+        protected void TryCreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, NativeHashSet<int2> processedParcels, ref int uniqueScenesCreated)
         {
             var shouldCreate = true;
 
@@ -54,6 +54,9 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 // Note: Span.ToArray is not LINQ
                 CreateSceneEntity(definition, ipfsPath);
+
+                // TODO REMOVE AFTER TESTS
+                uniqueScenesCreated++;
             }
         }
     }

@@ -32,15 +32,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly IPartitionSettings partitionSettings;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly ParcelFilteringService parcelFilteringService;
+        // private readonly ParcelFilteringService parcelFilteringService;
+        private readonly LandscapeParcelData landscapeParcelData;
 
         private float[]? sqrDistances;
 
         private bool splitIsPending;
 
         // TODO REMOVE AFTER TESTS
-        // private int totalParcelsPreFilter = 0;
-        // private int totalParcelsFiltered = 0;
+        private int totalParcelsFromMathHelper = 0;
+        private int totalParcelsRequested = 0;
+        private int uniqueScenesCreated = 0;
 
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
@@ -55,7 +57,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.scenesCache = scenesCache;
 
-            this.parcelFilteringService = new ParcelFilteringService(landscapeParcelData, parcelLoadingFilteringSettings);
+            this.landscapeParcelData = landscapeParcelData;
+            // this.parcelFilteringService = new ParcelFilteringService(landscapeParcelData, parcelLoadingFilteringSettings);
         }
 
         protected override void Update(float t)
@@ -111,24 +114,33 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     continue;
 
                 // TODO REMOVE AFTER TESTS
-                // totalParcelsPreFilter++;
+                totalParcelsFromMathHelper++;
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
-                    if (parcelFilteringService.IsEmptyParcel(parcelInfo.Parcel))
-                    {
+                    if (landscapeParcelData.EmptyParcels.Contains(parcelInfo.Parcel))
+                        // If parcel is empty skip request but mark as processed...
                         processedScenePointers.Value.Add(parcelInfo.Parcel);
-                        World.Create(SceneUtils.CreateEmptyScene(parcelInfo.Parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
-                    }
-
-                    if (parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
+                    else
                     {
+                        // ...else add to parcels to be requested
                         sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                         input.Add(parcelInfo.Parcel);
 
                         // TODO REMOVE AFTER TESTS
-                        // totalParcelsFiltered++;
+                        totalParcelsRequested++;
                     }
+
+                    // if (parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
+                    // {
+                    //     sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
+                    //     input.Add(parcelInfo.Parcel);
+                    //
+                    //     // TODO REMOVE AFTER TESTS
+                    //     totalParcelsRequested++;
+                    // }
+                    // else
+                    //     processedScenePointers.Value.Add(parcelInfo.Parcel);
 
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
@@ -141,7 +153,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
 
             // TODO REMOVE AFTER TESTS
-            // UnityEngine.Debug.Log($"[StartLoadingFromVolatilePointers] Pre-filter parcels: {totalParcelsPreFilter}, filtered parcels: {totalParcelsFiltered}");
+            UnityEngine.Debug.Log($"[MAURIZIO] Total parcels from helper: {totalParcelsFromMathHelper}, requested parcels: {totalParcelsRequested}");
 
             if (input.Count == 0) return;
 
@@ -190,8 +202,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Length == 0) continue;
 
-                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
+                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value, ref uniqueScenesCreated);
                 }
+
+                // TODO REMOVE AFTER TESTS
+                UnityEngine.Debug.Log($"[MAURIZIO] Unique scenes created: {uniqueScenesCreated}");
 
                 // Empty parcels = parcels for which no scene pointers were retrieved
                 // for (var i = 0; i < requestedList.Count; i++)
