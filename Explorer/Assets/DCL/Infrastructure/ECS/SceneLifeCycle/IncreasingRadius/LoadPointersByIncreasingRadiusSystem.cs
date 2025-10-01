@@ -131,17 +131,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                         totalParcelsRequested++;
                     }
 
-                    // if (parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
-                    // {
-                    //     sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
-                    //     input.Add(parcelInfo.Parcel);
-                    //
-                    //     // TODO REMOVE AFTER TESTS
-                    //     totalParcelsRequested++;
-                    // }
-                    // else
-                    //     processedScenePointers.Value.Add(parcelInfo.Parcel);
-
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
                 }
@@ -207,14 +196,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 // TODO REMOVE AFTER TESTS
                 UnityEngine.Debug.Log($"[MAURIZIO] Unique scenes created: {uniqueScenesCreated}");
-
-                // Empty parcels = parcels for which no scene pointers were retrieved
-                // for (var i = 0; i < requestedList.Count; i++)
-                // {
-                //     int2 parcel = requestedList[i];
-                //     if (!processedScenePointers.Value.Add(parcel)) continue;
-                //     World.Create(SceneUtils.CreateEmptyScene(parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
-                // }
             }
             else
             {
