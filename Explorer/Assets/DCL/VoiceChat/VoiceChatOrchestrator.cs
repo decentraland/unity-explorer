@@ -108,9 +108,9 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid ShowCommunityInChatAndJoinAsync()
             {
+                JoinCommunityVoiceChat(notification.CommunityId, true);
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(notification.CommunityId);
-                JoinCommunityVoiceChat(notification.CommunityId, true);
             }
 
         }

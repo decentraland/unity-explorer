@@ -134,7 +134,7 @@ namespace DCL.VoiceChat
                     break;
 
                 // When we join a call, if it is for THIS community, we need to hide the button. If it's another community's call, we keep it.
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL when
+                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or  VoiceChatStatus.VOICE_CHAT_IN_CALL when
                     communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
                     view.gameObject.SetActive(false);
                     break;
@@ -145,7 +145,7 @@ namespace DCL.VoiceChat
         {
             // We wait for a short time before getting the updated data just because BE might take some time to update the call status.
             Reset();
-            await UniTask.Delay(500);
+            await UniTask.Delay(1000);
             HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)).Forget();
         }
 

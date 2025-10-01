@@ -11,7 +11,6 @@ namespace DCL.Chat
         private readonly ChatPanelView panelView;
         private readonly ChatConfig.ChatConfig config;
         private readonly CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter;
-        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatTitlebarPresenter titleBarPresenter;
         private readonly ChatChannelsPresenter channelListPresenter;
         private readonly ChatMessageFeedPresenter messageFeedPresenter;
@@ -27,8 +26,7 @@ namespace DCL.Chat
             ChatMessageFeedPresenter messageFeedPresenter,
             ChatInputPresenter chatInputPresenter,
             ChatMemberFeedPresenter memberFeedPresenter,
-            CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter,
-            IVoiceChatOrchestrator voiceChatOrchestrator
+            CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter
             )
         {
             this.panelView = panelView;
@@ -39,7 +37,6 @@ namespace DCL.Chat
             this.chatInputPresenter = chatInputPresenter;
             this.memberFeedPresenter = memberFeedPresenter;
             this.subTitleButtonPresenter = subTitleButtonPresenter;
-            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public void SetupForDefaultState(bool animate)
@@ -55,7 +52,6 @@ namespace DCL.Chat
             SetPanelsFocus(isFocused: false, animate);
 
             subTitleButtonPresenter.Show();
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
         public void SetupForFocusedState()
@@ -115,7 +111,6 @@ namespace DCL.Chat
 
             SetPanelsFocus(isFocused: false, animate: false);
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, true);
             subTitleButtonPresenter.Hide();
         }
 
