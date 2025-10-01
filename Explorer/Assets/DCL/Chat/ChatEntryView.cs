@@ -23,8 +23,8 @@ namespace DCL.Chat
 
         public ChatEntryClickedDelegate? ChatEntryClicked;
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
-        private Func<bool> IsTranslationActivated;
-        private Func<bool> IsAutoTranslationEnabled;
+        private Func<bool>? IsTranslationActivated;
+        private Func<bool>? IsAutoTranslationEnabled;
         public event Action<string> OnTranslateRequested;
         public event Action<string> OnRevertRequested;
         private bool isPointerInside;
@@ -202,50 +202,48 @@ namespace DCL.Chat
             if (!isPointerInside)
                 messageBubbleElement.Reset();
         }
-
+        
         private void UpdateTranslationViewVisibility()
         {
-            // Step 1: Handle universal conditions where the view should ALWAYS be hidden ---
+            // Handle universal conditions where the view should ALWAYS be hidden.
             if (currentViewModel == null || IsTranslationActivated == null || !IsTranslationActivated())
             {
                 messageBubbleElement.SetTranslationViewVisibility(false);
                 return;
             }
 
-            // Step 2: Handle the special case for the user's OWN messages ---
-            if (currentViewModel.Message.IsSentByOwnUser)
-            {
-                // The translation process for own messages is only started via a context menu.
-                // Once started, the icon should ONLY be visible on hover.
-                bool isTranslationProcessStarted =
-                    currentViewModel.TranslationState == TranslationState.Pending ||
-                    currentViewModel.TranslationState == TranslationState.Success ||
-                    currentViewModel.TranslationState == TranslationState.Failed;
-
-                // Visibility is true ONLY if the process has started AND the user is hovering.
-                messageBubbleElement.SetTranslationViewVisibility(isTranslationProcessStarted && isPointerInside);
-                return;
-            }
-
-            // Step 3: Handle ALL OTHER messages (other users' and system messages) ---
-
-            // For immediate user feedback, the "Pending" (spinner) icon should always be visible.
+            // Universally show the 'Pending' state (spinner) for immediate feedback.
+            // This rule applies to ALL message types (own, system, others) and takes precedence.
             if (currentViewModel.TranslationState == TranslationState.Pending)
             {
                 messageBubbleElement.SetTranslationViewVisibility(true);
                 return;
             }
 
-            // Check if auto-translation is enabled for this conversation.
+            // Handle the special case for the user's OWN messages (for non-pending states).
+            if (currentViewModel.Message.IsSentByOwnUser)
+            {
+                // For own messages, the translation icon (for Success/Failed states) should only
+                // appear on hover, as the translation was triggered manually.
+                bool isTranslationFinished =
+                    currentViewModel.TranslationState == TranslationState.Success ||
+                    currentViewModel.TranslationState == TranslationState.Failed;
+
+                messageBubbleElement.SetTranslationViewVisibility(isTranslationFinished && isPointerInside);
+                return;
+            }
+
+            // Handle ALL OTHER messages (other users' and system messages).
             if (IsAutoTranslationEnabled != null && IsAutoTranslationEnabled())
             {
-                // With auto-translate ON, the icon is ONLY visible on hover to provide a clean UI.
+                // With auto-translate ON, the UI should be clean. The icon is only visible on hover
+                // to allow reverting or seeing the original text.
                 messageBubbleElement.SetTranslationViewVisibility(isPointerInside);
             }
             else
             {
-                // With auto-translate OFF, the icon is visible if the message has been translated,
-                // or if the user is hovering over an untranslated message.
+                // With auto-translate OFF, the icon is visible if the message has been translated
+                // (Success/Failed) or if the user is hovering to initiate a manual translation.
                 bool isVisible =
                     currentViewModel.TranslationState == TranslationState.Success ||
                     currentViewModel.TranslationState == TranslationState.Failed ||
