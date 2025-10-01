@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using System;
 using System.Threading;
 using Utility;
@@ -24,7 +25,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             CommunitiesBrowserEventBus browserEventBus,
-            CommunitiesBrowserCommandsLibrary commandsLibrary)
+            CommunitiesBrowserCommandsLibrary commandsLibrary,
+            ICommunityCallOrchestrator orchestrator)
         {
             this.view = view;
             this.browserEventBus = browserEventBus;
@@ -34,10 +36,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
             streamingCommunitiesPresenter.ViewAllClicked += OnViewAllStreamingCommunities;
 
-            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper, browserStateService, browserEventBus, commandsLibrary);
+            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper, browserStateService, browserEventBus, commandsLibrary, orchestrator);
             filteredCommunitiesPresenter.ResultsBackButtonClicked += LoadAllCommunities;
 
-            view.SetDependencies(thumbnailLoader, browserStateService);
+            view.SetDependencies(thumbnailLoader, browserStateService, orchestrator);
             view.LoopGridScrollChanged += TryLoadMoreResults;
         }
 
