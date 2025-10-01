@@ -120,6 +120,26 @@ Assets/DCL/MCP/
   - Platform
   ```
 
+### Управление скриншотами
+
+- **`take_screenshot`** - Сделать скриншот (полный автоматический процесс)
+  ```json
+  {
+    "waitBeforeCapture": 1500,  // ms перед захватом (optional, default: 1500)
+    "waitAfterCapture": 1000,    // ms после захвата (optional, default: 1000)
+    "source": "MCP"              // источник (optional, default: "MCP")
+  }
+  ```
+  
+  **Автоматически выполняет полный флоу:**
+  1. Открывает InWorld Camera
+  2. Ждёт стабилизации (1.5 сек по умолчанию)
+  3. Делает скриншот
+  4. Ждёт проигрывания эффектов (1 сек по умолчанию)
+  5. Закрывает камеру
+  
+  Скриншот сохраняется в Camera Reel с метаданными (профили в кадре, локация, и т.д.)
+
 ## 📡 Протокол WebSocket
 
 Используется JSON-RPC 2.0 формат:
@@ -282,6 +302,46 @@ async function diagnosePerformance() {
         console.log("⚠️ Low FPS detected!");
         console.log(`Memory: ${memory.totalAllocatedMemoryMB} MB`);
     }
+}
+```
+
+### Пример 3: Создание скриншота
+
+```typescript
+// Вызов через MCP tool (в Claude Desktop или другом MCP client)
+async function takeScreenshot() {
+    // Просто вызываем tool - всё остальное делается автоматически
+    const result = await useTool("take_screenshot", {
+        waitBeforeCapture: 1500,  // опционально
+        waitAfterCapture: 1000,    // опционально
+        source: "Claude"           // опционально
+    });
+    
+    // Результат:
+    // ✅ Screenshot taken successfully!
+    // 📸 Screenshot saved to Camera Reel
+    // ⏱️  Total time: 2500ms
+    // 🏷️  Source: Claude
+    // Process:
+    //   ✓ Camera opened
+    //   ✓ Stabilized (1500ms)
+    //   ✓ Screenshot captured
+    //   ✓ Effects played (1000ms)
+    //   ✓ Camera closed
+}
+
+// Или через прямой вызов Unity команды (если используете WebSocket напрямую)
+async function takeScreenshotDirect() {
+    await connectToUnityWebSocket("localhost", 7777);
+    
+    // С кастомными таймингами
+    const result = await sendUnityCommand("take_screenshot", {
+        waitBeforeCapture: 2000,  // Больше времени для стабилизации
+        waitAfterCapture: 1500,   // Больше времени для эффектов
+        source: "AutoTest"
+    });
+    
+    console.log("Screenshot result:", result);
 }
 ```
 
