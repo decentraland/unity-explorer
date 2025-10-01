@@ -198,6 +198,7 @@ namespace DCL.SmartWearables
 
             var metadata = new PortableExperienceMetadata
             {
+                Type = PortableExperienceType.SMART_WEARABLE,
                 Ens = string.Empty,
                 Id = id,
                 Name = smartWearable.DTO.Metadata.name,

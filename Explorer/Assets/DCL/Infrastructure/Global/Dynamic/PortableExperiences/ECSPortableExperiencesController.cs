@@ -124,6 +124,7 @@ namespace PortableExperiences.Controller
             world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
             world.Add(portableExperienceEntity, new PortableExperienceMetadata
             {
+                Type = isGlobalPortableExperience ? PortableExperienceType.GLOBAL : PortableExperienceType.LOCAL,
                 Ens = portableExperienceId,
                 Id = portableExperienceEntity.Id.ToString(),
                 Name = realmData.RealmName,
@@ -140,21 +141,28 @@ namespace PortableExperiences.Controller
 
         public bool CanKillPortableExperience(string id)
         {
-            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
+            if (!PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity)) return false;
 
-            ISceneFacade currentSceneFacade = scenesCache.CurrentScene.Value;
-            if (currentSceneFacade == null) return false;
+            PortableExperienceMetadata metadata = world.Get<PortableExperienceMetadata>(portableExperienceEntity);
 
-            if (PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity))
+            switch (metadata.Type)
             {
-                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+                case PortableExperienceType.GLOBAL:
+                    // Cannot kill a Global PX ever
+                    return false;
 
-                if (portableExperienceRealmComponent.IsGlobalPortableExperience) return false;
+                case PortableExperienceType.LOCAL:
+                    if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
-                return portableExperienceRealmComponent.ParentSceneId == currentSceneFacade.Info.Name;
+                    ISceneFacade currentSceneFacade = scenesCache.CurrentScene.Value;
+                    return currentSceneFacade != null && metadata.ParentSceneId == currentSceneFacade.Info.Name;
+
+                case PortableExperienceType.SMART_WEARABLE:
+                    // Can always kill a Smart Wearable PX
+                    return true;
             }
 
-            return false;
+            throw new InvalidOperationException();
         }
 
         public List<IPortableExperiencesController.SpawnResponse> GetAllPortableExperiences()
