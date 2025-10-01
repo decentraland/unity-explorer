@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
+using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -38,6 +39,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     Indicates that the loop was successfully launched but in the current context connection was not required
         /// </summary>
         NO_CONNECTION_REQUIRED,
+        /// <summary>
+        ///     Indicates that the connection failed due to a 403 Forbidden Access error
+        /// </summary>
+        FORBIDDEN_ACCESS,
     }
 
     /// <summary>
@@ -165,6 +170,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
+                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+                        attemptToConnectState.Set(AttemptToConnectState.FORBIDDEN_ACCESS);
+
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
                     connectionLoopHealth.Set(stateOnException);
                     await RecoveryDelayAsync(ct);
