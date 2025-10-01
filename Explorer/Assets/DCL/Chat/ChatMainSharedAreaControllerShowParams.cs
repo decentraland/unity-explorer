@@ -1,6 +1,6 @@
 namespace DCL.Chat.ControllerShowParams
 {
-    public struct ChatControllerShowParams
+    public struct ChatMainSharedAreaControllerShowParams
     {
         /// <summary>
         /// Indicates whether the chat panel should be unfolded. If it is False, no action will be performed.
@@ -22,7 +22,7 @@ namespace DCL.Chat.ControllerShowParams
         /// </summary>
         /// <param name="unfold">Indicates whether the chat panel should be unfolded. If it is False, no action will be performed.</param>
         /// <param name="focus">Indicates whether the chat panel should gain the focus after showing.</param>
-        public ChatControllerShowParams(bool unfold, bool focus = false, bool forceFocusFromShortcut = false)
+        public ChatMainSharedAreaControllerShowParams(bool unfold, bool focus = false, bool forceFocusFromShortcut = false)
         {
             Unfold = unfold;
             Focus = focus;

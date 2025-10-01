@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 
 namespace DCL.ChatArea
 {
-    public class ChatSharedAreaView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IDisposable
+    public class ChatMainSharedAreaView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IDisposable
     {
         public event Action? OnPointerEnterEvent;
         public event Action? OnPointerExitEvent;

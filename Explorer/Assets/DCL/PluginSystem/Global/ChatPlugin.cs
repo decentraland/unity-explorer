@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.Global
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
-        private ChatSharedAreaController? chatSharedAreaController;
+        private ChatMainSharedAreaController? chatSharedAreaController;
         private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService? communityUserStateService;
@@ -293,10 +293,10 @@ namespace DCL.PluginSystem.Global
                 chatSharedAreaEventBus
             );
 
-            chatSharedAreaController = new ChatSharedAreaController(
+            chatSharedAreaController = new ChatMainSharedAreaController(
                 () =>
                 {
-                    ChatSharedAreaView? view = mainUIView.ChatMainView;
+                    ChatMainSharedAreaView? view = mainUIView.ChatMainView;
                     view.gameObject.SetActive(false);
                     return view;
                 },
@@ -322,7 +322,7 @@ namespace DCL.PluginSystem.Global
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
             if (status == LoadingStatus.LoadingStage.Completed)
-                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
+                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, false)).Forget();
         }
 
         private void OnIdentityCleared()

@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.ChatArea
 {
-    public class ChatSharedAreaController : ControllerBase<ChatSharedAreaView, ChatControllerShowParams>, IControllerInSharedSpace<ChatSharedAreaView, ChatControllerShowParams>
+    public class ChatMainSharedAreaController : ControllerBase<ChatMainSharedAreaView, ChatMainSharedAreaControllerShowParams>, IControllerInSharedSpace<ChatMainSharedAreaView, ChatMainSharedAreaControllerShowParams>
     {
         private readonly IMVCManager mvcManager;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
@@ -24,7 +24,7 @@ namespace DCL.ChatArea
 
         public bool IsVisibleInSharedSpace { get; private set; }
 
-        public ChatSharedAreaController(ViewFactoryMethod viewFactory,
+        public ChatMainSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ChatSharedAreaEventBus chatSharedAreaEventBus) : base(viewFactory)
         {
@@ -69,7 +69,7 @@ namespace DCL.ChatArea
             chatSharedAreaEventBus.RaiseToggleEvent();
         }
 
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatMainSharedAreaControllerShowParams showParams)
         {
             // This method is called when we want to "show" the chat.
             // This can happen when:

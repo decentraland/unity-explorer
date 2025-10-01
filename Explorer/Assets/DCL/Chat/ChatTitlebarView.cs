@@ -11,7 +11,7 @@ using MVC;
 
 namespace DCL.Chat
 {
-    public class ChatTitlebarView2 : MonoBehaviour
+    public class ChatTitlebarView : MonoBehaviour
     {
         public event Action OnCloseRequested;
         public event Action OnMembersToggleRequested;
