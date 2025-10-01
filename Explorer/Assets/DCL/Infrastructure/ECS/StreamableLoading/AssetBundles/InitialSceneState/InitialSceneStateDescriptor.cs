@@ -23,9 +23,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private bool AllAssetsInstantiated;
 
-        public InitialSceneStateMetadata initialSceneStateMetadata;
-        private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
-
         private InitialSceneStateDescriptor() { }
 
 
@@ -41,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash(null, "GP_staticscene_LZMA_StaticSceneDescriptor", hasMultipleAssets : true),
+                    GetAssetBundleIntention.FromHash(typeof(GameObject), "GP_staticscene_LZMA_StaticSceneDescriptor"),
                     PartitionComponent.TOP_PRIORITY);
             }
 
@@ -54,7 +51,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         public void AddInstantiatedAsset(string hash, GltfContainerAsset asset)
         {
             AssetsInstantiated.Add((hash, asset));
-            AllAssetsInstantiated = AssetsInstantiated.Count == initialSceneStateMetadata.assetHash.Count;
+            AllAssetsInstantiated = AssetsInstantiated.Count == AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count;
         }
 
         public static InitialSceneStateDescriptor CreateUnsupported(string sceneID)
@@ -77,16 +74,16 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         public void RepositionStaticAssets(GameObject instantiatedLOD)
         {
-            for (var i = 0; i < initialSceneStateMetadata.assetHash.Count; i++)
+            for (var i = 0; i < AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count; i++)
             {
-                string assetHash = initialSceneStateMetadata.assetHash[i];
+                string assetHash = AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash[i];
                 if (assetsCache.TryGet(assetHash, out var asset))
                 {
                     asset.Root.SetActive(true);
                     asset.Root.transform.SetParent(instantiatedLOD.transform);
-                    asset.Root.transform.position = initialSceneStateMetadata.positions[i];
-                    asset.Root.transform.rotation = initialSceneStateMetadata.rotations[i];
-                    asset.Root.transform.localScale = initialSceneStateMetadata.scales[i];
+                    asset.Root.transform.position = AssetBundleData.Asset.InitialSceneStateMetadata.Value.positions[i];
+                    asset.Root.transform.rotation = AssetBundleData.Asset.InitialSceneStateMetadata.Value.rotations[i];
+                    asset.Root.transform.localScale = AssetBundleData.Asset.InitialSceneStateMetadata.Value.scales[i];
                 }
             }
         }
@@ -108,5 +105,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             //foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
                 //gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
         }
+
     }
 }

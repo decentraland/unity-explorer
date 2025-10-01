@@ -13,6 +13,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -148,9 +149,8 @@ namespace DCL.LOD.Tests
                 GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
                 new PartitionComponent());
 
-            var fakeAssetBundleData = new AssetBundleData(null, null, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
-                new AssetBundleData[]
-                    { });
+            var fakeAssetBundleData = new AssetBundleData(null,null, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
+                typeof(GameObject), new AssetBundleData[] { });
 
             world.Add(promise.Entity,
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));

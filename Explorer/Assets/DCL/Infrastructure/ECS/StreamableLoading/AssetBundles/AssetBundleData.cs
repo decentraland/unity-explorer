@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,17 +17,18 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        public readonly AssetBundleData[] Dependencies;
-        public readonly AssetBundleMetrics? Metrics;
         private readonly string AssetBundleName;
+
+        public readonly AssetBundleData[] Dependencies;
+        public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
 
         private bool unloaded;
         private Dictionary<string, AssetInfo>? assets;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object[] loadedAssets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
-            Metrics = metrics;
+            InitialSceneStateMetadata = initialSceneState;
 
             assets = new Dictionary<string, AssetInfo>();
             for (var i = 0; i < loadedAssets.Length; i++)
@@ -37,15 +39,14 @@ namespace ECS.StreamableLoading.AssetBundles
             UnloadAB();
         }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             //Dependencies cant be unloaded, since we dont know who will need them =(
-            Metrics = metrics;
             Dependencies = dependencies;
         }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object[] loadedAssets, AssetBundleData[] dependencies)
-        : this(assetBundle, metrics, loadedAssets, typeof(GameObject), dependencies)
+        public AssetBundleData(AssetBundle assetBundle, Object[] loadedAssets, AssetBundleData[] dependencies)
+        : this(assetBundle, new InitialSceneStateMetadata(), loadedAssets, typeof(GameObject), dependencies)
         {
         }
 
@@ -69,6 +70,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override void DestroyObject()
         {
+            //TODO (JUANI) : I think this is creashing or delaying the exit
+            return;
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
@@ -91,6 +94,9 @@ namespace ECS.StreamableLoading.AssetBundles
         public T GetAsset<T>(string assetName = "") where T : Object
         {
             AssetInfo assetInfo;
+
+            if(assets == null)
+                throw new ArgumentException($"No assets were loaded for {AssetBundleName}");
 
             if (string.IsNullOrEmpty(assetName))
             {

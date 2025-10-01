@@ -57,9 +57,10 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
             if (staticSceneAssetBundle.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 staticSceneAssetBundle.AssetBundleData = Result;
-                if (Result.Succeeded)
+                if (Result.Succeeded )
                 {
-                    foreach (string assetHash in staticSceneAssetBundle.initialSceneStateMetadata.assetHash)
+                    //TODO (JUANI) : So many !
+                    foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset!.InitialSceneStateMetadata!.Value.assetHash)
                         World.Create(staticSceneAssetBundle, new GetGltfContainerAssetIntention($"static_assset_{assetHash}", assetHash, new CancellationTokenSource()), Result);
                 }
             }

@@ -17,7 +17,9 @@ using System.Threading;
 using AssetManagement;
 using DCL.Ipfs;
 using DCL.WebRequests;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache.Disk;
+using Google.Protobuf;
 using System.Buffers;
 using System.IO;
 using UnityEngine;
@@ -30,7 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
         private const string METADATA_FILENAME = "metadata.json";
-        private const string METRICS_FILENAME = "metrics.json";
+        private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -80,13 +82,14 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 // get metrics
 
-                string? metricsJSON;
                 string? metadataJSON;
+                string? sceneDescriptoJSON;
+
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
-                    metricsJSON = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
                     metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                    sceneDescriptoJSON = assetBundle.LoadAsset<TextAsset>(STATIC_SCENE_DESCRIPTOR_FILENAME)?.text;
                 }
 
                 // Switch to thread pool to parse JSONs
@@ -94,9 +97,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToThreadPool();
                 ct.ThrowIfCancellationRequested();
 
-                AssetBundleMetrics? metrics = !string.IsNullOrEmpty(metricsJSON) ? JsonUtility.FromJson<AssetBundleMetrics>(metricsJSON) : null;
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
+                InitialSceneStateMetadata? initialSceneState = null;
+
+                if (!string.IsNullOrEmpty(sceneDescriptoJSON))
+                    initialSceneState = JsonUtility.FromJson<InitialSceneStateMetadata>(sceneDescriptoJSON);
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -115,9 +121,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, intention.HasMultipleAssets , ct);
+                    source, intention.LookForShaderAssets, ct);
             }
             catch (Exception e)
             {
@@ -134,19 +140,18 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
+            AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             ReportData reportCategory,
             string version,
             string source,
             bool lookForShaderAssets,
-            bool hasMultipleAssets,
             CancellationToken ct)
         {
             // if the type was not specified don't load any assets
             if (expectedObjType == null)
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, dependencies));
 
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
@@ -159,7 +164,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, initialSceneState, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
