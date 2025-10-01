@@ -172,7 +172,7 @@ namespace Global.Dynamic
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData, landscapeParcelData, staticSettings.ParcelLoadingFilteringSettings);
+                partitionSettings, roadCoordinates, realmData, landscapeParcelData);
 
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
