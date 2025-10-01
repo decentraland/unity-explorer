@@ -42,7 +42,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.SelectEmoteEvent += OnEmoteSelected;
             backpackEventBus.EmoteSlotSelectEvent += OnEmoteSlotSelected;
             backpackEventBus.UnEquipEmoteEvent += OnEmoteUnEquipped;
-            backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
+            backpackEventBus.FilterEvent += OnFilterEvent;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
             backpackEventBus.DeactivateEvent += OnDeactivate;
@@ -85,7 +85,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.UnEquipEmoteEvent -= OnEmoteUnEquipped;
             backpackEventBus.SelectEmoteEvent -= OnEmoteSelected;
             backpackEventBus.EmoteSlotSelectEvent -= OnEmoteSlotSelected;
-            backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
+            backpackEventBus.FilterEvent -= OnFilterEvent;
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
@@ -93,9 +93,10 @@ namespace DCL.Backpack.CharacterPreview
             emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
-        private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            inputEventBus.OnChangePreviewFocus(categoryEnum);
+            if (categoryEnum is AvatarWearableCategoryEnum c)
+                inputEventBus.OnChangePreviewFocus(c);
         }
 
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
@@ -160,6 +161,7 @@ namespace DCL.Backpack.CharacterPreview
             previewAvatarModel.Emotes ??= new HashSet<URN>();
 
             URN urn = emote.GetUrn().Shorten();
+
             if (!previewAvatarModel.Emotes.Add(urn))
                 return;
 
