@@ -73,6 +73,15 @@ namespace DCL.Translation.Service
             await TranslateAsync(messageId, senderWalletId, cts.Token);
         }
 
+        // Global cap: at most 10 translations in-flight across all senders.
+        private readonly SemaphoreSlim globalThrottle = new(10, 10);
+
+        // Per-sender leader/follower gate (UniTaskCompletionSource)
+        // At most ONE “leader” per sender runs TranslateInternalAsync at a time
+        // Other calls (“followers”) await the gate.Task; when leader finishes, it signals and followers retry
+        // The while-loop is deliberate: handles the race where multiple followers wake concurrently
+        // Gate lifecycle (create/remove/signal) is owned EXCLUSIVELY by this method
+        // Safe on main thread; if multi-threaded callers are possible, protect perSenderGates access with a lock
         private async UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
         {
             while (true)
@@ -84,22 +93,47 @@ namespace DCL.Translation.Service
                     continue;
                 }
 
-                // Try to become the leader for this sender.
-                var myGate = new UniTaskCompletionSource();
+                // create gate for this sender
+                var gate = new UniTaskCompletionSource();
 
-                // NOTE: Since we're on the main thread, Dictionary is fine. If not guaranteed, use a lock.
-                if (perSenderGates.TryAdd(senderWalletId, myGate))
+                // NOTE: Since we're on the main thread,
+                // NOTE: Dictionary is fine. If not guaranteed, use a lock.
+                if (perSenderGates.TryAdd(senderWalletId, gate))
                 {
+                    // try
+                    // {
+                    //     // We are the leader: do the actual work for THIS messageId.
+                    //     await TranslateInternalAsync(messageId, senderWalletId, ct);
+                    // }
+                    // finally
+                    // {
+                    //     // Signal followers and clean up the gate.
+                    //     perSenderGates.Remove(senderWalletId);
+                    //     gate.TrySetResult();
+                    // }
+                    //
+                    // return;
+
                     try
                     {
-                        // We are the leader: do the actual work for THIS messageId.
-                        await TranslateInternalAsync(messageId, senderWalletId, ct);
+                        // Only the leader consumes a global slot. Followers do not.
+                        await globalThrottle.WaitAsync(ct);
+                        try
+                        {
+                            // Do the actual translation work for THIS message/sender
+                            await TranslateInternalAsync(messageId, senderWalletId, ct);
+                        }
+                        finally
+                        {
+                            // Always free the global slot even if we were canceled or failed
+                            globalThrottle.Release();
+                        }
                     }
                     finally
                     {
-                        // Signal followers and clean up the gate.
+                        // Signal all waiting followers that leadership finished, and remove the gate
                         perSenderGates.Remove(senderWalletId);
-                        myGate.TrySetResult();
+                        gate.TrySetResult();
                     }
 
                     return;
@@ -107,26 +141,53 @@ namespace DCL.Translation.Service
             }
         }
 
+        // // Per-sender locks: one SemaphoreSlim (1 slot) per senderWalletId
         // private readonly Dictionary<string, SemaphoreSlim> perSenderLocks = new();
+        //
+        // // Translation concurrency policy
+        // // Per-sender serialization: only ONE translation per senderWalletId at a time
+        // // Global throttle: at most N translations across ALL senders (N = globalThrottle initialCount)
+        // // Async-friendly: uses WaitAsync so the Unity main thread never blocks
+        // // Lock order (important): acquire per-sender FIRST, global SECOND; release in reverse order
+        // // Safety: try/finally always releases both semaphores on success, exception, or cancellation
+        // // Assumptions: perSenderLocks is accessed from the main thread; if not, guard GetSenderLock with a lock
         // private async UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
         // {
+        //     // Per-sender gate (1 slot) — ensures strict serialization for this wallet
         //     var gate = GetSenderLock(senderWalletId);
         //
         //     await gate.WaitAsync(ct);
         //     try
         //     {
-        //         await TranslateInternalAsync(messageId, senderWalletId, ct);
+        //         // Global gate — caps total pressure on the provider
+        //         await globalThrottle.WaitAsync(ct);
+        //         try
+        //         {
+        //             // Entire translation runs under per-sender + global tokens
+        //             await TranslateInternalAsync(messageId, senderWalletId, ct);
+        //         }
+        //         finally
+        //         {
+        //             // Always release even on exceptions/cancellation
+        //             globalThrottle.Release();
+        //         }
         //     }
         //     finally
         //     {
+        //         // Always release the per-sender token
         //         gate.Release();
         //     }
+        //
         // }
         //
         // private SemaphoreSlim GetSenderLock(string senderId)
         // {
         //     if (!perSenderLocks.TryGetValue(senderId, out var sem))
         //     {
+        //         // NOTE: Safe on main thread.
+        //         // NOTE: If this might be touched off-main, wrap in `lock`.
+        //         
+        //         // 1 slot
         //         sem = new SemaphoreSlim(1, 1);
         //         perSenderLocks[senderId] = sem;
         //     }
@@ -224,12 +285,6 @@ namespace DCL.Translation.Service
                 {
                     MessageId = messageId, Error = ex.Message, Translation = translation
                 });
-            }
-            finally
-            {
-                // No matter what happens (success, failure, or cancellation),
-                // remove the task from the dictionary so new requests can be made later.
-                perSenderGates.Remove(senderWalletId);
             }
         }
 
