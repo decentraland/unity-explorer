@@ -552,6 +552,22 @@ MonoBehaviour:
       Severity: 1
     - Category: ASSET_BUNDLES
       Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 3
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 2
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 0
+    - Category: VOICE_CHAT
+      Severity: 3
+    - Category: VOICE_CHAT
+      Severity: 2
+    - Category: VOICE_CHAT
+      Severity: 0
+    - Category: VOICE_CHAT
+      Severity: 4
+    - Category: VOICE_CHAT
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1
