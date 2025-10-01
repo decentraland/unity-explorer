@@ -61,8 +61,6 @@ namespace DCL.Chat.ChatViews
             bool shouldShowMembersButton = model.ViewMode == TitlebarViewMode.Nearby ||
                                            model.ViewMode == TitlebarViewMode.Community;
 
-            buttonStartCall.gameObject.SetActive(model.ViewMode == TitlebarViewMode.DirectMessage);
-
             buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
 
             if (model.Thumbnail.Value.ThumbnailState
