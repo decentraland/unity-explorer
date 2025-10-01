@@ -12,7 +12,7 @@ namespace DCL.Translation
 
         public int MaxRetries => 1;
         public event Action<string> OnAutoTranslationSettingsChanged;
-        public float TranslationTimeoutSeconds => 10;
+        public float TranslationTimeoutSeconds => 30;
 
         /// <summary>
         ///     Is feature remotely enabled through feature flag or forced through chat config.

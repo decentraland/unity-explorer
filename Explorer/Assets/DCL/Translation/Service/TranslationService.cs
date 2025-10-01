@@ -121,7 +121,7 @@ namespace DCL.Translation.Service
                         try
                         {
                             // Do the actual translation work for THIS message/sender
-                            await TranslateInternalAsync(messageId, senderWalletId, ct);
+                            await TranslateInternalAsync(messageId, ct);
                         }
                         finally
                         {
@@ -230,7 +230,7 @@ namespace DCL.Translation.Service
             });
         }
 
-        private async UniTask TranslateInternalAsync(string messageId, string senderWalletId, CancellationToken ct)
+        private async UniTask TranslateInternalAsync(string messageId, CancellationToken ct)
         {
             if (!translationMemory.TryGet(messageId, out var translation)) return;
 

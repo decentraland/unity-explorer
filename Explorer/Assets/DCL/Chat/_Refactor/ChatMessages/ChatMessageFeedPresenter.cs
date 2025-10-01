@@ -40,6 +40,7 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatConfig.ChatConfig chatConfig;
 
         private readonly List<ChatMessageViewModel> viewModels = new (500);
+        private Dictionary<string, ChatMessageViewModel>? viewModelsMap;
 
         private readonly ChatMessageViewModel separatorViewModel;
 
@@ -113,8 +114,8 @@ namespace DCL.Chat.ChatMessages
             viewModels.ForEach(ChatMessageViewModel.RELEASE);
 
             viewModels.Clear();
-
             view.Clear();
+            viewModelsMap = null;
 
             scrollToBottomPresenter.OnChannelChanged();
             separatorFixedIndexFromBottom = -1;
@@ -134,20 +135,20 @@ namespace DCL.Chat.ChatMessages
 
         private void OnTranslateMessage(string messageId)
         {
-            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            var viewModel = FindViewModelById(messageId);
             if (viewModel == null || viewModel.TranslationState == TranslationState.Pending) return;
 
             // No need to check state here, the view already determined this is the correct action
             translateMessageCommand.Execute(viewModel.Message.MessageId,
                 viewModel.Message.SenderWalletId,
                 viewModel.Message.Message,
-                loadChannelCts.Token);
+                CancellationToken.None);
         }
 
         // NEW: Handler for the revert request
         private void OnRevertMessage(string messageId)
         {
-            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            var viewModel = FindViewModelById(messageId);
             if (viewModel == null) return;
 
             // No need to check state here
@@ -215,7 +216,9 @@ namespace DCL.Chat.ChatMessages
             }
             
             viewModels.Insert(index, newMessageViewModel);
-
+            if (viewModelsMap != null)
+                viewModelsMap[newMessageViewModel.Message.MessageId] = newMessageViewModel;
+            
             // Handle separator logic (this is unrelated to the button)
             bool qualifiedForAddingSeparator = !wasAtBottom && !isSentByOwnUser;
 
@@ -271,7 +274,7 @@ namespace DCL.Chat.ChatMessages
 
         private void OnChatContextMenuRequested(string messageId, ChatEntryView? chatEntry)
         {
-            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            var viewModel = FindViewModelById(messageId);
             if (viewModel == null) return;
 
             var contextMenu = new GenericContextMenu(
@@ -307,7 +310,7 @@ namespace DCL.Chat.ChatMessages
                         chatConfig.TranslateChatMessageContextMenuIcon,
                         () => translateMessageCommand.Execute(viewModel.Message.MessageId,
                             viewModel.Message.SenderWalletId,
-                            viewModel.Message.Message, loadChannelCts.Token)
+                            viewModel.Message.Message, CancellationToken.None)
                     ));
                 }
             }
@@ -334,7 +337,7 @@ namespace DCL.Chat.ChatMessages
 
         private void UpdateViewModelAndRefreshView(MessageTranslation? translation, string messageId)
         {
-            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            var viewModel = FindViewModelById(messageId);
             if (viewModel == null) return;
 
             if (translation != null)
@@ -396,6 +399,8 @@ namespace DCL.Chat.ChatMessages
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
                     TryAddNewMessagesSeparatorAfterPendingMessages();
 
+                    RebuildFastIndexIfNeeded();
+                    
                     Subscribe();
 
                     view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
@@ -432,6 +437,7 @@ namespace DCL.Chat.ChatMessages
                 viewModels.ForEach(ChatMessageViewModel.RELEASE);
                 viewModels.Clear();
                 view.Clear();
+                viewModelsMap?.Clear();
             }
         }
 
@@ -513,6 +519,9 @@ namespace DCL.Chat.ChatMessages
 
         private void OnAutoTranslationSettingsChanged(string conversationId)
         {
+            if (currentChannelService.CurrentChannelId.Id == conversationId)
+                RebuildFastIndexIfNeeded();
+            
             view.RefreshVisibleElements();
         }
 
@@ -531,6 +540,57 @@ namespace DCL.Chat.ChatMessages
 
             float targetAlpha = isFocused ? 1f : 0f;
             view.StartScrollBarFade(targetAlpha, animate ? duration : 0f, easing);
+        }
+
+        private bool UseFastIndexForCurrentConversation()
+        {
+            // Gate on per-conversation Auto-Translate setting (your requirement).
+            // Keep this exactly in one place so policy changes are trivial.
+            return IsAutoTranslationEnabled();
+        }
+
+        private void RebuildFastIndexIfNeeded()
+        {
+            if (!UseFastIndexForCurrentConversation())
+            {
+                viewModelsMap = null;
+                return;
+            }
+
+            viewModelsMap ??= new Dictionary<string, ChatMessageViewModel>(Math.Max(16, viewModels.Count));
+
+            viewModelsMap.Clear();
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                var vm = viewModels[i];
+                if (ReferenceEquals(vm, separatorViewModel))
+                    continue;
+
+                string id = vm.Message.MessageId;
+                if (!string.IsNullOrEmpty(id))
+                    viewModelsMap[id] = vm; // O(1) lookup
+            }
+        }
+
+        private ChatMessageViewModel? LinearFindViewModelById(string messageId)
+        {
+            // Cheaper than LINQ; avoids delegate/iterator allocations.
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                var vm = viewModels[i];
+                if (vm.Message.MessageId == messageId)
+                    return vm;
+            }
+
+            return null;
+        }
+
+        private ChatMessageViewModel? FindViewModelById(string messageId)
+        {
+            if (viewModelsMap != null && viewModelsMap.TryGetValue(messageId, out var vm))
+                return vm;
+
+            return LinearFindViewModelById(messageId); // safe fallback when index is disabled
         }
     }
 }
