@@ -24,7 +24,6 @@ namespace ECS.SceneLifeCycle.Tests
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
         private IPartitionSettings partitionSettings;
-        private ParcelLoadingFilteringSettings parcelLoadingFilteringSettings;
 
         [SetUp]
         public void SetUp()

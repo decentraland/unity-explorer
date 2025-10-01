@@ -23,9 +23,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
 
-        [field: SerializeField]
-        public ParcelLoadingFilteringSettings ParcelLoadingFilteringSettings { get; private set; }
-
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]
