@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -6,6 +7,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetCommunityResponse
     {
         [Serializable]
+        [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
         public struct VoiceChatStatus
         {
             public bool isActive;
