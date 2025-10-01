@@ -52,12 +52,13 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
-            // TODO: convert into a web3 exception
-            if (!File.Exists(TOKEN_PATH)) throw new FileNotFoundException(TOKEN_PATH);
+            if (!File.Exists(TOKEN_PATH))
+                throw new AutoLoginTokenNotFoundException();
 
             Result<string> contentResult = await File.ReadAllTextAsync(TOKEN_PATH, ct)!.SuppressToResultAsync<string>(ReportCategory.AUTHENTICATION);
-            // TODO: convert into a web3 exception
-            if (contentResult.Success == false) throw new Exception();
+
+            if (contentResult.Success == false)
+                throw new Exception(contentResult.ErrorMessage ?? "Cannot read token file");
 
             // Notify emitter that the file has been consumed
             File.Delete(TOKEN_PATH);

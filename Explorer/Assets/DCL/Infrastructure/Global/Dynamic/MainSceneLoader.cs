@@ -50,6 +50,7 @@ using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
 using DCL.Utility;
 using DCL.Utility.Types;
+using DCL.Web3.Authenticators;
 #if UNITY_EDITOR
 #endif
 using UnityEngine;
@@ -149,6 +150,7 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
@@ -274,6 +276,11 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
+                try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+                // Exceptions on auto-login should not block the application bootstrap
+                catch (AutoLoginTokenNotFoundException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
@@ -312,6 +319,7 @@ namespace Global.Dynamic
                 new PlatformDriveInfoProvider());
 
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+
             if (!hasMinimumSpecs)
             {
                 DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
@@ -321,10 +329,7 @@ namespace Global.Dynamic
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
-            {
-                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
-            });
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
@@ -332,11 +337,11 @@ namespace Global.Dynamic
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
-                .AssetsProvisioner!
-                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+                                                 .AssetsProvisioner!
+                                                 .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
             ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
-                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+               .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
             var minimumSpecsResults = minimumSpecsGuard.Results;
             var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
@@ -588,9 +593,7 @@ namespace Global.Dynamic
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
-            public SplashScreenRef(string guid) : base(guid)
-            {
-            }
+            public SplashScreenRef(string guid) : base(guid) { }
         }
     }
 }
