@@ -458,9 +458,9 @@ namespace ECS.Unity.AvatarShape.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
             var sceneContent = Substitute.For<ISceneContent>();
-            const string firstEmoteId = "emote1.glb";
+            const string firstEmoteId = "test1_emote.glb";
             const string firstHash = "emote1_hash";
-            const string secondEmoteId = "emote2.glb";
+            const string secondEmoteId = "test2_emote.glb";
             const string secondHash = "emote2_hash";
 
             sceneContent.TryGetHash(firstEmoteId, out Arg.Any<string>())
