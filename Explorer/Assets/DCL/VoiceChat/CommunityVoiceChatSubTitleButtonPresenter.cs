@@ -88,7 +88,7 @@ namespace DCL.VoiceChat
         {
             currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
-            //We subscribe to the call events but if the button cant be visible we dont need to check further.
+            //We subscribe to the call events but if the button cant be visible we don't need to check further.
             if (!canBeVisible) return;
 
             bool isOurCurrentConversation = communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase);
@@ -116,7 +116,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            //If the panel can't be visible, we dont activate it.
+            //If the panel can't be visible, we don't activate it.
             if (!canBeVisible) return;
 
             view.gameObject.SetActive(true);
