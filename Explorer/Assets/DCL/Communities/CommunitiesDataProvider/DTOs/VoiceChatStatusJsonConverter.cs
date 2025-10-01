@@ -6,6 +6,9 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     public class VoiceChatStatusJsonConverter : JsonConverter<GetCommunityResponse.VoiceChatStatus>
     {
+        //parameterless constructor to ensure that IL2CPP build can locate the constructor
+        public VoiceChatStatusJsonConverter() { }
+
         public override void WriteJson(JsonWriter writer, GetCommunityResponse.VoiceChatStatus value, JsonSerializer serializer)
         {
             writer.WriteStartObject();
