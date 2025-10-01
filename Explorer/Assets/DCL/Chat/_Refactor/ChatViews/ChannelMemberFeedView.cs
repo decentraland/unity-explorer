@@ -59,7 +59,7 @@ namespace DCL.Chat.ChatViews
                 return null;
 
             ChatMemberListViewModel? model = membersToDisplay[index];
-            LoopListViewItem2 newItem = listView.NewListViewItem("ChatMemberListItem2");
+            LoopListViewItem2 newItem = listView.NewListViewItem("ChatMemberListItem");
 
             ChannelMemberEntryView? itemComponent = newItem.GetComponent<ChannelMemberEntryView>();
             itemComponent.Setup(model);
