@@ -146,7 +146,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                if (AttemptToConnectState == AttemptToConnectState.FORBIDDEN_ACCESS)
+                if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
                     CurrentSceneRoomForbiddenAccess?.Invoke();
 
                 // if we don't catch an exception, any failure leads to the loop being stopped
