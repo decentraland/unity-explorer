@@ -42,10 +42,7 @@ namespace ECS.SceneLifeCycle.Tests
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
                 partitionSettings = Substitute.For<IPartitionSettings>(),
-                Substitute.For<ISceneReadinessReportQueue>(),
-                Substitute.For<IScenesCache>(),
-                new HashSet<Vector2Int>(), realmData, landscapeParcelData,
-                parcelLoadingFilteringSettings = ScriptableObject.CreateInstance<ParcelLoadingFilteringSettings>());
+                new HashSet<Vector2Int>(), realmData, landscapeParcelData);
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
