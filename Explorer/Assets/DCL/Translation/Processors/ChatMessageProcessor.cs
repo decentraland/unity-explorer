@@ -21,8 +21,8 @@ namespace DCL.Translation.Processors
 
             rules = new List<ITokenizationRule>
             {
-                new AngleBracketSegmentationRule(), new LinkProtectionRule(), new SplitTextTokensOnEmojiRule(), new SplitNumericAndDateRule(),
-                new SplitSlashCommandsRule(), new SelfMentionProtectionRule()
+                new AngleBracketSegmentationRule(), new LinkProtectionRule(), new SplitTextTokensOnEmojiRule(), new SplitUnicodeEmojiRule(),
+                new SplitNumericAndDateRule(), new SplitSlashCommandsRule(), new SelfMentionProtectionRule()
             };
         }
 
