@@ -38,6 +38,8 @@ namespace DCL.MCP
                 // Регистрация обработчиков для InWorldCamera
                 server.RegisterHandler("toggleInWorldCamera", HandleToggleInWorldCamera);
                 server.RegisterHandler("takeScreenshot", HandleTakeScreenshot);
+                server.RegisterHandler("getLastScreenshot", HandleGetLastScreenshot);
+                server.RegisterHandler("downloadLastScreenshot", HandleDownloadLastScreenshot);
 
                 server.Start();
 
@@ -117,6 +119,78 @@ namespace DCL.MCP
             {
                 success = true,
                 source,
+            };
+        }
+
+        /// <summary>
+        ///     Возвращает последний скриншот в виде base64 PNG (если есть)
+        /// </summary>
+        private async UniTask<object> HandleGetLastScreenshot(JObject parameters)
+        {
+            try
+            {
+                if (!MCPScreenshotStorage.HasScreenshot())
+                {
+                    return new
+                    {
+                        success = false,
+                        error = "No screenshot available",
+                    };
+                }
+
+                string base64 = MCPScreenshotStorage.GetLastScreenshotBase64();
+                string thumbBase64 = MCPScreenshotStorage.GetLastThumbnailBase64();
+                string source = MCPScreenshotStorage.GetLastSource();
+
+                return new
+                {
+                    success = true,
+                    imageBase64 = base64,
+                    thumbnailBase64 = thumbBase64,
+                    mimeType = "image/png",
+                    source,
+                };
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.DEBUG, $"[MCP Plugin] getLastScreenshot failed: {e.Message}");
+
+                return new
+                {
+                    success = false,
+                    error = e.Message,
+                };
+            }
+        }
+
+        /// <summary>
+        ///     Возвращает подсказку где скачать последний скриншот (без передачи содержимого),
+        ///     чтобы MCP мог скачать файл отдельно (например, через REST, если будет добавлено) или
+        ///     просто вернуть base64 миниатюру, а полный — отдельным инструментом загрузки
+        /// </summary>
+        private async UniTask<object> HandleDownloadLastScreenshot(JObject parameters)
+        {
+            if (!MCPScreenshotStorage.HasScreenshot())
+            {
+                return new
+                {
+                    success = false,
+                    error = "No screenshot available",
+                };
+            }
+
+            // Пока REST-скачивание не реализовано, возвращаем только то, что есть: миниатюру и информацию,
+            // а MCP tool сможет сохранить base64 на диск
+            string base64 = MCPScreenshotStorage.GetLastScreenshotBase64();
+            string source = MCPScreenshotStorage.GetLastSource();
+
+            return new
+            {
+                success = true,
+                imageBase64 = base64,
+                mimeType = "image/png",
+                source,
+                note = "For large files, consider saving base64 to disk on the MCP side.",
             };
         }
     }

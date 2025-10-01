@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.UI;
+using DCL.MCP;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -98,6 +99,9 @@ namespace DCL.InWorldCamera.Systems
 
             try
             {
+                // Сохраняем копию для MCP Server
+                MCPScreenshotStorage.StoreScreenshot(screenshot, currentSource);
+
                 cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, currentSource, ctx.Token).Forget();
 
                 hudController.SetViewCanvasActive(true);
