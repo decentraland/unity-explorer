@@ -16,14 +16,12 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        private Dictionary<string, AssetInfo> assets;
+        public readonly AssetBundleData[] Dependencies;
+        public readonly AssetBundleMetrics? Metrics;
         private readonly string AssetBundleName;
 
         private bool unloaded;
-
-
-        public readonly AssetBundleData[] Dependencies;
-        public readonly AssetBundleMetrics? Metrics;
+        private Dictionary<string, AssetInfo>? assets;
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object[] loadedAssets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -62,10 +60,11 @@ namespace ECS.StreamableLoading.AssetBundles
             //Very hacky, because the asset will remain in cache as AssetBundle == null
             //When DestroyObject is invoked, it will do nothing.
             //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
-            if (unloaded)
-                return;
-            unloaded = true;
-            Asset?.UnloadAsync(false);
+            if (!unloaded)
+            {
+                unloaded = true;
+                Asset.UnloadAsync(false);
+            }
         }
 
         protected override void DestroyObject()
@@ -73,13 +72,13 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
-            foreach (AssetInfo assetsValue in assets.Values)
-                Object.DestroyImmediate(assetsValue.Asset, true);
-
-            assets = null;
-
-            if (unloaded) return;
-            if(Asset && Asset != null) Asset.UnloadAsync(unloadAllLoadedObjects: true);
+            if (assets != null)
+            {
+                foreach (AssetInfo assetsValue in assets.Values)
+                    Object.DestroyImmediate(assetsValue.Asset, true);
+                assets = null;
+            }
+            UnloadAB();
         }
 
         /// <summary>
