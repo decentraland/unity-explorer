@@ -32,11 +32,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private bool splitIsPending;
 
-        // TODO REMOVE AFTER TESTS
-        private int totalParcelsFromMathHelper = 0;
-        private int totalParcelsRequested = 0;
-        private int uniqueScenesCreated = 0;
-
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
@@ -100,9 +95,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (processedScenePointers.Value.Contains(parcelInfo.Parcel))
                     continue;
 
-                // TODO REMOVE AFTER TESTS
-                totalParcelsFromMathHelper++;
-
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
                     if (landscapeParcelData.EmptyParcels.Contains(parcelInfo.Parcel))
@@ -113,9 +105,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                         // ...else add to parcels to be requested
                         sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                         input.Add(parcelInfo.Parcel);
-
-                        // TODO REMOVE AFTER TESTS
-                        totalParcelsRequested++;
                     }
 
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
@@ -127,9 +116,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     break;
                 }
             }
-
-            // TODO REMOVE AFTER TESTS
-            UnityEngine.Debug.Log($"[MAURIZIO] Total parcels from helper: {totalParcelsFromMathHelper}, requested parcels: {totalParcelsRequested}");
 
             if (input.Count == 0) return;
 
@@ -178,11 +164,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Length == 0) continue;
 
-                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value, ref uniqueScenesCreated);
+                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
                 }
-
-                // TODO REMOVE AFTER TESTS
-                UnityEngine.Debug.Log($"[MAURIZIO] Unique scenes created: {uniqueScenesCreated}");
             }
             else
             {
