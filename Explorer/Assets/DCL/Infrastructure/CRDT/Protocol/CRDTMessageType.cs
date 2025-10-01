@@ -12,5 +12,12 @@ namespace CRDT.Protocol
 
         // All components are valid and must be processed
         APPEND_COMPONENT = 4,
+
+        // Network
+        PUT_COMPONENT_NETWORK = 5,
+        DELETE_COMPONENT_NETWORK = 6,
+        DELETE_ENTITY_NETWORK = 7,
+
+        MAX_MESSAGE_TYPE,
     }
 }
