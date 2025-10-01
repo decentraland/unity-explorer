@@ -15,7 +15,7 @@
 ```
 Assets/DCL/MCP/
 ├── MCPWebSocketServer.cs      # Серверная часть на базе Fleck
-├── MCPServerBootstrap.cs      # MonoBehaviour для автозапуска
+├── MCPPlugin.cs               # Глобальный плагин для автоматического запуска
 ├── DCL.MCP.asmdef             # Assembly Definition
 └── README.md                  # Документация
 ```
@@ -24,16 +24,15 @@ Assets/DCL/MCP/
 
 ### Unity (Сервер)
 
-1. **Добавьте компонент на сцену**:
-   - Создайте пустой GameObject в первой сцене
-   - Добавьте компонент `MCPServerBootstrap`
-   - Убедитесь что `Start On Awake` включен
-   - Проверьте порт (по умолчанию 7777)
+1. **Плагин запускается автоматически**:
+   - `MCPPlugin` регистрируется как глобальный плагин в `DynamicWorldContainer`
+   - Запускается автоматически при старте приложения
+   - Не требует добавления на сцену - работает как часть системы плагинов
 
 2. **Запустите приложение**:
    - При старте в логах появится:
      ```
-     [MCP WS] Server started on ws://0.0.0.0:7777
+     [MCP Plugin] MCP WebSocket Server successfully started on port 7777
      ```
 
 ### MCP Server (Клиент)
@@ -164,7 +163,7 @@ Assets/DCL/MCP/
 
 ### Добавление новой команды в Unity
 
-В `MCPServerBootstrap.cs`:
+В `MCPPlugin.cs`:
 
 ```csharp
 private async UniTask<object> HandleCustomCommand(JObject parameters)
@@ -180,7 +179,7 @@ private async UniTask<object> HandleCustomCommand(JObject parameters)
     };
 }
 
-// В StartServerAsync():
+// В Initialize():
 server.RegisterHandler("customCommand", HandleCustomCommand);
 ```
 
@@ -226,7 +225,7 @@ registerCustomTool(server);
 ### Unity логи
 ```csharp
 // Включите категорию DEBUG в ReportHub
-[MCP WS] Server started on ws://0.0.0.0:7777
+[MCP Plugin] MCP WebSocket Server successfully started on port 7777
 [MCP WS] Client connected: 127.0.0.1:54321
 [MCP WS] Received: method=getFPS, id=1
 [MCP WS] Sent response: id=1

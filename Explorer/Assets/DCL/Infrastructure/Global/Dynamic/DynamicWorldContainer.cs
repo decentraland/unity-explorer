@@ -32,6 +32,7 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
+using DCL.MCP;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -1081,6 +1082,9 @@ namespace Global.Dynamic
 
             if (!localSceneDevelopment)
                 globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));
+
+            // MCP WebSocket Server - всегда включён
+            globalPlugins.Add(new MCPPlugin());
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
