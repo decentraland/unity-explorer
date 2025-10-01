@@ -69,6 +69,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             CurrentSceneRoomDisconnected?.Invoke();
         }
 
+        protected override void OnForbiddenAccess()
+        {
+            base.OnForbiddenAccess();
+            CurrentSceneRoomForbiddenAccess?.Invoke();
+        }
+
         protected override RoomSelection SelectValidRoom() =>
             options.SceneRoomMetaDataSource.GetMetadataInput().Equals(currentMetaData.GetValueOrDefault()) ? RoomSelection.PREVIOUS : RoomSelection.NEW;
 
@@ -146,9 +152,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
-                    CurrentSceneRoomForbiddenAccess?.Invoke();
-
                 // if we don't catch an exception, any failure leads to the loop being stopped
                 ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Exception occured in {nameof(CycleStepAsync)} when {meta} was being processed: {e}");
 

@@ -136,6 +136,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             cancellationTokenSource = null;
         }
 
+        protected virtual void OnForbiddenAccess() =>
+            attemptToConnectState.Set(AttemptToConnectState.FORBIDDEN_ACCESS);
+
         public IConnectiveRoom.State CurrentState() =>
             roomState.Value();
 
@@ -171,7 +174,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
                     if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
-                        attemptToConnectState.Set(AttemptToConnectState.FORBIDDEN_ACCESS);
+                        OnForbiddenAccess();
 
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
                     connectionLoopHealth.Set(stateOnException);
