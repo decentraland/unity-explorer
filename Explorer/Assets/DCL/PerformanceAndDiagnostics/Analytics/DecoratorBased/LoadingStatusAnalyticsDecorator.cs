@@ -2,6 +2,7 @@ using DCL.RealmNavigation;
 using DCL.Utilities;
 using Segment.Serialization;
 using Sentry;
+using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -86,5 +87,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             }
             return core.SetCurrentStage(stage);
         }
+
+        public bool IsLoadingScreenOn() =>
+            core.IsLoadingScreenOn();
     }
 }

@@ -183,13 +183,15 @@ namespace Global
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 reportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
+                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider, container.LoadingStatus.IsLoadingScreenOn),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneMapping()
             );
@@ -206,7 +208,6 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());

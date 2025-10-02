@@ -55,6 +55,9 @@ namespace DCL.RealmNavigation
             return PROGRESS[stage];
         }
 
+        public bool IsLoadingScreenOn() =>
+            !CurrentStage.Value.Equals(LoadingStage.Completed);
+
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
         {
             AssetState.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
