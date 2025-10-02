@@ -29,7 +29,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid GoToStreamAsync()
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
             }
         }
