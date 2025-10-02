@@ -56,25 +56,27 @@ namespace DCL.ECSComponents {
             "dGVDb250aW51b3VzEjIKCWRpcmVjdGlvbhgBIAEoCzIfLmRlY2VudHJhbGFu",
             "ZC5jb21tb24uUXVhdGVybmlvbhINCgVzcGVlZBgCIAEoAiJQCg5Nb3ZlQ29u",
             "dGludW91cxIvCglkaXJlY3Rpb24YASABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
-            "bW9uLlZlY3RvcjMSDQoFc3BlZWQYAiABKAIiVwoVVGV4dHVyZU1vdmVDb250",
-            "aW51b3VzEi8KCWRpcmVjdGlvbhgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21t",
-            "b24uVmVjdG9yMhINCgVzcGVlZBgCIAEoAio1ChNUZXh0dXJlTW92ZW1lbnRU",
-            "eXBlEg4KClRNVF9PRkZTRVQQABIOCgpUTVRfVElMSU5HEAEq5wQKDkVhc2lu",
-            "Z0Z1bmN0aW9uEg0KCUVGX0xJTkVBUhAAEhEKDUVGX0VBU0VJTlFVQUQQARIS",
-            "Cg5FRl9FQVNFT1VUUVVBRBACEg8KC0VGX0VBU0VRVUFEEAMSEQoNRUZfRUFT",
-            "RUlOU0lORRAEEhIKDkVGX0VBU0VPVVRTSU5FEAUSDwoLRUZfRUFTRVNJTkUQ",
-            "BhIRCg1FRl9FQVNFSU5FWFBPEAcSEgoORUZfRUFTRU9VVEVYUE8QCBIPCgtF",
-            "Rl9FQVNFRVhQTxAJEhQKEEVGX0VBU0VJTkVMQVNUSUMQChIVChFFRl9FQVNF",
-            "T1VURUxBU1RJQxALEhIKDkVGX0VBU0VFTEFTVElDEAwSEwoPRUZfRUFTRUlO",
-            "Qk9VTkNFEA0SFAoQRUZfRUFTRU9VVEJPVU5DRRAOEhEKDUVGX0VBU0VCT1VO",
-            "Q0UQDxISCg5FRl9FQVNFSU5DVUJJQxAQEhMKD0VGX0VBU0VPVVRDVUJJQxAR",
-            "EhAKDEVGX0VBU0VDVUJJQxASEhIKDkVGX0VBU0VJTlFVQVJUEBMSEwoPRUZf",
-            "RUFTRU9VVFFVQVJUEBQSEAoMRUZfRUFTRVFVQVJUEBUSEgoORUZfRUFTRUlO",
-            "UVVJTlQQFhITCg9FRl9FQVNFT1VUUVVJTlQQFxIQCgxFRl9FQVNFUVVJTlQQ",
-            "GBIRCg1FRl9FQVNFSU5DSVJDEBkSEgoORUZfRUFTRU9VVENJUkMQGhIPCgtF",
-            "Rl9FQVNFQ0lSQxAbEhEKDUVGX0VBU0VJTkJBQ0sQHBISCg5FRl9FQVNFT1VU",
-            "QkFDSxAdEg8KC0VGX0VBU0VCQUNLEB5CFKoCEURDTC5FQ1NDb21wb25lbnRz",
-            "YgZwcm90bzM="));
+            "bW9uLlZlY3RvcjMSDQoFc3BlZWQYAiABKAIitwEKFVRleHR1cmVNb3ZlQ29u",
+            "dGludW91cxIvCglkaXJlY3Rpb24YASABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLlZlY3RvcjISDQoFc3BlZWQYAiABKAISTAoNbW92ZW1lbnRfdHlwZRgD",
+            "IAEoDjIwLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlTW92",
+            "ZW1lbnRUeXBlSACIAQFCEAoOX21vdmVtZW50X3R5cGUqNQoTVGV4dHVyZU1v",
+            "dmVtZW50VHlwZRIOCgpUTVRfT0ZGU0VUEAASDgoKVE1UX1RJTElORxABKucE",
+            "Cg5FYXNpbmdGdW5jdGlvbhINCglFRl9MSU5FQVIQABIRCg1FRl9FQVNFSU5R",
+            "VUFEEAESEgoORUZfRUFTRU9VVFFVQUQQAhIPCgtFRl9FQVNFUVVBRBADEhEK",
+            "DUVGX0VBU0VJTlNJTkUQBBISCg5FRl9FQVNFT1VUU0lORRAFEg8KC0VGX0VB",
+            "U0VTSU5FEAYSEQoNRUZfRUFTRUlORVhQTxAHEhIKDkVGX0VBU0VPVVRFWFBP",
+            "EAgSDwoLRUZfRUFTRUVYUE8QCRIUChBFRl9FQVNFSU5FTEFTVElDEAoSFQoR",
+            "RUZfRUFTRU9VVEVMQVNUSUMQCxISCg5FRl9FQVNFRUxBU1RJQxAMEhMKD0VG",
+            "X0VBU0VJTkJPVU5DRRANEhQKEEVGX0VBU0VPVVRCT1VOQ0UQDhIRCg1FRl9F",
+            "QVNFQk9VTkNFEA8SEgoORUZfRUFTRUlOQ1VCSUMQEBITCg9FRl9FQVNFT1VU",
+            "Q1VCSUMQERIQCgxFRl9FQVNFQ1VCSUMQEhISCg5FRl9FQVNFSU5RVUFSVBAT",
+            "EhMKD0VGX0VBU0VPVVRRVUFSVBAUEhAKDEVGX0VBU0VRVUFSVBAVEhIKDkVG",
+            "X0VBU0VJTlFVSU5UEBYSEwoPRUZfRUFTRU9VVFFVSU5UEBcSEAoMRUZfRUFT",
+            "RVFVSU5UEBgSEQoNRUZfRUFTRUlOQ0lSQxAZEhIKDkVGX0VBU0VPVVRDSVJD",
+            "EBoSDwoLRUZfRUFTRUNJUkMQGxIRCg1FRl9FQVNFSU5CQUNLEBwSEgoORUZf",
+            "RUFTRU9VVEJBQ0sQHRIPCgtFRl9FQVNFQkFDSxAeQhSqAhFEQ0wuRUNTQ29t",
+            "cG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureMovementType), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -85,7 +87,7 @@ namespace DCL.ECSComponents {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "MovementType" }, new[]{ "MovementType" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.RotateContinuous), global::DCL.ECSComponents.RotateContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.MoveContinuous), global::DCL.ECSComponents.MoveContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMoveContinuous), global::DCL.ECSComponents.TextureMoveContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMoveContinuous), global::DCL.ECSComponents.TextureMoveContinuous.Parser, new[]{ "Direction", "Speed", "MovementType" }, new[]{ "MovementType" }, null, null, null)
           }));
     }
     #endregion
@@ -2443,6 +2445,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<TextureMoveContinuous> _parser = new pb::MessageParser<TextureMoveContinuous>(() => new TextureMoveContinuous());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<TextureMoveContinuous> Parser { get { return _parser; } }
@@ -2470,8 +2473,10 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TextureMoveContinuous(TextureMoveContinuous other) : this() {
+      _hasBits0 = other._hasBits0;
       direction_ = other.direction_ != null ? other.direction_.Clone() : null;
       speed_ = other.speed_;
+      movementType_ = other.movementType_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2505,6 +2510,34 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "movement_type" field.</summary>
+    public const int MovementTypeFieldNumber = 3;
+    private global::DCL.ECSComponents.TextureMovementType movementType_;
+    /// <summary>
+    /// default = TextureMovementType.TMT_OFFSET
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.TextureMovementType MovementType {
+      get { if ((_hasBits0 & 1) != 0) { return movementType_; } else { return global::DCL.ECSComponents.TextureMovementType.TmtOffset; } }
+      set {
+        _hasBits0 |= 1;
+        movementType_ = value;
+      }
+    }
+    /// <summary>Gets whether the "movement_type" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMovementType {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "movement_type" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMovementType() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2522,6 +2555,7 @@ namespace DCL.ECSComponents {
       }
       if (!object.Equals(Direction, other.Direction)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+      if (MovementType != other.MovementType) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2531,6 +2565,7 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (direction_ != null) hash ^= Direction.GetHashCode();
       if (Speed != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+      if (HasMovementType) hash ^= MovementType.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2557,6 +2592,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(21);
         output.WriteFloat(Speed);
       }
+      if (HasMovementType) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) MovementType);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2575,6 +2614,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(21);
         output.WriteFloat(Speed);
       }
+      if (HasMovementType) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) MovementType);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2590,6 +2633,9 @@ namespace DCL.ECSComponents {
       }
       if (Speed != 0F) {
         size += 1 + 4;
+      }
+      if (HasMovementType) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) MovementType);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2611,6 +2657,9 @@ namespace DCL.ECSComponents {
       }
       if (other.Speed != 0F) {
         Speed = other.Speed;
+      }
+      if (other.HasMovementType) {
+        MovementType = other.MovementType;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2638,6 +2687,10 @@ namespace DCL.ECSComponents {
             Speed = input.ReadFloat();
             break;
           }
+          case 24: {
+            MovementType = (global::DCL.ECSComponents.TextureMovementType) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -2662,6 +2715,10 @@ namespace DCL.ECSComponents {
           }
           case 21: {
             Speed = input.ReadFloat();
+            break;
+          }
+          case 24: {
+            MovementType = (global::DCL.ECSComponents.TextureMovementType) input.ReadEnum();
             break;
           }
         }

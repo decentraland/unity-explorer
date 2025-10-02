@@ -14,13 +14,15 @@ namespace DCL.SDKComponents.Tween
         {
             if (self is not Vector2Tweener vector2Tweener) return;
 
+            var value = vector2Tweener.CurrentValue;
+
             switch (movementType)
             {
                 case TextureMovementType.TmtOffset:
-                    material.SetTextureOffset(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, vector2Tweener.CurrentValue);
+                    material.SetTextureOffset(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, value);
                     break;
                 case TextureMovementType.TmtTiling:
-                    material.SetTextureScale(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, vector2Tweener.CurrentValue);
+                    material.SetTextureScale(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, value);
                     break;
             }
         }
@@ -32,11 +34,13 @@ namespace DCL.SDKComponents.Tween
             {
                 case PBTween.ModeOneofCase.Move:
                 case PBTween.ModeOneofCase.Scale:
+                case PBTween.ModeOneofCase.MoveContinuous:
                     if (self is not Vector3Tweener vector3Tweener) return;
-                    if (updateType == PBTween.ModeOneofCase.Move)
-                        transform.localPosition = vector3Tweener.CurrentValue;
+                    var value3 = vector3Tweener.CurrentValue;
+                    if (updateType == PBTween.ModeOneofCase.Move || updateType == PBTween.ModeOneofCase.MoveContinuous)
+                        transform.localPosition = value3;
                     else
-                        transform.localScale = vector3Tweener.CurrentValue;
+                        transform.localScale = value3;
                     break;
                 case PBTween.ModeOneofCase.Rotate:
                 case PBTween.ModeOneofCase.RotateContinuous:
@@ -53,11 +57,13 @@ namespace DCL.SDKComponents.Tween
             {
                 case PBTween.ModeOneofCase.Move:
                 case PBTween.ModeOneofCase.Scale:
+                case PBTween.ModeOneofCase.MoveContinuous:
                     if (self is not Vector3Tweener vector3Tweener) return;
-                    if (updateType == PBTween.ModeOneofCase.Move)
-                        sdkTransform.Position.Value = vector3Tweener.CurrentValue;
+                    var value3 = vector3Tweener.CurrentValue;
+                    if (updateType == PBTween.ModeOneofCase.Move || updateType == PBTween.ModeOneofCase.MoveContinuous)
+                        sdkTransform.Position.Value = value3;
                     else
-                        sdkTransform.Scale = vector3Tweener.CurrentValue;
+                        sdkTransform.Scale = value3;
                     break;
                 case PBTween.ModeOneofCase.Rotate:
                 case PBTween.ModeOneofCase.RotateContinuous:

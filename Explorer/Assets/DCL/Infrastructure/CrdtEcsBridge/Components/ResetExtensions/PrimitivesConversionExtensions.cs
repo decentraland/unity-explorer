@@ -2,6 +2,7 @@ using Decentraland.Common;
 using UnityEngine;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
+using Vector2 = UnityEngine.Vector2;
 
 namespace CrdtEcsBridge.Components.Conversion
 {
@@ -33,6 +34,13 @@ namespace CrdtEcsBridge.Components.Conversion
                 y = protoQuaternion.Y,
                 z = protoQuaternion.Z,
                 w = protoQuaternion.W,
+            };
+
+        public static Vector2 ToUnityVector(this Decentraland.Common.Vector2 protoVector) =>
+            new ()
+            {
+                x = protoVector.X,
+                y = protoVector.Y,
             };
 
         public static Decentraland.Common.Quaternion ToProtoQuaternion(this Quaternion unityQuaternion) =>

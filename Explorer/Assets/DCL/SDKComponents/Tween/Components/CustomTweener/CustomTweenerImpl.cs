@@ -25,6 +25,18 @@ namespace DCL.SDKComponents.Tween.Components
             CurrentValue = start;
             return DOTween.To(getValue, setValue, end, duration);
         }
+
+        protected override DG.Tweening.Tween CreateContinuousTweener(Vector3 start, Vector3 direction, float speed)
+        {
+            Vector3 dir = direction.normalized;
+            float absSpeed = Mathf.Abs(speed);
+            float sign = speed >= 0 ? 1f : -1f;
+
+            return DOVirtual.Float(0f, 1f, 1f, v =>
+            {
+                CurrentValue = start + dir * (sign * absSpeed * v);
+            }).SetLoops(-1, LoopType.Incremental);
+        }
     }
 
     public class QuaternionTweener : CustomTweener<Quaternion, NoOptions>
@@ -87,6 +99,18 @@ namespace DCL.SDKComponents.Tween.Components
         {
             CurrentValue = start;
             return DOTween.To(getValue, setValue, end, duration);
+        }
+
+        protected override DG.Tweening.Tween CreateContinuousTweener(Vector2 start, Vector2 direction, float speed)
+        {
+            Vector2 dir = direction.normalized;
+            float absSpeed = Mathf.Abs(speed);
+            float sign = speed >= 0 ? 1f : -1f;
+
+            return DOVirtual.Float(0f, 1f, 1f, v =>
+            {
+                CurrentValue = start + dir * (sign * absSpeed * v);
+            }).SetLoops(-1, LoopType.Incremental);
         }
     }
 }

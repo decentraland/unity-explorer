@@ -104,15 +104,21 @@ namespace DCL.SDKComponents.Tween
         [Query]
         private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
-            if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove) return;
+            if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove && pbTween.ModeCase != PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
             if (sdkTweenComponent.IsDirty)
             {
-                SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
+                SetupTween(ref sdkTweenComponent, in pbTween, null, materialComponent);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent,
+                    pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove ? pbTween.TextureMove.MovementType
+                        : pbTween.TextureMoveContinuous.MovementType);
             }
             else
-                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
+            {
+                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent,
+                    pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove ? pbTween.TextureMove.MovementType
+                        : pbTween.TextureMoveContinuous.MovementType);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -125,7 +131,10 @@ namespace DCL.SDKComponents.Tween
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, movementType);
             }
-            else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent); }
+            else if (newState == TweenStateStatus.TsActive)
+            {
+                UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -142,13 +151,12 @@ namespace DCL.SDKComponents.Tween
                 TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent, ref materialComponent, movementType, isInCurrentScene);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween, Transform? transform = null)
+        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween, Transform? transform = null, MaterialComponent? materialComponent = null)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
             float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-            SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying, transform);
+            SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying, transform, materialComponent);
 
             if (isPlaying)
             {
@@ -194,15 +202,27 @@ namespace DCL.SDKComponents.Tween
             TweenSDKComponentHelper.WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying, Transform? transform)
+        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying, Transform? transform, MaterialComponent? materialComponent)
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
-            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform);
+            Vector2? textureStart = null;
+            if (tweenModel.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous)
+            {
+                if (materialComponent.HasValue && materialComponent.Value.Result)
+                {
+                    textureStart = materialComponent.Value.Result!.mainTextureOffset;
+                }
+                else
+                {
+                    Debug.Log($"PRAVS - NO MATERIAL RESULT!!!!");
+                    textureStart = Vector2.zero;
+                }
+            }
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform, textureStart);
 
             float timeScale = tweenModel.ModeCase == PBTween.ModeOneofCase.RotateContinuous ? 1f : durationInSeconds;
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * timeScale, isPlaying);
