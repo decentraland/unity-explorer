@@ -48,6 +48,19 @@ MonoBehaviour:
   highlightInputMaterial: {fileID: 2100000, guid: 55a3f55bb348e95418783121e0b8ce1e, type: 2}
   highlightInputBlurMaterial: {fileID: 2100000, guid: c7d4b82b1c0428c4d815890b615064eb, type: 2}
   highlightOutputMaterial: {fileID: 2100000, guid: 1015f0654e3a1524aa9c0f38ed24692b, type: 2}
+--- !u!114 &-5574557157797590787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01052c1a4da12064d8681d7c1800f94a, type: 3}
+  m_Name: GaussianSplatURPFeature
+  m_EditorClassIdentifier: GaussianSplatting::GaussianSplatting.Runtime.GaussianSplatURPFeature
+  m_Active: 1
 --- !u!114 &-3253943072471734078
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -172,7 +185,8 @@ MonoBehaviour:
   - {fileID: 6470208710530210403}
   - {fileID: -3253943072471734078}
   - {fileID: 8547050541902374763}
-  m_RendererFeatureMap: 6bc2d8d6ccc7f618602f2c628d0502e2307a94592f41a884639acaa58accca59c2a8fa0504acd7d26ba766032f399d76
+  - {fileID: -5574557157797590787}
+  m_RendererFeatureMap: 6bc2d8d6ccc7f618602f2c628d0502e2307a94592f41a884639acaa58accca59c2a8fa0504acd7d26ba766032f399d76fd085dddcc31a3b2
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}

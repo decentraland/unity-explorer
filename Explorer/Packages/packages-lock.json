@@ -510,6 +510,16 @@
       },
       "hash": "e81de1896f07f77ba5a363a3e76c19faf42d1e52"
     },
+    "org.nesnausk.gaussian-splatting": {
+      "version": "file:GaussianSplatting",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.burst": "1.8.8",
+        "com.unity.collections": "2.1.4",
+        "com.unity.mathematics": "1.2.6"
+      }
+    },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
       "depth": 0,
