@@ -204,7 +204,7 @@ namespace DCL.SDKComponents.Tween
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
-            Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
+            Ease ease = IsTweenContinuous(tweenModel) ? Linear : EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             Vector2? textureStart = null;
@@ -234,14 +234,14 @@ namespace DCL.SDKComponents.Tween
                 sdkTweenComponent.IsDirty = true;
 
             // If duration is finite and we've reached the end of the timeline, kill the continuous tween
-            if (IsTweenContinuous(sdkTweenComponent) && TweenSurpassedDuration(pbTween, sdkTweenComponent))
+            if (IsTweenContinuous(pbTween) && TweenSurpassedDuration(pbTween, sdkTweenComponent))
                 sdkTweenComponent.CustomTweener.Kill(true);
         }
 
-        private static bool IsTweenContinuous(in SDKTweenComponent sdkTweenComponent) =>
-            sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.RotateContinuous ||
-            sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.MoveContinuous ||
-            sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.TextureMoveContinuous;
+        private static bool IsTweenContinuous(in PBTween pbTween) =>
+            pbTween.ModeCase == PBTween.ModeOneofCase.RotateContinuous ||
+            pbTween.ModeCase == PBTween.ModeOneofCase.MoveContinuous ||
+            pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous;
 
         private static bool TweenSurpassedDuration(in PBTween pbTween, in SDKTweenComponent sdkTweenComponent) =>
             pbTween.Duration > 0 && sdkTweenComponent.CustomTweener != null && sdkTweenComponent.CustomTweener.GetElapsedTime() >= pbTween.Duration;
