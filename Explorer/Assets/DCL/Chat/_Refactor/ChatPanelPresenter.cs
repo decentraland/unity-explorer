@@ -60,7 +60,8 @@ namespace DCL.Chat
             ChatClickDetectionService chatClickDetectionService,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
-            ITranslationMemory translationMemory)
+            ITranslationMemory translationMemory,
+            ITranslationCache translationCache)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -116,6 +117,7 @@ namespace DCL.Chat
                 currentChannelService,
                 chatContextMenuService,
                 translationMemory,
+                translationCache,
                 translationSettings,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,

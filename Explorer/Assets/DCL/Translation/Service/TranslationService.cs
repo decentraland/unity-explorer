@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Translation.Processors;
 using DCL.Translation.Processors.DCL.Translation.Service.Processing;
 using DCL.Utilities;
@@ -43,6 +41,7 @@ namespace DCL.Translation.Service
             this.settings = settings;
             this.eventBus = eventBus;
             this.translationMemory = translationMemory;
+            
         }
 
         public void ProcessIncomingMessage(string messageId, string senderWalletId, string originalText, string conversationId)

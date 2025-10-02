@@ -14,5 +14,7 @@ namespace DCL.Translation.Service
     {
         bool TryGet(string messageId, LanguageCode targetLang, out TranslationResult result);
         void Set(string messageId, LanguageCode targetLang, TranslationResult result);
+        void Clear();
+        int RemoveAllForMessage(string messageId);
     }
 }

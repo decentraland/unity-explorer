@@ -32,6 +32,7 @@ namespace DCL.Chat.ChatMessages
         private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
         private readonly MarkMessagesAsReadCommand markMessagesAsReadCommand;
         private readonly ITranslationMemory translationMemory;
+        private readonly ITranslationCache translationCache;
         private readonly ITranslationSettings translationSettings;
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
@@ -67,6 +68,7 @@ namespace DCL.Chat.ChatMessages
             CurrentChannelService currentChannelService,
             ChatContextMenuService contextMenuService,
             ITranslationMemory translationMemory,
+            ITranslationCache translationCache,
             ITranslationSettings translationSettings,
             GetMessageHistoryCommand getMessageHistoryCommand,
             CreateMessageViewModelCommand createMessageViewModelCommand,
@@ -81,6 +83,7 @@ namespace DCL.Chat.ChatMessages
             this.currentChannelService = currentChannelService;
             this.contextMenuService = contextMenuService;
             this.translationMemory = translationMemory;
+            this.translationCache = translationCache;
             this.translationSettings = translationSettings;
             this.getMessageHistoryCommand = getMessageHistoryCommand;
             this.createMessageViewModelCommand = createMessageViewModelCommand;
@@ -92,9 +95,12 @@ namespace DCL.Chat.ChatMessages
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
+            
             view.Initialize(viewModels,
                 translationSettings.IsTranslationFeatureActive,
-                IsAutoTranslationEnabled);
+                IsAutoTranslationEnabled,
+                IsTranslationMemoryForMessageAvailable);
+            
             view.OnTranslateMessageRequested += OnTranslateMessage;
             view.OnRevertMessageRequested += OnRevertMessage;
 
@@ -105,6 +111,11 @@ namespace DCL.Chat.ChatMessages
         {
             return translationSettings
                 .GetAutoTranslateForConversation(currentChannelService.CurrentChannelId.Id);
+        }
+
+        private bool IsTranslationMemoryForMessageAvailable(string messageId)
+        {
+            return translationMemory.TryGet(messageId, out _);
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)
@@ -432,6 +443,8 @@ namespace DCL.Chat.ChatMessages
 
             if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
             {
+                ClearTranslationsForCurrentChannel();
+                
                 view.SetScrollToBottomButtonVisibility(false, 0, false);
                 RemoveNewMessagesSeparator();
                 viewModels.ForEach(ChatMessageViewModel.RELEASE);
@@ -591,6 +604,26 @@ namespace DCL.Chat.ChatMessages
                 return vm;
 
             return LinearFindViewModelById(messageId); // safe fallback when index is disabled
+        }
+
+        private void ClearTranslationsForCurrentChannel()
+        {
+            // Bail if translation feature entirely disabled (optional; safe to clear anyway)
+            // if (!translationSettings.IsTranslationFeatureActive()) return;
+
+            // Gather all message IDs from the feed (skip the separator)
+            var ids = new HashSet<string>(viewModels.Count);
+            foreach (var vm in viewModels)
+            {
+                if (ReferenceEquals(vm, separatorViewModel)) continue;
+                if (!string.IsNullOrEmpty(vm.Message.MessageId)) ids.Add(vm.Message.MessageId);
+            }
+
+            foreach (string? id in ids)
+            {
+                translationMemory.Remove(id);
+                translationCache.RemoveAllForMessage(id);
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Threading;
+using DCL.Translation;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -50,6 +51,16 @@ namespace DCL.Chat.ChatCommands
             {
                 viewModel.TranslationState = translation.State;
                 viewModel.TranslatedText = translation.TranslatedBody;
+                viewModel.TranslationError = string.Empty;
+            }
+            else
+            {
+                // No translation state was found (it was evicted or never existed).
+                // Explicitly set the ViewModel to its default, original state (it's already
+                // reset when view model is released but to make it explicit here).
+                viewModel.TranslationState = TranslationState.Original;
+                viewModel.TranslatedText = string.Empty;
+                viewModel.TranslationError = string.Empty;
             }
 
             if (message.IsSystemMessage)

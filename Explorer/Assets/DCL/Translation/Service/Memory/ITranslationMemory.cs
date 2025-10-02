@@ -4,7 +4,8 @@
     {
         bool TryGet(string messageId, out MessageTranslation translation);
         void Set(string messageId, MessageTranslation translation);
-        void UpdateState(string messageId, TranslationState newState, string error = null);
         void SetTranslatedResult(string messageId, TranslationResult result);
+        void Clear();
+        bool Remove(string messageId);
     }
 }

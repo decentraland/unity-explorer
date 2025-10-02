@@ -111,6 +111,8 @@ namespace DCL.Chat.ChatConfig
         public string ChatContextMenuCopyText = "Copy";
         public string ChatContextMenuSeeOriginalText = "See Original";
         public string ChatContextMenuTranslateText = "Translate";
+        public int TranslationMemoryCapacity = 200;
+        public int TranslationCacheCapacity = 200;
 
     }
 }

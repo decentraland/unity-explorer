@@ -71,6 +71,7 @@ namespace DCL.Chat.ChatCommands
             ClipboardManager clipboardManager,
             ITranslationService translationService,
             ITranslationMemory translationMemory,
+            ITranslationCache translationCache,
             ITranslationSettings translationSettings)
         {
             RestartChatServices = new RestartChatServicesCommand(
@@ -84,7 +85,9 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService,
                 privateConversationUserStateService,
                 communityUserStateService,
-                chatMemberListService);
+                chatMemberListService,
+                translationMemory,
+                translationCache);
 
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 

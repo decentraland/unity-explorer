@@ -102,6 +102,7 @@ namespace DCL.PluginSystem.Global
         private FallbackFontsProvider fallbackFontsProvider;
         private ITranslationSettings translationSettings;
         private ITranslationMemory translationMemory;
+        private ITranslationCache translationCache;
         private ITranslationService translationService;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -191,6 +192,9 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            translationMemory.Clear();
+            translationCache.Clear();
+            
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
@@ -225,8 +229,15 @@ namespace DCL.PluginSystem.Global
 
             var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource, translationSettings);
 
-            var translationCache = new InMemoryTranslationCache();
-            translationMemory = new InMemoryTranslationMemory();
+            translationCache = new InMemoryTranslationCache(chatConfig.TranslationCacheCapacity, onEvicted: (key, _) =>
+            {
+                ReportHub.Log(ReportCategory.TRANSLATE, $"Cache evicted {key.MessageId}:{key.Lang}");
+            });
+
+            translationMemory = new InMemoryTranslationMemory(chatConfig.TranslationMemoryCapacity, onEvicted: (messageId, _) =>
+            {
+                ReportHub.Log(ReportCategory.TRANSLATE, $"Memory evicted {messageId}");
+            });
 
             var messageProcessor = new ChatMessageProcessor(translationProvider);
 
@@ -314,6 +325,7 @@ namespace DCL.PluginSystem.Global
                 clipboardManager,
                 translationService,
                 translationMemory,
+                translationCache,
                 translationSettings);
 
             pluginScope.Add(commandRegistry);
@@ -337,7 +349,8 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService,
                 chatSharedAreaEventBus,
                 translationSettings,
-                translationMemory
+                translationMemory,
+                translationCache
             );
 
             chatSharedAreaController = new ChatSharedAreaController(
