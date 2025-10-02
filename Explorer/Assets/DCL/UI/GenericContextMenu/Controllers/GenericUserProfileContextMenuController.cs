@@ -309,7 +309,7 @@ namespace DCL.UI
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             onChatShown?.Invoke();
         }
 
@@ -321,7 +321,7 @@ namespace DCL.UI
 
         private async UniTaskVoid StartCallAsync(string userId)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(userId);
             chatEventBus.StartCallInCurrentConversation();
         }

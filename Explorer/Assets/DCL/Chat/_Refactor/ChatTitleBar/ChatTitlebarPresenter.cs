@@ -27,7 +27,7 @@ namespace DCL.Chat
 {
     public class ChatTitlebarPresenter : IDisposable
     {
-        private readonly ChatTitlebarView2 view;
+        private readonly ChatTitlebarView view;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IEventBus eventBus;
         private readonly CommunityDataService communityDataService;
@@ -53,7 +53,7 @@ namespace DCL.Chat
         private ToggleWithCheckContextMenuControlSettings[]? notificationPingToggles;
 
         public ChatTitlebarPresenter(
-            ChatTitlebarView2 view,
+            ChatTitlebarView view,
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             CommunityDataService communityDataService,
