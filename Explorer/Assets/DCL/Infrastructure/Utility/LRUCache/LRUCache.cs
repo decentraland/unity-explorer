@@ -23,9 +23,9 @@ namespace DCL.Translation.Service
         /// </summary>
         public LRUCache(int capacity, Action<TKey, TValue>? onEvicted = null)
         {
-            this.Capacity = capacity > 0 ? capacity : 200;
+            Capacity = capacity > 0 ? capacity : 200;
             this.onEvicted = onEvicted;
-            map = new Dictionary<TKey, LinkedListNode<(TKey, TValue)>>(this.Capacity);
+            map = new Dictionary<TKey, LinkedListNode<(TKey, TValue)>>(Capacity);
             lru = new LinkedList<(TKey, TValue)>();
         }
 
