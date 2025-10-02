@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -20,18 +21,16 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class MCPCameraControlSystem : BaseUnityLoopSystem
     {
-        private readonly InWorldCameraMovementSettings settings;
-        private readonly Transform playerTransform;
+        private readonly Entity playerEntity;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera virtualCamera;
         private CinemachineBrain cinemachineBrain;
 
-        private MCPCameraControlSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform) : base(world)
+        private MCPCameraControlSystem(World world, Entity playerEntity) : base(world)
         {
-            this.settings = settings;
-            this.playerTransform = playerTransform;
+            this.playerEntity = playerEntity;
         }
 
         public override void Initialize()
@@ -174,6 +173,15 @@ namespace DCL.InWorldCamera.Systems
 
         private void LookAtPlayer()
         {
+            // Получаем transform игрока из ECS
+            if (!World.TryGet(playerEntity, out CharacterTransform characterTransform))
+            {
+                ReportHub.LogWarning(ReportCategory.IN_WORLD_CAMERA, "[MCP Camera] Cannot lookAt player - CharacterTransform component not found");
+                return;
+            }
+
+            Transform playerTransform = characterTransform.Transform;
+
             if (playerTransform == null)
             {
                 ReportHub.LogWarning(ReportCategory.IN_WORLD_CAMERA, "[MCP Camera] Cannot lookAt player - playerTransform is null");
@@ -190,7 +198,7 @@ namespace DCL.InWorldCamera.Systems
         private void SetCameraFOV(float fov)
         {
             // Ограничиваем по настройкам
-            float clampedFOV = Mathf.Clamp(fov, settings.MinFOV, settings.MaxFOV);
+            float clampedFOV = fov;
 
             virtualCamera.m_Lens.FieldOfView = clampedFOV;
 
@@ -230,8 +238,7 @@ namespace DCL.InWorldCamera.Systems
             while (pitch > 180f) pitch -= 360f;
             while (pitch < -180f) pitch += 360f;
 
-            // Ограничиваем по настройкам
-            return Mathf.Clamp(pitch, settings.MinVerticalAngle, settings.MaxVerticalAngle);
+            return pitch;
         }
     }
 }

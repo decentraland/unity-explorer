@@ -193,7 +193,6 @@ namespace DCL.PluginSystem.Global
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, DCLInput.Instance.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, DCLInput.Instance.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
-            MCPCameraControlSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
 
             CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
