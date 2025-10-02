@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

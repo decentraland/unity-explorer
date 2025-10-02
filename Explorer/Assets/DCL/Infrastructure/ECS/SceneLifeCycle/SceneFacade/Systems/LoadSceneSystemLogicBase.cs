@@ -10,6 +10,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using SceneRunner;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -53,7 +54,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, new AllowEverythingJsApiPermissionsProvider(), partition, ct);
 
             await UniTask.SwitchToMainThread();
 

@@ -6,6 +6,7 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using UnityEngine;
 using Utility;
 
@@ -38,7 +39,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 mvcManager,
                 sceneStateProvider,
                 globalWorldActions,
-                sceneData);
+                sceneData,
+                new AllowEverythingJsApiPermissionsProvider());
         }
 
         [Test]

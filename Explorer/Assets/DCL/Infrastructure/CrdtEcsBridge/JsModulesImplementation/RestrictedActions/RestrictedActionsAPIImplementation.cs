@@ -8,6 +8,7 @@ using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -21,21 +22,27 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
 
         public RestrictedActionsAPIImplementation(
             IMVCManager mvcManager,
             ISceneStateProvider sceneStateProvider,
             IGlobalWorldActions globalWorldActions,
-            ISceneData sceneData)
+            ISceneData sceneData,
+            IJsApiPermissionsProvider permissionsProvider)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorldActions = globalWorldActions;
             this.sceneData = sceneData;
+            this.permissionsProvider = permissionsProvider;
         }
 
         public bool TryOpenExternalUrl(string url)
         {
+            if (!permissionsProvider.CanOpenExternalUrl())
+                return false;
+
             if (!sceneStateProvider.IsCurrent)
                 return false;
 

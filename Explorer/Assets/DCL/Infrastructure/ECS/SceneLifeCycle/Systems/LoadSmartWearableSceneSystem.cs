@@ -16,6 +16,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Runtime.Wearables;
 using SceneRunner;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,7 +68,9 @@ namespace ECS.SceneLifeCycle.Systems
                 definitionComponent.Parcels,
                 new StaticSceneMessages(crdt));
 
-            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            var requiredPermissions = sceneDefinition.metadata.requiredPermissions;
+            var scenePermissions = new RestrictedJsApiPermissionsProvider(requiredPermissions);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, scenePermissions, partition, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
             await UniTask.SwitchToMainThread();
