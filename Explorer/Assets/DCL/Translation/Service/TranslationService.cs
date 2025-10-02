@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Translation.Processors;
 using DCL.Translation.Processors.DCL.Translation.Service.Processing;
 using DCL.Utilities;
@@ -284,6 +285,8 @@ namespace DCL.Translation.Service
                 {
                     MessageId = messageId, Error = ex.Message, Translation = translation
                 });
+
+                ReportHub.LogException(ex, $"TranslateInternalAsync Exception for {messageId}");
             }
         }
 
