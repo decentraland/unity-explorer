@@ -269,13 +269,13 @@ namespace DCL.Chat
                 case NearbyChannelViewModel nearby:
                     newItem.SetConversationName(nearby.DisplayName);
                     newItem.SetConversationIcon(nearby.Icon);
-                    newItem.Configure(isClosable: false, hasOnlineStatus: false);
+                    newItem.Configure(isClosable: false);
                     break;
 
                 case UserChannelViewModel user:
                     newItem.SetConversationName(user.DisplayName);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
-                    newItem.Configure(isClosable: true, hasOnlineStatus: false);
+                    newItem.Configure(isClosable: true);
                     newItem.BindProfileThumbnail(user.ProfilePicture);
                     newItem.SetConnectionStatus(OnlineStatus.OFFLINE);
 
@@ -284,7 +284,10 @@ namespace DCL.Chat
                 case CommunityChannelViewModel community:
                     newItem.SetConversationName(community.DisplayName);
                     newItem.SetPicture(community.Thumbnail, Color.white);
-                    newItem.Configure(isClosable: true, hasOnlineStatus: false);
+                    newItem.Configure(isClosable: true);
+                    var communityItem = newItem as CommunityChatConversationsToolbarViewItem;
+                    if (communityItem != null)
+                        communityItem.SetupCommunityUpdates(community.CommunityConnectionUpdates, community.CurrentCommunityCallId);
                     break;
             }
 

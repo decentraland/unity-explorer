@@ -332,10 +332,7 @@ namespace DCL.VoiceChat
                 activeCommunityVoiceChats.Remove(communityUpdate.CommunityId);
 
                 if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
-                {
                     existingData.Value = false;
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Community voice chat ended for {communityUpdate.CommunityId}");
-                }
 
                 // Clear locally started community ID if this was the one we started
                 if (communityUpdate.CommunityId == locallyStartedCommunityId)
@@ -344,6 +341,8 @@ namespace DCL.VoiceChat
                 // Delegate scene unregistration to the tracker
                 voiceChatSceneTrackerService.UnregisterCommunityFromScene(communityUpdate.CommunityId);
                 voiceChatSceneTrackerService.RemoveActiveCommunityVoiceChat(communityUpdate.CommunityId);
+
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Community voice chat ended for {communityUpdate.CommunityId}");
                 return;
             }
 
@@ -446,11 +445,8 @@ namespace DCL.VoiceChat
             return communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? callData) && callData.Value;
         }
 
-        public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId)
+        public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId)
         {
-            if (string.IsNullOrEmpty(communityId))
-                return null;
-
             if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingData)) { return existingData; }
 
             // Create new call data with no active call

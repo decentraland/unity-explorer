@@ -83,7 +83,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
-            currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = communityCallOrchestrator.CommunityConnectionUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             bool isOurCurrentConversation = communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase);
             if (isOurCurrentConversation) return;

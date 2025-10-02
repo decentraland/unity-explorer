@@ -8,6 +8,7 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
         public CreateChannelViewModelCommand(
@@ -30,7 +32,8 @@ namespace DCL.Chat.ChatCommands
             ChatConfig.ChatConfig chatConfig,
             ProfileRepositoryWrapper profileRepository,
             GetUserChatStatusCommand getUserChatStatusCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
@@ -38,6 +41,7 @@ namespace DCL.Chat.ChatCommands
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
@@ -94,6 +98,8 @@ namespace DCL.Chat.ChatCommands
             {
                 viewModel.DisplayName = communityData.name;
                 viewModel.ImageUrl = communityData.thumbnails?.raw;
+                viewModel.CommunityConnectionUpdates = voiceChatOrchestrator.CommunityConnectionUpdates(ChatChannel.GetCommunityIdFromChannelId(channel.Id));
+                viewModel.CurrentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
 
                 FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
             }
