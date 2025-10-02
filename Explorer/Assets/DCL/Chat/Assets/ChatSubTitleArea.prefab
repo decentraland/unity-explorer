@@ -72,7 +72,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3435545857806573646, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
       propertyPath: m_Name
-      value: LiveStreamSubTitleButton
+      value: JoinLiveStreamButton
       objectReference: {fileID: 0}
     - target: {fileID: 3435545857806573646, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
       propertyPath: m_IsActive
