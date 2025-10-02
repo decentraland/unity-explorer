@@ -744,8 +744,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: [{fileID: 4953166685686419466, guid: 54208472bd274f14a90c06641252c2dc, type: 3},
-      {fileID: 640031411460569453, guid: 54208472bd274f14a90c06641252c2dc, type: 3}]
+    m_RemovedGameObjects:
+    - {fileID: 4953166685686419466, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
+    - {fileID: 640031411460569453, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
@@ -856,6 +857,10 @@ PrefabInstance:
     - target: {fileID: 1190873555538097139, guid: 0bc9502e1ad78894c82225190e3af2cd, type: 3}
       propertyPath: m_Name
       value: VoiceChatPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 2252907955459317869, guid: 0bc9502e1ad78894c82225190e3af2cd, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 68
       objectReference: {fileID: 0}
     - target: {fileID: 2630920995751324411, guid: 0bc9502e1ad78894c82225190e3af2cd, type: 3}
       propertyPath: m_AnchorMax.y
