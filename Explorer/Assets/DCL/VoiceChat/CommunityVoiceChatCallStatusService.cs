@@ -95,7 +95,6 @@ namespace DCL.VoiceChat
         {
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
-            locallyStartedCommunityId = null;
         }
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
@@ -295,6 +294,7 @@ namespace DCL.VoiceChat
         public void UpdateStatus(VoiceChatStatus newStatus)
         {
             UpdateStatusAsync().Forget();
+            return;
 
             async UniTaskVoid UpdateStatusAsync()
             {
