@@ -1,7 +1,6 @@
 ﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Translation.Service;
-using NSubstitute;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
