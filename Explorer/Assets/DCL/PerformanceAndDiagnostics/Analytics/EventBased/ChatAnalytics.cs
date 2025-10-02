@@ -7,22 +7,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     public class ChatEventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly ChatController_OBSOLETE_OLD_CHAT chatController;
+        private readonly ChatPanelPresenter chatController;
 
         private bool isInitChatBubble = true;
 
-        public ChatEventsAnalytics(IAnalyticsController analytics, ChatController_OBSOLETE_OLD_CHAT chatController)
+        public ChatEventsAnalytics(IAnalyticsController analytics, ChatPanelPresenter chatController)
         {
             this.analytics = analytics;
             this.chatController = chatController;
-            chatController.ConversationOpened += OnConversationOpened;
-            chatController.ConversationClosed += OnConversationClosed;
+            //TODO: This needs re-implementing
+            //chatController.ConversationOpened += OnConversationOpened;
+            //chatController.ConversationClosed += OnConversationClosed;
         }
 
         public void Dispose()
         {
-            chatController.ConversationOpened -= OnConversationOpened;
-            chatController.ConversationClosed -= OnConversationClosed;
+            //chatController.ConversationOpened -= OnConversationOpened;
+            //chatController.ConversationClosed -= OnConversationClosed;
         }
 
         private void OnConversationClosed()
