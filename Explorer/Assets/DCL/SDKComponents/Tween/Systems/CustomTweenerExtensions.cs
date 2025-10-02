@@ -39,6 +39,7 @@ namespace DCL.SDKComponents.Tween
                         transform.localScale = vector3Tweener.CurrentValue;
                     break;
                 case PBTween.ModeOneofCase.Rotate:
+                case PBTween.ModeOneofCase.RotateContinuous:
                     if (self is not QuaternionTweener quaternionTweener) return;
                     transform.localRotation = quaternionTweener.CurrentValue;
                     break;
@@ -59,6 +60,7 @@ namespace DCL.SDKComponents.Tween
                         sdkTransform.Scale = vector3Tweener.CurrentValue;
                     break;
                 case PBTween.ModeOneofCase.Rotate:
+                case PBTween.ModeOneofCase.RotateContinuous:
                     if (self is not QuaternionTweener quaternionTweener) return;
                     sdkTransform.Rotation.Value = quaternionTweener.CurrentValue;
                     break;

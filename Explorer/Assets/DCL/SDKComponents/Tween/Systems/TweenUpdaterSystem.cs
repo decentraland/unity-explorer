@@ -16,6 +16,7 @@ using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -91,7 +92,7 @@ namespace DCL.SDKComponents.Tween
             if (sdkTweenComponent.IsDirty)
             {
                 LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
-                SetupTween(ref sdkTweenComponent, in pbTween);
+                SetupTween(ref sdkTweenComponent, in pbTween, transformComponent.Transform);
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
             else
@@ -142,12 +143,12 @@ namespace DCL.SDKComponents.Tween
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
+        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween, Transform? transform = null)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
             float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-            SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying);
+            SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying, transform);
 
             if (isPlaying)
             {
@@ -194,15 +195,17 @@ namespace DCL.SDKComponents.Tween
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying)
+        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying, Transform? transform)
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
-            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds);
-            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform);
+
+            float timeScale = tweenModel.ModeCase == PBTween.ModeOneofCase.RotateContinuous ? 1f : durationInSeconds;
+            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * timeScale, isPlaying);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
