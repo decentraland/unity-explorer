@@ -91,7 +91,6 @@ namespace DCL.SDKComponents.Tween
 
             if (sdkTweenComponent.IsDirty)
             {
-                LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
                 SetupTween(ref sdkTweenComponent, in pbTween, transformComponent.Transform);
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
@@ -216,23 +215,7 @@ namespace DCL.SDKComponents.Tween
                         materialComponent.Value.Result!.mainTextureOffset : Vector2.zero;
             }
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform, textureStart);
-
-            float timeScale = tweenModel.ModeCase == PBTween.ModeOneofCase.RotateContinuous ? 1f : durationInSeconds;
-            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * timeScale, isPlaying);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void LegacySetupSupport(SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform,
-            ref TransformComponent transformComponent, CRDTEntity entity, bool isInCurrentScene)
-        {
-            //NOTE: Left this per legacy reasons, I'm not sure if this can happen in new renderer
-            // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-            if (sdkTweenComponent.IsActive())
-            {
-                sdkTweenComponent.Rewind();
-                TweenSDKComponentHelper.UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
-                TweenSDKComponentHelper.WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, entity);
-            }
+            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
