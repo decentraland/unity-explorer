@@ -43,6 +43,5 @@ namespace CRDT.Protocol
                 CRDTMessageType.MAX_MESSAGE_TYPE => 0, // header
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             };
-
     }
 }
