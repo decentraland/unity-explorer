@@ -195,7 +195,7 @@ namespace DCL.Navmap
         private void JumpIn()
         {
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", ChatMessageOrigin.JUMP_IN, DateTime.UtcNow.ToOADate());
+            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", ChatMessageOrigin.JUMP_IN);
         }
     }
 }

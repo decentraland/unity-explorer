@@ -40,11 +40,10 @@ namespace DCL.Chat.ChatCommands
             if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(sound);
 
-            chatMessageBus.Send(
+            chatMessageBus.SendWithUtcNowTimestamp(
                 currentChannelService.CurrentChannel,
                 commandPayload.Body,
-                ChatMessageOrigin.CHAT,
-                DateTime.UtcNow.ToOADate());
+                ChatMessageOrigin.CHAT);
         }
     }
 }

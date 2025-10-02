@@ -14,7 +14,7 @@ namespace DCL.Chat.MessageBus
     {
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp = double.MinValue, string topic = "");
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp);
     }
 
     public static class ChatMessageBusExtensions
@@ -23,12 +23,12 @@ namespace DCL.Chat.MessageBus
         ///     Sends a chat message with the timestamp automatically set to the current UTC time.
         ///     This is a convenience overload to avoid repeating DateTime.UtcNow.ToOADate() everywhere.
         /// </summary>
-        public static void Send(this IChatMessagesBus messagesBus, ChatChannel channel, string message, ChatMessageOrigin origin, string topic = "")
+        public static void SendWithUtcNowTimestamp(this IChatMessagesBus messagesBus, ChatChannel channel, string message, ChatMessageOrigin origin)
         {
             double timestamp = DateTime.UtcNow.ToOADate();
-            messagesBus.Send(channel, message, origin, timestamp, topic);
+            messagesBus.Send(channel, message, origin, timestamp);
         }
-        
+
         public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
             new SelfResendChatMessageBus(messagesBus, web3IdentityCache, messageFactory);
 
@@ -36,7 +36,7 @@ namespace DCL.Chat.MessageBus
         {
             void CreateTestChatEntry()
             {
-                messagesBus.Send(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL, DateTime.UtcNow.ToOADate());
+                messagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL);
             }
 
             debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CHAT)?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);

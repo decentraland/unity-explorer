@@ -36,13 +36,13 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(channelId, channelType, message);
         }
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp, string topic = "")
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
         {
-            this.origin.Send(channel, message, origin, timestamp, topic);
-            SendSelf(channel, message, topic);
+            this.origin.Send(channel, message, origin, timestamp);
+            SendSelf(channel, message);
         }
 
-        private void SendSelf(ChatChannel channel, string chatMessage, string topic)
+        private void SendSelf(ChatChannel channel, string chatMessage)
         {
             IWeb3Identity identity = web3IdentityCache.Identity;
 
