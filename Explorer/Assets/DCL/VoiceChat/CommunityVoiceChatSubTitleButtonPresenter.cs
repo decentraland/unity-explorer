@@ -94,8 +94,6 @@ namespace DCL.VoiceChat
             //We subscribe to the call events but if the button cant be visible we don't need to check further.
             if (!canBeVisible || communityCts.IsCancellationRequested) return;
 
-            PollCommunityUpdates(communityId).Forget();
-
             while (!communityCts.IsCancellationRequested)
             {
                 try
@@ -126,10 +124,6 @@ namespace DCL.VoiceChat
                     ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
                 }
             }
-        }
-
-        private async UniTaskVoid PollCommunityUpdates(string communityId)
-        {
         }
 
         private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
