@@ -69,21 +69,13 @@ namespace DCL.Translation.Service
 
             ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatRequest(translateUrl, "application/json;", requestBody));
 
-            try
-            {
-                var response =  await webRequestController
-                    .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.TRANSLATE)
-                    .CreateFromJson<TranslationApiResponseBatch>(WRJsonParser.Newtonsoft);
+            var response =  await webRequestController
+                .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.TRANSLATE)
+                .CreateFromJson<TranslationApiResponseBatch>(WRJsonParser.Newtonsoft);
 
-                ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
+            ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
 
-                return response;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.TRANSLATE);
-                throw;
-            }
+            return response;
         }
 
         private async UniTask<TranslationApiResponse> GetTranslationFromApiAsync(string text,
@@ -114,6 +106,7 @@ namespace DCL.Translation.Service
 
                 return response;
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.TRANSLATE);
