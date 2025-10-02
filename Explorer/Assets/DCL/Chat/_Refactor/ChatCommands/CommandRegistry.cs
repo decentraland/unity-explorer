@@ -12,6 +12,7 @@ using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -61,7 +62,8 @@ namespace DCL.Chat.ChatCommands
             ISpriteCache spriteCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
-            GetParticipantProfilesCommand getParticipantProfilesCommand)
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            IAnalyticsController analytics)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -98,7 +100,8 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService,
                 communityUserStateService,
                 nearbyUserStateService,
-                privateConversationUserStateService);
+                privateConversationUserStateService,
+                analytics);
 
             DeleteChatHistory = new DeleteChatHistoryCommand(eventBus,
                 chatHistory,
@@ -136,8 +139,9 @@ namespace DCL.Chat.ChatCommands
                 sendMessageSound,
                 chatSettings);
 
-            CloseChannel = new CloseChannelCommand(chatHistory
-                , identityCache);
+            CloseChannel = new CloseChannelCommand(chatHistory,
+                identityCache,
+                analytics);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 communityDataService,

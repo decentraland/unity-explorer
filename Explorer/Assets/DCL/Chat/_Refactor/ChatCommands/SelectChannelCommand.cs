@@ -5,6 +5,8 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System.Threading;
 using DCL.Chat.EventBus;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using Segment.Serialization;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -19,6 +21,7 @@ namespace DCL.Chat.ChatCommands
         private readonly CommunityUserStateService communityUserStateService;
         private readonly NearbyUserStateService nearbyUserStateService;
         private readonly PrivateConversationUserStateService privateConversationUserStateService;
+        private readonly IAnalyticsController analytics;
 
         private CancellationTokenSource? oneOpAtATimeCts;
 
@@ -29,7 +32,8 @@ namespace DCL.Chat.ChatCommands
             CurrentChannelService currentChannelService,
             CommunityUserStateService communityUserStateService,
             NearbyUserStateService nearbyUserStateService,
-            PrivateConversationUserStateService privateConversationUserStateService)
+            PrivateConversationUserStateService privateConversationUserStateService,
+            IAnalyticsController analytics)
         {
             this.eventBus = eventBus;
             this.chatEventBus = chatEventBus;
@@ -38,12 +42,16 @@ namespace DCL.Chat.ChatCommands
             this.communityUserStateService = communityUserStateService;
             this.nearbyUserStateService = nearbyUserStateService;
             this.privateConversationUserStateService = privateConversationUserStateService;
+            this.analytics = analytics;
         }
 
         public void Execute(ChatChannel.ChannelId channelId, CancellationToken ct)
         {
             if (currentChannelService.CurrentChannelId.Equals(channelId))
+            {
+                LogAnalytics(true);
                 return;
+            }
 
             if (chatHistory.Channels.TryGetValue(channelId, out ChatChannel? channel))
             {
@@ -73,11 +81,18 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService.SetCurrentChannel(channel, userStateService);
 
                 eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
+                LogAnalytics(false);
             }
 
             // If the channel doesn't exist, we simply do nothing.
             // We could also log an error here if this case is unexpected.
         }
+
+        private void LogAnalytics(bool wasAlreadyOpen) =>
+            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JsonObject
+            {
+                { "was_already_open", wasAlreadyOpen },
+            });
 
         private void SelectAndInsertAsync(ChatChannel.ChannelId channelId, string text, CancellationToken ct)
         {

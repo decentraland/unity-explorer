@@ -38,6 +38,7 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
 using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -83,6 +84,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private readonly IAnalyticsController analytics;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private PrivateConversationUserStateService? chatUserStateService;
@@ -123,7 +125,8 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
             IEventBus eventBus,
-            ChatSharedAreaEventBus chatSharedAreaEventBus)
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            IAnalyticsController analytics)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -161,6 +164,7 @@ namespace DCL.PluginSystem.Global
             this.chatViewRectTransform = chatViewRectTransform;
             this.eventBus = eventBus;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
+            this.analytics = analytics;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -267,7 +271,8 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand
+                getParticipantProfilesCommand,
+                analytics
             );
 
             pluginScope.Add(commandRegistry);
