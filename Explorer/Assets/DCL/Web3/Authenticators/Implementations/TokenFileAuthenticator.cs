@@ -6,6 +6,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using Nethereum.Signer;
 using System;
 using System.Globalization;
