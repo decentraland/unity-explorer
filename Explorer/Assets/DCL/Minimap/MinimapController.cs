@@ -24,6 +24,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
 using DG.Tweening;
 using ECS;
@@ -50,7 +51,7 @@ namespace DCL.Minimap
         };
         private const float ANIMATION_TIME = 0.2f;
         private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
-        private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 5;
+        private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 10;
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -68,6 +69,7 @@ namespace DCL.Minimap
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ReloadSceneChatCommand reloadSceneCommand;
         private readonly IRoomHub roomHub;
+        private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
 
         private GenericContextMenu? contextMenu;
@@ -101,6 +103,7 @@ namespace DCL.Minimap
             IChatMessagesBus chatMessagesBus,
             ReloadSceneChatCommand reloadSceneCommand,
             IRoomHub roomHub,
+            ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene
         ) : base(() => minimapView)
         {
@@ -119,6 +122,7 @@ namespace DCL.Minimap
             this.chatMessagesBus = chatMessagesBus;
             this.reloadSceneCommand = reloadSceneCommand;
             this.roomHub = roomHub;
+            this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
@@ -433,6 +437,7 @@ namespace DCL.Minimap
 
             async UniTaskVoid ShowBannedTooltipAsync(CancellationToken ct)
             {
+                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
                 viewInstance!.bannedTooltip.SetActive(true);
                 await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
                 viewInstance!.bannedTooltip.SetActive(false);

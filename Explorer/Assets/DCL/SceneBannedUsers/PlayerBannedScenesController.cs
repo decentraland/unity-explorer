@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using System.Threading;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace DCL.SceneBannedUsers
     {
         private readonly IRoomHub roomHub;
         private readonly ECSBannedScene bannedSceneController;
+        private readonly ILoadingStatus loadingStatus;
 
         private CancellationTokenSource setCurrentSceneAsBannedCts;
         private CancellationTokenSource checkIfPlayerIsBannedCts;
@@ -19,10 +21,12 @@ namespace DCL.SceneBannedUsers
 
         public PlayerBannedScenesController(
             IRoomHub roomHub,
-            ECSBannedScene bannedSceneController)
+            ECSBannedScene bannedSceneController,
+            ILoadingStatus loadingStatus)
         {
             this.roomHub = roomHub;
             this.bannedSceneController = bannedSceneController;
+            this.loadingStatus = loadingStatus;
 
             roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += SetCurrentSceneAsBanned;
             roomHub.SceneRoom().CurrentSceneRoomConnected += RestoreCurrentBannedScene;
@@ -50,6 +54,7 @@ namespace DCL.SceneBannedUsers
                 if (playerIsCurrentlyBanned)
                     return;
 
+                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
                 playerIsCurrentlyBanned = await bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct);
                 Debug.Log("SANTI LOG -> BANNED!!");
             }

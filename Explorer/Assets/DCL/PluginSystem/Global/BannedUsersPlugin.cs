@@ -13,6 +13,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IRoomHub roomHub;
         private readonly ECSBannedScene bannedSceneController;
+        private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
 
         private PlayerBannedScenesController playerBannedScenesController;
@@ -20,10 +21,12 @@ namespace DCL.PluginSystem.Global
         public BannedUsersPlugin(
             IRoomHub roomHub,
             ECSBannedScene bannedSceneController,
+            ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene)
         {
             this.roomHub = roomHub;
             this.bannedSceneController = bannedSceneController;
+            this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
@@ -32,7 +35,7 @@ namespace DCL.PluginSystem.Global
             BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, includeBannedUsersFromScene));
 
             if (includeBannedUsersFromScene)
-                playerBannedScenesController = new PlayerBannedScenesController(roomHub, bannedSceneController);
+                playerBannedScenesController = new PlayerBannedScenesController(roomHub, bannedSceneController, loadingStatus);
 
             return UniTask.CompletedTask;
         }

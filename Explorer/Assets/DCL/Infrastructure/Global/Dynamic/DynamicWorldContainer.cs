@@ -546,6 +546,7 @@ namespace Global.Dynamic
                 chatMessagesBus,
                 reloadSceneChatCommand,
                 roomHub,
+                staticContainer.LoadingStatus,
                 includeBannedUsersFromScene
             );
 
@@ -915,7 +916,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new BannedUsersPlugin(roomHub, bannedSceneController, includeBannedUsersFromScene),
+                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
