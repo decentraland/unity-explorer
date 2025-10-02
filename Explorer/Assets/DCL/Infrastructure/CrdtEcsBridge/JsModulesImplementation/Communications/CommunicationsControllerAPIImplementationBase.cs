@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+﻿using CRDT;
+using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -80,9 +81,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertivenes, string? specialRecipient)
         {
-            Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
+            Span<byte> filtered = stackalloc byte[message.Length];
+            CRDTFilter.FilterSceneMessageBatch(message, filtered, out int totalWrite);
+            filtered = filtered.Slice(0, totalWrite);
+
+            Span<byte> encodedMessage = stackalloc byte[filtered.Length + 1];
             encodedMessage[0] = (byte)msgType;
-            message.CopyTo(encodedMessage[1..]);
+            filtered.CopyTo(encodedMessage[1..]);
+
             sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, assertivenes, cancellationTokenSource.Token, specialRecipient);
         }
 
