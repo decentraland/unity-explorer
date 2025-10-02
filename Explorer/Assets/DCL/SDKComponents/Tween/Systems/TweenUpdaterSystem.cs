@@ -87,7 +87,7 @@ namespace DCL.SDKComponents.Tween
         [Query]
         private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove || pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous) return;
+            if (pbTween.ModeCase is PBTween.ModeOneofCase.TextureMove or PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
             if (sdkTweenComponent.IsDirty)
             {
@@ -175,7 +175,6 @@ namespace DCL.SDKComponents.Tween
         private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
-
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
@@ -227,12 +226,24 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        private static void UpdatePBTween(in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             if (pbTween.IsDirty)
                 sdkTweenComponent.IsDirty = true;
+
+            // If duration is finite and we've reached the end of the timeline, kill the continuous tween
+            if (IsTweenContinuous(sdkTweenComponent) && TweenSurpassedDuration(pbTween, sdkTweenComponent))
+                sdkTweenComponent.CustomTweener.Kill(true);
         }
+
+        private static bool IsTweenContinuous(in SDKTweenComponent sdkTweenComponent) =>
+            sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.RotateContinuous ||
+            sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.MoveContinuous ||
+            sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.TextureMoveContinuous;
+
+        private static bool TweenSurpassedDuration(in PBTween pbTween, in SDKTweenComponent sdkTweenComponent) =>
+            pbTween.Duration > 0 && sdkTweenComponent.CustomTweener != null && sdkTweenComponent.CustomTweener.GetElapsedTime() >= pbTween.Duration;
     }
 }

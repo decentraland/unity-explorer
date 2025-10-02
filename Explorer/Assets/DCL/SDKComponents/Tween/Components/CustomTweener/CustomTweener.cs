@@ -11,7 +11,7 @@ namespace DCL.SDKComponents.Tween.Components
         private readonly TweenCallback onCompleteCallback;
 
         private bool finished;
-        private DG.Tweening.Tween core;
+        private DG.Tweening.Tween? core;
         private ITweener customTweenerImplementation;
 
         public T CurrentValue { get; set; }
@@ -44,26 +44,32 @@ namespace DCL.SDKComponents.Tween.Components
         }
 
         public void Play() =>
-            core.Play();
+            core?.Play();
 
         public void Pause() =>
-            core.Pause();
+            core?.Pause();
 
         public void Rewind() =>
-            core.Rewind();
+            core?.Rewind();
+
+        public void Kill(bool complete) =>
+            core?.Kill(complete);
 
         public bool IsPaused() =>
-            !core.IsPlaying();
+            !core?.IsPlaying() ?? false;
 
         public bool IsFinished() =>
             finished;
 
         public bool IsActive() =>
-            !core.IsPlaying() && !finished;
+            (!core?.IsPlaying() ?? false) && !finished;
+
+        public float GetElapsedTime() =>
+            core?.Elapsed() ?? 0f;
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            core.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
+            core?.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
         }
 
         private void OnTweenComplete()
