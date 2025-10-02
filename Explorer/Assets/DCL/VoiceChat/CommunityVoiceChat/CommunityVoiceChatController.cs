@@ -17,7 +17,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatController : IDisposable
     {
-        private readonly CommunityVoiceChatTitlebarView view;
+        private readonly CommunityVoiceChatPanelView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly VoiceChatRoomManager roomManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -33,7 +33,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatController(
-            CommunityVoiceChatTitlebarView view,
+            CommunityVoiceChatPanelView view,
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IVoiceChatOrchestrator voiceChatOrchestrator,

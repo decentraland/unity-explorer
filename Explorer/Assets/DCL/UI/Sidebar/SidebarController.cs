@@ -42,7 +42,7 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatSharedAreaView chatView;
+        private readonly ChatMainSharedAreaView chatMainView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
@@ -72,7 +72,7 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatSharedAreaView chatView,
+            ChatMainSharedAreaView chatMainView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -89,7 +89,7 @@ namespace DCL.UI.Sidebar
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
-            this.chatView = chatView;
+            this.chatMainView = chatMainView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
@@ -306,7 +306,7 @@ namespace DCL.UI.Sidebar
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true)).Forget();
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true)).Forget();
         }
 
         private async void OnEmotesWheelButtonClickedAsync()
