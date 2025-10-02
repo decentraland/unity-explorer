@@ -34,6 +34,7 @@ namespace DCL.Chat.ChatCommands
         {
             ChatMessageViewModel? viewModel = ChatMessageViewModel.POOL.Get();
             viewModel.Message = message;
+            viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(message.SenderWalletId != ChatMessageFactory.LOADING_PROFILE_TEXT, message.SenderValidatedName, message.SenderWalletId));
 
             // Whether the timestamp is not null (old messages, backward compatibility), it's not the last padding message, and either the message is the first in the feed or the day it was sent is different from the previous messages
             viewModel.ShowDateDivider = message.SentTimestamp.HasValue &&
@@ -66,6 +67,7 @@ namespace DCL.Chat.ChatCommands
             if (profile != null)
             {
                 viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.UserNameColor));
+                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.ValidatedName, profile.WalletId));
 
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
                     walletId, profile.Avatar.FaceSnapshotUrl, cancellationToken);
