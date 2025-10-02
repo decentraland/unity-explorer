@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash(typeof(GameObject), "GP_staticscene_LZMA_StaticSceneDescriptor"),
+                    GetAssetBundleIntention.FromHash("GP_staticscene_LZMA_StaticSceneDescriptor"),
                     PartitionComponent.TOP_PRIORITY);
             }
 

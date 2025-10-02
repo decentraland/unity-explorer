@@ -46,12 +46,15 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         public bool LookForShaderAssets;
 
+        public bool IsDependency;
+
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
             bool lookForShaderAssets = false,
             AssetBundleManifestVersion? assetBundleVersion = null,
             string parentEntityID = "",
+            bool isDependency = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -66,6 +69,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             ParentEntityID = parentEntityID;
             AssetBundleManifestVersion = assetBundleVersion;
+            IsDependency = isDependency;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -86,10 +90,10 @@ namespace ECS.StreamableLoading.AssetBundles
             URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null,
-            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "") =>
-            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
+            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false) =>
+            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, isDependency: isDependency, cancellationTokenSource: cancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 // if the type was not specified don't load any assets
                 return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, ct);
+                    source, intention.LookForShaderAssets, intention.IsDependency, ct);
             }
             catch (Exception e)
             {
@@ -147,10 +147,10 @@ namespace ECS.StreamableLoading.AssetBundles
             string version,
             string source,
             bool lookForShaderAssets,
+            bool isDependency,
             CancellationToken ct)
         {
-            // if the type was not specified don't load any assets
-            if (expectedObjType == null)
+            if (isDependency)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, dependencies));
 
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
@@ -180,6 +180,7 @@ namespace ECS.StreamableLoading.AssetBundles
             else if(objectType != null)
                 asyncOp = assetBundle.LoadAllAssetsAsync(objectType);
             else
+            //If no asset type or name was specified, we need to load all
                 asyncOp = assetBundle.LoadAllAssetsAsync();
 
             await asyncOp.WithCancellation(ct);
@@ -197,7 +198,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             // Inherit partition from the parent promise
             // we don't know the type of the dependency
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
 
             try
             {

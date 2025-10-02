@@ -25,14 +25,16 @@ namespace ECS.StreamableLoading.AssetBundles
         private bool unloaded;
         private Dictionary<string, AssetInfo>? assets;
 
-        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             InitialSceneStateMetadata = initialSceneState;
 
             assets = new Dictionary<string, AssetInfo>();
+
+            //TODO (JUANI) : The whole asset type could be confusing. Too much obscuriting realying on nullable condition
             for (var i = 0; i < loadedAssets.Length; i++)
-                assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType, version, source);
+                assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType == null ? loadedAssets[i].GetType() : assetType, version, source);
 
             Dependencies = dependencies;
             AssetBundleName = assetBundle.name;
@@ -70,8 +72,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override void DestroyObject()
         {
-            //TODO (JUANI) : I think this is creashing or delaying the exit
-            return;
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
@@ -125,8 +125,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public string GetAssetDescription(string assetName = "")
         {
-            //validations where done when the asset was requested
-
+            //Validations where done when the asset was requested
             if (string.IsNullOrEmpty(assetName))
             {
                 AssetInfo assetInfo = assets.FirstValueOrDefaultNonAlloc();
