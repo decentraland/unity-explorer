@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.SceneBannedUsers
@@ -56,13 +55,11 @@ namespace DCL.SceneBannedUsers
 
                 await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
                 playerIsCurrentlyBanned = await bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct);
-                Debug.Log("SANTI LOG -> BANNED!!");
             }
         }
 
         private void RestoreCurrentBannedScene()
         {
-            Debug.Log("SANTI LOG -> RESTORE ALL BANNED SCENES!!");
             bannedSceneController.RemoveAllBannedSceneComponents();
             playerIsCurrentlyBanned = false;
         }
