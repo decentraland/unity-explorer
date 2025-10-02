@@ -700,6 +700,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: VoiceChatPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 2252907955459317869, guid: 0bc9502e1ad78894c82225190e3af2cd, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 68
+      objectReference: {fileID: 0}
     - target: {fileID: 2630920995751324411, guid: 0bc9502e1ad78894c82225190e3af2cd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
