@@ -306,9 +306,9 @@ namespace DCL.Navmap
             Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) ? originParcel : currentBaseParcel;
 
             chatMessagesBus
-                .Send(ChatChannel.NEARBY_CHANNEL,
+               .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
                     $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
-                    ChatMessageOrigin.JUMP_IN, DateTime.UtcNow.ToOADate());
+                    ChatMessageOrigin.JUMP_IN);
         }
 
         private void Share()

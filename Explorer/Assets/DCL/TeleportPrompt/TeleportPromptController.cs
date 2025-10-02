@@ -57,7 +57,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ChatMessageOrigin.TELEPORT_PROMPT, DateTime.UtcNow.ToOADate());
+                chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ChatMessageOrigin.TELEPORT_PROMPT);
             });
         }
 
