@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+#endif
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
@@ -20,16 +22,21 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.ModuleControllers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -45,14 +52,6 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.WebRequests.ChromeDevtool;
-using DCL.Settings.ModuleControllers;
-using DCL.Utility;
-using DCL.Utility.Types;
-using DCL.Web3.Authenticators;
-#if UNITY_EDITOR
-#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -276,12 +275,7 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
-                try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
-                // Exceptions on auto-login should not block the application bootstrap
-                catch (AutoLoginTokenNotFoundException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
-
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded

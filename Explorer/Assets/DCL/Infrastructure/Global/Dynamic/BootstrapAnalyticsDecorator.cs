@@ -177,9 +177,11 @@ namespace Global.Dynamic
             core.InitializeFeaturesRegistry();
         }
 
-        public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
+        public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
+            BootstrapContainer bootstrapContainer,
+            GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
-            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, ct);
+            await core.UserInitializationAsync(dynamicWorldContainer, bootstrapContainer, globalWorld, playerEntity, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
