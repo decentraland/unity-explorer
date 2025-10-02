@@ -106,7 +106,7 @@ namespace DCL.Translation.Service
 
                 return response;
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.TRANSLATE);
