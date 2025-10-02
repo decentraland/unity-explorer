@@ -55,5 +55,5 @@ MonoBehaviour:
   ChatContextMenuCopyText: Copy
   ChatContextMenuSeeOriginalText: See Original
   ChatContextMenuTranslateText: Translate
-  TranslationMemoryCapacity: 20
-  TranslationCacheCapacity: 20
+  TranslationMemoryCapacity: 300
+  TranslationCacheCapacity: 300
