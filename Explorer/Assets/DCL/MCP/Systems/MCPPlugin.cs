@@ -7,6 +7,7 @@ using DCL.MCP.Handlers;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
 
@@ -22,11 +23,13 @@ namespace DCL.MCP
         private const int DEFAULT_PORT = 7777;
 
         private readonly World globalWorld;
+        private readonly IScenesCache scenesCache;
         private MCPWebSocketServer server;
 
-        public MCPPlugin(World globalWorld)
+        public MCPPlugin(World globalWorld, IScenesCache scenesCache)
         {
             this.globalWorld = globalWorld;
+            this.scenesCache = scenesCache;
         }
 
         public async UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -40,6 +43,7 @@ namespace DCL.MCP
                 var cameraHandler = new MCPCameraHandler(globalWorld);
                 var screenshotHandler = new MCPScreenshotHandler(globalWorld);
                 var quickActionHandler = new MCPQuickActionHandler(globalWorld, screenshotService);
+                var sceneInfoHandler = new MCPSceneInfoHandler(globalWorld, scenesCache);
 
                 // Регистрация обработчиков камеры
                 server.RegisterHandler("toggleInWorldCamera", cameraHandler.HandleToggleInWorldCameraAsync);
@@ -60,6 +64,11 @@ namespace DCL.MCP
                 // Регистрация Quick Actions (⚡ Fast all-in-one)
                 server.RegisterHandler("quickScreenshotOfPlayer", quickActionHandler.HandleQuickScreenshotOfPlayerAsync);
                 server.RegisterHandler("quickScreenshotFromPoint", quickActionHandler.HandleQuickScreenshotFromPointAsync);
+
+                // Регистрация обработчиков информации о сценах
+                server.RegisterHandler("getAllScenesInfo", sceneInfoHandler.HandleGetAllScenesInfoAsync);
+                server.RegisterHandler("getSceneInfo", sceneInfoHandler.HandleGetSceneInfoAsync);
+                server.RegisterHandler("getSceneCrdtState", sceneInfoHandler.HandleGetSceneCrdtStateAsync);
 
                 server.Start();
 
