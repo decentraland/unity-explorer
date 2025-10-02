@@ -137,7 +137,7 @@ namespace DCL.Chat
                 commandRegistry.SendMessage,
                 textFormatter);
 
-            var memberListPresenter = new ChatMemberListPresenter(
+            var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
                 eventBus,
                 chatEventBus,

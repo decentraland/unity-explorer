@@ -298,7 +298,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
                 CloseController();
             }
@@ -369,7 +369,7 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid OnClosePanelAsync()
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             }
         }
 

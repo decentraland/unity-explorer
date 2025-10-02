@@ -363,7 +363,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             try
             {
                 //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
                 await UniTask.Delay(500);
                 chatEventBus.StartCallInCurrentConversation();
@@ -376,7 +376,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }
             catch (OperationCanceledException) { }
