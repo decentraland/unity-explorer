@@ -1,14 +1,13 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Scripting;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    [Preserve]
     public class VoiceChatStatusJsonConverter : JsonConverter<GetCommunityResponse.VoiceChatStatus>
     {
-        //parameterless constructor to ensure that IL2CPP build can locate the constructor
-        public VoiceChatStatusJsonConverter() { }
-
         public override void WriteJson(JsonWriter writer, GetCommunityResponse.VoiceChatStatus value, JsonSerializer serializer)
         {
             writer.WriteStartObject();
@@ -36,7 +35,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             if (reader.TokenType == JsonToken.StartObject)
             {
                 var jsonObject = JObject.Load(reader);
-                
+
                 return new GetCommunityResponse.VoiceChatStatus
                 {
                     isActive = jsonObject["isActive"]?.Value<bool>() ?? false,
