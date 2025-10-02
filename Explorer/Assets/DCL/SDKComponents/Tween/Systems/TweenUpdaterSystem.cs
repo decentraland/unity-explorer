@@ -87,7 +87,7 @@ namespace DCL.SDKComponents.Tween
         [Query]
         private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove) return;
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove || pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
             if (sdkTweenComponent.IsDirty)
             {
@@ -212,15 +212,8 @@ namespace DCL.SDKComponents.Tween
             Vector2? textureStart = null;
             if (tweenModel.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous)
             {
-                if (materialComponent.HasValue && materialComponent.Value.Result)
-                {
-                    textureStart = materialComponent.Value.Result!.mainTextureOffset;
-                }
-                else
-                {
-                    Debug.Log($"PRAVS - NO MATERIAL RESULT!!!!");
-                    textureStart = Vector2.zero;
-                }
+                textureStart = materialComponent.HasValue && materialComponent.Value.Result ?
+                        materialComponent.Value.Result!.mainTextureOffset : Vector2.zero;
             }
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform, textureStart);
 
