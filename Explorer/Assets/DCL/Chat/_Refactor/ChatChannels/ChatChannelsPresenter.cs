@@ -78,7 +78,7 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChatInitialized>(OnSystemChannelSelected));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
         }
@@ -196,9 +196,9 @@ namespace DCL.Chat
             AddChannelToView(evt.Channel);
         }
 
-        private void OnSystemChannelSelected(ChatEvents.ChatInitialized evt)
+        private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
-            view.SelectConversation(evt.DefaultChannel.Id);
+            view.SelectConversation(evt.Channel.Id);
         }
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)

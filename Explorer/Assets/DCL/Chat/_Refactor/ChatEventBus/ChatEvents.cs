@@ -73,17 +73,6 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        ///     Event:          ChatInitialized
-        ///     Triggered By:   InitializeChatSystemCommand (on startup).
-        ///     When:           The system sets the default channel.
-        ///     Subscribers:    - ChatChannelsPresenter: Highlights the selected channel in the UI.
-        /// </summary>
-        public struct ChatInitialized
-        {
-            public ChatChannel DefaultChannel;
-        }
-
-        /// <summary>
         ///     Event:          ChannelAddedEvent
         ///     Triggered By:   (Future) A use case like OpenPrivateConversationCommand.
         ///     When:           A new conversation (e.g., a new DM) is started for the first time.
