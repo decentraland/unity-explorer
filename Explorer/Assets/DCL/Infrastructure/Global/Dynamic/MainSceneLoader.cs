@@ -14,6 +14,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Global.Dynamic;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -48,6 +49,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
+using DCL.UI.ErrorPopup;
 using DCL.Utility;
 using DCL.Utility.Types;
 #if UNITY_EDITOR
@@ -84,7 +86,6 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-
         private ProvidedInstance<SplashScreen> splashScreen;
 
         private void Awake()
@@ -149,6 +150,7 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
@@ -272,9 +274,8 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
-
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
+                await LoadStartingRealmAsync(ct);
+                await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -291,6 +292,32 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
+            }
+
+            return;
+
+            async UniTask LoadStartingRealmAsync(CancellationToken ct)
+            {
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadStartingRealmAsync(ct);
+                    else
+                        throw;
+                }
+            }
+
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
+            {
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct); }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadStartingRealmAsync(ct);
+                    else
+                        throw;
+                }
             }
         }
 
@@ -312,6 +339,7 @@ namespace Global.Dynamic
                 new PlatformDriveInfoProvider());
 
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+
             if (!hasMinimumSpecs)
             {
                 DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
@@ -321,10 +349,7 @@ namespace Global.Dynamic
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
-            {
-                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
-            });
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
@@ -332,11 +357,11 @@ namespace Global.Dynamic
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
-                .AssetsProvisioner!
-                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+                                                 .AssetsProvisioner!
+                                                 .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
             ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
-                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+               .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
             var minimumSpecsResults = minimumSpecsGuard.Results;
             var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
@@ -380,7 +405,7 @@ namespace Global.Dynamic
                 LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
 
             dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
-            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand(), ct).Forget();
             return true;
         }
 
@@ -563,6 +588,22 @@ namespace Global.Dynamic
             return controller.SelectedOption;
         }
 
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
+        {
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+
+            var input = new ErrorPopupWithRetryController.Input
+            {
+                Title = "Load Error",
+                Description = "A loading error was encountered. Please reload to try again.",
+                IconType = ErrorPopupWithRetryController.IconType.ERROR,
+            };
+
+            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
+
+            return input.SelectedOption;
+        }
+
         [Serializable]
         public struct TrustedRealmApiResponse
         {
@@ -588,9 +629,7 @@ namespace Global.Dynamic
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
-            public SplashScreenRef(string guid) : base(guid)
-            {
-            }
+            public SplashScreenRef(string guid) : base(guid) { }
         }
     }
 }
