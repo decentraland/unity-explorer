@@ -24,7 +24,7 @@ namespace Global.Dynamic
             new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, landscapeEnabled,
-                bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone));
+                bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone), (Landscape)Landscape);
 
         public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
         {

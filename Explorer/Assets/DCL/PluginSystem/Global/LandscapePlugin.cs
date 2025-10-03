@@ -13,6 +13,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
+using GPUInstancerPro;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -20,11 +21,13 @@ using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
 {
+    using Landscape = global::Global.Dynamic.Landscapes.Landscape;
+
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>
     {
         private readonly TerrainGenerator terrainGenerator;
         private readonly WorldTerrainGenerator worldTerrainGenerator;
-
+        private readonly Landscape landscape;
         private readonly IRealmData realmData;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -53,7 +56,8 @@ namespace DCL.PluginSystem.Global
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
             bool enableLandscape,
-            bool isZone)
+            bool isZone,
+            Landscape landscape)
         {
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
@@ -64,6 +68,7 @@ namespace DCL.PluginSystem.Global
             this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
+            this.landscape = landscape;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
 
@@ -104,12 +109,18 @@ namespace DCL.PluginSystem.Global
                 ownedParcels = fetchParcelResult.Manifest.GetOwnedParcels();
             }
 
-            // gpuiWrapper.SetupLandscapeData(landscapeData.Value);
+            GPUIProfile treesProfile = landscapeData.Value.TreesProfile;
+            LandscapeAsset[] treePrototypes = landscapeData.Value.terrainData.treeAssets;
+            int[] treeRendererKeys = new int[treePrototypes.Length];
 
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, landscapeData.Value.TreesProfile,
+            for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
+                GPUICoreAPI.RegisterRenderer(landscape.Root, treePrototypes[prototypeIndex].asset,
+                    treesProfile, out treeRendererKeys[prototypeIndex]);
+
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys,
                 ref emptyParcels, ref ownedParcels);
 
-            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
+            await worldTerrainGenerator.InitializeAsync(landscapeData.Value.worldsTerrainData, treeRendererKeys);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -122,8 +133,8 @@ namespace DCL.PluginSystem.Global
             //LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             //LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
-            RenderGroundSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            CollideTerrainSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            RenderGroundSystem.InjectToWorld(ref builder, landscape, landscapeData.Value);
+            CollideTerrainSystem.InjectToWorld(ref builder, landscape, landscapeData.Value);
 
             // gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
         }
