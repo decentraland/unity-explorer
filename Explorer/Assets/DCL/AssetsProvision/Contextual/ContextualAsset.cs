@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
+using RichTypes;
 using System;
 using System.Threading;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Utility.Ownership;
 using Object = UnityEngine.Object;
 
 namespace DCL.AssetsProvision

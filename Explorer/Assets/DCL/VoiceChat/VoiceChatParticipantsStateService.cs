@@ -51,6 +51,7 @@ namespace DCL.VoiceChat
 
         public IReadOnlyCollection<string> ConnectedParticipants => connectedParticipants;
         public IReadOnlyCollection<string> Speakers => speakers;
+
         public string LocalParticipantId { get; private set; }
         public VoiceChatParticipantState LocalParticipantState { get; private set; }
         public event ParticipantJoinedDelegate? ParticipantJoined;
@@ -150,7 +151,6 @@ namespace DCL.VoiceChat
                 participantState = LocalParticipantState;
                 return true;
             }
-
             return participantStates.TryGetValue(participantId, out participantState);
         }
 

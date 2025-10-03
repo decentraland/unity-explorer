@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.JsModulesImplementation.Communications;
+﻿using CRDT.Protocol;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -14,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -46,22 +48,24 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             jsOperations = Substitute.For<IJsOperations>();
             jsOperations.NewArray().Returns(_ => arrayCtor.Invoke(true));
 
-            jsOperations.GetTempUint8Array().Returns(
-                _ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
+            jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
             api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
                 jsOperations);
         }
 
         [Test]
-        public void SendBinary([Range(0, 5)] int outerArraySize, [Range(1, 500, 50)] int innerArraySize)
+        public void SendBinary([Range(0, 5)] int outerArraySize, [Range(1, 50)] int innerArrayMessagesCount)
         {
             // Generate random array of arrays
 
             var outerArray = new PoolableByteArray[outerArraySize];
 
             for (var i = 0; i < outerArraySize; i++)
-                outerArray[i] = new PoolableByteArray(GetRandomBytes(innerArraySize), innerArraySize, null);
+            {
+                byte[] messages = GetRandomMessagesSequence(innerArrayMessagesCount);
+                outerArray[i] = new PoolableByteArray(messages, messages.Length, null);
+            }
 
             api.SendBinary(outerArray);
             api.GetResult();
@@ -104,6 +108,44 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             var rand = new Random();
             var buf = new byte[size];
             rand.NextBytes(buf);
+            return buf;
+        }
+
+        private static byte[] GetRandomMessagesSequence(int count)
+        {
+            var rand = new Random();
+
+            const int PUT_NETWORK_MESSAGE_HEADER_LENGTH =
+                CRDTConstants.MESSAGE_HEADER_LENGTH // message header
+                + 20; // put network component header
+
+            int totalContentLength = 0;
+            List<int> contentLengths = new List<int>();
+
+            for (int i = 0; i < count; i++)
+            {
+                int length = rand.Next(0, 32) * 4;
+                contentLengths.Add(length);
+                totalContentLength += length;
+            }
+
+            var buf = new byte[1 + totalContentLength + (PUT_NETWORK_MESSAGE_HEADER_LENGTH * count)]; // 1 is for send type
+
+            var writeHead = buf.AsSpan().Slice(1);
+
+            foreach (int contentLength in contentLengths)
+            {
+                int messageLength = PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength;
+                writeHead.Write(messageLength);
+                writeHead.Write((uint) CRDTMessageType.PUT_COMPONENT_NETWORK);
+                writeHead.Write(rand.Next()); // entity id
+                writeHead.Write(rand.Next(0, 2048)); // component id
+                writeHead.Write(rand.Next()); // timestamp
+                writeHead.Write(rand.Next()); // network id
+                writeHead.Write(contentLength); // content length
+                writeHead = writeHead.Slice(contentLength);
+            }
+
             return buf;
         }
 

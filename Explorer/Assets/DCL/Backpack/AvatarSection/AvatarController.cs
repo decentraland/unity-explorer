@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.UI;
 using System;
@@ -51,7 +52,7 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+            backpackCommandBus.SendCommand(new BackpackFilterCommand(string.Empty, AvatarWearableCategoryEnum.Body, string.Empty));
             backpackGridController.Deactivate();
         }
 

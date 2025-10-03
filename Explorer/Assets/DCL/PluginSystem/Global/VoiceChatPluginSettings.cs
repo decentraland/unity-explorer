@@ -1,12 +1,7 @@
-using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Settings.Settings;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
-using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem.Global
 {
@@ -15,14 +10,11 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPluginSettings : ScriptableObject
     {
         [Header("Asset References")]
-        [field: SerializeField] public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
-        [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
-        [field: FormerlySerializedAs("<PlayerEntryView>k__BackingField")] [field: SerializeField] public VoiceChatParticipantEntryView ParticipantEntryView { get; private set; }
+        [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; } = null!;
+        [field: SerializeField] public PlayerEntryView PlayerEntryView { get; private set; } = null!;
 
         [Header("Audio References")]
-        [field: SerializeField] public AudioClipConfig MuteMicrophoneAudio { get; private set; }
-        [field: SerializeField] public AudioClipConfig UnmuteMicrophoneAudio { get; private set; }
-
-
+        [field: SerializeField] public AudioClipConfig MuteMicrophoneAudio { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig UnmuteMicrophoneAudio { get; private set; } = null!;
     }
 }

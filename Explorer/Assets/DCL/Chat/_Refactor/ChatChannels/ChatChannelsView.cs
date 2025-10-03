@@ -245,22 +245,6 @@ namespace DCL.Chat
             tooltip.transform.SetParent(transform, true);
         }
 
-        // private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
-        // {
-        //     Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
-        //
-        //     if (profile != null)
-        //     {
-        //         newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
-        //         newItem.SetConversationName(profile.ValidatedName);
-        //         newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
-        //         newItem.SetConversationType(true);
-        //     }
-        // }
-
-        public event Action<string>? OnChannelSelected;
-        public event Action<string>? OnChannelRemoved;
-
         public void AddConversation(BaseChannelViewModel viewModel)
         {
             chatConversationsToolbarViewItemPool ??= new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
