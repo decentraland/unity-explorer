@@ -59,7 +59,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
-                teleportStartupOperation
+                teleportStartupOperation,
             };
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
