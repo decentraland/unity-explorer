@@ -14,6 +14,7 @@ using Global.Versioning;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
@@ -78,11 +79,12 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            HashSet<string> officialWallets,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
+                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, officialWallets, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

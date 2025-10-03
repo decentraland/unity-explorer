@@ -38,12 +38,10 @@ namespace DCL.Multiplayer.Connections.Systems
             IActivatableConnectiveRoom voiceChatRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemoteMetadata remoteMetadata,
-            IDebugContainerBuilder debugBuilder,
-            IObjectPool<DebugRoomIndicatorView> roomIndicatorPool) : base(world)
+            IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.roomsStatus = roomsStatus;
             this.entityParticipantTable = entityParticipantTable;
-            this.roomIndicatorPool = roomIndicatorPool;
 
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
             enabled = infoWidget != null;

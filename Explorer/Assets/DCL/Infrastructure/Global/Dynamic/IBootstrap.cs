@@ -12,6 +12,7 @@ using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
 using Global.Versioning;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -43,6 +44,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            HashSet<string> officialWallets,
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,

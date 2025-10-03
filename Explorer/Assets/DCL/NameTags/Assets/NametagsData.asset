@@ -13,4 +13,3 @@ MonoBehaviour:
   m_Name: NametagsData
   m_EditorClassIdentifier: 
   showNameTags: 1
-  showChatBubbles: 1
