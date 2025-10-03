@@ -116,7 +116,7 @@ namespace DCL.ChatArea
 
         private void HandleGlobalClick(InputAction.CallbackContext context)
         {
-            if (EventSystem.current == null) return;
+            if (EventSystem.current == null || !context.control.IsPressed()) return;
 
             var eventData = new PointerEventData(EventSystem.current)
             {
