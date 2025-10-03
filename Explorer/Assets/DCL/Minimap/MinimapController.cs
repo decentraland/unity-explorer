@@ -25,6 +25,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
+using DCL.SceneBannedUsers;
 using DCL.UI.Controls.Configs;
 using DG.Tweening;
 using ECS;
@@ -78,7 +79,8 @@ namespace DCL.Minimap
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
-        private bool bannedMarkIsVisible;
+        private bool isOwnPlayerBanned;
+        private bool isOtherPlayersBanned;
         private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -137,9 +139,9 @@ namespace DCL.Minimap
 
             if (includeBannedUsersFromScene)
             {
-                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomConnected -= HideBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowOwnPlayerBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected -= HideAllBannedMarks;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideAllBannedMarks;
                 showBannedTooltipCts.SafeCancelAndDispose();
             }
 
@@ -191,9 +193,9 @@ namespace DCL.Minimap
 
             if (includeBannedUsersFromScene)
             {
-                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomConnected += HideBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowOwnPlayerBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected += HideAllBannedMarks;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideAllBannedMarks;
             }
         }
 
@@ -286,6 +288,14 @@ namespace DCL.Minimap
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
                 GetPlaceInfoAsync(position);
+            }
+
+            if (includeBannedUsersFromScene && !isOwnPlayerBanned)
+            {
+                if (BannedUsersFromCurrentScene.Instance.BannedUsersCount() > 0)
+                    ShowOtherPlayersBannedMark();
+                else
+                    HideOtherPlayersBannedMark();
             }
         }
 
@@ -422,35 +432,66 @@ namespace DCL.Minimap
                     : viewInstance.worldsAnimatorController;
         }
 
-        private void ShowBannedMark()
+        private void ShowOwnPlayerBannedMark()
         {
-            if (bannedMarkIsVisible)
+            if (isOwnPlayerBanned)
                 return;
 
-            bannedMarkIsVisible = true;
-
-            viewInstance!.nonBannedContainer.SetActive(false);
-            viewInstance!.bannedContainer.SetActive(true);
+            isOwnPlayerBanned = true;
+            HideOtherPlayersBannedMark();
+            viewInstance!.ownPlayerBannedMark.SetActive(true);
 
             showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
-            ShowBannedTooltipAsync(showBannedTooltipCts.Token).Forget();
-            return;
-
-            async UniTaskVoid ShowBannedTooltipAsync(CancellationToken ct)
-            {
-                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
-                viewInstance!.bannedTooltip.SetActive(true);
-                await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
-                viewInstance!.bannedTooltip.SetActive(false);
-            }
+            ShowBannedTooltipAsync(showOwnPlayerTooltip: true, showBannedTooltipCts.Token).Forget();
         }
 
-        private void HideBannedMark()
+        private void HideOwnPlayerBannedMark()
         {
             showBannedTooltipCts.SafeCancelAndDispose();
-            viewInstance!.nonBannedContainer.SetActive(true);
-            viewInstance!.bannedContainer.SetActive(false);
-            bannedMarkIsVisible = false;
+            viewInstance!.ownPlayerBannedMark.SetActive(false);
+            isOwnPlayerBanned = false;
+        }
+
+        private void ShowOtherPlayersBannedMark()
+        {
+            if (isOtherPlayersBanned)
+                return;
+
+            isOtherPlayersBanned = true;
+            viewInstance!.otherPlayersBannedMark.SetActive(true);
+
+            showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
+            ShowBannedTooltipAsync(showOwnPlayerTooltip: false, showBannedTooltipCts.Token).Forget();
+        }
+
+        private void HideOtherPlayersBannedMark()
+        {
+            showBannedTooltipCts.SafeCancelAndDispose();
+            viewInstance!.otherPlayersBannedMark.SetActive(false);
+            isOtherPlayersBanned = false;
+        }
+
+        private void HideAllBannedMarks()
+        {
+            HideOwnPlayerBannedMark();
+            HideOtherPlayersBannedMark();
+        }
+
+        private async UniTaskVoid ShowBannedTooltipAsync(bool showOwnPlayerTooltip, CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+
+            if (showOwnPlayerTooltip)
+                viewInstance!.ownPlayerBannedTooltip.SetActive(true);
+            else
+                viewInstance!.otherPlayersBannedTooltip.SetActive(true);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
+
+            if (showOwnPlayerTooltip)
+                viewInstance!.ownPlayerBannedTooltip.SetActive(false);
+            else
+                viewInstance!.otherPlayersBannedTooltip.SetActive(false);
         }
     }
 

@@ -78,13 +78,16 @@ namespace DCL.Minimap
         internal MinimapPinMarkerObject destinationPinMarker { get; private set; }
 
         [field: SerializeField]
-        internal GameObject nonBannedContainer { get; private set; }
+        internal GameObject ownPlayerBannedMark { get; private set; }
 
         [field: SerializeField]
-        internal GameObject bannedContainer { get; private set; }
+        internal GameObject ownPlayerBannedTooltip { get; private set; }
 
         [field: SerializeField]
-        internal GameObject bannedTooltip { get; private set; }
+        internal GameObject otherPlayersBannedMark { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject otherPlayersBannedTooltip { get; private set; }
 
         [SerializeField] internal ContextMenuConfig contextMenuConfig;
 

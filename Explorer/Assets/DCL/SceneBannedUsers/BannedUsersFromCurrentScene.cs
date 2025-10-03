@@ -49,5 +49,23 @@ namespace DCL.SceneBannedUsers
 
             return false;
         }
+
+        public int BannedUsersCount()
+        {
+            if (!includeBannedUsersFromScene)
+                return 0;
+
+            if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
+                return 0;
+
+            string roomMetadata = roomHub.SceneRoom().Room().Info.Metadata;
+
+            if (string.IsNullOrEmpty(roomMetadata))
+                return 0;
+
+            BannedUsersRoomMetadata bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
+
+            return bannedUsersRoomMetadata.bannedAddresses?.Length ?? 0;
+        }
     }
 }
