@@ -355,143 +355,160 @@ namespace Decentraland.SocialService.V2 {
             "Lk5vdEZvdW5kRXJyb3JIABJRChVpbnRlcm5hbF9zZXJ2ZXJfZXJyb3IYBSAB",
             "KAsyMC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UuSW50ZXJuYWxTZXJ2",
             "ZXJFcnJvckgAGhUKAk9rEg8KB21lc3NhZ2UYASABKAlCCgoIcmVzcG9uc2Ui",
-            "NAocRW5kQ29tbXVuaXR5Vm9pY2VDaGF0UGF5bG9hZBIUCgxjb21tdW5pdHlf",
-            "aWQYASABKAkivAMKHUVuZENvbW11bml0eVZvaWNlQ2hhdFJlc3BvbnNlEk4K",
-            "Am9rGAEgASgLMkAuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkVu",
-            "ZENvbW11bml0eVZvaWNlQ2hhdFJlc3BvbnNlLk9rSAASRgoPaW52YWxpZF9y",
-            "ZXF1ZXN0GAIgASgLMisuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLklu",
-            "dmFsaWRSZXF1ZXN0SAASRgoPZm9yYmlkZGVuX2Vycm9yGAMgASgLMisuZGVj",
-            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLkZvcmJpZGRlbkVycm9ySAASRQoP",
-            "bm90X2ZvdW5kX2Vycm9yGAQgASgLMiouZGVjZW50cmFsYW5kLnNvY2lhbF9z",
-            "ZXJ2aWNlLk5vdEZvdW5kRXJyb3JIABJRChVpbnRlcm5hbF9zZXJ2ZXJfZXJy",
-            "b3IYBSABKAsyMC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UuSW50ZXJu",
-            "YWxTZXJ2ZXJFcnJvckgAGhUKAk9rEg8KB21lc3NhZ2UYASABKAlCCgoIcmVz",
-            "cG9uc2UisgIKGENvbW11bml0eVZvaWNlQ2hhdFVwZGF0ZRIUCgxjb21tdW5p",
-            "dHlfaWQYASABKAkSEgoKY3JlYXRlZF9hdBgCIAEoAxJICgZzdGF0dXMYAyAB",
-            "KA4yOC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuQ29tbXVuaXR5",
-            "Vm9pY2VDaGF0U3RhdHVzEhUKCGVuZGVkX2F0GAQgASgDSACIAQESEQoJcG9z",
-            "aXRpb25zGAUgAygJEhEKCWlzX21lbWJlchgGIAEoCBIWCg5jb21tdW5pdHlf",
-            "bmFtZRgHIAEoCRIcCg9jb21tdW5pdHlfaW1hZ2UYCCABKAlIAYgBARIOCgZ3",
-            "b3JsZHMYCSADKAlCCwoJX2VuZGVkX2F0QhIKEF9jb21tdW5pdHlfaW1hZ2Uq",
-            "NwoSQ29ubmVjdGl2aXR5U3RhdHVzEgoKBk9OTElORRAAEgsKB09GRkxJTkUQ",
-            "ARIICgRBV0FZEAIqmAEKEEZyaWVuZHNoaXBTdGF0dXMSEAoMUkVRVUVTVF9T",
-            "RU5UEAASFAoQUkVRVUVTVF9SRUNFSVZFRBABEgwKCENBTkNFTEVEEAISDAoI",
-            "QUNDRVBURUQQAxIMCghSRUpFQ1RFRBAEEgsKB0RFTEVURUQQBRILCgdCTE9D",
-            "S0VEEAYSCAoETk9ORRAHEg4KCkJMT0NLRURfQlkQCCo5ChxQcml2YXRlTWVz",
-            "c2FnZVByaXZhY3lTZXR0aW5nEgcKA0FMTBAAEhAKDE9OTFlfRlJJRU5EUxAB",
-            "KlQKJUJsb2NrZWRVc2Vyc01lc3NhZ2VzVmlzaWJpbGl0eVNldHRpbmcSEQoN",
-            "U0hPV19NRVNTQUdFUxAAEhgKFERPX05PVF9TSE9XX01FU1NBR0VTEAEqkgEK",
-            "FlByaXZhdGVWb2ljZUNoYXRTdGF0dXMSGAoUVk9JQ0VfQ0hBVF9SRVFVRVNU",
-            "RUQQABIXChNWT0lDRV9DSEFUX0FDQ0VQVEVEEAESFwoTVk9JQ0VfQ0hBVF9S",
-            "RUpFQ1RFRBACEhQKEFZPSUNFX0NIQVRfRU5ERUQQAxIWChJWT0lDRV9DSEFU",
-            "X0VYUElSRUQQBCpcChhDb21tdW5pdHlWb2ljZUNoYXRTdGF0dXMSIAocQ09N",
-            "TVVOSVRZX1ZPSUNFX0NIQVRfU1RBUlRFRBAAEh4KGkNPTU1VTklUWV9WT0lD",
-            "RV9DSEFUX0VOREVEEAEy9SQKDVNvY2lhbFNlcnZpY2USgwEKCkdldEZyaWVu",
-            "ZHMSMS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0RnJpZW5k",
-            "c1BheWxvYWQaQC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUGFn",
-            "aW5hdGVkRnJpZW5kc1Byb2ZpbGVzUmVzcG9uc2UiABKPAQoQR2V0TXV0dWFs",
-            "RnJpZW5kcxI3LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRN",
-            "dXR1YWxGcmllbmRzUGF5bG9hZBpALmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
-            "dmljZS52Mi5QYWdpbmF0ZWRGcmllbmRzUHJvZmlsZXNSZXNwb25zZSIAEqMB",
-            "ChxHZXRQZW5kaW5nRnJpZW5kc2hpcFJlcXVlc3RzEjwuZGVjZW50cmFsYW5k",
-            "LnNvY2lhbF9zZXJ2aWNlLnYyLkdldEZyaWVuZHNoaXBSZXF1ZXN0c1BheWxv",
-            "YWQaQy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUGFnaW5hdGVk",
-            "RnJpZW5kc2hpcFJlcXVlc3RzUmVzcG9uc2UiABKgAQoZR2V0U2VudEZyaWVu",
-            "ZHNoaXBSZXF1ZXN0cxI8LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
-            "Mi5HZXRGcmllbmRzaGlwUmVxdWVzdHNQYXlsb2FkGkMuZGVjZW50cmFsYW5k",
-            "LnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRlZEZyaWVuZHNoaXBSZXF1ZXN0",
-            "c1Jlc3BvbnNlIgAShwEKEFVwc2VydEZyaWVuZHNoaXASNy5kZWNlbnRyYWxh",
-            "bmQuc29jaWFsX3NlcnZpY2UudjIuVXBzZXJ0RnJpZW5kc2hpcFBheWxvYWQa",
-            "OC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXBzZXJ0RnJpZW5k",
-            "c2hpcFJlc3BvbnNlIgASbAocU3Vic2NyaWJlVG9GcmllbmRzaGlwVXBkYXRl",
-            "cxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRowLmRlY2VudHJhbGFuZC5zb2Np",
-            "YWxfc2VydmljZS52Mi5GcmllbmRzaGlwVXBkYXRlIgAwARKQAQoTR2V0RnJp",
-            "ZW5kc2hpcFN0YXR1cxI6LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
-            "Mi5HZXRGcmllbmRzaGlwU3RhdHVzUGF5bG9hZBo7LmRlY2VudHJhbGFuZC5z",
-            "b2NpYWxfc2VydmljZS52Mi5HZXRGcmllbmRzaGlwU3RhdHVzUmVzcG9uc2Ui",
-            "ABJ8CiRTdWJzY3JpYmVUb0ZyaWVuZENvbm5lY3Rpdml0eVVwZGF0ZXMSFi5n",
-            "b29nbGUucHJvdG9idWYuRW1wdHkaOC5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
-            "cnZpY2UudjIuRnJpZW5kQ29ubmVjdGl2aXR5VXBkYXRlIgAwARJyCglCbG9j",
-            "a1VzZXISMC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuQmxvY2tV",
-            "c2VyUGF5bG9hZBoxLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5C",
-            "bG9ja1VzZXJSZXNwb25zZSIAEngKC1VuYmxvY2tVc2VyEjIuZGVjZW50cmFs",
-            "YW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVuYmxvY2tVc2VyUGF5bG9hZBozLmRl",
-            "Y2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5VbmJsb2NrVXNlclJlc3Bv",
-            "bnNlIgAShAEKD0dldEJsb2NrZWRVc2VycxI2LmRlY2VudHJhbGFuZC5zb2Np",
-            "YWxfc2VydmljZS52Mi5HZXRCbG9ja2VkVXNlcnNQYXlsb2FkGjcuZGVjZW50",
-            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldEJsb2NrZWRVc2Vyc1Jlc3Bv",
-            "bnNlIgASaAoRR2V0QmxvY2tpbmdTdGF0dXMSFi5nb29nbGUucHJvdG9idWYu",
-            "RW1wdHkaOS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0Qmxv",
-            "Y2tpbmdTdGF0dXNSZXNwb25zZSIAEmIKF1N1YnNjcmliZVRvQmxvY2tVcGRh",
-            "dGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GisuZGVjZW50cmFsYW5kLnNv",
-            "Y2lhbF9zZXJ2aWNlLnYyLkJsb2NrVXBkYXRlIgAwARJoChFHZXRTb2NpYWxT",
-            "ZXR0aW5ncxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRo5LmRlY2VudHJhbGFu",
-            "ZC5zb2NpYWxfc2VydmljZS52Mi5HZXRTb2NpYWxTZXR0aW5nc1Jlc3BvbnNl",
-            "IgASkwEKFFVwc2VydFNvY2lhbFNldHRpbmdzEjsuZGVjZW50cmFsYW5kLnNv",
-            "Y2lhbF9zZXJ2aWNlLnYyLlVwc2VydFNvY2lhbFNldHRpbmdzUGF5bG9hZBo8",
-            "LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5VcHNlcnRTb2NpYWxT",
-            "ZXR0aW5nc1Jlc3BvbnNlIgASpQEKGkdldFByaXZhdGVNZXNzYWdlc1NldHRp",
-            "bmdzEkEuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldFByaXZh",
-            "dGVNZXNzYWdlc1NldHRpbmdzUGF5bG9hZBpCLmRlY2VudHJhbGFuZC5zb2Np",
-            "YWxfc2VydmljZS52Mi5HZXRQcml2YXRlTWVzc2FnZXNTZXR0aW5nc1Jlc3Bv",
-            "bnNlIgASjgEKLVN1YnNjcmliZVRvQ29tbXVuaXR5TWVtYmVyQ29ubmVjdGl2",
-            "aXR5VXBkYXRlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRpBLmRlY2VudHJh",
-            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5Db21tdW5pdHlNZW1iZXJDb25uZWN0",
-            "aXZpdHlVcGRhdGUiADABEpYBChVTdGFydFByaXZhdGVWb2ljZUNoYXQSPC5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuU3RhcnRQcml2YXRlVm9p",
-            "Y2VDaGF0UGF5bG9hZBo9LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
-            "Mi5TdGFydFByaXZhdGVWb2ljZUNoYXRSZXNwb25zZSIAEpkBChZBY2NlcHRQ",
-            "cml2YXRlVm9pY2VDaGF0Ej0uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNl",
-            "LnYyLkFjY2VwdFByaXZhdGVWb2ljZUNoYXRQYXlsb2FkGj4uZGVjZW50cmFs",
-            "YW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkFjY2VwdFByaXZhdGVWb2ljZUNoYXRS",
-            "ZXNwb25zZSIAEpkBChZSZWplY3RQcml2YXRlVm9pY2VDaGF0Ej0uZGVjZW50",
-            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlJlamVjdFByaXZhdGVWb2ljZUNo",
-            "YXRQYXlsb2FkGj4uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlJl",
-            "amVjdFByaXZhdGVWb2ljZUNoYXRSZXNwb25zZSIAEpABChNFbmRQcml2YXRl",
-            "Vm9pY2VDaGF0EjouZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkVu",
-            "ZFByaXZhdGVWb2ljZUNoYXRQYXlsb2FkGjsuZGVjZW50cmFsYW5kLnNvY2lh",
-            "bF9zZXJ2aWNlLnYyLkVuZFByaXZhdGVWb2ljZUNoYXRSZXNwb25zZSIAEooB",
-            "CiJHZXRJbmNvbWluZ1ByaXZhdGVWb2ljZUNoYXRSZXF1ZXN0EhYuZ29vZ2xl",
-            "LnByb3RvYnVmLkVtcHR5GkouZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNl",
-            "LnYyLkdldEluY29taW5nUHJpdmF0ZVZvaWNlQ2hhdFJlcXVlc3RSZXNwb25z",
-            "ZSIAEngKIlN1YnNjcmliZVRvUHJpdmF0ZVZvaWNlQ2hhdFVwZGF0ZXMSFi5n",
-            "b29nbGUucHJvdG9idWYuRW1wdHkaNi5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
-            "cnZpY2UudjIuUHJpdmF0ZVZvaWNlQ2hhdFVwZGF0ZSIAMAESnAEKF1N0YXJ0",
-            "Q29tbXVuaXR5Vm9pY2VDaGF0Ej4uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2",
-            "aWNlLnYyLlN0YXJ0Q29tbXVuaXR5Vm9pY2VDaGF0UGF5bG9hZBo/LmRlY2Vu",
-            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5TdGFydENvbW11bml0eVZvaWNl",
-            "Q2hhdFJlc3BvbnNlIgASmQEKFkpvaW5Db21tdW5pdHlWb2ljZUNoYXQSPS5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuSm9pbkNvbW11bml0eVZv",
-            "aWNlQ2hhdFBheWxvYWQaPi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
-            "djIuSm9pbkNvbW11bml0eVZvaWNlQ2hhdFJlc3BvbnNlIgASvQEKIlJlcXVl",
-            "c3RUb1NwZWFrSW5Db21tdW5pdHlWb2ljZUNoYXQSSS5kZWNlbnRyYWxhbmQu",
-            "c29jaWFsX3NlcnZpY2UudjIuUmVxdWVzdFRvU3BlYWtJbkNvbW11bml0eVZv",
-            "aWNlQ2hhdFBheWxvYWQaSi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
-            "djIuUmVxdWVzdFRvU3BlYWtJbkNvbW11bml0eVZvaWNlQ2hhdFJlc3BvbnNl",
-            "IgASvQEKIlByb21vdGVTcGVha2VySW5Db21tdW5pdHlWb2ljZUNoYXQSSS5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUHJvbW90ZVNwZWFrZXJJ",
-            "bkNvbW11bml0eVZvaWNlQ2hhdFBheWxvYWQaSi5kZWNlbnRyYWxhbmQuc29j",
-            "aWFsX3NlcnZpY2UudjIuUHJvbW90ZVNwZWFrZXJJbkNvbW11bml0eVZvaWNl",
-            "Q2hhdFJlc3BvbnNlIgASugEKIURlbW90ZVNwZWFrZXJJbkNvbW11bml0eVZv",
-            "aWNlQ2hhdBJILmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5EZW1v",
-            "dGVTcGVha2VySW5Db21tdW5pdHlWb2ljZUNoYXRQYXlsb2FkGkkuZGVjZW50",
-            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkRlbW90ZVNwZWFrZXJJbkNvbW11",
-            "bml0eVZvaWNlQ2hhdFJlc3BvbnNlIgAStwEKIEtpY2tQbGF5ZXJGcm9tQ29t",
-            "bXVuaXR5Vm9pY2VDaGF0EkcuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNl",
-            "LnYyLktpY2tQbGF5ZXJGcm9tQ29tbXVuaXR5Vm9pY2VDaGF0UGF5bG9hZBpI",
-            "LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5LaWNrUGxheWVyRnJv",
-            "bUNvbW11bml0eVZvaWNlQ2hhdFJlc3BvbnNlIgASyQEKJlJlamVjdFNwZWFr",
-            "UmVxdWVzdEluQ29tbXVuaXR5Vm9pY2VDaGF0Ek0uZGVjZW50cmFsYW5kLnNv",
-            "Y2lhbF9zZXJ2aWNlLnYyLlJlamVjdFNwZWFrUmVxdWVzdEluQ29tbXVuaXR5",
-            "Vm9pY2VDaGF0UGF5bG9hZBpOLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vydmlj",
-            "ZS52Mi5SZWplY3RTcGVha1JlcXVlc3RJbkNvbW11bml0eVZvaWNlQ2hhdFJl",
-            "c3BvbnNlIgASlgEKFUVuZENvbW11bml0eVZvaWNlQ2hhdBI8LmRlY2VudHJh",
-            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5FbmRDb21tdW5pdHlWb2ljZUNoYXRQ",
-            "YXlsb2FkGj0uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkVuZENv",
-            "bW11bml0eVZvaWNlQ2hhdFJlc3BvbnNlIgASfAokU3Vic2NyaWJlVG9Db21t",
-            "dW5pdHlWb2ljZUNoYXRVcGRhdGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5",
-            "GjguZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkNvbW11bml0eVZv",
-            "aWNlQ2hhdFVwZGF0ZSIAMAFiBnByb3RvMw=="));
+            "ZQooTXV0ZVNwZWFrZXJGcm9tQ29tbXVuaXR5Vm9pY2VDaGF0UGF5bG9hZBIU",
+            "Cgxjb21tdW5pdHlfaWQYASABKAkSFAoMdXNlcl9hZGRyZXNzGAIgASgJEg0K",
+            "BW11dGVkGAMgASgIItIDCilNdXRlU3BlYWtlckZyb21Db21tdW5pdHlWb2lj",
+            "ZUNoYXRSZXNwb25zZRJaCgJvaxgBIAEoCzJMLmRlY2VudHJhbGFuZC5zb2Np",
+            "YWxfc2VydmljZS52Mi5NdXRlU3BlYWtlckZyb21Db21tdW5pdHlWb2ljZUNo",
+            "YXRSZXNwb25zZS5Pa0gAEkYKD2ZvcmJpZGRlbl9lcnJvchgCIAEoCzIrLmRl",
+            "Y2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS5Gb3JiaWRkZW5FcnJvckgAEkUK",
+            "D25vdF9mb3VuZF9lcnJvchgDIAEoCzIqLmRlY2VudHJhbGFuZC5zb2NpYWxf",
+            "c2VydmljZS5Ob3RGb3VuZEVycm9ySAASRgoPaW52YWxpZF9yZXF1ZXN0GAQg",
+            "ASgLMisuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLkludmFsaWRSZXF1",
+            "ZXN0SAASUQoVaW50ZXJuYWxfc2VydmVyX2Vycm9yGAUgASgLMjAuZGVjZW50",
+            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLkludGVybmFsU2VydmVyRXJyb3JIABoT",
+            "CgJPaxINCgVtdXRlZBgBIAEoCEIKCghyZXNwb25zZSI0ChxFbmRDb21tdW5p",
+            "dHlWb2ljZUNoYXRQYXlsb2FkEhQKDGNvbW11bml0eV9pZBgBIAEoCSK8Awod",
+            "RW5kQ29tbXVuaXR5Vm9pY2VDaGF0UmVzcG9uc2USTgoCb2sYASABKAsyQC5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuRW5kQ29tbXVuaXR5Vm9p",
+            "Y2VDaGF0UmVzcG9uc2UuT2tIABJGCg9pbnZhbGlkX3JlcXVlc3QYAiABKAsy",
+            "Ky5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UuSW52YWxpZFJlcXVlc3RI",
+            "ABJGCg9mb3JiaWRkZW5fZXJyb3IYAyABKAsyKy5kZWNlbnRyYWxhbmQuc29j",
+            "aWFsX3NlcnZpY2UuRm9yYmlkZGVuRXJyb3JIABJFCg9ub3RfZm91bmRfZXJy",
+            "b3IYBCABKAsyKi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UuTm90Rm91",
+            "bmRFcnJvckgAElEKFWludGVybmFsX3NlcnZlcl9lcnJvchgFIAEoCzIwLmRl",
+            "Y2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS5JbnRlcm5hbFNlcnZlckVycm9y",
+            "SAAaFQoCT2sSDwoHbWVzc2FnZRgBIAEoCUIKCghyZXNwb25zZSKyAgoYQ29t",
+            "bXVuaXR5Vm9pY2VDaGF0VXBkYXRlEhQKDGNvbW11bml0eV9pZBgBIAEoCRIS",
+            "CgpjcmVhdGVkX2F0GAIgASgDEkgKBnN0YXR1cxgDIAEoDjI4LmRlY2VudHJh",
+            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5Db21tdW5pdHlWb2ljZUNoYXRTdGF0",
+            "dXMSFQoIZW5kZWRfYXQYBCABKANIAIgBARIRCglwb3NpdGlvbnMYBSADKAkS",
+            "EQoJaXNfbWVtYmVyGAYgASgIEhYKDmNvbW11bml0eV9uYW1lGAcgASgJEhwK",
+            "D2NvbW11bml0eV9pbWFnZRgIIAEoCUgBiAEBEg4KBndvcmxkcxgJIAMoCUIL",
+            "CglfZW5kZWRfYXRCEgoQX2NvbW11bml0eV9pbWFnZSo3ChJDb25uZWN0aXZp",
+            "dHlTdGF0dXMSCgoGT05MSU5FEAASCwoHT0ZGTElORRABEggKBEFXQVkQAiqY",
+            "AQoQRnJpZW5kc2hpcFN0YXR1cxIQCgxSRVFVRVNUX1NFTlQQABIUChBSRVFV",
+            "RVNUX1JFQ0VJVkVEEAESDAoIQ0FOQ0VMRUQQAhIMCghBQ0NFUFRFRBADEgwK",
+            "CFJFSkVDVEVEEAQSCwoHREVMRVRFRBAFEgsKB0JMT0NLRUQQBhIICgROT05F",
+            "EAcSDgoKQkxPQ0tFRF9CWRAIKjkKHFByaXZhdGVNZXNzYWdlUHJpdmFjeVNl",
+            "dHRpbmcSBwoDQUxMEAASEAoMT05MWV9GUklFTkRTEAEqVAolQmxvY2tlZFVz",
+            "ZXJzTWVzc2FnZXNWaXNpYmlsaXR5U2V0dGluZxIRCg1TSE9XX01FU1NBR0VT",
+            "EAASGAoURE9fTk9UX1NIT1dfTUVTU0FHRVMQASqSAQoWUHJpdmF0ZVZvaWNl",
+            "Q2hhdFN0YXR1cxIYChRWT0lDRV9DSEFUX1JFUVVFU1RFRBAAEhcKE1ZPSUNF",
+            "X0NIQVRfQUNDRVBURUQQARIXChNWT0lDRV9DSEFUX1JFSkVDVEVEEAISFAoQ",
+            "Vk9JQ0VfQ0hBVF9FTkRFRBADEhYKElZPSUNFX0NIQVRfRVhQSVJFRBAEKlwK",
+            "GENvbW11bml0eVZvaWNlQ2hhdFN0YXR1cxIgChxDT01NVU5JVFlfVk9JQ0Vf",
+            "Q0hBVF9TVEFSVEVEEAASHgoaQ09NTVVOSVRZX1ZPSUNFX0NIQVRfRU5ERUQQ",
+            "ATKyJgoNU29jaWFsU2VydmljZRKDAQoKR2V0RnJpZW5kcxIxLmRlY2VudHJh",
+            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRGcmllbmRzUGF5bG9hZBpALmRl",
+            "Y2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5QYWdpbmF0ZWRGcmllbmRz",
+            "UHJvZmlsZXNSZXNwb25zZSIAEo8BChBHZXRNdXR1YWxGcmllbmRzEjcuZGVj",
+            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldE11dHVhbEZyaWVuZHNQ",
+            "YXlsb2FkGkAuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2lu",
+            "YXRlZEZyaWVuZHNQcm9maWxlc1Jlc3BvbnNlIgASowEKHEdldFBlbmRpbmdG",
+            "cmllbmRzaGlwUmVxdWVzdHMSPC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
+            "Y2UudjIuR2V0RnJpZW5kc2hpcFJlcXVlc3RzUGF5bG9hZBpDLmRlY2VudHJh",
+            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5QYWdpbmF0ZWRGcmllbmRzaGlwUmVx",
+            "dWVzdHNSZXNwb25zZSIAEqABChlHZXRTZW50RnJpZW5kc2hpcFJlcXVlc3Rz",
+            "EjwuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldEZyaWVuZHNo",
+            "aXBSZXF1ZXN0c1BheWxvYWQaQy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
+            "Y2UudjIuUGFnaW5hdGVkRnJpZW5kc2hpcFJlcXVlc3RzUmVzcG9uc2UiABKH",
+            "AQoQVXBzZXJ0RnJpZW5kc2hpcBI3LmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5VcHNlcnRGcmllbmRzaGlwUGF5bG9hZBo4LmRlY2VudHJhbGFu",
+            "ZC5zb2NpYWxfc2VydmljZS52Mi5VcHNlcnRGcmllbmRzaGlwUmVzcG9uc2Ui",
+            "ABJsChxTdWJzY3JpYmVUb0ZyaWVuZHNoaXBVcGRhdGVzEhYuZ29vZ2xlLnBy",
+            "b3RvYnVmLkVtcHR5GjAuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
+            "LkZyaWVuZHNoaXBVcGRhdGUiADABEpABChNHZXRGcmllbmRzaGlwU3RhdHVz",
+            "EjouZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldEZyaWVuZHNo",
+            "aXBTdGF0dXNQYXlsb2FkGjsuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNl",
+            "LnYyLkdldEZyaWVuZHNoaXBTdGF0dXNSZXNwb25zZSIAEnwKJFN1YnNjcmli",
+            "ZVRvRnJpZW5kQ29ubmVjdGl2aXR5VXBkYXRlcxIWLmdvb2dsZS5wcm90b2J1",
+            "Zi5FbXB0eRo4LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5Gcmll",
+            "bmRDb25uZWN0aXZpdHlVcGRhdGUiADABEnIKCUJsb2NrVXNlchIwLmRlY2Vu",
+            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5CbG9ja1VzZXJQYXlsb2FkGjEu",
+            "ZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkJsb2NrVXNlclJlc3Bv",
+            "bnNlIgASeAoLVW5ibG9ja1VzZXISMi5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
+            "cnZpY2UudjIuVW5ibG9ja1VzZXJQYXlsb2FkGjMuZGVjZW50cmFsYW5kLnNv",
+            "Y2lhbF9zZXJ2aWNlLnYyLlVuYmxvY2tVc2VyUmVzcG9uc2UiABKEAQoPR2V0",
+            "QmxvY2tlZFVzZXJzEjYuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
+            "LkdldEJsb2NrZWRVc2Vyc1BheWxvYWQaNy5kZWNlbnRyYWxhbmQuc29jaWFs",
+            "X3NlcnZpY2UudjIuR2V0QmxvY2tlZFVzZXJzUmVzcG9uc2UiABJoChFHZXRC",
+            "bG9ja2luZ1N0YXR1cxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRo5LmRlY2Vu",
+            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRCbG9ja2luZ1N0YXR1c1Jl",
+            "c3BvbnNlIgASYgoXU3Vic2NyaWJlVG9CbG9ja1VwZGF0ZXMSFi5nb29nbGUu",
+            "cHJvdG9idWYuRW1wdHkaKy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
+            "djIuQmxvY2tVcGRhdGUiADABEmgKEUdldFNvY2lhbFNldHRpbmdzEhYuZ29v",
+            "Z2xlLnByb3RvYnVmLkVtcHR5GjkuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2",
+            "aWNlLnYyLkdldFNvY2lhbFNldHRpbmdzUmVzcG9uc2UiABKTAQoUVXBzZXJ0",
+            "U29jaWFsU2V0dGluZ3MSOy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
+            "djIuVXBzZXJ0U29jaWFsU2V0dGluZ3NQYXlsb2FkGjwuZGVjZW50cmFsYW5k",
+            "LnNvY2lhbF9zZXJ2aWNlLnYyLlVwc2VydFNvY2lhbFNldHRpbmdzUmVzcG9u",
+            "c2UiABKlAQoaR2V0UHJpdmF0ZU1lc3NhZ2VzU2V0dGluZ3MSQS5kZWNlbnRy",
+            "YWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0UHJpdmF0ZU1lc3NhZ2VzU2V0",
+            "dGluZ3NQYXlsb2FkGkIuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
+            "LkdldFByaXZhdGVNZXNzYWdlc1NldHRpbmdzUmVzcG9uc2UiABKOAQotU3Vi",
+            "c2NyaWJlVG9Db21tdW5pdHlNZW1iZXJDb25uZWN0aXZpdHlVcGRhdGVzEhYu",
+            "Z29vZ2xlLnByb3RvYnVmLkVtcHR5GkEuZGVjZW50cmFsYW5kLnNvY2lhbF9z",
+            "ZXJ2aWNlLnYyLkNvbW11bml0eU1lbWJlckNvbm5lY3Rpdml0eVVwZGF0ZSIA",
+            "MAESlgEKFVN0YXJ0UHJpdmF0ZVZvaWNlQ2hhdBI8LmRlY2VudHJhbGFuZC5z",
+            "b2NpYWxfc2VydmljZS52Mi5TdGFydFByaXZhdGVWb2ljZUNoYXRQYXlsb2Fk",
+            "Gj0uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlN0YXJ0UHJpdmF0",
+            "ZVZvaWNlQ2hhdFJlc3BvbnNlIgASmQEKFkFjY2VwdFByaXZhdGVWb2ljZUNo",
+            "YXQSPS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuQWNjZXB0UHJp",
+            "dmF0ZVZvaWNlQ2hhdFBheWxvYWQaPi5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
+            "cnZpY2UudjIuQWNjZXB0UHJpdmF0ZVZvaWNlQ2hhdFJlc3BvbnNlIgASmQEK",
+            "FlJlamVjdFByaXZhdGVWb2ljZUNoYXQSPS5kZWNlbnRyYWxhbmQuc29jaWFs",
+            "X3NlcnZpY2UudjIuUmVqZWN0UHJpdmF0ZVZvaWNlQ2hhdFBheWxvYWQaPi5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUmVqZWN0UHJpdmF0ZVZv",
+            "aWNlQ2hhdFJlc3BvbnNlIgASkAEKE0VuZFByaXZhdGVWb2ljZUNoYXQSOi5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuRW5kUHJpdmF0ZVZvaWNl",
+            "Q2hhdFBheWxvYWQaOy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
+            "RW5kUHJpdmF0ZVZvaWNlQ2hhdFJlc3BvbnNlIgASigEKIkdldEluY29taW5n",
+            "UHJpdmF0ZVZvaWNlQ2hhdFJlcXVlc3QSFi5nb29nbGUucHJvdG9idWYuRW1w",
+            "dHkaSi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0SW5jb21p",
+            "bmdQcml2YXRlVm9pY2VDaGF0UmVxdWVzdFJlc3BvbnNlIgASeAoiU3Vic2Ny",
+            "aWJlVG9Qcml2YXRlVm9pY2VDaGF0VXBkYXRlcxIWLmdvb2dsZS5wcm90b2J1",
+            "Zi5FbXB0eRo2LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5Qcml2",
+            "YXRlVm9pY2VDaGF0VXBkYXRlIgAwARKcAQoXU3RhcnRDb21tdW5pdHlWb2lj",
+            "ZUNoYXQSPi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuU3RhcnRD",
+            "b21tdW5pdHlWb2ljZUNoYXRQYXlsb2FkGj8uZGVjZW50cmFsYW5kLnNvY2lh",
+            "bF9zZXJ2aWNlLnYyLlN0YXJ0Q29tbXVuaXR5Vm9pY2VDaGF0UmVzcG9uc2Ui",
+            "ABKZAQoWSm9pbkNvbW11bml0eVZvaWNlQ2hhdBI9LmRlY2VudHJhbGFuZC5z",
+            "b2NpYWxfc2VydmljZS52Mi5Kb2luQ29tbXVuaXR5Vm9pY2VDaGF0UGF5bG9h",
+            "ZBo+LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5Kb2luQ29tbXVu",
+            "aXR5Vm9pY2VDaGF0UmVzcG9uc2UiABK9AQoiUmVxdWVzdFRvU3BlYWtJbkNv",
+            "bW11bml0eVZvaWNlQ2hhdBJJLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vydmlj",
+            "ZS52Mi5SZXF1ZXN0VG9TcGVha0luQ29tbXVuaXR5Vm9pY2VDaGF0UGF5bG9h",
+            "ZBpKLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5SZXF1ZXN0VG9T",
+            "cGVha0luQ29tbXVuaXR5Vm9pY2VDaGF0UmVzcG9uc2UiABK9AQoiUHJvbW90",
+            "ZVNwZWFrZXJJbkNvbW11bml0eVZvaWNlQ2hhdBJJLmRlY2VudHJhbGFuZC5z",
+            "b2NpYWxfc2VydmljZS52Mi5Qcm9tb3RlU3BlYWtlckluQ29tbXVuaXR5Vm9p",
+            "Y2VDaGF0UGF5bG9hZBpKLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
+            "Mi5Qcm9tb3RlU3BlYWtlckluQ29tbXVuaXR5Vm9pY2VDaGF0UmVzcG9uc2Ui",
+            "ABK6AQohRGVtb3RlU3BlYWtlckluQ29tbXVuaXR5Vm9pY2VDaGF0EkguZGVj",
+            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkRlbW90ZVNwZWFrZXJJbkNv",
+            "bW11bml0eVZvaWNlQ2hhdFBheWxvYWQaSS5kZWNlbnRyYWxhbmQuc29jaWFs",
+            "X3NlcnZpY2UudjIuRGVtb3RlU3BlYWtlckluQ29tbXVuaXR5Vm9pY2VDaGF0",
+            "UmVzcG9uc2UiABK3AQogS2lja1BsYXllckZyb21Db21tdW5pdHlWb2ljZUNo",
+            "YXQSRy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuS2lja1BsYXll",
+            "ckZyb21Db21tdW5pdHlWb2ljZUNoYXRQYXlsb2FkGkguZGVjZW50cmFsYW5k",
+            "LnNvY2lhbF9zZXJ2aWNlLnYyLktpY2tQbGF5ZXJGcm9tQ29tbXVuaXR5Vm9p",
+            "Y2VDaGF0UmVzcG9uc2UiABLJAQomUmVqZWN0U3BlYWtSZXF1ZXN0SW5Db21t",
+            "dW5pdHlWb2ljZUNoYXQSTS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
+            "djIuUmVqZWN0U3BlYWtSZXF1ZXN0SW5Db21tdW5pdHlWb2ljZUNoYXRQYXls",
+            "b2FkGk4uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlJlamVjdFNw",
+            "ZWFrUmVxdWVzdEluQ29tbXVuaXR5Vm9pY2VDaGF0UmVzcG9uc2UiABKWAQoV",
+            "RW5kQ29tbXVuaXR5Vm9pY2VDaGF0EjwuZGVjZW50cmFsYW5kLnNvY2lhbF9z",
+            "ZXJ2aWNlLnYyLkVuZENvbW11bml0eVZvaWNlQ2hhdFBheWxvYWQaPS5kZWNl",
+            "bnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuRW5kQ29tbXVuaXR5Vm9pY2VD",
+            "aGF0UmVzcG9uc2UiABJ8CiRTdWJzY3JpYmVUb0NvbW11bml0eVZvaWNlQ2hh",
+            "dFVwZGF0ZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaOC5kZWNlbnRyYWxh",
+            "bmQuc29jaWFsX3NlcnZpY2UudjIuQ29tbXVuaXR5Vm9pY2VDaGF0VXBkYXRl",
+            "IgAwARK6AQohTXV0ZVNwZWFrZXJGcm9tQ29tbXVuaXR5Vm9pY2VDaGF0Ekgu",
+            "ZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLk11dGVTcGVha2VyRnJv",
+            "bUNvbW11bml0eVZvaWNlQ2hhdFBheWxvYWQaSS5kZWNlbnRyYWxhbmQuc29j",
+            "aWFsX3NlcnZpY2UudjIuTXV0ZVNwZWFrZXJGcm9tQ29tbXVuaXR5Vm9pY2VD",
+            "aGF0UmVzcG9uc2UiAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.EmptyReflection.Descriptor, global::Decentraland.SocialService.ErrorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.SocialService.V2.ConnectivityStatus), typeof(global::Decentraland.SocialService.V2.FriendshipStatus), typeof(global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting), typeof(global::Decentraland.SocialService.V2.BlockedUsersMessagesVisibilitySetting), typeof(global::Decentraland.SocialService.V2.PrivateVoiceChatStatus), typeof(global::Decentraland.SocialService.V2.CommunityVoiceChatStatus), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -564,6 +581,8 @@ namespace Decentraland.SocialService.V2 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.KickPlayerFromCommunityVoiceChatResponse), global::Decentraland.SocialService.V2.KickPlayerFromCommunityVoiceChatResponse.Parser, new[]{ "Ok", "InvalidRequest", "ForbiddenError", "NotFoundError", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.KickPlayerFromCommunityVoiceChatResponse.Types.Ok), global::Decentraland.SocialService.V2.KickPlayerFromCommunityVoiceChatResponse.Types.Ok.Parser, new[]{ "Message" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RejectSpeakRequestInCommunityVoiceChatPayload), global::Decentraland.SocialService.V2.RejectSpeakRequestInCommunityVoiceChatPayload.Parser, new[]{ "CommunityId", "UserAddress" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RejectSpeakRequestInCommunityVoiceChatResponse), global::Decentraland.SocialService.V2.RejectSpeakRequestInCommunityVoiceChatResponse.Parser, new[]{ "Ok", "InvalidRequest", "ForbiddenError", "NotFoundError", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RejectSpeakRequestInCommunityVoiceChatResponse.Types.Ok), global::Decentraland.SocialService.V2.RejectSpeakRequestInCommunityVoiceChatResponse.Types.Ok.Parser, new[]{ "Message" }, null, null, null, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatPayload), global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatPayload.Parser, new[]{ "CommunityId", "UserAddress", "Muted" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse), global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Parser, new[]{ "Ok", "ForbiddenError", "NotFoundError", "InvalidRequest", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok), global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok.Parser, new[]{ "Muted" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.EndCommunityVoiceChatPayload), global::Decentraland.SocialService.V2.EndCommunityVoiceChatPayload.Parser, new[]{ "CommunityId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.EndCommunityVoiceChatResponse), global::Decentraland.SocialService.V2.EndCommunityVoiceChatResponse.Parser, new[]{ "Ok", "InvalidRequest", "ForbiddenError", "NotFoundError", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.EndCommunityVoiceChatResponse.Types.Ok), global::Decentraland.SocialService.V2.EndCommunityVoiceChatResponse.Types.Ok.Parser, new[]{ "Message" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.CommunityVoiceChatUpdate), global::Decentraland.SocialService.V2.CommunityVoiceChatUpdate.Parser, new[]{ "CommunityId", "CreatedAt", "Status", "EndedAt", "Positions", "IsMember", "CommunityName", "CommunityImage", "Worlds" }, new[]{ "EndedAt", "CommunityImage" }, null, null, null)
@@ -24374,6 +24393,916 @@ namespace Decentraland.SocialService.V2 {
   }
 
   /// <summary>
+  /// Community Voice Chat Messages
+  /// </summary>
+  public sealed partial class MuteSpeakerFromCommunityVoiceChatPayload : pb::IMessage<MuteSpeakerFromCommunityVoiceChatPayload>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<MuteSpeakerFromCommunityVoiceChatPayload> _parser = new pb::MessageParser<MuteSpeakerFromCommunityVoiceChatPayload>(() => new MuteSpeakerFromCommunityVoiceChatPayload());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<MuteSpeakerFromCommunityVoiceChatPayload> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[59]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MuteSpeakerFromCommunityVoiceChatPayload() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MuteSpeakerFromCommunityVoiceChatPayload(MuteSpeakerFromCommunityVoiceChatPayload other) : this() {
+      communityId_ = other.communityId_;
+      userAddress_ = other.userAddress_;
+      muted_ = other.muted_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MuteSpeakerFromCommunityVoiceChatPayload Clone() {
+      return new MuteSpeakerFromCommunityVoiceChatPayload(this);
+    }
+
+    /// <summary>Field number for the "community_id" field.</summary>
+    public const int CommunityIdFieldNumber = 1;
+    private string communityId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string CommunityId {
+      get { return communityId_; }
+      set {
+        communityId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "user_address" field.</summary>
+    public const int UserAddressFieldNumber = 2;
+    private string userAddress_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string UserAddress {
+      get { return userAddress_; }
+      set {
+        userAddress_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "muted" field.</summary>
+    public const int MutedFieldNumber = 3;
+    private bool muted_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Muted {
+      get { return muted_; }
+      set {
+        muted_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as MuteSpeakerFromCommunityVoiceChatPayload);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(MuteSpeakerFromCommunityVoiceChatPayload other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (CommunityId != other.CommunityId) return false;
+      if (UserAddress != other.UserAddress) return false;
+      if (Muted != other.Muted) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (CommunityId.Length != 0) hash ^= CommunityId.GetHashCode();
+      if (UserAddress.Length != 0) hash ^= UserAddress.GetHashCode();
+      if (Muted != false) hash ^= Muted.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (CommunityId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(CommunityId);
+      }
+      if (UserAddress.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(UserAddress);
+      }
+      if (Muted != false) {
+        output.WriteRawTag(24);
+        output.WriteBool(Muted);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (CommunityId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(CommunityId);
+      }
+      if (UserAddress.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(UserAddress);
+      }
+      if (Muted != false) {
+        output.WriteRawTag(24);
+        output.WriteBool(Muted);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (CommunityId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(CommunityId);
+      }
+      if (UserAddress.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(UserAddress);
+      }
+      if (Muted != false) {
+        size += 1 + 1;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(MuteSpeakerFromCommunityVoiceChatPayload other) {
+      if (other == null) {
+        return;
+      }
+      if (other.CommunityId.Length != 0) {
+        CommunityId = other.CommunityId;
+      }
+      if (other.UserAddress.Length != 0) {
+        UserAddress = other.UserAddress;
+      }
+      if (other.Muted != false) {
+        Muted = other.Muted;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            CommunityId = input.ReadString();
+            break;
+          }
+          case 18: {
+            UserAddress = input.ReadString();
+            break;
+          }
+          case 24: {
+            Muted = input.ReadBool();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            CommunityId = input.ReadString();
+            break;
+          }
+          case 18: {
+            UserAddress = input.ReadString();
+            break;
+          }
+          case 24: {
+            Muted = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class MuteSpeakerFromCommunityVoiceChatResponse : pb::IMessage<MuteSpeakerFromCommunityVoiceChatResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<MuteSpeakerFromCommunityVoiceChatResponse> _parser = new pb::MessageParser<MuteSpeakerFromCommunityVoiceChatResponse>(() => new MuteSpeakerFromCommunityVoiceChatResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<MuteSpeakerFromCommunityVoiceChatResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[60]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MuteSpeakerFromCommunityVoiceChatResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MuteSpeakerFromCommunityVoiceChatResponse(MuteSpeakerFromCommunityVoiceChatResponse other) : this() {
+      switch (other.ResponseCase) {
+        case ResponseOneofCase.Ok:
+          Ok = other.Ok.Clone();
+          break;
+        case ResponseOneofCase.ForbiddenError:
+          ForbiddenError = other.ForbiddenError.Clone();
+          break;
+        case ResponseOneofCase.NotFoundError:
+          NotFoundError = other.NotFoundError.Clone();
+          break;
+        case ResponseOneofCase.InvalidRequest:
+          InvalidRequest = other.InvalidRequest.Clone();
+          break;
+        case ResponseOneofCase.InternalServerError:
+          InternalServerError = other.InternalServerError.Clone();
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MuteSpeakerFromCommunityVoiceChatResponse Clone() {
+      return new MuteSpeakerFromCommunityVoiceChatResponse(this);
+    }
+
+    /// <summary>Field number for the "ok" field.</summary>
+    public const int OkFieldNumber = 1;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok Ok {
+      get { return responseCase_ == ResponseOneofCase.Ok ? (global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.Ok;
+      }
+    }
+
+    /// <summary>Field number for the "forbidden_error" field.</summary>
+    public const int ForbiddenErrorFieldNumber = 2;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.ForbiddenError ForbiddenError {
+      get { return responseCase_ == ResponseOneofCase.ForbiddenError ? (global::Decentraland.SocialService.ForbiddenError) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.ForbiddenError;
+      }
+    }
+
+    /// <summary>Field number for the "not_found_error" field.</summary>
+    public const int NotFoundErrorFieldNumber = 3;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.NotFoundError NotFoundError {
+      get { return responseCase_ == ResponseOneofCase.NotFoundError ? (global::Decentraland.SocialService.NotFoundError) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.NotFoundError;
+      }
+    }
+
+    /// <summary>Field number for the "invalid_request" field.</summary>
+    public const int InvalidRequestFieldNumber = 4;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.InvalidRequest InvalidRequest {
+      get { return responseCase_ == ResponseOneofCase.InvalidRequest ? (global::Decentraland.SocialService.InvalidRequest) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.InvalidRequest;
+      }
+    }
+
+    /// <summary>Field number for the "internal_server_error" field.</summary>
+    public const int InternalServerErrorFieldNumber = 5;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.InternalServerError InternalServerError {
+      get { return responseCase_ == ResponseOneofCase.InternalServerError ? (global::Decentraland.SocialService.InternalServerError) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.InternalServerError;
+      }
+    }
+
+    private object response_;
+    /// <summary>Enum of possible cases for the "response" oneof.</summary>
+    public enum ResponseOneofCase {
+      None = 0,
+      Ok = 1,
+      ForbiddenError = 2,
+      NotFoundError = 3,
+      InvalidRequest = 4,
+      InternalServerError = 5,
+    }
+    private ResponseOneofCase responseCase_ = ResponseOneofCase.None;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResponseOneofCase ResponseCase {
+      get { return responseCase_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearResponse() {
+      responseCase_ = ResponseOneofCase.None;
+      response_ = null;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as MuteSpeakerFromCommunityVoiceChatResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(MuteSpeakerFromCommunityVoiceChatResponse other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(Ok, other.Ok)) return false;
+      if (!object.Equals(ForbiddenError, other.ForbiddenError)) return false;
+      if (!object.Equals(NotFoundError, other.NotFoundError)) return false;
+      if (!object.Equals(InvalidRequest, other.InvalidRequest)) return false;
+      if (!object.Equals(InternalServerError, other.InternalServerError)) return false;
+      if (ResponseCase != other.ResponseCase) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (responseCase_ == ResponseOneofCase.Ok) hash ^= Ok.GetHashCode();
+      if (responseCase_ == ResponseOneofCase.ForbiddenError) hash ^= ForbiddenError.GetHashCode();
+      if (responseCase_ == ResponseOneofCase.NotFoundError) hash ^= NotFoundError.GetHashCode();
+      if (responseCase_ == ResponseOneofCase.InvalidRequest) hash ^= InvalidRequest.GetHashCode();
+      if (responseCase_ == ResponseOneofCase.InternalServerError) hash ^= InternalServerError.GetHashCode();
+      hash ^= (int) responseCase_;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (responseCase_ == ResponseOneofCase.Ok) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Ok);
+      }
+      if (responseCase_ == ResponseOneofCase.ForbiddenError) {
+        output.WriteRawTag(18);
+        output.WriteMessage(ForbiddenError);
+      }
+      if (responseCase_ == ResponseOneofCase.NotFoundError) {
+        output.WriteRawTag(26);
+        output.WriteMessage(NotFoundError);
+      }
+      if (responseCase_ == ResponseOneofCase.InvalidRequest) {
+        output.WriteRawTag(34);
+        output.WriteMessage(InvalidRequest);
+      }
+      if (responseCase_ == ResponseOneofCase.InternalServerError) {
+        output.WriteRawTag(42);
+        output.WriteMessage(InternalServerError);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (responseCase_ == ResponseOneofCase.Ok) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Ok);
+      }
+      if (responseCase_ == ResponseOneofCase.ForbiddenError) {
+        output.WriteRawTag(18);
+        output.WriteMessage(ForbiddenError);
+      }
+      if (responseCase_ == ResponseOneofCase.NotFoundError) {
+        output.WriteRawTag(26);
+        output.WriteMessage(NotFoundError);
+      }
+      if (responseCase_ == ResponseOneofCase.InvalidRequest) {
+        output.WriteRawTag(34);
+        output.WriteMessage(InvalidRequest);
+      }
+      if (responseCase_ == ResponseOneofCase.InternalServerError) {
+        output.WriteRawTag(42);
+        output.WriteMessage(InternalServerError);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (responseCase_ == ResponseOneofCase.Ok) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Ok);
+      }
+      if (responseCase_ == ResponseOneofCase.ForbiddenError) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ForbiddenError);
+      }
+      if (responseCase_ == ResponseOneofCase.NotFoundError) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(NotFoundError);
+      }
+      if (responseCase_ == ResponseOneofCase.InvalidRequest) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(InvalidRequest);
+      }
+      if (responseCase_ == ResponseOneofCase.InternalServerError) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(InternalServerError);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(MuteSpeakerFromCommunityVoiceChatResponse other) {
+      if (other == null) {
+        return;
+      }
+      switch (other.ResponseCase) {
+        case ResponseOneofCase.Ok:
+          if (Ok == null) {
+            Ok = new global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok();
+          }
+          Ok.MergeFrom(other.Ok);
+          break;
+        case ResponseOneofCase.ForbiddenError:
+          if (ForbiddenError == null) {
+            ForbiddenError = new global::Decentraland.SocialService.ForbiddenError();
+          }
+          ForbiddenError.MergeFrom(other.ForbiddenError);
+          break;
+        case ResponseOneofCase.NotFoundError:
+          if (NotFoundError == null) {
+            NotFoundError = new global::Decentraland.SocialService.NotFoundError();
+          }
+          NotFoundError.MergeFrom(other.NotFoundError);
+          break;
+        case ResponseOneofCase.InvalidRequest:
+          if (InvalidRequest == null) {
+            InvalidRequest = new global::Decentraland.SocialService.InvalidRequest();
+          }
+          InvalidRequest.MergeFrom(other.InvalidRequest);
+          break;
+        case ResponseOneofCase.InternalServerError:
+          if (InternalServerError == null) {
+            InternalServerError = new global::Decentraland.SocialService.InternalServerError();
+          }
+          InternalServerError.MergeFrom(other.InternalServerError);
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok subBuilder = new global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok();
+            if (responseCase_ == ResponseOneofCase.Ok) {
+              subBuilder.MergeFrom(Ok);
+            }
+            input.ReadMessage(subBuilder);
+            Ok = subBuilder;
+            break;
+          }
+          case 18: {
+            global::Decentraland.SocialService.ForbiddenError subBuilder = new global::Decentraland.SocialService.ForbiddenError();
+            if (responseCase_ == ResponseOneofCase.ForbiddenError) {
+              subBuilder.MergeFrom(ForbiddenError);
+            }
+            input.ReadMessage(subBuilder);
+            ForbiddenError = subBuilder;
+            break;
+          }
+          case 26: {
+            global::Decentraland.SocialService.NotFoundError subBuilder = new global::Decentraland.SocialService.NotFoundError();
+            if (responseCase_ == ResponseOneofCase.NotFoundError) {
+              subBuilder.MergeFrom(NotFoundError);
+            }
+            input.ReadMessage(subBuilder);
+            NotFoundError = subBuilder;
+            break;
+          }
+          case 34: {
+            global::Decentraland.SocialService.InvalidRequest subBuilder = new global::Decentraland.SocialService.InvalidRequest();
+            if (responseCase_ == ResponseOneofCase.InvalidRequest) {
+              subBuilder.MergeFrom(InvalidRequest);
+            }
+            input.ReadMessage(subBuilder);
+            InvalidRequest = subBuilder;
+            break;
+          }
+          case 42: {
+            global::Decentraland.SocialService.InternalServerError subBuilder = new global::Decentraland.SocialService.InternalServerError();
+            if (responseCase_ == ResponseOneofCase.InternalServerError) {
+              subBuilder.MergeFrom(InternalServerError);
+            }
+            input.ReadMessage(subBuilder);
+            InternalServerError = subBuilder;
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok subBuilder = new global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Types.Ok();
+            if (responseCase_ == ResponseOneofCase.Ok) {
+              subBuilder.MergeFrom(Ok);
+            }
+            input.ReadMessage(subBuilder);
+            Ok = subBuilder;
+            break;
+          }
+          case 18: {
+            global::Decentraland.SocialService.ForbiddenError subBuilder = new global::Decentraland.SocialService.ForbiddenError();
+            if (responseCase_ == ResponseOneofCase.ForbiddenError) {
+              subBuilder.MergeFrom(ForbiddenError);
+            }
+            input.ReadMessage(subBuilder);
+            ForbiddenError = subBuilder;
+            break;
+          }
+          case 26: {
+            global::Decentraland.SocialService.NotFoundError subBuilder = new global::Decentraland.SocialService.NotFoundError();
+            if (responseCase_ == ResponseOneofCase.NotFoundError) {
+              subBuilder.MergeFrom(NotFoundError);
+            }
+            input.ReadMessage(subBuilder);
+            NotFoundError = subBuilder;
+            break;
+          }
+          case 34: {
+            global::Decentraland.SocialService.InvalidRequest subBuilder = new global::Decentraland.SocialService.InvalidRequest();
+            if (responseCase_ == ResponseOneofCase.InvalidRequest) {
+              subBuilder.MergeFrom(InvalidRequest);
+            }
+            input.ReadMessage(subBuilder);
+            InvalidRequest = subBuilder;
+            break;
+          }
+          case 42: {
+            global::Decentraland.SocialService.InternalServerError subBuilder = new global::Decentraland.SocialService.InternalServerError();
+            if (responseCase_ == ResponseOneofCase.InternalServerError) {
+              subBuilder.MergeFrom(InternalServerError);
+            }
+            input.ReadMessage(subBuilder);
+            InternalServerError = subBuilder;
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the MuteSpeakerFromCommunityVoiceChatResponse message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public sealed partial class Ok : pb::IMessage<Ok>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<Ok> _parser = new pb::MessageParser<Ok>(() => new Ok());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<Ok> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.MuteSpeakerFromCommunityVoiceChatResponse.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Ok() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Ok(Ok other) : this() {
+          muted_ = other.muted_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Ok Clone() {
+          return new Ok(this);
+        }
+
+        /// <summary>Field number for the "muted" field.</summary>
+        public const int MutedFieldNumber = 1;
+        private bool muted_;
+        /// <summary>
+        /// The resulting mute state
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Muted {
+          get { return muted_; }
+          set {
+            muted_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as Ok);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(Ok other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (Muted != other.Muted) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (Muted != false) hash ^= Muted.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (Muted != false) {
+            output.WriteRawTag(8);
+            output.WriteBool(Muted);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (Muted != false) {
+            output.WriteRawTag(8);
+            output.WriteBool(Muted);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (Muted != false) {
+            size += 1 + 1;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(Ok other) {
+          if (other == null) {
+            return;
+          }
+          if (other.Muted != false) {
+            Muted = other.Muted;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 8: {
+                Muted = input.ReadBool();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 8: {
+                Muted = input.ReadBool();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
+
+  }
+
+  /// <summary>
   /// End community voice chat (moderator/owner only)
   /// </summary>
   public sealed partial class EndCommunityVoiceChatPayload : pb::IMessage<EndCommunityVoiceChatPayload>
@@ -24390,7 +25319,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[59]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[61]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -24579,7 +25508,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[60]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[62]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -25224,7 +26153,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[61]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[63]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

@@ -26,52 +26,68 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CidkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdHdlZW4ucHJvdG8SG2Rl",
             "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxohZGVjZW50cmFsYW5kL2NvbW1v",
-            "bi92ZWN0b3JzLnByb3RvIpgDCgdQQlR3ZWVuEhAKCGR1cmF0aW9uGAEgASgC",
+            "bi92ZWN0b3JzLnByb3RvIoMFCgdQQlR3ZWVuEhAKCGR1cmF0aW9uGAEgASgC",
             "EkQKD2Vhc2luZ19mdW5jdGlvbhgCIAEoDjIrLmRlY2VudHJhbGFuZC5zZGsu",
             "Y29tcG9uZW50cy5FYXNpbmdGdW5jdGlvbhIxCgRtb3ZlGAMgASgLMiEuZGVj",
             "ZW50cmFsYW5kLnNkay5jb21wb25lbnRzLk1vdmVIABI1CgZyb3RhdGUYBCAB",
             "KAsyIy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUm90YXRlSAASMwoF",
             "c2NhbGUYBSABKAsyIi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuU2Nh",
             "bGVIABJACgx0ZXh0dXJlX21vdmUYCCABKAsyKC5kZWNlbnRyYWxhbmQuc2Rr",
-            "LmNvbXBvbmVudHMuVGV4dHVyZU1vdmVIABIUCgdwbGF5aW5nGAYgASgISAGI",
-            "AQESGQoMY3VycmVudF90aW1lGAcgASgCSAKIAQFCBgoEbW9kZUIKCghfcGxh",
-            "eWluZ0IPCg1fY3VycmVudF90aW1lIo4BCgRNb3ZlEisKBXN0YXJ0GAEgASgL",
-            "MhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEikKA2VuZBgCIAEoCzIc",
-            "LmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIbCg5mYWNlX2RpcmVjdGlv",
-            "bhgDIAEoCEgAiAEBQhEKD19mYWNlX2RpcmVjdGlvbiJmCgZSb3RhdGUSLgoF",
-            "c3RhcnQYASABKAsyHy5kZWNlbnRyYWxhbmQuY29tbW9uLlF1YXRlcm5pb24S",
-            "LAoDZW5kGAIgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9u",
-            "Il8KBVNjYWxlEisKBXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
-            "bi5WZWN0b3IzEikKA2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24u",
-            "VmVjdG9yMyLFAQoLVGV4dHVyZU1vdmUSKwoFc3RhcnQYASABKAsyHC5kZWNl",
-            "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjISKQoDZW5kGAIgASgLMhwuZGVjZW50",
-            "cmFsYW5kLmNvbW1vbi5WZWN0b3IyEkwKDW1vdmVtZW50X3R5cGUYAyABKA4y",
-            "MC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuVGV4dHVyZU1vdmVtZW50",
-            "VHlwZUgAiAEBQhAKDl9tb3ZlbWVudF90eXBlKjUKE1RleHR1cmVNb3ZlbWVu",
-            "dFR5cGUSDgoKVE1UX09GRlNFVBAAEg4KClRNVF9USUxJTkcQASrnBAoORWFz",
-            "aW5nRnVuY3Rpb24SDQoJRUZfTElORUFSEAASEQoNRUZfRUFTRUlOUVVBRBAB",
-            "EhIKDkVGX0VBU0VPVVRRVUFEEAISDwoLRUZfRUFTRVFVQUQQAxIRCg1FRl9F",
-            "QVNFSU5TSU5FEAQSEgoORUZfRUFTRU9VVFNJTkUQBRIPCgtFRl9FQVNFU0lO",
-            "RRAGEhEKDUVGX0VBU0VJTkVYUE8QBxISCg5FRl9FQVNFT1VURVhQTxAIEg8K",
-            "C0VGX0VBU0VFWFBPEAkSFAoQRUZfRUFTRUlORUxBU1RJQxAKEhUKEUVGX0VB",
-            "U0VPVVRFTEFTVElDEAsSEgoORUZfRUFTRUVMQVNUSUMQDBITCg9FRl9FQVNF",
-            "SU5CT1VOQ0UQDRIUChBFRl9FQVNFT1VUQk9VTkNFEA4SEQoNRUZfRUFTRUJP",
-            "VU5DRRAPEhIKDkVGX0VBU0VJTkNVQklDEBASEwoPRUZfRUFTRU9VVENVQklD",
-            "EBESEAoMRUZfRUFTRUNVQklDEBISEgoORUZfRUFTRUlOUVVBUlQQExITCg9F",
-            "Rl9FQVNFT1VUUVVBUlQQFBIQCgxFRl9FQVNFUVVBUlQQFRISCg5FRl9FQVNF",
-            "SU5RVUlOVBAWEhMKD0VGX0VBU0VPVVRRVUlOVBAXEhAKDEVGX0VBU0VRVUlO",
-            "VBAYEhEKDUVGX0VBU0VJTkNJUkMQGRISCg5FRl9FQVNFT1VUQ0lSQxAaEg8K",
-            "C0VGX0VBU0VDSVJDEBsSEQoNRUZfRUFTRUlOQkFDSxAcEhIKDkVGX0VBU0VP",
-            "VVRCQUNLEB0SDwoLRUZfRUFTRUJBQ0sQHkIUqgIRRENMLkVDU0NvbXBvbmVu",
-            "dHNiBnByb3RvMw=="));
+            "LmNvbXBvbmVudHMuVGV4dHVyZU1vdmVIABJKChFyb3RhdGVfY29udGludW91",
+            "cxgJIAEoCzItLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5Sb3RhdGVD",
+            "b250aW51b3VzSAASRgoPbW92ZV9jb250aW51b3VzGAogASgLMisuZGVjZW50",
+            "cmFsYW5kLnNkay5jb21wb25lbnRzLk1vdmVDb250aW51b3VzSAASVQoXdGV4",
+            "dHVyZV9tb3ZlX2NvbnRpbnVvdXMYCyABKAsyMi5kZWNlbnRyYWxhbmQuc2Rr",
+            "LmNvbXBvbmVudHMuVGV4dHVyZU1vdmVDb250aW51b3VzSAASFAoHcGxheWlu",
+            "ZxgGIAEoCEgBiAEBEhkKDGN1cnJlbnRfdGltZRgHIAEoAkgCiAEBQgYKBG1v",
+            "ZGVCCgoIX3BsYXlpbmdCDwoNX2N1cnJlbnRfdGltZSKOAQoETW92ZRIrCgVz",
+            "dGFydBgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIpCgNl",
+            "bmQYAiABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSGwoOZmFj",
+            "ZV9kaXJlY3Rpb24YAyABKAhIAIgBAUIRCg9fZmFjZV9kaXJlY3Rpb24iZgoG",
+            "Um90YXRlEi4KBXN0YXJ0GAEgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5R",
+            "dWF0ZXJuaW9uEiwKA2VuZBgCIAEoCzIfLmRlY2VudHJhbGFuZC5jb21tb24u",
+            "UXVhdGVybmlvbiJfCgVTY2FsZRIrCgVzdGFydBgBIAEoCzIcLmRlY2VudHJh",
+            "bGFuZC5jb21tb24uVmVjdG9yMxIpCgNlbmQYAiABKAsyHC5kZWNlbnRyYWxh",
+            "bmQuY29tbW9uLlZlY3RvcjMixQEKC1RleHR1cmVNb3ZlEisKBXN0YXJ0GAEg",
+            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IyEikKA2VuZBgCIAEo",
+            "CzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMhJMCg1tb3ZlbWVudF90",
+            "eXBlGAMgASgOMjAuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlRleHR1",
+            "cmVNb3ZlbWVudFR5cGVIAIgBAUIQCg5fbW92ZW1lbnRfdHlwZSJVChBSb3Rh",
+            "dGVDb250aW51b3VzEjIKCWRpcmVjdGlvbhgBIAEoCzIfLmRlY2VudHJhbGFu",
+            "ZC5jb21tb24uUXVhdGVybmlvbhINCgVzcGVlZBgCIAEoAiJQCg5Nb3ZlQ29u",
+            "dGludW91cxIvCglkaXJlY3Rpb24YASABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLlZlY3RvcjMSDQoFc3BlZWQYAiABKAIitwEKFVRleHR1cmVNb3ZlQ29u",
+            "dGludW91cxIvCglkaXJlY3Rpb24YASABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLlZlY3RvcjISDQoFc3BlZWQYAiABKAISTAoNbW92ZW1lbnRfdHlwZRgD",
+            "IAEoDjIwLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlTW92",
+            "ZW1lbnRUeXBlSACIAQFCEAoOX21vdmVtZW50X3R5cGUqNQoTVGV4dHVyZU1v",
+            "dmVtZW50VHlwZRIOCgpUTVRfT0ZGU0VUEAASDgoKVE1UX1RJTElORxABKucE",
+            "Cg5FYXNpbmdGdW5jdGlvbhINCglFRl9MSU5FQVIQABIRCg1FRl9FQVNFSU5R",
+            "VUFEEAESEgoORUZfRUFTRU9VVFFVQUQQAhIPCgtFRl9FQVNFUVVBRBADEhEK",
+            "DUVGX0VBU0VJTlNJTkUQBBISCg5FRl9FQVNFT1VUU0lORRAFEg8KC0VGX0VB",
+            "U0VTSU5FEAYSEQoNRUZfRUFTRUlORVhQTxAHEhIKDkVGX0VBU0VPVVRFWFBP",
+            "EAgSDwoLRUZfRUFTRUVYUE8QCRIUChBFRl9FQVNFSU5FTEFTVElDEAoSFQoR",
+            "RUZfRUFTRU9VVEVMQVNUSUMQCxISCg5FRl9FQVNFRUxBU1RJQxAMEhMKD0VG",
+            "X0VBU0VJTkJPVU5DRRANEhQKEEVGX0VBU0VPVVRCT1VOQ0UQDhIRCg1FRl9F",
+            "QVNFQk9VTkNFEA8SEgoORUZfRUFTRUlOQ1VCSUMQEBITCg9FRl9FQVNFT1VU",
+            "Q1VCSUMQERIQCgxFRl9FQVNFQ1VCSUMQEhISCg5FRl9FQVNFSU5RVUFSVBAT",
+            "EhMKD0VGX0VBU0VPVVRRVUFSVBAUEhAKDEVGX0VBU0VRVUFSVBAVEhIKDkVG",
+            "X0VBU0VJTlFVSU5UEBYSEwoPRUZfRUFTRU9VVFFVSU5UEBcSEAoMRUZfRUFT",
+            "RVFVSU5UEBgSEQoNRUZfRUFTRUlOQ0lSQxAZEhIKDkVGX0VBU0VPVVRDSVJD",
+            "EBoSDwoLRUZfRUFTRUNJUkMQGxIRCg1FRl9FQVNFSU5CQUNLEBwSEgoORUZf",
+            "RUFTRU9VVEJBQ0sQHRIPCgtFRl9FQVNFQkFDSxAeQhSqAhFEQ0wuRUNTQ29t",
+            "cG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureMovementType), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "RotateContinuous", "MoveContinuous", "TextureMoveContinuous", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Move), global::DCL.ECSComponents.Move.Parser, new[]{ "Start", "End", "FaceDirection" }, new[]{ "FaceDirection" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Rotate), global::DCL.ECSComponents.Rotate.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Scale), global::DCL.ECSComponents.Scale.Parser, new[]{ "Start", "End" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "MovementType" }, new[]{ "MovementType" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "MovementType" }, new[]{ "MovementType" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.RotateContinuous), global::DCL.ECSComponents.RotateContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.MoveContinuous), global::DCL.ECSComponents.MoveContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMoveContinuous), global::DCL.ECSComponents.TextureMoveContinuous.Parser, new[]{ "Direction", "Speed", "MovementType" }, new[]{ "MovementType" }, null, null, null)
           }));
     }
     #endregion
@@ -183,6 +199,15 @@ namespace DCL.ECSComponents {
         case ModeOneofCase.TextureMove:
           TextureMove = other.TextureMove.Clone();
           break;
+        case ModeOneofCase.RotateContinuous:
+          RotateContinuous = other.RotateContinuous.Clone();
+          break;
+        case ModeOneofCase.MoveContinuous:
+          MoveContinuous = other.MoveContinuous.Clone();
+          break;
+        case ModeOneofCase.TextureMoveContinuous:
+          TextureMoveContinuous = other.TextureMoveContinuous.Clone();
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -269,6 +294,42 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "rotate_continuous" field.</summary>
+    public const int RotateContinuousFieldNumber = 9;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.RotateContinuous RotateContinuous {
+      get { return modeCase_ == ModeOneofCase.RotateContinuous ? (global::DCL.ECSComponents.RotateContinuous) mode_ : null; }
+      set {
+        mode_ = value;
+        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.RotateContinuous;
+      }
+    }
+
+    /// <summary>Field number for the "move_continuous" field.</summary>
+    public const int MoveContinuousFieldNumber = 10;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.MoveContinuous MoveContinuous {
+      get { return modeCase_ == ModeOneofCase.MoveContinuous ? (global::DCL.ECSComponents.MoveContinuous) mode_ : null; }
+      set {
+        mode_ = value;
+        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.MoveContinuous;
+      }
+    }
+
+    /// <summary>Field number for the "texture_move_continuous" field.</summary>
+    public const int TextureMoveContinuousFieldNumber = 11;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.TextureMoveContinuous TextureMoveContinuous {
+      get { return modeCase_ == ModeOneofCase.TextureMoveContinuous ? (global::DCL.ECSComponents.TextureMoveContinuous) mode_ : null; }
+      set {
+        mode_ = value;
+        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.TextureMoveContinuous;
+      }
+    }
+
     /// <summary>Field number for the "playing" field.</summary>
     public const int PlayingFieldNumber = 6;
     private bool playing_;
@@ -333,6 +394,9 @@ namespace DCL.ECSComponents {
       Rotate = 4,
       Scale = 5,
       TextureMove = 8,
+      RotateContinuous = 9,
+      MoveContinuous = 10,
+      TextureMoveContinuous = 11,
     }
     private ModeOneofCase modeCase_ = ModeOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -369,6 +433,9 @@ namespace DCL.ECSComponents {
       if (!object.Equals(Rotate, other.Rotate)) return false;
       if (!object.Equals(Scale, other.Scale)) return false;
       if (!object.Equals(TextureMove, other.TextureMove)) return false;
+      if (!object.Equals(RotateContinuous, other.RotateContinuous)) return false;
+      if (!object.Equals(MoveContinuous, other.MoveContinuous)) return false;
+      if (!object.Equals(TextureMoveContinuous, other.TextureMoveContinuous)) return false;
       if (Playing != other.Playing) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(CurrentTime, other.CurrentTime)) return false;
       if (ModeCase != other.ModeCase) return false;
@@ -385,6 +452,9 @@ namespace DCL.ECSComponents {
       if (modeCase_ == ModeOneofCase.Rotate) hash ^= Rotate.GetHashCode();
       if (modeCase_ == ModeOneofCase.Scale) hash ^= Scale.GetHashCode();
       if (modeCase_ == ModeOneofCase.TextureMove) hash ^= TextureMove.GetHashCode();
+      if (modeCase_ == ModeOneofCase.RotateContinuous) hash ^= RotateContinuous.GetHashCode();
+      if (modeCase_ == ModeOneofCase.MoveContinuous) hash ^= MoveContinuous.GetHashCode();
+      if (modeCase_ == ModeOneofCase.TextureMoveContinuous) hash ^= TextureMoveContinuous.GetHashCode();
       if (HasPlaying) hash ^= Playing.GetHashCode();
       if (HasCurrentTime) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(CurrentTime);
       hash ^= (int) modeCase_;
@@ -438,6 +508,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(66);
         output.WriteMessage(TextureMove);
       }
+      if (modeCase_ == ModeOneofCase.RotateContinuous) {
+        output.WriteRawTag(74);
+        output.WriteMessage(RotateContinuous);
+      }
+      if (modeCase_ == ModeOneofCase.MoveContinuous) {
+        output.WriteRawTag(82);
+        output.WriteMessage(MoveContinuous);
+      }
+      if (modeCase_ == ModeOneofCase.TextureMoveContinuous) {
+        output.WriteRawTag(90);
+        output.WriteMessage(TextureMoveContinuous);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -480,6 +562,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(66);
         output.WriteMessage(TextureMove);
       }
+      if (modeCase_ == ModeOneofCase.RotateContinuous) {
+        output.WriteRawTag(74);
+        output.WriteMessage(RotateContinuous);
+      }
+      if (modeCase_ == ModeOneofCase.MoveContinuous) {
+        output.WriteRawTag(82);
+        output.WriteMessage(MoveContinuous);
+      }
+      if (modeCase_ == ModeOneofCase.TextureMoveContinuous) {
+        output.WriteRawTag(90);
+        output.WriteMessage(TextureMoveContinuous);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -507,6 +601,15 @@ namespace DCL.ECSComponents {
       }
       if (modeCase_ == ModeOneofCase.TextureMove) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(TextureMove);
+      }
+      if (modeCase_ == ModeOneofCase.RotateContinuous) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(RotateContinuous);
+      }
+      if (modeCase_ == ModeOneofCase.MoveContinuous) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(MoveContinuous);
+      }
+      if (modeCase_ == ModeOneofCase.TextureMoveContinuous) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(TextureMoveContinuous);
       }
       if (HasPlaying) {
         size += 1 + 1;
@@ -562,6 +665,24 @@ namespace DCL.ECSComponents {
             TextureMove = new global::DCL.ECSComponents.TextureMove();
           }
           TextureMove.MergeFrom(other.TextureMove);
+          break;
+        case ModeOneofCase.RotateContinuous:
+          if (RotateContinuous == null) {
+            RotateContinuous = new global::DCL.ECSComponents.RotateContinuous();
+          }
+          RotateContinuous.MergeFrom(other.RotateContinuous);
+          break;
+        case ModeOneofCase.MoveContinuous:
+          if (MoveContinuous == null) {
+            MoveContinuous = new global::DCL.ECSComponents.MoveContinuous();
+          }
+          MoveContinuous.MergeFrom(other.MoveContinuous);
+          break;
+        case ModeOneofCase.TextureMoveContinuous:
+          if (TextureMoveContinuous == null) {
+            TextureMoveContinuous = new global::DCL.ECSComponents.TextureMoveContinuous();
+          }
+          TextureMoveContinuous.MergeFrom(other.TextureMoveContinuous);
           break;
       }
 
@@ -632,6 +753,33 @@ namespace DCL.ECSComponents {
             TextureMove = subBuilder;
             break;
           }
+          case 74: {
+            global::DCL.ECSComponents.RotateContinuous subBuilder = new global::DCL.ECSComponents.RotateContinuous();
+            if (modeCase_ == ModeOneofCase.RotateContinuous) {
+              subBuilder.MergeFrom(RotateContinuous);
+            }
+            input.ReadMessage(subBuilder);
+            RotateContinuous = subBuilder;
+            break;
+          }
+          case 82: {
+            global::DCL.ECSComponents.MoveContinuous subBuilder = new global::DCL.ECSComponents.MoveContinuous();
+            if (modeCase_ == ModeOneofCase.MoveContinuous) {
+              subBuilder.MergeFrom(MoveContinuous);
+            }
+            input.ReadMessage(subBuilder);
+            MoveContinuous = subBuilder;
+            break;
+          }
+          case 90: {
+            global::DCL.ECSComponents.TextureMoveContinuous subBuilder = new global::DCL.ECSComponents.TextureMoveContinuous();
+            if (modeCase_ == ModeOneofCase.TextureMoveContinuous) {
+              subBuilder.MergeFrom(TextureMoveContinuous);
+            }
+            input.ReadMessage(subBuilder);
+            TextureMoveContinuous = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -697,6 +845,33 @@ namespace DCL.ECSComponents {
             }
             input.ReadMessage(subBuilder);
             TextureMove = subBuilder;
+            break;
+          }
+          case 74: {
+            global::DCL.ECSComponents.RotateContinuous subBuilder = new global::DCL.ECSComponents.RotateContinuous();
+            if (modeCase_ == ModeOneofCase.RotateContinuous) {
+              subBuilder.MergeFrom(RotateContinuous);
+            }
+            input.ReadMessage(subBuilder);
+            RotateContinuous = subBuilder;
+            break;
+          }
+          case 82: {
+            global::DCL.ECSComponents.MoveContinuous subBuilder = new global::DCL.ECSComponents.MoveContinuous();
+            if (modeCase_ == ModeOneofCase.MoveContinuous) {
+              subBuilder.MergeFrom(MoveContinuous);
+            }
+            input.ReadMessage(subBuilder);
+            MoveContinuous = subBuilder;
+            break;
+          }
+          case 90: {
+            global::DCL.ECSComponents.TextureMoveContinuous subBuilder = new global::DCL.ECSComponents.TextureMoveContinuous();
+            if (modeCase_ == ModeOneofCase.TextureMoveContinuous) {
+              subBuilder.MergeFrom(TextureMoveContinuous);
+            }
+            input.ReadMessage(subBuilder);
+            TextureMoveContinuous = subBuilder;
             break;
           }
         }
@@ -1780,6 +1955,766 @@ namespace DCL.ECSComponents {
               End = new global::Decentraland.Common.Vector2();
             }
             input.ReadMessage(End);
+            break;
+          }
+          case 24: {
+            MovementType = (global::DCL.ECSComponents.TextureMovementType) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class RotateContinuous : pb::IMessage<RotateContinuous>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<RotateContinuous> _parser = new pb::MessageParser<RotateContinuous>(() => new RotateContinuous());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<RotateContinuous> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::DCL.ECSComponents.TweenReflection.Descriptor.MessageTypes[5]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public RotateContinuous() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public RotateContinuous(RotateContinuous other) : this() {
+      direction_ = other.direction_ != null ? other.direction_.Clone() : null;
+      speed_ = other.speed_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public RotateContinuous Clone() {
+      return new RotateContinuous(this);
+    }
+
+    /// <summary>Field number for the "direction" field.</summary>
+    public const int DirectionFieldNumber = 1;
+    private global::Decentraland.Common.Quaternion direction_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Quaternion Direction {
+      get { return direction_; }
+      set {
+        direction_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "speed" field.</summary>
+    public const int SpeedFieldNumber = 2;
+    private float speed_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Speed {
+      get { return speed_; }
+      set {
+        speed_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as RotateContinuous);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(RotateContinuous other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(Direction, other.Direction)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (direction_ != null) hash ^= Direction.GetHashCode();
+      if (Speed != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (direction_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Direction);
+      }
+      if (Speed != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Speed);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (direction_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Direction);
+      }
+      if (Speed != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Speed);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (direction_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Direction);
+      }
+      if (Speed != 0F) {
+        size += 1 + 4;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(RotateContinuous other) {
+      if (other == null) {
+        return;
+      }
+      if (other.direction_ != null) {
+        if (direction_ == null) {
+          Direction = new global::Decentraland.Common.Quaternion();
+        }
+        Direction.MergeFrom(other.Direction);
+      }
+      if (other.Speed != 0F) {
+        Speed = other.Speed;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            if (direction_ == null) {
+              Direction = new global::Decentraland.Common.Quaternion();
+            }
+            input.ReadMessage(Direction);
+            break;
+          }
+          case 21: {
+            Speed = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            if (direction_ == null) {
+              Direction = new global::Decentraland.Common.Quaternion();
+            }
+            input.ReadMessage(Direction);
+            break;
+          }
+          case 21: {
+            Speed = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class MoveContinuous : pb::IMessage<MoveContinuous>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<MoveContinuous> _parser = new pb::MessageParser<MoveContinuous>(() => new MoveContinuous());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<MoveContinuous> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::DCL.ECSComponents.TweenReflection.Descriptor.MessageTypes[6]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MoveContinuous() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MoveContinuous(MoveContinuous other) : this() {
+      direction_ = other.direction_ != null ? other.direction_.Clone() : null;
+      speed_ = other.speed_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public MoveContinuous Clone() {
+      return new MoveContinuous(this);
+    }
+
+    /// <summary>Field number for the "direction" field.</summary>
+    public const int DirectionFieldNumber = 1;
+    private global::Decentraland.Common.Vector3 direction_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector3 Direction {
+      get { return direction_; }
+      set {
+        direction_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "speed" field.</summary>
+    public const int SpeedFieldNumber = 2;
+    private float speed_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Speed {
+      get { return speed_; }
+      set {
+        speed_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as MoveContinuous);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(MoveContinuous other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(Direction, other.Direction)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (direction_ != null) hash ^= Direction.GetHashCode();
+      if (Speed != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (direction_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Direction);
+      }
+      if (Speed != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Speed);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (direction_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Direction);
+      }
+      if (Speed != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Speed);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (direction_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Direction);
+      }
+      if (Speed != 0F) {
+        size += 1 + 4;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(MoveContinuous other) {
+      if (other == null) {
+        return;
+      }
+      if (other.direction_ != null) {
+        if (direction_ == null) {
+          Direction = new global::Decentraland.Common.Vector3();
+        }
+        Direction.MergeFrom(other.Direction);
+      }
+      if (other.Speed != 0F) {
+        Speed = other.Speed;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            if (direction_ == null) {
+              Direction = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(Direction);
+            break;
+          }
+          case 21: {
+            Speed = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            if (direction_ == null) {
+              Direction = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(Direction);
+            break;
+          }
+          case 21: {
+            Speed = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class TextureMoveContinuous : pb::IMessage<TextureMoveContinuous>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TextureMoveContinuous> _parser = new pb::MessageParser<TextureMoveContinuous>(() => new TextureMoveContinuous());
+    private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TextureMoveContinuous> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::DCL.ECSComponents.TweenReflection.Descriptor.MessageTypes[7]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TextureMoveContinuous() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TextureMoveContinuous(TextureMoveContinuous other) : this() {
+      _hasBits0 = other._hasBits0;
+      direction_ = other.direction_ != null ? other.direction_.Clone() : null;
+      speed_ = other.speed_;
+      movementType_ = other.movementType_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TextureMoveContinuous Clone() {
+      return new TextureMoveContinuous(this);
+    }
+
+    /// <summary>Field number for the "direction" field.</summary>
+    public const int DirectionFieldNumber = 1;
+    private global::Decentraland.Common.Vector2 direction_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector2 Direction {
+      get { return direction_; }
+      set {
+        direction_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "speed" field.</summary>
+    public const int SpeedFieldNumber = 2;
+    private float speed_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Speed {
+      get { return speed_; }
+      set {
+        speed_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "movement_type" field.</summary>
+    public const int MovementTypeFieldNumber = 3;
+    private global::DCL.ECSComponents.TextureMovementType movementType_;
+    /// <summary>
+    /// default = TextureMovementType.TMT_OFFSET
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.TextureMovementType MovementType {
+      get { if ((_hasBits0 & 1) != 0) { return movementType_; } else { return global::DCL.ECSComponents.TextureMovementType.TmtOffset; } }
+      set {
+        _hasBits0 |= 1;
+        movementType_ = value;
+      }
+    }
+    /// <summary>Gets whether the "movement_type" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMovementType {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "movement_type" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMovementType() {
+      _hasBits0 &= ~1;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TextureMoveContinuous);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TextureMoveContinuous other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(Direction, other.Direction)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+      if (MovementType != other.MovementType) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (direction_ != null) hash ^= Direction.GetHashCode();
+      if (Speed != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+      if (HasMovementType) hash ^= MovementType.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (direction_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Direction);
+      }
+      if (Speed != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Speed);
+      }
+      if (HasMovementType) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) MovementType);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (direction_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Direction);
+      }
+      if (Speed != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Speed);
+      }
+      if (HasMovementType) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) MovementType);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (direction_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Direction);
+      }
+      if (Speed != 0F) {
+        size += 1 + 4;
+      }
+      if (HasMovementType) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) MovementType);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TextureMoveContinuous other) {
+      if (other == null) {
+        return;
+      }
+      if (other.direction_ != null) {
+        if (direction_ == null) {
+          Direction = new global::Decentraland.Common.Vector2();
+        }
+        Direction.MergeFrom(other.Direction);
+      }
+      if (other.Speed != 0F) {
+        Speed = other.Speed;
+      }
+      if (other.HasMovementType) {
+        MovementType = other.MovementType;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            if (direction_ == null) {
+              Direction = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(Direction);
+            break;
+          }
+          case 21: {
+            Speed = input.ReadFloat();
+            break;
+          }
+          case 24: {
+            MovementType = (global::DCL.ECSComponents.TextureMovementType) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            if (direction_ == null) {
+              Direction = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(Direction);
+            break;
+          }
+          case 21: {
+            Speed = input.ReadFloat();
             break;
           }
           case 24: {
