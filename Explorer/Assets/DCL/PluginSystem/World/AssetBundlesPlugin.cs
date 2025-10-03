@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.World
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
 
-            PrematureAssetBundleRequestSystem.InjectToWorld(ref builder);
+            EarlyAssetBundleRequestSystem.InjectToWorld(ref builder);
             ResolveInitialSceneStateSystem.InjectToWorld(ref builder, gltfContainerAssetsCache);
         }
 

@@ -27,6 +27,13 @@ namespace DCL.RealmNavigation
             [LoadingStage.Completed] = 1f
         };
 
+        private static readonly HashSet<LoadingStage> NonLoadingScreenStages = new()
+        {
+            LoadingStage.Completed,
+            LoadingStage.Init,
+            LoadingStage.AuthenticationScreenShowing,
+        };
+
 
         public enum LoadingStage : byte
         {
@@ -55,12 +62,12 @@ namespace DCL.RealmNavigation
             return PROGRESS[stage];
         }
 
-        public bool IsLoadingScreenOn() =>
-            !CurrentStage.Value.Equals(LoadingStage.Completed);
-
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
         {
             AssetState.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
         }
+
+        public bool IsLoadingScreenOn() =>
+            !NonLoadingScreenStages.Contains(CurrentStage.Value);
     }
 }

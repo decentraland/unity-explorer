@@ -15,11 +15,11 @@ namespace DefaultNamespace
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
-    public partial class PrematureAssetBundleRequestSystem : BaseUnityLoopSystem
+    public partial class EarlyAssetBundleRequestSystem : BaseUnityLoopSystem
     {
         private bool requestDone;
 
-        public PrematureAssetBundleRequestSystem(World world) : base(world)
+        public EarlyAssetBundleRequestSystem(World world) : base(world)
         {
         }
 
@@ -31,14 +31,14 @@ namespace DefaultNamespace
                     GetAssetBundleIntention.FromHash("GP_staticscene_LZMA_StaticSceneDescriptor"),
                     PartitionComponent.TOP_PRIORITY);
                 requestDone = true;
-                World.Create(promise, new PrematureDownloadComponent());
+                World.Create(promise, new EarlyDownloadComponentFlag());
                 UnityEngine.Debug.Log("JUANI THE PREMATURE REQUEST WAS DONE");
             }
             CompletePrematureDownloadsQuery(World);
         }
 
         [Query]
-        [All(typeof(PrematureDownloadComponent))]
+        [All(typeof(EarlyDownloadComponentFlag))]
         private void CompletePrematureDownloads(Entity entity, ref AssetBundlePromise promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
