@@ -83,7 +83,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.Timestamp = timestamp;
             emote.Payload.SocialEmoteOutcome = socialEmoteOutcomeIndex;
             emote.Payload.IsReacting = isReactingToSocialEmote;
-            emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress;
+            emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress?? string.Empty;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
