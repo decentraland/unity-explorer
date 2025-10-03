@@ -156,6 +156,7 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
+                mainUIView.ChatMainView,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
@@ -163,7 +164,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 eventBus,
                 smartWearableCache
-                ));
+            ));
         }
 
         public class SidebarSettings : IDCLPluginSettings
