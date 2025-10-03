@@ -43,7 +43,11 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
         public void InitializeStaticSceneAssetBundle(Entity entity, in SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (sceneDefinitionComponent.Definition.SupportInitialSceneState())
+            {
+                UnityEngine.Debug.Log($"JUANI TESTING INITIAL SCENE STARTED {UnityEngine.Time.frameCount}");
                 World.Add(entity, InitialSceneStateDescriptor.CreateSupported(World, assetsCache));
+
+            }
             else
                 World.Add(entity, InitialSceneStateDescriptor.CreateUnsupported(sceneDefinitionComponent.Definition.id));
         }
@@ -56,6 +60,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
 
             if (staticSceneAssetBundle.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
+                UnityEngine.Debug.Log($"JUANI TESTING INITIAL SCENE COMPLETED {UnityEngine.Time.frameCount}");
                 staticSceneAssetBundle.AssetBundleData = Result;
                 if (Result.Succeeded )
                 {

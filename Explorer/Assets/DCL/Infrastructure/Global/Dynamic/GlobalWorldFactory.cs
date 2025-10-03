@@ -35,8 +35,10 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Roads.Systems;
 using DCL.SkyBox;
+using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -75,6 +77,7 @@ namespace Global.Dynamic
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly StartParcel startParcel;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -92,7 +95,8 @@ namespace Global.Dynamic
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
-            SceneLoadingLimit sceneLoadingLimit)
+            SceneLoadingLimit sceneLoadingLimit,
+            StartParcel startParcel)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -122,6 +126,7 @@ namespace Global.Dynamic
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.startParcel = startParcel;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
         }
@@ -193,6 +198,8 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
+
+            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
 
