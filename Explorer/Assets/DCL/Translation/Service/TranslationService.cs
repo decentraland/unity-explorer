@@ -286,7 +286,7 @@ namespace DCL.Translation.Service
                     MessageId = messageId, Error = ex.Message, Translation = translation
                 });
 
-                ReportHub.LogException(ex, $"TranslateInternalAsync Exception for {messageId}");
+                ReportHub.LogException(ex, ReportCategory.TRANSLATE);
             }
         }
 

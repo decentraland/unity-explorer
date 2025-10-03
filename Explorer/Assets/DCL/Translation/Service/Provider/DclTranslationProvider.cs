@@ -90,28 +90,19 @@ namespace DCL.Translation.Service
 
             ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatRequest(translateUrl, "application/json;", requestBody));
 
-            try
-            {
-                var commonArgs = new CommonArguments(
-                    url: URLAddress.FromString(translateUrl),
-                    retryPolicy: RetryPolicy.WithRetries(settings.MaxRetries),
-                    timeout: (int)settings.TranslationTimeoutSeconds
-                );
+            var commonArgs = new CommonArguments(
+                url: URLAddress.FromString(translateUrl),
+                retryPolicy: RetryPolicy.WithRetries(settings.MaxRetries),
+                timeout: (int)settings.TranslationTimeoutSeconds
+            );
 
-                var response = await webRequestController
-                    .PostAsync(commonArgs, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.TRANSLATE)
-                    .CreateFromJson<TranslationApiResponse>(WRJsonParser.Newtonsoft);
+            var response = await webRequestController
+                .PostAsync(commonArgs, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.TRANSLATE)
+                .CreateFromJson<TranslationApiResponse>(WRJsonParser.Newtonsoft);
 
-                ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
+            ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
 
-                return response;
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.TRANSLATE);
-                throw;
-            }
+            return response;
         }
 
         private LanguageCode ParseLanguageCode(string code)
