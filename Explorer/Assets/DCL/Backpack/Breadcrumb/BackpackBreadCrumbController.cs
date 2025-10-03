@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using DCL.UI;
 using Runtime.Wearables;
 using System;
@@ -15,7 +16,8 @@ namespace DCL.Backpack.Breadcrumb
         private readonly NftTypeIconSO categoryIcons;
         private readonly ColorPickerController colorPickerController;
 
-        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle, ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
+        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle,
+            ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -23,8 +25,7 @@ namespace DCL.Backpack.Breadcrumb
             this.categoryIcons = categoryIcons;
             colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
             colorPickerController.OnColorChanged += OnColorChanged;
-            eventBus.FilterCategoryEvent += OnFilterCategory;
-            eventBus.SearchEvent += OnSearch;
+            eventBus.FilterEvent += OnFilterEvent;
             eventBus.ChangeColorEvent += UpdateColorPickerColors;
 
             view.SearchButton.ExitButton.onClick.AddListener(OnExitSearch);
@@ -40,8 +41,7 @@ namespace DCL.Backpack.Breadcrumb
             view.FilterButton.ExitButton.onClick.RemoveAllListeners();
             view.AllButton.NavigateButton.onClick.RemoveAllListeners();
 
-            eventBus.FilterCategoryEvent -= OnFilterCategory;
-            eventBus.SearchEvent -= OnSearch;
+            eventBus.FilterEvent -= OnFilterEvent;
             eventBus.ChangeColorEvent -= UpdateColorPickerColors;
         }
 
@@ -58,17 +58,18 @@ namespace DCL.Backpack.Breadcrumb
         }
 
         private void OnExitSearch() =>
-            commandBus.SendCommand(new BackpackSearchCommand(""));
+            commandBus.SendCommand(new BackpackFilterCommand(null, null, string.Empty));
 
         private void OnExitFilter() =>
-            commandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+            commandBus.SendCommand(new BackpackFilterCommand(string.Empty, AvatarWearableCategoryEnum.Body, string.Empty));
 
         private void OnColorChanged(Color newColor, string category) =>
             commandBus.SendCommand(new BackpackChangeColorCommand(newColor, category));
 
-        private void OnSearch(string searchString)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if (string.IsNullOrEmpty(searchString))
+            // search
+            if (string.IsNullOrEmpty(searchText))
             {
                 view.SearchButton.gameObject.SetActive(false);
                 SetAllButtonColor(true);
@@ -76,14 +77,14 @@ namespace DCL.Backpack.Breadcrumb
             else
             {
                 view.SearchButton.gameObject.SetActive(true);
-                view.SearchButton.CategoryName.text = searchString;
+                view.SearchButton.CategoryName.text = searchText;
                 SetAllButtonColor(false);
             }
-        }
 
-        private void OnFilterCategory(string category)
-        {
-            colorPickerController.SetColorPickerStatus(category.ToLower());
+            // category
+            if (category != null)
+                colorPickerController.SetColorPickerStatus(category.ToLower());
+
             if (string.IsNullOrEmpty(category))
             {
                 view.FilterButton.gameObject.SetActive(false);

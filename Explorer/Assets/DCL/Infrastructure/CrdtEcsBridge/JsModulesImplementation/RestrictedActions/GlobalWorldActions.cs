@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
@@ -87,6 +88,8 @@ namespace CrdtEcsBridge.RestrictedActions
                 // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
                 if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
                     await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
+                else
+                    ReportHub.LogError(ReportCategory.EMOTE, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
             }
             else
             {

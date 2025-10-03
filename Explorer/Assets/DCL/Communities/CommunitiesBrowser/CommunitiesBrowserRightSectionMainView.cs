@@ -1,3 +1,4 @@
+using DCL.VoiceChat;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,10 +29,10 @@ namespace DCL.Communities.CommunitiesBrowser
             LoopGridScrollChanged?.Invoke();
         }
 
-        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
+        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService, ICommunityCallOrchestrator orchestrator)
         {
-            filteredCommunitiesView.SetDependencies(newThumbnailLoader, communitiesBrowserStateService);
-            streamingCommunitiesView.SetDependencies(newThumbnailLoader, communitiesBrowserStateService);
+            filteredCommunitiesView.SetDependencies(newThumbnailLoader, communitiesBrowserStateService, orchestrator);
+            streamingCommunitiesView.SetDependencies(newThumbnailLoader, communitiesBrowserStateService, orchestrator);
         }
 
         public void SetActiveView(CommunitiesViews activeView)
