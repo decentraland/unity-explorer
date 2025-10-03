@@ -158,7 +158,7 @@ namespace DCL.Chat.ChatCommands
         {
             nearbyUserStateService.Activate();
             currentChannelService.SetCurrentChannel(nearbyChannel, nearbyUserStateService);
-            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel } );
+            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel, FromInitialization = true} );
         }
     }
 }
