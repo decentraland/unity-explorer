@@ -6,6 +6,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
+using DefaultNamespace;
 using ECS.LifeCycle;
 using ECS.SceneLifeCycle.Systems.InitialSceneState;
 using ECS.StreamableLoading.AssetBundles;
@@ -79,6 +80,8 @@ namespace DCL.PluginSystem.World
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
+
+            PrematureAssetBundleRequestSystem.InjectToWorld(ref builder);
             ResolveInitialSceneStateSystem.InjectToWorld(ref builder, gltfContainerAssetsCache);
         }
 
