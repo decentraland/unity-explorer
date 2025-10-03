@@ -233,26 +233,26 @@ namespace DCL.AvatarRendering.Emotes.Play
             AnimationClip? avatarClip;
             string? armatureNameOverride = null;
 
-            if (emoteComponent.Metadata.IsSocialEmote)
+            if (emoteComponent.Metadata!.IsSocialEmote)
             {
                 if (emoteComponent.IsPlayingSocialEmoteOutcome)
                 {
                     if (emoteComponent.IsReactingToSocialEmote)
                     {
                         avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].OtherAvatarAnimation;
-                        isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Other!.loop;
+                        isLooping = emoteComponent.Metadata.socialEmoteData!.outcomes![emoteComponent.CurrentSocialEmoteOutcome].loop;
                         armatureNameOverride = "Armature_Other";
                     }
                     else
                     {
                         avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].LocalAvatarAnimation;
-                        isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature!.loop;
+                        isLooping = emoteComponent.Metadata.socialEmoteData!.outcomes![emoteComponent.CurrentSocialEmoteOutcome].loop;
                     }
                 }
                 else
                 {
                     avatarClip = emoteReferences.avatarClip;
-                    isLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature!.loop;
+                    isLooping = emoteComponent.Metadata.socialEmoteData!.startAnimation!.loop;
                 }
             }
             else
@@ -287,7 +287,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (propClip != null)
                     {
-                        isPropLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Prop!.loop;
+                        isPropLooping = emoteComponent.Metadata.emoteDataADR287!.outcomes![emoteComponent.CurrentSocialEmoteOutcome].loop;
                         propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.CurrentSocialEmoteOutcome].PropAnimationHash;
                     }
                 }
@@ -297,7 +297,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (propClip != null)
                     {
-                        isPropLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature_Prop!.loop;
+                        isPropLooping = emoteComponent.Metadata.socialEmoteData!.startAnimation!.Armature_Prop!.loop;
                         propClipHash = emoteReferences.propClipHash;
                     }
                 }
@@ -345,41 +345,41 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteMetadata.IsSocialEmote)
             {
-                outcomeClips = new EmoteReferences.EmoteOutcome[emoteMetadata.data.outcomes.Length]; // TODO: Make static List
+                outcomeClips = new EmoteReferences.EmoteOutcome[emoteMetadata.socialEmoteData!.outcomes!.Length]; // TODO: Make static List
 
                 foreach (AnimationClip animationClip in uniqueClips)
                 {
-                    if (emoteMetadata.emoteDataADR74.startAnimation != null &&
-                        emoteMetadata.emoteDataADR74.startAnimation.Armature != null &&
-                        animationClip.name == emoteMetadata.emoteDataADR74.startAnimation.Armature.animation)
+                    if (emoteMetadata.socialEmoteData.startAnimation != null &&
+                        emoteMetadata.socialEmoteData.startAnimation.Armature != null &&
+                        animationClip.name == emoteMetadata.socialEmoteData.startAnimation.Armature.animation)
                     {
                         avatarClip = animationClip;
                     }
-                    else if (emoteMetadata.emoteDataADR74.startAnimation != null &&
-                             emoteMetadata.emoteDataADR74.startAnimation.Armature_Prop != null &&
-                             animationClip.name == emoteMetadata.emoteDataADR74.startAnimation.Armature_Prop.animation)
+                    else if (emoteMetadata.socialEmoteData.startAnimation != null &&
+                             emoteMetadata.socialEmoteData.startAnimation.Armature_Prop != null &&
+                             animationClip.name == emoteMetadata.socialEmoteData.startAnimation.Armature_Prop.animation)
                     {
                         propClip = animationClip;
                         propClipHash = Animator.StringToHash(animationClip.name);
                     }
                     else // outcomes
                     {
-                        for (int i = 0; i < emoteMetadata.data.outcomes.Length; ++i)
+                        for (int i = 0; i < emoteMetadata.socialEmoteData.outcomes.Length; ++i)
                         {
-                            if (emoteMetadata.data.outcomes[i].clips.Armature_Other != null &&
-                                animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Other.animation)
+                            if (emoteMetadata.socialEmoteData.outcomes![i].clips!.Armature_Other != null &&
+                                animationClip.name == emoteMetadata.socialEmoteData.outcomes![i].clips!.Armature_Other!.animation)
                             {
                                 outcomeClips[i].OtherAvatarAnimation = animationClip;
                                 // In order to apply the animation to the "reacting" avatar, the name of the armature object in the clip must match the name in the avatar model
                                /* ReplaceBoundObjectNameInAnimationClip(animationClip, "Armature_Other", "Armature");*/
                             }
-                            else if (emoteMetadata.data.outcomes[i].clips.Armature != null &&
-                                     animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature.animation)
+                            else if (emoteMetadata.socialEmoteData.outcomes[i].clips!.Armature != null &&
+                                     animationClip.name == emoteMetadata.socialEmoteData.outcomes![i].clips!.Armature!.animation)
                             {
                                 outcomeClips[i].LocalAvatarAnimation = animationClip;
                             }
-                            else if (emoteMetadata.data.outcomes[i].clips.Armature_Prop != null &&
-                                     animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Prop.animation)
+                            else if (emoteMetadata.socialEmoteData.outcomes[i].clips!.Armature_Prop != null &&
+                                     animationClip.name == emoteMetadata.socialEmoteData.outcomes[i].clips!.Armature_Prop!.animation)
                             {
                                 outcomeClips[i].PropAnimation = animationClip;
                                 outcomeClips[i].PropAnimationHash = Animator.StringToHash(animationClip.name);

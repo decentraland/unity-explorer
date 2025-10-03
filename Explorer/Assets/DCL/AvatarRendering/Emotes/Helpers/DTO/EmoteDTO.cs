@@ -14,40 +14,53 @@ namespace DCL.AvatarRendering.Emotes
         public class EmoteOutcomeDTO
         {
             public string title;
+            public bool loop;
             public EmoteOutcomeClipsDTO? clips;
+            public string? audio;
         }
 
         [Serializable]
-        public class EmoteAnimationDTO
+        public class EmoteStartAnimationDTO
+        {
+            public bool loop;
+            public string animation;
+            public string? audio;
+        }
+
+
+        [Serializable]
+        public class EmoteOutcomeAnimationDTO
         {
             public string animation;
-            public bool loop;
         }
 
         [Serializable]
         public class EmoteOutcomeClipsDTO
         {
-            public EmoteAnimationDTO? Armature;
-            public EmoteAnimationDTO? Armature_Other;
-            public EmoteAnimationDTO? Armature_Prop;
+            public EmoteOutcomeAnimationDTO? Armature;
+            public EmoteOutcomeAnimationDTO? Armature_Other;
+            public EmoteOutcomeAnimationDTO? Armature_Prop;
         }
 
         [Serializable]
         public class EmoteStartClipsDTO
         {
-            public EmoteAnimationDTO? Armature;
-            public EmoteAnimationDTO? Armature_Prop;
+            public bool loop;
+            public EmoteStartAnimationDTO? Armature;
+            public EmoteStartAnimationDTO? Armature_Prop;
         }
 
         [Serializable]
         public class EmoteMetadataDto : MetadataBase
         {
-            public bool IsSocialEmote => emoteDataADR74.outcomes != null && emoteDataADR74.outcomes.Length > 0;
+            public bool IsSocialEmote => emoteDataADR287 != null;
 
             // emotes DTO fetched from builder-API use the normal 'data' property
             // emotes DTO fetched from realm use 'emoteDataADR74' property...
-            public Data emoteDataADR74;
-            public Data data
+            public Data? emoteDataADR74;
+            public EmoteDataADR287? emoteDataADR287;
+
+            public Data? data
             {
                 get => emoteDataADR74;
                 set
@@ -56,11 +69,26 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            public override DataBase AbstractData => emoteDataADR74;
+            public EmoteDataADR287? socialEmoteData
+            {
+                get => emoteDataADR287;
+                set
+                {
+                    emoteDataADR287 = value;
+                }
+            }
+
+            public override DataBase AbstractData => IsSocialEmote ? emoteDataADR287! : emoteDataADR74!;
+
+            [Serializable]
+            public class Data : DataBase
+            {
+                public bool loop;
+            }
 
             // Data structure extended in ADR-287 to support social emotes
             [Serializable]
-            public class Data : DataBase
+            public class EmoteDataADR287 : DataBase
             {
                 public bool loop;
                 public bool randomizeOutcomes;

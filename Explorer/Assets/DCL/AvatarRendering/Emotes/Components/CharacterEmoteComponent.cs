@@ -10,7 +10,7 @@ namespace DCL.AvatarRendering.Emotes
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
         public bool StopEmote;
-        public EmoteDTO.EmoteMetadataDto Metadata;
+        public EmoteDTO.EmoteMetadataDto? Metadata;
         public bool IsPlayingSocialEmoteOutcome;
         public int CurrentSocialEmoteOutcome;
         public bool IsReactingToSocialEmote;
@@ -28,6 +28,7 @@ namespace DCL.AvatarRendering.Emotes
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;
+            Metadata = null;
             IsPlayingSocialEmoteOutcome = false;
             CurrentSocialEmoteOutcome = -1;
             IsReactingToSocialEmote = false;

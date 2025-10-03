@@ -141,7 +141,60 @@ namespace DCL.AvatarRendering.Emotes
                 return;
 
             if (result.Succeeded)
-                emote.AudioAssetResults[bodyShape] = result;
+            {
+                if (emote.IsSocial)
+                {
+                    // Stores the audio clips of the outcomes
+                    string? outcomeAudioHash = null;
+
+                    for (int i = 0; i < emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length; ++i)
+                    {
+                        if (emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio != null)
+                        {
+                            string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
+                            string contentName = shape + "/" + emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio;
+
+                            for (int j = 0; j < emote.Model.Asset.content.Length; ++j)
+                            {
+                                if (string.Compare(emote.Model.Asset.content[j].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
+                                {
+                                    // Found the outcome sound in the content list, we can get the hash
+                                    outcomeAudioHash = emote.Model.Asset.content[j].hash;
+                                    break;
+                                }
+                            }
+
+                            // If the current result corresponds to the outcome at current position...
+                            if (result.Asset!.Asset.name.Contains(outcomeAudioHash!))
+                            {
+                                // This check is necessary because otherwise it will add more than one of each audio clip
+                                bool alreadyContainsAudio = false;
+
+                                for (int j = 0; j < emote.SocialEmoteOutcomeAudioAssetResults.Count; ++j)
+                                {
+                                    if (emote.SocialEmoteOutcomeAudioAssetResults[j].Asset!.Asset.name == result.Asset!.Asset.name)
+                                    {
+                                        alreadyContainsAudio = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!alreadyContainsAudio)
+                                {
+                                    emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
+                                }
+
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
+                        }
+                    }
+                }
+                else { emote.AudioAssetResults[bodyShape] = result; }
+            }
 
             World.Destroy(entity);
         }
