@@ -354,16 +354,18 @@ namespace DCL.Landscape
             var workingArea = new RectInt(minX, minY, maxX - minX, maxY - minY);
 
             // Seed distances at BLACK pixels (occupied parcels - leave them 0), propagate into WHITE (free parcels)
-            var dist = new int[src.Length];
+            var dist = new NativeArray<int>(src.Length, Allocator.Temp);
             int maxChamferDistance = ComputeChamferDistanceField(src, dist, textureWidth, workingArea);
 
             // Convert to byte values and write back
             (int floor, int maxSteps) = ApplyDistanceFieldMapping(src, dist, textureWidth, workingArea, maxChamferDistance);
+            dist.Dispose();
             return (floor, maxSteps);
         }
 
         // Core distance field algorithm - returns max chamfer distance
-        private static int ComputeChamferDistanceField(NativeArray<byte> src, int[] dist, int width, RectInt workingArea)
+        private static int ComputeChamferDistanceField(NativeArray<byte> src, NativeArray<int> dist,
+            int width, RectInt workingArea)
         {
             int n = src.Length;
 
@@ -434,7 +436,8 @@ namespace DCL.Landscape
         }
 
         // Convert chamfer distances to byte values and write to texture
-        private static (int, int) ApplyDistanceFieldMapping(NativeArray<byte> src, int[] dist, int width, RectInt area, int maxChamferDistance)
+        private static (int, int) ApplyDistanceFieldMapping(NativeArray<byte> src,
+            NativeArray<int> dist, int width, RectInt area, int maxChamferDistance)
         {
             // Convert chamfer distance to approximate pixel distance
             int maxPixelDistance = (maxChamferDistance / ORTH) - 1;
