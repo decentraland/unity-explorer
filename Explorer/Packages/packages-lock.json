@@ -481,11 +481,11 @@
       "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#feat/skybox-to-cubemap-probe",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a7c0293ec26eca13ab981c7eac757c9a8011124b"
+      "hash": "dd23d7ffc0deb432c8442979b60e40c1e2d3f007"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
