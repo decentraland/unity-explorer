@@ -13,6 +13,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -666,6 +667,17 @@ namespace Global.Dynamic
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
+            var chatPanelViewInstance = mainUIView.ChatMainView.ChatPanelView;
+
+            // Ignore buttons that would lead to the conflicting state
+            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)chatPanelViewInstance.transform,
+                chatPanelViewInstance.TitlebarView.CloseChatButton.transform,
+                chatPanelViewInstance.TitlebarView.CloseMemberListButton.transform,
+                chatPanelViewInstance.TitlebarView.OpenMemberListButton.transform,
+                chatPanelViewInstance.TitlebarView.BackFromMemberList.transform,
+                chatPanelViewInstance.InputView.inputField.transform,
+                mainUIView.SidebarView.unreadMessagesButton.transform);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -764,7 +776,8 @@ namespace Global.Dynamic
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
                     eventBus,
-                    chatSharedAreaEventBus),
+                    chatSharedAreaEventBus,
+                    chatClickDetectionService),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -927,7 +940,8 @@ namespace Global.Dynamic
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
-                        debugBuilder)
+                        debugBuilder,
+                        chatClickDetectionService)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

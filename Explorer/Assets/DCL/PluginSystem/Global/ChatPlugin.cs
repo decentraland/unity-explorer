@@ -83,11 +83,11 @@ namespace DCL.PluginSystem.Global
         private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService communityUserStateService;
-        private readonly Transform chatViewRectTransform;
         private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private readonly ChatClickDetectionService chatClickDetectionService;
 
         private CommandRegistry commandRegistry;
         private ChatPanelPresenter? chatPanelPresenter;
@@ -124,7 +124,8 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
             IEventBus eventBus,
-            ChatSharedAreaEventBus chatSharedAreaEventBus)
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            ChatClickDetectionService chatClickDetectionService)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -159,9 +160,9 @@ namespace DCL.PluginSystem.Global
             this.thumbnailCache = thumbnailCache;
             this.communitiesEventBus = communitiesEventBus;
             this.communityDataService = communityDataService;
-            this.chatViewRectTransform = chatViewRectTransform;
             this.eventBus = eventBus;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
+            this.chatClickDetectionService = chatClickDetectionService;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -219,15 +220,6 @@ namespace DCL.PluginSystem.Global
                 roomHub.ChatRoom());
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
-
-            // Ignore buttons that would lead to the conflicting state
-            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform,
-                chatViewRectTransform);
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);

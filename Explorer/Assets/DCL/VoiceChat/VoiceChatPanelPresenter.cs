@@ -1,3 +1,4 @@
+using DCL.Chat.ChatServices;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -14,6 +15,7 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelView view;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly ChatClickDetectionService chatClickDetectionService;
 
         private readonly PrivateVoiceChatController? privateVoiceChatController;
         private readonly CommunityVoiceChatController? communitiesVoiceChatController;
@@ -31,10 +33,12 @@ namespace DCL.VoiceChat
             VoiceChatRoomManager roomManager,
             IRoomHub roomHub,
             PlayerEntryView playerEntry,
-            ChatSharedAreaEventBus chatSharedAreaEventBus)
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            ChatClickDetectionService chatClickDetectionService)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.chatClickDetectionService = chatClickDetectionService;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
@@ -42,10 +46,14 @@ namespace DCL.VoiceChat
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 
+            eventSubscriptions.Add(chatClickDetectionService);
+
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(_ => OnPointerEnterChatArea()));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(_ => OnPointerExitChatArea()));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelGlobalClickEvent>(HandleGlobalClick));
+
+            chatClickDetectionService.OnClickInside += HandleClickInside;
+            chatClickDetectionService.OnClickOutside += HandleClickOutside;
         }
 
         private void OnPointerExitChatArea()
@@ -60,14 +68,17 @@ namespace DCL.VoiceChat
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent evt)
+        private void HandleGlobalClick(ChatSharedAreaEvents.ChatPanelGlobalClickEvent evt) =>
+            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
+
+        private void HandleClickInside()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent evt)
+        private void HandleClickOutside()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
 
@@ -80,6 +91,9 @@ namespace DCL.VoiceChat
             communitiesVoiceChatController?.Dispose();
             sceneVoiceChatController?.Dispose();
             voiceChatPanelResizeController?.Dispose();
+
+            chatClickDetectionService.OnClickInside -= HandleClickInside;
+            chatClickDetectionService.OnClickOutside -= HandleClickOutside;
 
             eventSubscriptions.Dispose();
         }
