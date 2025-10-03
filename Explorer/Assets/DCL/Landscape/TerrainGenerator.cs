@@ -107,14 +107,6 @@ namespace DCL.Landscape
         [Obsolete]
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled) { }
 
-        public bool Contains(Vector2Int parcel)
-        {
-            if (IsTerrainGenerated)
-                return TerrainModel.IsInsideBounds(parcel);
-
-            return true;
-        }
-
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
@@ -490,7 +482,7 @@ namespace DCL.Landscape
             return (minValue, maxPixelDistance);
         }
 
-        internal static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
+        public static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
             int occupancyMapSize, int parcelSize, int occupancyFloor, float maxHeight)
         {
             float occupancy;
@@ -529,10 +521,7 @@ namespace DCL.Landscape
             }
         }
 
-        public float GetHeight(float x, float z) =>
-            GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize, ParcelSize, OccupancyFloor, MaxHeight);
-
-        public static float GetHeight(float x, float z, int parcelSize,
+        internal static float GetHeight(float x, float z, int parcelSize,
             NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor, float maxHeight) =>
 
             // var parcel = (int2)floor(float2(x, z) / parcelSize);
