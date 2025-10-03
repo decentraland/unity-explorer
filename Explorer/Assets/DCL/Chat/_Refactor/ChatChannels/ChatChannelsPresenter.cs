@@ -72,13 +72,13 @@ namespace DCL.Chat
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
 
             this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
-            
+
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
             scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChatInitialized>(OnSystemChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
         }
@@ -196,9 +196,9 @@ namespace DCL.Chat
             AddChannelToView(evt.Channel);
         }
 
-        private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
+        private void OnSystemChannelSelected(ChatEvents.ChatInitialized evt)
         {
-            view.SelectConversation(evt.Channel.Id);
+            view.SelectConversation(evt.DefaultChannel.Id);
         }
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)

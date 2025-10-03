@@ -60,7 +60,7 @@ namespace DCL.Chat
 
         /// <summary>
         ///     Event:          ChannelSelectedEvent
-        ///     Triggered By:   SelectChannelCommand (on user click) or InitializeChatSystemCommand (on startup).
+        ///     Triggered By:   SelectChannelCommand (on user click).
         ///     When:           A user selects a channel from the list, or the system sets the default channel.
         ///     Subscribers:    - ChatChannelsPresenter: Highlights the selected channel in the UI.
         ///     - ChatMessageFeedPresenter: Clears old messages and loads the history for the new channel.
@@ -70,6 +70,17 @@ namespace DCL.Chat
         public struct ChannelSelectedEvent
         {
             public ChatChannel Channel;
+        }
+
+        /// <summary>
+        ///     Event:          ChatInitialized
+        ///     Triggered By:   InitializeChatSystemCommand (on startup).
+        ///     When:           The system sets the default channel.
+        ///     Subscribers:    - ChatChannelsPresenter: Highlights the selected channel in the UI.
+        /// </summary>
+        public struct ChatInitialized
+        {
+            public ChatChannel DefaultChannel;
         }
 
         /// <summary>
