@@ -60,7 +60,7 @@ namespace DCL.Chat
 
         /// <summary>
         ///     Event:          ChannelSelectedEvent
-        ///     Triggered By:   SelectChannelCommand (on user click).
+        ///     Triggered By:   SelectChannelCommand (on user click) or InitializeChatSystemCommand (on startup).
         ///     When:           A user selects a channel from the list, or the system sets the default channel.
         ///     Subscribers:    - ChatChannelsPresenter: Highlights the selected channel in the UI.
         ///     - ChatMessageFeedPresenter: Clears old messages and loads the history for the new channel.
