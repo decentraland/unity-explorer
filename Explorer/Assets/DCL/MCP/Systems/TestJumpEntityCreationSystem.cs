@@ -2,25 +2,31 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
+using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using UnityEngine;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.MCP.Systems
 {
-    public struct TestSceneCRDTEntity
+    public struct TestSceneCRDTEntity : IDirtyMarker
     {
-        public readonly CRDTEntity CRDTEntity;
-        public bool IsDirty;
+        public readonly CRDTEntity CRDTEntity { get; }
+        public bool IsDirty { get; set; }
 
-        public TestSceneCRDTEntity(CRDTEntity crdtEntity, bool isDirty)
+        public TestSceneCRDTEntity(CRDTEntity crdtEntity)
         {
             CRDTEntity = crdtEntity;
-            IsDirty = isDirty;
+            IsDirty = true;
         }
     }
 
@@ -33,86 +39,92 @@ namespace DCL.MCP.Systems
     [LogCategory(ReportCategory.DEBUG)]
     public partial class TestJumpEntityCreationSystem : BaseUnityLoopSystem
     {
-        private const int TEST_ENTITIES_FROM = 1000; // Начало диапазона для тестовых entity
-        private const int TEST_ENTITIES_TO = 1100; // Конец диапазона (100 тестовых entity)
+        private const int TEST_ENTITIES_FROM = 2000; // Начало диапазона для тестовых entity
+        private const int TEST_ENTITIES_TO = 3100; // Конец диапазона (100 тестовых entity)
 
         private readonly World globalWorld;
-        private readonly Entity globalPlayerEntity;
+        private readonly Arch.Core.Entity globalPlayerEntity;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly bool[] reservedEntities = new bool[TEST_ENTITIES_TO - TEST_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
         private bool hasJumped;
 
-        public TestJumpEntityCreationSystem(World world, World globalWorld, Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        public TestJumpEntityCreationSystem(World world, World globalWorld, Arch.Core.Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTransform> sdkTransformPool,
+            IComponentPool<PBTextShape> textShapePool) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.sdkTransformPool = sdkTransformPool;
+            this.textShapePool = textShapePool;
             ClearReservedEntities();
         }
 
         protected override void Update(float t)
         {
-            // Проверяем есть ли у игрока JumpInputComponent в Global World
             if (!globalWorld.Has<JumpInputComponent>(globalPlayerEntity))
                 return;
 
             ref JumpInputComponent jumpInput = ref globalWorld.Get<JumpInputComponent>(globalPlayerEntity);
 
-            // Проверяем нажата ли кнопка прыжка (аналогично PlayerMovementNetSendSystem)
             if (jumpInput.IsPressed && !hasJumped)
             {
                 hasJumped = true;
+
                 OnPlayerJumped();
+                CreateTestEntityComponentsQuery(World);
             }
-
-            // Сбрасываем флаг когда кнопка отпущена
-            if (!jumpInput.IsPressed) { hasJumped = false; }
-
-            // Обрабатываем создание/обновление компонентов для зарезервированных entity
-            CreateTestEntityComponentsQuery(World);
         }
 
         private void OnPlayerJumped()
         {
-            ReportHub.Log(ReportCategory.DEBUG, "[TestJumpEntityCreation] Player jumped! Creating test entity in scene...");
+            ReportHub.Log(ReportCategory.DEBUG, "[TestJumpEntityCreation] Player jumped");
 
-            // Резервируем ID для новой entity
-            int crdtEntityId = ReserveNextFreeEntity();
+            var testCRDTEntity = new CRDTEntity(ReserveNextFreeEntity());
 
-            if (crdtEntityId == -1)
+            SDKTransform? sdkTransform = sdkTransformPool.Get();
+            sdkTransform!.Position.Value = new Vector3(8, 4, 8);
+            sdkTransform.Rotation.Value = Quaternion.identity;
+            sdkTransform.Scale = new Vector3(1, 1, 1);
+            sdkTransform.ParentId = 0;
+            sdkTransform.IsDirty = true;
+
+            ecsToCRDTWriter.PutMessage<SDKTransform, (Vector3 Position, Vector3 Scale)>(static (sdkTransform, data) =>
             {
-                ReportHub.LogWarning(ReportCategory.DEBUG, "[TestJumpEntityCreation] All test entity slots are taken!");
-                return;
-            }
+                sdkTransform.Position.Value = data.Position;
+                sdkTransform.Scale = data.Scale;
+            }, testCRDTEntity, (new Vector3(8, 4, 8), new Vector3(1, 1, 1)));
 
-            var testCRDTEntity = new CRDTEntity(crdtEntityId);
+            PBTextShape? textShape = textShapePool.Get();
+            textShape!.Text = "Created from C#! Test Entity";
+            textShape.FontSize = 5;
+            textShape.FontAutoSize = false;
+            textShape.Height = 2;
+            textShape.Width = 4;
+            textShape.OutlineWidth = 0.1f;
+            textShape.OutlineColor = new Color3 { R = 0, G = 0, B = 1 };
+            textShape.TextColor = new Color4 { R = 1, G = 0, B = 0, A = 1 };
+            textShape.IsDirty = true;
 
-            ReportHub.Log(ReportCategory.DEBUG, $"[TestJumpEntityCreation] Creating entity with ID: {testCRDTEntity.Id}");
+            ecsToCRDTWriter.PutMessage<PBTextShape, (string Text, int FontSize)>(static (pbText, data) =>
+            {
+                pbText.Text = data.Text;
+                pbText.FontSize = data.FontSize;
+            }, testCRDTEntity, ("Created from C#! Test Entity", 5));
 
-            // Создаём entity в Scene World с маркер-компонентом
-            Entity sceneWorldEntity = this.World.Create();
-            World.Add(sceneWorldEntity, new TestSceneCRDTEntity(testCRDTEntity, true));
+            World.Create(testCRDTEntity, sdkTransform, textShape);
+
+            ReportHub.Log(ReportCategory.DEBUG,
+                $"[TestJumpEntityCreation] Added SDKTransform + PBTextShape to entity {testCRDTEntity.Id}");
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CreateTestEntityComponents(TestSceneCRDTEntity testEntity)
+        private void CreateTestEntityComponents(in Arch.Core.Entity entity, PBTextShape pbTextShape)
         {
-            if (!testEntity.IsDirty) return;
-
-            // Создаём PBSkyboxTime компонент с FixedTime = 0 и отправляем в JS сцену через CRDT
-            ecsToCRDTWriter.PutMessage<PBSkyboxTime, uint>
-            (
-                static (pbSkybox, fixedTime) => { pbSkybox.FixedTime = fixedTime; },
-                testEntity.CRDTEntity, 0
-            );
-
-            ReportHub.Log(ReportCategory.DEBUG,
-                $"[TestJumpEntityCreation] Successfully sent PBSkyboxTime (FixedTime=0) for entity {testEntity.CRDTEntity.Id}");
-
-            // Сбрасываем флаг dirty после отправки
-            testEntity.IsDirty = false;
+            // Debug.Log($"MCP: entity {entity.Id} with {pbTextShape.Text}");
         }
 
         private int ReserveNextFreeEntity()
