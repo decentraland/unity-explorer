@@ -297,9 +297,6 @@ MonoBehaviour:
   <LowerHandButton>k__BackingField: {fileID: 5347962801883064411}
   <UnMuteAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <MuteAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
-  <RaiseHandAudio>k__BackingField: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
-  <LowerHandAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <GenericButtonAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!222 &3731252311985573541
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -601,6 +598,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6455990636711801479}
     m_Modifications:
+    - target: {fileID: 1050971412028866962, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
     - target: {fileID: 1457460172092968088, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: m_SizeDelta.x
       value: 117
@@ -742,6 +743,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1050971412028866962, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 1457460172092968088, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: m_SizeDelta.x
       value: 102
@@ -963,6 +968,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: LeaveStageButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4905525173228196816, guid: 2eff578abbf904c1b9677b02a0dfeb9c, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 7322127418143455915, guid: 2eff578abbf904c1b9677b02a0dfeb9c, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1096,6 +1105,10 @@ PrefabInstance:
       propertyPath: m_PixelsPerUnitMultiplier
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 1050971412028866962, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 1457460172092968088, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: m_SizeDelta.x
       value: 105.17
@@ -1321,6 +1334,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1050971412028866962, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
     - target: {fileID: 1457460172092968088, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: m_SizeDelta.x
       value: 96
