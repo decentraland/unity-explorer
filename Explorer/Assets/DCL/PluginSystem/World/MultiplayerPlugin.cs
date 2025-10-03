@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using DCL.MCP.Systems;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
@@ -12,6 +13,15 @@ namespace DCL.PluginSystem.World
 {
     public class MultiplayerPlugin : IDCLWorldPluginWithoutSettings
     {
+        private readonly Arch.Core.World globalWorld;
+        private readonly Arch.Core.Entity globalPlayerEntity;
+
+        public MultiplayerPlugin(Arch.Core.World globalWorld, Arch.Core.Entity globalPlayerEntity)
+        {
+            this.globalWorld = globalWorld;
+            this.globalPlayerEntity = globalPlayerEntity;
+        }
+
         public void Dispose()
         {
             //ignore
@@ -24,6 +34,7 @@ namespace DCL.PluginSystem.World
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
+            TestJumpEntityCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.EcsToCRDTWriter);
 
             CleanUpAvatarPropagationComponentsSystem.InjectToWorld(ref builder);
         }
