@@ -120,12 +120,8 @@ namespace DCL.EmotesWheel
                 }
 
                 SetUpSlots(profile);
+                ListenToSlotsInput(DCLInput.Instance.EmoteWheel);
             }
-        }
-
-        protected override void OnViewShow()
-        {
-            ListenToSlotsInput(DCLInput.Instance.EmoteWheel);
         }
 
         protected override void OnViewClose()

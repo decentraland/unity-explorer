@@ -54,7 +54,9 @@ namespace DCL.EmotesWheel
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
-            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.5f,
+            // 0.05f make sure that graphic raycaster and emote emotes works, so emote can be played even when panel didn't
+            // open all the way.
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.05f,
                 cancellationToken: ct);
         }
 
