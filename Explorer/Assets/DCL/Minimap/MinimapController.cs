@@ -434,6 +434,7 @@ namespace DCL.Minimap
 
             showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
             ShowBannedTooltipAsync(showBannedTooltipCts.Token).Forget();
+            return;
 
             async UniTaskVoid ShowBannedTooltipAsync(CancellationToken ct)
             {
@@ -442,7 +443,7 @@ namespace DCL.Minimap
                 await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
                 viewInstance!.bannedTooltip.SetActive(false);
             }
-    }
+        }
 
         private void HideBannedMark()
         {
