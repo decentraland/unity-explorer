@@ -27,11 +27,14 @@ namespace DCL.AvatarRendering.Wearables
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize,
+            int pageNumber,
+            CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            bool smartWearablesOnly = false,
             string? name = null,
             List<IWearable>? results = null,
             CommonLoadingArguments? loadingArguments = null,
@@ -74,7 +77,17 @@ namespace DCL.AvatarRendering.Wearables
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded wearables
-                    await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, localBuffer,
+                    await source.GetAsync(
+                        pageSize,
+                        pageNumber,
+                        ct,
+                        sortingField,
+                        orderBy,
+                        category,
+                        collectionType,
+                        smartWearablesOnly,
+                        name,
+                        localBuffer,
                         loadingArguments: new CommonLoadingArguments(
                             builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
@@ -100,6 +113,7 @@ namespace DCL.AvatarRendering.Wearables
                         orderBy,
                         category,
                         collectionType,
+                        smartWearablesOnly,
                         name,
                         ownedPageBuffer
                     );
@@ -130,7 +144,7 @@ namespace DCL.AvatarRendering.Wearables
             }
 
             // Regular path without any "self-preview" element
-            return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results);
+            return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, smartWearablesOnly, name, results);
         }
 
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,

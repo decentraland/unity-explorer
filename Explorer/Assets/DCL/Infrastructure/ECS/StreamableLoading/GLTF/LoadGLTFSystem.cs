@@ -51,7 +51,8 @@ namespace ECS.StreamableLoading.GLTF
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
             // Cannot inject DownloadProvider from outside, because it needs the AcquiredBudget and PartitionComponent
-            IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, state.AcquiredBudget!);
+            using IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, state.AcquiredBudget!);
+            gltFastDownloadProvider.SetContentMappings(intention.ContentMappings);
 
             var gltfImport = new GltfImport(
                 downloadProvider: gltFastDownloadProvider,
@@ -67,33 +68,27 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);
-            gltFastDownloadProvider.Dispose();
+            if (!success) return new StreamableLoadingResult<GLTFData>(reportData, new Exception("The content to download couldn't be found"));
 
-            if (success)
-            {
-                // We do the GameObject instantiation in this system since 'InstantiateMainSceneAsync()' is async.
-                var rootContainer = new GameObject(gltfImport.GetSceneName(0));
+            // We do the GameObject instantiation in this system since 'InstantiateMainSceneAsync()' is async.
+            var rootContainer = new GameObject(gltfImport.GetSceneName(0));
 
-                // Let the upper layer decide what to do with the root
-                rootContainer.SetActive(false);
+            // Let the upper layer decide what to do with the root
+            rootContainer.SetActive(false);
 
-                await InstantiateGltfAsync(gltfImport, rootContainer.transform);
+            await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
-                // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
-                if (patchTexturesFormat)
-                    PatchTexturesForWearable(gltfImport);
+            // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
+            if (patchTexturesFormat)
+                PatchTexturesForWearable(gltfImport);
 
-                // Capture hierarchy paths for local scene development debugging
-                var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
+            // Capture hierarchy paths for local scene development debugging
+            var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
 
-                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
-                gltfData.AddReference();
-                return new StreamableLoadingResult<GLTFData>(gltfData);
-            }
+            var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
+            gltfData.AddReference();
+            return new StreamableLoadingResult<GLTFData>(gltfData);
 
-            return new StreamableLoadingResult<GLTFData>(
-                reportData,
-                new Exception("The content to download couldn't be found"));
         }
 
         private void PatchTexturesForWearable(GltfImport gltfImport)

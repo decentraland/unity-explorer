@@ -39,6 +39,10 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button skyboxButton { get; private set; }
         [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; }
 
+        [field: Header("Smart Wearables")]
+        [field: SerializeField] internal HoverableButton SmartWearablesButton { get; private set; }
+        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; }
+
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; }
         [field: SerializeField] internal ElementWithCloseArea sidebarSettingsWidget { get; private set; }

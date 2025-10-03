@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -39,6 +40,10 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         public void Dispose()
         {
             acquiredBudget.Release();
+        }
+
+        public virtual void SetContentMappings(ContentDefinition[] contentMappings)
+        {
         }
 
         protected static string GetUrl(Uri uri) =>

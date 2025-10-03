@@ -13,5 +13,6 @@ namespace DCL.UI.SharedSpaceManager
         Explore,
         MarketplaceCredits,
         Controls,
+        SmartWearables
     }
 }

@@ -17,12 +17,15 @@ using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.SmartWearables;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using Global.AppArgs;
+using MVC;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -58,6 +61,9 @@ namespace DCL.PluginSystem.Global
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly SmartWearableCache smartWearableCache;
+        private readonly IMVCManager mvcManager;
+
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -88,7 +94,9 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            SmartWearableCache smartWearableCache,
+            IMVCManager mvcManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -115,6 +123,8 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.thumbnailProvider = thumbnailProvider;
             this.profileChangesBus = profileChangesBus;
+            this.smartWearableCache = smartWearableCache;
+            this.mvcManager = mvcManager;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -179,12 +189,21 @@ namespace DCL.PluginSystem.Global
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
             var gridController = new BackpackGridController(
-                avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
-                rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                equippedWearables, sortController, pageButtonView, gridPool,
-                this.thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
-                wearablesProvider, webBrowser
-            );
+                avatarView.backpackGridView,
+                backpackCommandBus,
+                backpackEventBus,
+                rarityBackgroundsMapping,
+                rarityColorMappings,
+                categoryIconsMapping,
+                equippedWearables,
+                sortController,
+                pageButtonView,
+                gridPool,
+                thumbnailProvider,
+                wearablesProvider,
+                webBrowser,
+                smartWearableCache,
+                mvcManager, colorToggle, hairColors, eyesColors, bodyshapeColors);
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,

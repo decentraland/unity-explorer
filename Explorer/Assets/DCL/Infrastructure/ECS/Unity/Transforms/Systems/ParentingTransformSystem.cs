@@ -40,12 +40,16 @@ namespace ECS.Unity.Transforms.Systems
         [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
         private void DereferenceParentingOfDeletedEntity(in Entity entity, ref TransformComponent transformComponentToBeDeleted)
         {
-            var parentTransform = World!.TryGetRef<TransformComponent>(transformComponentToBeDeleted.Parent, out bool exists);
+            Entity parent = transformComponentToBeDeleted.Parent;
+
+            if (!World.IsAlive(parent)) return;
+
+            var parentTransform = World!.TryGetRef<TransformComponent>(parent, out bool exists);
 
             if (exists && parentTransform.Children.Remove(entity) == false)
                 ReportHub.LogError(
                     GetReportData(),
-                    $"Entity {entity} is not a child of its parent {transformComponentToBeDeleted.Parent}"
+                    $"Entity {entity} is not a child of its parent {parent}"
                 );
         }
 

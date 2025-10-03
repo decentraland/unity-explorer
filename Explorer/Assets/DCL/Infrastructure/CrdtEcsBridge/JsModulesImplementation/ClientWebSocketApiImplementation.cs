@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
+using SceneRuntime.ScenePermissions;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
 using System;
@@ -21,15 +22,17 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly IJsOperations jsOperations;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
 
         private readonly ConcurrentDictionary<int, WebSocketRental> webSockets = new ();
 
         private int nextId;
 
-        public ClientWebSocketApiImplementation(IInstancePoolsProvider instancePoolsProvider, IJsOperations jsOperations)
+        public ClientWebSocketApiImplementation(IInstancePoolsProvider instancePoolsProvider, IJsOperations jsOperations, IJsApiPermissionsProvider permissionsProvider)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.jsOperations = jsOperations;
+            this.permissionsProvider = permissionsProvider;
         }
 
         public void Dispose()
@@ -42,6 +45,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public int CreateWebSocket(string url)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return 0;
+
             Interlocked.Increment(ref nextId);
 
             webSockets[nextId] = new WebSocketRental(); // ClientWebSocket does not support reviving
@@ -50,11 +55,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask ConnectAsync(int websocketId, string url, CancellationToken ct)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
             await GetInstanceOrThrow(websocketId).WebSocket.ConnectAsync(new Uri(url), ct);
         }
 
         public async UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, ulong size, CancellationToken ct)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
             WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
 
             if (size == 0) return;
@@ -67,6 +76,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask SendTextAsync(int websocketId, string data, CancellationToken ct)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
             WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
 
             int utfBytesCount = Encoding.UTF8.GetByteCount(data);
@@ -81,6 +92,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask CloseAsync(int websocketId, CancellationToken ct)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
             if (!webSockets.TryGetValue(websocketId, out WebSocketRental webSocket))
                 throw new ArgumentException($"WebSocket with id {websocketId} does not exist.");
 
@@ -89,6 +102,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask<IWebSocketApi.ReceiveResponse> ReceiveAsync(int websocketId, CancellationToken ct)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return default(IWebSocketApi.ReceiveResponse);
+
             WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
 
             try
@@ -144,6 +159,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public IWebSocketApi.JSWebSocketState GetState(int webSocketId)
         {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return default(IWebSocketApi.JSWebSocketState);
+
             WebSocketRental dotNetState = GetInstanceOrThrow(webSocketId);
 
             switch (dotNetState.WebSocket.State)
