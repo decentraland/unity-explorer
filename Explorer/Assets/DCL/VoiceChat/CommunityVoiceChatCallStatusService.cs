@@ -95,7 +95,6 @@ namespace DCL.VoiceChat
         {
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
-            locallyStartedCommunityId = null;
         }
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
@@ -295,6 +294,7 @@ namespace DCL.VoiceChat
         public void UpdateStatus(VoiceChatStatus newStatus)
         {
             UpdateStatusAsync().Forget();
+            return;
 
             async UniTaskVoid UpdateStatusAsync()
             {
@@ -354,8 +354,8 @@ namespace DCL.VoiceChat
                 isMember = communityUpdate.IsMember,
                 positions = new List<string>(communityUpdate.Positions),
                 worlds = new List<string>(communityUpdate.Worlds),
-                participantCount = 0, // This would need to be populated from other sources
-                moderatorCount = 0, // This would need to be populated from other sources
+                participantCount = 0,
+                moderatorCount = 0,
             };
 
             // Update the active community voice chats dictionary

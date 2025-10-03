@@ -108,9 +108,9 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid ShowCommunityInChatAndJoinAsync()
             {
+                JoinCommunityVoiceChat(notification.CommunityId, true);
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(notification.CommunityId);
-                JoinCommunityVoiceChat(notification.CommunityId, true);
             }
 
         }
@@ -317,5 +317,9 @@ namespace DCL.VoiceChat
 
         public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId) =>
             communityVoiceChatCallStatusService.CommunityConnectionUpdates(communityId);
+
+        public bool IsEqualToCurrentStreamingCommunity(string communityId) =>
+            CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
+            string.Equals(communityVoiceChatCallStatusService.CallId.Value, communityId, StringComparison.InvariantCultureIgnoreCase);
     }
 }

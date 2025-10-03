@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -24,6 +25,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+            [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
             public string inviteOrRequestId;

@@ -56,6 +56,7 @@ namespace DCL.VoiceChat
         bool HasActiveVoiceChatCall(string communityId);
         IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId);
         bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
+        bool IsEqualToCurrentStreamingCommunity(string communityId);
     }
 
     public interface IVoiceChatOrchestratorActions
