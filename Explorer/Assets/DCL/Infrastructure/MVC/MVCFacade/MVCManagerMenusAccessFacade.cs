@@ -105,9 +105,9 @@ namespace MVC
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            Profile profile = await profileRepository.GetAsync(walletId, ct);
+            Profile? profile = await profileRepository.GetAsync(walletId, ct);
 
             if (profile == null)
                 return;
@@ -120,7 +120,7 @@ namespace MVC
             if (string.IsNullOrEmpty(participantWalletId)) return;
 
             Web3Address walletId = new Web3Address(participantWalletId);
-            Profile profile = await profileRepository.GetAsync(walletId, ct);
+            Profile? profile = await profileRepository.GetAsync(walletId, ct);
 
             if (profile == null) return;
 
