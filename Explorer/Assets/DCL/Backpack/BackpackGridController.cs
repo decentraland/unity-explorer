@@ -218,12 +218,18 @@ namespace DCL.Backpack
         {
             bool requiresAuthorization = await smartWearableCache.RequiresAuthorizationAsync(wearable, ct);
 
-            if (requiresAuthorization)
+            if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(wearable.DTO.Metadata.id))
             {
                 bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
-                if (!authorized) return;
+
+                if (authorized)
+                    smartWearableCache.AuthorizedSmartWearables.Add(wearable.DTO.Metadata.id);
+                else
+                    smartWearableCache.KilledPortableExperiences.Add(wearable.DTO.Metadata.id);
             }
 
+            // NOTICE we allow equipping the wearable even if not authorized
+            // Since we marked the PX as killed, the scene won't run anyway
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
         }
 

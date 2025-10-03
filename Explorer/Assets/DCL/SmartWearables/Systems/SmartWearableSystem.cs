@@ -130,7 +130,7 @@ namespace DCL.SmartWearables
             string id = wearable.DTO.Metadata.id;
 
             // If the user removes the wearable, we can allow reloading its scene the next time it is equipped
-            smartWearableCache.ForgetPortableExperienceKilled(id);
+            smartWearableCache.KilledPortableExperiences.Remove(id);
 
             if (pendingScenes.Remove(id, out var promise))
             {
@@ -293,17 +293,19 @@ namespace DCL.SmartWearables
                 // When equipping from the backpack, we request auth for any required permission
                 bool requiresAuthorization = authorization == AuthorizationAction.RequestAuthorization &&
                                              await smartWearableCache.RequiresWeb3APIAsync(wearable, CancellationToken.None);
-                if (requiresAuthorization)
+
+                if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(wearable.DTO.Metadata.id))
                 {
                     // Make sure the thumbnail is there
                     // Needed because we also run this flow on login, and thumbnails are loaded on-demand
                     await thumbnailProvider.GetAsync(wearable, ct);
 
                     bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
-                    if (!authorized)
+                    if (authorized)
+                        smartWearableCache.AuthorizedSmartWearables.Add(wearable.DTO.Metadata.id);
+                    else
                     {
-                        // Consider the PX killed so that it won't be reloaded when moving between scenes
-                        smartWearableCache.RememberPortableExperienceKilled(wearable.DTO.Metadata.id);
+                        smartWearableCache.KilledPortableExperiences.Add(wearable.DTO.Metadata.id);
                         continue;
                     }
                 }

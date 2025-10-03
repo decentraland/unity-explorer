@@ -54,7 +54,7 @@ namespace DCL.Chat.Commands
                 response = portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
             }
 
-            if (response.status) smartWearableCache.RememberPortableExperienceKilled(portableExperienceId);
+            if (response.status) smartWearableCache.KilledPortableExperiences.Add(portableExperienceId);
 
             return response.status ? $"🟢 The Portable Experience {portableExperienceId} has been Killed" : $"🔴 Error. Could not Kill the Portable Experience {portableExperienceId}";
         }

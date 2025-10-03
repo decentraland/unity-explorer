@@ -39,14 +39,20 @@ namespace Runtime.Wearables
         public bool CurrentSceneAllowsSmartWearables { get; set; }
 
         /// <summary>
-        ///     Contains the IDs of Smart Wearables equipped and that are currently running.
+        ///     Keeps track of wearables that were authorized during the current session.
+        ///     We won't ask the user again for authorization of those wearables.
         /// </summary>
-        public List<string> RunningSmartWearables { get; } = new ();
+        public HashSet<string> AuthorizedSmartWearables { get; } = new (StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Contains the IDs of Smart Wearables that were manually killed by the player.
+        ///     Contains the IDs of Smart Wearables equipped and that are currently running.
         /// </summary>
-        public List<string> KilledPortableExperiences { get; } = new ();
+        public HashSet<string> RunningSmartWearables { get; } = new (StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        ///     Contains the IDs of Smart Wearables that were manually killed by the user.
+        /// </summary>
+        public HashSet<string> KilledPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Whether the wearable is a smart wearable.
@@ -79,7 +85,7 @@ namespace Runtime.Wearables
         }
 
         public bool IsCached(IWearable wearable) =>
-            cache.ContainsKey(wearable.DTO.id!);
+            cache.ContainsKey(wearable.DTO.Metadata.id);
 
         public async UniTask<(ISceneContent, SceneMetadata)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
         {
@@ -87,22 +93,12 @@ namespace Runtime.Wearables
             return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
         }
 
-        public void RememberPortableExperienceKilled(string portableExperienceId)
-        {
-            KilledPortableExperiences.Add(portableExperienceId);
-        }
-
-        public void ForgetPortableExperienceKilled(string portableExperienceId)
-        {
-            KilledPortableExperiences.Remove(portableExperienceId);
-        }
-
         private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
         {
-            if (cache.TryGetValue(wearable.DTO.id!, out CacheItem item)) return item;
+            if (cache.TryGetValue(wearable.DTO.Metadata.id, out CacheItem item)) return item;
 
             item = new CacheItem();
-            cache.Add(wearable.DTO.id!, item);
+            cache.Add(wearable.DTO.Metadata.id, item);
 
             item.IsSmart = IsSmart(wearable);
             if (!item.IsSmart) return item;
