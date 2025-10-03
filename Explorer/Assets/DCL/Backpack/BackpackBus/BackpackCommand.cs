@@ -96,24 +96,16 @@ namespace DCL.Backpack.BackpackBus
         }
     }
 
-    public readonly struct BackpackFilterCategoryCommand
+    public readonly struct BackpackFilterCommand
     {
-        public readonly string Category;
-        public readonly AvatarWearableCategoryEnum CategoryEnum;
+        public readonly string? Category;
+        public readonly AvatarWearableCategoryEnum? CategoryEnum;
+        public readonly string? SearchText;
 
-        public BackpackFilterCategoryCommand(string category, AvatarWearableCategoryEnum categoryEnum = AvatarWearableCategoryEnum.Body)
+        public BackpackFilterCommand(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
             Category = category;
             CategoryEnum = categoryEnum;
-        }
-    }
-
-    public readonly struct BackpackSearchCommand
-    {
-        public readonly string SearchText;
-
-        public BackpackSearchCommand(string searchText)
-        {
             SearchText = searchText;
         }
     }
