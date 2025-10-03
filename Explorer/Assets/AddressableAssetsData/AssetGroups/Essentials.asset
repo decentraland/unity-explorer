@@ -215,6 +215,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c16a7c2b7d6b642a4822df00f8bd5f71
+    m_Address: Assets/DCL/ApplicationsGuards/ApplicationRealmGuard/ApplicationLoadErrorGuard.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7939fa59480e654a8537b6fc2f007e3
     m_Address: MediaPlayer
     m_ReadOnly: 0

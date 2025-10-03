@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.ApplicationMinimumSpecsGuard;
+using DCL.ApplicationsGuards.ApplicationLoadErrorGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
@@ -14,6 +15,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Global.Dynamic;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -79,13 +81,14 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject loadErrorPopupPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-
         private ProvidedInstance<SplashScreen> splashScreen;
+        private ApplicationLoadErrorGuardController? loadErrorGuardController;
 
         private void Awake()
         {
@@ -272,9 +275,8 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
-
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
+                await LoadStartingRealmAsync(ct);
+                await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -291,6 +293,32 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
+            }
+
+            return;
+
+            async UniTask LoadStartingRealmAsync(CancellationToken ct)
+            {
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ApplicationLoadErrorGuardController.Result.RESTART)
+                        await LoadStartingRealmAsync(ct);
+                    else
+                        throw;
+                }
+            }
+
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
+            {
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct); }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ApplicationLoadErrorGuardController.Result.RESTART)
+                        await LoadStartingRealmAsync(ct);
+                    else
+                        throw;
+                }
             }
         }
 
@@ -380,7 +408,7 @@ namespace Global.Dynamic
                 LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
 
             dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
-            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand(), ct).Forget();
             return true;
         }
 
@@ -561,6 +589,23 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(UntrustedRealmConfirmationController.IssueCommand(args), ct);
 
             return controller.SelectedOption;
+        }
+
+        private async UniTask<ApplicationLoadErrorGuardController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
+        {
+            ProvidedAsset<GameObject> prefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(loadErrorPopupPrefab, ct);
+            ControllerBase<ApplicationLoadErrorGuardView, ControllerNoData>.ViewFactoryMethod viewFactory = ApplicationLoadErrorGuardController.CreateLazily(prefab.Value.GetComponent<ApplicationLoadErrorGuardView>(), null);
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+
+            if (loadErrorGuardController == null)
+            {
+                loadErrorGuardController = new ApplicationLoadErrorGuardController(viewFactory);
+                mvcManager.RegisterController(loadErrorGuardController);
+            }
+
+            await mvcManager.ShowAsync(ApplicationLoadErrorGuardController.IssueCommand(), ct);
+
+            return loadErrorGuardController.SelectedOption;
         }
 
         [Serializable]

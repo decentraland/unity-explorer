@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
@@ -21,9 +22,9 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
- using DCL.RealmNavigation;
- using Global.AppArgs;
- using Unity.Mathematics;
+using DCL.RealmNavigation;
+using Global.AppArgs;
+using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
@@ -55,8 +56,6 @@ namespace Global.Dynamic
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
-
-
 
         public IRealmData RealmData => realmData;
 
@@ -115,6 +114,7 @@ namespace Global.Dynamic
 
             try { await UnloadCurrentRealmAsync(); }
             catch (ObjectDisposedException) { }
+            catch (Exception e) { throw new RealmChangeException("Cannot unload current realm", e); }
 
             await UniTask.SwitchToMainThread();
 
@@ -166,8 +166,8 @@ namespace Global.Dynamic
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}'. Redirecting to Genesis City!: {e.Message}");
-                SetRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct).Forget();
+                ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
+                throw new RealmChangeException($"Failed to connect to '{url}'", e);
             }
         }
 
