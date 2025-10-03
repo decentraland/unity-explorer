@@ -12,6 +12,7 @@ using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -61,7 +62,8 @@ namespace DCL.Chat.ChatCommands
             ISpriteCache spriteCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
-            GetParticipantProfilesCommand getParticipantProfilesCommand)
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -144,7 +146,8 @@ namespace DCL.Chat.ChatCommands
                 chatConfig,
                 profileRepositoryWrapper,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail);
+                GetCommunityThumbnail,
+                voiceChatOrchestrator);
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand, currentChannelService);
 

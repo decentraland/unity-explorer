@@ -267,7 +267,8 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand
+                getParticipantProfilesCommand,
+                voiceChatOrchestrator
             );
 
             pluginScope.Add(commandRegistry);

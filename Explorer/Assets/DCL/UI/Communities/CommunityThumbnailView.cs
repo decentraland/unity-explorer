@@ -90,7 +90,7 @@ namespace DCL.UI.Communities
         ///     NEW METHOD: Directly sets the thumbnail image from a pre-loaded sprite.
         /// </summary>
         /// <param name="sprite">The sprite to display.</param>
-        public void SetImage(Sprite sprite)
+        public void SetImage(Sprite? sprite)
         {
             // Cancel any async loading operations that might be in progress.
             cts.SafeCancelAndDispose();

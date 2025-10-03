@@ -88,7 +88,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
-            currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = communityCallOrchestrator.CommunityConnectionUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             await UniTask.Delay(1000, cancellationToken: communityCts.Token);
             //We subscribe to the call events but if the button cant be visible we don't need to check further.

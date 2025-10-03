@@ -42,7 +42,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 CommunityPrivacy privacy,
                 CommunityMemberRole role,
                 string ownerAddress,
-                int membersCount)
+                int membersCount,
+                GetCommunityResponse.VoiceChatStatus voiceChatStatus)
             {
                 this.id = id;
                 this.thumbnails = thumbnails;
@@ -52,6 +53,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 this.role = role;
                 this.ownerAddress = ownerAddress;
                 this.membersCount = membersCount;
+                this.voiceChatStatus = voiceChatStatus;
             }
 
             public void SetAsJoined(bool isJoined)

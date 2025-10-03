@@ -315,11 +315,11 @@ namespace DCL.VoiceChat
         public bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData) =>
             communityVoiceChatCallStatusService.TryGetActiveCommunityVoiceChat(communityId, out activeCommunityData);
 
+        public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId) =>
+            communityVoiceChatCallStatusService.CommunityConnectionUpdates(communityId);
+
         public bool IsEqualToCurrentStreamingCommunity(string communityId) =>
             CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
             string.Equals(communityVoiceChatCallStatusService.CallId.Value, communityId, StringComparison.InvariantCultureIgnoreCase);
-
-        public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId) =>
-            communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);
     }
 }
