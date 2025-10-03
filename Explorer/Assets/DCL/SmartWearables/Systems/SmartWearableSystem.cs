@@ -99,7 +99,7 @@ namespace DCL.SmartWearables
             bool isSmart = await smartWearableCache.IsSmartAsync(wearable, CancellationToken.None);
             if (!isSmart || !smartWearableCache.CurrentSceneAllowsSmartWearables) return;
 
-            string id = wearable.DTO.Metadata.id;
+            string id = SmartWearableCache.GetCacheId(wearable);
             if (pendingScenes.ContainsKey(id) ||
                 smartWearableCache.RunningSmartWearables.Contains(id) ||
                 // Do not load scenes that were manually killed
@@ -127,7 +127,7 @@ namespace DCL.SmartWearables
             bool isSmart = await smartWearableCache.IsSmartAsync(wearable, CancellationToken.None);
             if (!isSmart) return;
 
-            string id = wearable.DTO.Metadata.id;
+            string id = SmartWearableCache.GetCacheId(wearable);
 
             // If the user removes the wearable, we can allow reloading its scene the next time it is equipped
             smartWearableCache.KilledPortableExperiences.Remove(id);
@@ -143,8 +143,7 @@ namespace DCL.SmartWearables
             AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{metadata.name}'. Unloading scene...");
 
-            string ens = wearable.DTO.Metadata.id;
-            portableExperiencesController.UnloadPortableExperienceById(ens);
+            portableExperiencesController.UnloadPortableExperienceById(id);
         }
 
         protected override void Update(float t)
@@ -212,7 +211,7 @@ namespace DCL.SmartWearables
 
         private void AddPortableExperience(IWearable smartWearable, Entity scene)
         {
-            string id = smartWearable.DTO.Metadata.id;
+            string id = SmartWearableCache.GetCacheId(smartWearable);
 
             var metadata = new PortableExperienceMetadata
             {
@@ -289,12 +288,14 @@ namespace DCL.SmartWearables
                 URN shortUrn = urn.Shorten();
                 while (!wearableStorage.TryGetElement(shortUrn, out wearable) || wearable.IsLoading) await UniTask.Yield();
 
+                string id = SmartWearableCache.GetCacheId(wearable);
+
                 // By design at this point of the flow we only request auth if the wearable uses the Web3 API
                 // When equipping from the backpack, we request auth for any required permission
                 bool requiresAuthorization = authorization == AuthorizationAction.RequestAuthorization &&
                                              await smartWearableCache.RequiresWeb3APIAsync(wearable, CancellationToken.None);
 
-                if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(wearable.DTO.Metadata.id))
+                if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(id))
                 {
                     // Make sure the thumbnail is there
                     // Needed because we also run this flow on login, and thumbnails are loaded on-demand
@@ -302,10 +303,10 @@ namespace DCL.SmartWearables
 
                     bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
                     if (authorized)
-                        smartWearableCache.AuthorizedSmartWearables.Add(wearable.DTO.Metadata.id);
+                        smartWearableCache.AuthorizedSmartWearables.Add(id);
                     else
                     {
-                        smartWearableCache.KilledPortableExperiences.Add(wearable.DTO.Metadata.id);
+                        smartWearableCache.KilledPortableExperiences.Add(id);
                         continue;
                     }
                 }

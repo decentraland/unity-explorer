@@ -216,16 +216,17 @@ namespace DCL.Backpack
 
         private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, CancellationToken ct)
         {
+            string id = SmartWearableCache.GetCacheId(wearable);
             bool requiresAuthorization = await smartWearableCache.RequiresAuthorizationAsync(wearable, ct);
 
-            if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(wearable.DTO.Metadata.id))
+            if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(id))
             {
                 bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
 
                 if (authorized)
-                    smartWearableCache.AuthorizedSmartWearables.Add(wearable.DTO.Metadata.id);
+                    smartWearableCache.AuthorizedSmartWearables.Add(id);
                 else
-                    smartWearableCache.KilledPortableExperiences.Add(wearable.DTO.Metadata.id);
+                    smartWearableCache.KilledPortableExperiences.Add(id);
             }
 
             // NOTICE we allow equipping the wearable even if not authorized

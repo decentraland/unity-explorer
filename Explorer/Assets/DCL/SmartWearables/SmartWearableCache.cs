@@ -55,6 +55,14 @@ namespace Runtime.Wearables
         public HashSet<string> KilledPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
+        ///     Gets the ID the cache uses to identify wearables.
+        /// </summary>
+        public static string GetCacheId(IWearable wearable) =>
+            // To avoid confusion, since the DTO itself has an ID that is different from the ID in the metadata
+            // We want to always use this ID
+            wearable.DTO.Metadata.id;
+
+        /// <summary>
         ///     Whether the wearable is a smart wearable.
         /// </summary>
         public async Task<bool> IsSmartAsync(IWearable wearable, CancellationToken ct)
@@ -85,7 +93,7 @@ namespace Runtime.Wearables
         }
 
         public bool IsCached(IWearable wearable) =>
-            cache.ContainsKey(wearable.DTO.Metadata.id);
+            cache.ContainsKey(GetCacheId(wearable));
 
         public async UniTask<(ISceneContent, SceneMetadata)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
         {
@@ -95,10 +103,11 @@ namespace Runtime.Wearables
 
         private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
         {
-            if (cache.TryGetValue(wearable.DTO.Metadata.id, out CacheItem item)) return item;
+            string id = GetCacheId(wearable);
+            if (cache.TryGetValue(id, out CacheItem item)) return item;
 
             item = new CacheItem();
-            cache.Add(wearable.DTO.Metadata.id, item);
+            cache.Add(id, item);
 
             item.IsSmart = IsSmart(wearable);
             if (!item.IsSmart) return item;

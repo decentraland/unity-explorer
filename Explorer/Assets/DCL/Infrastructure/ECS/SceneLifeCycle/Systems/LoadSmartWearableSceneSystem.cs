@@ -52,8 +52,9 @@ namespace ECS.SceneLifeCycle.Systems
             (ISceneContent? sceneContent, SceneMetadata? sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
+            string id = SmartWearableCache.GetCacheId(wearable);
             AssetBundleManifestVersion manifestVersion = wearable.DTO.assetBundleManifestVersion!;
-            SceneEntityDefinition sceneDefinition = new SceneEntityDefinition(wearable.DTO.id!, sceneMetadata) { assetBundleManifestVersion = manifestVersion };
+            SceneEntityDefinition sceneDefinition = new SceneEntityDefinition(id, sceneMetadata) { assetBundleManifestVersion = manifestVersion };
 
             ReadOnlyMemory<byte> crdt = await GetCrdtAsync(sceneContent, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
@@ -76,7 +77,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
             sceneFacade?.Initialize();
 
-            ReportHub.Log(GetReportCategory(), $"Smart Wearable scene {wearable.DTO.id} loaded");
+            ReportHub.Log(GetReportCategory(), $"Smart Wearable scene {SmartWearableCache.GetCacheId(wearable)} loaded");
 
             var result = new GetSmartWearableSceneIntention.Result
             {

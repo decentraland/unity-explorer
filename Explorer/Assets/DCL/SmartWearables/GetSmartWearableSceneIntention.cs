@@ -2,6 +2,7 @@
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
+using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -24,22 +25,18 @@ namespace ECS.SceneLifeCycle.Systems
         public CommonLoadingArguments CommonArguments { get; set; }
 #endregion
 
-        public static GetSmartWearableSceneIntention Create(IWearable smartWearable, IPartitionComponent partition)
-        {
-            string id = smartWearable.DTO.Metadata.id;
-
-            return new GetSmartWearableSceneIntention
+        public static GetSmartWearableSceneIntention Create(IWearable smartWearable, IPartitionComponent partition) =>
+            new()
             {
                 SmartWearable = smartWearable,
                 Partition = partition,
-                CommonArguments = new CommonLoadingArguments(id)
+                CommonArguments = new CommonLoadingArguments(SmartWearableCache.GetCacheId(smartWearable))
             };
-        }
 
         public bool Equals(GetSmartWearableSceneIntention other)
         {
-            string id = SmartWearable.DTO.Metadata.id;
-            string otherId = other.SmartWearable.DTO.Metadata.id;
+            string id = SmartWearableCache.GetCacheId(SmartWearable);
+            string otherId = SmartWearableCache.GetCacheId(other.SmartWearable);
             return string.Equals(id, otherId, StringComparison.Ordinal);
         }
 
