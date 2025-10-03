@@ -52,8 +52,11 @@ namespace DCL.Chat
 
         private void OnCommunityCallIdChanged(string currentCallId)
         {
-            if (connectionStatusIndicatorContainer.activeInHierarchy)
-                iconImage.sprite = currentCallId.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase)? listeningToCallIcon : hasCallIcon;
+            bool isCurrentCommunity = currentCallId.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase);
+            if (isCurrentCommunity)
+                connectionStatusIndicatorContainer.SetActive(true);
+
+            iconImage.sprite = isCurrentCommunity? listeningToCallIcon : hasCallIcon;
         }
 
         private void OnCommunityStateUpdated(bool hasActiveCall)
