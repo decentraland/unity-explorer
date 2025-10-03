@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
@@ -53,6 +54,11 @@ namespace DCL.AvatarRendering.Emotes
                     {
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
+                        intention.WalletAddress = remoteEmoteIntention.WalletId;
+                        intention.SocialEmoteOutcomeIndex = remoteEmoteIntention.SocialEmoteOutcomeIndex;
+                        intention.UseOutcomeReactionAnimation = remoteEmoteIntention.IsReactingToSocialEmote;
+                        intention.UseSocialEmoteOutcomeAnimation = remoteEmoteIntention.IsUsingSocialOutcomeAnimation;
+                        intention.SocialEmoteInitiatorWalletAddress = remoteEmoteIntention.SocialEmoteInitiatorWalletAddress;
                     }
                     else
                         savedIntentions.Add(remoteEmoteIntention);

@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -94,6 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform ArmatureObject { get; private set; }
 
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
@@ -106,6 +108,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
+
+        private string originalArmatureName;
 
         private void Awake()
         {
@@ -121,6 +125,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
             animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
             overrideController.ApplyOverrides(animationOverrides);
+            AvatarAnimator.runtimeAnimatorController = overrideController; // This fixes a problem when executing a social emote before the overrideController was set (the avatar got the T pose)
+
+            originalArmatureName = ArmatureObject.name;
         }
 
         public Transform GetTransform() =>
@@ -159,6 +166,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.ResetTrigger(hash);
         }
 
+        public void RestoreArmatureName()
+        {
+            ArmatureObject.name = originalArmatureName;
+
+            // This is necessary for the animation to work after the name of the armature has been replaced
+            overrideController.ApplyOverrides(animationOverrides);
+        }
+
         public bool GetAnimatorBool(int hash) =>
             AvatarAnimator.GetBool(hash);
 
@@ -173,14 +188,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public float GetAnimatorFloat(int hash) =>
             AvatarAnimator.GetFloat(hash);
 
-        public void ReplaceEmoteAnimation(AnimationClip animationClip)
+        public void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null)
         {
             if (lastEmote == animationClip) return;
+
+            if(!string.IsNullOrEmpty(armatureNameOverride))
+                ArmatureObject.name = armatureNameOverride;
 
             overrideController["Emote"] = animationClip;
             AvatarAnimator.runtimeAnimatorController = overrideController;
 
             lastEmote = animationClip;
+
             AvatarAnimator.enabled = true;
         }
 
@@ -245,7 +264,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         bool GetAnimatorBool(int hash);
 
-        void ReplaceEmoteAnimation(AnimationClip animationClip);
+        void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null);
 
         float GetAnimatorFloat(int hash);
 
@@ -254,5 +273,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         int GetAnimatorCurrentStateTag();
 
         void ResetTrigger(int hash);
+
+        void RestoreArmatureName();
     }
 }
