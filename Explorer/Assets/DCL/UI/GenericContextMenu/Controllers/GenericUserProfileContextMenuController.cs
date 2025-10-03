@@ -189,6 +189,8 @@ namespace DCL.UI
             if (includeCommunities)
                 invitationButtonHandler.SetUserToInvite(profile.UserId);
 
+            if (ct.IsCancellationRequested) return;
+
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
