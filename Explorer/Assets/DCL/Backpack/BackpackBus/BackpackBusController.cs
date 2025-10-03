@@ -46,8 +46,7 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.HideMessageReceived += HandleHideCommand;
             this.backpackCommandBus.SelectWearableMessageReceived += HandleSelectWearableCommand;
             this.backpackCommandBus.SelectEmoteMessageReceived += HandleSelectEmoteCommand;
-            this.backpackCommandBus.FilterCategoryMessageReceived += HandleFilterCategoryCommand;
-            this.backpackCommandBus.SearchMessageReceived += HandleSearchCommand;
+            this.backpackCommandBus.FilterMessageReceived += HandleFilterCommand;
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
             this.backpackCommandBus.ChangeColorMessageReceived += HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived += HandleUnequipAll;
@@ -63,47 +62,29 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.HideMessageReceived -= HandleHideCommand;
             backpackCommandBus.SelectWearableMessageReceived -= HandleSelectWearableCommand;
             backpackCommandBus.SelectEmoteMessageReceived -= HandleSelectEmoteCommand;
-            backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
-            backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
+            backpackCommandBus.FilterMessageReceived -= HandleFilterCommand;
             backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
             this.backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
         }
 
-        private void HandlePublishProfile(BackpackPublishProfileCommand command)
-        {
+        private void HandlePublishProfile(BackpackPublishProfileCommand command) =>
             backpackEventBus.SendPublishProfile();
-        }
 
-        private void HandleUnequipAll(BackpackUnEquipAllCommand obj)
-        {
+        private void HandleUnequipAll(BackpackUnEquipAllCommand obj) =>
             backpackEventBus.SendUnEquipAll();
-        }
 
-        private void HandleChangeColor(BackpackChangeColorCommand command)
-        {
+        private void HandleChangeColor(BackpackChangeColorCommand command) =>
             backpackEventBus.SendChangeColor(command.NewColor, command.Category);
-        }
 
-        private void HandleSearchCommand(BackpackSearchCommand command)
-        {
-            if (!string.IsNullOrEmpty(command.SearchText))
-                backpackEventBus.SendFilterCategory(string.Empty, AvatarWearableCategoryEnum.Body);
-
-            backpackEventBus.SendSearch(command.SearchText);
-        }
+        private void HandleFilterCommand(BackpackFilterCommand command) =>
+            backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
                 backpackEventBus.SendWearableSelect(wearable);
-        }
-
-        private void HandleFilterCategoryCommand(BackpackFilterCategoryCommand command)
-        {
-            backpackEventBus.SendSearch(string.Empty);
-            backpackEventBus.SendFilterCategory(command.Category, command.CategoryEnum);
         }
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)

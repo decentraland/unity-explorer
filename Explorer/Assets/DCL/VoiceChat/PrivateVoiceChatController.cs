@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
 {
     public class PrivateVoiceChatController : IDisposable
     {
-        private readonly VoiceChatView view;
+        private readonly PrivateVoiceChatView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly IRoom voiceChatRoom;
@@ -26,7 +26,7 @@ namespace DCL.VoiceChat
         private CancellationTokenSource cts = new ();
 
         public PrivateVoiceChatController(
-            VoiceChatView view,
+            PrivateVoiceChatView view,
             IVoiceChatOrchestrator privateCallOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
             ProfileRepositoryWrapper profileDataProvider,

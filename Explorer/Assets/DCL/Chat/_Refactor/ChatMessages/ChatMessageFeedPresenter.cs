@@ -223,9 +223,9 @@ namespace DCL.Chat.ChatMessages
 
         private void UpdateChannelMessages()
         {
-            if (currentChannelService.CurrentChannel == null)
+            if (currentChannelService.UserStateService == null)
             {
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but no current channel is set. Aborting.");
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but User State Service is NOT set. Aborting.");
                 return;
             }
 

@@ -111,7 +111,7 @@ namespace DCL.Chat
                 commandRegistry.SendMessage,
                 textFormatter);
 
-            var memberListPresenter = new ChatMemberListPresenter(
+            var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
                 eventBus,
                 chatEventBus,
@@ -134,8 +134,7 @@ namespace DCL.Chat
                 messageFeedPresenter,
                 inputPresenter,
                 memberListPresenter,
-                communityVoiceChatSubTitleButtonPresenter,
-                voiceChatOrchestrator);
+                communityVoiceChatSubTitleButtonPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,

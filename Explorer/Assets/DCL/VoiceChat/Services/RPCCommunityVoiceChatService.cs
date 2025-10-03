@@ -61,6 +61,7 @@ namespace DCL.VoiceChat.Services
         {
             if (!isServiceDisabled)
             {
+                subscriptionCts = subscriptionCts.SafeRestart();
                 SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
                 FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
             }
@@ -84,6 +85,7 @@ namespace DCL.VoiceChat.Services
         {
             if (!isServiceDisabled)
             {
+                subscriptionCts = subscriptionCts.SafeRestart();
                 Reconnected?.Invoke();
                 SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
                 FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
