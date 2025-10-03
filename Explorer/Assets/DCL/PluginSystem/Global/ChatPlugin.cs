@@ -38,7 +38,6 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -84,7 +83,6 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
-        private readonly IAnalyticsController analytics;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private PrivateConversationUserStateService? chatUserStateService;
@@ -125,8 +123,7 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
             IEventBus eventBus,
-            ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IAnalyticsController analytics)
+            ChatSharedAreaEventBus chatSharedAreaEventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -164,7 +161,6 @@ namespace DCL.PluginSystem.Global
             this.chatViewRectTransform = chatViewRectTransform;
             this.eventBus = eventBus;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
-            this.analytics = analytics;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -271,8 +267,7 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand,
-                analytics
+                getParticipantProfilesCommand
             );
 
             pluginScope.Add(commandRegistry);
@@ -306,7 +301,8 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                chatSharedAreaEventBus
+                chatSharedAreaEventBus,
+                commandRegistry
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);

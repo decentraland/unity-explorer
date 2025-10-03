@@ -1,4 +1,4 @@
-﻿using DCL.Chat;
+﻿using DCL.ChatArea;
 using Segment.Serialization;
 using System;
 
@@ -7,36 +7,30 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     public class ChatEventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly ChatPanelPresenter chatController;
+        private readonly ChatMainSharedAreaController chatController;
 
-        private bool isInitChatBubble = true;
-
-        public ChatEventsAnalytics(IAnalyticsController analytics, ChatPanelPresenter chatController)
+        public ChatEventsAnalytics(IAnalyticsController analytics, ChatMainSharedAreaController chatController)
         {
             this.analytics = analytics;
             this.chatController = chatController;
-            //TODO: This needs re-implementing
-            //chatController.ConversationOpened += OnConversationOpened;
-            //chatController.ConversationClosed += OnConversationClosed;
+
+            chatController.CommandRegistry.SelectChannel.ChannelOpened += OnConversationOpened;
+            chatController.CommandRegistry.CloseChannel.ChannelClosed += OnConversationClosed;
         }
 
         public void Dispose()
         {
-            //chatController.ConversationOpened -= OnConversationOpened;
-            //chatController.ConversationClosed -= OnConversationClosed;
+            chatController.CommandRegistry.SelectChannel.ChannelOpened -= OnConversationOpened;
+            chatController.CommandRegistry.CloseChannel.ChannelClosed -= OnConversationClosed;
         }
 
-        private void OnConversationClosed()
-        {
+        private void OnConversationClosed() =>
             analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_CLOSED);
-        }
 
-        private void OnConversationOpened(bool wasAlreadyOpen)
-        {
+        private void OnConversationOpened(bool wasAlreadyOpen) =>
             analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JsonObject
             {
                 { "was_already_open", wasAlreadyOpen },
             });
-        }
     }
 }

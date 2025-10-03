@@ -764,8 +764,7 @@ namespace Global.Dynamic
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
                     eventBus,
-                    chatSharedAreaEventBus,
-                    bootstrapContainer.Analytics),
+                    chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

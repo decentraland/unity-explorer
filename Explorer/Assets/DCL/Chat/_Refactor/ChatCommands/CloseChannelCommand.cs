@@ -1,8 +1,8 @@
 ﻿using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
 using DCL.Web3.Identities;
+using System;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -11,15 +11,15 @@ namespace DCL.Chat.ChatCommands
     /// </summary>
     public class CloseChannelCommand
     {
+        public event Action? ChannelClosed;
+
         private readonly IChatHistory chatHistory;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IAnalyticsController analytics;
 
-        public CloseChannelCommand(IChatHistory chatHistory, IWeb3IdentityCache identityCache, IAnalyticsController analytics)
+        public CloseChannelCommand(IChatHistory chatHistory, IWeb3IdentityCache identityCache)
         {
             this.chatHistory = chatHistory;
             this.identityCache = identityCache;
-            this.analytics = analytics;
         }
 
         public void Execute(ChatChannel.ChannelId channelId)
@@ -34,11 +34,9 @@ namespace DCL.Chat.ChatCommands
                 AddCommunityToClosedPrefs(channelId.Id);
 
             chatHistory.RemoveChannel(channelId);
-            LogAnalytics();
-        }
 
-        private void LogAnalytics() =>
-            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_CLOSED);
+            ChannelClosed?.Invoke();
+        }
 
         private void AddCommunityToClosedPrefs(string communityId)
         {
