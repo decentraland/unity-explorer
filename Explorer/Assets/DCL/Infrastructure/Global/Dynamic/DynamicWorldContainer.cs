@@ -565,7 +565,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
                 chatEventBus
-                );
+            );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -625,6 +625,7 @@ namespace Global.Dynamic
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+
             var communitiesDataService = new CommunityDataService(chatHistory,
                 mvcManager,
                 communitiesEventBus,
@@ -666,17 +667,6 @@ namespace Global.Dynamic
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
-
-            var chatPanelViewInstance = mainUIView.ChatMainView.ChatPanelView;
-
-            // Ignore buttons that would lead to the conflicting state
-            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)chatPanelViewInstance.transform,
-                chatPanelViewInstance.TitlebarView.CloseChatButton.transform,
-                chatPanelViewInstance.TitlebarView.CloseMemberListButton.transform,
-                chatPanelViewInstance.TitlebarView.OpenMemberListButton.transform,
-                chatPanelViewInstance.TitlebarView.BackFromMemberList.transform,
-                chatPanelViewInstance.InputView.inputField.transform,
-                mainUIView.SidebarView.unreadMessagesButton.transform);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -774,10 +764,8 @@ namespace Global.Dynamic
                     thumbnailCache,
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    mainUIView.SidebarView.unreadMessagesButton.transform,
                     eventBus,
-                    chatSharedAreaEventBus,
-                    chatClickDetectionService),
+                    chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -941,7 +929,7 @@ namespace Global.Dynamic
                         assetsProvisioner,
                         chatSharedAreaEventBus,
                         debugBuilder,
-                        chatClickDetectionService)
+                        mainUIView)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -1091,7 +1079,7 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     assetsProvisioner,
                     debugBuilder
-                    ));
+                ));
 
             if (!localSceneDevelopment)
                 globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));

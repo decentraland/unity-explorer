@@ -8,6 +8,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.WebRequests;
@@ -34,7 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
-        private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly MainUIView mainUIView;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -59,7 +60,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
-            ChatClickDetectionService chatClickDetectionService)
+            MainUIView mainUIView
+        )
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -71,8 +73,9 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
-            this.chatClickDetectionService = chatClickDetectionService;
             this.debugContainer = debugContainer;
+            this.mainUIView = mainUIView;
+
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -83,6 +86,7 @@ namespace DCL.PluginSystem.Global
                 // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
             }
+
             voiceChatPanelController?.Dispose();
             voiceChatPluginSettingsAsset.Dispose();
             microphoneStateManager?.Dispose();
@@ -124,11 +128,23 @@ namespace DCL.PluginSystem.Global
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
+            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
+
+            // Ignore buttons that would lead to the conflicting state
+            var chatClickDetectionService = new ChatClickDetectionService(
+                (RectTransform)chatPanelView.transform,
+                chatPanelView.TitlebarView.CloseChatButton.transform,
+                chatPanelView.TitlebarView.CloseMemberListButton.transform,
+                chatPanelView.TitlebarView.OpenMemberListButton.transform,
+                chatPanelView.TitlebarView.BackFromMemberList.transform,
+                chatPanelView.InputView.inputField.transform,
+                mainUIView.SidebarView.unreadMessagesButton.transform
+            );
+
             voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus, chatClickDetectionService);
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(this.debugContainer, trackManager);
         }
-
 
         [Serializable]
         public class Settings : IDCLPluginSettings

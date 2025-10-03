@@ -40,7 +40,6 @@ using DCL.ChatArea;
 using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -87,7 +86,6 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
-        private readonly ChatClickDetectionService chatClickDetectionService;
 
         private CommandRegistry commandRegistry;
         private ChatPanelPresenter? chatPanelPresenter;
@@ -122,10 +120,9 @@ namespace DCL.PluginSystem.Global
             ISpriteCache thumbnailCache,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            Transform chatViewRectTransform,
             IEventBus eventBus,
-            ChatSharedAreaEventBus chatSharedAreaEventBus,
-            ChatClickDetectionService chatClickDetectionService)
+            ChatSharedAreaEventBus chatSharedAreaEventBus
+        )
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -162,7 +159,6 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.eventBus = eventBus;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
-            this.chatClickDetectionService = chatClickDetectionService;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -198,6 +194,7 @@ namespace DCL.PluginSystem.Global
             }
 
             var viewInstance = mainUIView.ChatMainView.ChatPanelView;
+
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -221,13 +218,28 @@ namespace DCL.PluginSystem.Global
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
 
+            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
+
+            // Ignore buttons that would lead to the conflicting state
+            var chatClickDetectionService = new ChatClickDetectionService(
+                (RectTransform)chatPanelView.transform,
+                chatPanelView.TitlebarView.CloseChatButton.transform,
+                chatPanelView.TitlebarView.CloseMemberListButton.transform,
+                chatPanelView.TitlebarView.OpenMemberListButton.transform,
+                chatPanelView.TitlebarView.BackFromMemberList.transform,
+                chatPanelView.InputView.inputField.transform,
+                mainUIView.SidebarView.unreadMessagesButton.transform
+            );
+
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
+
             communityUserStateService = new CommunityUserStateService(
                 communityDataProvider,
                 communitiesEventBus,
+
                 //voiceChatOrchestrator, TODO, CHECK WHAT DID WE USE THIS FOR?
                 eventBus,
                 chatHistory,
@@ -355,10 +367,7 @@ namespace DCL.PluginSystem.Global
                 await commandRegistry.InitializeChat.ExecuteAsync(ct);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
-            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
         }
     }
 
