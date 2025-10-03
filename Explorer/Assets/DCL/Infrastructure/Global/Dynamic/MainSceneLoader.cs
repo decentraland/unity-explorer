@@ -5,7 +5,6 @@ using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.ApplicationMinimumSpecsGuard;
-using DCL.ApplicationsGuards.ApplicationLoadErrorGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
@@ -50,6 +49,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
+using DCL.UI.ErrorPopup;
 using DCL.Utility;
 using DCL.Utility.Types;
 #if UNITY_EDITOR
@@ -81,14 +81,12 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
-        [SerializeField] private AssetReferenceGameObject loadErrorPopupPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
-        private ApplicationLoadErrorGuardController? loadErrorGuardController;
 
         private void Awake()
         {
@@ -152,6 +150,7 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
@@ -302,7 +301,7 @@ namespace Global.Dynamic
                 try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ApplicationLoadErrorGuardController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
                         await LoadStartingRealmAsync(ct);
                     else
                         throw;
@@ -312,9 +311,9 @@ namespace Global.Dynamic
             async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
             {
                 try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct); }
-                catch (Exception e) when (e is not OperationCanceledException)
+                catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ApplicationLoadErrorGuardController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
                         await LoadStartingRealmAsync(ct);
                     else
                         throw;
@@ -340,6 +339,7 @@ namespace Global.Dynamic
                 new PlatformDriveInfoProvider());
 
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+
             if (!hasMinimumSpecs)
             {
                 DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
@@ -349,10 +349,7 @@ namespace Global.Dynamic
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
-            {
-                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
-            });
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
@@ -360,11 +357,11 @@ namespace Global.Dynamic
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
-                .AssetsProvisioner!
-                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+                                                 .AssetsProvisioner!
+                                                 .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
             ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
-                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+               .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
             var minimumSpecsResults = minimumSpecsGuard.Results;
             var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
@@ -591,21 +588,20 @@ namespace Global.Dynamic
             return controller.SelectedOption;
         }
 
-        private async UniTask<ApplicationLoadErrorGuardController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
         {
-            ProvidedAsset<GameObject> prefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(loadErrorPopupPrefab, ct);
-            ControllerBase<ApplicationLoadErrorGuardView, ControllerNoData>.ViewFactoryMethod viewFactory = ApplicationLoadErrorGuardController.CreateLazily(prefab.Value.GetComponent<ApplicationLoadErrorGuardView>(), null);
             IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
 
-            if (loadErrorGuardController == null)
+            var input = new ErrorPopupWithRetryController.Input
             {
-                loadErrorGuardController = new ApplicationLoadErrorGuardController(viewFactory);
-                mvcManager.RegisterController(loadErrorGuardController);
-            }
+                Title = "Load Error",
+                Description = "A loading error was encountered. Please reload to try again.",
+                IconType = ErrorPopupWithRetryController.IconType.ERROR,
+            };
 
-            await mvcManager.ShowAsync(ApplicationLoadErrorGuardController.IssueCommand(), ct);
+            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
-            return loadErrorGuardController.SelectedOption;
+            return input.SelectedOption;
         }
 
         [Serializable]
@@ -633,9 +629,7 @@ namespace Global.Dynamic
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
-            public SplashScreenRef(string guid) : base(guid)
-            {
-            }
+            public SplashScreenRef(string guid) : base(guid) { }
         }
     }
 }

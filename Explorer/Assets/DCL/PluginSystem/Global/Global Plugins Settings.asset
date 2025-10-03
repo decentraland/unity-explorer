@@ -258,7 +258,6 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
-        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
         <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
@@ -373,6 +372,12 @@ MonoBehaviour:
       data:
         <ErrorPopup>k__BackingField:
           m_AssetGUID: 0fce4c1a785b1495bbf861787a9a3224
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <ErrorPopupWithRetry>k__BackingField:
+          m_AssetGUID: c16a7c2b7d6b642a4822df00f8bd5f71
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

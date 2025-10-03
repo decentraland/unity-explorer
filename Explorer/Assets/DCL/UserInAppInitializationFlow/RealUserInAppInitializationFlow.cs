@@ -93,7 +93,6 @@ namespace DCL.UserInAppInitializationFlow
             this.roomHub = roomHub;
         }
 
-
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
@@ -149,10 +148,11 @@ namespace DCL.UserInAppInitializationFlow
                 characterExposedTransform.Position.Value
                     = characterObject.Controller.transform.position
                         = startParcel.Peek().ParcelToPositionFlat();
+
                 UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
-                    .ShowWhileExecuteTaskAsync(
+                   .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
                             //Create a child report to be able to hold the parallel livekit operation
@@ -191,6 +191,7 @@ namespace DCL.UserInAppInitializationFlow
                     );
 
                 result = loadingResult;
+
                 if (result.Success == false)
                 {
                     //Fail straight away
@@ -229,6 +230,14 @@ namespace DCL.UserInAppInitializationFlow
 
             if (result.Error is { Exception: UserBlockedException })
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+
+            if (result.Error is { State: TaskError.Timeout })
+                return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input
+                {
+                    Title = "Connection Error",
+                    Description = "We were unable to connect to Decentraland. Please verify your connection and retry.",
+                    IconType = ErrorPopupWithRetryController.IconType.CONNECTION_LOST,
+                }), ct);
 
             var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);

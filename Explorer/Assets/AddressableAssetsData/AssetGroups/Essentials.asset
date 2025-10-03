@@ -216,7 +216,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c16a7c2b7d6b642a4822df00f8bd5f71
-    m_Address: Assets/DCL/ApplicationsGuards/ApplicationRealmGuard/ApplicationLoadErrorGuard.prefab
+    m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopupWithRetry.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
