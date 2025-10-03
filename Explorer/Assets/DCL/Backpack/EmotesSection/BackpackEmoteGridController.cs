@@ -292,10 +292,10 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void UnEquipItem(string itemId) =>
+        private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
         private void OnFilterCategory(string category)
@@ -353,7 +353,7 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(string itemId) =>
+        private void SelectItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId));
 
         private void OnUnequip(int slot, IEmote? emote)

@@ -5,10 +5,10 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SmartWearables;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -54,19 +54,19 @@ namespace Runtime.Wearables
         public async Task<bool> IsSmartAsync(IWearable wearable, CancellationToken ct)
         {
             CacheItem item = await CacheWearableInternalAsync(wearable, ct);
-            if (ct.IsCancellationRequested) return false;
-
-            return item.IsSmart;
+            return !ct.IsCancellationRequested && item.IsSmart;
         }
 
-        private bool IsSmart(IWearable wearable)
+        public async UniTask<bool> RequiresAuthorizationAsync(IWearable wearable, CancellationToken ct)
         {
-            foreach (var content in wearable.DTO.content)
-            {
-                if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-            return false;
+            CacheItem item = await CacheWearableInternalAsync(wearable, ct);
+            return !ct.IsCancellationRequested && item.RequiresAuthorization;
+        }
+
+        public async UniTask<bool> RequiresWeb3APIAsync(IWearable wearable, CancellationToken ct)
+        {
+            CacheItem item = await CacheWearableInternalAsync(wearable, ct);
+            return !ct.IsCancellationRequested && item.RequiresWeb3API;
         }
 
         /// <summary>
@@ -84,9 +84,17 @@ namespace Runtime.Wearables
         public async UniTask<(ISceneContent, SceneMetadata)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
         {
             CacheItem item = await CacheWearableInternalAsync(wearable, ct);
-            if (ct.IsCancellationRequested) return (null, null);
+            return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
+        }
 
-            return (item.SceneContent, item.SceneMetadata);
+        public void RememberPortableExperienceKilled(string portableExperienceId)
+        {
+            KilledPortableExperiences.Add(portableExperienceId);
+        }
+
+        public void ForgetPortableExperienceKilled(string portableExperienceId)
+        {
+            KilledPortableExperiences.Remove(portableExperienceId);
         }
 
         private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
@@ -115,7 +123,28 @@ namespace Runtime.Wearables
 
             item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
 
+            if (item.IsSmart)
+            {
+                List<string> permissions = item.SceneMetadata.requiredPermissions;
+
+                item.RequiresWeb3API = permissions.Contains(ScenePermissionNames.USE_WEB3_API);
+                item.RequiresAuthorization = item.RequiresWeb3API ||
+                                             permissions.Contains(ScenePermissionNames.OPEN_EXTERNAL_LINK) ||
+                                             permissions.Contains(ScenePermissionNames.USE_WEBSOCKET) ||
+                                             permissions.Contains(ScenePermissionNames.USE_FETCH);
+            }
+
             return item;
+        }
+
+        private bool IsSmart(IWearable wearable)
+        {
+            foreach (var content in wearable.DTO.content)
+            {
+                if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         private string GetContentUrl(IWearable smartWearable)
@@ -125,16 +154,6 @@ namespace Runtime.Wearables
             return string.IsNullOrEmpty(dtoContentUrl) ? DEFAULT_CONTENT_URL : dtoContentUrl;
         }
 
-        public void RememberPortableExperienceKilled(string portableExperienceId)
-        {
-            KilledPortableExperiences.Add(portableExperienceId);
-        }
-
-        public void ForgetPortableExperienceKilled(string portableExperienceId)
-        {
-            KilledPortableExperiences.Remove(portableExperienceId);
-        }
-
         private class CacheItem
         {
             public bool IsSmart;
@@ -142,6 +161,10 @@ namespace Runtime.Wearables
             public ISceneContent SceneContent;
 
             public SceneMetadata SceneMetadata;
+
+            public bool RequiresAuthorization;
+
+            public bool RequiresWeb3API;
         }
     }
 }

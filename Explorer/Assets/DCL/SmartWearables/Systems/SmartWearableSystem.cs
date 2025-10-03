@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
@@ -11,6 +12,7 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -18,9 +20,11 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
+using MVC;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
@@ -40,6 +44,9 @@ namespace DCL.SmartWearables
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IScenesCache scenesCache;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly IMVCManager mvcManager;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         /// <summary>
         ///     Promises waiting on the loading flow of a smart wearable scene.
@@ -48,13 +55,24 @@ namespace DCL.SmartWearables
 
         private bool currentSceneDirty;
 
-        public SmartWearableSystem(World world, WearableStorage wearableStorage, SmartWearableCache smartWearableCache, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
+        public SmartWearableSystem(World world,
+            WearableStorage wearableStorage,
+            SmartWearableCache smartWearableCache,
+            IBackpackEventBus backpackEventBus,
+            IPortableExperiencesController portableExperiencesController,
+            IScenesCache scenesCache,
+            ILoadingStatus loadingStatus,
+            IMVCManager mvcManager,
+            IThumbnailProvider thumbnailProvider) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.smartWearableCache = smartWearableCache;
             this.backpackEventBus = backpackEventBus;
             this.portableExperiencesController = portableExperiencesController;
             this.scenesCache = scenesCache;
+            this.loadingStatus = loadingStatus;
+            this.mvcManager = mvcManager;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         public override void Initialize()
@@ -66,7 +84,7 @@ namespace DCL.SmartWearables
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
 
-            RunScenesForEquippedWearablesAsync().Forget();
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
         }
 
         private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
@@ -227,8 +245,9 @@ namespace DCL.SmartWearables
             ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + smartWearablesAllowed);
 
             if (smartWearablesAllowed)
-                // Notice scenes that are already running won't run again, so we can call this safely.
-                RunScenesForEquippedWearablesAsync().Forget();
+                // Notice scenes that are already running won't run again, so we can call this safely
+                // TODO consider cancelling a previous running task
+                RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
             else
             {
                 foreach ((string _, ScenePromise promise) in pendingScenes) promise.ForgetLoading(World);
@@ -244,7 +263,14 @@ namespace DCL.SmartWearables
             }
         }
 
-        private async UniTask RunScenesForEquippedWearablesAsync()
+        private void OnLoadingStatusChanged(LoadingStatus.LoadingStage stage)
+        {
+            if (stage != LoadingStatus.LoadingStage.Completed) return;
+
+            RunScenesForEquippedWearablesAsync(AuthorizationAction.RequestAuthorization, CancellationToken.None).Forget();
+        }
+
+        private async UniTask RunScenesForEquippedWearablesAsync(AuthorizationAction authorization, CancellationToken ct)
         {
             Entity player = Entity.Null;
             while (player == Entity.Null)
@@ -263,8 +289,34 @@ namespace DCL.SmartWearables
                 URN shortUrn = urn.Shorten();
                 while (!wearableStorage.TryGetElement(shortUrn, out wearable) || wearable.IsLoading) await UniTask.Yield();
 
+                // By design at this point of the flow we only request auth if the wearable uses the Web3 API
+                // When equipping from the backpack, we request auth for any required permission
+                bool requiresAuthorization = authorization == AuthorizationAction.RequestAuthorization &&
+                                             await smartWearableCache.RequiresWeb3APIAsync(wearable, CancellationToken.None);
+                if (requiresAuthorization)
+                {
+                    // Make sure the thumbnail is there
+                    // Needed because we also run this flow on login, and thumbnails are loaded on-demand
+                    await thumbnailProvider.GetAsync(wearable, ct);
+
+                    bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
+                    if (!authorized)
+                    {
+                        // Consider the PX killed so that it won't be reloaded when moving between scenes
+                        smartWearableCache.RememberPortableExperienceKilled(wearable.DTO.Metadata.id);
+                        continue;
+                    }
+                }
+
                 await TryRunSmartWearableSceneAsync(wearable);
             }
+        }
+
+        private enum AuthorizationAction
+        {
+            RequestAuthorization,
+
+            SkipAuthorization
         }
     }
 }

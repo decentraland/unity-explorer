@@ -24,6 +24,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using Global.AppArgs;
+using MVC;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -60,9 +61,11 @@ namespace DCL.PluginSystem.Global
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly SmartWearableCache smartWearableCache;
+        private readonly IMVCManager mvcManager;
+
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
-        private SmartWearableCache smartWearableCache;
 
         internal BackpackController? backpackController { get; private set; }
 
@@ -92,7 +95,8 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
             ProfileChangesBus profileChangesBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            IMVCManager mvcManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -120,6 +124,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.profileChangesBus = profileChangesBus;
             this.smartWearableCache = smartWearableCache;
+            this.mvcManager = mvcManager;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -195,14 +200,10 @@ namespace DCL.PluginSystem.Global
                 pageButtonView,
                 gridPool,
                 thumbnailProvider,
-                colorToggle,
-                hairColors,
-                eyesColors,
-                bodyshapeColors,
                 wearablesProvider,
                 webBrowser,
-                smartWearableCache
-            );
+                smartWearableCache,
+                mvcManager, colorToggle, hairColors, eyesColors, bodyshapeColors);
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,

@@ -311,7 +311,8 @@ namespace DCL.PluginSystem.Global
                 inWorldWarningNotificationView,
                 thumbnailProvider,
                 profileChangesBus,
-                smartWearableCache
+                smartWearableCache,
+                mvcManager
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

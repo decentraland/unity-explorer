@@ -10,6 +10,7 @@ using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.UI;
+using MVC;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -34,15 +35,18 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO categoryIcons;
         private readonly IReadOnlyEquippedWearables equippedWearables;
         private readonly BackpackSortController backpackSortController;
-        private readonly PageSelectorController pageSelectorController;
-        private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
-        private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
-        private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebBrowser webBrowser;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly IMVCManager mvcManager;
+
+        private readonly PageSelectorController pageSelectorController;
+        private readonly BackpackBreadCrumbController breadcrumbController;
+        private readonly Dictionary<URN, BackpackItemView> usedPoolItems = new ();
+        private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
+        private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
@@ -53,10 +57,7 @@ namespace DCL.Backpack
         private IWearable? currentBodyShape;
         private IReadOnlyList<IWearable>? currentPageWearables;
 
-        private BackpackBreadCrumbController breadcrumbController;
-
-        public BackpackGridController(
-            BackpackGridView view,
+        public BackpackGridController(BackpackGridView view,
             BackpackCommandBus commandBus,
             IBackpackEventBus eventBus,
             NftTypeIconSO rarityBackgrounds,
@@ -67,13 +68,14 @@ namespace DCL.Backpack
             PageButtonView pageButtonView,
             IObjectPool<BackpackItemView> gridItemsPool,
             IThumbnailProvider thumbnailProvider,
+            IWearablesProvider wearablesProvider,
+            IWebBrowser webBrowser,
+            SmartWearableCache smartWearableCache,
+            IMVCManager mvcManager,
             ColorToggleView colorToggle,
             ColorPresetsSO hairColors,
             ColorPresetsSO eyesColors,
-            ColorPresetsSO bodyshapeColors,
-            IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser,
-            SmartWearableCache smartWearableCache)
+            ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -88,11 +90,12 @@ namespace DCL.Backpack
             this.gridItemsPool = gridItemsPool;
             this.webBrowser = webBrowser;
             this.smartWearableCache = smartWearableCache;
-            pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
+            this.mvcManager = mvcManager;
 
-            usedPoolItems = new Dictionary<URN, BackpackItemView>();
+            pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
             breadcrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
+
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
@@ -185,6 +188,7 @@ namespace DCL.Backpack
                 backpackItemView.OnEquip += EquipItem;
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.OnUnequip += UnEquipItem;
+                backpackItemView.Slot = i;
                 backpackItemView.ItemId = wearable.GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(wearable.GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(wearable.GetRarity());
@@ -204,10 +208,26 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(string itemId) =>
-            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
+        private void EquipItem(int slot, string itemId)
+        {
+            IWearable wearable = currentPageWearables![slot];
+            TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget();
+        }
 
-        private void UnEquipItem(string itemId) =>
+        private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, CancellationToken ct)
+        {
+            bool requiresAuthorization = await smartWearableCache.RequiresAuthorizationAsync(wearable, ct);
+
+            if (requiresAuthorization)
+            {
+                bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
+                if (!authorized) return;
+            }
+
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
+        }
+
+        private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
 
         private void OnFilterCategory(string category)
@@ -339,7 +359,7 @@ namespace DCL.Backpack
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(string itemId) =>
+        private void SelectItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
 
         private void OnUnequip(IWearable unequippedWearable)
