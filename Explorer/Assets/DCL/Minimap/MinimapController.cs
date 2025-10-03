@@ -23,6 +23,9 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.RealmNavigation;
+using DCL.SceneBannedUsers;
 using DCL.UI.Controls.Configs;
 using DG.Tweening;
 using ECS;
@@ -49,6 +52,7 @@ namespace DCL.Minimap
         };
         private const float ANIMATION_TIME = 0.2f;
         private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
+        private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 10;
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -65,6 +69,9 @@ namespace DCL.Minimap
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ReloadSceneChatCommand reloadSceneCommand;
+        private readonly IRoomHub roomHub;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly bool includeBannedUsersFromScene;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -72,6 +79,9 @@ namespace DCL.Minimap
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
+        private bool isOwnPlayerBanned;
+        private bool isOtherPlayersBanned;
+        private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -93,7 +103,10 @@ namespace DCL.Minimap
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrls,
             IChatMessagesBus chatMessagesBus,
-            ReloadSceneChatCommand reloadSceneCommand
+            ReloadSceneChatCommand reloadSceneCommand,
+            IRoomHub roomHub,
+            ILoadingStatus loadingStatus,
+            bool includeBannedUsersFromScene
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -110,6 +123,9 @@ namespace DCL.Minimap
             this.decentralandUrls = decentralandUrls;
             this.chatMessagesBus = chatMessagesBus;
             this.reloadSceneCommand = reloadSceneCommand;
+            this.roomHub = roomHub;
+            this.loadingStatus = loadingStatus;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -120,6 +136,14 @@ namespace DCL.Minimap
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+
+            if (includeBannedUsersFromScene)
+            {
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowOwnPlayerBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected -= HideAllBannedMarks;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideAllBannedMarks;
+                showBannedTooltipCts.SafeCancelAndDispose();
+            }
 
             sceneRestrictionsController?.Dispose();
             viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
@@ -166,6 +190,13 @@ namespace DCL.Minimap
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
+
+            if (includeBannedUsersFromScene)
+            {
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowOwnPlayerBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected += HideAllBannedMarks;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideAllBannedMarks;
+            }
         }
 
         private void ShowContextMenu()
@@ -257,6 +288,14 @@ namespace DCL.Minimap
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
                 GetPlaceInfoAsync(position);
+            }
+
+            if (includeBannedUsersFromScene && !isOwnPlayerBanned)
+            {
+                if (BannedUsersFromCurrentScene.Instance.BannedUsersCount() > 0)
+                    ShowOtherPlayersBannedMark();
+                else
+                    HideOtherPlayersBannedMark();
             }
         }
 
@@ -391,6 +430,68 @@ namespace DCL.Minimap
                 isGenesisModeActivated
                     ? viewInstance.genesisCityAnimatorController
                     : viewInstance.worldsAnimatorController;
+        }
+
+        private void ShowOwnPlayerBannedMark()
+        {
+            if (isOwnPlayerBanned)
+                return;
+
+            isOwnPlayerBanned = true;
+            HideOtherPlayersBannedMark();
+            viewInstance!.ownPlayerBannedMark.SetActive(true);
+
+            showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
+            ShowBannedTooltipAsync(showOwnPlayerTooltip: true, showBannedTooltipCts.Token).Forget();
+        }
+
+        private void HideOwnPlayerBannedMark()
+        {
+            showBannedTooltipCts.SafeCancelAndDispose();
+            viewInstance!.ownPlayerBannedMark.SetActive(false);
+            isOwnPlayerBanned = false;
+        }
+
+        private void ShowOtherPlayersBannedMark()
+        {
+            if (isOtherPlayersBanned)
+                return;
+
+            isOtherPlayersBanned = true;
+            viewInstance!.otherPlayersBannedMark.SetActive(true);
+
+            showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
+            ShowBannedTooltipAsync(showOwnPlayerTooltip: false, showBannedTooltipCts.Token).Forget();
+        }
+
+        private void HideOtherPlayersBannedMark()
+        {
+            showBannedTooltipCts.SafeCancelAndDispose();
+            viewInstance!.otherPlayersBannedMark.SetActive(false);
+            isOtherPlayersBanned = false;
+        }
+
+        private void HideAllBannedMarks()
+        {
+            HideOwnPlayerBannedMark();
+            HideOtherPlayersBannedMark();
+        }
+
+        private async UniTaskVoid ShowBannedTooltipAsync(bool showOwnPlayerTooltip, CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+
+            if (showOwnPlayerTooltip)
+                viewInstance!.ownPlayerBannedTooltip.SetActive(true);
+            else
+                viewInstance!.otherPlayersBannedTooltip.SetActive(true);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
+
+            if (showOwnPlayerTooltip)
+                viewInstance!.ownPlayerBannedTooltip.SetActive(false);
+            else
+                viewInstance!.otherPlayersBannedTooltip.SetActive(false);
         }
     }
 

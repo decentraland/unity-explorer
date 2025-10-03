@@ -98,6 +98,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 AttemptToConnectState.SUCCESS => "Success",
                 AttemptToConnectState.ERROR => "Error",
                 AttemptToConnectState.NO_CONNECTION_REQUIRED => "NoConnectionRequired",
+                AttemptToConnectState.FORBIDDEN_ACCESS => "ForbiddenAccess",
                 _ => UNDEFINED,
             };
 
