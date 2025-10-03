@@ -133,7 +133,6 @@ def clone_current_target(use_cache):
         print(f"New target found")
         # Create new target with template cache
         if use_cache:
-           if use_cache:
             cache_source = resolve_cache_source(template_target)
             body['settings']['buildTargetCopyCache'] = cache_source
             print(f"Using cache from: {cache_source}")
