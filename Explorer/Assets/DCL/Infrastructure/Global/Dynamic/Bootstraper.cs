@@ -124,6 +124,7 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 profileRepositoryProxy,
+                bootstrapContainer.Environment,
                 ct,
                 hasDebugFlag
             );

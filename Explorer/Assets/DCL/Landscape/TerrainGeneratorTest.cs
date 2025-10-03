@@ -26,7 +26,7 @@ namespace DCL.Landscape
         public TerrainGenerationData genData;
         public ParcelData parcelData;
 
-        private NativeParallelHashSet<int2> ownedParcels;
+        private NativeHashSet<int2> ownedParcels;
         private NativeList<int2> emptyParcels;
         private TerrainGenerator gen;
         private WorldTerrainGenerator wGen;
@@ -62,7 +62,7 @@ namespace DCL.Landscape
 
             Log("Generate started");
             ownedParcels = parcelData.GetOwnedParcels();
-            emptyParcels = parcelData.GetEmptyParcels();
+            emptyParcels = parcelData.GetEmptyParcelsList();
 
             if (genData.terrainSize == 1)
             {

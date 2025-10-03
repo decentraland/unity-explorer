@@ -97,6 +97,7 @@ namespace Global.Tests.PlayMode
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 new ObjectProxy<IProfileRepository>(),
+                DecentralandEnvironment.Org,
                 ct,
                 hasDebugFlag: false,
                 enableGPUInstancing: false

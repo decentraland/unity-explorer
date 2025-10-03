@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utilities;
-using System;
 
 namespace ECS
 {

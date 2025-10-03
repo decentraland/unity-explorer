@@ -14,7 +14,7 @@ namespace DCL.Landscape.Jobs
     public struct CalculateEmptyParcelBaseHeightJob : IJobParallelFor
     {
         [ReadOnly] private readonly NativeArray<int2> emptyParcels;
-        [ReadOnly] private readonly NativeParallelHashSet<int2>.ReadOnly ownedParcels;
+        [ReadOnly] private readonly NativeHashSet<int2>.ReadOnly ownedParcels;
         [ReadOnly] private readonly float heightNerf;
         [ReadOnly] private readonly int2 minBoundsInParcels;
         [ReadOnly] private readonly int2 maxBoundsInParcels;
@@ -22,7 +22,7 @@ namespace DCL.Landscape.Jobs
 
         public CalculateEmptyParcelBaseHeightJob(
             in NativeArray<int2> emptyParcels,
-            in NativeParallelHashSet<int2>.ReadOnly ownedParcels,
+            in NativeHashSet<int2>.ReadOnly ownedParcels,
             NativeParallelHashMap<int2, int>.ParallelWriter result,
             float heightScaleNerf,
             in int2 minBoundsInParcels,

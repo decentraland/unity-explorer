@@ -4,9 +4,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Landscape.Parcel;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
@@ -26,8 +26,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly IPartitionSettings partitionSettings;
-        private readonly IScenesCache scenesCache;
-        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly LandscapeParcelData landscapeParcelData;
 
         private float[]? sqrDistances;
 
@@ -36,14 +35,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache,
-            HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData)
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData, LandscapeParcelData landscapeParcelData) : base(world, roadCoordinates, realmData)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;
-            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.scenesCache = scenesCache;
+            this.landscapeParcelData = landscapeParcelData;
         }
 
         protected override void Update(float t)
@@ -100,8 +97,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
-                    sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
-                    input.Add(parcelInfo.Parcel);
+                    if (landscapeParcelData.EmptyParcels.Contains(parcelInfo.Parcel))
+                        // If parcel is empty skip request but mark as processed...
+                        processedScenePointers.Value.Add(parcelInfo.Parcel);
+                    else
+                    {
+                        // ...else add to parcels to be requested
+                        sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
+                        input.Add(parcelInfo.Parcel);
+                    }
+
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
                 }
@@ -160,14 +165,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     if (scene.pointers.Length == 0) continue;
 
                     TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
-                }
-
-                // Empty parcels = parcels for which no scene pointers were retrieved
-                for (var i = 0; i < requestedList.Count; i++)
-                {
-                    int2 parcel = requestedList[i];
-                    if (!processedScenePointers.Value.Add(parcel)) continue;
-                    World.Create(SceneUtils.CreateEmptyScene(parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
                 }
             }
             else

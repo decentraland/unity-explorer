@@ -49,7 +49,7 @@ namespace DCL.Landscape
         private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
-        private NativeParallelHashSet<int2> ownedParcels;
+        private NativeHashSet<int2> ownedParcels;
 
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
@@ -92,7 +92,7 @@ namespace DCL.Landscape
             timeProfiler = new TimeProfiler(measureTime);
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, GPUIProfile treesProfile, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        public void Initialize(TerrainGenerationData terrainGenData, GPUIProfile treesProfile, ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -262,7 +262,7 @@ namespace DCL.Landscape
             emptyParcelsData.Dispose();
         }
 
-        private static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
+        private static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             int2 terrainSize = maxParcel - minParcel + 1;
