@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
+using Sentry;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;

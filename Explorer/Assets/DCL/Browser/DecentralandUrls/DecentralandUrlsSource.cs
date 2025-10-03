@@ -127,6 +127,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DecentralandLambdasOverride => LAMBDAS_URL_OVERRIDE,
                 DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,
                 DecentralandUrl.LambdasProfiles => $"https://peer.decentraland.{ENV}/lambdas/profiles",
+                DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
