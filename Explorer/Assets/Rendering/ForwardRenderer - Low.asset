@@ -103,6 +103,19 @@ MonoBehaviour:
   m_Name: RendererFeature_AvatarOutline
   m_EditorClassIdentifier: 
   m_Active: 1
+--- !u!114 &-402379308377847753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01052c1a4da12064d8681d7c1800f94a, type: 3}
+  m_Name: GaussianSplatURPFeature
+  m_EditorClassIdentifier: GaussianSplatting::GaussianSplatting.Runtime.GaussianSplatURPFeature
+  m_Active: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -134,7 +147,8 @@ MonoBehaviour:
   - {fileID: 6840260418858268937}
   - {fileID: -4906195724866340262}
   - {fileID: -9034674521452425196}
-  m_RendererFeatureMap: 408bf8222cb3aa45d9fed3ef43517628fd25cc89c2b664e9093936159c7ced5e5a3acd7cfbb0e9bb14508ef763639e82
+  - {fileID: -402379308377847753}
+  m_RendererFeatureMap: 408bf8222cb3aa45d9fed3ef43517628fd25cc89c2b664e9093936159c7ced5e5a3acd7cfbb0e9bb14508ef763639e8237c82ba326766afa
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
