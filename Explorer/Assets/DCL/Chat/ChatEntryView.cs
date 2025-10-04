@@ -33,7 +33,7 @@ namespace DCL.Chat
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
         [field: Header("Elements")]
-        [field: SerializeField] private ChatEntryUsernameElement usernameElement { get; set; }
+        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; set; }
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
         [field: SerializeField] internal RectTransform dateDividerElement { get; private set; }
         [field: SerializeField] internal TMP_Text dateDividerText { get; private set; }
@@ -45,6 +45,7 @@ namespace DCL.Chat
         [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
         private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
+        private ReactivePropertyExtensions.DisposableSubscription<ProfileOptionalBasicInfo>? profileDataSubscription;
 
         private ChatMessage chatMessage;
         private ChatMessageViewModel currentViewModel;
@@ -143,6 +144,20 @@ namespace DCL.Chat
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
+
+            profileDataSubscription?.Dispose();
+            profileDataSubscription = viewModel.ProfileOptionalBasicInfo.UseCurrentValueAndSubscribeToUpdate(this, (profileInfo, view) =>
+            {
+                view.profileButton.interactable = profileInfo.DataIsPresent;
+
+                if (profileInfo.DataIsPresent)
+                {
+                    view.usernameElement.UserNameClicked += OnUsernameClicked;
+                    view.usernameElement.SetUsername(profileInfo.UserName, profileInfo.UserWalletId);
+                }
+                else
+                    view.usernameElement.UserNameClicked -= OnUsernameClicked;
+            }, viewModel.cancellationToken);
         }
 
         private void OnProfileButtonClicked()

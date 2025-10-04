@@ -10,6 +10,7 @@ namespace DCL.Chat.History
     /// </summary>
     public class ChatMessageFactory
     {
+        public const string LOADING_PROFILE_TEXT = "Loading Profile...";
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IProfileCache profileCache;
@@ -86,7 +87,7 @@ namespace DCL.Chat.History
                 if (profile != null)
                     userHash = profile.WalletId ?? string.Empty;
                 else
-                    userHash = $"#{senderWalletAddress[^4..]}";
+                    userHash = LOADING_PROFILE_TEXT;
 
                 return userHash;
             }
