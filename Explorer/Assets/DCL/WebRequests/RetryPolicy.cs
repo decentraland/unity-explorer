@@ -59,8 +59,8 @@
         ///     Manually specify that retries are properly respected by the server
         /// </summary>
         /// <returns></returns>
-        public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT) =>
-            new (retriesCount, Strictness.ENFORCED);
+        public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER) =>
+            new (retriesCount, Strictness.ENFORCED, minDelayBetweenAttemptsMs, backoffMultiplier);
 
         public static RetryPolicy WithRetries(int retriesCount, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER) =>
             new (retriesCount, Strictness.NONE, minDelayBetweenAttemptsMs, backoffMultiplier);

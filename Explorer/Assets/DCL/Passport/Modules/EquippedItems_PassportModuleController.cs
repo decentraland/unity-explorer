@@ -264,7 +264,7 @@ namespace DCL.Passport.Modules
             {
                 const string ERROR_MESSAGE = "There was an error while trying to load the equipped items. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogError(ReportCategory.WEARABLE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
@@ -281,7 +281,7 @@ namespace DCL.Passport.Modules
                 itemView.EquippedItemThumbnail.sprite = null;
                 const string ERROR_MESSAGE = "There was an error while trying to load wearable thumbnails. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogError(ReportCategory.WEARABLE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
@@ -298,7 +298,7 @@ namespace DCL.Passport.Modules
                 itemView.EquippedItemThumbnail.sprite = null;
                 const string ERROR_MESSAGE = "There was an error while trying to load emote thumbnails. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogError(ReportCategory.WEARABLE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
