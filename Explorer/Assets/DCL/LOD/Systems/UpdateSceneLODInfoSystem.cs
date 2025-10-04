@@ -71,8 +71,9 @@ namespace DCL.LOD.Systems
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
 
-            var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
+            var assetBundleIntention = GetAssetBundleIntention.FromHash(
                 platformLODKey,
+                typeof(GameObject),
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 lookForShaderAsset: true,

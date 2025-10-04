@@ -99,8 +99,9 @@ namespace DCL.AvatarRendering.Emotes
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
             var promise = AssetBundlePromise.Create(world,
-                GetAssetBundleIntention.FromHash(typeof(GameObject),
+                GetAssetBundleIntention.FromHash(
                     this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    typeof(GameObject),
                     assetBundleManifestVersion: SceneAssetBundleManifestVersion,
                     parentEntityID: SceneId,
                     permittedSources: this.PermittedSources,

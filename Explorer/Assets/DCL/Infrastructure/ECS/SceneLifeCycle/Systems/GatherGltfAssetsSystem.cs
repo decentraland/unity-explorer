@@ -22,7 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
-        private const int FRAMES_COUNT = 90;
+        private const int FRAMES_COUNT = 10;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;

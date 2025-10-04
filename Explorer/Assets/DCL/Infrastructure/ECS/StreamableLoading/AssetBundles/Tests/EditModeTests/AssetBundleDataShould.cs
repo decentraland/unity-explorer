@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void ProperlyCountReferenceWhenAddReferenceCalled(int refCount)
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, null);
+            var assetBundleData = new AssetBundleData(null, null, null, null, null);
 
             // Act
             for (var i = 0; i < refCount; i++)
@@ -25,7 +25,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void ProperlyRemoveReferenceWhenDereferenced(int initialRefs, int derefs, int remainedRefs)
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, null);
+            var assetBundleData = new AssetBundleData(null, null, null, null, null);
+
 
             for (var i = 0; i < initialRefs; i++)
                 assetBundleData.AddReference();
@@ -43,7 +44,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void CannotBeDisposedWhenStillReferenced(int refCount, bool canBeDisposed)
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, null);
+            var assetBundleData = new AssetBundleData(null, null, null, null, null);
+
 
             for (var i = 0; i < refCount; i++)
                 assetBundleData.AddReference();
