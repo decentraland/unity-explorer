@@ -124,6 +124,7 @@ namespace DCL.PluginSystem.Global
             communityCreationEditionController?.Dispose();
             eventInfoController?.Dispose();
             notificationHandler.Dispose();
+            rpcCommunitiesService.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
