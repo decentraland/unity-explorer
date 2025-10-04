@@ -361,7 +361,8 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                chatSharedAreaEventBus
+                chatSharedAreaEventBus,
+                commandRegistry
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus,

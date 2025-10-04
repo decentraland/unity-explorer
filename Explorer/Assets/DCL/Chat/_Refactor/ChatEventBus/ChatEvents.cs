@@ -70,6 +70,7 @@ namespace DCL.Chat
         public struct ChannelSelectedEvent
         {
             public ChatChannel Channel;
+            public bool FromInitialization;
         }
 
         /// <summary>

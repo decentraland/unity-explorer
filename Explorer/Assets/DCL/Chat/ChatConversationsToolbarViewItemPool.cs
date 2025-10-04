@@ -34,7 +34,7 @@ namespace DCL.Chat
 
         private void CreateObjectPool<T>(T prefab) where T: ChatConversationsToolbarViewItem
         {
-            GameObjectPool<T> pool = new (containersRoot, () => GameObject.Instantiate(prefab), onGet: HandleGetObject);
+            GameObjectPool<T> pool = new (containersRoot, () => GameObject.Instantiate(prefab), onGet: HandleGetObject, onRelease: HandleReleaseObject);
             poolRegistry[typeof(T)] = (pool, obj => pool.Release((T)obj));
         }
 
@@ -43,6 +43,9 @@ namespace DCL.Chat
             obj.transform.SetParent(itemsContainer);
             obj.transform.localScale = Vector3.one;
         }
+
+        private void HandleReleaseObject<T>(T obj) where T: ChatConversationsToolbarViewItem =>
+            obj.Dispose();
 
         public ChatConversationsToolbarViewItemPool(
             RectTransform itemsContainer,
