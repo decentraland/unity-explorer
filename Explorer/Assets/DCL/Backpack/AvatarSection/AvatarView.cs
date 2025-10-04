@@ -6,6 +6,12 @@ namespace DCL.Backpack
     public class AvatarView : MonoBehaviour
     {
         [field: SerializeField]
+        public TabSelectorView WearablesTabSelector { get; private set; }
+
+        [field: SerializeField]
+        public TabSelectorView OutfitsTabSelector { get; private set; }
+        
+        [field: SerializeField]
         public BackpackGridView backpackGridView { get; private set; }
 
         [field: SerializeField]
