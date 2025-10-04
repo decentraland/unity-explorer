@@ -165,6 +165,8 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
+                // TODO: request base emotes collection instead of pointers:
+                // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
                 if (onChainEmotesOnly)
                     emotes = customOwnedEmotes;
                 else
