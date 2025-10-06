@@ -149,8 +149,6 @@ namespace DCL.UserInAppInitializationFlow
                     = characterObject.Controller.transform.position
                         = startParcel.Peek().ParcelToPositionFlat();
 
-                UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
-
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                    .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
@@ -165,7 +163,7 @@ namespace DCL.UserInAppInitializationFlow
                             else
                             {
                                 //Wait for livekit to end handshake
-                                var livekitOperationResult = await livekitHandshake;
+                                var livekitOperationResult = await ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                                 if (isLocalSceneDevelopment)
                                 {
@@ -232,12 +230,11 @@ namespace DCL.UserInAppInitializationFlow
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
 
             if (result.Error is { State: TaskError.Timeout })
-                return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input
-                {
-                    Title = "Connection Error",
-                    Description = "We were unable to connect to Decentraland. Please verify your connection and retry.",
-                    IconType = ErrorPopupWithRetryController.IconType.CONNECTION_LOST,
-                }), ct);
+                return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
+                    title: "Connection Error",
+                    description: "We were unable to connect to Decentraland. Please verify your connection and retry.",
+                    iconType: ErrorPopupWithRetryController.IconType.CONNECTION_LOST,
+                    retryText: "Continue")), ct);
 
             var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);

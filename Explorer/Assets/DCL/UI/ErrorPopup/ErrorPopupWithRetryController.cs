@@ -11,7 +11,7 @@ namespace DCL.UI.ErrorPopup
         {
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override void OnViewInstantiated()
         {
@@ -32,6 +32,8 @@ namespace DCL.UI.ErrorPopup
 
             viewInstance!.DescriptionText.text = inputData.Description;
             viewInstance!.TitleText.text = inputData.Title;
+            viewInstance!.RetryButtonText.text = inputData.RetryText;
+            viewInstance!.ExitButtonText.text = inputData.ExitText;
             viewInstance.InternetLostIcon.SetActive(inputData.IconType == IconType.CONNECTION_LOST);
             viewInstance.ErrorIcon.SetActive(inputData.IconType == IconType.ERROR);
             viewInstance.WarningIcon.SetActive(inputData.IconType == IconType.WARNING);
@@ -60,10 +62,24 @@ namespace DCL.UI.ErrorPopup
             /// </summary>
             public Result SelectedOption;
 
-            public string Title = "Error";
-            public string Description = "An error was encountered. Please reload to try again.";
+            public readonly string Title;
+            public readonly string Description;
+            public readonly string RetryText;
+            public readonly string ExitText;
+            public readonly IconType IconType;
 
-            public IconType IconType = IconType.ERROR;
+            public Input(string title = "Error",
+                string description = "An error was encountered. Please reload to try again.",
+                string retryText = "Reload",
+                string exitText = "Exit Application",
+                IconType iconType = IconType.ERROR)
+            {
+                Title = title;
+                Description = description;
+                RetryText = retryText;
+                ExitText = exitText;
+                IconType = iconType;
+            }
         }
     }
 }

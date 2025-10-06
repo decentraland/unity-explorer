@@ -1326,6 +1326,8 @@ MonoBehaviour:
   <RestartButton>k__BackingField: {fileID: 7151957426761071945}
   <DescriptionText>k__BackingField: {fileID: 8007467556033942281}
   <TitleText>k__BackingField: {fileID: 7371684794822801718}
+  <RetryButtonText>k__BackingField: {fileID: 1093698357415620689}
+  <ExitButtonText>k__BackingField: {fileID: 9159638999251567347}
   <WarningIcon>k__BackingField: {fileID: 8332195669480281515}
   <ErrorIcon>k__BackingField: {fileID: 3935490405649274255}
   <InternetLostIcon>k__BackingField: {fileID: 1362985721571783511}

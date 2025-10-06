@@ -20,6 +20,12 @@ namespace DCL.UI.ErrorPopup
         public TMP_Text TitleText { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text RetryButtonText { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text ExitButtonText { get; private set; }
+
+        [field: SerializeField]
         public GameObject WarningIcon { get; private set; }
 
         [field: SerializeField]

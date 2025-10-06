@@ -592,12 +592,10 @@ namespace Global.Dynamic
         {
             IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
 
-            var input = new ErrorPopupWithRetryController.Input
-            {
-                Title = "Load Error",
-                Description = "A loading error was encountered. Please reload to try again.",
-                IconType = ErrorPopupWithRetryController.IconType.ERROR,
-            };
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Load Error",
+                description: "A loading error was encountered. Please reload to try again.",
+                iconType: ErrorPopupWithRetryController.IconType.ERROR);
 
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
