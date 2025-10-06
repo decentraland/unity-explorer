@@ -37,20 +37,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void ReEmit(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage obj) =>
             MessageAdded?.Invoke(channelId, channelType, obj);
 
-        public void Send(ChatChannel channel, string message, string origin, string topic)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
         {
-            core.Send(channel, message, origin, topic);
+            core.Send(channel, message, origin, timestamp);
 
             JsonObject jsonObject = new JsonObject
                 {
                     { "is_command", message[0] == '/' },
-                    { "origin", origin },
+                    { "length", message.Length },
+                    { "origin", origin.ToStringValue() },
                     { "is_mention", CheckIfIsMention(message)},
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
 
                     //TODO FRAN: Add here array of mentioned players.
                     // { "emoji_count", emoji_count },
                 };
+
+            if (timestamp > 0 && selfProfile is { OwnProfile: not null })
+                jsonObject.Add("message_id", ChatUtils.GetId(selfProfile.OwnProfile.UserId, timestamp));
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 jsonObject.Add("receiver_id", channel.Id.Id);

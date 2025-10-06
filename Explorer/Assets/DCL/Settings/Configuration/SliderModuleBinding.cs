@@ -16,6 +16,7 @@ using DCL.Audio;
 using DCL.SkyBox;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
 
 namespace DCL.Settings.Configuration
 {
@@ -55,7 +56,9 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
-            VolumeBus volumeBus)
+            VolumeBus volumeBus,
+            bool isTranslationChatEnabled,
+            IEventBus eventBus)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -68,7 +71,7 @@ namespace DCL.Settings.Configuration
                 SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
                 SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE => new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
-                SliderFeatures.MUSIC_SFX_SOUND_VOLUME_FEATURE => new MusicAndSFXVolumeSettingsController(viewInstance,generalAudioMixer, volumeBus),
+                SliderFeatures.MUSIC_SFX_SOUND_VOLUME_FEATURE => new MusicAndSFXVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
                 SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
