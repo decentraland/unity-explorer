@@ -4,14 +4,17 @@ using DCL.AvatarRendering.Wearables.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.SmartWearables
 {
     public class SmartWearableSceneContent : ISceneContent
     {
-        private Dictionary<string, string> hashTable = new ();
+        private readonly Dictionary<string, (bool, URLAddress)> cachedUrls = new(StringComparer.OrdinalIgnoreCase);
 
-        private Dictionary<string, (bool, URLAddress)> cachedUrls = new();
+        private Dictionary<string, string> content = new (StringComparer.OrdinalIgnoreCase);
+
+        private string contentPrefix;
 
         private SmartWearableSceneContent(URLDomain contentBaseUrl)
         {
@@ -28,7 +31,7 @@ namespace DCL.SmartWearables
                 return cachedResult.success;
             }
 
-            if (hashTable.TryGetValue(contentPath, out string hash))
+            if (TryGetHash(contentPath, out string hash))
             {
                 result = ContentBaseUrl.Append(URLPath.FromString(hash));
                 cachedUrls[contentPath] = (true, result);
@@ -40,37 +43,22 @@ namespace DCL.SmartWearables
             return false;
         }
 
-        public bool TryGetHash(string name, out string hash)
-        {
-            return hashTable.TryGetValue(name, out hash);
-        }
+        public bool TryGetHash(string name, out string hash) =>
+            content.TryGetValue(name, out hash) || content.TryGetValue(contentPrefix + name, out hash);
 
         public static SmartWearableSceneContent Create(URLDomain contentBaseUrl, IWearable wearable, BodyShape bodyShape)
         {
-            var result = new SmartWearableSceneContent(contentBaseUrl);
-
-            string contentPrefix = GetContentPrefix(bodyShape);
-            foreach (var content in wearable.DTO.content)
+            return new SmartWearableSceneContent(contentBaseUrl)
             {
-                string key = content.file;
-
-                // NOTE we use StartsWith because the string female/ also contains male/
-                if (content.file.StartsWith(contentPrefix))
-                    // Remove the prefix so that we don't need it when querying content with TryGetContentUrl
-                    key = content.file.Replace(contentPrefix, string.Empty);
-
-                result.hashTable.Add(key, content.hash);
-            }
-
-            return result;
+                contentPrefix = GetContentPrefix(bodyShape),
+                content = wearable.DTO.content.ToDictionary(x => x.file, x => x.hash),
+            };
         }
 
         private static string GetContentPrefix(BodyShape bodyShape)
         {
             if (bodyShape.Index == BodyShape.MALE.Index) return "male/";
-
             if (bodyShape.Index == BodyShape.FEMALE.Index) return "female/";
-
             throw new ArgumentOutOfRangeException();
         }
     }
