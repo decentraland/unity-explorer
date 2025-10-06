@@ -46,8 +46,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void Start()
         {
             hoverElement.gameObject.SetActive(false);
-            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this));
+            contextMenuButton.onClick.AddListener(OnOpenContextMenuClicked);
             openPassportButton.onClick.AddListener(OnOpenPassportClicked);
+        }
+
+        private void OnOpenContextMenuClicked()
+        {
+            ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this);
         }
 
         public void CleanupEntry()
@@ -104,11 +109,23 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             userProfile.IsMuted.OnUpdate += OnIsMutedChanged;
 
             approveButton.onClick.RemoveAllListeners();
-            approveButton.onClick.AddListener(() => ApproveSpeaker?.Invoke(userProfile.WalletId));
+            approveButton.onClick.AddListener(OnApproveButtonClicked);
             denyButton.onClick.RemoveAllListeners();
-            denyButton.onClick.AddListener(() => DenySpeaker?.Invoke(userProfile.WalletId));
+            denyButton.onClick.AddListener(OnDenyButtonClicked);
 
             SetSpeakingIconIdleScale();
+        }
+
+        private void OnDenyButtonClicked()
+        {
+            if (userProfile != null)
+                DenySpeaker?.Invoke(userProfile.WalletId);
+        }
+
+        private void OnApproveButtonClicked()
+        {
+            if (userProfile != null)
+                ApproveSpeaker?.Invoke(userProfile.WalletId);
         }
 
         private void OnIsMutedChanged(bool isMuted)
@@ -198,6 +215,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             IsSpeakingIcon.gameObject.SetActive(true);
             statusText.text = IS_SPEAKING_TEXT;
             isMutedIcon.SetActive(false);
+            promotingSpinner.SetActive(false);
         }
 
         public void ConfigureAsListener()
@@ -206,6 +224,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             IsSpeakingIcon.gameObject.SetActive(false);
             isMutedIcon.SetActive(false);
             transform.localScale = Vector3.one;
+            promotingSpinner.SetActive(false);
         }
     }
 }

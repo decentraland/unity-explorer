@@ -15,6 +15,7 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly VoiceChatConfiguration voiceChatConfiguration;
+        private readonly ICommunityCallOrchestrator? orchestrator;
 
         private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
         private float buttonPressStartTime;
@@ -27,6 +28,17 @@ namespace DCL.VoiceChat
         public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration)
         {
             this.voiceChatConfiguration = voiceChatConfiguration;
+            isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
+
+            DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
+            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+        }
+
+        public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration, ICommunityCallOrchestrator orchestrator)
+        {
+            this.voiceChatConfiguration = voiceChatConfiguration;
+            this.orchestrator = orchestrator;
             isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
@@ -86,7 +98,9 @@ namespace DCL.VoiceChat
             {
                 MicrophoneRtcAudioSource source = weakMicrophoneSource.Value;
                 source.Toggle();
-                isMicrophoneEnabledProperty.Value = source.IsRecording;
+                bool newState = source.IsRecording;
+                isMicrophoneEnabledProperty.Value = newState;
+                HandleMicrophoneStateChange(newState);
             }
         }
 
@@ -100,6 +114,7 @@ namespace DCL.VoiceChat
             Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
             isMicrophoneEnabledProperty.Value = true;
+            HandleMicrophoneStateChange(true);
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
@@ -125,6 +140,7 @@ namespace DCL.VoiceChat
             Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
             isMicrophoneEnabledProperty.Value = false;
+            HandleMicrophoneStateChange(false);
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
 
@@ -175,6 +191,22 @@ namespace DCL.VoiceChat
         {
             DisableMicrophone();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call");
+        }
+
+        private void HandleMicrophoneStateChange(bool isEnabled)
+        {
+            if (orchestrator != null &&
+                orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
+                orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value)
+            {
+                string localParticipantId = orchestrator.ParticipantsStateService.LocalParticipantId;
+                if (!string.IsNullOrEmpty(localParticipantId))
+                {
+                    // isEnabled = true means microphone is unmuted, so we want to unmute the speaker
+                    // isEnabled = false means microphone is muted, so we want to mute the speaker
+                    orchestrator.MuteSpeakerInCurrentCall(localParticipantId, !isEnabled);
+                }
+            }
         }
     }
 }

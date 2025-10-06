@@ -102,7 +102,7 @@ namespace DCL.PluginSystem.Global
 
             VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
-            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration, voiceChatOrchestrator);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
 
             trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler);
