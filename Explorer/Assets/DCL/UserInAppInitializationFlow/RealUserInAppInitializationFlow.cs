@@ -149,7 +149,6 @@ namespace DCL.UserInAppInitializationFlow
                 characterExposedTransform.Position.Value
                     = characterObject.Controller.transform.position
                         = startParcel.Peek().ParcelToPositionFlat();
-                UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
@@ -165,7 +164,7 @@ namespace DCL.UserInAppInitializationFlow
                             else
                             {
                                 //Wait for livekit to end handshake
-                                var livekitOperationResult = await livekitHandshake;
+                                var livekitOperationResult = await ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);;
 
                                 if (isLocalSceneDevelopment)
                                 {
