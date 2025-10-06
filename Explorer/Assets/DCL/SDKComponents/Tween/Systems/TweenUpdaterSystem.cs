@@ -227,7 +227,7 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private static void UpdatePBTween(in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
@@ -245,6 +245,9 @@ namespace DCL.SDKComponents.Tween
             pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous;
 
         private static bool TweenSurpassedDuration(in PBTween pbTween, in SDKTweenComponent sdkTweenComponent) =>
-            pbTween.Duration > 0 && sdkTweenComponent.CustomTweener != null && sdkTweenComponent.CustomTweener.GetElapsedTime() >= pbTween.Duration;
+            pbTween.Duration > 0
+            && sdkTweenComponent.CustomTweener != null
+            && !sdkTweenComponent.CustomTweener.IsFinished()
+            && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
     }
 }

@@ -52,8 +52,11 @@ namespace DCL.SDKComponents.Tween.Components
         public void Rewind() =>
             core?.Rewind();
 
-        public void Kill(bool complete) =>
+        public void Kill(bool complete)
+        {
             core?.Kill(complete);
+            finished = complete;
+        }
 
         public bool IsPaused() =>
             !core?.IsPlaying() ?? false;
@@ -62,7 +65,7 @@ namespace DCL.SDKComponents.Tween.Components
             finished;
 
         public bool IsActive() =>
-            (!core?.IsPlaying() ?? false) && !finished;
+            !IsFinished() && (!core?.IsPlaying() ?? false);
 
         public float GetElapsedTime() =>
             core?.Elapsed() ?? 0f;
