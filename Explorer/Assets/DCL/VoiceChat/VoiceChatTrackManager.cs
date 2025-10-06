@@ -5,7 +5,6 @@ using DCL.Utilities;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
-using DCL.VoiceChat.Permissions;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -22,7 +21,10 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+#if UNITY_STANDALONE_OSX
+using DCL.VoiceChat.Permissions;
 using Utility.Ownership;
+# endif
 using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
@@ -169,7 +171,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                microphoneTrack.Value.Track.SetMute(mute);
+                //microphoneTrack.Value.Track.SetMute(mute);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track muted: {mute}");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to mute local track: {ex.Message}"); }
@@ -282,11 +284,11 @@ namespace DCL.VoiceChat
 
                 if (!configuration.EnableLocalTrackPlayback) return;
 
-                WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
 
-                if (stream != null)
+                if (stream.Resource.Has)
                 {
-                    playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
+                    playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
                 }
             }
@@ -303,7 +305,7 @@ namespace DCL.VoiceChat
 
                 if (!configuration.EnableLocalTrackPlayback) return;
 
-                playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
+                playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
 
             }
