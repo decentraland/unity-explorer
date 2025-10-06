@@ -73,7 +73,6 @@ namespace DCL.PluginSystem.Global
         private IComponentPool<Transform> transformPoolRegistry = null!;
         private Transform? poolParent = null;
 
-        // private IObjectPool<NametagElement> nametagElementPool = null!;
         private IObjectPool<NametagHolder> nametagHolderPool = null!;
         private TextureArrayContainer textureArrayContainer;
 
