@@ -71,15 +71,8 @@ namespace DCL.UserInAppInitializationFlow
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.ONBOARDING, $"There was an error while trying to update TutorialStep into your profile. ERROR: {e.Message}"); }
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(CancellationToken ct)
-        {
-            EnumResult<TaskError> res = await TryToChangeToOnBoardingRealmAsync(ct);
-
-            if (!res.Success)
-                return res;
-
-            return res;
-        }
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(CancellationToken ct) =>
+            await TryToChangeToOnBoardingRealmAsync(ct);
 
         private async UniTask<EnumResult<TaskError>> TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
@@ -100,27 +93,15 @@ namespace DCL.UserInAppInitializationFlow
                 if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
                     return EnumResult<TaskError>.SuccessResult();
 
-            // If the onboarding feature flag is enabled, we set the realm to the onboarding realm
-            // TODO the following flow is suspicious: realmNavigator itself is wrapped in the loading screen, and this operation is a part of the loading screen,
-            // TODO So operations will be called from the operation. Re-consideration required
-            //try
-            //{
             string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
             var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
-            await realmController.SetRealmAsync(realmURL, ct);
+
+            if (await realmController.IsReachableAsync(realmURL, ct))
+                await realmController.SetRealmAsync(realmURL, ct);
+            else
+                ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
+
             isProfilePendingToBeUpdated = true;
-
-            return EnumResult<TaskError>.SuccessResult();
-
-            //}
-            // RealmNavigator already contains fallback logic to the previously loaded realm
-            // catch (Exception)
-            // {
-            //     // We redirect to Genesis City if the onboarding realm is not found
-            //     ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
-            //     await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
-            // }
-
             return EnumResult<TaskError>.SuccessResult();
         }
 
