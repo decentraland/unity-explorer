@@ -253,7 +253,6 @@ namespace Global.Dynamic
                     await LODContainer
                          .CreateAsync(
                               assetsProvisioner,
-                              bootstrapContainer.DecentralandUrlsSource,
                               staticContainer,
                               settingsContainer,
                               staticContainer.RealmData,

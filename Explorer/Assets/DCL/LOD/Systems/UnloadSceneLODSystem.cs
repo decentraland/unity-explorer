@@ -11,6 +11,7 @@ using ECS.LifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 
@@ -46,20 +47,33 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(ISceneFacade))]
         private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
         }
 
         [Query]
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState,
+            ref InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
+                //TODO (JUANI): Cleanup this further. Too may ifs
+                if (sceneDefinitionComponent.Definition.SupportInitialSceneState() && sceneLODInfo.HasLOD(0))
+                {
+                    initialSceneStateDescriptor.MoveToCache();
+
+                    sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                    sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                    World.Remove<SceneLODInfo>(entity);
+                    return;
+                }
+
+
                 if (!sceneFacade.IsSceneReady())
                     return;
 
-                sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                 World.Remove<SceneLODInfo>(entity);
             }
         }
@@ -76,7 +90,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         private void DestroySceneLOD(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
         }
     }
 }

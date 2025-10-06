@@ -11,6 +11,7 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
+    //TODO (JUANI) : This should be a struct?
     public class InitialSceneStateDescriptor
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
@@ -92,8 +93,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         {
             foreach (var valueTuple in AssetsInstantiated)
             {
-                //valueTuple.Item2.Scene_LOD_Bridge_Asset = true;
-                //assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
+                valueTuple.Item2.Scene_LOD_Bridge_Asset = true;
+                assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
         }
 
@@ -102,8 +103,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             if (!IsSupported())
                 return;
 
-            //foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
-                //gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
+            foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
+                gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
         }
 
     }

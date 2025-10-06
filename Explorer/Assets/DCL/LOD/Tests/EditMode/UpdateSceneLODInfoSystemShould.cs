@@ -60,7 +60,7 @@ namespace DCL.LOD.Tests
 
             sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
-            system = new UpdateSceneLODInfoSystem(world, lodSettings, new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY));
+            system = new UpdateSceneLODInfoSystem(world, lodSettings);
         }
 
         [Test]

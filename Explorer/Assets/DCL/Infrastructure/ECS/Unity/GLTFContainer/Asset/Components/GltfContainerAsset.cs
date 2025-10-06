@@ -62,6 +62,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public IStreamableRefCountData AssetData { get; private set; }
 
+        public bool Scene_LOD_Bridge_Asset;
+
+
         private GltfContainerAsset(GameObject root, IStreamableRefCountData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
             List<Animator> animators, IReadOnlyList<string>? hierarchyPaths = null)

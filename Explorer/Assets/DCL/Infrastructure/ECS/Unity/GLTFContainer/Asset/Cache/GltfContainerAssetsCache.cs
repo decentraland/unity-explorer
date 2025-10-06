@@ -87,8 +87,17 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            asset.Root.SetActive(false);
-            asset.Root.transform.SetParent(parentContainer, false);
+            if (asset.Scene_LOD_Bridge_Asset)
+            {
+                asset.Root.transform.SetParent(null);
+                asset.Root.SetActive(true);
+                asset.Scene_LOD_Bridge_Asset = false;
+            }
+            else
+            {
+                asset.Root.SetActive(false);
+                asset.Root.transform.SetParent(parentContainer, true);
+            }
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)

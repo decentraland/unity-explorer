@@ -14,6 +14,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,13 +29,11 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private IReadOnlyList<SceneAssetBundleManifest>? manifestCache;
 
-        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset, IDecentralandUrlsSource decentralandUrlsSource) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
-            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override void Update(float t)
@@ -44,7 +43,7 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {
@@ -61,13 +60,25 @@ namespace DCL.LOD.Systems
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
-                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition, initialSceneStateDescriptor);
             }
         }
 
-        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level, InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+
+            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState())
+            {
+                //TODO (JUANI) : Just to start the loop
+                initialSceneStateDescriptor.IsReady();
+                //TODO (JUANI) : Duplicate promise that will point to the same place
+                sceneLODInfo.CurrentLODPromise = Promise.Create(World,
+                    GetAssetBundleIntention.FromHash("GP_staticscene_LZMA_StaticSceneDescriptor"),
+                    PartitionComponent.TOP_PRIORITY);
+                sceneLODInfo.CurrentLODLevelPromise = level;
+                return;
+            }
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
 
