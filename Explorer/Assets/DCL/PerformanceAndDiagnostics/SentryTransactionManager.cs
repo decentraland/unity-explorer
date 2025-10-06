@@ -24,8 +24,6 @@ namespace DCL.PerformanceAndDiagnostics
 
         public void StartSentryTransaction(TransactionData transactionData)
         {
-            if (sentryTransactions.ContainsKey(transactionData.TransactionName)) return;
-
             ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
             sentryTransactions.TryAdd(transactionData.TransactionName, transactionTracer);
             transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
