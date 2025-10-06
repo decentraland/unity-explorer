@@ -145,6 +145,8 @@ namespace DCL.UserInAppInitializationFlow
                     ? reloginOps
                     : initOps;
 
+                await checkOnboardingStartupOperation.ExecuteAsync(new IStartupOperation.Params(), ct);
+
                 //Set initial position and start async livekit connection
                 characterExposedTransform.Position.Value
                     = characterObject.Controller.transform.position

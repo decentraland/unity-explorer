@@ -8,14 +8,16 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utility.Types;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
+using Global.Dynamic;
 using System;
 using System.Threading;
 
 namespace DCL.UserInAppInitializationFlow
 {
-    public class CheckOnboardingStartupOperation : IStartupOperation
+    public class CheckOnboardingStartupOperation
     {
         private const int TUTORIAL_STEP_DONE_MARK = 256;
 
@@ -24,7 +26,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly IGlobalRealmController realmController;
 
         private Profile? ownProfile;
         private bool isProfilePendingToBeUpdated;
@@ -34,13 +36,13 @@ namespace DCL.UserInAppInitializationFlow
             ISelfProfile selfProfile,
             IDecentralandUrlsSource decentralandUrlsSource,
             IAppArgs appParameters,
-            IRealmNavigator realmNavigator)
+            IGlobalRealmController realmController)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.appParameters = appParameters;
-            this.realmNavigator = realmNavigator;
+            this.realmController = realmController;
         }
 
         public async UniTask MarkOnboardingAsDoneAsync(World world, Entity playerEntity, CancellationToken ct)
@@ -69,15 +71,13 @@ namespace DCL.UserInAppInitializationFlow
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.ONBOARDING, $"There was an error while trying to update TutorialStep into your profile. ERROR: {e.Message}"); }
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(CancellationToken ct)
         {
-            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             EnumResult<TaskError> res = await TryToChangeToOnBoardingRealmAsync(ct);
 
             if (!res.Success)
                 return res;
 
-            args.Report.SetProgress(finalizationProgress);
             return res;
         }
 
@@ -91,8 +91,8 @@ namespace DCL.UserInAppInitializationFlow
             ownProfile = await selfProfile.ProfileAsync(ct);
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
-            if (ownProfile is { TutorialStep: > 0 })
-                return EnumResult<TaskError>.SuccessResult();
+            //if (ownProfile is { TutorialStep: > 0 })
+            //    return EnumResult<TaskError>.SuccessResult();
 
             // TODO: Remove the greeting-onboarding ff when it is finally moved to production. Keep onboarding only.
             //.We use the greeting-onboarding FF so we are able to test it on dev environment.
@@ -107,14 +107,10 @@ namespace DCL.UserInAppInitializationFlow
             //{
             string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
             var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
-            EnumResult<ChangeRealmError> result = await realmNavigator.TryChangeRealmAsync(realmURL, ct);
+            await realmController.SetRealmAsync(realmURL, ct);
             isProfilePendingToBeUpdated = true;
 
-            if (result.Success)
-                return EnumResult<TaskError>.SuccessResult();
-
-            if (result.Error!.Value.State is ChangeRealmError.MessageError or ChangeRealmError.NotReachable)
-                return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, result.Error.Value.Message);
+            return EnumResult<TaskError>.SuccessResult();
 
             //}
             // RealmNavigator already contains fallback logic to the previously loaded realm
