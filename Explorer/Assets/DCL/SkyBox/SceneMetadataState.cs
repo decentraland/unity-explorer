@@ -2,6 +2,7 @@ using DCL.Ipfs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS.SceneLifeCycle;
+using static DCL.Ipfs.SceneMetadata;
 
 namespace DCL.SkyBox
 {
@@ -38,11 +39,8 @@ namespace DCL.SkyBox
 
             SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
 
-            if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
-                ApplyFixedTime(worldTime);
-
-            if (sceneMetadata is { skyboxConfig: { fixedTime: var sceneTime } })
-                ApplyFixedTime(sceneTime);
+            if (sceneMetadata != null)
+                UpdateSkyboxSettings(sceneMetadata);
 
             sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
@@ -58,10 +56,20 @@ namespace DCL.SkyBox
             transition.Update(dt);
         }
 
-        private void ApplyFixedTime(float time)
+        private void UpdateSkyboxSettings(SceneMetadata metadata)
         {
-            settings.TransitionMode = TransitionMode.FORWARD;
-            settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
+            // Extract world and scene configs (if any)
+            SkyboxConfigData? worldConfig = metadata.worldConfiguration?.SkyboxConfig;
+            SkyboxConfigData? sceneConfig = metadata.skyboxConfig;
+
+            // Scene config overrides world config
+            float? time = sceneConfig?.fixedTime ?? worldConfig?.fixedTime;
+            TransitionMode transitionMode = sceneConfig?.transitionMode ?? worldConfig?.transitionMode ?? TransitionMode.FORWARD;
+
+            settings.TransitionMode = transitionMode;
+
+            if (time.HasValue)
+                settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time.Value);
         }
     }
 }
