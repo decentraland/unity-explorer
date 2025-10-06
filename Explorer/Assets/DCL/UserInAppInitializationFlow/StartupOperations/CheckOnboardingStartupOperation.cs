@@ -90,15 +90,18 @@ namespace DCL.UserInAppInitializationFlow
             isProfilePendingToBeUpdated = false;
             ownProfile = await selfProfile.ProfileAsync(ct);
 
+            // TODO: rollback this
+            const string realm = "onboardingdcl.dcl.eth";
+
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
-            if (ownProfile is { TutorialStep: > 0 })
-                return EnumResult<TaskError>.SuccessResult();
+            // if (ownProfile is { TutorialStep: > 0 })
+            //     return EnumResult<TaskError>.SuccessResult();
 
             // TODO: Remove the greeting-onboarding ff when it is finally moved to production. Keep onboarding only.
             //.We use the greeting-onboarding FF so we are able to test it on dev environment.
-            if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.GREETING_ONBOARDING, out string? realm))
-                if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
-                    return EnumResult<TaskError>.SuccessResult();
+            // if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.GREETING_ONBOARDING, out string? realm))
+            //     if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
+            //         return EnumResult<TaskError>.SuccessResult();
 
             // If the onboarding feature flag is enabled, we set the realm to the onboarding realm
             // TODO the following flow is suspicious: realmNavigator itself is wrapped in the loading screen, and this operation is a part of the loading screen,
