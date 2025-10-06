@@ -29,6 +29,7 @@ using DCL.Friends;
 using DCL.Friends.Passport;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
@@ -78,6 +79,7 @@ using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
@@ -93,6 +95,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.RealmUrl;
+using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -107,6 +110,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.NotificationsBus;
 using DCL.PerformanceAndDiagnostics;
+using DCL.Translation;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
 using UnityEngine;
@@ -434,7 +438,7 @@ namespace Global.Dynamic
             bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
-
+            bool includeTranslationChat = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
@@ -563,8 +567,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
-                chatEventBus
-                );
+                chatEventBus);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -619,6 +622,8 @@ namespace Global.Dynamic
             IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
+
+            var translationSettings = new PlayerPrefsTranslationSettings();
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
@@ -736,7 +741,9 @@ namespace Global.Dynamic
                     mvcManager,
                     menusAccessFacade,
                     chatMessagesBus,
+                    eventBus,
                     chatHistory,
+                    clipboardManager,
                     entityParticipantTable,
                     nametagsData,
                     mainUIView,
@@ -763,9 +770,14 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    eventBus,
+                    includeTranslationChat,
+                    translationSettings,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    bootstrapContainer.Environment,
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
+                    eventBus,
                     assetsProvisioner,
                     mvcManager,
                     mapRendererContainer,
@@ -818,6 +830,7 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     realmNftNamesProvider,
                     voiceChatContainer.VoiceChatOrchestrator,
+                    includeTranslationChat,
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
@@ -842,7 +855,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     dclCursor,
-                    realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", "RestrictedActionAPI")),
+                    realmUrl => chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
@@ -1067,7 +1080,8 @@ namespace Global.Dynamic
                         debugBuilder,
                         cameraReelStorageService,
                         entityParticipantTable,
-                        staticContainer.ScenesCache
+                        staticContainer.ScenesCache,
+                        eventBus, translationSettings
                     )
                 );
 
