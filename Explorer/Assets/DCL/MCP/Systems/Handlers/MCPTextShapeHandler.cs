@@ -14,7 +14,7 @@ namespace DCL.MCP.Handlers
         {
             var requestId = Guid.NewGuid().ToString("N");
 
-            var req = new MCPCreateTextShapeRequest
+            var req = new Systems.MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest
             {
                 RequestId = requestId,
 
@@ -29,9 +29,6 @@ namespace DCL.MCP.Handlers
                 Pitch = parameters["rotationEuler"]?["pitch"]?.Value<float?>() ?? parameters["pitch"]?.Value<float?>() ?? 0f,
                 Roll = parameters["rotationEuler"]?["roll"]?.Value<float?>() ?? parameters["roll"]?.Value<float?>() ?? 0f,
                 ParentId = parameters["parentId"]?.Value<int?>() ?? 0,
-
-                // Scene
-                SceneId = parameters["sceneId"]?.ToString(),
 
                 // Text content & style (имена соответствуют Builder.TextShape.cs)
                 Text = parameters["text"]?.ToString() ?? string.Empty,
@@ -52,12 +49,12 @@ namespace DCL.MCP.Handlers
                 ShadowOffsetX = parameters["shadowOffsetX"]?.Value<float?>() ?? 0f,
                 ShadowOffsetY = parameters["shadowOffsetY"]?.Value<float?>() ?? 0f,
                 OutlineWidth = parameters["outlineWidth"]?.Value<float?>() ?? 0.1f,
-                ShadowColor = parameters["shadowColor"]?.ToObject<MCPColor3?>(),
-                OutlineColor = parameters["outlineColor"]?.ToObject<MCPColor3?>(),
-                TextColor = parameters["textColor"]?.ToObject<MCPColor4?>(),
+                ShadowColor = parameters["shadowColor"]?.ToObject<Decentraland.Common.Color3?>(),
+                OutlineColor = parameters["outlineColor"]?.ToObject<Decentraland.Common.Color3?>(),
+                TextColor = parameters["textColor"]?.ToObject<Decentraland.Common.Color4?>(),
             };
 
-            MCPRequestsQueue.EnqueueTextShape(req);
+            Systems.MCPSceneEntitiesBuilder.EnqueueTextShape(req);
 
             return new
             {

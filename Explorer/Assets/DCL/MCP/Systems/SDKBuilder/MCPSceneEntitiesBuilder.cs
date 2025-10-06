@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Entity = Arch.Core.Entity;
 using Quaternion = UnityEngine.Quaternion;
@@ -30,6 +31,8 @@ namespace DCL.MCP.Systems
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sdkTransformPool = sdkTransformPool;
+
+            textShapeRequests.Clear();
         }
 
         public MCPSceneEntitiesBuilder Begin(Vector3 position, Vector3 scale, Quaternion rotation = default, int parentId = 0)
