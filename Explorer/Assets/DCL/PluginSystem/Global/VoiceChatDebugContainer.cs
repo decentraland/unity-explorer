@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
 #endif
@@ -23,11 +24,15 @@ namespace DCL.PluginSystem.Global
 
         public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager? trackManager)
         {
+            var unityOutputSampleRate = new ElementBinding<ulong>(0);
+
             var availableMicrophones = new ElementBinding<ulong>(0);
             var currentMicrophone = new ElementBinding<string>(string.Empty);
+
 #if UNITY_STANDALONE_OSX
             var permissionsStatus = new ElementBinding<string>(string.Empty);
 #endif
+
             var isRecording = new ElementBinding<string>(string.Empty);
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
@@ -38,11 +43,14 @@ namespace DCL.PluginSystem.Global
             List<StreamInfo<AudioStreamInfo>> infoBuffer = new ();
             List<(string name, string value)> speakersBuffer = new ();
 
-            debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
-                         ?.AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
+            debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.VOICE_CHAT)
+                         ?.AddMarker("Unity Output Sample Rate", unityOutputSampleRate, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
+
 #if UNITY_STANDALONE_OSX
                           .AddCustomMarker("Permission Status", permissionsStatus)
 #endif
+
                           .AddCustomMarker("Current Microphone", currentMicrophone)
                           .AddCustomMarker("Is Recording", isRecording)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
@@ -81,6 +89,8 @@ namespace DCL.PluginSystem.Global
             void UpdateWidget()
             {
                 if (trackManager == null) return;
+
+                unityOutputSampleRate.Value = (ulong)UnityEngine.AudioSettings.outputSampleRate;
 
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
