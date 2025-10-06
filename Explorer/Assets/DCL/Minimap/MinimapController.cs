@@ -51,7 +51,6 @@ namespace DCL.Minimap
             { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
         };
         private const float ANIMATION_TIME = 0.2f;
-        private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
         private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 10;
 
         private readonly IMapRenderer mapRenderer;
@@ -417,10 +416,8 @@ namespace DCL.Minimap
                             .Forget();
             }
 
-            return () => chatMessagesBus.Send(
-                ChatChannel.NEARBY_CHANNEL,
-                $"/{reloadSceneCommand.Command}",
-                RELOAD_SCENE_COMMAND_ORIGIN
+            return () => chatMessagesBus.SendWithUtcNowTimestamp(
+                ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.MINIMAP
             );
         }
 

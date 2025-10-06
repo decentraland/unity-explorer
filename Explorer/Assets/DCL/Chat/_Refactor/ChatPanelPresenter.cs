@@ -16,6 +16,8 @@ using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
+using DCL.Translation;
+using DCL.Translation.Service;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -40,10 +42,26 @@ namespace DCL.Chat
         private CancellationTokenSource initCts = new ();
         private bool isVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
 
-        public ChatPanelPresenter(ChatPanelView view, ITextFormatter textFormatter, IVoiceChatOrchestrator voiceChatOrchestrator, CurrentChannelService currentChannelService, CommunitiesDataProvider communityDataProvider,
-            ChatConfig.ChatConfig chatConfig, IChatEventBus chatEventBus, IChatHistory chatHistory, CommunityDataService communityDataService, ChatMemberListService chatMemberListService,
-            ProfileRepositoryWrapper profileRepositoryWrapper, CommandRegistry commandRegistry, ChatInputBlockingService chatInputBlockingService, IEventBus eventBus, ChatContextMenuService chatContextMenuService,
-            ChatClickDetectionService chatClickDetectionService, ChatSharedAreaEventBus chatSharedAreaEventBus)
+        public ChatPanelPresenter(ChatPanelView view,
+            ITextFormatter textFormatter,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            CurrentChannelService currentChannelService,
+            CommunitiesDataProvider communityDataProvider,
+            ChatConfig.ChatConfig chatConfig,
+            IChatEventBus chatEventBus,
+            IChatHistory chatHistory,
+            CommunityDataService communityDataService,
+            ChatMemberListService chatMemberListService,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            CommandRegistry commandRegistry,
+            ChatInputBlockingService chatInputBlockingService,
+            IEventBus eventBus,
+            ChatContextMenuService chatContextMenuService,
+            ChatClickDetectionService chatClickDetectionService,
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            ITranslationSettings translationSettings,
+            ITranslationMemory translationMemory,
+            ITranslationCache translationCache)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -70,12 +88,14 @@ namespace DCL.Chat
                 currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
+                translationSettings,
                 commandRegistry.GetTitlebarViewModel,
                 commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory,
                 voiceChatOrchestrator,
                 chatEventBus,
-                commandRegistry.GetUserCallStatusCommand);
+                commandRegistry.GetUserCallStatusCommand,
+                commandRegistry.ToggleAutoTranslateCommand);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
@@ -93,11 +113,17 @@ namespace DCL.Chat
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
                 eventBus,
                 chatHistory,
+                chatConfig,
                 currentChannelService,
                 chatContextMenuService,
+                translationMemory,
+                translationCache,
+                translationSettings,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead);
+                commandRegistry.MarkMessagesAsRead,
+                commandRegistry.TranslateMessageCommand,
+                commandRegistry.RevertToOriginalCommand);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,
