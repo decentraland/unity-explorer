@@ -34,6 +34,7 @@ namespace DCL.Chat.ChatViews
         [SerializeField] private TMP_Text textMembersCount;
         [SerializeField] private ChatProfileView chatProfileView;
         [SerializeField] private GameObject nearbyElementsContainer;
+        [SerializeField] private GameObject nearbyAutoTranslateIndicator;
 
         private TitlebarViewMode currentViewMode;
         private ChatTitlebarViewModel currentTitlebarViewModel;
@@ -60,8 +61,6 @@ namespace DCL.Chat.ChatViews
 
             bool shouldShowMembersButton = model.ViewMode == TitlebarViewMode.Nearby ||
                                            model.ViewMode == TitlebarViewMode.Community;
-
-            buttonStartCall.gameObject.SetActive(model.ViewMode == TitlebarViewMode.DirectMessage);
 
             buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
 
@@ -99,6 +98,12 @@ namespace DCL.Chat.ChatViews
             }
         }
 
+        public void SetAutoTranslateIndicatorForNearby(bool isVisible)
+        {
+            if (nearbyAutoTranslateIndicator != null)
+                nearbyAutoTranslateIndicator.SetActive(isVisible);
+        }
+        
         public void SetConnectionStatus(bool isOnline)
         {
             connectionStatusIndicator.gameObject.SetActive(isOnline);
@@ -108,5 +113,10 @@ namespace DCL.Chat.ChatViews
 
         public void SetMemberCount(string count) => textMembersCount.text = count;
         public void Activate(bool activate) => gameObject.SetActive(activate);
+
+        public void SetAutoTranslateIndicatorForUserAndCommunities(bool isVisible)
+        {
+            chatProfileView.SetAutoTranslateIndicator(isVisible);
+        }
     }
 }

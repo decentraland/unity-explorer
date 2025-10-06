@@ -1,5 +1,4 @@
 using DCL.Audio;
-using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.Utilities;
@@ -13,6 +12,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatInCallController : IDisposable
     {
+        private const int MAX_VISIBLE_SPEAKERS = 8;
+
         private readonly CommunityVoiceChatInCallView view;
 
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -21,6 +22,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly ImageController thumbnailController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
         private readonly IDisposable panelSizeChangeSubscription;
+        private readonly IDisposable panelStateChangeSubscription;
+
+        private int speakersCount;
 
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct = new();
@@ -43,11 +47,26 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
 
             panelSizeChangeSubscription = currentVoiceChatPanelSize.Subscribe(OnPanelSizeChanged);
+            panelStateChangeSubscription = voiceChatOrchestrator.CurrentVoiceChatPanelState.Subscribe(OnPanelStateChanged);
+        }
+
+        private void OnPanelStateChanged(VoiceChatPanelState state)
+        {
+            SetInCallElementsVisibility(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value, currentVoiceChatPanelSize.Value);
         }
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
-            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.COLLAPSED);
+            bool isPanelCollapsed = panelSize == VoiceChatPanelSize.COLLAPSED;
+            view.SetCollapsedState(isPanelCollapsed);
+
+            SetInCallElementsVisibility(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value, panelSize);
+        }
+
+        private void SetInCallElementsVisibility(VoiceChatPanelState panelState, VoiceChatPanelSize panelSize)
+        {
+            view.SetButtonsVisibility(panelState is not VoiceChatPanelState.UNFOCUSED, panelSize);
+            view.SetScrollAndMasksVisibility(speakersCount > MAX_VISIBLE_SPEAKERS);
         }
 
         private void OnCommunityButtonClicked()
@@ -75,6 +94,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             expandedPanelButtonsPresenter.Dispose();
             collapsedPanelButtonsPresenter.Dispose();
             panelSizeChangeSubscription.Dispose();
+            panelStateChangeSubscription.Dispose();
 
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
@@ -86,15 +106,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.transform.localScale = Vector3.one;
         }
 
-        public void RefreshCounter(int count, int raisedHandsCount)
+        public void RefreshCounters(int updatedSpeakersCount, int raisedHandsCount, int totalParticipantCount)
         {
-            view.SpeakersCount.text = $"({count})";
+            speakersCount = updatedSpeakersCount;
+            view.SpeakersCount.text = $"({updatedSpeakersCount})";
             view.ConfigureRaisedHandTooltip(raisedHandsCount);
-        }
-
-        public void SetParticipantCount(int participantCount)
-        {
-            view.SetParticipantCount(participantCount);
+            view.SetParticipantCount(totalParticipantCount);
+            view.SetScrollAndMasksVisibility(updatedSpeakersCount > MAX_VISIBLE_SPEAKERS);
         }
 
         public void ShowRaiseHandTooltip(string playerName)
@@ -121,7 +139,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED;
             voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.COLLAPSED);
-            view.SetCollapsedState(!isPanelCollapsed);
         }
     }
 }
