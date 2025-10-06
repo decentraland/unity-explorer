@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using DCL.Diagnostics;
+using DG.Tweening;
 using DG.Tweening.Plugins.Options;
 using System;
 
@@ -39,8 +40,8 @@ namespace DCL.SDKComponents.Tween.Components
 
         protected virtual DG.Tweening.Tween CreateContinuousTweener(T start, T directionOrEnd, float speed)
         {
-            // TODO: Reporthub
-            throw new NotSupportedException("Continuous tweener is not supported for this type");
+            ReportHub.LogError(ReportCategory.TWEEN, $"Continuous tweener is not supported for type {typeof(T).Name}");
+            throw new NotSupportedException($"Continuous tweener is not supported for type {typeof(T).Name}");
         }
 
         public void Play() =>
