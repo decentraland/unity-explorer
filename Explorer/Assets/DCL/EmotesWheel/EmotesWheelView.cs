@@ -12,6 +12,10 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelView : ViewBase, IView
     {
+        // 0.05f make sure that graphic raycaster and emote emotes works almost immediately, so emote can be played even
+        // while panel is not open all the way.
+        private const float ANIMATION_LOCK_DURATION = 0.05f;
+        
         public event Action? Closed;
 
         [SerializeField]
@@ -54,9 +58,7 @@ namespace DCL.EmotesWheel
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
-            // 0.05f make sure that graphic raycaster and emote emotes works, so emote can be played even when panel didn't
-            // open all the way.
-            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.05f,
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > ANIMATION_LOCK_DURATION,
                 cancellationToken: ct);
         }
 
