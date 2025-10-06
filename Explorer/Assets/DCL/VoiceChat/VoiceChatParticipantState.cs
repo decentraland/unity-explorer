@@ -27,5 +27,20 @@ namespace DCL.VoiceChat
             Role = role;
             IsMuted = isMuted;
         }
+
+        public static VoiceChatParticipantState CreateDefault(string walletId)
+        {
+            return new VoiceChatParticipantState(
+                walletId,
+                new ReactiveProperty<bool>(false),
+                new ReactiveProperty<string?>(null),
+                new ReactiveProperty<bool?>(false),
+                new ReactiveProperty<string?>(null),
+                new ReactiveProperty<bool>(false),
+                new ReactiveProperty<bool>(false),
+                new ReactiveProperty<VoiceChatParticipantsStateService.UserCommunityRoleMetadata>(VoiceChatParticipantsStateService.UserCommunityRoleMetadata.none),
+                new ReactiveProperty<bool>(false)
+            );
+        }
     }
 }
