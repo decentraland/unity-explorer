@@ -244,7 +244,7 @@ namespace DCL.EmotesWheel
 
         private async void OpenBackpackAsync()
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes), PanelsSharingSpace.Chat);
         }
 
         private void UnblockUnwantedInputs()
