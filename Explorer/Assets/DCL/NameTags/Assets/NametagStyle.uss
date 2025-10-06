@@ -65,8 +65,13 @@
 
 .nametag__background-mention {
     opacity: 0;
-    --gradient-to: rgb(255, 45, 85);
-    --gradient-from: rgb(198, 64, 205);
+    /*--gradient-to: rgb(255, 45, 85);*/
+    /*--gradient-from: rgb(198, 64, 205);*/
+    background-image: var(--sprite-common__background-gradient-mention);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-right-radius: 18px;
+    border-bottom-left-radius: 18px;
     position: absolute;
     left: 0;
     top: 0;

@@ -185,10 +185,13 @@ namespace DCL.Nametags
             background.AddToClassList(USS_BACKGROUND);
 
             {
-                var backgroundMention = new GradientElement { name = "background-mention" };
+                // Clipping does not work on rounded corners and we can't set a radius on the GradientElement,
+                // so we're using a regular VE with a background image for now instead. Support request: https://support.unity.com/hc/en-us/requests/2480620
+                // var backgroundMention = new GradientElement { name = "background-mention", Vertical = true };
+                var backgroundMention = new VisualElement { name = "background-mention" };
+
                 background.Add(backgroundMention);
                 backgroundMention.AddToClassList(USS_BACKGROUND_MENTION);
-                backgroundMention.Vertical = true;
 
                 var backgroundCenter = new VisualElement { name = "background-center" };
                 background.Add(backgroundCenter);

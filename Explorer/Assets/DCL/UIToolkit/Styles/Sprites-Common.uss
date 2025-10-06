@@ -1,5 +1,6 @@
 /* AUTO GENERATED */
 :root {
+    --sprite-common__background-gradient-mention: url('/Assets/Textures/UI/Common/background-gradient-mention.png');
     --sprite-common__icon-checkmark-thin: url('/Assets/Textures/UI/Common/icon-checkmark-thin.png');
     --sprite-common__icon-close: url('/Assets/Textures/UI/Common/icon-close.png');
     --sprite-common__icon-connection: url('/Assets/Textures/UI/Common/icon-connection.png');
@@ -11,6 +12,12 @@
     --sprite-common__icon-search: url('/Assets/Textures/UI/Common/icon-search.png');
     --sprite-common__icon-verified: url('/Assets/Textures/UI/Common/icon-verified.png');
     --sprite-common__label-dcl-official: url('/Assets/Textures/UI/Common/label-dcl-official.png');
+}
+
+.sprite-common__background-gradient-mention {
+    background-image: var(--sprite-common__background-gradient-mention);
+    width: 32px;
+    height: 32px;
 }
 
 .sprite-common__icon-checkmark-thin {
