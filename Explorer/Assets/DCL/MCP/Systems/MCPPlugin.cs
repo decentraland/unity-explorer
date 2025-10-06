@@ -44,6 +44,7 @@ namespace DCL.MCP
                 var screenshotHandler = new MCPScreenshotHandler(globalWorld);
                 var quickActionHandler = new MCPQuickActionHandler(globalWorld, screenshotService);
                 var sceneInfoHandler = new MCPSceneInfoHandler(globalWorld, scenesCache);
+                var textShapeHandler = new MCPTextShapeHandler();
 
                 // Регистрация обработчиков камеры
                 server.RegisterHandler("toggleInWorldCamera", cameraHandler.HandleToggleInWorldCameraAsync);
@@ -69,6 +70,9 @@ namespace DCL.MCP
                 server.RegisterHandler("getAllScenesInfo", sceneInfoHandler.HandleGetAllScenesInfoAsync);
                 server.RegisterHandler("getSceneInfo", sceneInfoHandler.HandleGetSceneInfoAsync);
                 server.RegisterHandler("getSceneCrdtState", sceneInfoHandler.HandleGetSceneCrdtStateAsync);
+
+                // Регистрация TextShape (создание по запросу, выполняется системой в сцене)
+                server.RegisterHandler("createTextShape", textShapeHandler.HandleCreateTextShapeAsync);
 
                 server.Start();
 
