@@ -88,17 +88,17 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        private void CancelEmotesByDeletion(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile, in CharacterController characterController)
         {
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView, characterController, profile.UserId);
         }
 
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile, in CharacterController characterController)
         {
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView, characterController, profile.UserId);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention))]
-        private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Entity entity, in Profile profile)
+        private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Entity entity, in Profile profile, in CharacterController characterController)
         {
             bool wantsToCancelEmote = emoteComponent.StopEmote;
             emoteComponent.StopEmote = false;
@@ -131,7 +131,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (wantsToCancelEmote || World.Has<BlockedPlayerComponent>(entity))
             {
-                StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+                StopEmote(entity, ref emoteComponent, avatarView, characterController, profile.UserId);
                 return;
             }
 
@@ -139,13 +139,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
             if (isOnAnotherTag)
-                StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+                StopEmote(entity, ref emoteComponent, avatarView, characterController, profile.UserId);
         }
 
         // when moving or jumping we detect the emote cancellation, and we take care of getting rid of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMovement(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView, in Profile profile)
+        private void CancelEmotesByMovement(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView, in Profile profile, in CharacterController characterController)
         {
             const float CUTOFF_LIMIT = 0.2f;
 
@@ -156,22 +156,35 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!canEmoteBeCancelled) return;
 
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView, characterController, profile.UserId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView, string walletAddress)
+        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView, CharacterController characterController, string walletAddress)
         {
-            if (emoteComponent.CurrentEmoteReference == null) return;
+            if (emoteComponent.CurrentEmoteReference == null)
+                return;
 
             emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
+            emoteComponent.HasOutcomeAnimationStarted = false;
 
             if (emoteComponent.Metadata.IsSocialEmote)
             {
                 SocialEmoteInteractionsManager.Instance.StopInteraction(walletAddress);
 
-                if(World.Has<MoveToInitiatorIntent>(entity))
-                    World.Remove<MoveToInitiatorIntent>(entity);
+                if (emoteComponent.IsReactingToSocialEmote)
+                {
+                    // Returns the receiver avatar in the social emote interaction to its original position
+                    if (World.TryGet(entity, out MoveToInitiatorIntent intent))
+                    {
+                        // It has to be disabled, otherwise position will be overriden
+                        characterController.enabled = false;
+                        characterController.transform.position = intent.OriginalPosition;
+                        characterController.transform.rotation = intent.OriginalRotation;
+                        characterController.enabled = true;
+                        World.Remove<MoveToInitiatorIntent>(entity);
+                    }
+                }
             }
 
             // Create a clean slate for the animator before setting the stop trigger
@@ -248,19 +261,15 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
-
                     // TODO: Move this to a system with intents?
                     if (emoteComponent.Metadata.IsSocialEmote)
                     {
                         if (emoteComponent.IsPlayingSocialEmoteOutcome)
                         {
                             if (emoteComponent.IsReactingToSocialEmote)
-                            {
                                 SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(profile.UserId, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress);
-                                World.Add<MoveToInitiatorIntent>(entity);
-                            }
+
+                            audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.CurrentSocialEmoteOutcome].Asset;
                         }
                         else // Starting interaction
                         {
@@ -268,6 +277,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                             emoteComponent.SocialEmoteInitiatorWalletAddress = profile.UserId;
                         }
                     }
+
+                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                        ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }

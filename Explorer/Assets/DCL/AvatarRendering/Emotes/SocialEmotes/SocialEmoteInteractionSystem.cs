@@ -15,6 +15,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
     public struct MoveToInitiatorIntent
     {
+        public Vector3 OriginalPosition;
+        public Quaternion OriginalRotation;
     }
 
 
@@ -53,26 +55,37 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         [Query]
         [All(typeof(IAvatarView))]
-        [None(typeof(CharacterEmoteIntent))]
-        private void PlayOutcomeAnimationTransform(Entity entity, Profile profile)
+        [None(typeof(CharacterEmoteIntent), typeof(MoveToInitiatorIntent))]
+        private void PlayOutcomeAnimationTransform(Entity entity, Profile profile, CharacterTransform transform)
         {
             SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (socialEmoteInteraction.HasValue &&
-                socialEmoteInteraction.Value.AreInteracting &&
-                socialEmoteInteraction.Value.InitiatorWalletAddress == profile.UserId)
+                socialEmoteInteraction.Value.AreInteracting)
             {
-                World.Add(entity, new CharacterEmoteIntent()
+                if (socialEmoteInteraction.Value.InitiatorWalletAddress == profile.UserId)
                 {
-                    EmoteId = socialEmoteInteraction.Value.Emote.DTO.Metadata.id!,
-                    TriggerSource = TriggerSource.SELF,
-                    Spatial = true,
-                    WalletAddress = profile.UserId,
-                    SocialEmoteOutcomeIndex = socialEmoteInteraction.Value.OutcomeIndex,
-                    UseOutcomeReactionAnimation = false,
-                    SocialEmoteInitiatorWalletAddress = profile.UserId,
-                    UseSocialEmoteOutcomeAnimation = true
-                });
+                    World.Add(entity, new CharacterEmoteIntent()
+                    {
+                        EmoteId = socialEmoteInteraction.Value.Emote.DTO.Metadata.id!,
+                        TriggerSource = TriggerSource.SELF,
+                        Spatial = true,
+                        WalletAddress = profile.UserId,
+                        SocialEmoteOutcomeIndex = socialEmoteInteraction.Value.OutcomeIndex,
+                        UseOutcomeReactionAnimation = false,
+                        SocialEmoteInitiatorWalletAddress = profile.UserId,
+                        UseSocialEmoteOutcomeAnimation = true
+                    });
+                }
+                else if(socialEmoteInteraction.Value.ReceiverWalletAddress == profile.UserId)
+                {
+                    MoveToInitiatorIntent newIntent = new MoveToInitiatorIntent()
+                    {
+                        OriginalPosition = transform.Position,
+                        OriginalRotation = transform.Rotation
+                    };
+                    World.Add(entity, newIntent);
+                }
             }
         }
     }

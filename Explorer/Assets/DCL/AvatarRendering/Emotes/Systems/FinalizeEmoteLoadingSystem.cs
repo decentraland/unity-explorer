@@ -193,7 +193,10 @@ namespace DCL.AvatarRendering.Emotes
                         }
                     }
                 }
-                else { emote.AudioAssetResults[bodyShape] = result; }
+                else
+                {
+                    emote.AudioAssetResults[bodyShape] = result;
+                }
             }
 
             World.Destroy(entity);

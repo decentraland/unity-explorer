@@ -52,6 +52,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (participantInteractions.ContainsKey(initiatorWalletAddress))
                 return;
 
+            // TODO: Use a pool
             SocialEmoteInteraction newInteraction = new SocialEmoteInteraction()
             {
                 InitiatorWalletAddress = initiatorWalletAddress,
