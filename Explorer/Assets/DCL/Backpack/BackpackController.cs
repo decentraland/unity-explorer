@@ -16,6 +16,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Browser;
+using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -25,6 +28,9 @@ namespace DCL.Backpack
     public class BackpackController : ISection, IDisposable
     {
         private readonly BackpackView view;
+        private readonly ISelfProfile selfProfile;
+        private readonly IWebBrowser webBrowser;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
@@ -49,6 +55,9 @@ namespace DCL.Backpack
 
         public BackpackController(
             BackpackView view,
+            ISelfProfile selfProfile,
+            IWebBrowser webBrowser,
+            IWeb3IdentityCache identityCache,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,
@@ -66,6 +75,9 @@ namespace DCL.Backpack
             ICursor cursor)
         {
             this.view = view;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.identityCache = identityCache;
             this.backpackCommandBus = backpackCommandBus;
             this.emoteInfoPanelController = emoteInfoPanelController;
             this.world = world;
@@ -78,6 +90,9 @@ namespace DCL.Backpack
 
             avatarController = new AvatarController(
                 avatarView,
+                selfProfile,
+                webBrowser,
+                identityCache,
                 avatarSlotViews,
                 rarityInfoPanelBackgrounds,
                 backpackCommandBus,

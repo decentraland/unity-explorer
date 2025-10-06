@@ -215,6 +215,9 @@ namespace DCL.PluginSystem.Global
 
             backpackController = new BackpackController(
                 view,
+                selfProfile,
+                webBrowser,
+                web3Identity,
                 avatarView,
                 rarityBackgroundsMapping,
                 backpackCommandBus,
@@ -229,7 +232,7 @@ namespace DCL.PluginSystem.Global
                 emotesController,
                 backpackCharacterPreviewController,
                 this.thumbnailProvider,
-                inputBlock,
+                inputBlock, 
                 cursor
             );
         }
