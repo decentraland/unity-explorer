@@ -173,6 +173,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
+                    // When we receive a 403 Forbidden Access error, we have to set the attempt to connect state to FORBIDDEN_ACCESS
                     if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
                         OnForbiddenAccess();
 

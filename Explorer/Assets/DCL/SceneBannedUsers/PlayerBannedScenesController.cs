@@ -7,6 +7,9 @@ using Utility;
 
 namespace DCL.SceneBannedUsers
 {
+    /// <summary>
+    /// Controls when to unload the current scene when the player is banned from there.
+    /// </summary>
     public class PlayerBannedScenesController
     {
         private readonly IRoomHub roomHub;
@@ -14,7 +17,6 @@ namespace DCL.SceneBannedUsers
         private readonly ILoadingStatus loadingStatus;
 
         private CancellationTokenSource setCurrentSceneAsBannedCts;
-        private CancellationTokenSource checkIfPlayerIsBannedCts;
 
         private bool playerIsCurrentlyBanned;
 
@@ -39,9 +41,11 @@ namespace DCL.SceneBannedUsers
             roomHub.SceneRoom().CurrentSceneRoomDisconnected -= RestoreCurrentBannedScene;
 
             setCurrentSceneAsBannedCts.SafeCancelAndDispose();
-            checkIfPlayerIsBannedCts.SafeCancelAndDispose();
         }
 
+        /// <summary>
+        /// If we receive a forbidden access response from the server, we mark the current scene to be unloaded.
+        /// </summary>
         private void SetCurrentSceneAsBanned()
         {
             setCurrentSceneAsBannedCts = setCurrentSceneAsBannedCts.SafeRestart();
@@ -53,11 +57,16 @@ namespace DCL.SceneBannedUsers
                 if (playerIsCurrentlyBanned)
                     return;
 
+                // By design, we don't want to unload the scene until the loading screen (if exists) has finished.
                 await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+
                 playerIsCurrentlyBanned = await bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct);
             }
         }
 
+        /// <summary>
+        /// Whenever we successfully connect/disconnect a scene, we un-mark all the existing scenes marked as banned.
+        /// </summary>
         private void RestoreCurrentBannedScene()
         {
             bannedSceneController.RemoveAllBannedSceneComponents();

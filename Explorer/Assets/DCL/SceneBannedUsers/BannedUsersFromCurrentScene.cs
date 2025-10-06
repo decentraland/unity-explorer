@@ -7,6 +7,9 @@ using System.Threading;
 
 namespace DCL.SceneBannedUsers
 {
+    /// <summary>
+    /// Singleton class to check is a user is banned from the current scene.
+    /// </summary>
     [Singleton]
     public partial class BannedUsersFromCurrentScene
     {
@@ -23,6 +26,11 @@ namespace DCL.SceneBannedUsers
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
+        /// <summary>
+        /// Checks if a user is banned from the current scene.
+        /// </summary>
+        /// <param name="userId">Wallet address.</param>
+        /// <returns>True is the user is currently banned from the current scene.</returns>
         public bool IsUserBanned(string userId)
         {
             if (!includeBannedUsersFromScene)
@@ -50,6 +58,10 @@ namespace DCL.SceneBannedUsers
             return false;
         }
 
+        /// <summary>
+        /// Returns the number of banned users from the current scene.
+        /// </summary>
+        /// <returns>Number of banned users from the current scene.</returns>
         public int BannedUsersCount()
         {
             if (!includeBannedUsersFromScene)

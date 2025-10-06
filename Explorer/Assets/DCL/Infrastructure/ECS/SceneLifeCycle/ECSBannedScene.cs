@@ -25,6 +25,11 @@ namespace ECS.SceneLifeCycle
             this.playerEntity = playerEntity;
         }
 
+        /// <summary>
+        /// Mark the current scene with the 'BannedSceneComponent' component so it will be unloaded by ControlSceneUpdateLoopSystem.
+        /// </summary>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>True if the scene was successfully banned.</returns>
         public async UniTask<bool> TrySetCurrentSceneAsBannedAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
@@ -53,6 +58,9 @@ namespace ECS.SceneLifeCycle
             return true;
         }
 
+        /// <summary>
+        /// Remove all 'BannedSceneComponent' components from the world.
+        /// </summary>
         public void RemoveAllBannedSceneComponents() =>
             world.Query(in new QueryDescription().WithAll<BannedSceneComponent>(), entity => world.Remove<BannedSceneComponent>(entity));
 

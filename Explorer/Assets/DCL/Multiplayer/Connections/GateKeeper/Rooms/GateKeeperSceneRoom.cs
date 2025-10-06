@@ -72,6 +72,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         protected override void OnForbiddenAccess()
         {
             base.OnForbiddenAccess();
+
+            // We need to notify the upper layer that the current room is forbidden (that means the player is banned)
             CurrentSceneRoomForbiddenAccess?.Invoke();
         }
 
