@@ -111,7 +111,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Dispose()
         {
-            core?.Dispose();
+            core.Dispose();
         }
     }
 }

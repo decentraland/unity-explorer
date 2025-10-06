@@ -1622,9 +1622,6 @@ MonoBehaviour:
   <LowerHandButton>k__BackingField: {fileID: 1255841839923388737}
   <UnMuteAudio>k__BackingField: {fileID: 11400000, guid: d99ca4a62bf3744c299beac41f2035b3, type: 2}
   <MuteAudio>k__BackingField: {fileID: 11400000, guid: 261a78e93a10e47e48497b48dff1cad0, type: 2}
-  <RaiseHandAudio>k__BackingField: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
-  <LowerHandAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <GenericButtonAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &5423830235152870823
 GameObject:
   m_ObjectHideFlags: 0
@@ -2044,6 +2041,7 @@ GameObject:
   - component: {fileID: 4968139706768906641}
   - component: {fileID: 8193521814362861079}
   - component: {fileID: 4152873772428501449}
+  - component: {fileID: 1115723411146617019}
   m_Layer: 5
   m_Name: ExpandButton
   m_TagString: Untagged
@@ -2154,6 +2152,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1115723411146617019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7324118454414784694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0946983c1bce487d8ca44232d02836eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4152873772428501449}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &8845937636433602178
 GameObject:
   m_ObjectHideFlags: 0
@@ -3160,6 +3173,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9048351630405477272, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
