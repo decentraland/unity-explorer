@@ -88,11 +88,6 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private readonly Transform chatViewRectTransform;
-        private ChatSharedAreaController chatSharedAreaController;
-        private PrivateConversationUserStateService? chatUserStateService;
-        private ChatHistoryService? chatBusListenerService;
-        private CommunityUserStateService communityUserStateService;
-        private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
@@ -253,8 +248,6 @@ namespace DCL.PluginSystem.Global
                 translationSettings,
                 eventBus,
                 translationMemory);
-
-            var viewInstance = mainUIView.ChatMainView.ChatPanelView;
 
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
