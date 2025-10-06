@@ -3080,6 +3080,50 @@ PrefabInstance:
       propertyPath: m_Name
       value: PeopleButton
       objectReference: {fileID: 0}
+    - target: {fileID: 2538495055143561998, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538495055143561998, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538495055143561998, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538495055143561998, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2538495055143561998, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2856843251184168599, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2856843251184168599, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2856843251184168599, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2856843251184168599, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2856843251184168599, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4020171724909062317, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6637376687060503267, guid: 7543ec77a9bd048afb2c7712a2886927, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
