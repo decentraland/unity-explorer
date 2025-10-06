@@ -247,6 +247,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
             invitedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             invitedCommunityCardView.SetActionLoadingActive(false);
+            invitedCommunityCardView.ConfigureListenersCount(false, 0);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events

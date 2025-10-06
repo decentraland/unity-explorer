@@ -13,7 +13,6 @@ namespace DCL.PerformanceAndDiagnostics
     {
         private readonly Dictionary<string, ITransactionTracer> sentryTransactions = new();
         private readonly Dictionary<string, Stack<ISpan>> transactionsSpans = new();
-        private bool isDisposed = false;
 
         public SentryTransactionManager()
         {
@@ -24,17 +23,15 @@ namespace DCL.PerformanceAndDiagnostics
 
         public void StartSentryTransaction(TransactionData transactionData)
         {
-            if (isDisposed) return;
+            if (sentryTransactions.ContainsKey(transactionData.TransactionName)) return;
 
             ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
-            sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
             transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
+            sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
         }
 
         public void StartSpan(SpanData spanData)
         {
-            if (isDisposed) return;
-
             if (!sentryTransactions.TryGetValue(spanData.TransactionName, out ITransactionTracer transaction))
             {
                 ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{spanData.TransactionName}' not found");
@@ -61,8 +58,6 @@ namespace DCL.PerformanceAndDiagnostics
 
         public void EndCurrentSpan(string transactionName)
         {
-            if (isDisposed) return;
-
             if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
             {
                 ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
@@ -81,8 +76,6 @@ namespace DCL.PerformanceAndDiagnostics
 
         public void EndTransaction(string transactionName)
         {
-            if (isDisposed) return;
-
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
             {
                 ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
@@ -106,8 +99,6 @@ namespace DCL.PerformanceAndDiagnostics
 
         public void EndTransactionWithError(string transactionName, string errorMessage, System.Exception? exception = null)
         {
-            if (isDisposed) return;
-
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
             {
                 ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
@@ -145,8 +136,6 @@ namespace DCL.PerformanceAndDiagnostics
 
         public void EndCurrentSpanWithError(string transactionName, string errorMessage, System.Exception? exception = null)
         {
-            if (isDisposed) return;
-
             if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
             {
                 ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
@@ -183,8 +172,6 @@ namespace DCL.PerformanceAndDiagnostics
 
         private void FinishAllTransactions()
         {
-            if (isDisposed) return;
-
             var transactionNames = new List<string>(sentryTransactions.Keys);
 
             foreach (string transactionName in transactionNames)

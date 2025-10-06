@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI.Profiles.Helpers;
@@ -314,6 +315,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             if (isRequestingToSpeak)
             {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.CommunityVoiceChatInCallView.ExpandedPanelInCallButtonsView.RaiseHandAudio);
                 entryView.transform.parent = view.CommunityVoiceChatSearchView.RequestToSpeakParent;
                 entryView.transform.localScale = Vector3.one;
                 inCallController.ShowRaiseHandTooltip(playerName);

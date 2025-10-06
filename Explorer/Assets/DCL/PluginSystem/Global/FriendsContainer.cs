@@ -174,6 +174,7 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
             syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
+            friendsService.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
