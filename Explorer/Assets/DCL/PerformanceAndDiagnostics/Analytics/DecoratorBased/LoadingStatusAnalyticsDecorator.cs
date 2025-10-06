@@ -41,34 +41,34 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void TrackLoadingStageWithSentry(LoadingStatus.LoadingStage stage)
         {
-            if (stage == LoadingStatus.LoadingStage.Init)
-            {
-                var transactionData = new TransactionData
-                {
-                    TransactionName = LOADING_TRANSACTION_NAME,
-                    TransactionOperation = "loading",
-                    TransactionTag = "loading_type",
-                    TransactionTagValue = "initial_loading"
-                };
-                sentryTransactionManager.StartSentryTransaction(transactionData);
-            }
-
-            if (stage != LoadingStatus.LoadingStage.Completed)
-            {
-                var spanData = new SpanData
-                {
-                    TransactionName = LOADING_TRANSACTION_NAME,
-                    SpanName = stage.ToString(),
-                    SpanOperation = $"loading_stage_{stage.ToString().ToLower()}",
-                    Depth = 0
-                };
-                sentryTransactionManager.StartSpan(spanData);
-            }
-
-            if (stage == LoadingStatus.LoadingStage.Completed)
-            {
-                sentryTransactionManager.EndTransaction(LOADING_TRANSACTION_NAME);
-            }
+            // if (stage == LoadingStatus.LoadingStage.Init)
+            // {
+            //     var transactionData = new TransactionData
+            //     {
+            //         TransactionName = LOADING_TRANSACTION_NAME,
+            //         TransactionOperation = "loading",
+            //         TransactionTag = "loading_type",
+            //         TransactionTagValue = "initial_loading"
+            //     };
+            //     sentryTransactionManager.StartSentryTransaction(transactionData);
+            // }
+            //
+            // if (stage != LoadingStatus.LoadingStage.Completed)
+            // {
+            //     var spanData = new SpanData
+            //     {
+            //         TransactionName = LOADING_TRANSACTION_NAME,
+            //         SpanName = stage.ToString(),
+            //         SpanOperation = $"loading_stage_{stage.ToString().ToLower()}",
+            //         Depth = 0
+            //     };
+            //     sentryTransactionManager.StartSpan(spanData);
+            // }
+            //
+            // if (stage == LoadingStatus.LoadingStage.Completed)
+            // {
+            //     sentryTransactionManager.EndTransaction(LOADING_TRANSACTION_NAME);
+            // }
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
