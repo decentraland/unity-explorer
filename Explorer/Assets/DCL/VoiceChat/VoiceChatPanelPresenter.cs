@@ -37,37 +37,62 @@ namespace DCL.VoiceChat
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
-            privateVoiceChatController = new PrivateVoiceChatController(view.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            privateVoiceChatController = new PrivateVoiceChatController(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(view.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
-            sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
+            sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(_ => OnPointerEnterChatArea()));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(_ => OnPointerExitChatArea()));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(OnPointerEnterChatArea));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(OnPointerExitChatArea));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
         }
 
-        private void OnPointerExitChatArea()
+        private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
+        {
+            voiceChatOrchestrator.ChangePanelState(evt.IsVisible ? VoiceChatPanelState.UNFOCUSED : VoiceChatPanelState.HIDDEN, force: true);
+        }
+
+        private void HandleChatPanelToggle(ChatSharedAreaEvents.ChatPanelToggleEvent evt)
+        {
+            if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.HIDDEN)
+                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, force: true);
+        }
+
+        private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent _)
+        {
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
+        }
+
+        private void HandleChatPanelShownInSharedSpace(ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent evt)
+        {
+            voiceChatOrchestrator.ChangePanelState(evt.Focus? VoiceChatPanelState.FOCUSED : VoiceChatPanelState.UNFOCUSED, force: true);
+        }
+
+        private void OnPointerExitChatArea(ChatSharedAreaEvents.ChatPanelPointerExitEvent _)
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.FOCUSED)
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
         }
 
-        private void OnPointerEnterChatArea()
+        private void OnPointerEnterChatArea(ChatSharedAreaEvents.ChatPanelPointerEnterEvent _)
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED)
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent evt)
+        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent _)
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent evt)
+        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent _)
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
 

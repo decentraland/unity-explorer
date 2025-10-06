@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI.Profiles.Helpers;
@@ -17,7 +18,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatController : IDisposable
     {
-        private readonly CommunityVoiceChatTitlebarView view;
+        private readonly CommunityVoiceChatPanelView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly VoiceChatRoomManager roomManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -33,7 +34,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatController(
-            CommunityVoiceChatTitlebarView view,
+            CommunityVoiceChatPanelView view,
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IVoiceChatOrchestrator voiceChatOrchestrator,
@@ -315,6 +316,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             if (isRequestingToSpeak)
             {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.CommunityVoiceChatInCallView.ExpandedPanelInCallButtonsView.RaiseHandAudio);
                 entryView.transform.parent = view.CommunityVoiceChatSearchView.RequestToSpeakParent;
                 entryView.transform.localScale = Vector3.one;
                 inCallController.ShowRaiseHandTooltip(playerName);

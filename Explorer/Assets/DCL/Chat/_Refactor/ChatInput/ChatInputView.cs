@@ -13,6 +13,8 @@ namespace DCL.Chat.ChatInput
 {
     public class ChatInputView : MonoBehaviour
     {
+        public event Action? DebugOnSubmit;
+
         [Serializable]
         public class EmojiContainer
         {
@@ -173,5 +175,13 @@ namespace DCL.Chat.ChatInput
             maskContainer.SetActive(true);
             maskText.text = reason;
         }
+
+        public void DebugInsertTextAndSubmit(string text)
+        {
+            inputField.SetTextWithoutNotify(text);
+            inputField.OnSubmit(null);
+            DebugOnSubmit?.Invoke();
+        }
+
     }
 }
