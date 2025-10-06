@@ -8,6 +8,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
@@ -41,8 +42,8 @@ namespace DCL.VoiceChat
         private readonly IWeb3IdentityCache identityCache;
 
         private readonly HashSet<string> connectedParticipants = new ();
-        private readonly Dictionary<string, VoiceChatParticipantState> participantStates = new ();
-        private readonly Dictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
+        private readonly ConcurrentDictionary<string, VoiceChatParticipantState> participantStates = new ();
+        private readonly ConcurrentDictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
         private readonly HashSet<string> speakers = new ();
 
         private bool isDisposed;
@@ -139,9 +140,6 @@ namespace DCL.VoiceChat
             return participantStates.TryGetValue(participantId, out participantState);
         }
 
-        public VoiceChatParticipantState? GetParticipantState(string participantId) =>
-            participantId == LocalParticipantId ? LocalParticipantState : participantStates.GetValueOrDefault(participantId);
-
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
         {
             if (!PlayerLoopHelper.IsMainThread)
@@ -192,8 +190,8 @@ namespace DCL.VoiceChat
                         }
                         else
                         {
-                            VoiceChatParticipantState? participantState = GetParticipantState(participant.Identity);
-                            RefreshParticipantStateFromMetadata(participant, participantState);
+                            if (TryGetParticipantState(participant.Identity, out VoiceChatParticipantState participantState))
+                                RefreshParticipantStateFromMetadata(participant, participantState);
                         }
                         break;
 
@@ -238,17 +236,31 @@ namespace DCL.VoiceChat
                 foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
                 {
                     newActiveSpeakers.Add(speakerId);
-
-                    if (!activeSpeakers.Contains(speakerId)) { UpdateParticipantSpeaking(speakerId, true); }
+                    UpdateParticipantSpeaking(speakerId, true);
                 }
 
-                foreach (string oldSpeakerId in activeSpeakers)
+                var speakersToStop = HashSetPool<string>.Get();
+                speakersToStop.UnionWith(activeSpeakers);
+                speakersToStop.ExceptWith(newActiveSpeakers);
+
+                foreach (string speakerId in speakersToStop)
                 {
-                    if (!newActiveSpeakers.Contains(oldSpeakerId)) { UpdateParticipantSpeaking(oldSpeakerId, false); }
+                    UpdateParticipantSpeaking(speakerId, false);
                 }
 
+                HashSetPool<string>.Release(speakersToStop);
                 HashSetPool<string>.Release(activeSpeakers);
                 activeSpeakers = newActiveSpeakers;
+
+                return;
+
+                void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
+                {
+                    if (TryGetParticipantState(participantId, out VoiceChatParticipantState participantState))
+                    {
+                        participantState.IsSpeaking.Value = isSpeaking;
+                    }
+                }
             }
         }
 
@@ -478,13 +490,6 @@ namespace DCL.VoiceChat
                 speakers.Add(participantId);
             else
                 speakers.Remove(participantId);
-        }
-
-        private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
-        {
-            VoiceChatParticipantState? participantState = GetParticipantState(participantId);
-
-            if (participantState != null) { participantState.IsSpeaking.Value = isSpeaking; }
         }
 
         private void ResetLocalParticipantState()

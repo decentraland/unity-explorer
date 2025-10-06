@@ -293,12 +293,17 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 participantState.IsSpeaker.Subscribe(isSpeaker => SetUserEntryParent(isSpeaker, entryView)),
                 participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name)),
                 // Subscribe to state changes to update counters
-                participantState.IsSpeaker.Subscribe(_ => UpdateCounters()),
-                participantState.IsRequestingToSpeak.Subscribe(_ => UpdateCounters())
+                participantState.IsSpeaker.Subscribe(UpdateCounters),
+                participantState.IsRequestingToSpeak.Subscribe(UpdateCounters)
             };
 
             participantSubscriptions[participantState.WalletId] = subscriptions;
             return entryView;
+        }
+
+        private void UpdateCounters(bool _)
+        {
+            UpdateCounters();
         }
 
         private void PlayerEntryIsSpeaking(bool isSpeaking, ReactiveProperty<string?> participantStateName, string walletId)
@@ -376,15 +381,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 string? participantId = participantEntry.Key;
                 if (participantId == localParticipant?.WalletId) continue;
 
-                var participantState = voiceChatOrchestrator.ParticipantsStateService.GetParticipantState(participantId);
-                if (participantState == null) continue;
-
-                if (participantState.IsSpeaker.Value)
-                    speakers++;
-                else if (participantState.IsRequestingToSpeak.Value)
-                    raisedHands++;
-                else
-                    listeners++;
+                if (voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(participantId, out var participantState))
+                {
+                    if (participantState.IsSpeaker.Value)
+                        speakers++;
+                    else if (participantState.IsRequestingToSpeak.Value)
+                        raisedHands++;
+                    else
+                        listeners++;
+                }
             }
 
             inCallController.RefreshCounters(speakers, raisedHands, voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);

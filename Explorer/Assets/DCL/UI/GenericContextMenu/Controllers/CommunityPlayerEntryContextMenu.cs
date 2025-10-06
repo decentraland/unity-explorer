@@ -342,11 +342,10 @@ namespace DCL.UI
         private void ShowBanConfirmationDialog(string walletId)
         {
             string currentCommunityId = voiceChatOrchestrator.CurrentCommunityId.Value;
+            
             if (!voiceChatOrchestrator.TryGetActiveCommunityData(currentCommunityId, out var community)) return;
 
-            var participant = voiceChatOrchestrator.ParticipantsStateService.GetParticipantState(walletId);
-
-            if (participant == null) return;
+            if (!voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(walletId, out var participant)) return;
 
             string communityName = community.communityName;
 

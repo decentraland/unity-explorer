@@ -137,11 +137,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 statusText.text = IS_MUTED_TEXT;
                 isSpeakingCurrentSequence?.Kill();
                 isSpeakingCurrentSequence = null;
+                IsSpeakingIcon.gameObject.SetActive(false);
                 isMutedIcon.SetActive(true);
             }
             else if (userProfile.IsSpeaker.Value)
             {
                 statusText.text = IS_SPEAKING_TEXT;
+                IsSpeakingIcon.gameObject.SetActive(true);
                 isMutedIcon.SetActive(false);
                 SetSpeakingIconIdleScale();
             }
