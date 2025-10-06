@@ -18,150 +18,150 @@ namespace DCL.PerformanceAndDiagnostics
         public SentryTransactionManager()
         {
             // Register for application lifecycle events to ensure transactions are finished
-            // ExitUtils.BeforeApplicationQuitting += OnApplicationQuitting;
-            // Application.quitting += OnApplicationQuitting;
+            ExitUtils.BeforeApplicationQuitting += OnApplicationQuitting;
+            Application.quitting += OnApplicationQuitting;
         }
 
         public void StartSentryTransaction(TransactionData transactionData)
         {
-            // ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
-            // sentryTransactions[transactionData.TransactionName] = transactionTracer;
-            // transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
+            ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
+            sentryTransactions[transactionData.TransactionName] = transactionTracer;
+            transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
         }
 
         public void StartSpan(SpanData spanData)
         {
-            // if (!sentryTransactions.TryGetValue(spanData.TransactionName, out ITransactionTracer transaction))
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{spanData.TransactionName}' not found");
-            //     return;
-            // }
-            //
-            // if (!transactionsSpans.TryGetValue(spanData.TransactionName, out Stack<ISpan> spanStack))
-            // {
-            //     spanStack = new Stack<ISpan>();
-            //     transactionsSpans[spanData.TransactionName] = spanStack;
-            // }
-            //
-            // if (spanStack.Count > 0 && spanData.Depth < spanStack.Count)
-            // {
-            //     ISpan currentSpan = spanStack.Pop();
-            //     currentSpan.Finish();
-            // }
-            //
-            // ISpan parentSpan = (spanStack.Count == spanData.Depth && spanStack.Count > 0) ? spanStack.Peek() : transaction;
-            // ISpan newSpan = parentSpan.StartChild(spanData.SpanOperation, spanData.SpanName);
-            //
-            // spanStack.Push(newSpan);
+            if (!sentryTransactions.TryGetValue(spanData.TransactionName, out ITransactionTracer transaction))
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{spanData.TransactionName}' not found");
+                return;
+            }
+
+            if (!transactionsSpans.TryGetValue(spanData.TransactionName, out Stack<ISpan> spanStack))
+            {
+                spanStack = new Stack<ISpan>();
+                transactionsSpans[spanData.TransactionName] = spanStack;
+            }
+
+            if (spanStack.Count > 0 && spanData.Depth < spanStack.Count)
+            {
+                ISpan currentSpan = spanStack.Pop();
+                currentSpan.Finish();
+            }
+
+            ISpan parentSpan = (spanStack.Count == spanData.Depth && spanStack.Count > 0) ? spanStack.Peek() : transaction;
+            ISpan newSpan = parentSpan.StartChild(spanData.SpanOperation, spanData.SpanName);
+
+            spanStack.Push(newSpan);
         }
 
         public void EndCurrentSpan(string transactionName)
         {
-            // if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
-            //     return;
-            // }
-            //
-            // if (spanStack.Count == 0)
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionName}'");
-            //     return;
-            // }
-            //
-            // ISpan currentSpan = spanStack.Pop();
-            // currentSpan.Finish();
+            if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
+                return;
+            }
+
+            if (spanStack.Count == 0)
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionName}'");
+                return;
+            }
+
+            ISpan currentSpan = spanStack.Pop();
+            currentSpan.Finish();
         }
 
         public void EndTransaction(string transactionName)
         {
-            // if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
-            //     return;
-            // }
-            //
-            // if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
-            // {
-            //     while (spanStack.Count > 0)
-            //     {
-            //         ISpan span = spanStack.Pop();
-            //         span.Finish();
-            //     }
-            // }
-            //
-            // transaction.Finish();
-            //
-            // sentryTransactions.TryRemove(transactionName, out _);
-            // transactionsSpans.TryRemove(transactionName, out _);
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
+                return;
+            }
+
+            if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            {
+                while (spanStack.Count > 0)
+                {
+                    ISpan span = spanStack.Pop();
+                    span.Finish();
+                }
+            }
+
+            transaction.Finish();
+
+            sentryTransactions.TryRemove(transactionName, out _);
+            transactionsSpans.TryRemove(transactionName, out _);
         }
 
         public void EndTransactionWithError(string transactionName, string errorMessage, System.Exception? exception = null)
         {
-            // if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
-            //     return;
-            // }
-            //
-            // if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
-            // {
-            //     while (spanStack.Count > 0)
-            //     {
-            //         ISpan span = spanStack.Pop();
-            //         span.Finish();
-            //     }
-            // }
-            //
-            // // Set the transaction status to error and add error information
-            // transaction.SetTag("status", "error");
-            // transaction.SetTag("error.message", errorMessage);
-            //
-            // if (exception != null)
-            // {
-            //     transaction.SetTag("error.type", exception.GetType().Name);
-            //     transaction.SetTag("error.stack", exception.StackTrace);
-            //     transaction.Finish(exception, SpanStatus.InternalError);
-            // }
-            // else
-            // {
-            //     transaction.Finish(SpanStatus.UnknownError);
-            // }
-            //
-            //
-            // sentryTransactions.TryRemove(transactionName, out _);
-            // transactionsSpans.Remove(transactionName, out _);
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
+                return;
+            }
+
+            if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            {
+                while (spanStack.Count > 0)
+                {
+                    ISpan span = spanStack.Pop();
+                    span.Finish();
+                }
+            }
+
+            // Set the transaction status to error and add error information
+            transaction.SetTag("status", "error");
+            transaction.SetTag("error.message", errorMessage);
+
+            if (exception != null)
+            {
+                transaction.SetTag("error.type", exception.GetType().Name);
+                transaction.SetTag("error.stack", exception.StackTrace);
+                transaction.Finish(exception, SpanStatus.InternalError);
+            }
+            else
+            {
+                transaction.Finish(SpanStatus.UnknownError);
+            }
+
+
+            sentryTransactions.TryRemove(transactionName, out _);
+            transactionsSpans.Remove(transactionName, out _);
         }
 
         public void EndCurrentSpanWithError(string transactionName, string errorMessage, System.Exception? exception = null)
         {
-            // if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
-            //     return;
-            // }
-            //
-            // if (spanStack.Count == 0)
-            // {
-            //     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionName}'");
-            //     return;
-            // }
-            //
-            // ISpan currentSpan = spanStack.Pop();
-            //
-            // currentSpan.SetTag("status", "error");
-            // currentSpan.SetTag("error.message", errorMessage);
-            //
-            // if (exception != null)
-            // {
-            //     currentSpan.SetTag("error.type", exception.GetType().Name);
-            //     currentSpan.SetTag("error.stack", exception.StackTrace);
-            //     currentSpan.Finish(exception, SpanStatus.InternalError);
-            // }
-            // else
-            // {
-            //     currentSpan.Finish(SpanStatus.UnknownError);
-            // }
+            if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
+                return;
+            }
+
+            if (spanStack.Count == 0)
+            {
+                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionName}'");
+                return;
+            }
+
+            ISpan currentSpan = spanStack.Pop();
+
+            currentSpan.SetTag("status", "error");
+            currentSpan.SetTag("error.message", errorMessage);
+
+            if (exception != null)
+            {
+                currentSpan.SetTag("error.type", exception.GetType().Name);
+                currentSpan.SetTag("error.stack", exception.StackTrace);
+                currentSpan.Finish(exception, SpanStatus.InternalError);
+            }
+            else
+            {
+                currentSpan.Finish(SpanStatus.UnknownError);
+            }
         }
 
         private void OnApplicationQuitting()
@@ -171,19 +171,19 @@ namespace DCL.PerformanceAndDiagnostics
 
         private void FinishAllTransactions()
         {
-            // var transactionNames = new List<string>(sentryTransactions.Keys);
-            //
-            // foreach (string transactionName in transactionNames)
-            // {
-            //     try
-            //     {
-            //         EndTransactionWithError(transactionName, "Application is quitting", null);
-            //     }
-            //     catch (Exception ex)
-            //     {
-            //         ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionName}' during application quit: {ex.Message}");
-            //     }
-            // }
+            var transactionNames = new List<string>(sentryTransactions.Keys);
+
+            foreach (string transactionName in transactionNames)
+            {
+                try
+                {
+                    EndTransactionWithError(transactionName, "Application is quitting", null);
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionName}' during application quit: {ex.Message}");
+                }
+            }
         }
     }
 
