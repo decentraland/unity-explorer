@@ -12,10 +12,10 @@ namespace DCL.VoiceChat
         public ReactiveProperty<bool> IsRequestingToSpeak { get; set; }
         public ReactiveProperty<bool> IsSpeaker { get; set; }
         public ReactiveProperty<bool> IsMuted { get; set; }
-        public ReactiveProperty<VoiceChatParticipantsStateService.UserCommunityRoleMetadata> Role { get; set; }
+        public ReactiveProperty<VoiceChatParticipantCommunityRole> Role { get; set; }
 
-        public VoiceChatParticipantState(string walletId, ReactiveProperty<bool> isSpeaking, ReactiveProperty<string?> name, ReactiveProperty<bool?> hasClaimedName, ReactiveProperty<string?> profilePictureUrl,
-            ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<VoiceChatParticipantsStateService.UserCommunityRoleMetadata> role, ReactiveProperty<bool> isMuted)
+        private VoiceChatParticipantState(string walletId, ReactiveProperty<bool> isSpeaking, ReactiveProperty<string?> name, ReactiveProperty<bool?> hasClaimedName, ReactiveProperty<string?> profilePictureUrl,
+            ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<VoiceChatParticipantCommunityRole> role, ReactiveProperty<bool> isMuted)
         {
             WalletId = walletId;
             IsSpeaking = isSpeaking;
@@ -28,9 +28,8 @@ namespace DCL.VoiceChat
             IsMuted = isMuted;
         }
 
-        public static VoiceChatParticipantState CreateDefault(string walletId)
-        {
-            return new VoiceChatParticipantState(
+        public static VoiceChatParticipantState CreateDefault(string walletId) =>
+            new (
                 walletId,
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<string?>(null),
@@ -38,9 +37,17 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<string?>(null),
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<bool>(false),
-                new ReactiveProperty<VoiceChatParticipantsStateService.UserCommunityRoleMetadata>(VoiceChatParticipantsStateService.UserCommunityRoleMetadata.none),
+                new ReactiveProperty<VoiceChatParticipantCommunityRole>(VoiceChatParticipantCommunityRole.NONE),
                 new ReactiveProperty<bool>(false)
             );
-        }
     }
+
+    public enum VoiceChatParticipantCommunityRole
+    {
+        NONE,
+        USER,
+        MODERATOR,
+        OWNER,
+    }
+
 }

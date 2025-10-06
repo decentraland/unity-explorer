@@ -92,7 +92,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             var showContextMenuButton = true;
 
             if (participantState.Name.Value == localParticipantState.Name.Value)
-                showContextMenuButton = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+                showContextMenuButton = localParticipantState.Role.Value is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
 
             contextMenuButton.gameObject.SetActive(showContextMenuButton);
 
@@ -151,8 +151,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void SetRequestingToSpeakSection(bool isRequestingToSpeak) =>
             approveDenySection.SetActive(isRequestingToSpeak && localUserProfile?.Role.Value is
-                VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or
-                VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
+                VoiceChatParticipantCommunityRole.MODERATOR or
+                VoiceChatParticipantCommunityRole.OWNER);
 
         private void OnChangeIsSpeaking(bool isSpeaking)
         {

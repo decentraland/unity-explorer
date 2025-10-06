@@ -144,7 +144,7 @@ namespace DCL.UI
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
             bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
-            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
 
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -342,7 +342,7 @@ namespace DCL.UI
         private void ShowBanConfirmationDialog(string walletId)
         {
             string currentCommunityId = voiceChatOrchestrator.CurrentCommunityId.Value;
-            
+
             if (!voiceChatOrchestrator.TryGetActiveCommunityData(currentCommunityId, out var community)) return;
 
             if (!voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(walletId, out var participant)) return;

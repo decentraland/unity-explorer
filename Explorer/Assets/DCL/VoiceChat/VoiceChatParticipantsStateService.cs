@@ -20,15 +20,6 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatParticipantsStateService : IDisposable
     {
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        public enum UserCommunityRoleMetadata
-        {
-            none,
-            user,
-            moderator,
-            owner,
-        }
-
         public delegate void ParticipantJoinedDelegate(string participantId, VoiceChatParticipantState participantState);
         public delegate void ParticipantsStateRefreshDelegate(List<(string participantId, VoiceChatParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
         private const string TAG = nameof(VoiceChatParticipantsStateService);
@@ -478,7 +469,7 @@ namespace DCL.VoiceChat
             LocalParticipantState.IsRequestingToSpeak.Value = false;
             LocalParticipantState.IsSpeaker.Value = false;
             LocalParticipantState.IsMuted.Value = false;
-            LocalParticipantState.Role.Value = UserCommunityRoleMetadata.none;
+            LocalParticipantState.Role.Value = VoiceChatParticipantCommunityRole.NONE;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reset local participant state to defaults");
         }
 
@@ -494,19 +485,19 @@ namespace DCL.VoiceChat
             public bool muted;
             public string role;
 
-            public UserCommunityRoleMetadata Role => ParseRole(role);
+            public VoiceChatParticipantCommunityRole Role => ParseRole(role);
 
-            private static UserCommunityRoleMetadata ParseRole(string? roleString)
+            private static VoiceChatParticipantCommunityRole ParseRole(string? roleString)
             {
                 if (string.IsNullOrEmpty(roleString))
-                    return UserCommunityRoleMetadata.none;
+                    return VoiceChatParticipantCommunityRole.NONE;
 
                 return roleString.ToLowerInvariant() switch
                        {
-                           "user" => UserCommunityRoleMetadata.user,
-                           "moderator" => UserCommunityRoleMetadata.moderator,
-                           "owner" => UserCommunityRoleMetadata.owner,
-                           _ => UserCommunityRoleMetadata.none,
+                           "user" => VoiceChatParticipantCommunityRole.USER,
+                           "moderator" => VoiceChatParticipantCommunityRole.MODERATOR,
+                           "owner" => VoiceChatParticipantCommunityRole.OWNER,
+                           _ => VoiceChatParticipantCommunityRole.NONE,
                        };
             }
 
