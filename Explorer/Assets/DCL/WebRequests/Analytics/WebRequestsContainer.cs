@@ -99,7 +99,7 @@ namespace DCL.WebRequests.Analytics
             void CreateWebRequestDelayUtility()
             {
                 debugContainerBuilder
-                   .TryAddWidget("Web Requests Delay")
+                   .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DELAY)
                   ?.AddControlWithLabel(
                         "Use Artificial Delay",
                         new DebugToggleDef(options.Enable)
@@ -118,7 +118,7 @@ namespace DCL.WebRequests.Analytics
                 var retriesCount = new ElementBinding<int>(3);
                 var delayBetweenRequests = new ElementBinding<float>(0);
 
-                debugContainerBuilder.TryAddWidget("Web Requests Stress Test")
+                debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_STRESS_TEST)
                                     ?.AddControlWithLabel("Count:", new DebugIntFieldDef(count))
                                      .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
                                      .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))

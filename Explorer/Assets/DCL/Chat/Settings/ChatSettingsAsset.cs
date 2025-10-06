@@ -10,8 +10,12 @@ namespace DCL.Settings.Settings
         [FormerlySerializedAs("chatSettings")] public ChatAudioSettings chatAudioSettings = ChatAudioSettings.ALL;
         public ChatPrivacySettings chatPrivacySettings = ChatPrivacySettings.ALL;
         public ChatBubbleVisibilitySettings chatBubblesVisibilitySettings = ChatBubbleVisibilitySettings.ALL;
+        public ChatPreferredTranslationSettings chatPreferredTranslationSettings = ChatPreferredTranslationSettings.EN;
 
+        public string CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP
+            = "Chat messages will be translated into the language you select in this setting.";
         public delegate void ChatPrivacyDelegate(ChatPrivacySettings privacySettings);
+
         public event ChatPrivacyDelegate? PrivacySettingsSet;
         public event ChatPrivacyDelegate? PrivacySettingsRead;
 
@@ -53,5 +57,19 @@ namespace DCL.Settings.Settings
         NONE = 0,
         NEARBY_ONLY = 1,
         ALL
+    }
+
+    public enum ChatPreferredTranslationSettings
+    {
+        EN = 0,
+        ES = 1,
+        FR = 2,
+        DE = 3,
+        RU = 4,
+        PT = 5,
+        IT = 6,
+        ZH = 7,
+        JA = 8,
+        KO = 9
     }
 }

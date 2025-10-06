@@ -6,13 +6,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class SceneVoiceChatController : IDisposable
     {
-        private readonly SceneVoiceChatTitlebarView view;
+        private readonly SceneVoiceChatPanelView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IDisposable currentSceneActiveCallSubscription;
         private readonly IDisposable currentCallStatusSubscription;
 
         public SceneVoiceChatController(
-            SceneVoiceChatTitlebarView view,
+            SceneVoiceChatPanelView view,
             IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.view = view;

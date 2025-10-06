@@ -102,6 +102,7 @@ namespace DCL.Diagnostics
                         ReportCategory.LIVEKIT,
                         ReportCategory.SCENE_FETCH_REQUEST,
                         ReportCategory.PORTABLE_EXPERIENCE,
+                        ReportCategory.EMOTE,
                     }, logType: false);
             entries.Add(new () { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
 

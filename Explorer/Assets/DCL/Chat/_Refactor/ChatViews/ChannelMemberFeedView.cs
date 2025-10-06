@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatViews
     public class ChannelMemberFeedView : MonoBehaviour
     {
         [SerializeField] private LoopListView2 loopListView;
-        [SerializeField] private GameObject loadingSpinner;
+        //[SerializeField] private GameObject loadingSpinner;
 
         // This list is shared by reference between the view and the presenter
         private IReadOnlyList<ChatMemberListViewModel> membersToDisplay = Array.Empty<ChatMemberListViewModel>();
@@ -59,18 +59,18 @@ namespace DCL.Chat.ChatViews
                 return null;
 
             ChatMemberListViewModel? model = membersToDisplay[index];
-            LoopListViewItem2 newItem = listView.NewListViewItem("ChatMemberListItem2");
+            LoopListViewItem2 newItem = listView.NewListViewItem("ChatMemberListItem");
 
             ChannelMemberEntryView? itemComponent = newItem.GetComponent<ChannelMemberEntryView>();
             itemComponent.Setup(model);
 
             itemComponent.OnContextMenuRequested -= HandleItemContextMenuRequest;
             itemComponent.OnContextMenuRequested += HandleItemContextMenuRequest;
-            
+
             itemComponent.OnItemSelectRequested -= HandleItemSelectedRequest;
             itemComponent.OnItemSelectRequested += HandleItemSelectedRequest;
-            
-            
+
+
 
             return newItem;
         }
@@ -84,7 +84,7 @@ namespace DCL.Chat.ChatViews
 
             OnMemberContextMenuRequested?.Invoke(data);
         }
-        
+
         private void HandleItemSelectedRequest(MemberEntryContextMenuRequest request)
         {
             OnMemberItemRequested?.Invoke(request.UserId);
