@@ -213,8 +213,9 @@ namespace DCL.SDKComponents.Tween
                 textureStart = materialComponent.HasValue && materialComponent.Value.Result ?
                         materialComponent.Value.Result!.mainTextureOffset : Vector2.zero;
             }
+
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform, textureStart);
-            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
+            sdkTweenComponent.CustomTweener.DoTween(ease, Mathf.Clamp(tweenModel.CurrentTime, 0f, 1f) * durationInSeconds, isPlaying);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
