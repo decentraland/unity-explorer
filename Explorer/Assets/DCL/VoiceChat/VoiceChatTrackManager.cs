@@ -45,6 +45,8 @@ namespace DCL.VoiceChat
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
 
+        public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
+
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
@@ -54,10 +56,7 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
 
-            playbackSourcesHub = new PlaybackSourcesHub(
-                new ConcurrentDictionary<StreamKey, LivekitAudioSource>(),
-                configuration.ChatAudioMixerGroup.EnsureNotNull()
-            );
+            playbackSourcesHub = new PlaybackSourcesHub(configuration.ChatAudioMixerGroup.EnsureNotNull());
         }
 
         public void Dispose()
