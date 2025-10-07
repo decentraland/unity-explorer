@@ -6,6 +6,9 @@
     <assembly fullname="SceneRuntime" preserve="all" />
     <assembly fullname="DCL.SharedAPI.Events" preserve="all" />
     <assembly fullname="Decentraland.ClearScript" preserve="all" />
+    <assembly fullname="DCL.Social">
+        <namespace fullname="DCL.Communities.CommunitiesDataProvider.DTOs" preserve="all"/>
+    </assembly>
     
     <!--  Because of Ipfs.ProtobufHelper  -->
     <assembly fullname="Google.Protobuf">
