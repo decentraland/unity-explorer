@@ -1,10 +1,13 @@
 using Arch.Core;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using SceneRuntime.Apis.Modules.EngineApi;
+using DCL.MCP.Systems;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -193,64 +196,47 @@ namespace DCL.MCP.Handlers
         {
             try
             {
-                var sceneId = parameters["sceneId"]?.ToString();
-
-                if (string.IsNullOrEmpty(sceneId))
-                {
-                    return new
-                    {
-                        success = false,
-                        error = "sceneId parameter is required",
-                    };
-                }
-
-                // Поиск сцены по ID
-                ISceneFacade? targetScene = null;
-
-                foreach (ISceneFacade scene in scenesCache.Scenes)
-                {
-                    if (scene.SceneData?.SceneEntityDefinition?.id == sceneId)
-                    {
-                        targetScene = scene;
-                        break;
-                    }
-                }
-
-                if (targetScene == null)
-                {
-                    foreach (ISceneFacade scene in scenesCache.PortableExperiencesScenes)
-                    {
-                        if (scene.SceneData?.SceneEntityDefinition?.id == sceneId)
-                        {
-                            targetScene = scene;
-                            break;
-                        }
-                    }
-                }
+                // Всегда работаем с текущей сценой
+                ISceneFacade? targetScene = scenesCache.CurrentScene;
 
                 if (targetScene == null)
                 {
                     return new
                     {
                         success = false,
-                        error = $"Scene with id '{sceneId}' not found",
+                        error = "No current scene available",
                     };
                 }
 
-                // Получаем CRDT state через EcsExecutor
-                // Это вызовет метод CrdtGetState() в EngineAPIImplementation
-                // TODO: Нужно найти способ получить сериализованное состояние CRDT
-                // Для MVP возвращаем информацию о том, что функция в разработке
-
-                ReportHub.LogWarning(ReportCategory.DEBUG, $"[MCP Scene Info] CRDT state extraction for scene {sceneId} - not yet implemented in MVP");
-
-                return new
+                // Получаем EngineAPI по сцене
+                if (!EngineApiLocator.TryGet(targetScene.Info, out IEngineApi engineApi))
                 {
-                    success = false,
-                    error = "CRDT state extraction not yet implemented in MVP. This requires deeper integration with EngineAPIImplementation.",
-                    sceneId,
-                    note = "This feature needs access to scene's CRDTProtocol instance which is internal to the scene runtime.",
-                };
+                    return new
+                    {
+                        success = false,
+                        sceneId = targetScene.SceneData?.SceneEntityDefinition?.id ?? "unknown",
+                        error = "EngineApi not available for target scene",
+                    };
+                }
+
+                // Снимок CRDT и экспорт в JSON-структуру
+                PoolableByteArray data = engineApi.CrdtGetState();
+
+                try
+                {
+                    string json = SceneStateJsonExporter.ExportStateToJson(data);
+                    var state = JObject.Parse(json);
+
+                    ReportHub.Log(ReportCategory.DEBUG, $"[MCP Scene Info] CRDT state exported for current scene {targetScene.SceneData?.SceneEntityDefinition?.id ?? "unknown"}");
+
+                    return new
+                    {
+                        success = true,
+                        sceneId = targetScene.SceneData?.SceneEntityDefinition?.id ?? "unknown",
+                        state,
+                    };
+                }
+                finally { data.Dispose(); }
             }
             catch (Exception e)
             {

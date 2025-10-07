@@ -48,11 +48,11 @@ namespace DCL.MCP.Systems
 
         protected override void Update(float t)
         {
-            JumpDebug();
+            // JumpDebug();
 
             // Обрабатываем запросы MCP на создание TextShape через билдер
-            // builder.ProcessTextShapeRequests(World, textShapePool);
-            // builder.ProcessMeshRendererRequests(World, meshRendererPool);
+            builder.ProcessTextShapeRequests(World, textShapePool);
+            builder.ProcessMeshRendererRequests(World, meshRendererPool);
         }
 
         private void JumpDebug()
