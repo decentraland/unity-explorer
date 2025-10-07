@@ -103,8 +103,14 @@ namespace DCL.PluginSystem.Global
                 wavRemotesBuffer.Clear();
 
                 foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in trackManager.RemoteStreams)
+                    ProcessElement(key, value.stream, value.source);
+
+                wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
+                return;
+
+                void ProcessElement(StreamKey key, Weak<AudioStream> stream, LivekitAudioSource source)
                 {
-                    Option<AudioStream> streamOption = value.stream.Resource;
+                    Option<AudioStream> streamOption = stream.Resource;
 
                     if (streamOption.Has)
                     {
@@ -127,7 +133,7 @@ namespace DCL.PluginSystem.Global
                     }
 
                     {
-                        Result toggleResult = value.source.ToggleRecordWavOutput();
+                        Result toggleResult = source.ToggleRecordWavOutput();
 
                         if (toggleResult.Success == false)
                             ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot toggle wav output: {toggleResult.ErrorMessage}");
@@ -137,8 +143,6 @@ namespace DCL.PluginSystem.Global
                         wavRemotesBuffer.Add((name, message));
                     }
                 }
-
-                wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
             }
 
             async UniTaskVoid AutoUpdateTriggerAsync(bool enable)
