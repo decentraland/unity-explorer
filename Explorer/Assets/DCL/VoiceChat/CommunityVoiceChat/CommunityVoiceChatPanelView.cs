@@ -35,6 +35,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Show()
         {
+            SetConnectedPanel(false);
             VoiceChatContainer.SetActive(true);
             VoiceChatCanvasGroup
                .DOFade(1, SHOW_HIDE_ANIMATION_DURATION)

@@ -115,6 +115,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CleanupEntry();
             playerEntriesPool.Release(view);
             subscriptionsScope.Dispose();
+            view.ContextMenuButtonClicked -= OnContextMenuButtonClicked;
+            view.ApproveSpeaker -= OnApproveSpeaker;
+            view.DenySpeaker -= OnDenySpeaker;
+            view.OpenPassport -= ViewOnOpenPassport;
         }
 
         public void ConfigureAsListener()

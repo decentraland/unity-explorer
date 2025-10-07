@@ -211,16 +211,16 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             switch (voiceChatType)
             {
-                case VoiceChatType.PRIVATE:
-                    Hide();
-                    break;
                 case VoiceChatType.COMMUNITY:
-                    Show();
-                    view.SetConnectedPanel(false);
+                    voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+                    view.Show();
                     break;
+                case VoiceChatType.PRIVATE:
                 case VoiceChatType.NONE:
                 default:
-                    Hide();
+                    contextMenuTask.TrySetResult();
+                    popupCts.SafeCancelAndDispose();
+                    view.Hide();
                     break;
             }
         }
@@ -229,19 +229,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, ct);
             inCallPresenter.SetCommunityData(communityData);
-        }
-
-        private void Show()
-        {
-            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
-            view.Show();
-        }
-
-        private void Hide()
-        {
-            contextMenuTask.TrySetResult();
-            popupCts.SafeCancelAndDispose();
-            view.Hide();
         }
 
         private void AddSpeaker(VoiceChatParticipantState participantState)
