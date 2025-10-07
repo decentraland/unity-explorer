@@ -7,7 +7,7 @@ namespace DCL.Chat
 {
     public class ChatEntryUsernameElement : MonoBehaviour
     {
-        public Action UserNameClicked;
+        public Action? UserNameClicked;
 
         [field: SerializeField] internal TMP_Text userName { get; private set; }
         [field: SerializeField] internal TMP_Text walletIdText { get; private set; }
