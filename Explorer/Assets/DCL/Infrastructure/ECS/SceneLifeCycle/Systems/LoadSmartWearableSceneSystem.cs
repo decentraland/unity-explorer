@@ -1,12 +1,9 @@
 ﻿using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.SmartWearables;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -19,7 +16,6 @@ using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace ECS.SceneLifeCycle.Systems
 {
