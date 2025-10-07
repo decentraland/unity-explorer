@@ -20,6 +20,7 @@ namespace DCL.Settings.ModuleViews
         }
 
         [field: SerializeField] public DropdownView DropdownView { get; private set; }
+        [field: SerializeField] public TooltipButtonView TooltipButtonView { get; private set; }
 
         public override void SetInteractable(bool interactable) =>
             DropdownView.Dropdown.interactable = interactable;
@@ -29,6 +30,9 @@ namespace DCL.Settings.ModuleViews
 
         protected override void Configure(Config configuration)
         {
+            if (TooltipButtonView != null)
+                TooltipButtonView.Deactivate();
+            
             DropdownView.Dropdown.interactable = configuration.IsEnabled;
             DropdownView.Dropdown.MultiSelect = configuration.isMultiselect;
             DropdownView.Dropdown.options.Clear();

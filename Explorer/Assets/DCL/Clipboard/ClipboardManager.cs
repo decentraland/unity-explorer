@@ -8,6 +8,8 @@ namespace DCL.Clipboard
     /// </summary>
     public class ClipboardManager
     {
+        private static ClipboardManager? instance;
+        
         public delegate void CopyEventHandler(object sender, string copiedText);
         public delegate void PasteEventHandler(object sender, string pastedText);
 
