@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
-using DCL.Utilities;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
@@ -46,7 +45,6 @@ namespace DCL.VoiceChat
         private bool isDisposed;
 
         private MicrophoneTrack? microphoneTrack;
-        private TrackPublication? currentTrackPublication;
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
 
@@ -59,17 +57,10 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
 
-            microphoneChangeSubscription = microphoneHandler.IsMicrophoneEnabled.Subscribe(OnMicrophoneEnabledChanged);
-
             playbackSourcesHub = new PlaybackSourcesHub(
                 new ConcurrentDictionary<StreamKey, LivekitAudioSource>(),
                 configuration.ChatAudioMixerGroup.EnsureNotNull()
             );
-        }
-
-        private void OnMicrophoneEnabledChanged(bool isEnabled)
-        {
-            MuteLocalTrack(!isEnabled);
         }
 
         public void Dispose()
@@ -114,7 +105,6 @@ namespace DCL.VoiceChat
                 return;
             }
 #endif
-
             try
             {
                 Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
@@ -163,18 +153,6 @@ namespace DCL.VoiceChat
                 CleanupLocalTrack();
                 throw;
             }
-        }
-
-        private void MuteLocalTrack(bool mute)
-        {
-            if (!microphoneTrack.HasValue || currentTrackPublication == null) return;
-
-            try
-            {
-                //microphoneTrack.Value.Track.SetMute(mute);
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track muted: {mute}");
-            }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to mute local track: {ex.Message}"); }
         }
 
         public void UnpublishLocalTrack()
@@ -280,8 +258,6 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind != TrackKind.KindAudio) return;
 
-                currentTrackPublication = publication;
-
                 if (!configuration.EnableLocalTrackPlayback) return;
 
                 Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
@@ -300,8 +276,6 @@ namespace DCL.VoiceChat
             try
             {
                 if (publication.Kind != TrackKind.KindAudio) return;
-
-                currentTrackPublication = null;
 
                 if (!configuration.EnableLocalTrackPlayback) return;
 

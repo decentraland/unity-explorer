@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatRoomManager? roomManager;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
-        private MicrophoneAudioToggleController? microphoneAudioToggleController;
+        private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelController;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
 
@@ -85,7 +85,7 @@ namespace DCL.PluginSystem.Global
             nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
             roomManager?.Dispose();
-            microphoneAudioToggleController?.Dispose();
+            microphoneAudioToggleHandler?.Dispose();
             voiceChatDebugContainer?.Dispose();
         }
 
@@ -118,7 +118,7 @@ namespace DCL.PluginSystem.Global
             var playerEntry = pluginSettings.PlayerEntryView;
             var muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
-            microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
+            microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
             voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
 
