@@ -11,6 +11,9 @@ namespace Utility.UIToolkit
         public static bool IsDisplayed(this VisualElement ve) =>
             ve.style.display == DisplayStyle.Flex;
 
+        public static void SetVisible(this VisualElement ve, bool visible) =>
+            ve.style.visibility = visible ? Visibility.Visible : Visibility.Hidden;
+
         public static T InstantiateForElement<T>(this VisualTreeAsset asset) where T: VisualElement =>
             asset.Instantiate().Q<T>();
 
