@@ -62,6 +62,7 @@ using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
@@ -77,6 +78,7 @@ namespace DCL.PluginSystem.Global
 {
     public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
+        private readonly IEventBus eventBus;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
@@ -144,12 +146,15 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
+        private readonly bool isVoiceChatEnabled;
+        private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
 
-        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
+        public ExplorePanelPlugin(IEventBus eventBus,
+            IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
@@ -201,12 +206,14 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator communityCallOrchestrator,
+            bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
             IChatEventBus chatEventBus,
             SmartWearableCache smartWearableCache)
         {
+            this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -258,6 +265,7 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
+            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.galleryEventBus = galleryEventBus;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
@@ -390,8 +398,9 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 volumeBus,
                 upscalingController,
-                assetsProvisioner
-                );
+                isTranslationChatEnabled,
+                assetsProvisioner,
+                eventBus);
 
             await settingsController.InitializeAsync();
 
