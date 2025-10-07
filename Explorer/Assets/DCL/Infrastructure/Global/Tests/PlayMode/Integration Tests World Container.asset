@@ -73,9 +73,9 @@ MonoBehaviour:
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
     - rid: 4555433133200637954
-      type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      type: {class: SDKEntityTriggerAreaSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        CharacterTriggerAreaPrefab:
+        TriggerAreaPrefab:
           m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
           m_SubObjectName: 
           m_SubObjectType: 

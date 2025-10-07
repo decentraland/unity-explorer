@@ -18,6 +18,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private ListenersCountView listenersCountView;
+        [SerializeField] private GameObject listeningTooltip;
         [SerializeField] private GameObject requestsReceivedContainer = null!;
         [SerializeField] private TMP_Text requestsReceivedText = null!;
 
@@ -47,9 +48,18 @@ namespace DCL.Communities.CommunitiesBrowser
             userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
         }
 
+        public void ConfigureListeningTooltip()
+        {
+            listeningTooltip.gameObject.SetActive(true);
+            listenersCountView.gameObject.SetActive(false);
+        }
+
         public void ConfigureListenersCount(bool isActive, int listenersCount)
         {
+            listeningTooltip.gameObject.SetActive(false);
             listenersCountView.gameObject.SetActive(isActive);
+
+            if (!isActive) return;
 
             stringBuilder.Clear();
             stringBuilder.Append(listenersCount);

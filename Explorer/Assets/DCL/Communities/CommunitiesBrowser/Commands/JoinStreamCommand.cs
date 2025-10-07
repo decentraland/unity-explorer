@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid JoinStreamAsync()
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
                 // We wait until the panel has disappeared before starting the call, so the UX feels better.
                 await UniTask.Delay(UI_CLOSE_DELAY);

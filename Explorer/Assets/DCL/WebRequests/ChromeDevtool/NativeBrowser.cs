@@ -36,7 +36,7 @@ namespace DCL.WebRequests.ChromeDevtool
                     BrowserOpenError error = BrowserOpenError.FromException(new Exception(result.ErrorMessage!));
                     return BrowserOpenResult.FromBrowserOpenError(error);
                 }
-#else
+#elif UNITY_STANDALONE_WIN  || UNITY_EDITOR_WIN
 
                 // Windows: check if Chrome is registered in the registry
                 const string CHROME_KEY = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";

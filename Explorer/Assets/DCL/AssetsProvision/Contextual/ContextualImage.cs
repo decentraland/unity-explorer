@@ -1,13 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using DCL.Utility.Types;
+using RichTypes;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
-using Utility.Ownership;
 
 namespace DCL.AssetsProvision
 {

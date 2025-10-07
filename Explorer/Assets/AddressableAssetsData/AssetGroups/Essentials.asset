@@ -166,7 +166,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
-    m_Address: CharacterTriggerArea
+    m_Address: SDKEntityTriggerArea
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

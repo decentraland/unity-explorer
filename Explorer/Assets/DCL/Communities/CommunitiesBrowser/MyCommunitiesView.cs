@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.VoiceChat;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private CommunitiesBrowserStateService browserStateService = null!;
         private ThumbnailLoader? thumbnailLoader;
+        private ICommunityCallOrchestrator? communityCallOrchestrator;
 
         //TODO FRAN: MAKE THIS HAVE ANY USE!
         private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
@@ -64,7 +66,12 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
-            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+
+            if (communityCallOrchestrator?.CurrentCommunityId.Value == communityData.id)
+                cardView.ConfigureListeningTooltip();
+            else
+                cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+
             cardView.SetRequestsReceived(communityData.requestsReceived);
 
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
@@ -115,10 +122,11 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesMainContainer.SetActive(!isEmpty);
         }
 
-        public void SetDependencies(CommunitiesBrowserStateService communitiesBrowserStateService, ThumbnailLoader newThumbnailLoader)
+        public void SetDependencies(CommunitiesBrowserStateService communitiesBrowserStateService, ThumbnailLoader newThumbnailLoader, ICommunityCallOrchestrator orchestrator)
         {
             browserStateService = communitiesBrowserStateService;
             thumbnailLoader = newThumbnailLoader;
+            communityCallOrchestrator = orchestrator;
         }
     }
 }

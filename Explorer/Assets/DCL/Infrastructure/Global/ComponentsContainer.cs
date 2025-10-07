@@ -137,7 +137,9 @@ namespace Global
                .Add(SDKComponentBuilder<PBLightSource>.Create(ComponentID.LIGHT_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPrimaryPointerInfo>.Create(ComponentID.PRIMARY_POINTER_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBSkyboxTime>.Create(ComponentID.SKYBOX_TIME).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBGltfNodeModifiers>.Create(ComponentID.GLTF_NODE_MODIFIERS).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBGltfNodeModifiers>.Create(ComponentID.GLTF_NODE_MODIFIERS).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTriggerArea>.Create(ComponentID.TRIGGER_AREA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTriggerAreaResult>.Create(ComponentID.TRIGGER_AREA_RESULT).AsProtobufResult());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 
