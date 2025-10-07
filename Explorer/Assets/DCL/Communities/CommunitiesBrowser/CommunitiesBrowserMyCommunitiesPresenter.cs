@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using System;
 using System.Threading;
 using Utility;
@@ -28,14 +29,15 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
             ThumbnailLoader thumbnailLoader,
-            CommunitiesBrowserEventBus browserEventBus)
+            CommunitiesBrowserEventBus browserEventBus,
+            ICommunityCallOrchestrator orchestrator)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
             this.browserEventBus = browserEventBus;
 
-            view.SetDependencies(browserStateService, thumbnailLoader);
+            view.SetDependencies(browserStateService, thumbnailLoader, orchestrator);
             view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
             view.CommunityProfileOpened += OnCommunityProfileOpened;
             view.InitializeCommunitiesList(0);

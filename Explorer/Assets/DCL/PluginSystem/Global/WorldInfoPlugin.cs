@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.Global
             var entityIdBinding = new ElementBinding<int>(0);
 
             debugContainerBuilder
-               .TryAddWidget("World Info")
+               .TryAddWidget(IDebugContainerBuilder.Categories.WORLD_INFO)
                ?.AddControl(
                     new DebugConstLabelDef("Scene Coordinates"),
                     new DebugVector2IntFieldDef(poseBinding)

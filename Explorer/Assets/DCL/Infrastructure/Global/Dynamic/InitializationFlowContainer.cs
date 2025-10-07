@@ -44,21 +44,18 @@ namespace DCL.UserInAppInitializationFlow
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck);
-            var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmNavigationContainer.RealmNavigator);
+            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
             var loadingOperations = new List<IStartupOperation>()
             {
                 blocklistCheckStartupOperation,
-                preloadProfileStartupOperation,
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
-                checkOnboardingStartupOperation,
                 teleportStartupOperation
             };
 

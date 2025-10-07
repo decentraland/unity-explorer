@@ -1,6 +1,7 @@
 ﻿using DCL.Audio;
 using DCL.Emoji;
 using DCL.UI.CustomInputField;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
@@ -12,6 +13,8 @@ namespace DCL.Chat.ChatInput
 {
     public class ChatInputView : MonoBehaviour
     {
+        public event Action? DebugOnSubmit;
+
         [Serializable]
         public class EmojiContainer
         {
@@ -94,10 +97,11 @@ namespace DCL.Chat.ChatInput
             inputField.DeactivateInputField();
         }
 
-        public void Initialize(ChatConfig.ChatConfig chatConfig)
+        public void Initialize(ChatConfig.ChatConfig chatConfig, ITextFormatter textFormatter)
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
+            inputField.SetTextFormatter(textFormatter);
         }
 
         public void InsertTextAtCaretPosition(string text)
@@ -171,5 +175,13 @@ namespace DCL.Chat.ChatInput
             maskContainer.SetActive(true);
             maskText.text = reason;
         }
+
+        public void DebugInsertTextAndSubmit(string text)
+        {
+            inputField.SetTextWithoutNotify(text);
+            inputField.OnSubmit(null);
+            DebugOnSubmit?.Invoke();
+        }
+
     }
 }

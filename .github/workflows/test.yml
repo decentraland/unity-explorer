@@ -24,8 +24,8 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: windows-il2cpp
-  UNITY_IMAGE_VERSION: 3      
+  UNITY_IMAGE_FLAVOR: linux-il2cpp
+  UNITY_IMAGE_VERSION: 3.1.0
   GHCR_IMAGE_NAME: unityci-editor
   
 concurrency:
@@ -36,16 +36,19 @@ jobs:
   test:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
     name: Test
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
+
 
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          lfs: true
           submodules: recursive
 
       - name: Create LFS file list
-        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
 
       - name: Restore LFS cache
         uses: actions/cache@v4
@@ -59,72 +62,58 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
+          
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
 
       - name: Restore Library cache
         uses: actions/cache@v4
         with:
           path: Explorer/Library
-          key: Library-Explorer-Windows
-
-      - name: Clone Packages To Use Locally
-        env:
-          REPOS_READ_ONLY_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
-        run: |
-            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
-            $jsonFilePath = "Explorer/Packages/manifest.json"
-            (Get-Content $jsonFilePath) `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
-                Set-Content $jsonFilePath
-
-            Get-ChildItem
-            Get-Content $jsonFilePath
-
+          key: Library-Explorer-Ubuntu
+      
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
-        shell: pwsh
         run: |
-          $verFile = "Explorer/ProjectSettings/ProjectVersion.txt"
-          if (!(Test-Path $verFile)) {
-            Write-Error "File not found: $verFile"
+          verFile="Explorer/ProjectSettings/ProjectVersion.txt"
+          if [ ! -f "$verFile" ]; then
+            echo "File not found: $verFile"
             exit 1
-          }
-          $match = Select-String -Path $verFile -Pattern 'm_EditorVersion:\s*(\S+)' | Select-Object -First 1
-          if (-not $match) {
-            Write-Error "Could not parse Unity version from $verFile"
+          fi
+          ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
+          if [ -z "$ver" ]; then
+            echo "Could not parse Unity version from $verFile"
             exit 1
-          }
-          $ver = $match.Matches[0].Groups[1].Value.Trim()
-          echo "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "Detected Unity version: $ver"
+          fi
+          echo "version=$ver" >> $GITHUB_OUTPUT
+          echo "Detected Unity version: $ver"
 
       # --- Build image references (GHCR + upstream) ---
       - name: Set image names
         id: img
-        shell: pwsh
         run: |
-          $version = "${{ steps.unity-version.outputs.version }}"
-          $flavor  = "${{ env.UNITY_IMAGE_FLAVOR }}"
-          $imgVer  = "${{ env.UNITY_IMAGE_VERSION }}"
+          version="${{ steps.unity-version.outputs.version }}"
+          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
+          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
 
-          # windows-<unityVersion>-<flavor>-<gameciVersion>
-          $tag = "windows-$version-$flavor-$imgVer"
-          $owner = "${{ github.repository_owner }}".ToLower()
-          $upstream = "unityci/editor:$tag"
-          $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
-          echo "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          echo "upstream=$upstream" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          echo "ghcr=$ghcr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "Upstream image: $upstream"
-          Write-Host "GHCR image:     $ghcr"
+          # ubuntu-<unityVersion>-<flavor>-<gameciVersion>
+          tag="ubuntu-$version-$flavor-$imgVer"
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          upstream="unityci/editor:$tag"
+          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "upstream=$upstream" >> $GITHUB_OUTPUT
+          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
+          echo "Upstream image: $upstream"
+          echo "GHCR image:     $ghcr"
 
       # --- Log into GHCR ---
       - name: Log in to GitHub Container Registry
@@ -137,7 +126,6 @@ jobs:
       # --- Restore Unity image from GHCR (fast path) ---
       - name: Restore Unity image from GHCR
         id: restore-image
-        shell: pwsh
         continue-on-error: true
         run: |
           docker pull "${{ steps.img.outputs.ghcr }}"
@@ -145,25 +133,29 @@ jobs:
       # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
       - name: Download from Docker Hub and upload to GHCR (if missing)
         if: steps.restore-image.outcome == 'failure'
-        shell: pwsh
         run: |
-          $upstream = "${{ steps.img.outputs.upstream }}"
-          $ghcr     = "${{ steps.img.outputs.ghcr }}"
-          Write-Host "GHCR miss. Pulling upstream: $upstream"
+          upstream="${{ steps.img.outputs.upstream }}"
+          ghcr="${{ steps.img.outputs.ghcr }}"
+          echo "GHCR miss. Pulling upstream: $upstream"
           docker pull $upstream
           docker tag  $upstream $ghcr
           docker push $ghcr
-          Write-Host "Seeded GHCR: $ghcr"
+          echo "Seeded GHCR: $ghcr"
 
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
         timeout-minutes: 80
         continue-on-error: true
+        env:
+          SHELL: /bin/bash
         with:
           projectPath: Explorer
           testMode: all
+          sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
+          customParameters: -buildTarget StandaloneLinux64
+          githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
         if: always()
