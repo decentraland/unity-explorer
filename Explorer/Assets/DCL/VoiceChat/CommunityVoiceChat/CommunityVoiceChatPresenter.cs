@@ -247,7 +247,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             playerEntriesPool.Get(out VoiceChatParticipantEntryView entryView);
 
-            var newPresenter = new VoiceChatParticipantEntryPresenter(entryView, participantState, profileRepositoryWrapper, voiceChatOrchestrator, playerEntriesPool,
+            var newPresenter = new VoiceChatParticipantEntryPresenter(
+                entryView,
+                participantState,
+                profileRepositoryWrapper,
+                voiceChatOrchestrator,
+                playerEntriesPool,
                 view.CommunityVoiceChatSearchView.ListenersParent,
                 view.CommunityVoiceChatInCallView.SpeakersParent,
                 view.CommunityVoiceChatSearchView.RequestToSpeakParent);

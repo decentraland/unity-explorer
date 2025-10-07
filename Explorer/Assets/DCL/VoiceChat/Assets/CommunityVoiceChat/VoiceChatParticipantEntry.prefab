@@ -639,21 +639,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 891facf43f844bf191621eb8eb451aa8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ProfilePictureView>k__BackingField: {fileID: 1424574524159187700}
-  <NameElement>k__BackingField: {fileID: 6062674866884451803}
-  <IsSpeakingIcon>k__BackingField: {fileID: 1141228680857635431}
+  profilePictureView: {fileID: 1424574524159187700}
+  nameElement: {fileID: 6062674866884451803}
+  isSpeakingIcon: {fileID: 1141228680857635431}
   isSpeakingIconRect: {fileID: 3464397274847466972}
   isSpeakingIconOuterRect: {fileID: 2009829505635314270}
+  isMutedIcon: {fileID: 3501611122236373790}
+  stateText: {fileID: 635152181967125552}
+  stateSection: {fileID: 7345773076728832506}
   approveDenySection: {fileID: 652712787888245055}
   approveButton: {fileID: 646811855629426618}
   denyButton: {fileID: 6831059222118658443}
   openPassportButton: {fileID: 7676719144302330817}
   hoverElement: {fileID: 4501714834528175849}
   contextMenuButton: {fileID: 588555066609539575}
-  isMutedIcon: {fileID: 3501611122236373790}
-  statusText: {fileID: 635152181967125552}
   promotingSpinner: {fileID: 5959524753099523185}
-  statusSection: {fileID: 7345773076728832506}
 --- !u!1 &3391325476608169283
 GameObject:
   m_ObjectHideFlags: 0
@@ -740,7 +740,7 @@ GameObject:
   - component: {fileID: 6617090593264058009}
   - component: {fileID: 2445812315655740472}
   m_Layer: 0
-  m_Name: IsMutedStatus
+  m_Name: IsMutedState
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -873,7 +873,7 @@ GameObject:
   - component: {fileID: 1141228680857635431}
   - component: {fileID: 1397183261831544157}
   m_Layer: 0
-  m_Name: IsSpeakingStatus
+  m_Name: IsSpeakingState
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1480,7 +1480,7 @@ GameObject:
   - component: {fileID: 7075265489348197857}
   - component: {fileID: 9086841751438469006}
   m_Layer: 0
-  m_Name: CurrentStatusSection
+  m_Name: CurrentStateSection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -27,7 +27,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly Transform requestToSpeakParent;
         private readonly EventSubscriptionScope subscriptionsScope = new ();
 
-        private CancellationTokenSource cts = new ();
+        private readonly CancellationTokenSource cts = new ();
 
         public VoiceChatParticipantEntryPresenter(
             VoiceChatParticipantEntryView view,
@@ -50,9 +50,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CleanupEntry();
 
             var nameColor = NameColorHelper.GetNameColor(currentParticipantState.Name.Value);
-            view.SetupParticipantProfile(currentParticipantState.Name.Value, nameColor, profileRepositoryWrapper, nameColor, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
+            view.SetupParticipantProfile(currentParticipantState.Name.Value, nameColor, profileRepositoryWrapper, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
 
-            // We only show context menu button on top of local participant if local participant is a mod.
+            // We only show context menu button on top of the local participant if the local participant is a moderator.
             var showContextMenuButton = true;
 
             if (currentParticipantState.Name.Value == localParticipantState.Name.Value)
@@ -120,23 +120,23 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void ConfigureAsListener()
         {
-            view.ConfigureAsListener();
-            view.ConfigureTransform(listenersParent, Vector3.one);
+            view.ConfigureInitialState(currentParticipantState.IsSpeaker.Value, currentParticipantState.IsMuted.Value);
+            view.SetParent(listenersParent);
         }
 
         public void ConfigureAsSpeaker()
         {
-            view.ConfigureAsSpeaker();
-            view.ConfigureTransform(speakersParent, Vector3.one);
+            view.ConfigureInitialState(currentParticipantState.IsSpeaker.Value, currentParticipantState.IsMuted.Value);
+            view.SetParent(speakersParent);
         }
 
         private void ParticipantRequestingToSpeakChanged(bool isRequestingToSpeak)
         {
             var parent = isRequestingToSpeak ? requestToSpeakParent : listenersParent;
-            view.ConfigureTransform(parent, Vector3.one);
+            view.SetParent(parent);
 
             bool showApproveDenySection = isRequestingToSpeak && VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
-            view.ShowApproveDenySection(showApproveDenySection);
+            view.ParticipantRequestingToSpeakChanged(showApproveDenySection);
 
             if (isRequestingToSpeak)
                 UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name.Value);
@@ -144,7 +144,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void ParticipantIsMutedChanged(bool isMuted)
         {
-            view.OnIsMutedChanged(isMuted, currentParticipantState.IsSpeaker.Value);
+            if (!currentParticipantState.IsSpeaker.Value) return;
+
+            view.OnIsMutedChanged(isMuted);
         }
 
         private void ParticipantIsSpeakingChanged(bool isSpeaking)
@@ -158,7 +160,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             view.OnIsSpeakerChanged(isSpeaker, currentParticipantState.IsMuted.Value);
             var parent = currentParticipantState.IsSpeaker.Value ? speakersParent : listenersParent;
-            view.ConfigureTransform(parent , Vector3.one);
+            view.SetParent(parent);
         }
     }
 }
