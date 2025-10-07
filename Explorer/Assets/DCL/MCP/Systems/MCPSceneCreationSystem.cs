@@ -29,18 +29,22 @@ namespace DCL.MCP.Systems
         private readonly Arch.Core.Entity globalPlayerEntity;
         private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
+        private readonly IComponentPool<PBMeshCollider> colliderPool;
 
         private bool hasJumped;
 
         private readonly MCPSceneEntitiesBuilder builder;
 
         public MCPSceneCreationSystem(World world, World globalWorld, Arch.Core.Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTransform> sdkTransformPool,
-            IComponentPool<PBTextShape> textShapePool, IComponentPool<PBMeshRenderer> meshRendererPool) : base(world)
+            IComponentPool<PBTextShape> textShapePool
+          , IComponentPool<PBMeshRenderer> meshRendererPool
+          , IComponentPool<PBMeshCollider> colliderPool) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
             this.textShapePool = textShapePool;
             this.meshRendererPool = meshRendererPool;
+            this.colliderPool = colliderPool;
 
             builder = new MCPSceneEntitiesBuilder(ecsToCRDTWriter, sdkTransformPool);
             builder.ClearReservedEntities();
@@ -48,11 +52,12 @@ namespace DCL.MCP.Systems
 
         protected override void Update(float t)
         {
-            // JumpDebug();
+            JumpDebug();
 
             // Обрабатываем запросы MCP на создание TextShape через билдер
-            builder.ProcessTextShapeRequests(World, textShapePool);
-            builder.ProcessMeshRendererRequests(World, meshRendererPool);
+            // builder.ProcessTextShapeRequests(World, textShapePool);
+            // builder.ProcessMeshRendererRequests(World, meshRendererPool);
+            // Пример: builder.ProcessMeshColliderRequests(World, colliderPool);
         }
 
         private void JumpDebug()
@@ -67,24 +72,29 @@ namespace DCL.MCP.Systems
                 hasJumped = true;
                 ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
 
-                // TODO (Cursor): GetCrdtState
-                if (EngineApiLocator.TryGet(sceneInfo, out IEngineApi engineApi))
+                // Создаём MeshRenderer + MeshCollider (Box) для проверки
+                var meshReq = new MCPSceneEntitiesBuilder.MCPCreateMeshRendererRequest
                 {
-                    PoolableByteArray data = engineApi.CrdtGetState();
+                    RequestId = System.Guid.NewGuid().ToString("N"),
+                    X = 8, Y = 1, Z = 8,
+                    SX = 1, SY = 1, SZ = 1,
+                    Yaw = 0, Pitch = 0, Roll = 0,
+                    ParentId = 0,
+                    MeshType = "Box",
+                };
 
-                    try
-                    {
-                        string json = SceneStateJsonExporter.ExportStateToJson(data);
-                        ReportHub.Log(ReportCategory.DEBUG, json);
-                    }
-                    finally { data.Dispose(); }
-                }
-                else { ReportHub.LogWarning(ReportCategory.DEBUG, "[MCP] EngineApi not available for current scene; cannot get CRDT state"); }
+                var colReq = new MCPSceneEntitiesBuilder.MCPCreateMeshColliderRequest
+                {
+                    RequestId = System.Guid.NewGuid().ToString("N"),
+                    ColliderType = "Box",
+                    CollisionMask = 1u | 2u, // CL_POINTER | CL_PHYSICS
+                };
 
-                // ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
-                // builder.Begin(new Vector3(8, 4, 8), new Vector3(1, 1, 1))
-                //        .AddTextShape(textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "TEST FROM ECS", FontSize = 5 })
-                //        .Build(World);
+                builder.Begin(new Vector3(meshReq.X, meshReq.Y, meshReq.Z), new Vector3(meshReq.SX, meshReq.SY, meshReq.SZ),
+                            Quaternion.Euler(meshReq.Pitch, meshReq.Yaw, meshReq.Roll), meshReq.ParentId)
+                       .AddMeshRenderer(meshRendererPool, meshReq)
+                       .AddMeshCollider(colliderPool, colReq)
+                       .Build(World);
             }
         }
     }
