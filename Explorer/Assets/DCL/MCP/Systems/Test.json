@@ -1,5 +1,413 @@
-{"schema":"dcl-crdt-json@0","messages":
-[
-  {"type":"PUT_COMPONENT","entityId":"E": number 0 version 0,"componentId":1048,"timestamp":5185,"data":"CPMoFU0gMEMYjDU="}
-,{"type":"PUT_COMPONENT","entityId":E: number 0 version 0,"componentId":1209,"timestamp":5185,"data":"EgoNwEJlRBUE/ZNDGgAiDw3wniA/FWqUuL4dw7AwPw=="}
-,{"type":"PUT_COMPONENT","entityId":E: number 0 version 0,"componentId":1106,"timestamp":0,"data":"CkNodHRwczovL3dvcmxkcy1jb250ZW50LXNlcnZlci5kZWNlbnRyYWxhbmQub3JnL3dvcmxkL3ByYXZ1cy5kY2wuZXRoEg5wcmF2dXMuZGNsLmV0aBgBInRmaXhlZC1hZGFwdGVyOnNpZ25lZC1sb2dpbjpodHRwczovL3dvcmxkcy1jb250ZW50LXNlcnZlci5kZWNlbnRyYWxhbmQub3JnL2dldC1jb21tcy1hZGFwdGVyL3dvcmxkLXByZC1wcmF2dXMuZGNsLmV0aDIPUk1fUVMyemRlbnpLd01FOAE="},{"type":"PUT_COMPONENT","entityId":E: number 1 version 0,"componentId":1,"timestamp":2,"data":"F7fROPjWoz0Xt9E4AAAAABbvwz4AAAAAXoNsPwAAgD8AAIA/AACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 2 version 0,"componentId":1,"timestamp":80,"data":"TqJJwJE5KEBMoknA74tXPUeewz47kbK88SBsPwAAgD8AAIA/AACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 512 version 0,"componentId":1,"timestamp":1,"data":"AABAQAAAgD8AAGhBAAAAAAAAAAAAAAAAAACAPwAAgD4AAIA+AACAPgAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 513 version 0,"componentId":1,"timestamp":1,"data":"AACAPwAAgD8AAGhBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 514 version 0,"componentId":1,"timestamp":1,"data":"AAAAQQAAAEAAAGhBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 515 version 0,"componentId":1,"timestamp":1,"data":"AAAgQQAAgD8AAGhBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 516 version 0,"componentId":1,"timestamp":1,"data":"AACgQAAAwD8AAGhBAAAAABXvwz4AAAAAXoNsPwAAgD8AAEBAAACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 517 version 0,"componentId":1,"timestamp":6795,"data":"AAAAQQAAgD8AAChBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="},{"type":"PUT_COMPONENT","entityId":E: number 0 version 0,"componentId":1054,"timestamp":1,"data":"DQAAgD8QgA8YuAgiAA=="},{"type":"PUT_COMPONENT","entityId":E: number 2 version 0,"componentId":1075,"timestamp":0,"data":"CAA="},{"type":"PUT_COMPONENT","entityId":E: number 2 version 0,"componentId":1072,"timestamp":0,"data":"CAE="},{"type":"PUT_COMPONENT","entityId":E: number 2 version 0,"componentId":1074,"timestamp":0,"data":""},{"type":"PUT_COMPONENT","entityId":E: number 513 version 0,"componentId":1062,"timestamp":1,"data":"ChQIARIQCAASDG1vdmUgdHJpZ2dlcg=="},{"type":"PUT_COMPONENT","entityId":E: number 515 version 0,"componentId":1062,"timestamp":1,"data":"ChQIARIQCAASDG1vdmUgdHJpZ2dlcg=="},{"type":"PUT_COMPONENT","entityId":E: number 517 version 0,"componentId":1062,"timestamp":1,"data":"ChQIARIQCAASDHNwYXduIHNwaGVyZQ=="},{"type":"PUT_COMPONENT","entityId":E: number 512 version 0,"componentId":1019,"timestamp":1,"data":"CIAIEgA="},{"type":"PUT_COMPONENT","entityId":E: number 513 version 0,"componentId":1019,"timestamp":1,"data":"EgA="},{"type":"PUT_COMPONENT","entityId":E: number 515 version 0,"componentId":1019,"timestamp":1,"data":"EgA="},{"type":"PUT_COMPONENT","entityId":E: number 517 version 0,"componentId":1019,"timestamp":1,"data":"GgA="},{"type":"PUT_COMPONENT","entityId":E: number 514 version 0,"componentId":1041,"timestamp":1,"data":"ChJtb2RlbHMvTW9uc3Rlci5nbGIggBA="},{"type":"PUT_COMPONENT","entityId":E: number 516 version 0,"componentId":1017,"timestamp":1,"data":"EhY6FA0AAIA/FQAAgD8dAACAPyUAAAA/"},{"type":"PUT_COMPONENT","entityId":E: number 512 version 0,"componentId":1018,"timestamp":1,"data":"CgIKAA=="},{"type":"PUT_COMPONENT","entityId":E: number 513 version 0,"componentId":1018,"timestamp":1,"data":"CgIKAA=="},{"type":"PUT_COMPONENT","entityId":E: number 515 version 0,"componentId":1018,"timestamp":1,"data":"CgIKAA=="},{"type":"PUT_COMPONENT","entityId":E: number 516 version 0,"componentId":1018,"timestamp":1,"data":"CgIKAA=="},{"type":"PUT_COMPONENT","entityId":E: number 517 version 0,"componentId":1018,"timestamp":1,"data":"EgA="},{"type":"PUT_COMPONENT","entityId":E: number 516 version 0,"componentId":1060,"timestamp":1,"data":"CAAQgJAE"},{"type":"PUT_COMPONENT","entityId":E: number 1 version 0,"componentId":1087,"timestamp":1,"data":"CgoNAACAPxUiJvo+Eg8N5eRkPhX5+Pg+HbGwMD8aDw3h4OA9FeHg4D0d4eDgPSIwdXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOkJhc2VNYWxlKgN2aXQ="},{"type":"PUT_COMPONENT","entityId":E: number 1 version 0,"componentId":1089,"timestamp":1,"data":"CioweDJmY2NiZDczNDQ0MTkzZTE0NDZhZDQ0NTNhM2UxOGE3OWQ3NThhNGE="},{"type":"PUT_COMPONENT","entityId":E: number 1 version 0,"componentId":1091,"timestamp":1,"data":"CjR1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfamFja2V0CjN1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfZ2xvdmUKOnVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpmX2RpYW1vbmRfbGVnZ2luZ3MKO3VybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpzcG9ydF9jb2xvcmVkX3Nob2VzCjl1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfc3VuX2dsYXNzZXMKNnVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpzcXVhcmVfZWFycmluZwo0dXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOmJsdWVfYmFuZGFuYQoydXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOmZfbW91dGhfMDgKLXVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpiZWFyZBIIaGFuZHNhaXISA2NyeRKXAXVybjpkZWNlbnRyYWxhbmQ6bWF0aWM6Y29sbGVjdGlvbnMtdjI6MHgwODMyMzA0MDI2NzdjYWQ2MWQ3YTBjYzA0MGRjOGEwOGNmZWI4MDllOjIxOjIyMTE1NTgxMjUwMzk3MDA5MjA2NTYyNzg1ODEzNTcwNzkwNzg2OTY3OTcwMDM0MTE1MzEzMzYzNDA1MzA1Mjk2MDESBWRhbmNlEglyYWlzZUhhbmQSBGNsYXASBW1vbmV5EgRraXNzEgtoZWFkZXhwbG9kZRIFc2hydWc="},{"type":"PUT_COMPONENT","entityId":E: number 514 version 0,"componentId":1049,"timestamp":1,"data":"CAQ="}]}
+{
+  "schema": "dcl-crdt-json@0",
+  "messages": [
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 0,
+        "number": 0,
+        "version": 0
+      },
+      "componentId": 1048,
+      "componentName": "ENGINE_INFO",
+      "timestamp": 2101,
+      "data": "CNMQFaFXkkIY9RU="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 0,
+        "number": 0,
+        "version": 0
+      },
+      "componentId": 1209,
+      "componentName": "POINTER_LOCK",
+      "timestamp": 2101,
+      "data": "EgoNJsVORBUBmXVDGgAiDw36CAs/Fbtizr4ddZA8Pw=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 0,
+        "number": 0,
+        "version": 0
+      },
+      "componentId": 1106,
+      "componentName": "PLAYER_IDENTITY_DATA",
+      "timestamp": 0,
+      "data": "CkNodHRwczovL3dvcmxkcy1jb250ZW50LXNlcnZlci5kZWNlbnRyYWxhbmQub3JnL3dvcmxkL3ByYXZ1cy5kY2wuZXRoEg5wcmF2dXMuZGNsLmV0aBgBInRmaXhlZC1hZGFwdGVyOnNpZ25lZC1sb2dpbjpodHRwczovL3dvcmxkcy1jb250ZW50LXNlcnZlci5kZWNlbnRyYWxhbmQub3JnL2dldC1jb21tcy1hZGFwdGVyL3dvcmxkLXByZC1wcmF2dXMuZGNsLmV0aDIPUk1fRWNBQnlUOHNMQ2hjOAE="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 1,
+        "number": 1,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 2,
+      "data": "F7fROPjWoz0Xt9E4AAAAABbvwz4AAAAAXoNsPwAAgD8AAIA/AACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 2,
+        "number": 2,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 90,
+      "data": "vpwuwJE5KEBugmTAc6tXPen3wj53+bG8VENsPwAAgD8AAIA/AACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 512,
+        "number": 512,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 1,
+      "data": "AABAQAAAgD8AAGhBAAAAAAAAAAAAAAAAAACAPwAAgD4AAIA+AACAPgAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 513,
+        "number": 513,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 1,
+      "data": "AACAPwAAgD8AAGhBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 514,
+        "number": 514,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 1,
+      "data": "AAAAQQAAAEAAAGhBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 515,
+        "number": 515,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 1,
+      "data": "AAAgQQAAgD8AAGhBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 516,
+        "number": 516,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 1,
+      "data": "AACgQAAAwD8AAGhBAAAAABXvwz4AAAAAXoNsPwAAgD8AAEBAAACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 517,
+        "number": 517,
+        "version": 0
+      },
+      "componentId": 1,
+      "componentName": "TRANSFORM",
+      "timestamp": 2805,
+      "data": "AAAAQQAAgD8AAChBAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 0,
+        "number": 0,
+        "version": 0
+      },
+      "componentId": 1054,
+      "componentName": "MAIN_CAMERA",
+      "timestamp": 1,
+      "data": "DQAAgD8QgA8YuAgiAA=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 2,
+        "number": 2,
+        "version": 0
+      },
+      "componentId": 1075,
+      "componentName": "UI_TEXT",
+      "timestamp": 0,
+      "data": "CAA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 2,
+        "number": 2,
+        "version": 0
+      },
+      "componentId": 1072,
+      "componentName": "UI_TRANSFORM",
+      "timestamp": 0,
+      "data": "CAE="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 2,
+        "number": 2,
+        "version": 0
+      },
+      "componentId": 1074,
+      "componentName": "UI_BACKGROUND",
+      "timestamp": 1,
+      "data": "CAE="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 513,
+        "number": 513,
+        "version": 0
+      },
+      "componentId": 1062,
+      "componentName": "TEXT_SHAPE",
+      "timestamp": 1,
+      "data": "ChQIARIQCAASDG1vdmUgdHJpZ2dlcg=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 515,
+        "number": 515,
+        "version": 0
+      },
+      "componentId": 1062,
+      "componentName": "TEXT_SHAPE",
+      "timestamp": 1,
+      "data": "ChQIARIQCAASDG1vdmUgdHJpZ2dlcg=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 517,
+        "number": 517,
+        "version": 0
+      },
+      "componentId": 1062,
+      "componentName": "TEXT_SHAPE",
+      "timestamp": 1,
+      "data": "ChQIARIQCAASDHNwYXduIHNwaGVyZQ=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 512,
+        "number": 512,
+        "version": 0
+      },
+      "componentId": 1019,
+      "componentName": "MESH_RENDERER",
+      "timestamp": 1,
+      "data": "CIAIEgA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 513,
+        "number": 513,
+        "version": 0
+      },
+      "componentId": 1019,
+      "componentName": "MESH_RENDERER",
+      "timestamp": 1,
+      "data": "EgA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 515,
+        "number": 515,
+        "version": 0
+      },
+      "componentId": 1019,
+      "componentName": "MESH_RENDERER",
+      "timestamp": 1,
+      "data": "EgA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 517,
+        "number": 517,
+        "version": 0
+      },
+      "componentId": 1019,
+      "componentName": "MESH_RENDERER",
+      "timestamp": 1,
+      "data": "GgA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 514,
+        "number": 514,
+        "version": 0
+      },
+      "componentId": 1041,
+      "componentName": "GLTF_CONTAINER",
+      "timestamp": 1,
+      "data": "ChJtb2RlbHMvTW9uc3Rlci5nbGIggBA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 516,
+        "number": 516,
+        "version": 0
+      },
+      "componentId": 1017,
+      "componentName": "MATERIAL",
+      "timestamp": 1,
+      "data": "EhY6FA0AAIA/FQAAgD8dAACAPyUAAAA/"
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 512,
+        "number": 512,
+        "version": 0
+      },
+      "componentId": 1018,
+      "componentName": "MESH_COLLIDER",
+      "timestamp": 1,
+      "data": "CgIKAA=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 513,
+        "number": 513,
+        "version": 0
+      },
+      "componentId": 1018,
+      "componentName": "MESH_COLLIDER",
+      "timestamp": 1,
+      "data": "CgIKAA=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 515,
+        "number": 515,
+        "version": 0
+      },
+      "componentId": 1018,
+      "componentName": "MESH_COLLIDER",
+      "timestamp": 1,
+      "data": "CgIKAA=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 516,
+        "number": 516,
+        "version": 0
+      },
+      "componentId": 1018,
+      "componentName": "MESH_COLLIDER",
+      "timestamp": 1,
+      "data": "CgIKAA=="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 517,
+        "number": 517,
+        "version": 0
+      },
+      "componentId": 1018,
+      "componentName": "MESH_COLLIDER",
+      "timestamp": 1,
+      "data": "EgA="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 516,
+        "number": 516,
+        "version": 0
+      },
+      "componentId": 1060,
+      "componentName": "VISIBILITY_COMPONENT",
+      "timestamp": 1,
+      "data": "CAAQgJAE"
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 1,
+        "number": 1,
+        "version": 0
+      },
+      "componentId": 1087,
+      "componentName": "AVATAR_SHAPE",
+      "timestamp": 1,
+      "data": "CgoNAACAPxUiJvo+Eg8N5eRkPhX5+Pg+HbGwMD8aDw3h4OA9FeHg4D0d4eDgPSIwdXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOkJhc2VNYWxlKgN2aXQ="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 1,
+        "number": 1,
+        "version": 0
+      },
+      "componentId": 1089,
+      "componentName": "AVATAR_EQUIPPED_DATA",
+      "timestamp": 1,
+      "data": "CioweDJmY2NiZDczNDQ0MTkzZTE0NDZhZDQ0NTNhM2UxOGE3OWQ3NThhNGE="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 1,
+        "number": 1,
+        "version": 0
+      },
+      "componentId": 1091,
+      "componentName": "AVATAR_BASE",
+      "timestamp": 1,
+      "data": "CjR1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfamFja2V0CjN1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfZ2xvdmUKOnVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpmX2RpYW1vbmRfbGVnZ2luZ3MKO3VybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpzcG9ydF9jb2xvcmVkX3Nob2VzCjl1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfc3VuX2dsYXNzZXMKNnVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpzcXVhcmVfZWFycmluZwo0dXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOmJsdWVfYmFuZGFuYQoydXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOmZfbW91dGhfMDgKLXVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpiZWFyZBIIaGFuZHNhaXISA2NyeRKXAXVybjpkZWNlbnRyYWxhbmQ6bWF0aWM6Y29sbGVjdGlvbnMtdjI6MHgwODMyMzA0MDI2NzdjYWQ2MWQ3YTBjYzA0MGRjOGEwOGNmZWI4MDllOjIxOjIyMTE1NTgxMjUwMzk3MDA5MjA2NTYyNzg1ODEzNTcwNzkwNzg2OTY3OTcwMDM0MTE1MzEzMzYzNDA1MzA1Mjk2MDESBWRhbmNlEglyYWlzZUhhbmQSBGNsYXASBW1vbmV5EgRraXNzEgtoZWFkZXhwbG9kZRIFc2hydWc="
+    },
+    {
+      "type": "PUT_COMPONENT",
+      "entity": {
+        "id": 514,
+        "number": 514,
+        "version": 0
+      },
+      "componentId": 1049,
+      "componentName": "REALM_INFO",
+      "timestamp": 1,
+      "data": "CAQ="
+    }
+  ]
+}

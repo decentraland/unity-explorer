@@ -5,6 +5,8 @@ using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.Components;
+using DCL.ECS7;
 
 namespace DCL.MCP.Systems
 {
@@ -73,6 +75,14 @@ namespace DCL.MCP.Systems
                     sb.Append(',');
                     sb.Append("\"componentId\":");
                     sb.Append(m.ComponentId);
+
+                    if (TryGetComponentName(m.ComponentId, out string name))
+                    {
+                        sb.Append(',');
+                        sb.Append("\"componentName\":\"");
+                        sb.Append(name);
+                        sb.Append("\"");
+                    }
                     sb.Append(',');
                     sb.Append("\"timestamp\":");
                     sb.Append(m.Timestamp);
@@ -85,6 +95,14 @@ namespace DCL.MCP.Systems
                     sb.Append(',');
                     sb.Append("\"componentId\":");
                     sb.Append(m.ComponentId);
+
+                    if (TryGetComponentName(m.ComponentId, out name))
+                    {
+                        sb.Append(',');
+                        sb.Append("\"componentName\":\"");
+                        sb.Append(name);
+                        sb.Append("\"");
+                    }
                     sb.Append(',');
                     sb.Append("\"timestamp\":");
                     sb.Append(m.Timestamp);
@@ -95,6 +113,73 @@ namespace DCL.MCP.Systems
             }
 
             sb.Append('}');
+        }
+
+        // Простая мапа известных componentId -> имя. При желании можно дернуть из глобального контейнера, но для логов хватит плоской карты.
+        private static bool TryGetComponentName(int id, out string name)
+        {
+            switch (id)
+            {
+                case 1:
+                    name = nameof(ComponentID.TRANSFORM);
+                    return true;
+                case 1017:
+                    name = nameof(ComponentID.MATERIAL);
+                    return true;
+                case 1018:
+                    name = nameof(ComponentID.MESH_COLLIDER);
+                    return true;
+                case 1019:
+                    name = nameof(ComponentID.MESH_RENDERER);
+                    return true;
+                case 1041:
+                    name = nameof(ComponentID.GLTF_CONTAINER);
+                    return true;
+                case 1048:
+                    name = nameof(ComponentID.ENGINE_INFO);
+                    return true;
+                case 1049:
+                    name = nameof(ComponentID.REALM_INFO);
+                    return true;
+                case 1054:
+                    name = nameof(ComponentID.MAIN_CAMERA);
+                    return true;
+                case 1060:
+                    name = nameof(ComponentID.VISIBILITY_COMPONENT);
+                    return true;
+                case 1062:
+                    name = nameof(ComponentID.TEXT_SHAPE);
+                    return true;
+                case 1072:
+                    name = nameof(ComponentID.UI_TRANSFORM);
+                    return true;
+                case 1074:
+                    name = nameof(ComponentID.UI_BACKGROUND);
+                    return true;
+                case 1075:
+                    name = nameof(ComponentID.UI_TEXT);
+                    return true;
+                case 1087:
+                    name = nameof(ComponentID.AVATAR_SHAPE);
+                    return true;
+                case 1089:
+                    name = nameof(ComponentID.AVATAR_EQUIPPED_DATA);
+                    return true;
+                case 1091:
+                    name = nameof(ComponentID.AVATAR_BASE);
+                    return true;
+                case 1106:
+                    name = nameof(ComponentID.PLAYER_IDENTITY_DATA);
+                    return true;
+                case 1209:
+                    name = nameof(ComponentID.POINTER_LOCK);
+                    return true;
+
+                // Дополнить по мере необходимости
+                default:
+                    name = null;
+                    return false;
+            }
         }
 
         private static void AppendBase64(StringBuilder sb, ReadOnlySpan<byte> bytes)
