@@ -39,6 +39,8 @@
 
         public const string IDENTITY_EXPIRATION_DURATION = "identity-expiration-duration";
 
+        public const string FORCE_ONBOARDING = "force-onboarding";
+
         public const string SIMULATE_MEMORY = "simulateMemory";
 
         public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";

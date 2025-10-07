@@ -40,7 +40,8 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
             bool localSceneDevelopment,
-            CharacterContainer characterContainer)
+            CharacterContainer characterContainer,
+            bool forceOnboarding)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -49,7 +50,7 @@ namespace DCL.UserInAppInitializationFlow
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmNavigationContainer.RealmNavigator);
+            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmNavigationContainer.RealmNavigator, forceOnboarding);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
             var loadingOperations = new List<IStartupOperation>()

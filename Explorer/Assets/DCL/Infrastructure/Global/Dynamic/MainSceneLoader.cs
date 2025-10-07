@@ -236,7 +236,8 @@ namespace Global.Dynamic
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,
-                    destroyCancellationToken);
+                    destroyCancellationToken,
+                    debugSettings.ForceOnboarding);
 
                 if (!isLoaded)
                 {

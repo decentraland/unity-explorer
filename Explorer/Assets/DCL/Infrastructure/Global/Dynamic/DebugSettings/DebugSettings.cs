@@ -19,7 +19,10 @@ namespace Global.Dynamic.DebugSettings
         private bool enableLandscape;
         [SerializeField]
         private bool enableLOD;
-        [SerializeField] private bool enableVersionUpdateGuard;
+        [SerializeField]
+        private bool enableVersionUpdateGuard;
+        [SerializeField]
+        private bool forceOnboarding;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
         [SerializeField] [Tooltip("Enable Portable Experiences obtained from Feature Flags from loading at the start of the game")]
@@ -45,6 +48,7 @@ namespace Global.Dynamic.DebugSettings
                 enableLandscape = true,
                 enableLOD = true,
                 enableVersionUpdateGuard = true,
+                forceOnboarding = false,
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
@@ -64,6 +68,7 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableLandscape => Application.isEditor ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
         public bool EnableLOD => Application.isEditor ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
         public bool EnableVersionUpdateGuard => Application.isEditor ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
+        public bool ForceOnboarding => Application.isEditor ? this.forceOnboarding : RELEASE_SETTINGS.forceOnboarding;
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;

@@ -140,7 +140,8 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool forceOnboarding)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
@@ -180,7 +181,8 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
-                ct);
+                ct,
+                forceOnboarding);
 
             if (tuple.container != null)
                 profileRepositoryProxy.SetObject(tuple.container.ProfileRepository);

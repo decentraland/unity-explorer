@@ -199,7 +199,8 @@ namespace Global.Dynamic
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             RealmUrls realmUrls,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool forceOnboarding)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
@@ -464,7 +465,8 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 localSceneDevelopment,
-                staticContainer.CharacterContainer);
+                staticContainer.CharacterContainer,
+                forceOnboarding);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 

@@ -78,11 +78,12 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            CancellationToken ct)
+            CancellationToken ct,
+            bool forceOnboarding)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
+                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct, forceOnboarding);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
