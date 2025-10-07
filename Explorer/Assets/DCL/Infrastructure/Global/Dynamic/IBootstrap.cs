@@ -44,7 +44,6 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            HashSet<string> officialWallets,
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,

@@ -59,7 +59,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly HashSet<string> officialWallets;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
@@ -100,8 +99,7 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            HashSet<string> officialWallets)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -115,7 +113,6 @@ namespace DCL.PluginSystem.Global
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.wearableStorage = wearableStorage;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.officialWallets = officialWallets;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
@@ -170,7 +167,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData, officialWallets);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
 
             //Debug scripts

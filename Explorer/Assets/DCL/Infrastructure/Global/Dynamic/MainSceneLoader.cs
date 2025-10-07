@@ -227,10 +227,7 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
-                HashSet<string> officialWallets = new HashSet<string>();
-                if (FeatureFlagsConfiguration.Instance.TryGetCsvPayload(FeatureFlagsStrings.OFFICIAL_WALLETS, FeatureFlagsStrings.WALLETS_VARIANT, out var csv))
-                    foreach (string wallet in csv[0])
-                        officialWallets.Add(wallet);
+                OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
@@ -244,7 +241,6 @@ namespace Global.Dynamic
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,
-                    officialWallets,
                     destroyCancellationToken);
 
                 if (!isLoaded)

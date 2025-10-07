@@ -199,7 +199,6 @@ namespace Global.Dynamic
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             RealmUrls realmUrls,
-            HashSet<string> officialWallets,
             CancellationToken ct)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -720,8 +719,7 @@ namespace Global.Dynamic
                     dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    userBlockingCacheProxy,
-                    officialWallets),
+                    userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),

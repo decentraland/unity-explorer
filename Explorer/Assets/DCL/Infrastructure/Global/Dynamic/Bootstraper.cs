@@ -141,7 +141,6 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            HashSet<string> officialWallets,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -182,7 +181,6 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
-                officialWallets,
                 ct);
 
             if (tuple.container != null)

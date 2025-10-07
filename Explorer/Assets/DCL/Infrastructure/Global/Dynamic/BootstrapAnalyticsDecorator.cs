@@ -79,12 +79,11 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            HashSet<string> officialWallets,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, officialWallets, ct);
+                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
