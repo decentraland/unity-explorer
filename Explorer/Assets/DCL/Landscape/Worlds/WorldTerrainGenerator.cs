@@ -131,6 +131,7 @@ namespace DCL.Landscape
 
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
+                // Fixes a crash from unity 6000.2.6f2 that occurs especially on worlds, like onboarding and goerli
                 if (chunkModel.TerrainData.treeInstanceCount == 0)
                     continue;
 

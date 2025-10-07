@@ -148,6 +148,8 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            // We need to do this before livekit because there is a realm change in this operation
+                            // and we need to ensure that livekit connects to the correct endpoint
                             await checkOnboardingStartupOperation.ExecuteAsync(ct);
 
                             //Set initial position and start async livekit connection
