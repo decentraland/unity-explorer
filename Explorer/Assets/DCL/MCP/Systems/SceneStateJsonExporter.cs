@@ -6,8 +6,6 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.Components;
-using DCL.ECS7;
-using CrdtEcsBridge.Serialization;
 using Google.Protobuf;
 
 namespace DCL.MCP.Systems
@@ -126,71 +124,16 @@ namespace DCL.MCP.Systems
             sb.Append('}');
         }
 
-        // Простая мапа известных componentId -> имя. При желании можно дернуть из глобального контейнера, но для логов хватит плоской карты.
         private static bool TryGetComponentName(int id, out string name)
         {
-            switch (id)
+            if (SDKComponentsRegistryLocator.TryGet(out ISDKComponentsRegistry registry) && registry.TryGet(id, out SDKComponentBridge bridge))
             {
-                case 1:
-                    name = nameof(ComponentID.TRANSFORM);
-                    return true;
-                case 1017:
-                    name = nameof(ComponentID.MATERIAL);
-                    return true;
-                case 1018:
-                    name = nameof(ComponentID.MESH_COLLIDER);
-                    return true;
-                case 1019:
-                    name = nameof(ComponentID.MESH_RENDERER);
-                    return true;
-                case 1041:
-                    name = nameof(ComponentID.GLTF_CONTAINER);
-                    return true;
-                case 1048:
-                    name = nameof(ComponentID.ENGINE_INFO);
-                    return true;
-                case 1049:
-                    name = nameof(ComponentID.REALM_INFO);
-                    return true;
-                case 1054:
-                    name = nameof(ComponentID.MAIN_CAMERA);
-                    return true;
-                case 1060:
-                    name = nameof(ComponentID.VISIBILITY_COMPONENT);
-                    return true;
-                case 1062:
-                    name = nameof(ComponentID.TEXT_SHAPE);
-                    return true;
-                case 1072:
-                    name = nameof(ComponentID.UI_TRANSFORM);
-                    return true;
-                case 1074:
-                    name = nameof(ComponentID.UI_BACKGROUND);
-                    return true;
-                case 1075:
-                    name = nameof(ComponentID.UI_TEXT);
-                    return true;
-                case 1087:
-                    name = nameof(ComponentID.AVATAR_SHAPE);
-                    return true;
-                case 1089:
-                    name = nameof(ComponentID.AVATAR_EQUIPPED_DATA);
-                    return true;
-                case 1091:
-                    name = nameof(ComponentID.AVATAR_BASE);
-                    return true;
-                case 1106:
-                    name = nameof(ComponentID.PLAYER_IDENTITY_DATA);
-                    return true;
-                case 1209:
-                    name = nameof(ComponentID.POINTER_LOCK);
-                    return true;
-
-                // Дополнить по мере необходимости
-                default:
-                    name = null;
-                    return false;
+                name = bridge.ComponentType.Name;
+                return true;
             }
+
+            name = null;
+            return false;
         }
 
         private static void AppendBase64(StringBuilder sb, ReadOnlySpan<byte> bytes)
@@ -207,68 +150,58 @@ namespace DCL.MCP.Systems
 
         private static bool TryWriteDecodedComponent(StringBuilder sb, int componentId, ReadOnlySpan<byte> data)
         {
-            if (componentId == ComponentID.TRANSFORM)
-                return TryWriteTransform(sb, data);
-
+            // Единый путь: через реестр и сериализатор
             if (SDKComponentsRegistryLocator.TryGet(out ISDKComponentsRegistry registry) && registry.TryGet(componentId, out SDKComponentBridge bridge))
             {
+                object instance = null;
                 try
                 {
-                    object instance = bridge.Pool.Rent();
+                    instance = bridge.Pool.Rent();
+                    bridge.Serializer.DeserializeInto(instance, data);
 
-                    try
+                    if (instance is IMessage message)
                     {
-                        bridge.Serializer.DeserializeInto(instance, data);
-
-                        if (instance is IMessage message)
-                        {
-                            string json = JsonFormatter.Default.Format(message);
-                            sb.Append(',');
-                            sb.Append("\"decoded\":");
-                            sb.Append(json);
-                            return true;
-                        }
+                        string json = JsonFormatter.Default.Format(message);
+                        sb.Append(',');
+                        sb.Append("\"decoded\":");
+                        sb.Append(json);
+                        return true;
                     }
-                    finally { bridge.Pool.Release(instance); }
+
+                    // Непротобуфовые типы (например, SDKTransform)
+                    if (TryWriteDecodedNonProtobuf(sb, instance))
+                        return true;
                 }
                 catch { }
+                finally
+                {
+                    if (instance != null)
+                        bridge.Pool.Release(instance);
+                }
             }
 
             return false;
         }
 
-        private static bool TryWriteTransform(StringBuilder sb, ReadOnlySpan<byte> data)
+        private static bool TryWriteDecodedNonProtobuf(StringBuilder sb, object instance)
         {
-            try
+            if (instance is CrdtEcsBridge.Components.Transform.SDKTransform t)
             {
-                // pos(Vector3) rot(Quaternion) scale(Vector3) parent(int32)
-                ReadOnlySpan<byte> p = data;
-                var px = BitConverter.ToSingle(p.Slice(0, 4));
-                var py = BitConverter.ToSingle(p.Slice(4, 4));
-                var pz = BitConverter.ToSingle(p.Slice(8, 4));
-                var rx = BitConverter.ToSingle(p.Slice(12, 4));
-                var ry = BitConverter.ToSingle(p.Slice(16, 4));
-                var rz = BitConverter.ToSingle(p.Slice(20, 4));
-                var rw = BitConverter.ToSingle(p.Slice(24, 4));
-                var sx = BitConverter.ToSingle(p.Slice(28, 4));
-                var sy = BitConverter.ToSingle(p.Slice(32, 4));
-                var sz = BitConverter.ToSingle(p.Slice(36, 4));
-                var parentId = BitConverter.ToInt32(p.Slice(40, 4));
-
                 sb.Append(',');
                 sb.Append("\"decoded\":{");
                 sb.Append("\"position\":{");
-                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2}", px, py, pz);
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2}", t.Position.Value.x, t.Position.Value.y, t.Position.Value.z);
                 sb.Append("},\"rotation\":{");
-                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2},\"w\":{3}", rx, ry, rz, rw);
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2},\"w\":{3}", t.Rotation.Value.x, t.Rotation.Value.y, t.Rotation.Value.z, t.Rotation.Value.w);
                 sb.Append("},\"scale\":{");
-                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2}", sx, sy, sz);
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2}", t.Scale.x, t.Scale.y, t.Scale.z);
                 sb.Append("},\"parentId\":");
-                sb.Append(parentId);
+                sb.Append(t.ParentId.Id);
                 sb.Append('}');
                 return true;
             }
-            catch { return false; }
+
+            return false;
         }
     }
 }
