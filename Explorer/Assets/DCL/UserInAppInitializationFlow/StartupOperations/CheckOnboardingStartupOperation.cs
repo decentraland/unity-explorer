@@ -71,27 +71,27 @@ namespace DCL.UserInAppInitializationFlow
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.ONBOARDING, $"There was an error while trying to update TutorialStep into your profile. ERROR: {e.Message}"); }
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(CancellationToken ct) =>
+        public async UniTask ExecuteAsync(CancellationToken ct) =>
             await TryToChangeToOnBoardingRealmAsync(ct);
 
-        private async UniTask<EnumResult<TaskError>> TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
+        private async UniTask TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
-                return EnumResult<TaskError>.SuccessResult();
+                return;
 
             isProfilePendingToBeUpdated = false;
             ownProfile = await selfProfile.ProfileAsync(ct);
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
-            //if (ownProfile is { TutorialStep: > 0 })
-            //    return EnumResult<TaskError>.SuccessResult();
+            if (ownProfile is { TutorialStep: > 0 })
+                return;
 
             // TODO: Remove the greeting-onboarding ff when it is finally moved to production. Keep onboarding only.
             //.We use the greeting-onboarding FF so we are able to test it on dev environment.
             if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.GREETING_ONBOARDING, out string? realm))
                 if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
-                    return EnumResult<TaskError>.SuccessResult();
+                    return;
 
             string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
             var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
@@ -102,7 +102,6 @@ namespace DCL.UserInAppInitializationFlow
                 ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
 
             isProfilePendingToBeUpdated = true;
-            return EnumResult<TaskError>.SuccessResult();
         }
 
         private bool TrySolveRealmFromFeatureFlags(string featureFlag, out string? realm)

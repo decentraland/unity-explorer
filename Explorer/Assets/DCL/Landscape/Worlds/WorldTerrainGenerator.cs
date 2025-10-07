@@ -131,6 +131,9 @@ namespace DCL.Landscape
 
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
+                if (chunkModel.TerrainData.treeInstanceCount == 0)
+                    continue;
+
                 terrains.Add(
                     factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, enableColliders: true)
                            .Item1);
