@@ -9,7 +9,7 @@ namespace DCL.VoiceChat
     public class CommunityVoiceChatCallStatusServiceNull : ICommunityVoiceChatCallStatusService
     {
         public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; }
-        public IReadonlyReactiveProperty<string> CallId { get; }
+        public IReadonlyReactiveProperty<string> CallId { get; } = new ReactiveProperty<string>(string.Empty);
         public string ConnectionUrl { get; }
 
         public void StartCall(string target) { }
