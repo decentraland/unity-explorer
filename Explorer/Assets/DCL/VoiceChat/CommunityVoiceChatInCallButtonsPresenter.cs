@@ -131,25 +131,21 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnRaiseHandButtonClicked()
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RaiseHandAudio);
             orchestrator.RequestToSpeakInCurrentCall();
         }
 
         private void OnLowerHandButtonClicked()
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LowerHandAudio);
             orchestrator.LowerHandInCurrentCall();
         }
 
         private void OnLeaveStageButtonClicked()
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.GenericButtonAudio);
             orchestrator.DemoteFromSpeakerInCurrentCall(orchestrator.ParticipantsStateService.LocalParticipantId);
         }
 
         private void OnEndCallButtonClicked()
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.GenericButtonAudio);
             cts = cts.SafeRestart();
             orchestrator.HangUp();
         }
