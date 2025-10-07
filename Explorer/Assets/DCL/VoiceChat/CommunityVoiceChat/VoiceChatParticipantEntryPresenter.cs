@@ -27,6 +27,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly Transform requestToSpeakParent;
         private readonly EventSubscriptionScope subscriptionsScope = new ();
 
+        private CancellationTokenSource cts = new ();
+
         public VoiceChatParticipantEntryPresenter(
             VoiceChatParticipantEntryView view,
             VoiceChatParticipantState currentParticipantState,
@@ -48,11 +50,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CleanupEntry();
 
             var nameColor = NameColorHelper.GetNameColor(currentParticipantState.Name.Value);
-
-            view.SetupNameElement(currentParticipantState.Name.Value, nameColor);
-
-            view.ProfilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, CancellationToken.None).Forget();
-
+            view.SetupParticipantProfile(currentParticipantState.Name.Value, nameColor, profileRepositoryWrapper, nameColor, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
 
             // We only show context menu button on top of local participant if local participant is a mod.
             var showContextMenuButton = true;
@@ -62,20 +60,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             view.SetContextMenuButtonVisibility(showContextMenuButton);
 
+            subscriptionsScope.Add(currentParticipantState.IsMuted.Subscribe(ParticipantIsMutedChanged));
+            subscriptionsScope.Add(currentParticipantState.IsSpeaking.Subscribe(ParticipantIsSpeakingChanged));
+            subscriptionsScope.Add(currentParticipantState.IsSpeaker.Subscribe(ParticipantIsSpeakerChanged));
+            subscriptionsScope.Add(currentParticipantState.IsRequestingToSpeak.Subscribe(ParticipantRequestingToSpeakChanged));
 
-            subscriptionsScope.Add(currentParticipantState.IsMuted.Subscribe(PlayerEntryIsMutedChanged));
-            subscriptionsScope.Add(currentParticipantState.IsSpeaking.Subscribe(PlayerEntryIsSpeakingChanged));
-            subscriptionsScope.Add(currentParticipantState.IsRequestingToSpeak.Subscribe(PlayerEntryIsRequestingToSpeak));
-            subscriptionsScope.Add(currentParticipantState.IsSpeaker.Subscribe(SetUserEntryParent));
-            subscriptionsScope.Add(currentParticipantState.IsRequestingToSpeak.Subscribe(SetUserRequestingToSpeak));
-
-            view.ContextMenuButtonClicked += OnContextMenuButtonClicked;
+            view.OpenContextMenu += OnOpenOpenContextMenu;
             view.ApproveSpeaker += OnApproveSpeaker;
             view.DenySpeaker += OnDenySpeaker;
-            view.OpenPassport += ViewOnOpenPassport;
+            view.OpenPassport += OnOpenPassport;
         }
 
-        private void ViewOnOpenPassport()
+        private void OnOpenPassport()
         {
             if (string.IsNullOrEmpty(currentParticipantState.WalletId)) return;
 
@@ -105,20 +101,21 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ApproveSpeaker?.Invoke(currentParticipantState.WalletId);
         }
 
-        private void OnContextMenuButtonClicked(Vector2 position)
+        private void OnOpenOpenContextMenu(Vector2 position)
         {
             ContextMenuClicked?.Invoke(currentParticipantState, position);
         }
 
         public void Dispose()
         {
+            cts.SafeCancelAndDispose();
             view.CleanupEntry();
             playerEntriesPool.Release(view);
             subscriptionsScope.Dispose();
-            view.ContextMenuButtonClicked -= OnContextMenuButtonClicked;
+            view.OpenContextMenu -= OnOpenOpenContextMenu;
             view.ApproveSpeaker -= OnApproveSpeaker;
             view.DenySpeaker -= OnDenySpeaker;
-            view.OpenPassport -= ViewOnOpenPassport;
+            view.OpenPassport -= OnOpenPassport;
         }
 
         public void ConfigureAsListener()
@@ -133,42 +130,35 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.ConfigureTransform(speakersParent, Vector3.one);
         }
 
-        private void SetUserRequestingToSpeak(bool isRequestingToSpeak)
-        {
-            if (isRequestingToSpeak)
-            {
-                view.ConfigureTransform(requestToSpeakParent, Vector3.one);
-
-                UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name.Value);
-            }
-        }
-
-        private void PlayerEntryIsMutedChanged(bool isMuted)
-        {
-            view.OnIsMutedChanged(isMuted, currentParticipantState.IsSpeaker.Value);
-        }
-
-        private void PlayerEntryIsSpeakingChanged(bool isSpeaking)
-        {
-            if (currentParticipantState.IsMuted.Value) return;
-
-            view.OnChangeIsSpeaking(isSpeaking);
-        }
-
-        private void SetUserEntryParent(bool isSpeaker)
-        {
-            view.IsSpeakingIcon.gameObject.SetActive(isSpeaker);
-            var parent = currentParticipantState.IsSpeaker.Value ? speakersParent : listenersParent;
-            view.ConfigureTransform(parent , Vector3.one);
-        }
-
-        private void PlayerEntryIsRequestingToSpeak(bool isRequestingToSpeak)
+        private void ParticipantRequestingToSpeakChanged(bool isRequestingToSpeak)
         {
             var parent = isRequestingToSpeak ? requestToSpeakParent : listenersParent;
             view.ConfigureTransform(parent, Vector3.one);
 
             bool showApproveDenySection = isRequestingToSpeak && VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
             view.ShowApproveDenySection(showApproveDenySection);
+
+            if (isRequestingToSpeak)
+                UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name.Value);
+        }
+
+        private void ParticipantIsMutedChanged(bool isMuted)
+        {
+            view.OnIsMutedChanged(isMuted, currentParticipantState.IsSpeaker.Value);
+        }
+
+        private void ParticipantIsSpeakingChanged(bool isSpeaking)
+        {
+            if (currentParticipantState.IsMuted.Value) return;
+
+            view.OnIsSpeakingChanged(isSpeaking);
+        }
+
+        private void ParticipantIsSpeakerChanged(bool isSpeaker)
+        {
+            view.OnIsSpeakerChanged(isSpeaker, currentParticipantState.IsMuted.Value);
+            var parent = currentParticipantState.IsSpeaker.Value ? speakersParent : listenersParent;
+            view.ConfigureTransform(parent , Vector3.one);
         }
     }
 }

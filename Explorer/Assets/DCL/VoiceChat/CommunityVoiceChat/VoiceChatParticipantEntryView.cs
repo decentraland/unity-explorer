@@ -1,6 +1,10 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DG.Tweening;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,7 +19,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private const string IS_MUTED_TEXT = "Muted";
         private const string IS_SPEAKING_TEXT = "Speaking";
 
-        public event Action<Vector2>? ContextMenuButtonClicked;
+        public event Action<Vector2>? OpenContextMenu;
         public event Action? ApproveSpeaker;
         public event Action? DenySpeaker;
         public event Action? OpenPassport;
@@ -50,7 +54,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnOpenContextMenuClicked()
         {
-            ContextMenuButtonClicked?.Invoke(contextMenuButton.transform.position);
+            OpenContextMenu?.Invoke(contextMenuButton.transform.position);
         }
 
         public void CleanupEntry()
@@ -96,6 +100,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             if (isMuted)
             {
+                statusSection.gameObject.SetActive(true);
                 statusText.text = IS_MUTED_TEXT;
                 isSpeakingCurrentSequence?.Kill();
                 isSpeakingCurrentSequence = null;
@@ -104,6 +109,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
             else if (isSpeaker)
             {
+                statusSection.gameObject.SetActive(true);
                 statusText.text = IS_SPEAKING_TEXT;
                 IsSpeakingIcon.gameObject.SetActive(true);
                 isMutedIcon.SetActive(false);
@@ -114,7 +120,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void ShowApproveDenySection(bool show) =>
             approveDenySection.SetActive(show);
 
-        public void OnChangeIsSpeaking(bool isSpeaking)
+        public void OnIsSpeakingChanged(bool isSpeaking)
         {
             isMutedIcon.SetActive(false);
 
@@ -156,6 +162,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void ConfigureAsSpeaker()
         {
+            SetSpeakingIconIdleScale();
+            statusSection.SetActive(true);
             IsSpeakingIcon.gameObject.SetActive(true);
             statusText.text = IS_SPEAKING_TEXT;
             isMutedIcon.SetActive(false);
@@ -164,11 +172,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void ConfigureAsListener()
         {
+            statusSection.SetActive(false);
             statusText.text = string.Empty;
             IsSpeakingIcon.gameObject.SetActive(false);
             isMutedIcon.SetActive(false);
             transform.localScale = Vector3.one;
             promotingSpinner.SetActive(false);
+            SetSpeakingIconIdleScale();
         }
 
         public void ConfigureTransform(Transform parent, Vector3 scale)
@@ -177,16 +187,34 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             transform.localScale = scale;
         }
 
-        public void SetupNameElement(string? participantName, Color nameColor)
-        {
-            NameElement.text = participantName;
-            NameElement.color = nameColor;
-            SetSpeakingIconIdleScale();
-        }
-
         public void SetContextMenuButtonVisibility(bool show)
         {
             contextMenuButton.gameObject.SetActive(show);
+        }
+
+        public void OnIsSpeakerChanged(bool isSpeaker, bool isMuted)
+        {
+            promotingSpinner.SetActive(false);
+            statusSection.SetActive(isSpeaker);
+            isMutedIcon.SetActive(isSpeaker && isMuted);
+            IsSpeakingIcon.gameObject.SetActive(isSpeaker && !isMuted);
+
+            if (isSpeaker)
+                statusText.SetText(IS_SPEAKING_TEXT);
+            else if (isMuted)
+                statusText.SetText(IS_MUTED_TEXT);
+        }
+
+        public void SetupParticipantProfile(
+            string? participantName,
+            Color nameColor,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            ReactiveProperty<string?> profilePictureUrl,
+            string walletId, CancellationToken ct)
+        {
+            NameElement.text = participantName;
+            NameElement.color = nameColor;
+            ProfilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, profilePictureUrl, walletId, ct).Forget();
         }
     }
 }
