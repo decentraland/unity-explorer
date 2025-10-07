@@ -72,7 +72,11 @@ namespace DCL.MCP.Systems
                 {
                     PoolableByteArray data = engineApi.CrdtGetState();
 
-                    try { ReportHub.Log(ReportCategory.DEBUG, $"[MCP] CRDT state length: {data.Length}"); }
+                    try
+                    {
+                        string json = SceneStateJsonExporter.ExportStateToJson(data);
+                        ReportHub.Log(ReportCategory.DEBUG, json);
+                    }
                     finally { data.Dispose(); }
                 }
                 else { ReportHub.LogWarning(ReportCategory.DEBUG, "[MCP] EngineApi not available for current scene; cannot get CRDT state"); }
