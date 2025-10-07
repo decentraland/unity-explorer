@@ -50,7 +50,7 @@ namespace DCL.Backpack
 
             for (int index = 0; index < view.BaseOutfitSlots.Length; index++)
             {
-                slotPresenters.Add(new OutfitSlotPresenter(view.BaseOutfitSlots[index], index,
+                slotPresenters.Add(new OutfitSlotPresenter(view.OutfitPopoupDeleteIcon, view.BaseOutfitSlots[index], index,
                     outfitsService,
                     commandBus));
             }
@@ -58,7 +58,7 @@ namespace DCL.Backpack
             for (int index = 0; index < view.ExtraOutfitSlots.Length; index++)
             {
                 int slotIndex = index + view.BaseOutfitSlots.Length;
-                slotPresenters.Add(new OutfitSlotPresenter(view.ExtraOutfitSlots[index], slotIndex,
+                slotPresenters.Add(new OutfitSlotPresenter(view.OutfitPopoupDeleteIcon, view.ExtraOutfitSlots[index], slotIndex,
                     outfitsService,
                     commandBus));
             }

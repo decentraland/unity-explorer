@@ -4311,6 +4311,7 @@ MonoBehaviour:
   - {fileID: 2731369013348318327}
   - {fileID: 1289643431397151159}
   OutfitsBanner: {fileID: 6051728527606150277}
+  OutfitPopoupDeleteIcon: {fileID: 21300000, guid: 767d48f13763447a3b8bdc48c0a2efee, type: 3}
 --- !u!1 &3757609821265347821
 GameObject:
   m_ObjectHideFlags: 0
@@ -12001,6 +12002,10 @@ PrefabInstance:
     - target: {fileID: 3791327754957758292, guid: dd40e574a59d9b348a7c02ca96be6ae9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4879111273612506683, guid: dd40e574a59d9b348a7c02ca96be6ae9, type: 3}
+      propertyPath: m_Name
+      value: ButtonUnEquipText
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

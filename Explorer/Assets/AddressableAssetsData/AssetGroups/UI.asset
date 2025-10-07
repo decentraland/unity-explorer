@@ -675,6 +675,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dd40e574a59d9b348a7c02ca96be6ae9
+    m_Address: Assets/DCL/Backpack/AvatarSection/Outfits/Slots/OutfitSlot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: de88bd0dde8feda4393664330ac8afb4
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTitleIconAndCheck.prefab
     m_ReadOnly: 0

@@ -27,6 +27,10 @@ namespace DCL.Backpack.Slots
 
     public class OutfitSlotPresenter : IDisposable
     {
+        public string OUTFIT_POPUP_DELETE_TEXT = "Are you sure you want to delete this Outfit?";
+        public string OUTFIT_POPUP_DELETE_CANCEL_TEXT = "CANCEL";
+        public string OUTFIT_POPUP_DELETE_CONFIRM_TEXT = "YES";
+        
         public readonly OutfitSlotView view;
         public readonly int slotIndex;
         private readonly IOutfitsService outfitsAPI;
@@ -37,13 +41,16 @@ namespace DCL.Backpack.Slots
         private bool isHovered;
         private OutfitSlotState currentState;
         private OutfitData? currentOutfitData;
+        private readonly Sprite popupDeleteIcon;
 
         public OutfitSlotPresenter(
+            Sprite popupDeleteIcon,
             OutfitSlotView view,
             int slotIndex,
             IOutfitsService outfitsAPI,
             BackpackCommandBus commandBus)
         {
+            this.popupDeleteIcon = popupDeleteIcon;
             this.view = view;
             this.slotIndex = slotIndex;
             this.outfitsAPI = outfitsAPI;
@@ -108,7 +115,8 @@ namespace DCL.Backpack.Slots
                 case OutfitSlotState.Full:
 
                     // TODO: Replace with real check
-                    bool isEquipped = currentOutfitData != null && slotIndex == 0;
+                    // bool isEquipped = currentOutfitData != null && slotIndex == 0;
+                    bool isEquipped = false;
 
                     // TODO: Replace with real thumbnail loading
                     Sprite mockThumbnail = null;
@@ -154,17 +162,18 @@ namespace DCL.Backpack.Slots
             cts = cts.SafeRestart();
 
             var result = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(
-                new ConfirmationDialogParameter("Are you sure you want to delete this Outfit?",
-                    "CANCEL",
-                    "YES",
-                    null, false, false),
+                new ConfirmationDialogParameter(OUTFIT_POPUP_DELETE_TEXT,
+                    OUTFIT_POPUP_DELETE_CANCEL_TEXT,
+                    OUTFIT_POPUP_DELETE_CONFIRM_TEXT, popupDeleteIcon,
+                    false,
+                    false),
                 cts.Token).SuppressToResultAsync(ReportCategory.TRANSLATE);
 
             if (cts.IsCancellationRequested ||
                 result.Value == ConfirmationResult.CANCEL ||
                 !result.Success) return;
 
-            SetState(OutfitSlotState.Loading);
+            SetState(OutfitSlotState.Save);
 
             try
             {

@@ -18,5 +18,8 @@ namespace DCL.Backpack.AvatarSection.Outfits
 
         [Header("Banner")]
         [SerializeField] public OutfitBannerView OutfitsBanner;
+
+        [SerializeField]
+        public Sprite OutfitPopoupDeleteIcon;
     }
 }
