@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.VoiceChat;
 using LiveKit.Audio;
@@ -116,13 +117,21 @@ namespace DCL.PluginSystem.Global
                             var isActive = streamOption.Value.WavTeeControl.IsWavActive;
                             message = isActive ? "Writing" : "Sleep";
                         }
-                        else { message = result.ErrorMessage!; }
+                        else
+                        {
+                            message = result.ErrorMessage!;
+                            ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot toggle wav stream: {result.ErrorMessage}");
+                        }
 
                         wavRemotesBuffer.Add((name, message));
                     }
 
                     {
                         Result toggleResult = value.source.ToggleRecordWavOutput();
+
+                        if (toggleResult.Success == false)
+                            ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot toggle wav output: {toggleResult.ErrorMessage}");
+
                         string name = $"Stream {key.identity}";
                         string message = toggleResult.Success ? "Success" : toggleResult.ErrorMessage!;
                         wavRemotesBuffer.Add((name, message));
