@@ -144,15 +144,19 @@ namespace DCL.UserInAppInitializationFlow
                     ? reloginOps
                     : initOps;
 
-                //Set initial position and start async livekit connection
-                characterExposedTransform.Position.Value
-                    = characterObject.Controller.transform.position
-                        = startParcel.Peek().ParcelToPositionFlat();
-
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
-                   .ShowWhileExecuteTaskAsync(
+                    .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            await checkOnboardingStartupOperation.ExecuteAsync(ct);
+
+                            //Set initial position and start async livekit connection
+                            characterExposedTransform.Position.Value
+                                = characterObject.Controller.transform.position
+                                    = startParcel.Peek().ParcelToPositionFlat();
+
+                            UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+
                             //Create a child report to be able to hold the parallel livekit operation
                             AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
                             EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);
@@ -163,7 +167,7 @@ namespace DCL.UserInAppInitializationFlow
                             else
                             {
                                 //Wait for livekit to end handshake
-                                var livekitOperationResult = await ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+                                var livekitOperationResult = await livekitHandshake;
 
                                 if (isLocalSceneDevelopment)
                                 {

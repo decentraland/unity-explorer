@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
+using DCL.Translation.Service;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -13,6 +14,8 @@ namespace DCL.Chat.ChatCommands
         private readonly PrivateConversationUserStateService privateConversationUserStateService;
         private readonly CommunityUserStateService communityUserStateService;
         private readonly ChatMemberListService chatMemberListService;
+        private readonly ITranslationMemory translationMemory;
+        private readonly ITranslationCache translationCache;
 
         public ResetChatCommand(
             IEventBus eventBus,
@@ -21,7 +24,9 @@ namespace DCL.Chat.ChatCommands
             CurrentChannelService currentChannelService,
             PrivateConversationUserStateService privateConversationUserStateService,
             CommunityUserStateService communityUserStateService,
-            ChatMemberListService chatMemberListService)
+            ChatMemberListService chatMemberListService,
+            ITranslationMemory translationMemory,
+            ITranslationCache translationCache)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
@@ -30,6 +35,8 @@ namespace DCL.Chat.ChatCommands
             this.privateConversationUserStateService = privateConversationUserStateService;
             this.communityUserStateService = communityUserStateService;
             this.chatMemberListService = chatMemberListService;
+            this.translationMemory = translationMemory;
+            this.translationCache = translationCache;
         }
 
         public void Execute()
@@ -39,7 +46,8 @@ namespace DCL.Chat.ChatCommands
             communityUserStateService.Reset();
             chatHistory.DeleteAllChannels();
             currentChannelService.Reset();
-
+            translationMemory.Clear();
+            translationCache.Clear();
             chatHistoryStorage?.UnloadAllFiles();
 
             eventBus.Publish(new ChatEvents.ChatResetEvent());
