@@ -30,7 +30,7 @@ namespace DCL.SkyBox
 
             if (metadata == null) return false;
 
-            return metadata.skyboxConfig != null || metadata.worldConfiguration?.SkyboxConfig != null;
+            return GetConfigFixedTime(metadata) != null;
         }
 
         public void Enter()
@@ -58,18 +58,22 @@ namespace DCL.SkyBox
 
         private void UpdateSkyboxSettings(SceneMetadata metadata)
         {
-            // Extract world and scene configs (if any)
-            SkyboxConfigData? worldConfig = metadata.worldConfiguration?.SkyboxConfig;
-            SkyboxConfigData? sceneConfig = metadata.skyboxConfig;
-
             // Scene config overrides world config
-            float? time = sceneConfig?.fixedTime ?? worldConfig?.fixedTime;
-            TransitionMode transitionMode = sceneConfig?.transitionMode ?? worldConfig?.transitionMode ?? TransitionMode.FORWARD;
+            float? time = GetConfigFixedTime(metadata);
+            TransitionMode transitionMode = GetConfigTransitionModeOrDefault(metadata);
 
             settings.TransitionMode = transitionMode;
 
             if (time.HasValue)
                 settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time.Value);
         }
+
+        private float? GetConfigFixedTime(SceneMetadata sceneMetadata) =>
+            sceneMetadata.skyboxConfig?.fixedTime ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.fixedTime;
+
+        private TransitionMode GetConfigTransitionModeOrDefault(SceneMetadata sceneMetadata) =>
+            sceneMetadata.skyboxConfig?.transitionMode
+            ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.transitionMode
+            ?? TransitionMode.FORWARD;
     }
 }
