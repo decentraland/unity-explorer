@@ -15,7 +15,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
-        private AnimationClip lastEmote;
 
         private AnimatorOverrideController overrideController;
 
@@ -168,10 +167,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void RestoreArmatureName()
         {
-            ArmatureObject.name = originalArmatureName;
+            if (ArmatureObject.name != originalArmatureName)
+            {
+                ArmatureObject.name = originalArmatureName;
 
-            // This is necessary for the animation to work after the name of the armature has been replaced
-            overrideController.ApplyOverrides(animationOverrides);
+                // This is necessary for the animation to work after the name of the armature has been replaced
+                overrideController.ApplyOverrides(animationOverrides);
+            }
         }
 
         public bool GetAnimatorBool(int hash) =>
@@ -190,15 +192,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null)
         {
-            if (lastEmote == animationClip) return;
+            if (overrideController["Emote"] == animationClip)
+                return;
 
             if(!string.IsNullOrEmpty(armatureNameOverride))
                 ArmatureObject.name = armatureNameOverride;
 
             overrideController["Emote"] = animationClip;
             AvatarAnimator.runtimeAnimatorController = overrideController;
-
-            lastEmote = animationClip;
 
             AvatarAnimator.enabled = true;
         }

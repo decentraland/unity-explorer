@@ -4,11 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
@@ -49,7 +51,12 @@ namespace DCL.Multiplayer.Movement.Systems
                 remotePlayerMovement.WasPassedThisFrame = false;
 
                 if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
+                {
                     emote.StopEmote = true;
+                    emote.CurrentEmoteReference?.animatorComp?.ResetTrigger(emote.CurrentEmoteReference.propClipHash);
+                    view.AvatarAnimator.SetTrigger(AnimationHashes.EMOTE_STOP);
+                    view.RestoreArmatureName();
+                }
 
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
             }

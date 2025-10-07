@@ -56,14 +56,14 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [Query]
         [All(typeof(IAvatarView))]
         [None(typeof(CharacterEmoteIntent), typeof(MoveToInitiatorIntent))]
-        private void PlayOutcomeAnimationTransform(Entity entity, Profile profile, CharacterTransform transform)
+        private void PlayOutcomeAnimationTransform(Entity entity, Profile profile, CharacterTransform transform, CharacterEmoteComponent emoteComponente)
         {
             SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (socialEmoteInteraction.HasValue &&
                 socialEmoteInteraction.Value.AreInteracting)
             {
-                if (socialEmoteInteraction.Value.InitiatorWalletAddress == profile.UserId)
+                if (socialEmoteInteraction.Value.InitiatorWalletAddress == profile.UserId && !emoteComponente.HasOutcomeAnimationStarted)
                 {
                     World.Add(entity, new CharacterEmoteIntent()
                     {

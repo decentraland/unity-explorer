@@ -13,7 +13,9 @@ using ECS.Abstract;
 using MVC;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.InputSystem;
+using Avatar = DCL.Profiles.Avatar;
 using InputAction = UnityEngine.InputSystem.InputAction;
 
 namespace DCL.AvatarRendering.Emotes
@@ -31,7 +33,7 @@ namespace DCL.AvatarRendering.Emotes
         private int triggeredEmoteSlotIndex = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
-        private string triggeredEmoteUrn;
+        private string? triggeredEmoteUrn;
         private int socialEmoteOutcomeIndexForTrigger;
         private bool useOutcomeReactionAnimationForTrigger;
         private bool useSocialEmoteOutcomeAnimationForTrigger;
@@ -80,7 +82,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 TriggerEmoteQuery(World, triggeredEmoteSlotIndex, triggeredEmoteUrn);
                 triggeredEmoteSlotIndex = -1;
-                triggeredEmoteUrn = new URN();
+                triggeredEmoteUrn = null;
             }
         }
 

@@ -80,6 +80,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         public void StopInteraction(string participantWalletAddress)
         {
+            if(string.IsNullOrEmpty(participantWalletAddress))
+                return;
+
             if (!participantInteractions.ContainsKey(participantWalletAddress))
                 return;
 
