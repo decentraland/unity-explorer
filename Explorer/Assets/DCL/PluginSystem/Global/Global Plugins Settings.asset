@@ -53,6 +53,7 @@ MonoBehaviour:
   - rid: 648265872610426982
   - rid: 657752310186246267
   - rid: 6478896861045588059
+  - rid: 4301236879401943137
   references:
     version: 2
     RefIds:
@@ -258,7 +259,6 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
-        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
         <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
@@ -595,6 +595,33 @@ MonoBehaviour:
           m_EditorAssetChanged: 1
         <ShowUIToast>k__BackingField:
           m_AssetGUID: 4a21ec4cd76d144a5bce86b3ac4cc9d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 4301236879401943137
+      type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
+      data:
+        AuthorizationPopup:
+          m_AssetGUID: 000fc6d94dca3b64594f10aae8994ed7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityBackgrounds:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityColors:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        CategoryIcons:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
