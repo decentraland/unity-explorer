@@ -303,7 +303,7 @@ namespace DCL.VoiceChat
                 communityVoiceChatCallStatusService.KickPlayerFromCurrentCall(walletId);
         }
 
-        public void MuteSpeakerInCurrentCall(string walletId, bool muted)
+        public void NotifyMuteSpeakerInCurrentCall(string walletId, bool muted)
         {
             if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
                 communityVoiceChatCallStatusService.MuteSpeakerInCurrentCall(walletId, muted);

@@ -89,7 +89,7 @@ namespace DCL.VoiceChat
                 source.Toggle();
                 bool newState = source.IsRecording;
                 isMicrophoneEnabledProperty.Value = newState;
-                HandleMicrophoneStateChange(newState);
+                NotifyMicrophoneStateChange(newState);
             }
         }
 
@@ -103,7 +103,7 @@ namespace DCL.VoiceChat
             Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
             isMicrophoneEnabledProperty.Value = true;
-            HandleMicrophoneStateChange(true);
+            NotifyMicrophoneStateChange(true);
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
@@ -129,12 +129,10 @@ namespace DCL.VoiceChat
                 Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
                 if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
                 isMicrophoneEnabledProperty.Value = false;
-                HandleMicrophoneStateChange(false);
+                NotifyMicrophoneStateChange(false);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
             }
         }
-
-
 
         private void OnMicrophoneChanged(MicrophoneSelection microphoneName)
         {
@@ -185,7 +183,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call");
         }
 
-        private void HandleMicrophoneStateChange(bool isEnabled)
+        private void NotifyMicrophoneStateChange(bool isEnabled)
         {
             if (orchestrator != null &&
                 orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
@@ -197,7 +195,7 @@ namespace DCL.VoiceChat
                 {
                     // isEnabled = true means microphone is unmuted, so we want to unmute the speaker
                     // isEnabled = false means microphone is muted, so we want to mute the speaker
-                    orchestrator.MuteSpeakerInCurrentCall(localParticipantId, !isEnabled);
+                    orchestrator.NotifyMuteSpeakerInCurrentCall(localParticipantId, !isEnabled);
                 }
             }
         }

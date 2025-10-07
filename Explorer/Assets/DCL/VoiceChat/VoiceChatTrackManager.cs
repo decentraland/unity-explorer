@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
@@ -111,7 +112,7 @@ namespace DCL.VoiceChat
 
                 if (reachable.Success == false)
                 {
-                    NotificationsBus.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
                     throw new Exception(reachable.ErrorMessage!);
                 }
 
@@ -123,10 +124,10 @@ namespace DCL.VoiceChat
 
                 if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
-                var rtcAudioSource = result.Value;
+                MicrophoneRtcAudioSource rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
 
-                var livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
+                ITrack livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
                     rtcAudioSource
                 );
@@ -173,7 +174,7 @@ namespace DCL.VoiceChat
             {
                 playbackSourcesHub.Reset();
 
-                foreach (var remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                foreach (KeyValuePair<string, Participant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 {
                     foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
                     {
@@ -281,7 +282,6 @@ namespace DCL.VoiceChat
 
                 playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
-
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}"); }
         }
@@ -304,13 +304,13 @@ namespace DCL.VoiceChat
 
             public MicrophoneTrack(ITrack track, Owned<MicrophoneRtcAudioSource> source)
             {
-                this.Track = track;
+                Track = track;
                 this.source = source;
             }
 
             public void Dispose()
             {
-                source.Dispose(out var inner);
+                source.Dispose(out MicrophoneRtcAudioSource? inner);
                 inner?.Dispose();
             }
         }

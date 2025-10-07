@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
@@ -9,6 +10,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
 using System.Threading;
@@ -79,6 +81,7 @@ namespace DCL.PluginSystem.Global
                 // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
             }
+
             voiceChatPanelController?.Dispose();
             voiceChatPluginSettingsAsset.Dispose();
             microphoneStateManager?.Dispose();
@@ -98,7 +101,7 @@ namespace DCL.PluginSystem.Global
             AudioSettings.Reset(audioConfig);
 
             voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
-            var pluginSettings = this.voiceChatPluginSettingsAsset.Value;
+            VoiceChatPluginSettings pluginSettings = voiceChatPluginSettingsAsset.Value;
 
             VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
@@ -115,16 +118,15 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            var playerEntry = pluginSettings.PlayerEntryView;
-            var muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
-            var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
+            VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
+            AudioClipConfig muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
+            AudioClipConfig unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
             voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
 
-            voiceChatDebugContainer = new VoiceChatDebugContainer(this.debugContainer, trackManager);
+            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
         }
-
 
         [Serializable]
         public class Settings : IDCLPluginSettings
