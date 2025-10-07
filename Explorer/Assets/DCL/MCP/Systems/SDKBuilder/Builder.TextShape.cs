@@ -109,7 +109,8 @@ namespace DCL.MCP.Systems
             textShape.ShadowColor = resolvedShadowColor;
             textShape.OutlineColor = resolvedOutlineColor;
             textShape.TextColor = resolvedTextColor;
-            textShape.IsDirty = true;
+
+            // textShape.IsDirty = true;
 
             ecsToCRDTWriter.PutMessage<PBTextShape, (
                 string Text,

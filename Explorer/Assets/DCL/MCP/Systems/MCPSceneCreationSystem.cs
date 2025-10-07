@@ -26,17 +26,19 @@ namespace DCL.MCP.Systems
         private readonly World globalWorld;
         private readonly Arch.Core.Entity globalPlayerEntity;
         private readonly IComponentPool<PBTextShape> textShapePool;
+        private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
 
         private bool hasJumped;
 
         private readonly MCPSceneEntitiesBuilder builder;
 
         public MCPSceneCreationSystem(World world, World globalWorld, Arch.Core.Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTransform> sdkTransformPool,
-            IComponentPool<PBTextShape> textShapePool) : base(world)
+            IComponentPool<PBTextShape> textShapePool, IComponentPool<PBMeshRenderer> meshRendererPool) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
             this.textShapePool = textShapePool;
+            this.meshRendererPool = meshRendererPool;
 
             builder = new MCPSceneEntitiesBuilder(ecsToCRDTWriter, sdkTransformPool);
             builder.ClearReservedEntities();
@@ -47,7 +49,8 @@ namespace DCL.MCP.Systems
             JumpDebug();
 
             // Обрабатываем запросы MCP на создание TextShape через билдер
-            builder.ProcessTextShapeRequests(World, textShapePool);
+            // builder.ProcessTextShapeRequests(World, textShapePool);
+            // builder.ProcessMeshRendererRequests(World, meshRendererPool);
         }
 
         private void JumpDebug()
@@ -60,11 +63,14 @@ namespace DCL.MCP.Systems
             if (jumpInput.IsPressed && !hasJumped)
             {
                 hasJumped = true;
-                ReportHub.Log(ReportCategory.DEBUG, "[TestJumpEntityCreation] Player jumped");
+                ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
 
-                builder.Begin(new Vector3(8, 4, 8), new Vector3(1, 1, 1))
-                       .AddTextShape(textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "TEST FROM ECS", FontSize = 5 })
-                       .Build(World);
+                // TODO (Cursor): GetCrdtState
+
+                // ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
+                // builder.Begin(new Vector3(8, 4, 8), new Vector3(1, 1, 1))
+                //        .AddTextShape(textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "TEST FROM ECS", FontSize = 5 })
+                //        .Build(World);
             }
         }
     }

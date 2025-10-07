@@ -20,6 +20,7 @@ namespace DCL.PluginSystem.World
         private readonly Arch.Core.Entity globalPlayerEntity;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
         private readonly IComponentPool<PBTextShape> textShapePool;
+        private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
 
         public MultiplayerPlugin(Arch.Core.World globalWorld, Arch.Core.Entity globalPlayerEntity, IComponentPoolsRegistry componentPoolsRegistry)
         {
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.World
             this.globalPlayerEntity = globalPlayerEntity;
             sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
             textShapePool = componentPoolsRegistry.GetReferenceTypePool<PBTextShape>();
+            meshRendererPool = componentPoolsRegistry.GetReferenceTypePool<PBMeshRenderer>();
         }
 
         public void Dispose()
@@ -41,7 +43,7 @@ namespace DCL.PluginSystem.World
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
-            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, textShapePool);
+            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, textShapePool, meshRendererPool);
 
             CleanUpAvatarPropagationComponentsSystem.InjectToWorld(ref builder);
         }
