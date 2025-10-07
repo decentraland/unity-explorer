@@ -86,10 +86,19 @@ namespace DCL.MCP.Systems
                     sb.Append(',');
                     sb.Append("\"timestamp\":");
                     sb.Append(m.Timestamp);
-                    sb.Append(',');
-                    sb.Append("\"data\":\"");
-                    AppendBase64(sb, m.Data.Memory.Span);
-                    sb.Append("\"");
+
+                    // раскодировать payload, если знаем тип
+                    if (TryWriteDecodedComponent(sb, m.ComponentId, m.Data.Memory.Span))
+                    {
+                        // decodedData уже записан
+                    }
+                    else
+                    {
+                        sb.Append(',');
+                        sb.Append("\"data\":\"");
+                        AppendBase64(sb, m.Data.Memory.Span);
+                        sb.Append("\"");
+                    }
                     break;
                 case CRDTMessageType.DELETE_COMPONENT:
                     sb.Append(',');
@@ -192,6 +201,51 @@ namespace DCL.MCP.Systems
 
             // escape для JSON — base64 не требует дополнительных экранирований
             sb.Append(b64);
+        }
+
+        private static bool TryWriteDecodedComponent(StringBuilder sb, int componentId, ReadOnlySpan<byte> data)
+        {
+            switch (componentId)
+            {
+                case ComponentID.TRANSFORM:
+                    return TryWriteTransform(sb, data);
+                default:
+                    return false;
+            }
+        }
+
+        private static bool TryWriteTransform(StringBuilder sb, ReadOnlySpan<byte> data)
+        {
+            try
+            {
+                // pos(Vector3) rot(Quaternion) scale(Vector3) parent(int32)
+                ReadOnlySpan<byte> p = data;
+                var px = BitConverter.ToSingle(p.Slice(0, 4));
+                var py = BitConverter.ToSingle(p.Slice(4, 4));
+                var pz = BitConverter.ToSingle(p.Slice(8, 4));
+                var rx = BitConverter.ToSingle(p.Slice(12, 4));
+                var ry = BitConverter.ToSingle(p.Slice(16, 4));
+                var rz = BitConverter.ToSingle(p.Slice(20, 4));
+                var rw = BitConverter.ToSingle(p.Slice(24, 4));
+                var sx = BitConverter.ToSingle(p.Slice(28, 4));
+                var sy = BitConverter.ToSingle(p.Slice(32, 4));
+                var sz = BitConverter.ToSingle(p.Slice(36, 4));
+                var parentId = BitConverter.ToInt32(p.Slice(40, 4));
+
+                sb.Append(',');
+                sb.Append("\"decoded\":{");
+                sb.Append("\"position\":{");
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2}", px, py, pz);
+                sb.Append("},\"rotation\":{");
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2},\"w\":{3}", rx, ry, rz, rw);
+                sb.Append("},\"scale\":{");
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture, "\"x\":{0},\"y\":{1},\"z\":{2}", sx, sy, sz);
+                sb.Append("},\"parentId\":");
+                sb.Append(parentId);
+                sb.Append('}');
+                return true;
+            }
+            catch { return false; }
         }
     }
 }
