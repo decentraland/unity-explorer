@@ -22,6 +22,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private const string END_COMMUNITY_STREAM_TEXT_FORMAT = "Are you sure you want to end {0}'s live voice stream?";
         private const string END_COMMUNITY_STREAM_CONFIRM_TEXT = "YES";
         private const string END_COMMUNITY_STREAM_CANCEL_TEXT = "NO";
+        private const string DEFAULT_NAME = "[Missing Name]";
 
         public event Action? EndStreamButtonCLicked;
 
@@ -101,7 +102,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] public RectMask2D RectMask2D { get; private set; } = null!;
 
         [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
-
+        [field: SerializeField] public AudioClipConfig RaiseHandAudio { get; private set; } = null!;
 
 
         private CancellationTokenSource? endStreamButtonConfirmationDialogCts;
@@ -146,8 +147,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ParticipantCount.text = $"{participantCount}";
         }
 
-        public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string playerName, CancellationToken ct)
+        public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string? playerName, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(playerName)) playerName = DEFAULT_NAME;
+
             RaiseHandTooltipText.text = string.Format(TOOLTIP_CONTENT, playerName);
             RaiseHandTooltip.SetActive(true);
             await UniTask.Delay(5000, cancellationToken: ct);

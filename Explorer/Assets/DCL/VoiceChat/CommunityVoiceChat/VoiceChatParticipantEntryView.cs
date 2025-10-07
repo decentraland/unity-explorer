@@ -1,10 +1,6 @@
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
-using MVC;
 using System;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,9 +15,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private const string IS_MUTED_TEXT = "Muted";
         private const string IS_SPEAKING_TEXT = "Speaking";
 
-        public event Action<VoiceChatParticipantState, Vector2, VoiceChatParticipantEntryView>? ContextMenuButtonClicked;
-        public event Action<string>? ApproveSpeaker;
-        public event Action<string>? DenySpeaker;
+        public event Action<Vector2>? ContextMenuButtonClicked;
+        public event Action? ApproveSpeaker;
+        public event Action? DenySpeaker;
+        public event Action? OpenPassport;
 
         [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
         [field: SerializeField] public TMP_Text NameElement { get; private set; } = null!;
@@ -38,9 +35,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [SerializeField] private GameObject isMutedIcon = null!;
         [SerializeField] private TMP_Text statusText = null!;
         [SerializeField] private GameObject promotingSpinner = null!;
+        [SerializeField] private GameObject statusSection  = null!;
 
-        private VoiceChatParticipantState? userProfile;
-        private VoiceChatParticipantState? localUserProfile;
         private Sequence? isSpeakingCurrentSequence;
 
         private void Start()
@@ -48,11 +44,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             hoverElement.gameObject.SetActive(false);
             contextMenuButton.onClick.AddListener(OnOpenContextMenuClicked);
             openPassportButton.onClick.AddListener(OnOpenPassportClicked);
+            approveButton.onClick.AddListener(OnApproveButtonClicked);
+            denyButton.onClick.AddListener(OnDenyButtonClicked);
         }
 
         private void OnOpenContextMenuClicked()
         {
-            ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this);
+            ContextMenuButtonClicked?.Invoke(contextMenuButton.transform.position);
         }
 
         public void CleanupEntry()
@@ -63,74 +61,38 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             approveDenySection.SetActive(false);
             IsSpeakingIcon.gameObject.SetActive(false);
             isMutedIcon.SetActive(false);
+            promotingSpinner.SetActive(false);
+            statusText.SetText(IS_SPEAKING_TEXT);
         }
 
         private void OnOpenPassportClicked()
         {
-            if (string.IsNullOrEmpty(userProfile?.WalletId)) return;
-
-            OpenPassportAsync(userProfile.WalletId, CancellationToken.None).Forget();
-            return;
-
-            async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
-            {
-                try
-                {
-                    await ViewDependencies.GlobalUIViews.OpenPassportAsync(userId, ct);
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogError(ReportCategory.COMMUNITY_VOICE_CHAT, $"Failed to open passport for user {userId}: {ex.Message}");
-                }
-            }
-        }
-
-
-        public void SetUserProfile(VoiceChatParticipantState participantState, VoiceChatParticipantState localParticipantState)
-        {
-            // We only show context menu button on top of local participant if local participant is a mod.
-            var showContextMenuButton = true;
-
-            if (participantState.Name.Value == localParticipantState.Name.Value)
-                showContextMenuButton = localParticipantState.Role.Value is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
-
-            contextMenuButton.gameObject.SetActive(showContextMenuButton);
-
-            userProfile = participantState;
-            localUserProfile = localParticipantState;
-
-            userProfile.IsSpeaking.OnUpdate -= OnChangeIsSpeaking;
-            userProfile.IsSpeaking.OnUpdate += OnChangeIsSpeaking;
-
-            userProfile.IsRequestingToSpeak.OnUpdate -= SetRequestingToSpeakSection;
-            userProfile.IsRequestingToSpeak.OnUpdate += SetRequestingToSpeakSection;
-
-            userProfile.IsMuted.OnUpdate -= OnIsMutedChanged;
-            userProfile.IsMuted.OnUpdate += OnIsMutedChanged;
-
-            approveButton.onClick.RemoveAllListeners();
-            approveButton.onClick.AddListener(OnApproveButtonClicked);
-            denyButton.onClick.RemoveAllListeners();
-            denyButton.onClick.AddListener(OnDenyButtonClicked);
-
-            SetSpeakingIconIdleScale();
+            OpenPassport?.Invoke();
         }
 
         private void OnDenyButtonClicked()
         {
-            if (userProfile != null)
-                DenySpeaker?.Invoke(userProfile.WalletId);
+            DenySpeaker?.Invoke();
         }
 
         private void OnApproveButtonClicked()
         {
-            if (userProfile != null)
-                ApproveSpeaker?.Invoke(userProfile.WalletId);
+            ApproveSpeaker?.Invoke();
+            approveDenySection.SetActive(false);
+            promotingSpinner.SetActive(true);
         }
 
-        private void OnIsMutedChanged(bool isMuted)
+        public void OnIsMutedChanged(bool isMuted, bool isSpeaker)
         {
-            if (!userProfile!.IsSpeaker.Value) return;
+            if (!isSpeaker)
+            {
+                statusText.text = string.Empty;
+                isSpeakingCurrentSequence?.Kill();
+                isSpeakingCurrentSequence = null;
+                statusSection.gameObject.SetActive(false);
+                promotingSpinner.gameObject.SetActive(false);
+                return;
+            }
 
             if (isMuted)
             {
@@ -140,7 +102,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 IsSpeakingIcon.gameObject.SetActive(false);
                 isMutedIcon.SetActive(true);
             }
-            else if (userProfile.IsSpeaker.Value)
+            else if (isSpeaker)
             {
                 statusText.text = IS_SPEAKING_TEXT;
                 IsSpeakingIcon.gameObject.SetActive(true);
@@ -149,15 +111,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
-        private void SetRequestingToSpeakSection(bool isRequestingToSpeak) =>
-            approveDenySection.SetActive(isRequestingToSpeak && localUserProfile?.Role.Value is
-                VoiceChatParticipantCommunityRole.MODERATOR or
-                VoiceChatParticipantCommunityRole.OWNER);
+        public void ShowApproveDenySection(bool show) =>
+            approveDenySection.SetActive(show);
 
-        private void OnChangeIsSpeaking(bool isSpeaking)
+        public void OnChangeIsSpeaking(bool isSpeaking)
         {
-            if (userProfile!.IsMuted.Value) return;
-
             isMutedIcon.SetActive(false);
 
             statusText.text = IS_SPEAKING_TEXT;
@@ -186,22 +144,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             isSpeakingIconOuterRect.localScale = IDLE_SCALE;
         }
 
-        public void SubscribeToInteractions(Action<VoiceChatParticipantState, Vector2, VoiceChatParticipantEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
-        {
-            RemoveAllListeners();
-
-            ContextMenuButtonClicked += contextMenu;
-            ApproveSpeaker += approveSpeaker;
-            DenySpeaker += denySpeaker;
-        }
-
-        private void RemoveAllListeners()
-        {
-            ContextMenuButtonClicked = null;
-            ApproveSpeaker = null;
-            DenySpeaker = null;
-        }
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             hoverElement.gameObject.SetActive(true);
@@ -227,6 +169,24 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             isMutedIcon.SetActive(false);
             transform.localScale = Vector3.one;
             promotingSpinner.SetActive(false);
+        }
+
+        public void ConfigureTransform(Transform parent, Vector3 scale)
+        {
+            transform.SetParent(parent);
+            transform.localScale = scale;
+        }
+
+        public void SetupNameElement(string? participantName, Color nameColor)
+        {
+            NameElement.text = participantName;
+            NameElement.color = nameColor;
+            SetSpeakingIconIdleScale();
+        }
+
+        public void SetContextMenuButtonVisibility(bool show)
+        {
+            contextMenuButton.gameObject.SetActive(show);
         }
     }
 }
