@@ -35,7 +35,6 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
-        private readonly MainUIView mainUIView;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -59,8 +58,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer,
-            MainUIView mainUIView
+            IDebugContainerBuilder debugContainer
         )
         {
             this.roomHub = roomHub;
@@ -74,7 +72,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
-            this.mainUIView = mainUIView;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -128,17 +125,9 @@ namespace DCL.PluginSystem.Global
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
-            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
-
             // Ignore buttons that would lead to the conflicting state
             var chatClickDetectionService = new ChatClickDetectionService(
-                (RectTransform)chatPanelView.transform,
-                chatPanelView.TitlebarView.CloseChatButton.transform,
-                chatPanelView.TitlebarView.CloseMemberListButton.transform,
-                chatPanelView.TitlebarView.OpenMemberListButton.transform,
-                chatPanelView.TitlebarView.BackFromMemberList.transform,
-                chatPanelView.InputView.inputField.transform,
-                mainUIView.SidebarView.unreadMessagesButton.transform
+                (RectTransform)voiceChatPanelView.transform
             );
 
             voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus, chatClickDetectionService);
