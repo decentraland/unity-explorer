@@ -157,6 +157,11 @@ namespace DCL.UserInAppInitializationFlow
                                 = characterObject.Controller.transform.position
                                     = startParcel.Peek().ParcelToPositionFlat();
 
+                            // This operation is not awaited immediately to save approximately 3-4 seconds during the load process,
+                            // as it runs in parallel with other tasks.
+                            // However, this approach introduces potential risks.
+                            // If any of the LiveKit parameters change after this call (e.g., realm configuration),
+                            // the task may become outdated, leading to an inconsistent state.
                             UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                             //Create a child report to be able to hold the parallel livekit operation
@@ -168,7 +173,8 @@ namespace DCL.UserInAppInitializationFlow
                                 mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
                             else
                             {
-                                //Wait for livekit to end handshake
+                                // Finally, wait for livekit to end handshake that started before.
+                                // At this point it is necessary that the task did not become invalid by any modification in the process
                                 var livekitOperationResult = await livekitHandshake;
 
                                 if (isLocalSceneDevelopment)
@@ -259,9 +265,9 @@ namespace DCL.UserInAppInitializationFlow
             return error.State switch
                    {
                        TaskError.MessageError => $"Error: {error.Message}",
-                       TaskError.Timeout => "Load timeout",
-                       TaskError.Cancelled => "Operation cancelled",
-                       TaskError.UnexpectedException => "Critical error occured",
+                       TaskError.Timeout => "Load timeout. Verify yor connection.",
+                       TaskError.Cancelled => "Operation cancelled.",
+                       TaskError.UnexpectedException => "Critical error occured.",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
