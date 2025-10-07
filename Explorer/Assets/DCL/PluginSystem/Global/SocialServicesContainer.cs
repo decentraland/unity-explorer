@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            socialServicesRPC?.Dispose();
+            socialServicesRPC.Dispose();
             web3IdentityCache.OnIdentityCleared -= DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged -= ReInitializeRpcClient;
         }
