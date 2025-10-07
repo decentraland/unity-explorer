@@ -7,6 +7,8 @@ using CRDT.Protocol;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.Components;
 using DCL.ECS7;
+using CrdtEcsBridge.Serialization;
+using Google.Protobuf;
 
 namespace DCL.MCP.Systems
 {
@@ -205,13 +207,34 @@ namespace DCL.MCP.Systems
 
         private static bool TryWriteDecodedComponent(StringBuilder sb, int componentId, ReadOnlySpan<byte> data)
         {
-            switch (componentId)
+            if (componentId == ComponentID.TRANSFORM)
+                return TryWriteTransform(sb, data);
+
+            if (SDKComponentsRegistryLocator.TryGet(out ISDKComponentsRegistry registry) && registry.TryGet(componentId, out SDKComponentBridge bridge))
             {
-                case ComponentID.TRANSFORM:
-                    return TryWriteTransform(sb, data);
-                default:
-                    return false;
+                try
+                {
+                    object instance = bridge.Pool.Rent();
+
+                    try
+                    {
+                        bridge.Serializer.DeserializeInto(instance, data);
+
+                        if (instance is IMessage message)
+                        {
+                            string json = JsonFormatter.Default.Format(message);
+                            sb.Append(',');
+                            sb.Append("\"decoded\":");
+                            sb.Append(json);
+                            return true;
+                        }
+                    }
+                    finally { bridge.Pool.Release(instance); }
+                }
+                catch { }
             }
+
+            return false;
         }
 
         private static bool TryWriteTransform(StringBuilder sb, ReadOnlySpan<byte> data)

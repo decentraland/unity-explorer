@@ -10,8 +10,12 @@
       },
       "componentId": 1048,
       "componentName": "ENGINE_INFO",
-      "timestamp": 113,
-      "data": "CHUVaFCjQBiiAQ=="
+      "timestamp": 640,
+      "decoded": {
+        "frameNumber": 661,
+        "totalRuntime": 23.4220066,
+        "tickNumber": 877
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -22,8 +26,19 @@
       },
       "componentId": 1209,
       "componentName": "POINTER_LOCK",
-      "timestamp": 114,
-      "data": "EgoNGChvRBVWngdEGgAiDw2iPjM/FaSF470d8Yw0Pw=="
+      "timestamp": 641,
+      "decoded": {
+        "screenCoordinates": {
+          "x": 957.526062,
+          "y": 542.474
+        },
+        "screenDelta": {},
+        "worldRayDirection": {
+          "x": 0.7008648,
+          "y": -0.111105457,
+          "z": 0.7045879
+        }
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -35,7 +50,14 @@
       "componentId": 1106,
       "componentName": "PLAYER_IDENTITY_DATA",
       "timestamp": 0,
-      "data": "CkNodHRwczovL3dvcmxkcy1jb250ZW50LXNlcnZlci5kZWNlbnRyYWxhbmQub3JnL3dvcmxkL3ByYXZ1cy5kY2wuZXRoEg5wcmF2dXMuZGNsLmV0aBgBInRmaXhlZC1hZGFwdGVyOnNpZ25lZC1sb2dpbjpodHRwczovL3dvcmxkcy1jb250ZW50LXNlcnZlci5kZWNlbnRyYWxhbmQub3JnL2dldC1jb21tcy1hZGFwdGVyL3dvcmxkLXByZC1wcmF2dXMuZGNsLmV0aDIPUk1fUUZacmNqN1hQenR6OAE="
+      "decoded": {
+        "baseUrl": "https://worlds-content-server.decentraland.org/world/pravus.dcl.eth",
+        "realmName": "pravus.dcl.eth",
+        "networkId": 1,
+        "commsAdapter": "fixed-adapter:signed-login:https://worlds-content-server.decentraland.org/get-comms-adapter/world-prd-pravus.dcl.eth",
+        "room": "RM_a4hU9xSaSk2A",
+        "isConnectedSceneRoom": true
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -76,18 +98,18 @@
       },
       "componentId": 1,
       "componentName": "TRANSFORM",
-      "timestamp": 26,
+      "timestamp": 85,
       "decoded": {
         "position": {
-          "x": -2.738174,
+          "x": -2.738177,
           "y": 2.628514,
-          "z": -3.56289
+          "z": -3.562893
         },
         "rotation": {
-          "x": 0.05261875,
-          "y": 0.3820628,
-          "z": -0.02179544,
-          "w": 0.9223797
+          "x": 0.05262369,
+          "y": 0.3820669,
+          "z": -0.02179777,
+          "w": 0.9223776
         },
         "scale": {
           "x": 1,
@@ -256,7 +278,7 @@
       },
       "componentId": 1,
       "componentName": "TRANSFORM",
-      "timestamp": 161,
+      "timestamp": 877,
       "decoded": {
         "position": {
           "x": 8,
@@ -287,7 +309,12 @@
       "componentId": 1054,
       "componentName": "MAIN_CAMERA",
       "timestamp": 1,
-      "data": "DQAAgD8QgA8YuAgiAA=="
+      "decoded": {
+        "devicePixelRatio": 1,
+        "width": 1920,
+        "height": 1080,
+        "interactableArea": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -299,7 +326,9 @@
       "componentId": 1075,
       "componentName": "UI_TEXT",
       "timestamp": 0,
-      "data": "CAA="
+      "decoded": {
+        "virtualCameraEntity": 0
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -311,7 +340,9 @@
       "componentId": 1072,
       "componentName": "UI_TRANSFORM",
       "timestamp": 0,
-      "data": "CAE="
+      "decoded": {
+        "mode": "CT_THIRD_PERSON"
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -323,7 +354,9 @@
       "componentId": 1074,
       "componentName": "UI_BACKGROUND",
       "timestamp": 1,
-      "data": "CAE="
+      "decoded": {
+        "isPointerLocked": true
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -335,7 +368,17 @@
       "componentId": 1062,
       "componentName": "TEXT_SHAPE",
       "timestamp": 1,
-      "data": "ChQIARIQCAASDG1vdmUgdHJpZ2dlcg=="
+      "decoded": {
+        "pointerEvents": [
+          {
+            "eventType": "PET_DOWN",
+            "eventInfo": {
+              "button": "IA_POINTER",
+              "hoverText": "move trigger"
+            }
+          }
+        ]
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -347,7 +390,17 @@
       "componentId": 1062,
       "componentName": "TEXT_SHAPE",
       "timestamp": 1,
-      "data": "ChQIARIQCAASDG1vdmUgdHJpZ2dlcg=="
+      "decoded": {
+        "pointerEvents": [
+          {
+            "eventType": "PET_DOWN",
+            "eventInfo": {
+              "button": "IA_POINTER",
+              "hoverText": "move trigger"
+            }
+          }
+        ]
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -359,7 +412,17 @@
       "componentId": 1062,
       "componentName": "TEXT_SHAPE",
       "timestamp": 1,
-      "data": "ChQIARIQCAASDHNwYXduIHNwaGVyZQ=="
+      "decoded": {
+        "pointerEvents": [
+          {
+            "eventType": "PET_DOWN",
+            "eventInfo": {
+              "button": "IA_POINTER",
+              "hoverText": "spawn sphere"
+            }
+          }
+        ]
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -371,7 +434,10 @@
       "componentId": 1019,
       "componentName": "MESH_RENDERER",
       "timestamp": 1,
-      "data": "CIAIEgA="
+      "decoded": {
+        "collisionMask": 1024,
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -383,7 +449,9 @@
       "componentId": 1019,
       "componentName": "MESH_RENDERER",
       "timestamp": 1,
-      "data": "EgA="
+      "decoded": {
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -395,7 +463,9 @@
       "componentId": 1019,
       "componentName": "MESH_RENDERER",
       "timestamp": 1,
-      "data": "EgA="
+      "decoded": {
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -407,7 +477,9 @@
       "componentId": 1019,
       "componentName": "MESH_RENDERER",
       "timestamp": 1,
-      "data": "GgA="
+      "decoded": {
+        "sphere": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -419,7 +491,10 @@
       "componentId": 1041,
       "componentName": "GLTF_CONTAINER",
       "timestamp": 1,
-      "data": "ChJtb2RlbHMvTW9uc3Rlci5nbGIggBA="
+      "decoded": {
+        "src": "models/Monster.glb",
+        "visibleMeshesCollisionMask": 2048
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -431,7 +506,16 @@
       "componentId": 1017,
       "componentName": "MATERIAL",
       "timestamp": 1,
-      "data": "EhY6FA0AAIA/FQAAgD8dAACAPyUAAAA/"
+      "decoded": {
+        "pbr": {
+          "albedoColor": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 0.5
+          }
+        }
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -443,7 +527,9 @@
       "componentId": 1018,
       "componentName": "MESH_COLLIDER",
       "timestamp": 1,
-      "data": "CgIKAA=="
+      "decoded": {
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -455,7 +541,9 @@
       "componentId": 1018,
       "componentName": "MESH_COLLIDER",
       "timestamp": 1,
-      "data": "CgIKAA=="
+      "decoded": {
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -467,7 +555,9 @@
       "componentId": 1018,
       "componentName": "MESH_COLLIDER",
       "timestamp": 1,
-      "data": "CgIKAA=="
+      "decoded": {
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -479,7 +569,9 @@
       "componentId": 1018,
       "componentName": "MESH_COLLIDER",
       "timestamp": 1,
-      "data": "CgIKAA=="
+      "decoded": {
+        "box": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -491,7 +583,9 @@
       "componentId": 1018,
       "componentName": "MESH_COLLIDER",
       "timestamp": 1,
-      "data": "EgA="
+      "decoded": {
+        "sphere": {}
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -503,7 +597,10 @@
       "componentId": 1060,
       "componentName": "VISIBILITY_COMPONENT",
       "timestamp": 1,
-      "data": "CAAQgJAE"
+      "decoded": {
+        "mesh": "TAMT_BOX",
+        "collisionMask": 67584
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -515,7 +612,24 @@
       "componentId": 1087,
       "componentName": "AVATAR_SHAPE",
       "timestamp": 1,
-      "data": "CgoNAACAPxUiJvo+Eg8N5eRkPhX5+Pg+HbGwMD8aDw3h4OA9FeHg4D0d4eDgPSIwdXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOkJhc2VNYWxlKgN2aXQ="
+      "decoded": {
+        "skinColor": {
+          "r": 1,
+          "g": 0.48857218
+        },
+        "eyesColor": {
+          "r": 0.223529413,
+          "g": 0.4862745,
+          "b": 0.6901961
+        },
+        "hairColor": {
+          "r": 0.109803922,
+          "g": 0.109803922,
+          "b": 0.109803922
+        },
+        "bodyShapeUrn": "urn:decentraland:off-chain:base-avatars:BaseMale",
+        "name": "vit"
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -527,7 +641,9 @@
       "componentId": 1089,
       "componentName": "AVATAR_EQUIPPED_DATA",
       "timestamp": 1,
-      "data": "CioweDJmY2NiZDczNDQ0MTkzZTE0NDZhZDQ0NTNhM2UxOGE3OWQ3NThhNGE="
+      "decoded": {
+        "address": "0x2fccbd73444193e1446ad4453a3e18a79d758a4a"
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -539,7 +655,31 @@
       "componentId": 1091,
       "componentName": "AVATAR_BASE",
       "timestamp": 1,
-      "data": "CjR1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfamFja2V0CjN1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfZ2xvdmUKOnVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpmX2RpYW1vbmRfbGVnZ2luZ3MKO3VybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpzcG9ydF9jb2xvcmVkX3Nob2VzCjl1cm46ZGVjZW50cmFsYW5kOm9mZi1jaGFpbjpiYXNlLWF2YXRhcnM6YmxhY2tfc3VuX2dsYXNzZXMKNnVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpzcXVhcmVfZWFycmluZwo0dXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOmJsdWVfYmFuZGFuYQoydXJuOmRlY2VudHJhbGFuZDpvZmYtY2hhaW46YmFzZS1hdmF0YXJzOmZfbW91dGhfMDgKLXVybjpkZWNlbnRyYWxhbmQ6b2ZmLWNoYWluOmJhc2UtYXZhdGFyczpiZWFyZBIIaGFuZHNhaXISA2NyeRKXAXVybjpkZWNlbnRyYWxhbmQ6bWF0aWM6Y29sbGVjdGlvbnMtdjI6MHgwODMyMzA0MDI2NzdjYWQ2MWQ3YTBjYzA0MGRjOGEwOGNmZWI4MDllOjIxOjIyMTE1NTgxMjUwMzk3MDA5MjA2NTYyNzg1ODEzNTcwNzkwNzg2OTY3OTcwMDM0MTE1MzEzMzYzNDA1MzA1Mjk2MDESBWRhbmNlEglyYWlzZUhhbmQSBGNsYXASBW1vbmV5EgRraXNzEgtoZWFkZXhwbG9kZRIFc2hydWc="
+      "decoded": {
+        "wearableUrns": [
+          "urn:decentraland:off-chain:base-avatars:black_jacket",
+          "urn:decentraland:off-chain:base-avatars:black_glove",
+          "urn:decentraland:off-chain:base-avatars:f_diamond_leggings",
+          "urn:decentraland:off-chain:base-avatars:sport_colored_shoes",
+          "urn:decentraland:off-chain:base-avatars:black_sun_glasses",
+          "urn:decentraland:off-chain:base-avatars:square_earring",
+          "urn:decentraland:off-chain:base-avatars:blue_bandana",
+          "urn:decentraland:off-chain:base-avatars:f_mouth_08",
+          "urn:decentraland:off-chain:base-avatars:beard"
+        ],
+        "emoteUrns": [
+          "handsair",
+          "cry",
+          "urn:decentraland:matic:collections-v2:0x083230402677cad61d7a0cc040dc8a08cfeb809e:21:2211558125039700920656278581357079078696797003411531336340530529601",
+          "dance",
+          "raiseHand",
+          "clap",
+          "money",
+          "kiss",
+          "headexplode",
+          "shrug"
+        ]
+      }
     },
     {
       "type": "PUT_COMPONENT",
@@ -551,7 +691,9 @@
       "componentId": 1049,
       "componentName": "REALM_INFO",
       "timestamp": 1,
-      "data": "CAQ="
+      "decoded": {
+        "currentState": "FINISHED"
+      }
     }
   ]
 }

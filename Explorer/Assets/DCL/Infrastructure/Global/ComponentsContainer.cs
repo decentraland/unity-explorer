@@ -154,6 +154,7 @@ namespace Global
                                      .Concat(GetMiscComponents())
                                      .ToDictionary(x => x.Item1, x => x.Item2), rootContainer);
 
+            SDKComponentsRegistryLocator.Register(sdkComponentsRegistry);
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }
 
