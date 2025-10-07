@@ -5,6 +5,7 @@ using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -46,6 +47,9 @@ namespace SceneRunner
         public void Initialize()
         {
             deps.SyncDeps.ECSWorldFacade.Initialize();
+
+            // Регистрация EngineAPI для доступа из ECS-систем по SceneShortInfo
+            EngineApiLocator.Register(Info, deps.EngineAPI);
         }
 
         /// <remarks>
@@ -233,6 +237,8 @@ namespace SceneRunner
 
         private void DisposeInternal()
         {
+            // Снятие регистрации EngineAPI
+            EngineApiLocator.Unregister(Info, deps.EngineAPI);
             deps.Dispose();
         }
     }

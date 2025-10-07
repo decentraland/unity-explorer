@@ -2,12 +2,14 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using CrdtEcsBridge.PoolsProviders;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
+using SceneRuntime.Apis.Modules.EngineApi;
 using Font = DCL.ECSComponents.Font;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
@@ -66,6 +68,14 @@ namespace DCL.MCP.Systems
                 ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
 
                 // TODO (Cursor): GetCrdtState
+                if (EngineApiLocator.TryGet(sceneInfo, out IEngineApi engineApi))
+                {
+                    PoolableByteArray data = engineApi.CrdtGetState();
+
+                    try { ReportHub.Log(ReportCategory.DEBUG, $"[MCP] CRDT state length: {data.Length}"); }
+                    finally { data.Dispose(); }
+                }
+                else { ReportHub.LogWarning(ReportCategory.DEBUG, "[MCP] EngineApi not available for current scene; cannot get CRDT state"); }
 
                 // ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
                 // builder.Begin(new Vector3(8, 4, 8), new Vector3(1, 1, 1))
