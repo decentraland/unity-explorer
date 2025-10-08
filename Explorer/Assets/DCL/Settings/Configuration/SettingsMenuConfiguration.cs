@@ -29,7 +29,7 @@ namespace DCL.Settings.Configuration
         [field: SerializeField] internal string GroupTitle { get; set; }
 
         [field: SerializeField] internal FeatureFlag FeatureFlagName { get; set; }
-
+        [field: SerializeField] internal FeatureId FeatureId { get; set; }
         [field: SerializeReference] [field: SubclassSelector] internal List<SettingsModuleBindingBase> Modules { get; set; }
     }
 
