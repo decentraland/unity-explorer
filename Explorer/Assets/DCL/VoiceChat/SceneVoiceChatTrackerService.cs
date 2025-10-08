@@ -66,11 +66,35 @@ namespace DCL.VoiceChat
         public void SetActiveCommunityVoiceChat(string communityId, ActiveCommunityVoiceChat activeChat)
         {
             activeCommunityVoiceChats[communityId] = activeChat;
+
+            if (realmData.RealmType.Value != RealmKind.GenesisCity)
+            {
+                if (communityToWorldMap.TryGetValue(communityId, out HashSet<string>? worlds))
+                {
+                    if (worlds.Contains(realmData.RealmName)) ActiveVoiceChatDetectedInScene?.Invoke(activeChat);
+                }
+            }
+            else if (communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? parcels))
+            {
+                if (parcels.Contains(scenesCache.CurrentParcel.Value)) ActiveVoiceChatDetectedInScene?.Invoke(activeChat);
+            }
         }
 
         public void RemoveActiveCommunityVoiceChat(string communityId)
         {
             activeCommunityVoiceChats.Remove(communityId);
+
+            if (realmData.RealmType.Value != RealmKind.GenesisCity)
+            {
+                if (communityToWorldMap.TryGetValue(communityId, out HashSet<string>? worlds))
+                {
+                    if (worlds.Contains(realmData.RealmName)) OnActiveVoiceChatStoppedInScene();
+                }
+            }
+            else if (communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? parcels))
+            {
+                if (parcels.Contains(scenesCache.CurrentParcel.Value)) OnActiveVoiceChatStoppedInScene();
+            }
         }
 
         private void OnRealmNavigatorOperationExecuted(Vector2Int _)
@@ -271,6 +295,11 @@ namespace DCL.VoiceChat
                 }
 
                 worlds.Add(worldName);
+
+                if (realmData.RealmName == worldName)
+                {
+                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) OnActiveVoiceChatDetectedInScene(communityId);
+                }
             }
 
             if (isNewCommunity) { communityToWorldMap[communityId] = worlds; }
