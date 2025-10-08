@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
     {
         private CancellationTokenSource? autoUpdateCts;
 
-        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager? trackManager)
+        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager trackManager)
         {
             var availableMicrophones = new ElementBinding<ulong>(0);
             var currentMicrophone = new ElementBinding<string>(string.Empty);
@@ -80,8 +80,6 @@ namespace DCL.PluginSystem.Global
 
             void UpdateWidget()
             {
-                if (trackManager == null) return;
-
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
 

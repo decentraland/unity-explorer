@@ -256,6 +256,28 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void MuteSpeakerInCurrentCall(string walletId, bool muted)
+        {
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            MuteSpeakerAsync(callId.Value, walletId, muted, cts.Token).Forget();
+            return;
+
+            async UniTaskVoid MuteSpeakerAsync(string communityId, string walletId, bool muted, CancellationToken ct)
+            {
+                try
+                {
+                    MuteSpeakerFromCommunityVoiceChatResponse response = await voiceChatService.MuteSpeakerFromCommunityVoiceChatAsync(communityId, walletId, muted, ct);
+
+                    string action = muted ? "mute" : "unmute";
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} MuteSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}, action: {action}");
+                }
+                catch (Exception e) { }
+            }
+        }
+
         public void EndStreamInCurrentCall()
         {
             if (string.IsNullOrEmpty(callId.Value)) return;
