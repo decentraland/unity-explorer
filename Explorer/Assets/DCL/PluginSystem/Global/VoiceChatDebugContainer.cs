@@ -55,6 +55,7 @@ namespace DCL.PluginSystem.Global
 
             List<(string name, string value)> wavRemotesBuffer = new ();
 
+            bool hasWavMicrophoneIntention = false;
             bool hasWavRemoteIntention = false;
 
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.VOICE_CHAT)
@@ -71,9 +72,9 @@ namespace DCL.PluginSystem.Global
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Remote Speakers", remoteSpeakers, DebugLongMarkerDef.Unit.NoFormat)
                           .AddList("Speakers Info", speakersInfo)
-                          .AddSingleButton("Toggle WAV Microphone", ChangeMicrophoneRecordStatus)
+                          .AddToggleField("Record WAV Microphone", v => ChangeMicrophoneRecordStatus(v.newValue), false)
                           .AddCustomMarker("Status WAV Microphone", wavMicrophoneStatus)
-                          .AddSingleButton("Toggle WAV Remotes", ChangeRemoteRecordStatus)
+                          .AddToggleField("Record WAV Remotes", v => ChangeRemoteRecordStatus(v.newValue), false)
                           .AddList("Status WAV Remotes", wavRemotesStatusInfo)
                           .AddSingleButton("Open Records Directory", () => Application.OpenURL($"file://{StreamKeyUtils.RecordsDirectory}".Replace(" ", "%20")))
                           .AddToggleField("Auto Update", v => AutoUpdateTriggerAsync(v.newValue).Forget(), false)
@@ -81,37 +82,19 @@ namespace DCL.PluginSystem.Global
 
             return;
 
-            void ChangeMicrophoneRecordStatus()
+            void ChangeMicrophoneRecordStatus(bool enable)
             {
-                Option<MicrophoneRtcAudioSource> currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
-
-                if (currentMicrophoneOption.Has == false)
-                {
-                    wavMicrophoneStatus.Value = "Is Not Recording";
-                    return;
-                }
-
-                MicrophoneRtcAudioSource source = currentMicrophoneOption.Value;
-                var result = source.WavTeeControl.Toggle();
-                string message;
-
-                if (result.Success)
-                {
-                    var isActive = source.WavTeeControl.IsWavActive;
-                    message = isActive ? "Writing" : "Sleep";
-                }
-                else { message = result.ErrorMessage!; }
-
-                wavMicrophoneStatus.Value = message;
+                hasWavMicrophoneIntention = enable;
+                TryStartWavUpdateLoopAsync().Forget();
             }
 
-            void ChangeRemoteRecordStatus()
+            void ChangeRemoteRecordStatus(bool enable)
             {
-                hasWavRemoteIntention = !hasWavRemoteIntention;
-                TryStartWavRemotesUpdateLoopAsync().Forget();
+                hasWavRemoteIntention = enable;
+                TryStartWavUpdateLoopAsync().Forget();
             }
 
-            async UniTaskVoid TryStartWavRemotesUpdateLoopAsync()
+            async UniTaskVoid TryStartWavUpdateLoopAsync()
             {
                 if (wavRemoteUpdateCts != null && wavRemoteUpdateCts.IsCancellationRequested == false) return;
 
@@ -123,6 +106,8 @@ namespace DCL.PluginSystem.Global
                     {
                         bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: token).SuppressCancellationThrow();
                         if (cancelled) return;
+
+                        ProcessMicrophone();
 
                         wavRemotesBuffer.Clear();
 
@@ -138,6 +123,31 @@ namespace DCL.PluginSystem.Global
                     }
 
                 return;
+
+                void ProcessMicrophone()
+                {
+                    Option<MicrophoneRtcAudioSource> currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
+
+                    if (currentMicrophoneOption.Has == false)
+                    {
+                        wavMicrophoneStatus.Value = "Is Not Recording";
+                        return;
+                    }
+
+                    MicrophoneRtcAudioSource source = currentMicrophoneOption.Value;
+                    WavTeeControl wavTeeControl = source.WavTeeControl;
+                    Result result = wavTeeControl.IsWavActive != hasWavMicrophoneIntention ? wavTeeControl.Toggle() : Result.SuccessResult();
+                    string message;
+
+                    if (result.Success)
+                    {
+                        bool isActive = wavTeeControl.IsWavActive;
+                        message = isActive ? "Writing" : "Sleep";
+                    }
+                    else { message = result.ErrorMessage!; }
+
+                    wavMicrophoneStatus.Value = message;
+                }
 
                 void ProcessElement(StreamKey key, Weak<AudioStream> stream, LivekitAudioSource source)
                 {
