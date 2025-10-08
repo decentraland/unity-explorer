@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention), typeof(BannedPlayerComponent))]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention), typeof(BlockedPlayerComponent), typeof(BannedPlayerComponent))]
         private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim, ref CharacterEmoteComponent emote,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
