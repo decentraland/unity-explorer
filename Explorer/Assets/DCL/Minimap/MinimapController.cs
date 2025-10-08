@@ -477,18 +477,10 @@ namespace DCL.Minimap
         private async UniTaskVoid ShowBannedTooltipAsync(bool showOwnPlayerTooltip, CancellationToken ct)
         {
             await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
-
-            if (showOwnPlayerTooltip)
-                viewInstance!.ownPlayerBannedTooltip.SetActive(true);
-            else
-                viewInstance!.otherPlayersBannedTooltip.SetActive(true);
-
+            var tooltip = showOwnPlayerTooltip ? viewInstance!.ownPlayerBannedTooltip : viewInstance!.otherPlayersBannedTooltip;
+            tooltip.SetActive(true);
             await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
-
-            if (showOwnPlayerTooltip)
-                viewInstance!.ownPlayerBannedTooltip.SetActive(false);
-            else
-                viewInstance!.otherPlayersBannedTooltip.SetActive(false);
+            tooltip.SetActive(false);
         }
     }
 
