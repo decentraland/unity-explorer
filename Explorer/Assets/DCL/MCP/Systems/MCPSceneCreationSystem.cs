@@ -8,8 +8,12 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using System.Collections.Concurrent;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.SceneLifeCycle;
+using SceneRunner;
+using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System.Collections.Generic;
 using Font = DCL.ECSComponents.Font;
@@ -18,12 +22,13 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.MCP.Systems
 {
-    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.DEBUG)]
     public partial class MCPSceneCreationSystem : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
         private readonly Arch.Core.Entity globalPlayerEntity;
+        private readonly IScenesCache scenesCache;
         private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
@@ -32,7 +37,24 @@ namespace DCL.MCP.Systems
 
         private readonly MCPSceneEntitiesBuilder builder;
 
-        public MCPSceneCreationSystem(World world, World globalWorld, Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter,
+        private static readonly ConcurrentQueue<SpawnTextRequest> pendingTextRequests = new ();
+
+        public readonly struct SpawnTextRequest
+        {
+            public readonly string Text;
+            public readonly Vector3 Position;
+            public readonly float FontSize;
+
+            public SpawnTextRequest(string text, Vector3 position, float fontSize)
+            {
+                Text = text;
+                Position = position;
+                FontSize = fontSize;
+            }
+        }
+
+        public MCPSceneCreationSystem(World world, World globalWorld, Entity globalPlayerEntity, IScenesCache scenesCache,
+            IECSToCRDTWriter ecsToCRDTWriter,
             Dictionary<CRDTEntity, Entity> EntitiesMap,
             IComponentPool<SDKTransform> sdkTransformPool,
             IComponentPool<PBTextShape> textShapePool
@@ -41,6 +63,7 @@ namespace DCL.MCP.Systems
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
+            this.scenesCache = scenesCache;
             this.textShapePool = textShapePool;
             this.meshRendererPool = meshRendererPool;
             this.colliderPool = colliderPool;
@@ -54,9 +77,27 @@ namespace DCL.MCP.Systems
             JumpDebug();
 
             // Обрабатываем запросы MCP на создание TextShape через билдер
-            // builder.ProcessTextShapeRequests(World, textShapePool);
+            ProcessPendingTextRequests();
             // builder.ProcessMeshRendererRequests(World, meshRendererPool);
             // Пример: builder.ProcessMeshColliderRequests(World, colliderPool);
+        }
+
+        private void ProcessPendingTextRequests()
+        {
+            while (pendingTextRequests.TryDequeue(out SpawnTextRequest req))
+            {
+                builder.Begin(World, req.Position, new Vector3(1, 1, 1))
+                       .AddTextShape(World, textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest
+                        {
+                            Text = req.Text,
+                            FontSize = (int)req.FontSize,
+                        });
+            }
+        }
+
+        public static void EnqueueSpawnText(string text, Vector3 position, float fontSize = 5f)
+        {
+            pendingTextRequests.Enqueue(new SpawnTextRequest(text, position, fontSize));
         }
 
         private void JumpDebug()
@@ -71,10 +112,20 @@ namespace DCL.MCP.Systems
                 hasJumped = true;
                 ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
 
+                // 1) Визуальная метка
                 builder.Begin(World, new Vector3(8, 4, 8), new Vector3(1, 1, 1))
-                       .AddTextShape(World, textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "TEST FROM ECS", FontSize = 5 })
-                    ;
+                       .AddTextShape(World, textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "JUMP", FontSize = 5 });
+
+                // 2) Прямая инъекция в JS onUpdate (локальный тест без MCP): добавить лог на каждый тик
+                TryInjectLocalJsOnUpdate("try { console.log('[MCP-LOCAL] onUpdate dt=', dt); } catch (_) {}");
             }
+        }
+
+        private void TryInjectLocalJsOnUpdate(string jsSnippet)
+        {
+            // Прямой вызов API рантайма: инжект кода в onUpdate (до оригинального апдейта)
+            ISceneFacade? scene = scenesCache.CurrentScene;
+            scene?.InjectOnUpdate(jsSnippet);
         }
     }
 }

@@ -50,6 +50,9 @@ namespace SceneRunner
 
             // Регистрация EngineAPI для доступа из ECS-систем по SceneShortInfo
             EngineApiLocator.Register(Info, deps.EngineAPI);
+
+            // Зарегистрировать локатор мира -> фасад
+            SceneWorldLocator.Register(deps.SyncDeps.ECSWorldFacade.EcsWorld, this);
         }
 
         /// <remarks>
@@ -95,6 +98,16 @@ namespace SceneRunner
         public bool IsSceneReady()
         {
             return SceneData.SceneLoadingConcluded;
+        }
+
+        public void EnqueueJsEvaluation(string jsCode)
+        {
+            runtimeInstance.EnqueueJsEvaluation(jsCode);
+        }
+
+        public void InjectOnUpdate(string jsCode, bool runAfterOriginal = false)
+        {
+            runtimeInstance.InjectOnUpdate(jsCode, runAfterOriginal);
         }
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
@@ -239,6 +252,7 @@ namespace SceneRunner
         {
             // Снятие регистрации EngineAPI
             EngineApiLocator.Unregister(Info, deps.EngineAPI);
+            SceneWorldLocator.Unregister(deps.SyncDeps.ECSWorldFacade.EcsWorld);
             deps.Dispose();
         }
     }

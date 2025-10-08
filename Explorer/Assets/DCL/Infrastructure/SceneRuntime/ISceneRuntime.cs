@@ -52,6 +52,19 @@ namespace SceneRuntime
         void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper);
 
         V8RuntimeHeapInfo RuntimeHeapInfo { get; }
+
+        /// <summary>
+        ///     Queue a JavaScript snippet to be evaluated inside the scene runtime context
+        ///     It will be executed at the beginning of the next UpdateScene call.
+        /// </summary>
+        void EnqueueJsEvaluation(string jsCode);
+
+        /// <summary>
+        ///     Replace internal onUpdate function to inject custom code before/after original update
+        /// </summary>
+        /// <param name="code">JavaScript snippet to run</param>
+        /// <param name="runAfterOriginal">If true, run after original update; otherwise before</param>
+        void InjectOnUpdate(string code, bool runAfterOriginal = false);
     }
 
     public static class SceneRuntimeExtensions

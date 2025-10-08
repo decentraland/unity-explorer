@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
@@ -6,6 +7,7 @@ using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
+using ECS.SceneLifeCycle;
 using System.Collections.Generic;
 using WriteAvatarEmoteCommandSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteAvatarEmoteCommandSystem;
 using WriteAvatarEquippedDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteAvatarEquippedDataSystem;
@@ -18,15 +20,17 @@ namespace DCL.PluginSystem.World
     {
         private readonly Arch.Core.World globalWorld;
         private readonly Arch.Core.Entity globalPlayerEntity;
+        private readonly IScenesCache scenesCache;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
         private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
 
-        public MultiplayerPlugin(Arch.Core.World globalWorld, Arch.Core.Entity globalPlayerEntity, IComponentPoolsRegistry componentPoolsRegistry)
+        public MultiplayerPlugin(Arch.Core.World globalWorld, Entity globalPlayerEntity, IComponentPoolsRegistry componentPoolsRegistry, IScenesCache scenesCache)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
+            this.scenesCache = scenesCache;
             sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
             textShapePool = componentPoolsRegistry.GetReferenceTypePool<PBTextShape>();
             meshRendererPool = componentPoolsRegistry.GetReferenceTypePool<PBMeshRenderer>();
@@ -45,7 +49,7 @@ namespace DCL.PluginSystem.World
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
-            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool, textShapePool, meshRendererPool, colliderPool);
+            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, scenesCache, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool, textShapePool, meshRendererPool, colliderPool);
 
             CleanUpAvatarPropagationComponentsSystem.InjectToWorld(ref builder);
         }

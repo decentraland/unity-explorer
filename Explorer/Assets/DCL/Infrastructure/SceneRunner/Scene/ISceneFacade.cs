@@ -39,5 +39,15 @@ namespace SceneRunner.Scene
         bool Contains(Vector2Int parcel);
 
         bool IsSceneReady();
+
+        /// <summary>
+        ///     Queue a JavaScript snippet to be evaluated at the beginning of the next update
+        /// </summary>
+        void EnqueueJsEvaluation(string jsCode);
+
+        /// <summary>
+        ///     Inject code into onUpdate; code runs before (default) or after original update
+        /// </summary>
+        void InjectOnUpdate(string jsCode, bool runAfterOriginal = false);
     }
 }

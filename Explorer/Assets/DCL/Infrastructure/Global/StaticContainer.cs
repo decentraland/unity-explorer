@@ -267,7 +267,7 @@ namespace Global
                 new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
-                new MultiplayerPlugin(globalWorld, container.PlayerEntity, componentsContainer.ComponentPoolsRegistry),
+                new MultiplayerPlugin(globalWorld, container.PlayerEntity, componentsContainer.ComponentPoolsRegistry, container.ScenesCache),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),

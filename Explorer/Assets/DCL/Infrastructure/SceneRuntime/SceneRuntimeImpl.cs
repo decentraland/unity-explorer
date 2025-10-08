@@ -37,6 +37,10 @@ namespace SceneRuntime
 
         public V8RuntimeHeapInfo RuntimeHeapInfo { get; private set; }
 
+        // Minimal MVP queue for JS injections to evaluate on next update
+        private readonly Queue<string> pendingEvaluations = new ();
+        private bool rebindUpdateRequested;
+
         CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
 
         public SceneRuntimeImpl(
@@ -147,6 +151,23 @@ namespace SceneRuntime
             nextUint8Array = 0;
             RuntimeHeapInfo = engine.GetRuntimeHeapInfo();
             resetableSource.Reset();
+
+            while (pendingEvaluations.Count > 0)
+            {
+                string js = pendingEvaluations.Dequeue();
+                engine.Execute(js);
+            }
+
+            if (rebindUpdateRequested)
+            {
+                object? maybe = engine.Evaluate("__internalOnUpdate_mcp");
+
+                if (maybe is ScriptObject so)
+                {
+                    updateFunc = so.EnsureNotNull();
+                    rebindUpdateRequested = false;
+                }
+            }
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
         }
@@ -172,6 +193,72 @@ namespace SceneRuntime
                     IJsOperations.LIVEKIT_MAX_SIZE));
 
             return uint8Arrays[nextUint8Array++];
+        }
+
+        public void EnqueueJsEvaluation(string jsCode)
+        {
+            pendingEvaluations.Enqueue(jsCode);
+        }
+
+        public void InjectOnUpdate(string code, bool runAfterOriginal = false)
+        {
+            // Enqueue wrapper creation; will run inside UpdateScene on JS thread
+            var template = @"
+(function(){
+  if (typeof __internalOnUpdate !== 'function') { throw new Error('__internalOnUpdate not available'); }
+  const __originalOnUpdate = __internalOnUpdate;
+  const __internalOnUpdate_mcp = async function(dt) {
+    try {
+      __INJECT_BEFORE__
+      await __originalOnUpdate(dt)
+      __INJECT_AFTER__
+      __resetableSource.Completed()
+    } catch(e) {
+      __resetableSource.Reject(e.stack)
+    }
+  }
+  globalThis.__internalOnUpdate_mcp = __internalOnUpdate_mcp;
+})();
+";
+
+            string before = runAfterOriginal ? string.Empty : code ?? string.Empty;
+            string after = runAfterOriginal ? code ?? string.Empty : string.Empty;
+            string wrapped = template.Replace("__INJECT_BEFORE__", before).Replace("__INJECT_AFTER__", after);
+
+            pendingEvaluations.Enqueue(wrapped);
+            rebindUpdateRequested = true;
+        }
+
+        private void RebuildLifecycleWithInjection(string injectedSnippet, bool runAfterOriginal)
+        {
+            // Build a wrapper around the existing __internalOnUpdate without re-declaring consts
+            var template = @"
+(function(){
+  if (typeof __internalOnUpdate !== 'function') { throw new Error('__internalOnUpdate not available'); }
+  const __originalOnUpdate = __internalOnUpdate;
+  const __internalOnUpdate_mcp = async function(dt) {
+    try {
+      __INJECT_BEFORE__
+      await __originalOnUpdate(dt)
+      __INJECT_AFTER__
+      __resetableSource.Completed()
+    } catch(e) {
+      __resetableSource.Reject(e.stack)
+    }
+  }
+  globalThis.__internalOnUpdate_mcp = __internalOnUpdate_mcp;
+})();
+";
+
+            string before = runAfterOriginal ? string.Empty : injectedSnippet ?? string.Empty;
+            string after = runAfterOriginal ? injectedSnippet ?? string.Empty : string.Empty;
+
+            string code = template.Replace("__INJECT_BEFORE__", before).Replace("__INJECT_AFTER__", after);
+
+            engine.Execute(code);
+
+            // point updateFunc to the new wrapper function
+            updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate_mcp").EnsureNotNull();
         }
     }
 }
