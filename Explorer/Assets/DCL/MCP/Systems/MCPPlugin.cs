@@ -47,6 +47,7 @@ namespace DCL.MCP
                 var textShapeHandler = new MCPTextShapeHandler();
                 var meshRendererHandler = new MCPMeshRendererHandler();
                 var meshColliderHandler = new MCPMeshColliderHandler();
+                var sceneStaticHandler = new MCPSceneStaticHandler(scenesCache);
 
                 // Регистрация обработчиков камеры
                 server.RegisterHandler("toggleInWorldCamera", cameraHandler.HandleToggleInWorldCameraAsync);
@@ -72,6 +73,13 @@ namespace DCL.MCP
                 server.RegisterHandler("getAllScenesInfo", sceneInfoHandler.HandleGetAllScenesInfoAsync);
                 server.RegisterHandler("getSceneInfo", sceneInfoHandler.HandleGetSceneInfoAsync);
                 server.RegisterHandler("getSceneCrdtState", sceneInfoHandler.HandleGetSceneCrdtStateAsync);
+
+                // Регистрация статического контента сцены (раздельные, минимальные ответы)
+                server.RegisterHandler("getCurrentSceneStatic", sceneStaticHandler.HandleGetCurrentSceneStaticAsync); // content index + metadataRawJson
+                server.RegisterHandler("getSceneStaticById", sceneStaticHandler.HandleGetSceneStaticByIdAsync); // content index + metadataRawJson
+                server.RegisterHandler("getSceneContentIndex", sceneStaticHandler.HandleGetSceneContentIndexAsync); // только file/hash
+                server.RegisterHandler("getSceneMetadataJson", sceneStaticHandler.HandleGetSceneMetadataJsonAsync); // только raw JSON
+                server.RegisterHandler("getSceneFileUrl", sceneStaticHandler.HandleGetSceneFileUrlAsync); // резолв URL для конкретного файла
 
                 // Регистрация TextShape (создание по запросу, выполняется системой в сцене)
                 server.RegisterHandler("createTextShape", textShapeHandler.HandleCreateTextShapeAsync);

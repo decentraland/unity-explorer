@@ -120,6 +120,80 @@ Assets/DCL/MCP/
   - Platform
   ```
 
+### Статика JS‑сцены (раздельные команды)
+
+- **`getCurrentSceneStatic`** — минимальный набор по текущей сцене (content index + сырой scene.json)
+  ```json
+  {
+    "id": 1,
+    "method": "getCurrentSceneStatic",
+    "params": {}
+  }
+  ```
+  Ответ (`result`, без дублирования распарсенных полей):
+  ```json
+  {
+    "success": true,
+    "sceneId": "urn:decentraland:...",
+    "baseUrl": "https://content/.../",
+    "metadataRawJson": "{...}",
+    "content": [
+      { "file": "scene.json", "hash": "..." },
+      { "file": "bin/index.js", "hash": "..." }
+      // ... все файлы деплоя
+    ]
+  }
+  ```
+
+- **`getSceneStaticById`** — минимальный набор по сцене `sceneId`
+  ```json
+  {
+    "id": 2,
+    "method": "getSceneStaticById",
+    "params": { "sceneId": "urn:decentraland:..." }
+  }
+  ```
+  Ответ: как у `getCurrentSceneStatic`.
+
+- **`getSceneContentIndex`** — только индекс контента (file/hash)
+  ```json
+  {
+    "id": 3,
+    "method": "getSceneContentIndex",
+    "params": { "sceneId": "urn:decentraland:..." } // optional
+  }
+  ```
+  Ответ:
+  ```json
+  { "success": true, "sceneId": "...", "baseUrl": "...", "content": [{"file":"...","hash":"..."}, ...] }
+  ```
+
+- **`getSceneMetadataJson`** — только сырой `scene.json` как строка
+  ```json
+  {
+    "id": 4,
+    "method": "getSceneMetadataJson",
+    "params": { "sceneId": "urn:decentraland:..." } // optional
+  }
+  ```
+  Ответ:
+  ```json
+  { "success": true, "sceneId": "...", "metadataRawJson": "{...}" }
+  ```
+
+- **`getSceneFileUrl`** — резолв URL для конкретного файла из контента
+  ```json
+  {
+    "id": 5,
+    "method": "getSceneFileUrl",
+    "params": { "file": "bin/index.js", "sceneId": "urn:decentraland:..." } // sceneId optional
+  }
+  ```
+  Ответ:
+  ```json
+  { "success": true, "sceneId": "...", "file": "bin/index.js", "url": "https://.../bafy...", "hash": "bafy..." }
+  ```
+
 ### Управление скриншотами
 
 - **`take_screenshot`** - Сделать скриншот (полный автоматический процесс)
