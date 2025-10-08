@@ -16,7 +16,7 @@ namespace DCL.Landscape
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
 
-        private int parcelSize;
+        public int ParcelSize { get; private set; }
         private TerrainGenerationData terrainGenData;
         public TreeData? Trees { get; private set; }
 
@@ -39,25 +39,13 @@ namespace DCL.Landscape
             // If we destroy rootGo here it causes issues on application exit
         }
 
-        public bool Contains(Vector2Int parcel)
-        {
-            if (TerrainModel != null)
-                return TerrainModel.IsInsideBounds(parcel);
-
-            return false;
-        }
-
-        public float GetHeight(float x, float z) =>
-            TerrainGenerator.GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize,
-                terrainGenData.parcelSize, OccupancyFloor, MaxHeight);
-
         public async UniTask InitializeAsync(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
         {
             this.terrainGenData = terrainGenData;
 
-            parcelSize = terrainGenData.parcelSize;
+            ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
-            boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+            boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
             Trees = new TreeData(treeRendererKeys, terrainGenData);
             await Trees.LoadAsync($"{Application.streamingAssetsPath}/WorldsTrees.bin");
             IsInitialized = true;
@@ -79,7 +67,7 @@ namespace DCL.Landscape
             if (!IsInitialized) return;
 
             var worldModel = new WorldModel(ownedParcels);
-            TerrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
+            TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
 
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);

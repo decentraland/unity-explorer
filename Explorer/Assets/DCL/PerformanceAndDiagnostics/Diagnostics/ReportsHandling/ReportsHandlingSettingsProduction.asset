@@ -378,6 +378,22 @@ MonoBehaviour:
       Severity: 1
     - Category: CHROME_DEVTOOL_PROTOCOL
       Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 0
+    - Category: LIVEKIT
+      Severity: 0
+    - Category: VOICE_CHAT
+      Severity: 0
+    - Category: AUDIO
+      Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 0
+    - Category: DEBUG
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -730,6 +746,12 @@ MonoBehaviour:
       Severity: 4
     - Category: VOICE_CHAT
       Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 0
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

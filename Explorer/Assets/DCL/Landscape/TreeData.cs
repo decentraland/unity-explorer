@@ -79,6 +79,7 @@ namespace DCL.Landscape
             {
                 position.y = 0f;
                 rotation = default(Quaternion);
+                scale = default(Vector3);
                 return false;
             }
 
@@ -86,6 +87,11 @@ namespace DCL.Landscape
                 occupancyMapSize, terrainData.parcelSize, occupancyFloor, maxHeight);
 
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
+
+            scale = terrainData.treeAssets[instance.PrototypeIndex]
+                               .randomization
+                               .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
+                               .xyx;
 
             return true;
         }

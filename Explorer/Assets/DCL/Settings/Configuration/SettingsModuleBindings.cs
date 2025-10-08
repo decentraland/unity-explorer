@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
@@ -16,6 +17,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
 
 namespace DCL.Settings.Configuration
 {
@@ -25,7 +27,10 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public abstract class SettingsModuleBindingBase
     {
-        public abstract UniTask<SettingsFeatureController> CreateModuleAsync(
+        [field: SerializeField]
+        public FeatureId FeatureId { get; set; } = FeatureId.NONE;
+
+        public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -39,10 +44,11 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
-            VolumeBus volumeBus);
+            VolumeBus volumeBus,
+            bool isTranslationChatEnabled,
+            IEventBus eventBus);
     }
 
     [Serializable]

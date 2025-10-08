@@ -14,24 +14,24 @@ namespace DCL.VoiceChat
 {
     public class CommunityVoiceChatCallStatusService : ICommunityVoiceChatCallStatusService
     {
-        private static readonly ReactiveProperty<bool> DEFAULT_BOOL_REACTIVE_PROPERTY = new (false);
         private const string TAG = nameof(CommunityVoiceChatCallStatusService);
-
-        public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
-        public IReadonlyReactiveProperty<string> CallId => callId;
-        string IVoiceChatCallStatusServiceBase.ConnectionUrl => connectionUrl;
+        private static readonly ReactiveProperty<bool> DEFAULT_BOOL_REACTIVE_PROPERTY = new (false);
 
         private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<string> callId = new (string.Empty);
-        private string connectionUrl = string.Empty;
 
         private readonly ICommunityVoiceService voiceChatService;
         private readonly SceneVoiceChatTrackerService voiceChatSceneTrackerService;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
+        private string connectionUrl = string.Empty;
 
         private CancellationTokenSource cts = new ();
-        private string? locallyStartedCommunityId ;
+        private string? locallyStartedCommunityId;
+
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
+        public IReadonlyReactiveProperty<string> CallId => callId;
+        string IVoiceChatCallStatusServiceBase.ConnectionUrl => connectionUrl;
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
@@ -95,7 +95,6 @@ namespace DCL.VoiceChat
         {
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
-            locallyStartedCommunityId = null;
         }
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
@@ -103,6 +102,7 @@ namespace DCL.VoiceChat
             try
             {
                 if (!status.Value.IsNotConnected())
+
                     //we should throw here and let the catch handle it?
                     return;
 
@@ -256,6 +256,28 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void MuteSpeakerInCurrentCall(string walletId, bool muted)
+        {
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            MuteSpeakerAsync(callId.Value, walletId, muted, cts.Token).Forget();
+            return;
+
+            async UniTaskVoid MuteSpeakerAsync(string communityId, string walletId, bool muted, CancellationToken ct)
+            {
+                try
+                {
+                    MuteSpeakerFromCommunityVoiceChatResponse response = await voiceChatService.MuteSpeakerFromCommunityVoiceChatAsync(communityId, walletId, muted, ct);
+
+                    string action = muted ? "mute" : "unmute";
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} MuteSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}, action: {action}");
+                }
+                catch (Exception e) { }
+            }
+        }
+
         public void EndStreamInCurrentCall()
         {
             if (string.IsNullOrEmpty(callId.Value)) return;
@@ -294,6 +316,7 @@ namespace DCL.VoiceChat
         public void UpdateStatus(VoiceChatStatus newStatus)
         {
             UpdateStatusAsync().Forget();
+            return;
 
             async UniTaskVoid UpdateStatusAsync()
             {
@@ -308,7 +331,6 @@ namespace DCL.VoiceChat
             SetCallId(string.Empty);
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();
-            SetCallId(string.Empty);
             locallyStartedCommunityId = null;
         }
 
@@ -355,8 +377,8 @@ namespace DCL.VoiceChat
                 isMember = communityUpdate.IsMember,
                 positions = new List<string>(communityUpdate.Positions),
                 worlds = new List<string>(communityUpdate.Worlds),
-                participantCount = 0, // This would need to be populated from other sources
-                moderatorCount = 0, // This would need to be populated from other sources
+                participantCount = 0,
+                moderatorCount = 0,
             };
 
             // Update the active community voice chats dictionary
@@ -451,10 +473,7 @@ namespace DCL.VoiceChat
             if (string.IsNullOrEmpty(communityId))
                 return null;
 
-            if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingData))
-            {
-                return existingData;
-            }
+            if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingData)) { return existingData; }
 
             // Create new call data with no active call
             var newCallData = new ReactiveProperty<bool>(false);

@@ -400,7 +400,7 @@ namespace DCL.Passport
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
                 await UniTask.Delay(500);
                 chatEventBus.StartCallInCurrentConversation();
@@ -416,7 +416,7 @@ namespace DCL.Passport
 
         private async UniTaskVoid OnOpenConversationAsync()
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
         }
 

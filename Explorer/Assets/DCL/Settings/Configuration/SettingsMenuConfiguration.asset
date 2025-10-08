@@ -24,6 +24,7 @@ MonoBehaviour:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Graphics Quality
       <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 5242998342527483906
       - rid: 5242998500334764034
@@ -34,6 +35,7 @@ MonoBehaviour:
       - rid: 5015494041161695532
     - <GroupTitle>k__BackingField: Environment
       <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 5242998342527483909
       - rid: 5242998342527483910
@@ -41,6 +43,7 @@ MonoBehaviour:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
       <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 5242998342527483917
       - rid: 5242998342527483918
@@ -48,13 +51,15 @@ MonoBehaviour:
       - rid: 5242998342527483919
       - rid: 3511243270148325474
     - <GroupTitle>k__BackingField: Voice Streams & Calls
-      <FeatureFlagName>k__BackingField: 21
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 1
       <Modules>k__BackingField:
       - rid: 3511243270148325473
   <ControlsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Mouse
       <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
@@ -62,16 +67,19 @@ MonoBehaviour:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: 
       <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 4494877371389181952
       - rid: 1708279571579404288
       - rid: 1708279571579404289
+      - rid: 2659808844961546333
   references:
     version: 2
     RefIds:
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -91,6 +99,7 @@ MonoBehaviour:
     - rid: 1708279571579404289
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -108,9 +117,38 @@ MonoBehaviour:
           - All Chats
           defaultOptionIndex: 2
         <Feature>k__BackingField: 10
+    - rid: 2659808844961546333
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Translate Messages to
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - <sprite name=flag_gb> <sprite name=flag_us> English
+          - "<sprite name=flag_es> Espa\xF1ol"
+          - "<sprite name=flag_fr> Fran\xE7ais"
+          - <sprite name=flag_de> Deutsch
+          - "<sprite name=flag_ru> P\u0443\u0301\u0441\u0441\u043A\u0438\u0439"
+          - "<sprite name=flag_pt> <sprite name=flag_br> Portugu\xEAs"
+          - <sprite name=flag_it> Italiano
+          - "<sprite name=flag_zh> \u4E2D\u6587"
+          - "<sprite name=flag_jp> \u65E5\u672C\u8A9E"
+          - "<sprite name=flag_ko> \uD55C\uAD6D\uC5B4"
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 12
     - rid: 3126482891795070976
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -130,6 +168,7 @@ MonoBehaviour:
     - rid: 3126482891795070977
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -149,6 +188,7 @@ MonoBehaviour:
     - rid: 3511243270148325473
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -166,6 +206,7 @@ MonoBehaviour:
     - rid: 3511243270148325474
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 1
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -185,6 +226,7 @@ MonoBehaviour:
     - rid: 4494877371389181952
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -205,6 +247,7 @@ MonoBehaviour:
     - rid: 4916151837425664002
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
           m_SubObjectName: 
@@ -220,6 +263,7 @@ MonoBehaviour:
     - rid: 4975969656134959106
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -240,6 +284,7 @@ MonoBehaviour:
     - rid: 5015494041161695532
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -259,6 +304,7 @@ MonoBehaviour:
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -276,6 +322,7 @@ MonoBehaviour:
     - rid: 5242998342527483909
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -295,6 +342,7 @@ MonoBehaviour:
     - rid: 5242998342527483910
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -314,6 +362,7 @@ MonoBehaviour:
     - rid: 5242998342527483917
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -333,6 +382,7 @@ MonoBehaviour:
     - rid: 5242998342527483918
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -352,6 +402,7 @@ MonoBehaviour:
     - rid: 5242998342527483919
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -371,6 +422,7 @@ MonoBehaviour:
     - rid: 5242998342527483920
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
@@ -390,6 +442,7 @@ MonoBehaviour:
     - rid: 5242998500334764034
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -407,6 +460,7 @@ MonoBehaviour:
     - rid: 5242998503086751746
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 
@@ -427,6 +481,7 @@ MonoBehaviour:
     - rid: 5242998503086751747
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
+        <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
           m_SubObjectName: 

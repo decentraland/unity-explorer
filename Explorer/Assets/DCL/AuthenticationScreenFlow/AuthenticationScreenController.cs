@@ -8,6 +8,7 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
 using DCL.Profiles;
@@ -25,6 +26,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
+using Sentry;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -77,6 +79,9 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
+        private readonly SentryTransactionManager sentryTransactionManager;
+
+        private const string LOADING_TRANSACTION_NAME = "loading_process";
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -105,7 +110,8 @@ namespace DCL.AuthenticationScreenFlow
             World world,
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
-            AudioClipConfig backgroundMusic)
+            AudioClipConfig backgroundMusic,
+            SentryTransactionManager sentryTransactionManager)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -121,6 +127,7 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
+            this.sentryTransactionManager = sentryTransactionManager;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -154,7 +161,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
             viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-            
+
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildData.InstallSource}"
                 : $"{Application.version} - {buildData.InstallSource}";
@@ -217,30 +224,59 @@ namespace DCL.AuthenticationScreenFlow
 
                 try
                 {
+                    var identityValidationSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "IdentityValidation",
+                        SpanOperation = "auth.identity_validation",
+                        Depth = 1
+                    };
+                    sentryTransactionManager.StartSpan(identityValidationSpan);
+
                     if (IsUserAllowedToAccessToBeta(storedIdentity))
                     {
                         CurrentState.Value = AuthenticationStatus.FetchingProfileCached;
 
+                        var profileFetchSpan = new SpanData
+                        {
+                            TransactionName = LOADING_TRANSACTION_NAME,
+                            SpanName = "FetchProfileCached",
+                            SpanOperation = "auth.profile_fetch",
+                            Depth = 1
+                        };
+                        sentryTransactionManager.StartSpan(profileFetchSpan);
+
                         await FetchProfileAsync(loginCancellationToken.Token);
+
+                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                         CurrentState.Value = AuthenticationStatus.LoggedInCached;
                         SwitchState(ViewState.Finalize);
                     }
                     else
                     {
+                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
                         SwitchState(ViewState.Login);
                         ShowRestrictedUserPopup();
                     }
                 }
-                catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
+                catch (ProfileNotFoundException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
+                    SwitchState(ViewState.Login);
+                }
                 catch (Exception e)
                 {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     SwitchState(ViewState.Login);
                 }
             }
             else
+            {
+                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "No valid cached identity found - user needs to login");
                 SwitchState(ViewState.Login);
+            }
 
             if (splashScreen != null) // Splash screen is destroyed after first login
                 splashScreen.Hide();
@@ -296,51 +332,90 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance!.LoadingSpinner.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
+                    var web3AuthSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "Web3Authentication",
+                        SpanOperation = "auth.web3_login",
+                        Depth = 1
+                    };
+                    sentryTransactionManager.StartSpan(web3AuthSpan);
+
                     web3Authenticator.SetVerificationListener(ShowVerification);
 
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
 
                     web3Authenticator.SetVerificationListener(null);
 
+                    var identityValidationSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "IdentityValidation",
+                        SpanOperation = "auth.identity_validation",
+                        Depth = 1
+                    };
+                    sentryTransactionManager.StartSpan(identityValidationSpan);
+
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
                         CurrentState.Value = AuthenticationStatus.FetchingProfile;
                         SwitchState(ViewState.Loading);
 
+                        var profileFetchSpan = new SpanData
+                        {
+                            TransactionName = LOADING_TRANSACTION_NAME,
+                            SpanName = "FetchProfile",
+                            SpanOperation = "auth.profile_fetch",
+                            Depth = 1
+                        };
+                        sentryTransactionManager.StartSpan(profileFetchSpan);
+
                         await FetchProfileAsync(ct);
+
+                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                         CurrentState.Value = AuthenticationStatus.LoggedIn;
                         SwitchState(ViewState.Finalize);
                     }
                     else
                     {
+                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
                         SwitchState(ViewState.Login);
                         ShowRestrictedUserPopup();
                     }
                 }
-                catch (OperationCanceledException) { SwitchState(ViewState.Login); }
+                catch (OperationCanceledException)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                    SwitchState(ViewState.Login);
+                }
                 catch (SignatureExpiredException e)
                 {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     SwitchState(ViewState.Login);
                 }
                 catch (Web3SignatureException e)
                 {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     SwitchState(ViewState.Login);
                 }
                 catch (CodeVerificationException e)
                 {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     SwitchState(ViewState.Login);
                 }
                 catch (ProfileNotFoundException e)
                 {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     SwitchState(ViewState.Login);
                 }
                 catch (Exception e)
                 {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                     SwitchState(ViewState.Login);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ShowConnectionErrorPopup();
@@ -356,6 +431,15 @@ namespace DCL.AuthenticationScreenFlow
         {
             viewInstance!.VerificationCodeLabel.text = code.ToString();
             CurrentRequestID = requestID;
+
+            var verificationSpan = new SpanData
+            {
+                TransactionName = LOADING_TRANSACTION_NAME,
+                SpanName = "CodeVerification",
+                SpanOperation = "auth.code_verification",
+                Depth = 1
+            };
+            sentryTransactionManager.StartSpan(verificationSpan);
 
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();
@@ -588,7 +672,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
                 return;
-            
+
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
             InitMusicMute();
         }
@@ -599,21 +683,21 @@ namespace DCL.AuthenticationScreenFlow
 
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-            
+
             viewInstance?.MuteButton.SetIcon(isMuted);
         }
 
         private void OnMuteButtonClicked()
         {
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
-            
+
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
             else
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-            
+
             viewInstance?.MuteButton.SetIcon(!isMuted);
-            
+
             DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
         }
 

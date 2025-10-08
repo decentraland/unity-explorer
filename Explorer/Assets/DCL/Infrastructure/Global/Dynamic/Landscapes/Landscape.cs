@@ -23,7 +23,7 @@ namespace Global.Dynamic.Landscapes
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
-        public readonly Transform? Root;
+        public readonly Transform Root;
         public Action<ITerrain>? TerrainLoaded;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
@@ -70,14 +70,20 @@ namespace Global.Dynamic.Landscapes
             return EnumResult<LandscapeError>.SuccessResult();
         }
 
-        public float GetHeight(float x, float z) =>
-            CurrentTerrain.GetHeight(x, z);
+        public float GetHeight(float x, float z)
+        {
+            ITerrain terrain = CurrentTerrain;
+
+            return TerrainGenerator.GetParcelNoiseHeight(x, z, terrain.OccupancyMapData,
+                terrain.OccupancyMapSize, terrain.ParcelSize, terrain.OccupancyFloor,
+                terrain.MaxHeight);
+        }
 
         public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
         {
             ITerrain terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
 
-            return !terrain.Contains(parcel)
+            return terrain.TerrainModel == null || !terrain.TerrainModel.IsInsideBounds(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
         }

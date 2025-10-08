@@ -44,9 +44,11 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private Vector2Int decodePointer;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
+        private CancellationTokenSource fetchDataCt = new ();
         private ISceneOfInterestMarker? previousMarker;
 
         private bool isDataInitialized;
+        private bool isFetchingData;
         private bool isEnabled;
         private int zoomLevel = 1;
         private float baseZoom = 1;
@@ -70,9 +72,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             this.navmapBus = navmapBus;
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken)
-        {
-        }
+        public async UniTask InitializeAsync(CancellationToken cancellationToken) { }
 
         protected override void DisposeImpl()
         {
@@ -82,6 +82,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 marker.Dispose();
 
             markers.Clear();
+            fetchDataCt.SafeCancelAndDispose();
             isDataInitialized = false;
         }
 
@@ -89,15 +90,18 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         {
             marker.OnBecameVisible();
             GameObject? gameObject = marker.GetGameObject();
-            if(gameObject != null)
+
+            if (gameObject != null)
                 visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(ISceneOfInterestMarker marker)
         {
             GameObject? gameObject = marker.GetGameObject();
-            if(gameObject != null)
+
+            if (gameObject != null)
                 visibleMarkers.Remove(gameObject);
+
             marker.OnBecameInvisible();
         }
 
@@ -148,10 +152,23 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public async UniTask EnableAsync(CancellationToken cancellationToken)
         {
+            if (isFetchingData)
+                await UniTask.WaitWhile(() => isFetchingData, cancellationToken: cancellationToken);
+
             if (!isDataInitialized)
             {
-                await LoadDataAsync();
-                isDataInitialized = true;
+                try
+                {
+                    isFetchingData = true;
+                    await LoadDataAsync();
+                    isDataInitialized = true;
+                }
+                finally { isFetchingData = false; }
+
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/3403
+                // Since data loading is decoupled from the cancellation token argument
+                // we need to ensure that the operation still on course before showing the markers
+                cancellationToken.ThrowIfCancellationRequested();
             }
 
             foreach (ISceneOfInterestMarker marker in markers.Values)
@@ -167,9 +184,13 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
             async UniTask LoadDataAsync()
             {
-                IReadOnlyList<string> pointsOfInterestCoordsAsync =
-                    await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken)
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/3403
+                // We need to decouple the fetching from the passed cancellation token because sometimes it is canceled by an unknown reason
+                // We need to ensure the data is loaded by passing an internal cancellation token that is only canceled on disposal
+                IReadOnlyList<string>? pointsOfInterestCoordsAsync =
+                    await placesAPIService.GetPointsOfInterestCoordsAsync(fetchDataCt.Token)!
                                           .SuppressAnyExceptionWithFallback(Array.Empty<string>(), ReportCategory.UI);
+
                 vectorCoords.Clear();
 
                 foreach (string? s in pointsOfInterestCoordsAsync)
@@ -179,7 +200,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 }
 
                 using var placesByCoordsListAsync =
-                    await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true)
+                    await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, fetchDataCt.Token, true)
                                           .SuppressAnyExceptionWithFallback(EMPTY_PLACES, ReportCategory.UI);
 
                 // Should we clear & dispose the markers before filling it?
@@ -208,6 +229,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
         {
             mapMarker = null;
+
             if (clusterController.HighlightObject(gameObject))
                 return true;
 

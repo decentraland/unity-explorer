@@ -8,13 +8,13 @@ using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Pool;
 using UnityEngine.Rendering;
 using static Unity.Mathematics.math;
 
@@ -34,7 +34,7 @@ namespace DCL.Landscape.Systems
         private readonly List<ParcelData> freeParcels;
         private readonly List<ParcelData> usedParcels;
         private readonly short[] indexBuffer;
-        private readonly ObjectPool<GameObject>?[] treePools;
+        private readonly GameObjectPool<Transform>?[] treePools;
 
         private static readonly VertexAttributeDescriptor[] VERTEX_LAYOUT =
         {
@@ -56,7 +56,7 @@ namespace DCL.Landscape.Systems
             usedParcels = new List<ParcelData>();
             indexBuffer = CreateIndexBuffer(landscapeData.terrainData.parcelSize);
 
-            treePools = new ObjectPool<GameObject>?[
+            treePools = new GameObjectPool<Transform>?[
                 landscapeData.terrainData.treeAssets.Length];
 
             LandscapeAsset[] treePrototypes = landscapeData.terrainData.treeAssets;
@@ -68,8 +68,14 @@ namespace DCL.Landscape.Systems
                 if (collider == null)
                     continue;
 
-                treePools[prototypeIndex] = new ObjectPool<GameObject>(
-                    createFunc: () =>
+                treePools[prototypeIndex] = new GameObjectPool<Transform>(
+#if UNITY_EDITOR
+                    landscape.Root,
+#else
+                    null,
+#endif
+
+                    creationHandler: () =>
                     {
                         GameObject tree = Object.Instantiate(collider
 #if UNITY_EDITOR
@@ -78,11 +84,8 @@ namespace DCL.Landscape.Systems
                         );
 
                         tree.name = collider.name;
-                        return tree;
-                    },
-                    actionOnGet: static tree => tree.SetActive(true),
-                    actionOnRelease: static tree => tree.SetActive(false),
-                    actionOnDestroy: static tree => Object.Destroy(tree));
+                        return tree.transform;
+                    });
             }
         }
 
@@ -217,7 +220,7 @@ namespace DCL.Landscape.Systems
                             parcel.y * landscapeData.terrainData.parcelSize);
 
                         foreach (TreeInstance tree in parcelData.Trees)
-                            treePools[tree.PrototypeIndex]!.Release(tree.GameObject);
+                            treePools[tree.PrototypeIndex]!.Release(tree.Transform);
 
                         parcelData.Trees.Clear();
                         InstantiateTrees(int2(parcel.x, parcel.y), parcelData);
@@ -300,6 +303,7 @@ namespace DCL.Landscape.Systems
             mesh.SetSubMesh(0, new SubMeshDescriptor(0, indexBuffer.Length), FLAGS);
 
             ITerrain terrain = landscape.CurrentTerrain;
+
             Vector3 parcelMax = new Vector3(landscapeData.terrainData.parcelSize,
                 terrain.MaxHeight, landscapeData.terrainData.parcelSize);
 
@@ -324,12 +328,11 @@ namespace DCL.Landscape.Systems
                 var tree = new TreeInstance()
                 {
                     PrototypeIndex = instance.PrototypeIndex,
-                    GameObject = pool.Get()
+                    Transform = pool.Get()
                 };
 
-                Transform treeTransform = tree.GameObject.transform;
-                treeTransform.SetPositionAndRotation(position, rotation);
-                treeTransform.localScale = scale;
+                tree.Transform.SetPositionAndRotation(position, rotation);
+                tree.Transform.localScale = scale;
 
                 parcelData.Trees.Add(tree);
             }
@@ -347,7 +350,7 @@ namespace DCL.Landscape.Systems
                 parcel.Parcel = mordor;
 
                 foreach (TreeInstance tree in parcel.Trees)
-                    treePools[tree.PrototypeIndex]!.Release(tree.GameObject);
+                    treePools[tree.PrototypeIndex]!.Release(tree.Transform);
 
                 parcel.Trees.Clear();
             }
@@ -379,7 +382,7 @@ namespace DCL.Landscape.Systems
         private struct TreeInstance
         {
             public int PrototypeIndex;
-            public GameObject GameObject;
+            public Transform Transform;
         }
     }
 }

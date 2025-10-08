@@ -8,8 +8,8 @@ namespace DCL.VoiceChat
     {
         public string CurrentTargetWallet { get; }
         public event Action<PrivateVoiceChatUpdate>? PrivateVoiceChatUpdateReceived;
-        public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; }
-        public IReadonlyReactiveProperty<string> CallId { get; }
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; } = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
+        public IReadonlyReactiveProperty<string> CallId { get; } = new ReactiveProperty<string>(string.Empty);
         public string ConnectionUrl { get; }
 
         public void StartCall(string target) { }
