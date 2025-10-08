@@ -25,6 +25,7 @@ namespace DCL.VoiceChat.Services
         private const string REJECT_SPEAKER_COMMUNITY_VOICE_CHAT = "RejectSpeakRequestInCommunityVoiceChat";
         private const string DEMOTE_FROM_SPEAKER_COMMUNITY_VOICE_CHAT = "DemoteSpeakerInCommunityVoiceChat";
         private const string KICK_FROM_COMMUNITY_VOICE_CHAT = "KickPlayerFromCommunityVoiceChat";
+        private const string MUTE_SPEAKER_FROM_COMMUNITY_VOICE_CHAT = "MuteSpeakerFromCommunityVoiceChat";
         private const string END_COMMUNITY_VOICE_CHAT = "EndCommunityVoiceChat";
         private const string SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES = "SubscribeToCommunityVoiceChatUpdates";
 
@@ -251,6 +252,26 @@ namespace DCL.VoiceChat.Services
                                                                                        .CallUnaryProcedure<KickPlayerFromCommunityVoiceChatResponse>(KICK_FROM_COMMUNITY_VOICE_CHAT, payload)
                                                                                        .AttachExternalCancellation(ct)
                                                                                        .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<MuteSpeakerFromCommunityVoiceChatResponse> MuteSpeakerFromCommunityVoiceChatAsync(string communityId, string userAddress, bool muted, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            var payload = new MuteSpeakerFromCommunityVoiceChatPayload()
+            {
+                CommunityId = communityId,
+                UserAddress = userAddress,
+                Muted = muted
+            };
+
+            MuteSpeakerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                                        .CallUnaryProcedure<MuteSpeakerFromCommunityVoiceChatResponse>(MUTE_SPEAKER_FROM_COMMUNITY_VOICE_CHAT, payload)
+                                                                                        .AttachExternalCancellation(ct)
+                                                                                        .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }

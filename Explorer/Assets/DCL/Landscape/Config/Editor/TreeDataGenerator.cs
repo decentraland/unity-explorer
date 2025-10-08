@@ -11,13 +11,15 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
+using static Unity.Mathematics.math;
 
 namespace DCL.Landscape.Config.Editor
 {
     public sealed class TreeDataGenerator : ScriptableWizard
     {
         [field: SerializeField] private TerrainGenerationData? terrainData { get; set; }
-        [field: SerializeField] private int terrainSize { get; set; } = 318;
+        [field: SerializeField] private int2 minParcel { get; set; } = int2(-152, -152);
+        [field: SerializeField] private int2 maxParcel { get; set; } = int2(165, 160);
         [field: SerializeField] private string treeFilePath { get; set; } = "Trees.bin";
 
         [MenuItem("Decentraland/Generate Tree Data")]
@@ -36,8 +38,7 @@ namespace DCL.Landscape.Config.Editor
                 if (terrainData == null)
                     return;
 
-                int2 minParcel = terrainSize / -2;
-                int2 maxParcel = -minParcel - 1;
+                int terrainSize = AdjustTerrainSize();
                 ownedParcels = new NativeParallelHashSet<int2>(0, Allocator.TempJob);
 
                 TerrainGenerationUtils.ExtractEmptyParcels(minParcel, maxParcel, ref emptyParcels,
@@ -89,5 +90,15 @@ namespace DCL.Landscape.Config.Editor
 
         private void OnWizardUpdate() =>
             isValid = terrainData != null;
+
+        /// <summary>Called code assumes width == height.</summary>
+        private int AdjustTerrainSize()
+        {
+            int2 halfSize = (maxParcel - minParcel + 1) / 2;
+            int2 center = minParcel + halfSize;
+            minParcel = center - halfSize;
+            maxParcel = center + halfSize - 1;
+            return cmax(halfSize) * 2;
+        }
     }
 }

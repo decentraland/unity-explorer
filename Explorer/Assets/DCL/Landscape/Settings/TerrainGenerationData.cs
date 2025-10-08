@@ -17,6 +17,7 @@ namespace DCL.Landscape.Settings
         public float terrainHoleEdgeSize;
         public float minHeight = 1f;
         public float pondDepth = 5;
+        public float stepHeight = 1.8f;
 
         [Min(0)]
         public int borderPadding = 2;
