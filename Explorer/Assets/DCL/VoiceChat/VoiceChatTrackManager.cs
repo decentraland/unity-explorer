@@ -16,12 +16,10 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Ownership;
 using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
@@ -37,6 +35,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly SemaphoreSlim semaphoreSlimMicrophone = new (1, 1);
 
         private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;
@@ -68,6 +67,8 @@ namespace DCL.VoiceChat
             StopListeningToRemoteTracks();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+
+            semaphoreSlimMicrophone.Dispose();
         }
 
         public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output)
@@ -81,6 +82,8 @@ namespace DCL.VoiceChat
         /// </summary>
         public async UniTaskVoid PublishLocalTrackAsync(CancellationToken ct)
         {
+            using var _ = await SlimScope.LockAsync(semaphoreSlimMicrophone);
+
             if (microphoneTrack.HasValue)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track already published");
@@ -305,6 +308,27 @@ namespace DCL.VoiceChat
             {
                 source.Dispose(out var inner);
                 inner?.Dispose();
+            }
+        }
+
+        private readonly struct SlimScope : IDisposable
+        {
+            private readonly SemaphoreSlim slim;
+
+            private SlimScope(SemaphoreSlim slim)
+            {
+                this.slim = slim;
+            }
+
+            public static async UniTask<SlimScope> LockAsync(SemaphoreSlim slim)
+            {
+                await slim.WaitAsync();
+                return new SlimScope(slim);
+            }
+
+            public void Dispose()
+            {
+                slim.Release();
             }
         }
     }
