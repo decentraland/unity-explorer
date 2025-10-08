@@ -7,6 +7,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using Utility;
 
@@ -14,6 +15,8 @@ namespace ECS.SceneLifeCycle
 {
     public class ECSBannedScene
     {
+        private static readonly TimeSpan DISPOSE_SCENE_TIMEOUT = TimeSpan.FromSeconds(10);
+
         private readonly IScenesCache scenesCache;
         private readonly World world;
         private readonly Entity playerEntity;
@@ -46,7 +49,8 @@ namespace ECS.SceneLifeCycle
             world.Add<DeleteEntityIntention>(foundEntity);
             world.Add<BannedSceneComponent>(foundEntity);
 
-            await UniTask.WaitUntil(() => sceneInCache.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct);
+            await UniTask.WaitUntil(() => sceneInCache.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct)
+                         .Timeout(DISPOSE_SCENE_TIMEOUT);
 
             if (world.IsAlive(foundEntity))
             {
