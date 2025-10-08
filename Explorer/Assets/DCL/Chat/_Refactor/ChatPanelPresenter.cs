@@ -104,7 +104,6 @@ namespace DCL.Chat
                 chatHistory,
                 currentChannelService,
                 communityDataService,
-                profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
                 commandRegistry.OpenConversation,

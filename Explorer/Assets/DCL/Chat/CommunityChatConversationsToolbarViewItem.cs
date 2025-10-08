@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.Communities;
 using DCL.Utilities;
@@ -46,6 +47,7 @@ namespace DCL.Chat
 
 
             connectionStatusIndicatorContainer.SetActive(communityUpdates.Value);
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Setup Community Item -> is Streaming: {communityUpdates.Value} - current community ID: {communityCallId.Value}");
             if (!communityUpdates.Value) return;
             iconImage.sprite = communityCallId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase)? listeningToCallIcon : hasCallIcon;
         }
@@ -53,6 +55,7 @@ namespace DCL.Chat
         private void OnCommunityCallIdChanged(string currentCallId)
         {
             bool isCurrentCommunity = currentCallId.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase);
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"On Community Call ID Updated -> Is current: {isCurrentCommunity}");
             if (isCurrentCommunity)
                 connectionStatusIndicatorContainer.SetActive(true);
 
@@ -61,6 +64,7 @@ namespace DCL.Chat
 
         private void OnCommunityStateUpdated(bool hasActiveCall)
         {
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"On Community State Updated -> has call: {hasActiveCall}");
             connectionStatusIndicatorContainer.SetActive(hasActiveCall);
             if (!hasActiveCall) return;
             if (currentCommunityCallId != null)

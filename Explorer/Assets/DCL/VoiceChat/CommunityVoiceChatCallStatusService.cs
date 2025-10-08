@@ -51,10 +51,9 @@ namespace DCL.VoiceChat
 
             cts = cts.SafeRestart();
 
-            //Setting starting call status to instantly disable call button
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
 
-            // Track that we started this community call
+            // Track that WE started this community call
             locallyStartedCommunityId = communityId;
 
             StartCallAsync(communityId, cts.Token).Forget();
@@ -329,8 +328,6 @@ namespace DCL.VoiceChat
         public void ResetVoiceChatData()
         {
             SetCallId(string.Empty);
-            communityVoiceChatCalls.Clear();
-            activeCommunityVoiceChats.Clear();
             locallyStartedCommunityId = null;
         }
 
@@ -354,7 +351,7 @@ namespace DCL.VoiceChat
                 activeCommunityVoiceChats.Remove(communityUpdate.CommunityId);
 
                 if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
-                    existingData.Value = false;
+                    existingData.UpdateValue(false);
 
                 // Clear locally started community ID if this was the one we started
                 if (communityUpdate.CommunityId == locallyStartedCommunityId)
@@ -460,12 +457,8 @@ namespace DCL.VoiceChat
             voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;
         }
 
-        public bool HasActiveVoiceChatCall(string communityId)
-        {
-            if (string.IsNullOrEmpty(communityId)) { return false; }
-
-            return communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? callData) && callData.Value;
-        }
+        public bool HasActiveVoiceChatCall(string communityId) =>
+            !string.IsNullOrEmpty(communityId) && activeCommunityVoiceChats.ContainsKey(communityId);
 
         public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId)
         {
