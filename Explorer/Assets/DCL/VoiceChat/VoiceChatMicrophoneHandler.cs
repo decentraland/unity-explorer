@@ -15,8 +15,9 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly VoiceChatConfiguration voiceChatConfiguration;
+        private readonly ICommunityCallOrchestrator? orchestrator;
 
-        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
+        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty = new (false);
         private float buttonPressStartTime;
         private bool hasIntentionToDisable;
 
@@ -24,10 +25,10 @@ namespace DCL.VoiceChat
 
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
-        public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration)
+        public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration, ICommunityCallOrchestrator orchestrator)
         {
             this.voiceChatConfiguration = voiceChatConfiguration;
-            isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
+            this.orchestrator = orchestrator;
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
@@ -86,7 +87,9 @@ namespace DCL.VoiceChat
             {
                 MicrophoneRtcAudioSource source = weakMicrophoneSource.Value;
                 source.Toggle();
-                isMicrophoneEnabledProperty.Value = source.IsRecording;
+                bool newState = source.IsRecording;
+                isMicrophoneEnabledProperty.Value = newState;
+                NotifyMicrophoneStateChange(newState);
             }
         }
 
@@ -100,6 +103,7 @@ namespace DCL.VoiceChat
             Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
             isMicrophoneEnabledProperty.Value = true;
+            NotifyMicrophoneStateChange(true);
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
@@ -112,20 +116,22 @@ namespace DCL.VoiceChat
             }
 
             DisableMicrophoneInternal();
-        }
+            return;
 
-        private async UniTaskVoid DisableMicrophoneAsync()
-        {
-            await UniTask.SwitchToMainThread();
-            DisableMicrophoneInternal();
-        }
+            async UniTaskVoid DisableMicrophoneAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                DisableMicrophoneInternal();
+            }
 
-        private void DisableMicrophoneInternal()
-        {
-            Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
-            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
-            isMicrophoneEnabledProperty.Value = false;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
+            void DisableMicrophoneInternal()
+            {
+                Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
+                if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
+                isMicrophoneEnabledProperty.Value = false;
+                NotifyMicrophoneStateChange(false);
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
+            }
         }
 
         private void OnMicrophoneChanged(MicrophoneSelection microphoneName)
@@ -175,6 +181,23 @@ namespace DCL.VoiceChat
         {
             DisableMicrophone();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call");
+        }
+
+        private void NotifyMicrophoneStateChange(bool isEnabled)
+        {
+            if (orchestrator != null &&
+                orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
+                orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value)
+            {
+                string localParticipantId = orchestrator.ParticipantsStateService.LocalParticipantId;
+
+                if (!string.IsNullOrEmpty(localParticipantId))
+                {
+                    // isEnabled = true means microphone is unmuted, so we want to unmute the speaker
+                    // isEnabled = false means microphone is muted, so we want to mute the speaker
+                    orchestrator.NotifyMuteSpeakerInCurrentCall(localParticipantId, !isEnabled);
+                }
+            }
         }
     }
 }

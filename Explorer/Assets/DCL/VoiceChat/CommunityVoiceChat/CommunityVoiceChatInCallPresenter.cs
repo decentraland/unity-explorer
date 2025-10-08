@@ -10,7 +10,7 @@ using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class CommunityVoiceChatInCallController : IDisposable
+    public class CommunityVoiceChatInCallPresenter : IDisposable
     {
         private const int MAX_VISIBLE_SPEAKERS = 8;
 
@@ -29,7 +29,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct = new();
 
-        public CommunityVoiceChatInCallController(
+        public CommunityVoiceChatInCallPresenter(
             CommunityVoiceChatInCallView view,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
@@ -100,12 +100,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
         }
 
-        public void AddSpeaker(PlayerEntryView entryView)
-        {
-            entryView.transform.parent = view.SpeakersParent;
-            entryView.transform.localScale = Vector3.one;
-        }
-
         public void RefreshCounters(int updatedSpeakersCount, int raisedHandsCount, int totalParticipantCount)
         {
             speakersCount = updatedSpeakersCount;
@@ -115,7 +109,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.SetScrollAndMasksVisibility(updatedSpeakersCount > MAX_VISIBLE_SPEAKERS);
         }
 
-        public void ShowRaiseHandTooltip(string playerName)
+        public void ShowRaiseHandTooltip(string? playerName)
         {
             ct = ct.SafeRestart();
             view.ShowRaiseHandTooltipAndWaitAsync(playerName, ct.Token).Forget();
