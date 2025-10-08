@@ -17,7 +17,8 @@ namespace DCL.Ipfs
         public bool SupportInitialSceneState()
         {
             //TODO (JUANI): FOr now, we hardcoded it only for GP. We will later check it with manifest
-            return id.Equals("bafkreiggfsyopcam5lrmiiimcqatdrjf4cjtmzuwjf4tgkb5uiq3rvnitq");
+            return id.Equals("bafkreiafug5zsmahj3g3ubm5xphloombv5a7ucbnzvqkphaervew2famz4") ||
+                   id.Equals("bafkreihid75pcydmw5dkuyh37ioo5fwrdenrc6tkivbzzgx3c2npc7dzku");
         }
     }
 }

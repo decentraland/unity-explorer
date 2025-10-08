@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash("GP_staticscene_LZMA_StaticSceneDescriptor"),
+                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}"),
                     PartitionComponent.TOP_PRIORITY);
             }
 
@@ -62,9 +62,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             return unsuportedStaticSceneAB;
         }
 
-        public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache)
+        public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, string sceneID)
         {
             InitialSceneStateDescriptor suportedStaticSceneAB = new InitialSceneStateDescriptor();
+            suportedStaticSceneAB.SceneID = sceneID;
             suportedStaticSceneAB.AssetBundlePromise = AssetBundlePromise.NULL;
             suportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
             suportedStaticSceneAB.AssetBundleData = new ();

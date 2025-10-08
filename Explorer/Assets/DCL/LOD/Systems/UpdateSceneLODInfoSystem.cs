@@ -74,7 +74,7 @@ namespace DCL.LOD.Systems
                 initialSceneStateDescriptor.IsReady();
                 //TODO (JUANI) : Duplicate promise that will point to the same place
                 sceneLODInfo.CurrentLODPromise = Promise.Create(World,
-                    GetAssetBundleIntention.FromHash("GP_staticscene_LZMA_StaticSceneDescriptor"),
+                    GetAssetBundleIntention.FromHash($"staticscene_{sceneDefinitionComponent.Definition.id}"),
                     PartitionComponent.TOP_PRIORITY);
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;

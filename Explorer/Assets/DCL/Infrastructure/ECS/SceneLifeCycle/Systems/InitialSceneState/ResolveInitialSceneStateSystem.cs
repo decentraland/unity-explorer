@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
             if (sceneDefinitionComponent.Definition.SupportInitialSceneState())
             {
                 UnityEngine.Debug.Log($"JUANI TESTING INITIAL SCENE STARTED {UnityEngine.Time.frameCount}");
-                World.Add(entity, InitialSceneStateDescriptor.CreateSupported(World, assetsCache));
+                World.Add(entity, InitialSceneStateDescriptor.CreateSupported(World, assetsCache, sceneDefinitionComponent.Definition.id));
 
             }
             else
