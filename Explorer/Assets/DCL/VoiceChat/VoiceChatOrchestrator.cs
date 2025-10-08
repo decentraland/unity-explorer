@@ -133,7 +133,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid HangUpAndStartCallAsync()
             {
                 HangUp();
-                await UniTask.Delay(2000, cancellationToken: joinCallCts.Token);
+                await UniTask.Delay(1000, cancellationToken: joinCallCts.Token);
 
                 if (!joinCallCts.IsCancellationRequested)
                 {
