@@ -37,6 +37,8 @@ namespace ECS.Unity.AvatarShape.Systems
     [ThrottlingEnabled]
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private const string SCENE_EMOTE_NAMING = "_emote.glb";
+
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> globalTransformPool;
         private readonly ISceneData sceneData;
@@ -124,6 +126,14 @@ namespace ECS.Unity.AvatarShape.Systems
             // Scene emote files have to be loaded before the CharacterEmoteIntent can be used...
             if (localSceneDevelopment)
             {
+                // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
+                // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
+                if (!emoteId.ToLower().EndsWith(SCENE_EMOTE_NAMING))
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE, $"'{emoteId}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
+                    return;
+                }
+
                 if (sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue)
                     sdkAvatarShapeComponent.LocalSceneEmotePromise.Value.ForgetLoading(globalWorld);
 

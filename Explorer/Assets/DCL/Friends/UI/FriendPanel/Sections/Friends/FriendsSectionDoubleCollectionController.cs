@@ -31,7 +31,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private CancellationTokenSource openPassportCts = new ();
         private bool elementClicked;
         private CancellationTokenSource? popupCts;
-        private UniTaskCompletionSource contextMenuTask = new ();
 
         internal event Action<string>? OnlineFriendClicked;
         internal event Action<string, Vector2Int>? JumpInClicked;
@@ -117,7 +116,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OnContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
-            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
+            popupCts = popupCts.SafeRestart();
             elementView.CanUnHover = false;
 
             bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.Address) != OnlineStatus.OFFLINE;
@@ -125,14 +124,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             if (isFriendOnline)
                 OnlineFriendClicked?.Invoke(friendProfile.Address);
 
-            popupCts = popupCts.SafeRestart();
-            contextMenuTask.TrySetResult();
-
-            contextMenuTask = new UniTaskCompletionSource();
-            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
-
             ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
-                buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: menuTask, onHide: () => elementView.CanUnHover = true
+                buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: panelLifecycleTask!.Task, onHide: () => elementView.CanUnHover = true
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
@@ -149,7 +142,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
         }
     }

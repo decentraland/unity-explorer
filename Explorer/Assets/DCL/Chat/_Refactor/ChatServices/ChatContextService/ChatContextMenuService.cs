@@ -9,7 +9,6 @@ namespace DCL.Chat.ChatServices.ChatContextService
 {
     public class ChatContextMenuService : IDisposable
     {
-
         private readonly IMVCManagerMenusAccessFacade mvcFacade;
         private readonly ChatClickDetectionService chatClickDetectionService;
 

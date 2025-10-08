@@ -1,7 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat.Permissions;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -10,12 +13,16 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
+using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Ownership;
+using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
 {
@@ -35,6 +42,8 @@ namespace DCL.VoiceChat
         private bool isDisposed;
 
         private MicrophoneTrack? microphoneTrack;
+
+        public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
 
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
@@ -62,11 +71,16 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
+        public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output)
+        {
+            voiceChatRoom.AudioStreams.ListInfo(output);
+        }
+
         /// <summary>
         ///     Publishes the local microphone track to the room.
         ///     Creates and starts the OptimizedMonoRtcAudioSource if needed.
         /// </summary>
-        public void PublishLocalTrack(CancellationToken ct)
+        public async UniTaskVoid PublishLocalTrackAsync(CancellationToken ct)
         {
             if (microphoneTrack.HasValue)
             {
@@ -78,15 +92,33 @@ namespace DCL.VoiceChat
             if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
 
+#if UNITY_STANDALONE_OSX
+            bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
+
+            if (hasPermissions == false)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, "Microphone permissions were not granted by user, cannot publish local track");
+                return;
+            }
+#endif
+
             try
             {
+                Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
+
+                if (reachable.Success == false)
+                {
+                    NotificationsBus.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
+                    throw new Exception(reachable.ErrorMessage!);
+                }
+
                 Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
-                    microphoneHandler.CurrentMicrophoneName,
+                    reachable.Value,
                     (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
                     configuration.microphonePlaybackToSpeakers
                 );
 
-                if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
+                if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
                 var rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
