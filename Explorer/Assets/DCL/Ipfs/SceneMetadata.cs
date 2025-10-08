@@ -19,6 +19,14 @@ namespace DCL.Ipfs
         public WorldConfiguration? worldConfiguration;
         public SkyboxConfigData? skyboxConfig;
 
+        public float? FixedTime => this.skyboxConfig?.fixedTime
+                                   ?? this.worldConfiguration?.SkyboxConfig?.fixedTime;
+
+        public TransitionMode GetTransitionModeOrDefault() =>
+            this.skyboxConfig?.transitionMode
+            ?? this.worldConfiguration?.SkyboxConfig?.transitionMode
+            ?? TransitionMode.FORWARD;
+
         /// <summary>
         /// Configuration specific to Decentraland Worlds (Realms).
         /// NOTE: more about the setup: https://docs.decentraland.org/creator/worlds/about/

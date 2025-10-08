@@ -4,16 +4,15 @@ namespace DCL.SkyBox
     {
         private readonly SkyboxSettingsAsset settings;
         private readonly InterpolateTimeOfDayState transition;
-        private float refreshAccumulatedTime;
-        private float globalTimeOfDay;
-        private bool isTransitioning;
+        private readonly SkyboxTimeProgressionService timeProgressionService;
 
         public GlobalTimeState(SkyboxSettingsAsset settings,
-            InterpolateTimeOfDayState transition)
+            InterpolateTimeOfDayState transition,
+            SkyboxTimeProgressionService timeProgressionService)
         {
             this.settings = settings;
             this.transition = transition;
-            globalTimeOfDay = settings.TimeOfDayNormalized;
+            this.timeProgressionService = timeProgressionService;
         }
 
         public bool Applies() =>
@@ -22,40 +21,13 @@ namespace DCL.SkyBox
 
         public void Enter()
         {
-            refreshAccumulatedTime = 0f;
-            settings.TargetTimeOfDayNormalized = globalTimeOfDay;
             settings.IsDayCycleEnabled = true;
-            isTransitioning = true;
-
+            timeProgressionService.Reset();
             transition.Enter();
         }
 
-        public void Update(float dt)
-        {
-            if (isTransitioning)
-            {
-                if (transition.Applies())
-                {
-                    transition.Update(dt);
-                    return;
-                }
-
-                isTransitioning = false;
-            }
-
-            globalTimeOfDay += dt * settings.FullCycleSpeed;
-
-            while (globalTimeOfDay >= 1f)
-                globalTimeOfDay -= 1f;
-
-            refreshAccumulatedTime += dt;
-
-            if (refreshAccumulatedTime >= settings.RefreshInterval)
-            {
-                settings.TimeOfDayNormalized = globalTimeOfDay;
-                refreshAccumulatedTime = 0f;
-            }
-        }
+        public void Update(float dt) =>
+            timeProgressionService.UpdateTimeProgression(dt);
 
         public void Exit()
         {

@@ -20,6 +20,7 @@ namespace DCL.UI.Skybox
 
         private CancellationTokenSource skyboxMenuCts = new ();
         private bool? pendingInteractableState;
+        private bool isRestrictedByScene;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
@@ -77,12 +78,8 @@ namespace DCL.UI.Skybox
             OnTimeOfDayChanged(skyboxSettings.TimeOfDayNormalized);
         }
 
-        private void OnDayCycleChanged(bool isEnabled)
-        {
+        private void OnDayCycleChanged(bool isEnabled) =>
             viewInstance!.TimeProgressionToggle.isOn = isEnabled;
-            viewInstance.TopSliderGroup.enabled = isEnabled;
-            viewInstance.TextSliderGroup.enabled = isEnabled;
-        }
 
         private void OnTimeSliderValueChanged(float sliderValue)
         {
@@ -93,13 +90,13 @@ namespace DCL.UI.Skybox
 
         private void OnTimeProgressionToggleChanged(bool isOn)
         {
-            skyboxSettings.IsUIControlled = !isOn;
+            if (isRestrictedByScene) return;
 
-            if (skyboxSettings.IsUIControlled)
-                skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
-
-            viewInstance!.TopSliderGroup.enabled = isOn;
+            viewInstance!.TimeSlider.interactable = !isOn;
+            viewInstance.TopSliderGroup.enabled = isOn;
             viewInstance.TextSliderGroup.enabled = isOn;
+
+            skyboxSettings.IsUIControlled = !isOn;
         }
 
         protected override void OnBeforeViewShow()
@@ -131,8 +128,11 @@ namespace DCL.UI.Skybox
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
         {
-            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_UI_BLOCKED)
-                SetInteractable(restriction.Action != SceneRestrictionsAction.APPLIED);
+            if (restriction.Type != SceneRestrictions.SKYBOX_TIME_UI_BLOCKED) return;
+
+            isRestrictedByScene = restriction.Action == SceneRestrictionsAction.APPLIED;
+
+            SetInteractable(!isRestrictedByScene);
         }
 
         private void SetInteractable(bool isInteractable)
@@ -143,13 +143,12 @@ namespace DCL.UI.Skybox
                 return;
             }
 
-            viewInstance.TimeSlider.interactable = isInteractable;
             viewInstance.TimeProgressionToggle.interactable = isInteractable;
+            viewInstance.TimeProgressionGroup.enabled = !isInteractable; // when enabled is visually greyed out
 
-            // When enabled these groups display controls as "disabled"
-            viewInstance.TimeProgressionGroup.enabled = !isInteractable;
-            viewInstance.TopSliderGroup.enabled = !isInteractable;
-            viewInstance.TextSliderGroup.enabled = !isInteractable;
+            viewInstance.TimeSlider.interactable = isInteractable && skyboxSettings.IsUIControlled;
+            viewInstance.TopSliderGroup.enabled = !isInteractable || !skyboxSettings.IsUIControlled; // when enabled is visually greyed out
+            viewInstance.TextSliderGroup.enabled = !isInteractable || !skyboxSettings.IsUIControlled; // when enabled is visually greyed out
         }
     }
 }

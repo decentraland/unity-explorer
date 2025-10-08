@@ -12,68 +12,75 @@ namespace DCL.SkyBox
         private readonly SkyboxSettingsAsset settings;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly InterpolateTimeOfDayState transition;
+        private readonly SkyboxTimeProgressionService timeProgressionService;
 
         public SceneMetadataState(IScenesCache scenes,
             SkyboxSettingsAsset settings,
             ISceneRestrictionBusController sceneRestrictionController,
-            InterpolateTimeOfDayState transition)
+            InterpolateTimeOfDayState transition,
+            SkyboxTimeProgressionService timeProgressionService)
         {
             this.scenes = scenes;
             this.settings = settings;
             this.sceneRestrictionController = sceneRestrictionController;
             this.transition = transition;
+            this.timeProgressionService = timeProgressionService;
         }
 
         public bool Applies()
         {
-            SceneMetadata? metadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+            SceneMetadata? metadata = GetCurrentSceneMetadata();
 
             if (metadata == null) return false;
 
-            return GetConfigFixedTime(metadata) != null;
+            return metadata.skyboxConfig != null || metadata.worldConfiguration?.SkyboxConfig != null;
         }
 
         public void Enter()
         {
-            transition.Enter();
+            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
 
-            SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+            SceneMetadata? sceneMetadata = GetCurrentSceneMetadata();
+            if (sceneMetadata == null) return;
+            settings.IsDayCycleEnabled = sceneMetadata.FixedTime == null;
 
-            if (sceneMetadata != null)
+            if (settings.IsDayCycleEnabled)
+                timeProgressionService.Reset();
+            else
                 UpdateSkyboxSettings(sceneMetadata);
 
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+            transition.Enter();
         }
 
         public void Exit()
         {
-            transition.Exit();
             sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+            transition.Exit();
         }
 
         public void Update(float dt)
         {
-            transition.Update(dt);
+            SceneMetadata? sceneMetadata = GetCurrentSceneMetadata();
+            if (sceneMetadata == null) return;
+            settings.IsDayCycleEnabled = sceneMetadata.FixedTime == null;
+
+            if (settings.IsDayCycleEnabled)
+                timeProgressionService.UpdateTimeProgression(dt);
+            else
+                transition.Update(dt);
         }
 
         private void UpdateSkyboxSettings(SceneMetadata metadata)
         {
-            // Scene config overrides world config
-            float? time = GetConfigFixedTime(metadata);
-            TransitionMode transitionMode = GetConfigTransitionModeOrDefault(metadata);
+            settings.TransitionMode = metadata.GetTransitionModeOrDefault();
 
-            settings.TransitionMode = transitionMode;
+            float? time = metadata.FixedTime;
 
             if (time.HasValue)
                 settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time.Value);
         }
 
-        private float? GetConfigFixedTime(SceneMetadata sceneMetadata) =>
-            sceneMetadata.skyboxConfig?.fixedTime ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.fixedTime;
-
-        private TransitionMode GetConfigTransitionModeOrDefault(SceneMetadata sceneMetadata) =>
-            sceneMetadata.skyboxConfig?.transitionMode
-            ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.transitionMode
-            ?? TransitionMode.FORWARD;
+        private SceneMetadata? GetCurrentSceneMetadata() =>
+            scenes.CurrentScene?.SceneData?.SceneEntityDefinition?.metadata;
     }
 }

@@ -27,14 +27,15 @@ namespace DCL.SkyBox
             SkyboxRenderController skyboxRenderController,
             Entity skyboxEntity) : base(world)
         {
-            var transition = new InterpolateTimeOfDayState(skyboxSettings);
+            InterpolateTimeOfDayState transition = new InterpolateTimeOfDayState(skyboxSettings);
+            SkyboxTimeProgressionService timeProgressionService = new SkyboxTimeProgressionService(skyboxSettings, transition);
 
-            globalTimeState = new GlobalTimeState(skyboxSettings, transition);
+            globalTimeState = new GlobalTimeState(skyboxSettings, transition, timeProgressionService);
 
             stateMachine = new SkyboxStateMachine(new ISkyboxState[]
             {
                 new SDKComponentState(skyboxSettings, sceneRestrictionController, transition, scenesCache),
-                new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition),
+                new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition, timeProgressionService),
                 new UIOverrideState(skyboxSettings, transition),
                 globalTimeState,
             });
