@@ -19,18 +19,35 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public Activatable(GateKeeperSceneRoom origin, bool initialState = true) : base(origin, initialState)
             {
                 this.origin = origin;
-                origin.CurrentSceneRoomConnected += () => CurrentSceneRoomConnected?.Invoke();
-                origin.CurrentSceneRoomDisconnected += () => CurrentSceneRoomDisconnected?.Invoke();
-                origin.CurrentSceneRoomForbiddenAccess += () => CurrentSceneRoomForbiddenAccess?.Invoke();
+                origin.CurrentSceneRoomConnected += OnCurrentSceneRoomConnected;
+                origin.CurrentSceneRoomDisconnected += OnCurrentSceneRoomDisconnected;
+                origin.CurrentSceneRoomForbiddenAccess += OnCurrentSceneRoomForbiddenAccess;
             }
 
             public bool IsSceneConnected(string? sceneId) =>
                 origin.IsSceneConnected(sceneId);
 
+            public override void Dispose()
+            {
+                origin.CurrentSceneRoomConnected -= OnCurrentSceneRoomConnected;
+                origin.CurrentSceneRoomDisconnected -= OnCurrentSceneRoomDisconnected;
+                origin.CurrentSceneRoomForbiddenAccess -= OnCurrentSceneRoomForbiddenAccess;
+                base.Dispose();
+            }
+
             public event Action? CurrentSceneRoomConnected;
             public event Action? CurrentSceneRoomDisconnected;
             public event Action? CurrentSceneRoomForbiddenAccess;
             public MetaData? ConnectedScene => origin.ConnectedScene;
+
+            private void OnCurrentSceneRoomConnected() =>
+                CurrentSceneRoomConnected?.Invoke();
+
+            private void OnCurrentSceneRoomDisconnected() =>
+                CurrentSceneRoomDisconnected?.Invoke();
+
+            private void OnCurrentSceneRoomForbiddenAccess() =>
+                CurrentSceneRoomForbiddenAccess?.Invoke();
         }
 
         private readonly IWebRequestController webRequests;
