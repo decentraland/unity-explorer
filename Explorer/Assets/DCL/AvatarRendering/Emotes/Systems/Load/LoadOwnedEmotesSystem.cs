@@ -47,6 +47,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 return urlBuilder.Build();
             }
 
+            //return URLAddress.FromString("https://peer-ap1.decentraland.zone/lambdas//users/0x9C8e8eb9f7f4D9B591851e90eD1367d979b8b096/emotes?includeEntities=true&pageNum=1&pageSize=16&orderBy=date&direction=desc");
             return intention.CommonArguments.URL;
         }
 

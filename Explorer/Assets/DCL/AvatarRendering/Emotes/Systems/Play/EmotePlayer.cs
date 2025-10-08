@@ -55,7 +55,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return true;
 
             if (emoteInUse != null)
+            {
+                Debug.LogError("Stopping emoteInUse " + emoteInUse.avatarClip.name + " BECAUSE PLAYING " + mainAsset.name);
                 Stop(emoteInUse);
+            }
+            else
+            {
+                Debug.LogError("emoteInUse is null PLAYING " + mainAsset.name);
+            }
 
             if (!pools.ContainsKey(mainAsset))
             {
@@ -120,6 +127,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
+            Debug.LogError("emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.IsPlayingSocialEmoteOutcome);
             emoteComponent.HasOutcomeAnimationStarted = emoteComponent.IsPlayingSocialEmoteOutcome;
 
             return true;

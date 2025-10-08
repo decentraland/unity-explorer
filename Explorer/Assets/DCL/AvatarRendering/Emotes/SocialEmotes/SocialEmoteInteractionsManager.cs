@@ -49,6 +49,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         public void StartInteraction(string initiatorWalletAddress, IEmote emote, Transform initiatorTransform)
         {
+            Debug.LogError("START INTERACTION " + initiatorWalletAddress);
+
             if (participantInteractions.ContainsKey(initiatorWalletAddress))
                 return;
 
@@ -67,11 +69,14 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         public void AddParticipantToInteraction(string participantWalletAddress, int outcomeIndex, string initiatorWalletAddress)
         {
+            Debug.LogError("Add to Interaction " + participantWalletAddress);
+
             if (participantInteractions.ContainsKey(participantWalletAddress))
                 return;
 
             SocialEmoteInteraction interaction = participantInteractions[initiatorWalletAddress];
             interaction.AreInteracting = true;
+            Debug.LogError("AreInteracting = true");
             interaction.ReceiverWalletAddress = participantWalletAddress;
             interaction.OutcomeIndex = outcomeIndex;
             participantInteractions.Add(participantWalletAddress, interaction);
@@ -85,6 +90,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
             if (!participantInteractions.ContainsKey(participantWalletAddress))
                 return;
+
+            Debug.LogError("StopInteraction " + participantWalletAddress);
 
             SocialEmoteInteraction interaction = participantInteractions[participantWalletAddress];
             participantInteractions.Remove(interaction.InitiatorWalletAddress);

@@ -35,6 +35,8 @@ namespace DCL.AvatarRendering.Emotes
             // this using cleans up the intention list
             using (OwnedBunch<RemoteEmoteIntention> emoteIntentions = emotesMessageBus.EmoteIntentions())
             {
+       //         Debug.Log("update emoteIntentions.Available: " + emoteIntentions.Available());
+
                 if (!emoteIntentions.Available())
                     return;
 
@@ -53,12 +55,14 @@ namespace DCL.AvatarRendering.Emotes
                         !remoteEmoteIntention.IsUsingSocialOutcomeAnimation &&
                         interaction.Value.AreInteracting)
                     {
+                        Debug.LogError("PENDING savedIntention IGNORED " + remoteEmoteIntention.EmoteId);
                         continue;
                     }
 
                     // The entity was not created yet, so we wait until its created to be able to consume the intent
                     if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
+                        Debug.LogError("savedIntentions +1   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
                         savedIntentions!.Add(remoteEmoteIntention);
                         continue;
                     }
@@ -69,6 +73,8 @@ namespace DCL.AvatarRendering.Emotes
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
                     if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
                     {
+                        Debug.LogError("PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
+
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                         intention.WalletAddress = remoteEmoteIntention.WalletId;
@@ -78,7 +84,10 @@ namespace DCL.AvatarRendering.Emotes
                         intention.SocialEmoteInitiatorWalletAddress = remoteEmoteIntention.SocialEmoteInitiatorWalletAddress;
                     }
                     else
+                    {
+                        Debug.LogError("savedIntentions ++2 (" + emoteIntentions.Collection().Count + ")   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
                         savedIntentions.Add(remoteEmoteIntention);
+                    }
                 }
             }
 

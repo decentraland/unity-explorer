@@ -37,7 +37,20 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
+            StopSocialEmoteOutcomeAnimationQuery(World);
             UpdatePlayersAnimationQuery(World);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        private void StopSocialEmoteOutcomeAnimation(ref CharacterEmoteComponent emote, Profile profile)
+        {
+            if (!emote.IsPlayingEmote && emote.HasOutcomeAnimationStarted && emote.SocialEmoteInitiatorWalletAddress == profile.UserId)
+            {
+                // Finished outcome emote animation in remote avatar that initiated the interaction
+  //              Debug.LogError("RESET!!!! StopSocialEmoteOutcomeAnimation " + profile.UserId);
+  //              emote.StopEmote = true; //.Reset();
+            }
         }
 
         [Query]
@@ -52,10 +65,18 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
                 {
+                    Debug.LogError("STOP EMOTE Outcome? " + emote.IsPlayingSocialEmoteOutcome);
                     emote.StopEmote = true;
                     emote.CurrentEmoteReference?.animatorComp?.ResetTrigger(emote.CurrentEmoteReference.propClipHash);
                     view.AvatarAnimator.SetTrigger(AnimationHashes.EMOTE_STOP);
                     view.RestoreArmatureName();
+//                    emote.Reset();
+
+                    if (emote.Metadata != null && emote.Metadata.IsSocialEmote)
+                    {
+//                        emote.HasOutcomeAnimationStarted = false;
+           //             SocialEmoteInteractionsManager.Instance.StopInteraction(emote.SocialEmoteInitiatorWalletAddress);
+                    }
                 }
 
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);

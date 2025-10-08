@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using UnityEngine;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -25,6 +26,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Reset()
         {
+            Debug.LogError("-emote Reset-");
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;

@@ -65,6 +65,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             {
                 if (socialEmoteInteraction.Value.InitiatorWalletAddress == profile.UserId && !emoteComponente.HasOutcomeAnimationStarted)
                 {
+                    Debug.LogError("EMOTEINTENT " + profile.UserId);
+
                     World.Add(entity, new CharacterEmoteIntent()
                     {
                         EmoteId = socialEmoteInteraction.Value.Emote.DTO.Metadata.id!,

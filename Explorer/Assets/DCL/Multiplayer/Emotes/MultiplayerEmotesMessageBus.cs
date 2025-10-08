@@ -85,6 +85,8 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.IsReacting = isReactingToSocialEmote;
             emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress?? string.Empty;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+
+            Debug.LogError("SENT TO [" + emote.Payload.IncrementalId + "]: " + emote.Payload.Urn + " reacting? " + emote.Payload.IsReacting );
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress)
@@ -108,6 +110,8 @@ namespace DCL.Multiplayer.Emotes
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
+                Debug.LogError("RECEIVED [" + receivedMessage.Payload.IncrementalId + "]");
+
                 Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp, receivedMessage.Payload.SocialEmoteOutcome > -1, receivedMessage.Payload.SocialEmoteOutcome, receivedMessage.Payload.IsReacting, receivedMessage.Payload.SocialEmoteInitiator);
             }
         }
@@ -121,7 +125,10 @@ namespace DCL.Multiplayer.Emotes
                 return;
 
             using (sync.GetScope())
+            {
+                Debug.LogError("INBOX: " + walletId + " " + emoteURN + " is outcome? " + isUsingSocialEmoteOutcome + " reacting? " + isReactingToSocialEmote);
                 emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress));
+            }
         }
 
         public void SaveForRetry(RemoteEmoteIntention intention)

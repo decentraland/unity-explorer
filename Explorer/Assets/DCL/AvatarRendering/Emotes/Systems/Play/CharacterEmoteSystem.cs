@@ -126,6 +126,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
 
+//            Debug.LogError("CANCEL EMOTES " + profile.UserId);
+
             if (emoteReference == null)
                 return;
 
@@ -162,6 +164,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView, string walletAddress)
         {
+            Debug.LogError("-StopEmote- " + ((AvatarBase)avatarView).name);
+
             if (emoteComponent.CurrentEmoteReference == null)
                 return;
 
@@ -197,7 +201,19 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emoteComponent.Reset();
         }
+/*
+        [Query]
+        private void StopRemoteAvatarInteraction(IAvatarView avatarView, Profile profile)
+        {
+            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
+            if (interaction.HasValue && interaction.Value.)
+            {
+
+            }
+            avatarView.RestoreArmatureName();
+        }
+*/
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -262,6 +278,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         emoteComponent.IsPlayingEmote &&
                         (emoteComponent.EmoteUrn.Shorten() != emoteIntent.EmoteId.Shorten() || (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation))) // It's a different emote OR it was playing the outcome phase and now it wants to play the start phase of the same emote interaction (triggered the same social emote again while the previous interaction didn't finish yet, it cancels it)
                     {
+                        Debug.LogError("DIFFERENT PHASE? " + (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation));
                         SocialEmoteInteractionsManager.Instance.StopInteraction(emoteComponent.SocialEmoteInitiatorWalletAddress);
                     }
 
@@ -291,6 +308,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                             emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
                         }
                     }
+
+                    Debug.LogError("PLAY USER: " + emoteIntent.WalletAddress);
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
