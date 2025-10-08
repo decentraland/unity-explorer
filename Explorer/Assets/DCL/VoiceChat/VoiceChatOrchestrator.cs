@@ -32,7 +32,7 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.COLLAPSED);
         private readonly ReactiveProperty<VoiceChatPanelState> currentVoiceChatPanelState = new (VoiceChatPanelState.NONE);
-        private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
+        private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentSceneActiveCommunityData = new (null);
 
         private IVoiceChatCallStatusServiceBase? activeCallStatusService;
         private IVoiceChatOrchestrator? voiceChatOrchestratorImplementation;
@@ -42,7 +42,7 @@ namespace DCL.VoiceChat
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
         public IReadonlyReactiveProperty<VoiceChatPanelState> CurrentVoiceChatPanelState => currentVoiceChatPanelState;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
-        public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData => currentActiveCommunityData;
+        public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneSceneActiveCommunityVoiceChatData => currentSceneActiveCommunityData;
         public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
         public string CurrentConnectionUrl => activeCallStatusService?.ConnectionUrl ?? string.Empty;
         public VoiceChatParticipantsStateService ParticipantsStateService { get; }
@@ -90,7 +90,7 @@ namespace DCL.VoiceChat
             currentVoiceChatType.ClearSubscriptionsList();
             currentCallStatus.ClearSubscriptionsList();
             currentVoiceChatPanelSize.ClearSubscriptionsList();
-            currentActiveCommunityData.ClearSubscriptionsList();
+            currentSceneActiveCommunityData.ClearSubscriptionsList();
             currentVoiceChatPanelState.ClearSubscriptionsList();
 
             ParticipantsStateService.Dispose();
@@ -203,12 +203,12 @@ namespace DCL.VoiceChat
         private void OnActiveVoiceChatDetectedInScene(ActiveCommunityVoiceChat activeCommunityData)
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {activeCommunityData.communityName} ({activeCommunityData.communityId})");
-            currentActiveCommunityData.Value = activeCommunityData;
+            currentSceneActiveCommunityData.Value = activeCommunityData;
         }
 
         private void OnActiveVoiceChatStoppedInScene()
         {
-            currentActiveCommunityData.Value = null;
+            currentSceneActiveCommunityData.Value = null;
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)

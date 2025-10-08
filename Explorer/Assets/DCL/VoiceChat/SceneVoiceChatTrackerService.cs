@@ -175,10 +175,18 @@ namespace DCL.VoiceChat
                         {
                             worldToCommunityMap.Remove(worldName);
                             ListPool<string>.Release(communities);
+                            if (realmData.RealmName == worldName) { OnActiveVoiceChatStoppedInScene(); }
+                        }
+                        else
+                        {
+                            if (realmData.RealmName == worldName)
+                            {
+                                string remainingCommunityId = communities[0];
+                                if (activeCommunityVoiceChats.TryGetValue(remainingCommunityId, out ActiveCommunityVoiceChat _)) { OnActiveVoiceChatDetectedInScene(remainingCommunityId); }
+                            }
                         }
                     }
                 }
-
                 communityToWorldMap.Remove(communityId);
 
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Unregistered {sceneWorlds.Count} worlds from community {communityId}");
@@ -232,7 +240,7 @@ namespace DCL.VoiceChat
 
                 if (scenesCache.CurrentParcel.Value == parcel)
                 {
-                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) { OnActiveVoiceChatDetectedInScene(communityId); }
+                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) OnActiveVoiceChatDetectedInScene(communityId);
                 }
             }
 

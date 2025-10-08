@@ -52,7 +52,7 @@ namespace DCL.VoiceChat
     {
         IReadonlyReactiveProperty<VoiceChatStatus> CommunityCallStatus { get; }
         IReadonlyReactiveProperty<string> CurrentCommunityId { get; }
-        IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData { get; }
+        IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneSceneActiveCommunityVoiceChatData { get; }
         bool HasActiveVoiceChatCall(string communityId);
         IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId);
         bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
