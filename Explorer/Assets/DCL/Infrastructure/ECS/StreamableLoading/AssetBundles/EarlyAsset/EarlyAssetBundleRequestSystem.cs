@@ -50,7 +50,8 @@ namespace DefaultNamespace
             {
                 //Do nothing. We just needed loaded in memory, we dont care the result.
                 //Whoever needs it, will grab it later
-                UnityEngine.Debug.Log("JUANI THE EARLY ASSET BUNDLE WAS DOWNLOADED");
+                if(Result.Succeeded)
+                    UnityEngine.Debug.Log("JUANI THE EARLY ASSET BUNDLE WAS DOWNLOADED " + promise.LoadingIntention.Hash);
                 World.Destroy(entity);
             }
         }

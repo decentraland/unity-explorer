@@ -75,7 +75,7 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                         //Whoever needs it, will grab it later
                         UnityEngine.Debug.Log("JUANI THE EARLY SCENE WAS RETRIEVED");
                         //Test URL
-                        flag.AsssetBundleHash = $"staticscene_{Result.Asset.Value[0].id}";
+                        flag.AsssetBundleHash = $"staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.ToString()}";
                     }
                     else
                     {
