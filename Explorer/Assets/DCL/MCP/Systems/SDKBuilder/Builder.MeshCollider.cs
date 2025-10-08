@@ -92,7 +92,7 @@ namespace DCL.MCP.Systems
                 }
             }, currentCRDTEntity, req);
 
-            collectedComponents.Add(col);
+            // collectedComponents.Add(col);
             return this;
         }
     }

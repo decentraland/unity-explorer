@@ -35,25 +35,25 @@ namespace DCL.MCP.Systems
         public static void EnqueueMeshRenderer(in MCPCreateMeshRendererRequest request) =>
             meshRendererRequests.Enqueue(request);
 
-        public void ProcessMeshRendererRequests(World world, IComponentPool<PBMeshRenderer> pool)
-        {
-            while (meshRendererRequests.TryDequeue(out MCPCreateMeshRendererRequest req))
-            {
-                try
-                {
-                    var position = new Vector3(req.X, req.Y, req.Z);
-                    var scale = new Vector3(req.SX, req.SY, req.SZ);
-                    var rotation = Quaternion.Euler(req.Pitch, req.Yaw, req.Roll);
-
-                    Begin(position, scale, rotation, req.ParentId)
-                       .AddMeshRenderer(pool, req)
-                       .Build(world);
-
-                    ReportHub.Log(ReportCategory.DEBUG, $"[MCP MeshRenderer] Created MeshRenderer from request {req.RequestId}");
-                }
-                catch (System.Exception e) { ReportHub.LogError(ReportCategory.DEBUG, $"[MCP MeshRenderer] Failed to process request {req.RequestId}: {e.Message}"); }
-            }
-        }
+        // public void ProcessMeshRendererRequests(World world, IComponentPool<PBMeshRenderer> pool)
+        // {
+        //     while (meshRendererRequests.TryDequeue(out MCPCreateMeshRendererRequest req))
+        //     {
+        //         try
+        //         {
+        //             var position = new Vector3(req.X, req.Y, req.Z);
+        //             var scale = new Vector3(req.SX, req.SY, req.SZ);
+        //             var rotation = Quaternion.Euler(req.Pitch, req.Yaw, req.Roll);
+        //
+        //             Begin(position, scale, rotation, req.ParentId)
+        //                .AddMeshRenderer(pool, req)
+        //                .Build(world);
+        //
+        //             ReportHub.Log(ReportCategory.DEBUG, $"[MCP MeshRenderer] Created MeshRenderer from request {req.RequestId}");
+        //         }
+        //         catch (System.Exception e) { ReportHub.LogError(ReportCategory.DEBUG, $"[MCP MeshRenderer] Failed to process request {req.RequestId}: {e.Message}"); }
+        //     }
+        // }
 
         public MCPSceneEntitiesBuilder AddMeshRenderer(
             IComponentPool<PBMeshRenderer> pool,
@@ -125,7 +125,7 @@ namespace DCL.MCP.Systems
                 }
             }, currentCRDTEntity, (caseType, req.RadiusTop ?? 1f, req.RadiusBottom ?? 1f, req.Uvs));
 
-            collectedComponents.Add(mesh);
+            // collectedComponents.Add(mesh);
             return this;
         }
     }

@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.PoolsProviders;
@@ -10,17 +11,13 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRuntime.Apis.Modules.EngineApi;
+using System.Collections.Generic;
 using Font = DCL.ECSComponents.Font;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.MCP.Systems
 {
-    /// <summary>
-    ///     Тестовая система для проверки создания entity из C# и отправки в JS сцену.
-    ///     При прыжке игрока создаёт новую entity с PBSkyboxTime в текущей сцене.
-    ///     Работает в Scene World, проверяет прыжок через Global World.
-    /// </summary>
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.DEBUG)]
     public partial class MCPSceneCreationSystem : BaseUnityLoopSystem
@@ -35,7 +32,9 @@ namespace DCL.MCP.Systems
 
         private readonly MCPSceneEntitiesBuilder builder;
 
-        public MCPSceneCreationSystem(World world, World globalWorld, Arch.Core.Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTransform> sdkTransformPool,
+        public MCPSceneCreationSystem(World world, World globalWorld, Entity globalPlayerEntity, IECSToCRDTWriter ecsToCRDTWriter,
+            Dictionary<CRDTEntity, Entity> EntitiesMap,
+            IComponentPool<SDKTransform> sdkTransformPool,
             IComponentPool<PBTextShape> textShapePool
           , IComponentPool<PBMeshRenderer> meshRendererPool
           , IComponentPool<PBMeshCollider> colliderPool) : base(world)
@@ -46,7 +45,7 @@ namespace DCL.MCP.Systems
             this.meshRendererPool = meshRendererPool;
             this.colliderPool = colliderPool;
 
-            builder = new MCPSceneEntitiesBuilder(ecsToCRDTWriter, sdkTransformPool);
+            builder = new MCPSceneEntitiesBuilder(ecsToCRDTWriter, sdkTransformPool, EntitiesMap);
             builder.ClearReservedEntities();
         }
 
@@ -72,29 +71,9 @@ namespace DCL.MCP.Systems
                 hasJumped = true;
                 ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
 
-                // Создаём MeshRenderer + MeshCollider (Box) для проверки
-                var meshReq = new MCPSceneEntitiesBuilder.MCPCreateMeshRendererRequest
-                {
-                    RequestId = System.Guid.NewGuid().ToString("N"),
-                    X = 8, Y = 1, Z = 8,
-                    SX = 1, SY = 1, SZ = 1,
-                    Yaw = 0, Pitch = 0, Roll = 0,
-                    ParentId = 0,
-                    MeshType = "Box",
-                };
-
-                var colReq = new MCPSceneEntitiesBuilder.MCPCreateMeshColliderRequest
-                {
-                    RequestId = System.Guid.NewGuid().ToString("N"),
-                    ColliderType = "Box",
-                    CollisionMask = 1u | 2u, // CL_POINTER | CL_PHYSICS
-                };
-
-                builder.Begin(new Vector3(meshReq.X, meshReq.Y, meshReq.Z), new Vector3(meshReq.SX, meshReq.SY, meshReq.SZ),
-                            Quaternion.Euler(meshReq.Pitch, meshReq.Yaw, meshReq.Roll), meshReq.ParentId)
-                       .AddMeshRenderer(meshRendererPool, meshReq)
-                       .AddMeshCollider(colliderPool, colReq)
-                       .Build(World);
+                builder.Begin(World, new Vector3(8, 4, 8), new Vector3(1, 1, 1))
+                       .AddTextShape(World, textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "TEST FROM ECS", FontSize = 5 })
+                    ;
             }
         }
     }

@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.World
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
-            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, textShapePool, meshRendererPool, colliderPool);
+            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool, textShapePool, meshRendererPool, colliderPool);
 
             CleanUpAvatarPropagationComponentsSystem.InjectToWorld(ref builder);
         }

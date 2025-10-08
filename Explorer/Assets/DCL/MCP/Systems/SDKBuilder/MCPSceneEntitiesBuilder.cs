@@ -19,36 +19,37 @@ namespace DCL.MCP.Systems
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
         private readonly bool[] reservedEntities = new bool[TEST_ENTITIES_TO - TEST_ENTITIES_FROM];
 
         private int currentReservedEntitiesCount;
 
         private CRDTEntity currentCRDTEntity;
         private SDKTransform? currentSDKTransform;
-        private readonly List<object> collectedComponents = new ();
+        private Entity entity;
 
-        public MCPSceneEntitiesBuilder(IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTransform> sdkTransformPool)
+        public MCPSceneEntitiesBuilder(IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTransform> sdkTransformPool, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sdkTransformPool = sdkTransformPool;
+            this.entitiesMap = entitiesMap;
 
             textShapeRequests.Clear();
         }
 
-        public MCPSceneEntitiesBuilder Begin(Vector3 position, Vector3 scale, Quaternion rotation = default, int parentId = 0)
+        public MCPSceneEntitiesBuilder Begin(World world, Vector3 position, Vector3 scale, Quaternion rotation = default, int parentId = 0)
         {
-            collectedComponents.Clear();
+            currentCRDTEntity = new CRDTEntity(ReserveNextFreeEntity());
+            entity = world.Create(currentCRDTEntity);
+            entitiesMap[currentCRDTEntity] = entity;
 
             currentSDKTransform = sdkTransformPool.Get();
+            world.Add(entity, currentSDKTransform);
 
             currentSDKTransform.Position.Value = position;
             currentSDKTransform.Rotation.Value = rotation;
             currentSDKTransform.Scale = scale;
             currentSDKTransform.ParentId = parentId;
-
-            collectedComponents.Add(currentSDKTransform);
-
-            currentCRDTEntity = new CRDTEntity(ReserveNextFreeEntity());
 
             ecsToCRDTWriter.PutMessage<SDKTransform, (Vector3 Position, Vector3 Scale, Quaternion Rotation, int parentId)>
             (static (sdkTransform, data) =>
@@ -60,17 +61,14 @@ namespace DCL.MCP.Systems
             return this;
         }
 
-        public (Entity entity, CRDTEntity crdtEntity) Build(World world)
+        public void Build(World world)
         {
-            Entity entity = world.Create(currentCRDTEntity);
-
-            foreach (object? component in collectedComponents)
-                world.Add(entity, component);
+            // Entity entity = world.Create(currentCRDTEntity);
+            // foreach (object? component in collectedComponents)
+            //     world.Add(entity, component);
 
             ReportHub.Log(ReportCategory.DEBUG,
                 $"[TestJumpEntityCreation] Added SDKTransform + PBTextShape to entity {currentCRDTEntity.Id}");
-
-            return (entity, currentCRDTEntity);
         }
 
         private int ReserveNextFreeEntity()
