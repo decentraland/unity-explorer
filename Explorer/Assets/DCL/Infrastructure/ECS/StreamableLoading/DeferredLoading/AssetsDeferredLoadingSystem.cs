@@ -27,7 +27,8 @@ namespace ECS.StreamableLoading.DeferredLoading
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),
-                CreateQuery<GetNFTShapeIntention, Texture2DData>(),
+                CreateQuery<GetNFTImageIntention, Texture2DData>(),
+                CreateQuery<GetNFTVideoIntention, Texture2DData>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
             };
         }

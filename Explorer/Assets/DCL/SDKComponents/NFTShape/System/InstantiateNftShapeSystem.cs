@@ -66,7 +66,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             if (!pbNftShape.IsDirty) return;
 
-            bool sourceChanged = pbNftShape.Urn != loadingComponent.Promise.LoadingIntention.URN;
+            bool sourceChanged = pbNftShape.Urn != loadingComponent.OriginalUrn;
 
             nftShapeRendererComponent.PoolableComponent.Apply(pbNftShape, sourceChanged);
 
@@ -74,10 +74,25 @@ namespace DCL.SDKComponents.NFTShape.System
             if (!sourceChanged) return;
 
             changedNftShapes.Add(entity, nftShapeRendererComponent);
-            loadingComponent.Promise.TryDereference(World);
-            loadingComponent.Promise.ForgetLoading(World);
-            World.Remove<NFTLoadingComponent>(entity);
+            loadingComponent.TypePromise.ForgetLoading(World);
 
+            // TODO: check if we dont have a reference issue here, since .Value provides a copy of the promise
+            if (loadingComponent.VideoPromise != null)
+            {
+                var promise = loadingComponent.VideoPromise.Value;
+                promise.TryDereference(World);
+                promise.ForgetLoading(World);
+            }
+
+            // TODO: check if we dont have a reference issue here, since .Value provides a copy of the promise
+            if (loadingComponent.ImagePromise != null)
+            {
+                var promise = loadingComponent.ImagePromise.Value;
+                promise.TryDereference(World);
+                promise.ForgetLoading(World);
+            }
+
+            World.Remove<NFTLoadingComponent>(entity);
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)

@@ -1,17 +1,26 @@
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
+using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.DTOs.NftTypeDto, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
+using NftVideoPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTVideoIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Component
 {
     public struct NFTLoadingComponent
     {
-        public Promise Promise;
+        public NftTypePromise TypePromise;
+        public NftImagePromise? ImagePromise;
+        public NftVideoPromise? VideoPromise;
 
-        public NFTLoadingComponent(Promise promise)
+        public readonly string OriginalUrn;
+
+        public NFTLoadingComponent(string originalUrn, NftTypePromise typePromise)
         {
-            Promise = promise;
+            this.OriginalUrn = originalUrn;
+            TypePromise = typePromise;
+            ImagePromise = null;
+            VideoPromise = null;
         }
 
         public readonly override string ToString() =>
-            $"NFTLoadingComponent {{ promise: {Promise.Entity} {Promise.LoadingIntention.CommonArguments.URL} }}";
+            $"NFTLoadingComponent {{ promise: {TypePromise.Entity} {TypePromise.LoadingIntention.CommonArguments.URL} {OriginalUrn} }}";
     }
 }

@@ -22,6 +22,7 @@ using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.NFTShapes;
+using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
@@ -40,7 +41,8 @@ namespace DCL.PluginSystem.World
         private readonly IFramePrefabs framePrefabs;
         private readonly IDiskCache<Texture2DData> diskCache;
         private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
-        private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
+        private readonly ISizedStreamableCache<Texture2DData, GetNFTImageIntention> imageCache = new NftImageCache();
+        private readonly ISizedStreamableCache<Texture2DData, GetNFTVideoIntention> videoCache = new NftVideoCache();
 
         static NFTShapePlugin()
         {
@@ -110,12 +112,14 @@ namespace DCL.PluginSystem.World
             this.framePrefabs = framePrefabs;
             this.diskCache = diskCache;
             this.videoTexturePool = videoTexturePool;
-            cacheCleaner.Register(cache);
+            cacheCleaner.Register(imageCache);
+            cacheCleaner.Register(videoCache);
         }
 
         public void Dispose()
         {
-            cache.Dispose();
+            imageCache.Dispose();
+            videoCache.Dispose();
         }
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
@@ -133,7 +137,7 @@ namespace DCL.PluginSystem.World
 
             bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, videoTexturePool, decentralandUrlsSource);
+            LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeDto, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

@@ -9,6 +9,9 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.NFTShapes;
+using ECS.StreamableLoading.Textures;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -48,10 +51,28 @@ namespace DCL.SDKComponents.NFTShape.System
 
         private void AbortLoading(ref NFTLoadingComponent nftLoadingComponent, bool forgetPromise)
         {
-            nftLoadingComponent.Promise.TryDereference(World);
-
             if (forgetPromise)
-                nftLoadingComponent.Promise.ForgetLoading(World);
+                nftLoadingComponent.TypePromise.ForgetLoading(World);
+
+            if (nftLoadingComponent.ImagePromise != null)
+            {
+                // TODO: check if we dont get a reference miss here, since .Value provides a copy of the promise
+                var promise = nftLoadingComponent.ImagePromise.Value;
+                promise.TryDereference(World);
+
+                if (forgetPromise)
+                    promise.ForgetLoading(World);
+            }
+
+            if (nftLoadingComponent.VideoPromise != null)
+            {
+                // TODO: check if we dont get a reference miss here, since .Value provides a copy of the promise
+                var promise = nftLoadingComponent.VideoPromise.Value;
+                promise.TryDereference(World);
+
+                if (forgetPromise)
+                    promise.ForgetLoading(World);
+            }
         }
 
         public void FinalizeComponents(in Query query)
