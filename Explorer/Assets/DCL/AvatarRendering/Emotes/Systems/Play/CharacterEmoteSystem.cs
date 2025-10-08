@@ -203,6 +203,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
             in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent, Profile profile, CharacterTransform characterTransform)
+            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent, CharacterTransform characterTransform)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -282,6 +283,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         {
                             if (emoteComponent.IsReactingToSocialEmote)
                                 SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(profile.UserId, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress);
+                                SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress);
 
                             audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.CurrentSocialEmoteOutcome].Asset;
                         }
@@ -289,6 +291,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                         {
                             SocialEmoteInteractionsManager.Instance.StartInteraction(profile.UserId, emote, characterTransform.Transform);
                             emoteComponent.SocialEmoteInitiatorWalletAddress = profile.UserId;
+                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, emote, characterTransform.Transform);
+                            emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
                         }
                     }
 
