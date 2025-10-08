@@ -20,7 +20,6 @@ namespace DCL.RealmNavigation
             [LoadingStage.ProfileLoading] = 0.1f,
             [LoadingStage.PlayerAvatarLoading] = 0.3f,
             [LoadingStage.LandscapeLoading] = 0.6f,
-            [LoadingStage.OnboardingChecking] = 0.7f,
             [LoadingStage.PlayerTeleporting] = 0.85f,
             [LoadingStage.GlobalPXsLoading] = 0.99f, //Used in initialization Flow
             [LoadingStage.LivekitRestarting] = 0.99f, //Used in Teleport Flow
@@ -43,7 +42,6 @@ namespace DCL.RealmNavigation
             ProfileLoading = 2,
             PlayerAvatarLoading = 3,
             LandscapeLoading = 4,
-            OnboardingChecking = 5,
             PlayerTeleporting = 6,
             GlobalPXsLoading = 8,
             Completed = 9,
