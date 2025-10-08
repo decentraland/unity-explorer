@@ -13,6 +13,7 @@ using RustAudio;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 #if UNITY_STANDALONE_OSX
@@ -24,6 +25,9 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatDebugContainer : IDisposable
     {
         private CancellationTokenSource? autoUpdateCts;
+        private CancellationTokenSource? wavRemoteUpdateCts;
+
+        private readonly TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
         public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager trackManager)
         {
@@ -51,6 +55,8 @@ namespace DCL.PluginSystem.Global
 
             List<(string name, string value)> wavRemotesBuffer = new ();
 
+            bool hasWavRemoteIntention = false;
+
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.VOICE_CHAT)
                          ?.AddMarker("Unity Output Sample Rate", unityOutputSampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
@@ -69,6 +75,7 @@ namespace DCL.PluginSystem.Global
                           .AddCustomMarker("Status WAV Microphone", wavMicrophoneStatus)
                           .AddSingleButton("Toggle WAV Remotes", ChangeRemoteRecordStatus)
                           .AddList("Status WAV Remotes", wavRemotesStatusInfo)
+                          .AddSingleButton("Open Records Directory", () => Application.OpenURL($"file://{StreamKeyUtils.RecordsDirectory}".Replace(" ", "%20")))
                           .AddToggleField("Auto Update", v => AutoUpdateTriggerAsync(v.newValue).Forget(), false)
                           .AddSingleButton("Update", UpdateWidget);
 
@@ -100,12 +107,36 @@ namespace DCL.PluginSystem.Global
 
             void ChangeRemoteRecordStatus()
             {
-                wavRemotesBuffer.Clear();
+                hasWavRemoteIntention = !hasWavRemoteIntention;
+                TryStartWavRemotesUpdateLoopAsync().Forget();
+            }
 
-                foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in trackManager.RemoteStreams)
-                    ProcessElement(key, value.stream, value.source);
+            async UniTaskVoid TryStartWavRemotesUpdateLoopAsync()
+            {
+                if (wavRemoteUpdateCts != null && wavRemoteUpdateCts.IsCancellationRequested == false) return;
 
-                wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
+                wavRemoteUpdateCts = new CancellationTokenSource();
+                CancellationToken token = wavRemoteUpdateCts.Token;
+
+                while (token.IsCancellationRequested == false)
+                    try
+                    {
+                        bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: token).SuppressCancellationThrow();
+                        if (cancelled) return;
+
+                        wavRemotesBuffer.Clear();
+
+                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in trackManager.RemoteStreams)
+                            ProcessElement(key, value.stream, value.source);
+
+                        wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
+                    }
+                    catch
+                    {
+                        wavRemoteUpdateCts?.Cancel();
+                        break;
+                    }
+
                 return;
 
                 void ProcessElement(StreamKey key, Weak<AudioStream> stream, LivekitAudioSource source)
@@ -114,7 +145,10 @@ namespace DCL.PluginSystem.Global
 
                     if (streamOption.Has)
                     {
-                        Result result = streamOption.Value.WavTeeControl.Toggle();
+                        Result result = streamOption.Value.WavTeeControl.IsWavActive != hasWavRemoteIntention
+                            ? streamOption.Value.WavTeeControl.Toggle()
+                            : Result.SuccessResult();
+
                         string name = $"Stream {key.identity}";
                         string message = string.Empty;
 
@@ -133,7 +167,9 @@ namespace DCL.PluginSystem.Global
                     }
 
                     {
-                        Result toggleResult = source.ToggleRecordWavOutput();
+                        Result toggleResult = source.IsWavActive != hasWavRemoteIntention
+                            ? source.ToggleRecordWavOutput()
+                            : Result.SuccessResult();
 
                         if (toggleResult.Success == false)
                             ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot toggle wav output: {toggleResult.ErrorMessage}");
@@ -151,7 +187,6 @@ namespace DCL.PluginSystem.Global
                 {
                     autoUpdateCts = autoUpdateCts.SafeRestart();
                     CancellationToken current = autoUpdateCts.Token;
-                    TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
                     while (current.IsCancellationRequested == false)
                     {
