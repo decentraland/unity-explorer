@@ -1,4 +1,3 @@
-using DCL.UIToolkit.Elements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -85,7 +84,7 @@ namespace DCL.Nametags
             set
             {
                 EnableInClassList(USS_SHOW_MESSAGE, value);
-                SetMessageSize(!value, false);
+                SetMessageSize(!value);
             }
         }
 
@@ -125,7 +124,7 @@ namespace DCL.Nametags
             set
             {
                 messageLabel.text = value;
-                if (ShowMessage) SetMessageSize();
+                if (ShowMessage) SetMessageSize(false);
             }
         }
 
@@ -300,31 +299,28 @@ namespace DCL.Nametags
             hideMessage.ExecuteLater(NametagViewConstants.CHAT_BUBBLE_DELAY);
         }
 
-        private void SetMessageSize(bool zero = false, bool label = true, bool container = true)
+        private void SetMessageSize(bool hide)
         {
             float dmBadgeSize = DM ? -dmBadge.resolvedStyle.width + 31 + dmRecipientLabel.MeasureTextSize(dmRecipientLabel.text, 0, MeasureMode.Undefined, 0, MeasureMode.Undefined).x : 0;
             float headerTargetSize = header.resolvedStyle.width + dmBadgeSize;
 
-            Vector2 size = zero ? Vector2.zero : messageLabel.MeasureTextSize(messageLabel.text, Mathf.Max(headerTargetSize, NametagViewConstants.MAX_MESSAGE_WIDTH), MeasureMode.AtMost, 0, MeasureMode.Undefined);
+            Vector2 size = hide ? Vector2.zero : messageLabel.MeasureTextSize(messageLabel.text, Mathf.Max(headerTargetSize, NametagViewConstants.MAX_MESSAGE_WIDTH), MeasureMode.AtMost, 0, MeasureMode.Undefined);
 
-            if (label)
-            {
-                messageLabel.style.width = size.x;
-                messageLabel.style.height = size.y;
-            }
+            bool scalingDown = hide || size.y < messageLabel.resolvedStyle.height || size.x < messageLabel.resolvedStyle.width;
 
-            if (container)
-            {
-                // When easing to 0 if we use "back" easing the negative value breaks layouting for a frame
-                messageContainer.EnableInClassList("safe-easing", zero);
+            // When easing to down / to 0 if we use "back" easing the negative value breaks layouting for a frame / looks weird
+            messageContainer.EnableInClassList("safe-easing", scalingDown);
+            messageLabel.EnableInClassList("safe-easing", scalingDown);
 
-                messageContainer.schedule.Execute(() =>
-                                 {
-                                     messageContainer.style.width = size.x;
-                                     messageContainer.style.height = size.y + (zero ? 0f : messageLabel.resolvedStyle.marginTop);
-                                 })
-                                .StartingIn(100);
-            }
+            messageLabel.style.width = size.x;
+            messageLabel.style.height = size.y;
+
+            messageContainer.schedule.Execute(() =>
+                             {
+                                 messageContainer.style.width = size.x;
+                                 messageContainer.style.height = size.y + (hide ? 0f : messageLabel.resolvedStyle.marginTop);
+                             })
+                            .StartingIn(100);
         }
 
         private string BuildName(string username, string walletId, bool hasClaimedName) =>
