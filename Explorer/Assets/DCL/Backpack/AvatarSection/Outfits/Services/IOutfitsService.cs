@@ -10,5 +10,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         UniTask<Dictionary<int, OutfitData>> GetOutfitsAsync(CancellationToken ct);
         UniTask<OutfitData> SaveOutfitAsync(int slotIndex, OutfitData outfit, CancellationToken ct);
         UniTask DeleteOutfitAsync(int slotIndex, CancellationToken ct);
+        UniTask<bool> ShouldShowExtraOutfitSlotsAsync(CancellationToken ct);
     }
 }

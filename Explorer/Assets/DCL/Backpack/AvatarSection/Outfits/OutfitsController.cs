@@ -124,22 +124,24 @@ namespace DCL.Backpack
 
         private async UniTask CheckBannerVisibilityAsync(CancellationToken ct)
         {
-            if (web3IdentityCache.Identity == null) return;
-            profile ??= await selfProfile.ProfileAsync(ct);
-
-            if (profile != null)
+            bool showExtraOutfitSlots;
+            try
             {
-                if (profile.HasClaimedName)
-                {
-                    outfitBannerPresenter.Deactivate();
-                    view.ExtraSlotsContainer.SetActive(true);
-                }
-                else
-                {
-                    outfitBannerPresenter.Activate();
-                    view.ExtraSlotsContainer.SetActive(false);
-                }
+                showExtraOutfitSlots = await outfitsService.ShouldShowExtraOutfitSlotsAsync(ct);
             }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.OUTFITS);
+                return;
+            }
+
+            if (ct.IsCancellationRequested) return;
+
+            view.ExtraSlotsContainer.SetActive(showExtraOutfitSlots);
+
+            if (showExtraOutfitSlots) outfitBannerPresenter.Deactivate();
+            else outfitBannerPresenter.Activate();
         }
 
         private async UniTask LoadAndDisplayOutfitsAsync(CancellationToken ct)

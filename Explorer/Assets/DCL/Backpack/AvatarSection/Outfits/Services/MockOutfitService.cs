@@ -2,6 +2,8 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Slots;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using UnityEngine;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Services
@@ -9,6 +11,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
     public class MockOutfitsService : IOutfitsService
     {
         private readonly Dictionary<int, OutfitData> mockDatabase = new ();
+        private readonly ISelfProfile selfProfile;
+
+        public MockOutfitsService(ISelfProfile selfProfile)
+        {
+            this.selfProfile = selfProfile;
+        }
 
         public async UniTask<Dictionary<int, OutfitData>> GetOutfitsAsync(CancellationToken ct)
         {
@@ -43,6 +51,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         {
             await UniTask.Delay(300, cancellationToken: ct);
             mockDatabase.Remove(slotIndex);
+        }
+
+        public async UniTask<bool> ShouldShowExtraOutfitSlotsAsync(CancellationToken ct)
+        {
+            var profile = await selfProfile.ProfileAsync(ct);
+            return profile?.HasClaimedName == true;
         }
     }
 }

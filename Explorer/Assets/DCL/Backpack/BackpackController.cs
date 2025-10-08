@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Browser;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
@@ -40,6 +41,7 @@ namespace DCL.Backpack
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly BackpackEmoteGridController backpackEmoteGridController;
+        private readonly BackpackGridController backpackGridController;
         private readonly EmotesController emotesController;
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
@@ -62,7 +64,7 @@ namespace DCL.Backpack
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,
             IBackpackEventBus backpackEventBus,
-            BackpackGridController gridController,
+            BackpackGridController backpackGridController,
             BackpackInfoPanelController wearableInfoPanelController,
             BackpackInfoPanelController emoteInfoPanelController,
             World world, Entity playerEntity,
@@ -83,24 +85,38 @@ namespace DCL.Backpack
             this.world = world;
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
+            this.backpackGridController = backpackGridController;
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
-            avatarController = new AvatarController(
-                avatarView,
+            var categoriesController = new CategoriesController(avatarView.CategoriesView,
+                backpackGridController,
+                backpackCommandBus,
+                backpackEventBus,
+                inputBlock);
+
+            var outfitService = new MockOutfitsService(selfProfile);
+            var outfitsController = new OutfitsController(avatarView.OutfitsView,
                 selfProfile,
+                outfitService,
                 webBrowser,
                 identityCache,
+                backpackCommandBus);
+            
+            avatarController = new AvatarController(
+                avatarView,
+                webBrowser,
                 avatarSlotViews,
                 rarityInfoPanelBackgrounds,
                 backpackCommandBus,
                 backpackEventBus,
-                gridController,
                 wearableInfoPanelController,
-                thumbnailProvider,
-                inputBlock);
+                backpackGridController,
+                categoriesController,
+                outfitsController,
+                thumbnailProvider);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
@@ -161,7 +177,9 @@ namespace DCL.Backpack
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
+            backpackEmoteGridController.Dispose();
             emoteInfoPanelController.Dispose();
+            
         }
 
         private void ToggleTipsContent()
@@ -182,7 +200,7 @@ namespace DCL.Backpack
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
-            avatarController.RequestInitialWearablesPage();
+            backpackGridController.RequestPage(1, true);
             backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
