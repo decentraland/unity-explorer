@@ -71,6 +71,7 @@ namespace DCL.Chat
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed += OnUIClose;
             uiScope.Add(eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
 
             communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
@@ -186,15 +187,17 @@ namespace DCL.Chat
             }
         }
 
-        public void OnUIClose()
+        private void OnUIClose(InputAction.CallbackContext obj)
         {
             if (chatStateMachine.IsMinimized) return;
+
             chatStateMachine.SetVisibility(true);
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
             initCts.SafeCancelAndDispose();
 
