@@ -47,7 +47,7 @@ namespace ECS.Unity.Textures.Components
         }
 
         // All the renderers that use the video texture
-        private readonly List<Renderer> renderers;
+        public readonly List<Renderer> renderers;
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,

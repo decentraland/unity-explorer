@@ -37,7 +37,12 @@ namespace DCL.SDKComponents.MediaStream
             if (!videoTextureConsumer.IsDirty)
                 return;
 
-            if (!TryHandleRequest(mediaPlayerComponent, out var texScale)) return;
+            if (!IsReady(mediaPlayerComponent, ref videoTextureConsumer))
+                return;
+
+            if (!TryHandleRequest(mediaPlayerComponent, out var texScale))
+                return;
+
             videoTextureConsumer.SetTextureScale(texScale);
             videoTextureConsumer.IsDirty = false;
         }
@@ -56,6 +61,29 @@ namespace DCL.SDKComponents.MediaStream
                 return false;
             }
             texScale = mediaPlayerComponent.MediaPlayer.GetTexureScale;
+            return true;
+        }
+
+        private bool IsReady(in MediaPlayerComponent mediaPlayerComponent, ref VideoTextureConsumer videoTextureConsumer)
+        {
+            if (!mediaPlayerComponent.MediaPlayer.IsReady)
+                return false;
+
+            if (!mediaPlayerComponent.MediaPlayer.MediaOpened)
+                return false;
+
+            if (mediaPlayerComponent.MediaPlayer.LastTexture() == null)
+                return false;
+
+            if (videoTextureConsumer.renderers.Count == 0)
+                return false;
+
+            foreach (var renderer in videoTextureConsumer.renderers)
+            {
+                if (renderer.sharedMaterial == null)
+                    return false;
+            }
+
             return true;
         }
     }
