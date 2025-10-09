@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
@@ -9,10 +8,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
-using GPUInstancerPro;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
 using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -26,7 +21,6 @@ namespace DCL.Landscape
 {
     public class TerrainGenerator : IDisposable, ITerrain
     {
-        public const int MAX_HEIGHT = 16;
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
@@ -34,8 +28,12 @@ namespace DCL.Landscape
         private const float PROGRESS_COUNTER_OCCUPANCY_MAP = 0.4f;
         private const float PROGRESS_COUNTER_TERRAIN_COMPONENTS = 0.8f;
 
-        private const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
-        private const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
+        internal const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
+        internal const int TREE_INSTANCE_LIMIT = 524288; // 2^19 trees
+
+        private const int INF = 1 << 28;
+        private const int ORTH = 3; // 3-4 chamfer (good Euclidean approx)
+        private const int DIAG = 4;
 
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
@@ -44,7 +42,7 @@ namespace DCL.Landscape
         private TerrainGenerationData terrainGenData;
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
-        private GPUIProfile treesProfile;
+        public TreeData? Trees { get; private set; }
 
         private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
@@ -54,17 +52,8 @@ namespace DCL.Landscape
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private bool isInitialized;
-
-        private NativeArray<byte> occupancyMapData;
-        private int occupancyMapSize;
-        private int2 treeMinParcel;
-        private int2 treeMaxParcel;
-        private NativeArray<int> treeIndices;
-        private NativeArray<TreeInstanceData> treeInstances;
-
-        private int[]? gpuInstancerRendererKeys;
-        private int[]? gpuInstancerInstanceCounts;
-
+        public NativeArray<byte> OccupancyMapData { get; private set; }
+        public int OccupancyMapSize { get; private set; }
         public Transform TerrainRoot { get; private set; }
 
         public int ParcelSize { get; private set; }
@@ -81,8 +70,7 @@ namespace DCL.Landscape
         public TerrainModel TerrainModel { get; private set; }
         public Texture2D OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
-
-        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
+        public float MaxHeight { get; private set; }
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false)
         {
@@ -92,12 +80,13 @@ namespace DCL.Landscape
             timeProfiler = new TimeProfiler(measureTime);
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, GPUIProfile treesProfile, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
+            ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
-            this.treesProfile = treesProfile;
+            Trees = new TreeData(treeRendererKeys, terrainGenData);
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -118,14 +107,6 @@ namespace DCL.Landscape
         [Obsolete]
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled) { }
 
-        public bool Contains(Vector2Int parcel)
-        {
-            if (IsTerrainGenerated)
-                return TerrainModel.IsInsideBounds(parcel);
-
-            return true;
-        }
-
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
@@ -139,7 +120,7 @@ namespace DCL.Landscape
             // TODO is it necessary to yield?
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            ShowGPUInstancerInstances();
+            Trees!.Show();
 
             IsTerrainShown = true;
 
@@ -154,7 +135,7 @@ namespace DCL.Landscape
             {
                 TerrainRoot.gameObject.SetActive(false);
 
-                HideGPUInstancerInstances();
+                Trees!.Hide();
 
                 IsTerrainShown = false;
             }
@@ -187,13 +168,15 @@ namespace DCL.Landscape
                     // The MinParcel, MaxParcel already has padding, so padding zero works here,
                     // but in reality we should remove integrated padding and utilise padding parameter as it would make things more scalable and less confusing
                     OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
-                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    (int floor, int maxSteps) distanceFieldData = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    OccupancyFloor = distanceFieldData.floor;
+                    MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
 
                     // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
                     OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
 
-                    occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                    occupancyMapSize = OccupancyMap.width; // width == height
+                    OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                    OccupancyMapSize = OccupancyMap.width; // width == height
 
                     processReport?.SetProgress(PROGRESS_COUNTER_OCCUPANCY_MAP);
 
@@ -211,10 +194,16 @@ namespace DCL.Landscape
 
                     processReport?.SetProgress(PROGRESS_COUNTER_TERRAIN_COMPONENTS);
 
-                    await LoadTreesAsync();
-                    InstantiateTrees();
+                    await Trees!.LoadAsync($"{Application.streamingAssetsPath}/GenesisTrees.bin");
+
+                    Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel,
+                        OccupancyMapData, OccupancyMapSize, OccupancyFloor, MaxHeight);
+
+                    Trees.Instantiate();
 
                     processReport?.SetProgress(1f);
+
+                    IsTerrainShown = true;
                 }
             }
             catch (OperationCanceledException)
@@ -229,7 +218,6 @@ namespace DCL.Landscape
                 FreeMemory();
 
                 IsTerrainGenerated = true;
-                IsTerrainShown = true;
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
@@ -262,16 +250,14 @@ namespace DCL.Landscape
             emptyParcelsData.Dispose();
         }
 
-        private static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
+        internal static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
-            int2 terrainSize = maxParcel - minParcel + 1;
-            int2 citySize = terrainSize - (padding * 2);
-            int textureSize = ceilpow2(cmax(terrainSize) + 2);
+            int absMax = cmax(abs(int4(minParcel, maxParcel)));
+            int textureSize = ceilpow2((absMax * 2) + 2);
             int textureHalfSize = textureSize / 2;
 
-            var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
-                true);
+            var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false, true);
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
@@ -317,21 +303,19 @@ namespace DCL.Landscape
                     int leftCol = textureHalfSize + freeMinX - 1;
                     int rightCol = textureHalfSize + freeMaxX + 1;
 
-                    // Clamp columns to texture bounds
-                    leftCol = Math.Clamp(leftCol, 0, textureSize - 1);
-                    rightCol = Math.Clamp(rightCol, 0, textureSize - 1);
-
                     unsafe
                     {
                         var basePtr = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
 
                         // Left vertical stripe
-                        for (int row = startRow; row <= endRowInclusive; row++)
-                            *(basePtr + (row * textureSize) + leftCol) = 0;
+                        if (leftCol >= 0 && leftCol < textureSize)
+                            for (int row = startRow; row <= endRowInclusive; row++)
+                                *(basePtr + (row * textureSize) + leftCol) = 0;
 
                         // Right vertical stripe
-                        for (int row = startRow; row <= endRowInclusive; row++)
-                            *(basePtr + (row * textureSize) + rightCol) = 0;
+                        if (rightCol >= 0 && rightCol < textureSize)
+                            for (int row = startRow; row <= endRowInclusive; row++)
+                                *(basePtr + (row * textureSize) + rightCol) = 0;
                     }
                 }
             }
@@ -350,203 +334,159 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        private static int WriteInteriorChamferOnWhite(Texture2D r8, int2 minParcel, int2 maxParcel, int padding)
+        internal static (int floor, int maxSteps) WriteInteriorChamferOnWhite(Texture2D texture, int2 minParcel, int2 maxParcel, int padding)
         {
-            int w = r8.width, h = r8.height, n = w * h;
-            NativeArray<byte> src = r8.GetRawTextureData<byte>();
-            if (!src.IsCreated || src.Length != n) return 0;
+            NativeArray<byte> src = texture.GetRawTextureData<byte>();
+            if (!src.IsCreated) return (0, 0);
 
-            int textureHalfSize = w / 2; // Assuming square texture
+            int textureWidth = texture.width;
 
-            // Calculate working area bounds in texture coordinates (with padding)
-            int workMinX = minParcel.x - padding;
-            int workMinY = minParcel.y - padding;
-            int workMaxX = maxParcel.x + padding;
-            int workMaxY = maxParcel.y + padding;
+            if (!ispow2(textureWidth))
+                ReportHub.LogError(ReportCategory.LANDSCAPE, "OccupancyMap is not power of 2. This can lead to unpredictable results!");
 
-            // Clamp to texture logical range [-textureHalfSize .. textureHalfSize-1]
-            workMinX = Math.Max(workMinX, -textureHalfSize);
-            workMinY = Math.Max(workMinY, -textureHalfSize);
-            workMaxX = Math.Min(workMaxX, textureHalfSize - 1);
-            workMaxY = Math.Min(workMaxY, textureHalfSize - 1);
+            // Calculate working area bounds
+            int textureHalfSize = textureWidth / 2;
+            int minX = max(minParcel.x - padding + textureHalfSize, 0);
+            int minY = max(minParcel.y - padding + textureHalfSize, 0);
+            int maxX = min(maxParcel.x + padding + textureHalfSize, textureWidth - 1);
+            int maxY = min(maxParcel.y + padding + textureHalfSize, textureWidth - 1);
 
-            // Convert to texture pixel coordinates and expand by 1 to include border stripes
-            int texMinX = workMinX + textureHalfSize - 1;
-            int texMinY = workMinY + textureHalfSize - 1;
-            int texMaxX = workMaxX + textureHalfSize + 1;
-            int texMaxY = workMaxY + textureHalfSize + 1;
-
-            // Clamp to actual texture bounds
-            texMinX = Math.Max(texMinX, 0);
-            texMinY = Math.Max(texMinY, 0);
-            texMaxX = Math.Min(texMaxX, w - 1);
-            texMaxY = Math.Min(texMaxY, h - 1);
-
-            const int INF = 1 << 28;
-            const int ORTH = 3; // 3-4 chamfer (good Euclidean approx)
-            const int DIAG = 4;
+            var workingArea = new RectInt(minX, minY, maxX - minX, maxY - minY);
 
             // Seed distances at BLACK pixels (occupied parcels - leave them 0), propagate into WHITE (free parcels)
-            var dist = new int[n];
-            bool anyBlack = false, anyWhite = false;
+            var dist = new NativeArray<int>(src.Length, Allocator.Temp);
+            int maxChamferDistance = ComputeChamferDistanceField(src, dist, textureWidth, workingArea);
 
-            // Initialize only working area pixels
-            for (int y = texMinY; y <= texMaxY; y++)
-            for (int x = texMinX; x <= texMaxX; x++)
+            // Convert to byte values and write back
+            (int floor, int maxSteps) = ApplyDistanceFieldMapping(src, dist, textureWidth, workingArea, maxChamferDistance);
+            dist.Dispose();
+            return (floor, maxSteps);
+        }
+
+        // Core distance field algorithm - returns max chamfer distance
+        private static int ComputeChamferDistanceField(NativeArray<byte> src, NativeArray<int> dist,
+            int width, RectInt workingArea)
+        {
+            int n = src.Length;
+
+            // Initialize working area pixels
+            for (int y = workingArea.yMin; y <= workingArea.yMax; y++)
+            for (int x = workingArea.xMin; x <= workingArea.xMax; x++)
             {
-                int i = (y * w) + x;
+                int i = (y * width) + x;
 
-                if (src[i] == 0)
-                {
-                    dist[i] = 0;
-                    anyBlack = true;
-                } // Black pixels (occupied) are seeds
-                else
-                {
+                if (src[i] > 0) // All not black  pixels (free) will get distances
                     dist[i] = INF;
-                    anyWhite = true;
-                } // White pixels (free) will get distances
             }
 
-            if (!anyBlack || !anyWhite)
-                return 0; // Nothing to do if no black or no white regions exist.
-
-            // Forward pass - only within working area
-            for (int y = texMinY; y <= texMaxY; y++)
+            // Forward pass
+            for (int y = workingArea.yMin; y <= workingArea.yMax; y++)
             {
-                int row = y * w;
+                int row = y * width;
 
-                for (int x = texMinX; x <= texMaxX; x++)
+                for (int x = workingArea.xMin; x <= workingArea.xMax; x++)
                 {
                     int i = row + x;
+
                     int d = dist[i];
 
                     if (d != 0) // skip black seeds
                     {
-                        if (x > texMinX) d = Mathf.Min(d, dist[i - 1] + ORTH);
-                        if (y > texMinY) d = Mathf.Min(d, dist[i - w] + ORTH);
-                        if (x > texMinX && y > texMinY) d = Mathf.Min(d, dist[i - w - 1] + DIAG);
-                        if (x < texMaxX && y > texMinY) d = Mathf.Min(d, dist[i - w + 1] + DIAG);
+                        // outside pixels considered as black (0)
+                        d = x > workingArea.xMin ? Mathf.Min(d, dist[i - 1] + ORTH) : Mathf.Min(d, 0 + ORTH);
+                        d = y > workingArea.yMin ? Mathf.Min(d, dist[i - width] + ORTH) : Mathf.Min(d, 0 + ORTH);
+                        d = x > workingArea.xMin && y > workingArea.yMin ? Mathf.Min(d, dist[i - width - 1] + DIAG) : Mathf.Min(d, 0 + DIAG);
+                        d = x < workingArea.xMax && y > workingArea.yMin ? Mathf.Min(d, dist[i - width + 1] + DIAG) : Mathf.Min(d, 0 + DIAG);
+
                         dist[i] = d;
                     }
                 }
             }
 
-            // Backward pass - only within working area
-            for (int y = texMaxY; y >= texMinY; y--)
-            {
-                int row = y * w;
-
-                for (int x = texMaxX; x >= texMinX; x--)
-                {
-                    int i = row + x;
-                    int d = dist[i];
-
-                    if (d != 0) // skip black seeds
-                    {
-                        if (x < texMaxX) d = Mathf.Min(d, dist[i + 1] + ORTH);
-                        if (y < texMaxY) d = Mathf.Min(d, dist[i + w] + ORTH);
-                        if (x < texMaxX && y < texMaxY) d = Mathf.Min(d, dist[i + w + 1] + DIAG);
-                        if (x > texMinX && y < texMaxY) d = Mathf.Min(d, dist[i + w - 1] + DIAG);
-                        dist[i] = d;
-                    }
-                }
-            }
-
-            // Find maximum distance and convert to pixel distance - only within working area
+            // Backward pass + track maximum
             var maxD = 0;
 
-            for (int y = texMinY; y <= texMaxY; y++)
-            for (int x = texMinX; x <= texMaxX; x++)
+            for (int y = workingArea.yMax; y >= workingArea.yMin; y--)
             {
-                int i = (y * w) + x;
+                int row = y * width;
 
-                if (src[i] != 0 && dist[i] < INF && dist[i] > maxD)
-                    maxD = dist[i]; // Check white pixels
+                for (int x = workingArea.xMax; x >= workingArea.xMin; x--)
+                {
+                    int i = row + x;
+                    int d = dist[i];
+
+                    if (d != 0) // skip black seeds
+                    {
+                        // outside pixels considered as black (0)
+                        d = x < workingArea.xMax ? Mathf.Min(d, dist[i + 1] + ORTH) : Mathf.Min(d, 0 + ORTH);
+                        d = y < workingArea.yMax ? Mathf.Min(d, dist[i + width] + ORTH) : Mathf.Min(d, 0 + ORTH);
+                        d = x < workingArea.xMax && y < workingArea.yMax ? Mathf.Min(d, dist[i + width + 1] + DIAG) : Mathf.Min(d, 0 + DIAG);
+                        d = x > workingArea.xMin && y < workingArea.yMax ? Mathf.Min(d, dist[i + width - 1] + DIAG) : Mathf.Min(d, 0 + DIAG);
+
+                        dist[i] = d;
+                    }
+
+                    // Track maximum distance
+                    if (src[i] != 0 && dist[i] < INF && dist[i] > maxD)
+                        maxD = dist[i];
+                }
             }
 
-            if (maxD == 0)
-                return 0;
+            return maxD;
+        }
 
+        // Convert chamfer distances to byte values and write to texture
+        private static (int, int) ApplyDistanceFieldMapping(NativeArray<byte> src,
+            NativeArray<int> dist, int width, RectInt area, int maxChamferDistance)
+        {
             // Convert chamfer distance to approximate pixel distance
-            int maxPixelDistance = maxD / ORTH;
+            int maxPixelDistance = (maxChamferDistance / ORTH) - 1;
 
-            // Check for overflow and warn if needed
-            bool hasOverflow = maxPixelDistance > 255;
+            if (maxChamferDistance == 0 || maxPixelDistance <= 0) // means no distance field applied
+                return (255, 0);
 
-            if (hasOverflow)
+            if (maxPixelDistance > 255)
             {
                 ReportHub.LogError(ReportCategory.LANDSCAPE, $"Distance field overflow! Max distance {maxPixelDistance} pixels, clamping to 255");
                 maxPixelDistance = 255;
             }
 
             // Calculate adaptive stepSize to avoid merging with black pixels
-            int stepSize;
-
-            if (maxPixelDistance <= 25)
-            {
-                stepSize = 10; // Default stepSize for reasonable distances
-            }
-            else
-            {
-                // Adaptive stepSize to fit large distances, ensuring minValue >= 1
-                stepSize = (255 - 1) / maxPixelDistance; // 254 / maxPixelDistance
-                stepSize = Mathf.Max(stepSize, 1); // Ensure at least 1
-            }
+            int stepSize = maxPixelDistance <= 25
+                ? 10 // Default stepSize for reasonable distances
+                : Mathf.Max((255 - 1) / maxPixelDistance, 1); // Adaptive stepSize to fit large distances, ensuring minValue >= 1
 
             int minValue = 255 - (stepSize * maxPixelDistance);
-            ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxD}, max maxPixelDistance={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
 
-            // Write back: keep black at 0, map distances to [minValue, 255] range - only within working area
-            for (int y = texMinY; y <= texMaxY; y++)
+            ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxChamferDistance}, max pixels={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
+
+            int n = src.Length;
+
+            // Write back mapped values
+            for (int y = area.yMin; y <= area.yMax; y++)
+            for (int x = area.xMin; x <= area.xMax; x++)
             {
-                for (int x = texMinX; x <= texMaxX; x++)
+                int i = (y * width) + x;
+
+                if (src[i] == 0) // keep black pixels (occupied)
                 {
-                    int i = (y * w) + x;
-
-                    if (src[i] == 0)
-                    {
-                        src[i] = 0;
-                        continue;
-                    } // keep black pixels (occupied)
-
-                    // Convert chamfer distance to pixel distance
-                    int pixelDist = dist[i] / ORTH;
-                    pixelDist = Mathf.Min(pixelDist, maxPixelDistance); // Clamp to max
-
-                    // Map [1, maxPixelDistance] to [minValue, 255]
-                    int value;
-
-                    if (maxPixelDistance == 1)
-                        value = 255; // Only one distance level, use max value
-                    else
-                    {
-                        value = minValue + ((pixelDist - 1) * (255 - minValue) / (maxPixelDistance - 1));
-                        value = Mathf.Clamp(value, minValue, 255);
-                    }
-
-                    src[i] = (byte)value;
+                    src[i] = 0;
+                    continue;
                 }
+
+                // Convert chamfer distance to pixel distance
+                int pixelDist = Mathf.Min((dist[i] / ORTH) - 1, maxPixelDistance);
+
+                // Map [1, maxPixelDistance] to [minValue, 255]
+                int value = minValue + (pixelDist * stepSize);
+                src[i] = (byte)Mathf.Clamp(value, minValue, 255);
             }
 
-            return minValue;
+            return (minValue, maxPixelDistance);
         }
 
-        public bool IsParcelOccupied(int2 parcel)
-        {
-            if (any(parcel < TerrainModel.MinParcel) || any(parcel > TerrainModel.MaxParcel))
-                return false;
-
-            if (occupancyMapSize <= 0)
-                return false;
-
-            parcel += occupancyMapSize / 2;
-            int index = (parcel.y * occupancyMapSize) + parcel.x;
-            return occupancyMapData[index] == 0;
-        }
-
-        private static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
-            int occupancyMapSize, int parcelSize, int occupancyFloor)
+        public static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
+            int occupancyMapSize, int parcelSize, int occupancyFloor, float maxHeight)
         {
             float occupancy;
 
@@ -561,25 +501,34 @@ namespace DCL.Landscape
             else
                 occupancy = 0f;
 
-            // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
             float minValue = occupancyFloor / 255.0f; // 0.68
 
-            if (occupancy <= minValue) return 0f;
+            if (occupancy <= minValue)
+            {
+                // Flat surface (occupied parcels and above minValue threshold)
+                return 0f;
+            }
+            else
+            {
+                // Calculate normalized height first
+                float normalizedHeight = (occupancy - minValue) / (1f - minValue);
 
-            const float SATURATION_FACTOR = 20;
-            float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-            return (normalizedHeight * MAX_HEIGHT) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+                // the result from the heightmap should be equal to this function
+                float noiseH = MountainsNoise.GetHeight(x, z);
+
+                const float SATURATION_FACTOR = 20;
+                float y = (normalizedHeight * maxHeight) + (noiseH * saturate(normalizedHeight * SATURATION_FACTOR));
+
+                // Ensure no negative heights
+                return max(0f, y);
+            }
         }
 
-        public float GetHeight(float x, float z) =>
-            GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
+        internal static float GetHeight(float x, float z, int parcelSize,
+            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor, float maxHeight) =>
 
-        public static float GetHeight(float x, float z, int parcelSize,
-            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor)
-        {
             // var parcel = (int2)floor(float2(x, z) / parcelSize);
-            return GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor);
-        }
+            GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor, maxHeight);
 
         private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
         {
@@ -594,242 +543,6 @@ namespace DCL.Landscape
             float top = lerp(texture[index.w], texture[index.z], t.x);
             float bottom = lerp(texture[index.x], texture[index.y], t.x);
             return lerp(top, bottom, t.y) * (1f / 255f);
-        }
-
-        public ReadOnlySpan<TreeInstanceData> GetTreeInstances(int2 parcel)
-        {
-            // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
-            // don't need to check if treeInstances is empty or anything like that.
-            if (parcel.x < treeMinParcel.x || parcel.x >= treeMaxParcel.x
-                                           || parcel.y < treeMinParcel.y || parcel.y >= treeMaxParcel.y) { return ReadOnlySpan<TreeInstanceData>.Empty; }
-
-            int index = ((parcel.y - treeMinParcel.y) * (treeMaxParcel.x - treeMinParcel.x))
-                + parcel.x - treeMinParcel.x;
-
-            int start = treeIndices[index++];
-            int end = index < treeIndices.Length ? treeIndices[index] : treeInstances.Length;
-            return treeInstances.AsReadOnlySpan().Slice(start, end - start);
-        }
-
-        public bool GetTreeTransform(int2 parcel, TreeInstanceData instance, out Vector3 position,
-            out Quaternion rotation, out Vector3 scale)
-        {
-            position.x = (parcel.x + (instance.PositionX * (1f / 255f))) * ParcelSize;
-            position.z = (parcel.y + (instance.PositionZ * (1f / 255f))) * ParcelSize;
-
-            if (OverlapsOccupiedParcel(float2(position.x, position.z),
-                    terrainGenData.treeAssets[instance.PrototypeIndex].radius))
-            {
-                position.y = 0f;
-                rotation = default(Quaternion);
-                scale = default(Vector3);
-                return false;
-            }
-
-            position.y = GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
-
-            rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
-
-            scale = terrainGenData.treeAssets[instance.PrototypeIndex]
-                                  .randomization
-                                  .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
-                                  .xyx;
-
-            return true;
-        }
-
-        private bool OverlapsOccupiedParcel(float2 position, float radius)
-        {
-            var parcel = (int2)floor(position * (1f / ParcelSize));
-
-            if (IsParcelOccupied(parcel))
-                return true;
-
-            float2 localPosition = position - (parcel * ParcelSize);
-
-            if (localPosition.x < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x - 1, parcel.y)))
-                    return true;
-
-                if (localPosition.y < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x - 1, parcel.y - 1)))
-                        return true;
-                }
-            }
-
-            if (ParcelSize - localPosition.x < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x + 1, parcel.y)))
-                    return true;
-
-                if (ParcelSize - localPosition.y < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x + 1, parcel.y + 1)))
-                        return true;
-                }
-            }
-
-            if (localPosition.y < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x, parcel.y - 1)))
-                    return true;
-
-                if (ParcelSize - localPosition.x < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x + 1, parcel.y - 1)))
-                        return true;
-                }
-            }
-
-            if (ParcelSize - localPosition.y < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x, parcel.y + 1)))
-                    return true;
-
-                if (localPosition.x < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x - 1, parcel.y + 1)))
-                        return true;
-                }
-            }
-
-            return false;
-        }
-
-        private async UniTask LoadTreesAsync()
-        {
-            try
-            {
-                await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
-                    FileShare.Read);
-
-                using var reader = new BinaryReader(stream, new UTF8Encoding(false), false);
-
-                treeMinParcel.x = reader.ReadInt32();
-                treeMinParcel.y = reader.ReadInt32();
-                treeMaxParcel.x = reader.ReadInt32();
-                treeMaxParcel.y = reader.ReadInt32();
-
-                int2 treeIndexSize = treeMaxParcel - treeMinParcel;
-
-                if (any(treeIndexSize > TERRAIN_SIZE_LIMIT))
-                    throw new IOException(
-                        $"Tree index size of ({treeIndexSize.x}, {treeIndexSize.y}) exceeds the limit of {TERRAIN_SIZE_LIMIT}");
-
-                treeIndices = new NativeArray<int>(treeIndexSize.x * treeIndexSize.y,
-                    Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-
-                ReadReliably(reader, treeIndices);
-
-                int treeInstanceCount = reader.ReadInt32();
-
-                if (treeInstanceCount > TREE_INSTANCE_LIMIT)
-                    throw new IOException(
-                        $"Tree instance count of {treeInstanceCount} exceeds the limit of {TREE_INSTANCE_LIMIT}");
-
-                treeInstances = new NativeArray<TreeInstanceData>(treeInstanceCount, Allocator.Persistent,
-                    NativeArrayOptions.UninitializedMemory);
-
-                ReadReliably(reader, treeInstances);
-            }
-            catch (Exception ex)
-            {
-                if (ex is FileNotFoundException)
-                    ReportHub.LogWarning(ReportCategory.LANDSCAPE,
-                        $"Tree instance data file not found, path: {treeFilePath}");
-                else
-                    ReportHub.LogException(ex, ReportCategory.LANDSCAPE);
-
-                if (treeIndices.IsCreated)
-                    treeIndices.Dispose();
-
-                if (treeInstances.IsCreated)
-                    treeInstances.Dispose();
-
-                treeIndices = new NativeArray<int>(0, Allocator.Persistent);
-                treeInstances = new NativeArray<TreeInstanceData>(0, Allocator.Persistent);
-            }
-        }
-
-        private static unsafe void ReadReliably<T>(BinaryReader reader, NativeArray<T> array)
-            where T: unmanaged
-        {
-            var buffer = new Span<byte>(array.GetUnsafePtr(), array.Length * sizeof(T));
-
-            while (buffer.Length > 0)
-            {
-                int read = reader.Read(buffer);
-
-                if (read <= 0)
-                    throw new EndOfStreamException("Read zero bytes");
-
-                buffer = buffer.Slice(read);
-            }
-        }
-
-        [Conditional("GPUI_PRO_PRESENT")]
-        private void ShowGPUInstancerInstances()
-        {
-            if (gpuInstancerRendererKeys == null || gpuInstancerInstanceCounts == null)
-                return;
-
-            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
-                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], gpuInstancerInstanceCounts[i]);
-        }
-
-        [Conditional("GPUI_PRO_PRESENT")]
-        private void HideGPUInstancerInstances()
-        {
-            if (gpuInstancerRendererKeys == null)
-                return;
-
-            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
-                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], 0);
-        }
-
-        [Conditional("GPUI_PRO_PRESENT")]
-        private void InstantiateTrees()
-        {
-            LandscapeAsset[] prototypes = terrainGenData.treeAssets;
-            int stride = treeMaxParcel.x - treeMinParcel.x;
-            var transforms = new List<Matrix4x4>[prototypes.Length];
-
-            for (var i = 0; i < transforms.Length; i++)
-                transforms[i] = new List<Matrix4x4>();
-
-            for (var i = 0; i < treeIndices.Length; i++)
-            {
-                int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
-                ReadOnlySpan<TreeInstanceData> instances = GetTreeInstances(parcel);
-
-                foreach (TreeInstanceData instance in instances)
-                {
-                    if (GetTreeTransform(parcel, instance,
-                            out Vector3 position, out Quaternion rotation, out Vector3 scale))
-                    {
-                        transforms[instance.PrototypeIndex]
-                           .Add(Matrix4x4.TRS(position, rotation, scale));
-                    }
-                }
-            }
-
-            gpuInstancerRendererKeys = new int[terrainGenData.treeAssets.Length];
-            gpuInstancerInstanceCounts = new int[gpuInstancerRendererKeys.Length];
-
-            for (var prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
-                 prototypeIndex++)
-            {
-                GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset, treesProfile, out gpuInstancerRendererKeys[prototypeIndex]);
-
-                List<Matrix4x4> matrices = transforms[prototypeIndex];
-
-                gpuInstancerInstanceCounts[prototypeIndex] = matrices.Count;
-
-                GPUICoreAPI.SetTransformBufferData(gpuInstancerRendererKeys[prototypeIndex],
-                    matrices, 0, 0, matrices.Count);
-            }
         }
     }
 }

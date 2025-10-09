@@ -11,7 +11,7 @@ namespace DCL.PluginSystem.Global
     {
         [Header("Asset References")]
         [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; } = null!;
-        [field: SerializeField] public PlayerEntryView PlayerEntryView { get; private set; } = null!;
+        [field: SerializeField] public VoiceChatParticipantEntryView PlayerEntryView { get; private set; } = null!;
 
         [Header("Audio References")]
         [field: SerializeField] public AudioClipConfig MuteMicrophoneAudio { get; private set; } = null!;
