@@ -26,6 +26,7 @@ using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
@@ -58,6 +59,9 @@ namespace DCL.PluginSystem.Global
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly OutfitsRepository outfitsRepository;
+        private readonly IRealmData realmData;
+        private readonly IWebRequestController webController;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -88,7 +92,10 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            OutfitsRepository outfitsRepository,
+            IRealmData realmData,
+            IWebRequestController webController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -115,6 +122,9 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.thumbnailProvider = thumbnailProvider;
             this.profileChangesBus = profileChangesBus;
+            this.outfitsRepository = outfitsRepository;
+            this.realmData = realmData;
+            this.webController = webController;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -232,8 +242,12 @@ namespace DCL.PluginSystem.Global
                 emotesController,
                 backpackCharacterPreviewController,
                 this.thumbnailProvider,
-                inputBlock, 
-                cursor
+                inputBlock,
+                cursor,
+                outfitsRepository,
+                realmData,
+                webController,
+                equippedWearables
             );
         }
 

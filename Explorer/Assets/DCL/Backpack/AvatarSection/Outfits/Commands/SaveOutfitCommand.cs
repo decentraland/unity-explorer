@@ -33,7 +33,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             try
             {
-                var saved = await outfitService.SaveOutfitAsync(slotIndex, outfit, ct);
+                // var saved = await outfitService.SaveOutfitAsync(slotIndex, outfit, ct);
                 return SaveOutfitOutcome.Success;
             }
             catch (OperationCanceledException)

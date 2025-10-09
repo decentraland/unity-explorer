@@ -62,7 +62,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             try
             {
-                await outfitsService.DeleteOutfitAsync(slotIndex, ct);
+                outfitsService.DeleteLocalOutfit(slotIndex);
                 return DeleteOutfitOutcome.Success;
             }
             catch (OperationCanceledException)

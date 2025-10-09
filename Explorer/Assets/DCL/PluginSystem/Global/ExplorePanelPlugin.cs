@@ -38,6 +38,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesBrowser;
@@ -288,6 +289,8 @@ namespace DCL.PluginSystem.Global
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
+            var outfitsRepository = new OutfitsRepository(realmData);
+            
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
                 web3IdentityCache,
@@ -313,7 +316,10 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inWorldWarningNotificationView,
                 thumbnailProvider,
-                profileChangesBus
+                profileChangesBus,
+                outfitsRepository,
+                realmData,
+                webRequestController
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

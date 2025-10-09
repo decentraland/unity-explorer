@@ -16,10 +16,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Browser;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
+using ECS;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -47,8 +52,12 @@ namespace DCL.Backpack
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly OutfitsRepository outfitsRepository;
+        private readonly IRealmData realmData;
+        private readonly IWebRequestController webController;
+        private readonly IEquippedWearables equippedWearables;
         private BackpackSections lastShownSection;
-
+        
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
@@ -74,7 +83,11 @@ namespace DCL.Backpack
             BackpackCharacterPreviewController backpackCharacterPreviewController,
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
-            ICursor cursor)
+            ICursor cursor,
+            OutfitsRepository outfitsRepository,
+            IRealmData realmData,
+            IWebRequestController webController,
+            IEquippedWearables equippedWearables)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -88,7 +101,9 @@ namespace DCL.Backpack
             this.backpackGridController = backpackGridController;
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
-
+            this.outfitsRepository = outfitsRepository;
+            this.webController = webController;
+            this.equippedWearables = equippedWearables;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             var categoriesController = new CategoriesController(avatarView.CategoriesView,
@@ -97,13 +112,18 @@ namespace DCL.Backpack
                 backpackEventBus,
                 inputBlock);
 
-            var outfitService = new MockOutfitsService(selfProfile);
+            var outfitService = new OutfitsService(selfProfile,
+                webController,
+                realmData,
+                outfitsRepository);
+
+            var deleteOutfitCommand = new DeleteOutfitCommand(outfitService);
             var outfitsController = new OutfitsController(avatarView.OutfitsView,
-                selfProfile,
                 outfitService,
                 webBrowser,
-                identityCache,
-                backpackCommandBus);
+                backpackCommandBus,
+                equippedWearables,
+                deleteOutfitCommand);
             
             avatarController = new AvatarController(
                 avatarView,
@@ -199,7 +219,6 @@ namespace DCL.Backpack
             world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
-
             backpackGridController.RequestPage(1, true);
             backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);

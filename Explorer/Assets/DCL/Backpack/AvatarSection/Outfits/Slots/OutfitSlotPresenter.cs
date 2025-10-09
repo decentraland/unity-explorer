@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Backpack.AvatarSection.Outfits.Commands;
-using DCL.Backpack.AvatarSection.Outfits.Services;
+using DCL.Backpack.AvatarSection.Outfits.Models;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
-using DCL.Backpack.BackpackBus;
 using DCL.Diagnostics;
-using DCL.UI.ConfirmationDialog.Opener;
-using DCL.Utilities.Extensions;
-using MVC;
 using UnityEngine;
 using Utility;
 
@@ -23,6 +18,12 @@ namespace DCL.Backpack.Slots
         public Color HairColor { get; set; }
         public Color EyesColor { get; set; }
         public string ThumbnailUrl { get; set; }
+
+        public override string ToString()
+        {
+            return $"BodyShape: {BodyShapeUrn}, Wearables: [{string.Join(", ", WearableUrns)}], " +
+                   $"SkinColor: {SkinColor}, HairColor: {HairColor}, EyesColor: {EyesColor}, ThumbnailUrl: {ThumbnailUrl}";
+        }
     }
 
     public enum OutfitSlotState { Empty, Loading, Full, Save }
@@ -31,28 +32,25 @@ namespace DCL.Backpack.Slots
     {
         public readonly OutfitSlotView view;
         public readonly int slotIndex;
-        private readonly IOutfitsService outfitService;
-        private readonly BackpackCommandBus commandBus;
+        private readonly OutfitsController ownerController;
 
         private CancellationTokenSource cts = new ();
         private readonly HoverHandler hoverHandler;
         private bool isHovered;
         private OutfitSlotState currentState;
-        private OutfitData? currentOutfitData;
+        private OutfitItem? currentOutfitData;
         private readonly Sprite popupDeleteIcon;
 
         public OutfitSlotPresenter(
             Sprite popupDeleteIcon,
             OutfitSlotView view,
             int slotIndex,
-            IOutfitsService outfitService,
-            BackpackCommandBus commandBus)
+            OutfitsController ownerController)
         {
             this.popupDeleteIcon = popupDeleteIcon;
             this.view = view;
             this.slotIndex = slotIndex;
-            this.outfitService = outfitService;
-            this.commandBus = commandBus;
+            this.ownerController = ownerController;
 
             view.OnSaveClicked += HandleSaveClicked;
             view.OnDeleteClicked += HandleDeleteClicked;
@@ -66,12 +64,14 @@ namespace DCL.Backpack.Slots
 
         private void HandleSaveClicked()
         {
-            HandleSaveClickedAsync().Forget();
+            // HandleSaveClickedAsync().Forget();
+            ownerController.OnSaveOutfitRequested(slotIndex);
         }
 
         private void HandleDeleteClicked()
         {
-            HandleDeleteClickedAsync().Forget();
+            // HandleDeleteClickedAsync().Forget();
+            ownerController.OnDeleteOutfitRequested(slotIndex);
         }
 
         private void OnHoverEntered()
@@ -86,9 +86,10 @@ namespace DCL.Backpack.Slots
             UpdateView();
         }
 
-        public void SetData(OutfitData data)
+        public void SetData(OutfitItem item)
         {
-            SetState(OutfitSlotState.Full, data);
+            currentOutfitData = item;
+            SetState(OutfitSlotState.Full, item);
         }
 
         public void SetEmpty()
@@ -101,10 +102,10 @@ namespace DCL.Backpack.Slots
             SetState(OutfitSlotState.Loading);
         }
 
-        private void SetState(OutfitSlotState newState, OutfitData? data = null)
+        private void SetState(OutfitSlotState newState, OutfitItem? item = null)
         {
             currentState = newState;
-            currentOutfitData = data;
+            currentOutfitData = item;
             UpdateView();
         }
 
@@ -127,6 +128,7 @@ namespace DCL.Backpack.Slots
         private void HandleEquipClicked()
         {
             ReportHub.Log(ReportCategory.OUTFITS, "Equip outfit clicked");
+            ownerController.OnEquipOutfitRequested(currentOutfitData);
         }
 
         private void HandleUnequipClicked()
@@ -134,58 +136,58 @@ namespace DCL.Backpack.Slots
             ReportHub.Log(ReportCategory.OUTFITS, "Unequip outfit clicked");
         }
 
-        private async UniTask HandleSaveClickedAsync()
-        {
-            if (currentState != OutfitSlotState.Empty) return;
-
-            cts = cts.SafeRestart();
-
-            var outfitToSave = new OutfitData();
-
-            var saveCmd = new SaveOutfitCommand(outfitService);
-
-            var outcome = await saveCmd.ExecuteAsync(
-                slotIndex,
-                outfitToSave,
-                cts.Token,
-                onConfirmed: () => SetState(OutfitSlotState.Save));
-
-            if (cts.IsCancellationRequested) return;
-
-            var (state, data) = outcome switch
-            {
-                SaveOutfitOutcome.Success => (OutfitSlotState.Full, (OutfitData?)outfitToSave),
-                SaveOutfitOutcome.Cancelled => (OutfitSlotState.Empty, null),
-                SaveOutfitOutcome.Failed => (OutfitSlotState.Empty, (OutfitData?)null)
-            };
-
-            SetState(state, data);
-        }
-
-        private async UniTask HandleDeleteClickedAsync()
-        {
-            if (currentState != OutfitSlotState.Full) return;
-
-            cts = cts.SafeRestart();
-
-            var outfitDeleteCommand = new DeleteOutfitCommand(outfitService);
-            var outcome = await outfitDeleteCommand.ExecuteAsync(slotIndex, cts.Token,
-                onConfirmed: () =>
-                {
-                    SetState(OutfitSlotState.Save);
-                });
-
-            if (cts.IsCancellationRequested) return;
-
-            var (state, data) = outcome switch
-            {
-                DeleteOutfitOutcome.Success => (OutfitSlotState.Empty, (OutfitData?)null),
-                DeleteOutfitOutcome.Cancelled => (OutfitSlotState.Full, null),
-                DeleteOutfitOutcome.Failed => (OutfitSlotState.Full, currentOutfitData)
-            };
-
-            SetState(state, data);
-        }
+        // private async UniTask HandleSaveClickedAsync()
+        // {
+        //     if (currentState != OutfitSlotState.Empty) return;
+        //
+        //     cts = cts.SafeRestart();
+        //
+        //     var outfitToSave = new OutfitData();
+        //
+        //     var saveCmd = new SaveOutfitCommand(outfitService);
+        //
+        //     var outcome = await saveCmd.ExecuteAsync(
+        //         slotIndex,
+        //         outfitToSave,
+        //         cts.Token,
+        //         onConfirmed: () => SetState(OutfitSlotState.Save));
+        //
+        //     if (cts.IsCancellationRequested) return;
+        //
+        //     var (state, data) = outcome switch
+        //     {
+        //         SaveOutfitOutcome.Success => (OutfitSlotState.Full, (OutfitData?)outfitToSave),
+        //         SaveOutfitOutcome.Cancelled => (OutfitSlotState.Empty, null),
+        //         SaveOutfitOutcome.Failed => (OutfitSlotState.Empty, (OutfitData?)null)
+        //     };
+        //
+        //     SetState(state, data);
+        // }
+        //
+        // private async UniTask HandleDeleteClickedAsync()
+        // {
+        //     if (currentState != OutfitSlotState.Full) return;
+        //
+        //     cts = cts.SafeRestart();
+        //
+        //     var outfitDeleteCommand = new DeleteOutfitCommand(outfitService);
+        //     var outcome = await outfitDeleteCommand.ExecuteAsync(slotIndex, cts.Token,
+        //         onConfirmed: () =>
+        //         {
+        //             SetState(OutfitSlotState.Save);
+        //         });
+        //
+        //     if (cts.IsCancellationRequested) return;
+        //
+        //     var (state, data) = outcome switch
+        //     {
+        //         DeleteOutfitOutcome.Success => (OutfitSlotState.Empty, (OutfitData?)null),
+        //         DeleteOutfitOutcome.Cancelled => (OutfitSlotState.Full, null),
+        //         DeleteOutfitOutcome.Failed => (OutfitSlotState.Full, currentOutfitData)
+        //     };
+        //
+        //     SetState(state, data);
+        // }
 
         public void Dispose()
         {
