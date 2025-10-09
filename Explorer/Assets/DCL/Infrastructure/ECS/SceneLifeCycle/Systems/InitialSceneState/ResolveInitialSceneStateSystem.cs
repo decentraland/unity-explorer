@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
                 {
                     //TODO (JUANI) : So many !
                     foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset!.InitialSceneStateMetadata!.Value.assetHash)
-                        World.Create(staticSceneAssetBundle, new GetGltfContainerAssetIntention($"static_assset_{assetHash}", assetHash, new CancellationTokenSource()), Result);
+                        World.Create(staticSceneAssetBundle, new GetGltfContainerAssetIntention($"static_{assetHash}", assetHash, new CancellationTokenSource()), Result);
                 }
             }
         }

@@ -11,7 +11,7 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
-    public struct InitialSceneStateDescriptor
+    public class InitialSceneStateDescriptor
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
@@ -90,6 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         {
             foreach (var valueTuple in AssetsInstantiated)
             {
+                //TODO (JUANI) : Can we clean this up?
                 valueTuple.Item2.Scene_LOD_Bridge_Asset = true;
                 assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
