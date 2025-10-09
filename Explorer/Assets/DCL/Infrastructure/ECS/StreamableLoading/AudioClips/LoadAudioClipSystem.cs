@@ -34,6 +34,8 @@ namespace ECS.StreamableLoading.AudioClips
                 ct,
                 GetReportData());
 
+            Debug.LogError("AUDIO WEB REQUEST " + intention.CommonArguments.URL + " name: " + result.name);
+
             return new StreamableLoadingResult<AudioClipData>(new AudioClipData(result));
         }
     }

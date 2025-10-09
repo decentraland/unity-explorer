@@ -950,7 +950,7 @@ PlayerSettings:
     PS5: 1
     QNX: 1
     Stadia: 1
-    Standalone: 2
+    Standalone: 4
     WebGL: 1
     Windows Store Apps: 1
     XboxOne: 1
