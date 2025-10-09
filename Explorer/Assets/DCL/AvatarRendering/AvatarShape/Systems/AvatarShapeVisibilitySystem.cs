@@ -9,6 +9,7 @@ using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
+using DCL.SceneBannedUsers;
 using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
@@ -29,8 +30,9 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly float startFadeDithering;
         private readonly float endFadeDithering;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly bool includeBannedUsersFromScene;
 
-        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering) : base(world)
+        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDitheringm, bool includeBannedUsersFromScene) : base(world)
         {
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.outlineFeature = outlineFeature.GetRendererFeature<RendererFeature_AvatarOutline>();
@@ -38,6 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             this.startFadeDithering = startFadeDithering;
             this.endFadeDithering = endFadeDithering;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
         public override void Initialize()
@@ -54,6 +57,7 @@ namespace DCL.AvatarRendering.AvatarShape
             UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             BlockAvatarsQuery(World);
+            BanAvatarsQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
             GetAvatarsVisibleWithOutlineQuery(World);
         }
@@ -140,16 +144,52 @@ namespace DCL.AvatarRendering.AvatarShape
 
             bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
 
-            if (isBlocked && !World.Has<BlockedPlayerComponent>(entity))
-                World.Add(entity, new BlockedPlayerComponent());
-            else if (!isBlocked)
-                World.TryRemove<BlockedPlayerComponent>(entity);
+            ref HiddenPlayerComponent attachedHiddenComponent = ref World.TryGetRef<HiddenPlayerComponent>(entity, out bool isHiddenComponentAttached);
+
+            if (isBlocked && (!isHiddenComponentAttached || (isHiddenComponentAttached && !attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED))))
+            {
+                if (!isHiddenComponentAttached)
+                    World.Add(entity, new HiddenPlayerComponent { Reason = HiddenPlayerComponent.HiddenReason.BLOCKED } );
+                else
+                    attachedHiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.BLOCKED;
+            }
+            else if (!isBlocked && isHiddenComponentAttached && attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED))
+            {
+                attachedHiddenComponent.Reason &= ~HiddenPlayerComponent.HiddenReason.BLOCKED;
+                if (attachedHiddenComponent.Reason == 0)
+                    World.TryRemove<HiddenPlayerComponent>(entity);
+            }
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent))]
+        private void BanAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
+        {
+            if (!includeBannedUsersFromScene) return;
+
+            bool isBanned = BannedUsersFromCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
+
+            ref HiddenPlayerComponent attachedHiddenComponent = ref World.TryGetRef<HiddenPlayerComponent>(entity, out bool isHiddenComponentAttached);
+
+            if (isBanned && (!isHiddenComponentAttached || (isHiddenComponentAttached && !attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED))))
+            {
+                if (!isHiddenComponentAttached)
+                    World.Add(entity, new HiddenPlayerComponent { Reason = HiddenPlayerComponent.HiddenReason.BANNED } );
+                else
+                    attachedHiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.BANNED;
+            }
+            else if (!isBanned && isHiddenComponentAttached && attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED))
+            {
+                attachedHiddenComponent.Reason &= ~HiddenPlayerComponent.HiddenReason.BANNED;
+                if (attachedHiddenComponent.Reason == 0)
+                    World.TryRemove<HiddenPlayerComponent>(entity);
+            }
         }
 
         [Query]
         private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<BlockedPlayerComponent>(entity) || World.Has<BannedPlayerComponent>(entity);
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<HiddenPlayerComponent>(entity);
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 

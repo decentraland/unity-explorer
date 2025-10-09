@@ -186,8 +186,7 @@ namespace DCL.Nametags
                 partitionComponent.IsBehind
                 || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
-                || World.Has<BlockedPlayerComponent>(e)
-                || World.Has<BannedPlayerComponent>(e))
+                || World.Has<HiddenPlayerComponent>(e))
             {
                 nametagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);

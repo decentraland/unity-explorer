@@ -3,13 +3,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.SceneBannedUsers;
-using DCL.SceneBannedUsers.Systems;
 using ECS.SceneLifeCycle;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class BannedUsersPlugin : IDCLGlobalPlugin
+    public class BannedUsersPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IRoomHub roomHub;
         private readonly ECSBannedScene bannedSceneController;
@@ -40,13 +39,7 @@ namespace DCL.PluginSystem.Global
             return UniTask.CompletedTask;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            if (!includeBannedUsersFromScene)
-                return;
-
-            BannedUsersSystem.InjectToWorld(ref builder);
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public void Dispose() =>
             playerBannedScenesController.Dispose();
