@@ -97,6 +97,9 @@ namespace DCL.UI.Skybox
             viewInstance.TextSliderGroup.enabled = isOn;
 
             skyboxSettings.IsUIControlled = !isOn;
+
+            if (skyboxSettings.IsUIControlled)
+                skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
         }
 
         protected override void OnBeforeViewShow()
