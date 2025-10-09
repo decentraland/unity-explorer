@@ -11,8 +11,7 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
-    //TODO (JUANI) : This should be a struct?
-    public class InitialSceneStateDescriptor
+    public struct InitialSceneStateDescriptor
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
@@ -23,9 +22,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private IGltfContainerAssetsCache assetsCache;
 
         private bool AllAssetsInstantiated;
-
-        private InitialSceneStateDescriptor() { }
-
 
         public bool IsReady()
         {
