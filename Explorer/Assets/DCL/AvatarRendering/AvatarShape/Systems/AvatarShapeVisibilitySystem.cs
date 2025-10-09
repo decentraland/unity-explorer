@@ -144,21 +144,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
 
-            ref HiddenPlayerComponent attachedHiddenComponent = ref World.TryGetRef<HiddenPlayerComponent>(entity, out bool isHiddenComponentAttached);
-
-            if (isBlocked && (!isHiddenComponentAttached || (isHiddenComponentAttached && !attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED))))
-            {
-                if (!isHiddenComponentAttached)
-                    World.Add(entity, new HiddenPlayerComponent { Reason = HiddenPlayerComponent.HiddenReason.BLOCKED } );
-                else
-                    attachedHiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.BLOCKED;
-            }
-            else if (!isBlocked && isHiddenComponentAttached && attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED))
-            {
-                attachedHiddenComponent.Reason &= ~HiddenPlayerComponent.HiddenReason.BLOCKED;
-                if (attachedHiddenComponent.Reason == 0)
-                    World.TryRemove<HiddenPlayerComponent>(entity);
-            }
+            SetHiddenComponent(entity, isBlocked, HiddenPlayerComponent.HiddenReason.BLOCKED);
         }
 
         [Query]
@@ -169,18 +155,23 @@ namespace DCL.AvatarRendering.AvatarShape
 
             bool isBanned = BannedUsersFromCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
 
+            SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.BANNED);
+        }
+
+        private void SetHiddenComponent(Entity entity, bool hiddenValue, HiddenPlayerComponent.HiddenReason hiddenReason)
+        {
             ref HiddenPlayerComponent attachedHiddenComponent = ref World.TryGetRef<HiddenPlayerComponent>(entity, out bool isHiddenComponentAttached);
 
-            if (isBanned && (!isHiddenComponentAttached || (isHiddenComponentAttached && !attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED))))
+            if (hiddenValue && (!isHiddenComponentAttached || (isHiddenComponentAttached && !attachedHiddenComponent.Reason.HasFlag(hiddenReason))))
             {
                 if (!isHiddenComponentAttached)
-                    World.Add(entity, new HiddenPlayerComponent { Reason = HiddenPlayerComponent.HiddenReason.BANNED } );
+                    World.Add(entity, new HiddenPlayerComponent { Reason = hiddenReason } );
                 else
-                    attachedHiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.BANNED;
+                    attachedHiddenComponent.Reason |= hiddenReason;
             }
-            else if (!isBanned && isHiddenComponentAttached && attachedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED))
+            else if (!hiddenValue && isHiddenComponentAttached && attachedHiddenComponent.Reason.HasFlag(hiddenReason))
             {
-                attachedHiddenComponent.Reason &= ~HiddenPlayerComponent.HiddenReason.BANNED;
+                attachedHiddenComponent.Reason &= ~hiddenReason;
                 if (attachedHiddenComponent.Reason == 0)
                     World.TryRemove<HiddenPlayerComponent>(entity);
             }
