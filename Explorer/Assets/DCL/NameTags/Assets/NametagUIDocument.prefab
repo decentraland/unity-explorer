@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2238971992511925778}
   - component: {fileID: 1753059685906445377}
   - component: {fileID: 9049864178005414463}
-  - component: {fileID: 321360063289111940}
   m_Layer: 5
   m_Name: NametagUIDocument
   m_TagString: Untagged
@@ -69,15 +68,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a631e1c5e3cd47d79782bc839f06dfd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Nametags::DCL.Nametags.NametagHolder
---- !u!114 &321360063289111940
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6992765968124143499}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa37bb57f2a2400497b84e42b9a35f06, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

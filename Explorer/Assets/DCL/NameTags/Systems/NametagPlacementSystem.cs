@@ -81,18 +81,6 @@ namespace DCL.Nametags
             UpdateNametagSpeakingStateQuery(World);
 
             timer += t;
-
-            // Sort nametags with 1 iteration of bubble sort per frame. Back to basics :)
-            // int childCount = nametagRoot.hierarchy.childCount;
-            //
-            // for (int i = 0; i < childCount - 1; i++)
-            // {
-            //     var left = (NametagElement)nametagRoot.hierarchy.ElementAt(i);
-            //     var right = (NametagElement)nametagRoot.hierarchy.ElementAt(i + 1);
-            //
-            //     if (left.LastSqrDistance < right.LastSqrDistance)
-            //         left.PlaceInFront(right);
-            // }
         }
 
         [Query]
