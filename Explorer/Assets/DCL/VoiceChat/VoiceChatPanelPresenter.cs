@@ -18,7 +18,7 @@ namespace DCL.VoiceChat
         private readonly ChatClickDetectionService chatClickDetectionService;
 
         private readonly PrivateVoiceChatController? privateVoiceChatController;
-        private readonly CommunityVoiceChatController? communitiesVoiceChatController;
+        private readonly CommunityVoiceChatPresenter? communitiesVoiceChatController;
         private readonly VoiceChatPanelResizeController? voiceChatPanelResizeController;
         private readonly SceneVoiceChatController? sceneVoiceChatController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
@@ -32,7 +32,7 @@ namespace DCL.VoiceChat
             VoiceChatMicrophoneHandler voiceChatHandler,
             VoiceChatRoomManager roomManager,
             IRoomHub roomHub,
-            PlayerEntryView playerEntry,
+            VoiceChatParticipantEntryView participantEntryView,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ChatClickDetectionService chatClickDetectionService)
         {
@@ -42,7 +42,7 @@ namespace DCL.VoiceChat
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(view.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 
