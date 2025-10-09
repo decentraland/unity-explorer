@@ -38,6 +38,8 @@ namespace DCL.Chat.ChatViews
 
         private TitlebarViewMode currentViewMode;
         private ChatTitlebarViewModel currentTitlebarViewModel;
+        private ColorBlock profileCtxMenuButtonNormalColors;
+        private ColorBlock profileCtxMenuButtonOpenColors;
 
         [SerializeField]
         private Image connectionStatusIndicator;
@@ -51,7 +53,17 @@ namespace DCL.Chat.ChatViews
             buttonOpenProfileContextMenu.onClick.AddListener(() => OnProfileContextMenuRequested?.Invoke(currentViewMode));
             buttonClose.onClick.AddListener(() => OnCloseRequested?.Invoke());
             buttonOpenMembers.onClick.AddListener(() => OnMembersRequested?.Invoke());
+
+            profileCtxMenuButtonNormalColors = buttonOpenProfileContextMenu.colors;
+            profileCtxMenuButtonOpenColors = buttonOpenProfileContextMenu.colors;
+            profileCtxMenuButtonOpenColors.normalColor = profileCtxMenuButtonOpenColors.pressedColor;
         }
+
+        public void SetContextMenuButtonSelectedAppearance() =>
+            buttonOpenProfileContextMenu.colors = profileCtxMenuButtonOpenColors;
+
+        public void SetContextMenuButtonNormalAppearance() =>
+            buttonOpenProfileContextMenu.colors = profileCtxMenuButtonNormalColors;
 
         public void Setup(ChatTitlebarViewModel model)
         {
@@ -103,7 +115,7 @@ namespace DCL.Chat.ChatViews
             if (nearbyAutoTranslateIndicator != null)
                 nearbyAutoTranslateIndicator.SetActive(isVisible);
         }
-        
+
         public void SetConnectionStatus(bool isOnline)
         {
             connectionStatusIndicator.gameObject.SetActive(isOnline);
