@@ -32,9 +32,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
             assets = new Dictionary<string, AssetInfo>();
 
-            //TODO (JUANI) : The whole asset type could be confusing. Too much obscuriting realying on nullable condition
             for (var i = 0; i < loadedAssets.Length; i++)
-                assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType == null ? loadedAssets[i].GetType() : assetType, version, source);
+                assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
 
             Dependencies = dependencies;
             AssetBundleName = assetBundle.name;
@@ -123,21 +122,6 @@ namespace ECS.StreamableLoading.AssetBundles
             return (T)assetInfo.Asset!;
         }
 
-        public string GetAssetDescription(string assetName = "")
-        {
-            //Validations where done when the asset was requested
-            if (string.IsNullOrEmpty(assetName))
-            {
-                AssetInfo assetInfo = assets.FirstValueOrDefaultNonAlloc();
-                return assetInfo.Description;
-            }
-            else
-            {
-                AssetInfo assetInfo = assets[assetName];
-                return assetInfo.Description;
-            }
-        }
-
     }
 }
 
@@ -145,13 +129,12 @@ public struct AssetInfo
 {
     public Object Asset { get; }
     public Type AssetType { get; }
-    public string Description { get; }
 
     public AssetInfo(Object asset, Type assetType, string version, string source)
     {
         Asset = asset;
         AssetType = assetType;
-        Description = $"AB:{Asset?.name}_{version}_{source}";
+        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
     }
 }
 
