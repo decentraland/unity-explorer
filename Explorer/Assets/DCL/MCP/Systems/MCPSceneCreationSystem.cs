@@ -33,6 +33,7 @@ namespace DCL.MCP.Systems
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
         private readonly IComponentPool<PBGltfContainer> gltfPool;
+        private readonly IComponentPool<PBTriggerArea> triggerAreaPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
 
@@ -47,7 +48,8 @@ namespace DCL.MCP.Systems
             IComponentPool<PBTextShape> textShapePool
           , IComponentPool<PBMeshRenderer> meshRendererPool
           , IComponentPool<PBMeshCollider> colliderPool,
-            IComponentPool<PBGltfContainer> gltfPool) : base(world)
+            IComponentPool<PBGltfContainer> gltfPool,
+            IComponentPool<PBTriggerArea> triggerAreaPool) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
@@ -56,6 +58,7 @@ namespace DCL.MCP.Systems
             this.meshRendererPool = meshRendererPool;
             this.colliderPool = colliderPool;
             this.gltfPool = gltfPool;
+            this.triggerAreaPool = triggerAreaPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             entitiesMap = EntitiesMap;
 
@@ -71,6 +74,7 @@ namespace DCL.MCP.Systems
             builder.ProcessTextShapeRequests(World, textShapePool);
             builder.ProcessMeshColliderRequests(World, colliderPool);
             builder.ProcessGltfContainerRequests(World, gltfPool);
+            builder.ProcessTriggerAreaRequests(World, triggerAreaPool, meshRendererPool);
 
             // builder.ProcessSetTransformRequests(World);
         }

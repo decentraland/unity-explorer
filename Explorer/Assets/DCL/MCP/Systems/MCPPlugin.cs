@@ -48,6 +48,7 @@ namespace DCL.MCP
                 var meshRendererHandler = new MCPMeshRendererHandler();
                 var meshColliderHandler = new MCPMeshColliderHandler();
                 var gltfHandler = new MCPGltfContainerHandler();
+                var triggerAreaHandler = new MCPTriggerAreaHandler();
                 var transformHandler = new MCPTransformHandler();
                 var sceneStaticHandler = new MCPSceneStaticHandler(scenesCache);
                 var sceneCodeHandler = new MCPSceneCodeHandler(scenesCache);
@@ -99,6 +100,7 @@ namespace DCL.MCP
                 server.RegisterHandler("createMeshRenderer", meshRendererHandler.HandleCreateMeshRendererAsync);
                 server.RegisterHandler("createMeshCollider", meshColliderHandler.HandleCreateMeshColliderAsync);
                 server.RegisterHandler("createGltfContainer", gltfHandler.HandleCreateGltfContainerAsync);
+                server.RegisterHandler("createTriggerArea", triggerAreaHandler.HandleCreateTriggerAreaAsync);
 
                 // Регистрация Transform
                 server.RegisterHandler("setEntityPosition", transformHandler.HandleSetEntityPositionAsync);

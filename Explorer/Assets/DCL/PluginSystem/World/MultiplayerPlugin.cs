@@ -26,6 +26,7 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
         private readonly IComponentPool<PBGltfContainer> gltfPool;
+        private readonly IComponentPool<PBTriggerArea> triggerAreaPool;
 
         public MultiplayerPlugin(Arch.Core.World globalWorld, Entity globalPlayerEntity, IComponentPoolsRegistry componentPoolsRegistry,
             IScenesCache scenesCache)
@@ -38,6 +39,7 @@ namespace DCL.PluginSystem.World
             meshRendererPool = componentPoolsRegistry.GetReferenceTypePool<PBMeshRenderer>();
             colliderPool = componentPoolsRegistry.GetReferenceTypePool<PBMeshCollider>();
             gltfPool = componentPoolsRegistry.GetReferenceTypePool<PBGltfContainer>();
+            triggerAreaPool = componentPoolsRegistry.GetReferenceTypePool<PBTriggerArea>();
         }
 
         public void Dispose()
@@ -52,7 +54,9 @@ namespace DCL.PluginSystem.World
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
-            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, scenesCache, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool, textShapePool, meshRendererPool, colliderPool, gltfPool);
+
+            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, scenesCache, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool,
+                textShapePool, meshRendererPool, colliderPool, gltfPool, triggerAreaPool);
 
             CleanUpAvatarPropagationComponentsSystem.InjectToWorld(ref builder);
         }
