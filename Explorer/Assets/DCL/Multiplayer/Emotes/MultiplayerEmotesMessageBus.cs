@@ -126,7 +126,7 @@ namespace DCL.Multiplayer.Emotes
 
             using (sync.GetScope())
             {
-                Debug.LogError("INBOX: " + walletId + " " + emoteURN + " is outcome? " + isUsingSocialEmoteOutcome + " reacting? " + isReactingToSocialEmote);
+                Debug.LogError("INBOX: " + walletId + " " + emoteURN + " is outcome? " + isUsingSocialEmoteOutcome + " reacting? " + isReactingToSocialEmote + " outcome index:" + socialEmoteOutcomeIndex);
                 emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress));
             }
         }

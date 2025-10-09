@@ -300,6 +300,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                             if (emoteComponent.IsReactingToSocialEmote)
                                 SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress);
 
+                            Debug.LogError("AUDIO for outcome " + emoteComponent.CurrentSocialEmoteOutcome);
+                            
                             audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.CurrentSocialEmoteOutcome].Asset;
                         }
                         else // Starting interaction

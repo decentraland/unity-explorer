@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
+using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -140,8 +141,12 @@ namespace DCL.AvatarRendering.Emotes
             if (!promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
                 return;
 
+            Debug.LogError("--> AUDIO PROMISE");
+
             if (result.Succeeded)
             {
+                Debug.LogError("--> success");
+
                 if (emote.IsSocial)
                 {
                     // Stores the audio clips of the outcomes
@@ -149,10 +154,14 @@ namespace DCL.AvatarRendering.Emotes
 
                     for (int i = 0; i < emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length; ++i)
                     {
+                        Debug.LogError("--> outcome " + i);
+
                         if (emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio != null)
                         {
                             string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
                             string contentName = shape + "/" + emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio;
+
+                            Debug.LogError("--> contentName " + contentName);
 
                             for (int j = 0; j < emote.Model.Asset.content.Length; ++j)
                             {
@@ -167,6 +176,8 @@ namespace DCL.AvatarRendering.Emotes
                             // If the current result corresponds to the outcome at current position...
                             if (result.Asset!.Asset.name.Contains(outcomeAudioHash!))
                             {
+                                Debug.LogError("--> outcomeAudioHash " + outcomeAudioHash);
+
                                 // This check is necessary because otherwise it will add more than one of each audio clip
                                 bool alreadyContainsAudio = false;
 
@@ -181,6 +192,8 @@ namespace DCL.AvatarRendering.Emotes
 
                                 if (!alreadyContainsAudio)
                                 {
+                                    Debug.LogError("--> ADDED" + outcomeAudioHash);
+
                                     emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
                                 }
 
@@ -189,6 +202,7 @@ namespace DCL.AvatarRendering.Emotes
                         }
                         else
                         {
+                            Debug.LogError("--> NULL");
                             emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
                         }
                     }
