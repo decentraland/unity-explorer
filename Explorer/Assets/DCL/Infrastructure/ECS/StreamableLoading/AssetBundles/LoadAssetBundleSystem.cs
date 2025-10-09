@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 // if the type was not specified don't load any assets
                 return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, intention.IsDependency, ct);
+                    source, intention.IsDependency, ct);
             }
             catch (Exception e)
             {
@@ -146,14 +146,13 @@ namespace ECS.StreamableLoading.AssetBundles
             ReportData reportCategory,
             string version,
             string source,
-            bool lookForShaderAssets,
             bool isDependency,
             CancellationToken ct)
         {
             if (isDependency)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, dependencies));
 
-            if (lookForShaderAssets && expectedObjType == typeof(GameObject))
+            if (expectedObjType == typeof(GameObject))
             {
                 //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.
                 //All gameobject asset bundles ahould at least have the dependency on the shader.

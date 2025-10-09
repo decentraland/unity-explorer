@@ -34,24 +34,11 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         internal Hash128? cacheHash;
 
-        /// <param name="expectedObjectType"></param>
-        /// <param name="name">Name is resolved into Hash before loading by the manifest</param>
-        /// <param name="hash">Hash of the asset, if it is provided manifest is not checked</param>
-        /// <param name="permittedSources">Sources from which systems will try to load</param>
-        /// <param name="assetBundleManifest"></param>
-        /// <param name="customEmbeddedSubDirectory"></param>
-        /// <param name="cancellationTokenSource"></param>
-        /// <summary>
-        ///     Used to check if the asset bundle has shader assets in it
-        /// </summary>
-        public bool LookForShaderAssets;
-
         public bool IsDependency;
 
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
-            bool lookForShaderAssets = false,
             AssetBundleManifestVersion? assetBundleVersion = null,
             string parentEntityID = "",
             bool isDependency = false,
@@ -65,7 +52,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
-            LookForShaderAssets = lookForShaderAssets;
 
             ParentEntityID = parentEntityID;
             AssetBundleManifestVersion = assetBundleVersion;
@@ -93,7 +79,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null,
             AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false) =>
-            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, isDependency: isDependency, cancellationTokenSource: cancellationTokenSource);
+            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, cancellationTokenSource: cancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
