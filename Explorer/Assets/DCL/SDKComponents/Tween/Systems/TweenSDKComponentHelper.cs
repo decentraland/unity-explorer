@@ -27,7 +27,6 @@ namespace DCL.SDKComponents.Tween
             if (shouldUpdateTransform)
             {
                 sdkTweenComponent.CustomTweener.UpdateTransform(transformComponent.Transform, sdkTweenComponent.TweenMode);
-
                 transformComponent.UpdateCache();
             }
             else
