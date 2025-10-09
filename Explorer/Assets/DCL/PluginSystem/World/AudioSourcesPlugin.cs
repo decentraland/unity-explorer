@@ -38,7 +38,12 @@ namespace DCL.PluginSystem.World
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: audioSource => audioSource.clip = null);
+            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: delegate(AudioSource audioSource)
+            {
+                audioSource.clip = null;
+                // Quick fix for https://github.com/decentraland/unity-explorer/issues/5437
+                audioSource.enabled = true;
+            });
             cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
 
             audioClipsCache = new AudioClipsCache();
