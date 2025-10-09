@@ -213,6 +213,47 @@ Assets/DCL/MCP/
   { "id": 21, "result": { "success": true } }
   ```
 
+### Игроки вокруг
+
+- **`getNearbyPlayers`** — получить максимально возможный срез данных по текущим видимым/известным игрокам
+  ```json
+  {
+    "id": 31,
+    "method": "getNearbyPlayers",
+    "params": {}
+  }
+  ```
+  Ответ:
+  ```json
+  {
+    "id": 31,
+    "result": {
+      "success": true,
+      "count": 2,
+      "players": [
+        {
+          "walletId": "0xabc...",
+          "connectedTo": "ISLAND|SCENE",
+          "position": { "x": 12.3, "y": 1.0, "z": -5.6 },
+          "rotationY": 180.0,
+          "profile": {
+            "userId": "0xabc...",
+            "name": "Alice",
+            "displayName": "Alice#c1a3",
+            "hasClaimedName": false,
+            "avatar": {
+              "bodyShape": "MALE",
+              "wearables": ["urn:...", "urn:..."],
+              "eyes": { "color": "RGBA(0.50, 0.50, 0.50, 1.00)" },
+              "hair": { "color": "RGBA(0.10, 0.10, 0.10, 1.00)" },
+              "skin": { "color": "RGBA(0.90, 0.80, 0.70, 1.00)" }
+            }
+          }
+        }
+      ]
+    }
+  }
+  ```
 - **`chatGetRecent`** — получить последние N сообщений канала
   ```json
   {

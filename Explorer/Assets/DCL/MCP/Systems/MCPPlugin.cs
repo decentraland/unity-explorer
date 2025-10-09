@@ -11,6 +11,7 @@ using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
 using DCL.MCP.Handlers;
+using DCL.Profiles;
 
 namespace DCL.MCP
 {
@@ -25,12 +26,14 @@ namespace DCL.MCP
 
         private readonly World globalWorld;
         private readonly IScenesCache scenesCache;
+        private readonly IProfileRepository profileRepository;
         private MCPWebSocketServer server;
 
-        public MCPPlugin(World globalWorld, IScenesCache scenesCache)
+        public MCPPlugin(World globalWorld, IScenesCache scenesCache, IProfileRepository profileRepository)
         {
             this.globalWorld = globalWorld;
             this.scenesCache = scenesCache;
+            this.profileRepository = profileRepository;
         }
 
         public async UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -55,6 +58,7 @@ namespace DCL.MCP
                 var sceneCodeHandler = new MCPSceneCodeHandler(scenesCache);
                 var sceneInjectionHandler = new MCPSceneInjectionHandler(scenesCache);
                 var chatHandler = new MCPChatHandler();
+                var playersHandler = new MCPPlayersHandler(globalWorld, profileRepository);
 
                 // Регистрация обработчиков камеры
                 server.RegisterHandler("toggleInWorldCamera", cameraHandler.HandleToggleInWorldCameraAsync);
@@ -99,6 +103,9 @@ namespace DCL.MCP
                 server.RegisterHandler("chatSendMessage", chatHandler.HandleChatSendMessageAsync);
                 server.RegisterHandler("chatGetRecent", chatHandler.HandleChatGetRecentAsync);
                 server.RegisterHandler("chatListChannels", chatHandler.HandleChatListChannelsAsync);
+
+                // Игроки вокруг
+                server.RegisterHandler("getNearbyPlayers", playersHandler.HandleGetNearbyPlayersAsync);
 
                 // Регистрация TextShape (создание по запросу, выполняется системой в сцене)
                 server.RegisterHandler("createTextShape", textShapeHandler.HandleCreateTextShapeAsync);

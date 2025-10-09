@@ -168,6 +168,8 @@ namespace DCL.PluginSystem.Global
             // Экспорт ссылок для MCP через глобальный локатор (грязный прототип)
             MCPGlobalLocator.ChatMessagesBus = chatMessagesBus;
             MCPGlobalLocator.ChatHistory = chatHistory;
+            MCPGlobalLocator.EntityParticipantTable = entityParticipantTable;
+            MCPGlobalLocator.ProfileRepository = profileRepositoryWrapper;
         }
 
         public void Dispose()
