@@ -32,6 +32,8 @@ namespace DCL.MCP.Systems
         private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
 
         private bool hasJumped;
 
@@ -51,6 +53,8 @@ namespace DCL.MCP.Systems
             this.textShapePool = textShapePool;
             this.meshRendererPool = meshRendererPool;
             this.colliderPool = colliderPool;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
+            entitiesMap = EntitiesMap;
 
             builder = new MCPSceneEntitiesBuilder(ecsToCRDTWriter, sdkTransformPool, EntitiesMap);
             builder.ClearReservedEntities();
@@ -58,11 +62,12 @@ namespace DCL.MCP.Systems
 
         protected override void Update(float t)
         {
-            // JumpDebug();
+            JumpDebug();
 
-            builder.ProcessMeshRendererRequests(World, meshRendererPool);
-            builder.ProcessTextShapeRequests(World, textShapePool);
-            builder.ProcessMeshColliderRequests(World, colliderPool);
+            // builder.ProcessMeshRendererRequests(World, meshRendererPool);
+            // builder.ProcessTextShapeRequests(World, textShapePool);
+            // builder.ProcessMeshColliderRequests(World, colliderPool);
+            // builder.ProcessSetTransformRequests(World);
         }
 
         private void JumpDebug()
@@ -72,17 +77,50 @@ namespace DCL.MCP.Systems
 
             ref JumpInputComponent jumpInput = ref globalWorld.Get<JumpInputComponent>(globalPlayerEntity);
 
-            if (jumpInput.IsPressed && !hasJumped)
+            if (jumpInput.IsPressed && hasJumped && !hasJumpedTwice)
             {
-                hasJumped = true;
-                ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped");
+                hasJumpedTwice = true;
+                ReportHub.Log(ReportCategory.DEBUG, "[MCP] Player jumped twice");
 
-                // 1) Визуальная метка
-                builder.Begin(World, new Vector3(8, 4, 8), new Vector3(1, 1, 1))
-                       .AddTextShape(World, textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest { Text = "JUMP", FontSize = 5 });
+                // Тест: сдвигаем все entity на 1м вперёд (по Z) через PutMessage без создания новых CRDT
+                DebugNudgeAllEntitiesForward();
 
-                // 2) Прямая инъекция в JS onUpdate (локальный тест без MCP): добавить лог на каждый тик
-                TryInjectLocalJsOnUpdate("try { console.log('[MCP-LOCAL] onUpdate dt=', dt); } catch (_) {}");
+                // TryInjectLocalJsOnUpdate("try { console.log('[MCP-LOCAL] onUpdate dt=', dt); } catch (_) {}");
+            }
+        }
+
+        private bool hasJumpedTwice;
+
+        private void DebugNudgeAllEntitiesForward()
+        {
+            foreach (KeyValuePair<CRDTEntity, Entity> kvp in entitiesMap)
+            {
+                CRDTEntity crdtEntity = kvp.Key;
+                Entity e = kvp.Value;
+
+                if (!World.Has<SDKTransform>(e))
+                    continue;
+
+                ref SDKTransform sdkTransform = ref World.Get<SDKTransform>(e);
+
+                Vector3 newPos = sdkTransform.Position.Value + new Vector3(1, 1, 1);
+                var newScale = new Vector3(5, 5, 5);
+                Quaternion newRot = sdkTransform.Rotation.Value;
+
+                // 1) Обновляем мир (сразу визуально)
+                sdkTransform.Position.Value = newPos;
+                sdkTransform.Scale = newScale;
+                sdkTransform.Rotation.Value = newRot;
+
+                // 2) Шлём CRDT с теми же значениями (pos + scale + rot)
+                ecsToCRDTWriter.PutMessage<SDKTransform, (Vector3 Pos, Vector3 Scale, Quaternion Rot)>(static (sdk, data) =>
+                {
+                    sdk.Position.Value = data.Pos;
+                    sdk.Scale = data.Scale;
+                    sdk.Rotation.Value = data.Rot;
+                }, crdtEntity, (newPos, newScale, newRot));
+
+                ReportHub.Log(ReportCategory.DEBUG, $"[MCP Debug] moved {e.Id} crdt {crdtEntity.Id}");
             }
         }
 

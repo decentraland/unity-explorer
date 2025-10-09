@@ -135,9 +135,10 @@ namespace DCL.InWorldCamera.Systems
             if (!followTarget.enabled) return;
 
             Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, settings.TranslationSpeed, deltaTime, input);
-            Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, settings.MaxDistanceFromPlayer);
 
-            followTarget.Move(restrictedMovement);
+            // Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, settings.MaxDistanceFromPlayer);
+
+            followTarget.Move(moveVector);
         }
 
         private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime, InWorldCameraInput input)
