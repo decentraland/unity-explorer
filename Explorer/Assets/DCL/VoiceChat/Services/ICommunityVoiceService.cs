@@ -24,6 +24,8 @@ namespace DCL.VoiceChat.Services
 
         UniTask<KickPlayerFromCommunityVoiceChatResponse> KickPlayerFromCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);
 
+        UniTask<MuteSpeakerFromCommunityVoiceChatResponse> MuteSpeakerFromCommunityVoiceChatAsync(string communityId, string userAddress, bool muted, CancellationToken ct);
+
         UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct);
 
         UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct);
