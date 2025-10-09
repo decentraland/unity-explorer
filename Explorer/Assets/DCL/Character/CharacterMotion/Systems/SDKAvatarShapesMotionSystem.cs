@@ -104,7 +104,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (Quaternion.Dot(characterTransformComponent.Transform.rotation, targetRotation) > DOT_THRESHOLD)
                 return;
 
-            characterTransformComponent.Transform.rotation = Quaternion.Slerp(characterTransformComponent.Transform.localRotation, targetRotation, ROTATION_SPEED * deltaTime);
+            characterTransformComponent.Transform.rotation = Quaternion.Slerp(characterTransformComponent.Transform.rotation, targetRotation, ROTATION_SPEED * deltaTime);
         }
 
         private static void UpdateAnimations(
