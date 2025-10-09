@@ -42,6 +42,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 using Utility;
+using DCL.Utilities;
 
 namespace DCL.PluginSystem.Global
 {
@@ -163,6 +164,10 @@ namespace DCL.PluginSystem.Global
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
 
             pluginCts = new CancellationTokenSource();
+
+            // Экспорт ссылок для MCP через глобальный локатор (грязный прототип)
+            MCPGlobalLocator.ChatMessagesBus = chatMessagesBus;
+            MCPGlobalLocator.ChatHistory = chatHistory;
         }
 
         public void Dispose()

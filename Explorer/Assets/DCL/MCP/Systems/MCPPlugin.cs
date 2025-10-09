@@ -10,6 +10,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
+using DCL.MCP.Handlers;
 
 namespace DCL.MCP
 {
@@ -53,6 +54,7 @@ namespace DCL.MCP
                 var sceneStaticHandler = new MCPSceneStaticHandler(scenesCache);
                 var sceneCodeHandler = new MCPSceneCodeHandler(scenesCache);
                 var sceneInjectionHandler = new MCPSceneInjectionHandler(scenesCache);
+                var chatHandler = new MCPChatHandler();
 
                 // Регистрация обработчиков камеры
                 server.RegisterHandler("toggleInWorldCamera", cameraHandler.HandleToggleInWorldCameraAsync);
@@ -92,6 +94,11 @@ namespace DCL.MCP
                 // Инжекция в onUpdate (MVP)
                 server.RegisterHandler("injectSceneOnUpdate", sceneInjectionHandler.HandleInjectSceneOnUpdateAsync);
                 server.RegisterHandler("debugSpawnText", sceneInjectionHandler.HandleDebugSpawnTextAsync);
+
+                // Регистрация чата
+                server.RegisterHandler("chatSendMessage", chatHandler.HandleChatSendMessageAsync);
+                server.RegisterHandler("chatGetRecent", chatHandler.HandleChatGetRecentAsync);
+                server.RegisterHandler("chatListChannels", chatHandler.HandleChatListChannelsAsync);
 
                 // Регистрация TextShape (создание по запросу, выполняется системой в сцене)
                 server.RegisterHandler("createTextShape", textShapeHandler.HandleCreateTextShapeAsync);

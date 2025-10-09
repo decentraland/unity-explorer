@@ -194,6 +194,84 @@ Assets/DCL/MCP/
   { "success": true, "sceneId": "...", "file": "bin/index.js", "url": "https://.../bafy...", "hash": "bafy..." }
   ```
 
+### Чат
+
+- **`chatSendMessage`** — отправить сообщение в чат
+  ```json
+  {
+    "id": 21,
+    "method": "chatSendMessage",
+    "params": {
+      "text": "Hello from MCP!",
+      "channelId": "NEARBY" | "0xWALLET" | "community:UUID",
+      // optional: "topic"
+    }
+  }
+  ```
+  Ответ:
+  ```json
+  { "id": 21, "result": { "success": true } }
+  ```
+
+- **`chatGetRecent`** — получить последние N сообщений канала
+  ```json
+  {
+    "id": 22,
+    "method": "chatGetRecent",
+    "params": {
+      "channelId": "NEARBY" | "0xWALLET" | "community:UUID",
+      "limit": 50            // по умолчанию 50
+    }
+  }
+  ```
+
+- **`chatListChannels`** — получить список доступных каналов
+  ```json
+  {
+    "id": 23,
+    "method": "chatListChannels",
+    "params": {}
+  }
+  ```
+  Ответ:
+  ```json
+  {
+    "id": 23,
+    "result": {
+      "success": true,
+      "channels": [
+        { "id": "NEARBY", "type": "NEARBY", "totalMessages": 42, "readMessages": 40 },
+        { "id": "0xabc...", "type": "USER", "totalMessages": 10, "readMessages": 10 },
+        { "id": "community:...", "type": "COMMUNITY", "totalMessages": 71, "readMessages": 65 }
+      ]
+    }
+  }
+  ```
+  Ответ:
+  ```json
+  {
+    "id": 22,
+    "result": {
+      "success": true,
+      "channel": { "id": "community:...", "type": "COMMUNITY" },
+      "messages": [
+        {
+          "message": "hi",
+          "senderName": "Alice",
+          "senderWalletId": "0x...",
+          "senderWalletAddress": "0x...",
+          "isOwn": false,
+          "isSystem": false,
+          "isMention": false,
+          "sentTimestamp": "2025-10-09T12:34:56.000Z",
+          "sentTimestampRaw": 456789.123
+        }
+      ],
+      "totalInChannel": 123
+    }
+  }
+  ```
+
 ### Управление скриншотами
 
 - **`take_screenshot`** - Сделать скриншот (полный автоматический процесс)
