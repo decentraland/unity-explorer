@@ -178,7 +178,7 @@ namespace DCL.AvatarRendering.Emotes
                             Debug.LogError("xx--> contained in? " + result.Asset!.Asset.name);
 
                             // If the current result corresponds to the outcome at current position...
-                            if (result.Asset!.Asset.name.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
+                            if (audioURL.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 Debug.LogError("xx--> outcomeAudioHash " + outcomeAudioHash);
 
@@ -187,7 +187,7 @@ namespace DCL.AvatarRendering.Emotes
 
                                 for (int j = 0; j < emote.SocialEmoteOutcomeAudioAssetResults.Count; ++j)
                                 {
-                                    if (emote.SocialEmoteOutcomeAudioAssetResults[j].Asset!.Asset.name == result.Asset!.Asset.name)
+                                    if (emote.SocialEmoteOutcomeAudioAssetResults[j].Asset!.Asset.name == audioURL)
                                     {
                                         alreadyContainsAudio = true;
                                         break;
@@ -198,6 +198,7 @@ namespace DCL.AvatarRendering.Emotes
                                 {
                                     Debug.LogError("xx--> ADDED" + outcomeAudioHash);
 
+                                    result.Asset!.Asset.name = audioURL;
                                     emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
                                 }
 
