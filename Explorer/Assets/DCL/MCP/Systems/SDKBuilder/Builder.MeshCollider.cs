@@ -1,3 +1,4 @@
+using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using System.Collections.Concurrent;
@@ -26,14 +27,15 @@ namespace DCL.MCP.Systems
             {
                 try
                 {
-                    AddMeshCollider(pool, req);
-                    Build(world);
+                    AddMeshCollider(world, pool, req);
+
+                    // Build(world);
                 }
                 catch (System.Exception e) { Diagnostics.ReportHub.LogError(Diagnostics.ReportCategory.DEBUG, $"[MCP MeshCollider] Failed to process request {req.RequestId}: {e.Message}"); }
             }
         }
 
-        public MCPSceneEntitiesBuilder AddMeshCollider(IComponentPool<PBMeshCollider> pool, MCPCreateMeshColliderRequest req)
+        public MCPSceneEntitiesBuilder AddMeshCollider(World world, IComponentPool<PBMeshCollider> pool, MCPCreateMeshColliderRequest req)
         {
             PBMeshCollider col = pool.Get();
 

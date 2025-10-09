@@ -46,25 +46,25 @@ namespace DCL.MCP.Systems
         public static void EnqueueTextShape(in MCPCreateTextShapeRequest request) =>
             textShapeRequests.Enqueue(request);
 
-        // public void ProcessTextShapeRequests(World world, IComponentPool<PBTextShape> pool)
-        // {
-        //     while (textShapeRequests.TryDequeue(out MCPCreateTextShapeRequest req))
-        //     {
-        //         try
-        //         {
-        //             var position = new Vector3(req.X, req.Y, req.Z);
-        //             var scale = new Vector3(req.SX, req.SY, req.SZ);
-        //             var rotation = Quaternion.Euler(req.Pitch, req.Yaw, req.Roll);
-        //
-        //             Begin(position, scale, rotation, req.ParentId)
-        //                .AddTextShape(pool, req)
-        //                .Build(world);
-        //
-        //             ReportHub.Log(ReportCategory.DEBUG, $"[MCP TextShape] Created TextShape from request {req.RequestId}");
-        //         }
-        //         catch (System.Exception e) { ReportHub.LogError(ReportCategory.DEBUG, $"[MCP TextShape] Failed to process request {req.RequestId}: {e.Message}"); }
-        //     }
-        // }
+        public void ProcessTextShapeRequests(World world, IComponentPool<PBTextShape> pool)
+        {
+            while (textShapeRequests.TryDequeue(out MCPCreateTextShapeRequest req))
+            {
+                try
+                {
+                    var position = new Vector3(req.X, req.Y, req.Z);
+                    var scale = new Vector3(req.SX, req.SY, req.SZ);
+                    var rotation = Quaternion.Euler(req.Pitch, req.Yaw, req.Roll);
+
+                    Begin(world, position, scale, rotation, req.ParentId)
+                       .AddTextShape(world, pool, req)
+                        ;
+
+                    ReportHub.Log(ReportCategory.DEBUG, $"[MCP TextShape] Created TextShape from request {req.RequestId}");
+                }
+                catch (System.Exception e) { ReportHub.LogError(ReportCategory.DEBUG, $"[MCP TextShape] Failed to process request {req.RequestId}: {e.Message}"); }
+            }
+        }
 
         private static TEnum EnumTryParse<TEnum>(string value, TEnum fallback) where TEnum: struct
         {

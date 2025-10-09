@@ -37,22 +37,6 @@ namespace DCL.MCP.Systems
 
         private readonly MCPSceneEntitiesBuilder builder;
 
-        private static readonly ConcurrentQueue<SpawnTextRequest> pendingTextRequests = new ();
-
-        public readonly struct SpawnTextRequest
-        {
-            public readonly string Text;
-            public readonly Vector3 Position;
-            public readonly float FontSize;
-
-            public SpawnTextRequest(string text, Vector3 position, float fontSize)
-            {
-                Text = text;
-                Position = position;
-                FontSize = fontSize;
-            }
-        }
-
         public MCPSceneCreationSystem(World world, World globalWorld, Entity globalPlayerEntity, IScenesCache scenesCache,
             IECSToCRDTWriter ecsToCRDTWriter,
             Dictionary<CRDTEntity, Entity> EntitiesMap,
@@ -74,30 +58,11 @@ namespace DCL.MCP.Systems
 
         protected override void Update(float t)
         {
-            JumpDebug();
+            // JumpDebug();
 
-            // Обрабатываем запросы MCP на создание TextShape через билдер
-            ProcessPendingTextRequests();
-            // builder.ProcessMeshRendererRequests(World, meshRendererPool);
-            // Пример: builder.ProcessMeshColliderRequests(World, colliderPool);
-        }
-
-        private void ProcessPendingTextRequests()
-        {
-            while (pendingTextRequests.TryDequeue(out SpawnTextRequest req))
-            {
-                builder.Begin(World, req.Position, new Vector3(1, 1, 1))
-                       .AddTextShape(World, textShapePool, new MCPSceneEntitiesBuilder.MCPCreateTextShapeRequest
-                        {
-                            Text = req.Text,
-                            FontSize = (int)req.FontSize,
-                        });
-            }
-        }
-
-        public static void EnqueueSpawnText(string text, Vector3 position, float fontSize = 5f)
-        {
-            pendingTextRequests.Enqueue(new SpawnTextRequest(text, position, fontSize));
+            builder.ProcessMeshRendererRequests(World, meshRendererPool);
+            builder.ProcessTextShapeRequests(World, textShapePool);
+            builder.ProcessMeshColliderRequests(World, colliderPool);
         }
 
         private void JumpDebug()
