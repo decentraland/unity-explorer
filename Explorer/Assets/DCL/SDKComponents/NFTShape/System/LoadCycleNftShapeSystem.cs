@@ -11,12 +11,11 @@ using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.NFTShapes;
-using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
-using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.DTOs.NftTypeDto, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
+using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
 using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
 using NftVideoPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTVideoIntention>;
 
@@ -55,7 +54,7 @@ namespace DCL.SDKComponents.NFTShape.System
             in PartitionComponent partitionComponent)
         {
             if (nftLoadingComponent.TypePromise.IsConsumed
-                || !nftLoadingComponent.TypePromise.TryConsume(World!, out StreamableLoadingResult<NftTypeDto> result)) return;
+                || !nftLoadingComponent.TypePromise.TryConsume(World!, out StreamableLoadingResult<NftTypeResult> result)) return;
 
             WebContentInfo.ContentType type = result.Asset.Type;
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;

@@ -44,8 +44,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<Texture2DData, GetTextureIntention>? texturesCache;
         private ILODCache? lodCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
-        private ISizedStreamableCache<Texture2DData, GetNFTImageIntention>? nftImageCache;
-        private ISizedStreamableCache<Texture2DData, GetNFTVideoIntention>? nftVideoCache;
+        private NftShapeCache? nftShapeCache;
 
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
@@ -79,8 +78,7 @@ namespace DCL.ResourcesUnloading
 
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
-            nftImageCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
-            nftVideoCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
+            nftShapeCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
@@ -126,16 +124,9 @@ namespace DCL.ResourcesUnloading
             TryAppendToDebug(texturesCache, "Textures");
         }
 
-        public void Register(ISizedStreamableCache<Texture2DData, GetNFTImageIntention> nftImageCache)
+        public void Register(NftShapeCache nftShapeCache)
         {
-            this.nftImageCache = nftImageCache;
-            TryAppendToDebug(nftImageCache, "NFT Images");
-        }
-
-        public void Register(ISizedStreamableCache<Texture2DData, GetNFTVideoIntention> nftVideoCache)
-        {
-            this.nftVideoCache = nftVideoCache;
-            TryAppendToDebug(nftVideoCache, "NFT Videos");
+            this.nftShapeCache = nftShapeCache;
         }
 
         public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>

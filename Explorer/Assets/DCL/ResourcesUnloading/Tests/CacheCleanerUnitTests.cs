@@ -9,7 +9,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
-using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
@@ -28,8 +27,6 @@ namespace DCL.ResourcesUnloading.Tests
         private IAttachmentsAssetsCache attachmentsAssetsCache;
         private ISizedStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache;
-        private ISizedStreamableCache<Texture2DData, GetNFTImageIntention> nftImageCache;
-        private ISizedStreamableCache<Texture2DData, GetNFTVideoIntention> nftVideoCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
@@ -56,8 +53,6 @@ namespace DCL.ResourcesUnloading.Tests
             profileCache = Substitute.For<IProfileCache>();
             lodAssetsPool = Substitute.For<ILODCache>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();
-            nftImageCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetNFTImageIntention>>();
-            nftVideoCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetNFTVideoIntention>>();
             emoteStorage = Substitute.For<IEmoteStorage>();
             jsSourcesCache = Substitute.For<IMemoryCache<string, string>>();
 
@@ -73,8 +68,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(profileCache);
             cacheCleaner.Register(lodAssetsPool);
             cacheCleaner.Register(roadAssetPool);
-            cacheCleaner.Register(nftImageCache);
-            cacheCleaner.Register(nftVideoCache);
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(jsSourcesCache);
         }

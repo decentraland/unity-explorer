@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.NFTShapes
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.NFT_SHAPE_WEB_REQUEST)]
-    public partial class LoadNFTTypeSystem : LoadSystemBase<NftTypeDto, GetNFTTypeIntention>
+    public partial class LoadNFTTypeSystem : LoadSystemBase<NftTypeResult, GetNFTTypeIntention>
     {
         private const long MAX_PREVIEW_SIZE = 8388608;
 
@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.NFTShapes
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly bool ktxEnabled;
 
-        public LoadNFTTypeSystem(World world, IStreamableCache<NftTypeDto, GetNFTTypeIntention> cache,
+        public LoadNFTTypeSystem(World world, IStreamableCache<NftTypeResult, GetNFTTypeIntention> cache,
             IWebRequestController webRequestController, bool ktxEnabled, IDecentralandUrlsSource urlsSource)
             : base(world, cache)
         {
@@ -34,7 +34,7 @@ namespace ECS.StreamableLoading.NFTShapes
             this.ktxEnabled = ktxEnabled;
         }
 
-        protected override async UniTask<StreamableLoadingResult<NftTypeDto>> FlowInternalAsync(GetNFTTypeIntention intention,
+        protected override async UniTask<StreamableLoadingResult<NftTypeResult>> FlowInternalAsync(GetNFTTypeIntention intention,
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
@@ -42,13 +42,9 @@ namespace ECS.StreamableLoading.NFTShapes
             var contentInfo = await WebContentInfo.FetchAsync(convertUrl, ct);
 
             if (!ktxEnabled && contentInfo is { Type: WebContentInfo.ContentType.Image, SizeInBytes: > MAX_PREVIEW_SIZE })
-                return new StreamableLoadingResult<NftTypeDto>(GetReportCategory(), new Exception("Image size is too big"));
+                return new StreamableLoadingResult<NftTypeResult>(GetReportCategory(), new Exception("Image size is too big"));
 
-            return new StreamableLoadingResult<NftTypeDto>(new NftTypeDto
-            {
-                URL = URLAddress.FromString(convertUrl),
-                Type = contentInfo.Type,
-            });
+            return new StreamableLoadingResult<NftTypeResult>(new NftTypeResult(contentInfo.Type, URLAddress.FromString(convertUrl)));
         }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)

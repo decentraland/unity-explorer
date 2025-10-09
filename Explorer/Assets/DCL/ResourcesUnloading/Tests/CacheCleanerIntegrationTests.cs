@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
 using ECS;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
 using Unity.PerformanceTesting;
@@ -41,7 +42,7 @@ namespace DCL.ResourcesUnloading.Tests
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
-        private NftImageCache nftShapeCache;
+        private NftShapeCache nftShapeCache;
         private IEmoteStorage emoteStorage;
         private IProfileCache profileCache;
         private IComponentPoolsRegistry poolsRegistry;
@@ -67,7 +68,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new IRealmData.Fake(), new List<GameObject>());
-            nftShapeCache = new NftImageCache();
+            nftShapeCache = new NftShapeCache(new TexturesCache<GetNFTImageIntention>(), new TexturesCache<GetNFTVideoIntention>());
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
 
