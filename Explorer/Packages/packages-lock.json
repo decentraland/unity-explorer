@@ -206,7 +206,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.cloud.ktx": {
-      "version": "file:com.unity.cloud.ktx@9cc7165d9d20",
+      "version": "file:com.unity.cloud.ktx",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
