@@ -25,8 +25,10 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
+        private readonly IComponentPool<PBGltfContainer> gltfPool;
 
-        public MultiplayerPlugin(Arch.Core.World globalWorld, Entity globalPlayerEntity, IComponentPoolsRegistry componentPoolsRegistry, IScenesCache scenesCache)
+        public MultiplayerPlugin(Arch.Core.World globalWorld, Entity globalPlayerEntity, IComponentPoolsRegistry componentPoolsRegistry,
+            IScenesCache scenesCache)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
@@ -35,6 +37,7 @@ namespace DCL.PluginSystem.World
             textShapePool = componentPoolsRegistry.GetReferenceTypePool<PBTextShape>();
             meshRendererPool = componentPoolsRegistry.GetReferenceTypePool<PBMeshRenderer>();
             colliderPool = componentPoolsRegistry.GetReferenceTypePool<PBMeshCollider>();
+            gltfPool = componentPoolsRegistry.GetReferenceTypePool<PBGltfContainer>();
         }
 
         public void Dispose()
@@ -49,7 +52,7 @@ namespace DCL.PluginSystem.World
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
-            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, scenesCache, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool, textShapePool, meshRendererPool, colliderPool);
+            MCPSceneCreationSystem.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, scenesCache, sharedDependencies.EcsToCRDTWriter, sharedDependencies.EntitiesMap, sdkTransformPool, textShapePool, meshRendererPool, colliderPool, gltfPool);
 
             CleanUpAvatarPropagationComponentsSystem.InjectToWorld(ref builder);
         }

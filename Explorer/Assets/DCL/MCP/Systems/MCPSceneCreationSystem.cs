@@ -32,6 +32,7 @@ namespace DCL.MCP.Systems
         private readonly IComponentPool<PBTextShape> textShapePool;
         private readonly IComponentPool<PBMeshRenderer> meshRendererPool;
         private readonly IComponentPool<PBMeshCollider> colliderPool;
+        private readonly IComponentPool<PBGltfContainer> gltfPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
 
@@ -45,7 +46,8 @@ namespace DCL.MCP.Systems
             IComponentPool<SDKTransform> sdkTransformPool,
             IComponentPool<PBTextShape> textShapePool
           , IComponentPool<PBMeshRenderer> meshRendererPool
-          , IComponentPool<PBMeshCollider> colliderPool) : base(world)
+          , IComponentPool<PBMeshCollider> colliderPool,
+            IComponentPool<PBGltfContainer> gltfPool) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
@@ -53,6 +55,7 @@ namespace DCL.MCP.Systems
             this.textShapePool = textShapePool;
             this.meshRendererPool = meshRendererPool;
             this.colliderPool = colliderPool;
+            this.gltfPool = gltfPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             entitiesMap = EntitiesMap;
 
@@ -62,11 +65,13 @@ namespace DCL.MCP.Systems
 
         protected override void Update(float t)
         {
-            JumpDebug();
+            // JumpDebug();
 
-            // builder.ProcessMeshRendererRequests(World, meshRendererPool);
-            // builder.ProcessTextShapeRequests(World, textShapePool);
-            // builder.ProcessMeshColliderRequests(World, colliderPool);
+            builder.ProcessMeshRendererRequests(World, meshRendererPool);
+            builder.ProcessTextShapeRequests(World, textShapePool);
+            builder.ProcessMeshColliderRequests(World, colliderPool);
+            builder.ProcessGltfContainerRequests(World, gltfPool);
+
             // builder.ProcessSetTransformRequests(World);
         }
 
