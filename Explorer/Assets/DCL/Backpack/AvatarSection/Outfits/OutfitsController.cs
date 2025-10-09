@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
@@ -121,54 +123,61 @@ namespace DCL.Backpack
 
         public void OnSaveOutfitRequested(int slotIndex)
         {
-            var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
-            var liveWearableUrns = new List<string>();
-
-            foreach (var equippedItem in equippedWearables.Items())
+            outfitsService.CreateAndUpdateLocalOutfit(slotIndex, equippedWearables, item =>
             {
-                if (equippedItem.Value != null)
-                {
-                    liveWearableUrns.Add(equippedItem.Value.GetUrn());
-                }
-            }
+                slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex)?.SetData(item);
+                OnEquipOutfitRequested(item);
+            });
 
-            if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE,
-                    out var bodyShapeWearable) || bodyShapeWearable == null)
-            {
-                ReportHub.LogError(ReportCategory.OUTFITS, "Cannot save outfit, Body Shape is not equipped!");
-                return;
-            }
+            // var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
+            //
+            // var liveWearableUrns = new List<string>();
+            //
+            // foreach (var equippedItem in equippedWearables.Items())
+            // {
+            //     if (equippedItem.Value != null)
+            //     {
+            //         liveWearableUrns.Add(equippedItem.Value.GetUrn());
+            //     }
+            // }
+            //
+            // if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE,
+            //         out var bodyShapeWearable) || bodyShapeWearable == null)
+            // {
+            //     ReportHub.LogError(ReportCategory.OUTFITS, "Cannot save outfit, Body Shape is not equipped!");
+            //     return;
+            // }
+            //
+            // string liveBodyShapeUrn = bodyShapeWearable.GetUrn();
+            //
+            // ReportHub.Log(ReportCategory.OUTFITS, $"INVESTIGATION (FINAL): BodyShape='{liveBodyShapeUrn}'," +
+            //                                       $" Colors='{skinColor}, {eyesColor}, {hairColor}'," +
+            //                                       $" Wearables='{liveWearableUrns.Count}'");
+            //
+            // var newItem = new OutfitItem
+            // {
+            //     slot = slotIndex, outfit = new Outfit
+            //     {
+            //         bodyShape = liveBodyShapeUrn, wearables = liveWearableUrns.ToArray(), eyes = new Eyes
+            //         {
+            //             color = eyesColor
+            //         },
+            //         hair = new Hair
+            //         {
+            //             color = hairColor
+            //         },
+            //         skin = new Skin
+            //         {
+            //             color = skinColor
+            //         }
+            //     }
+            // };
+            //
+            // outfitsService.UpdateLocalOutfit(newItem);
 
-            string liveBodyShapeUrn = bodyShapeWearable.GetUrn();
-
-            ReportHub.Log(ReportCategory.OUTFITS, $"INVESTIGATION (FINAL): BodyShape='{liveBodyShapeUrn}'," +
-                                                  $" Colors='{skinColor}, {eyesColor}, {hairColor}'," +
-                                                  $" Wearables='{liveWearableUrns.Count}'");
-
-            var newItem = new OutfitItem
-            {
-                slot = slotIndex, outfit = new Outfit
-                {
-                    bodyShape = liveBodyShapeUrn, wearables = liveWearableUrns.ToArray(), eyes = new Eyes
-                    {
-                        color = eyesColor
-                    },
-                    hair = new Hair
-                    {
-                        color = hairColor
-                    },
-                    skin = new Skin
-                    {
-                        color = skinColor
-                    }
-                }
-            };
-
-            outfitsService.UpdateLocalOutfit(newItem);
-
-            slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex)?.SetData(newItem);
-
-            OnEquipOutfitRequested(newItem);
+            // slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex)?.SetData(newItem);
+            //
+            // OnEquipOutfitRequested(newItem);
 
             ReportHub.LogWarning(ReportCategory.OUTFITS, $"Save requested for outfit in slot {slotIndex} with UPDATED live data. ---");
         }
@@ -191,8 +200,11 @@ namespace DCL.Backpack
             commandBus.SendCommand(new BackpackUnEquipAllCommand());
             commandBus.SendCommand(new BackpackEquipWearableCommand(outfitItem.outfit.bodyShape));
 
-            foreach (string wearable in outfitItem.outfit.wearables)
-                commandBus.SendCommand(new BackpackEquipWearableCommand(wearable));
+            foreach (string wearableId in outfitItem.outfit.wearables)
+            {
+                var wearableUrn = new URN(wearableId);
+                commandBus.SendCommand(new BackpackEquipWearableCommand(wearableUrn.Shorten()));
+            }
 
             commandBus.SendCommand(new BackpackChangeColorCommand(outfitItem.outfit.hair.color,
                 WearableCategories.Categories.HAIR));

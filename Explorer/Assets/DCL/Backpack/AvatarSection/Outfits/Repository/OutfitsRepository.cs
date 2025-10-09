@@ -56,7 +56,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
                 {
                     $"{userId}:outfits"
                 },
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>() // No thumbnails for now
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>()
             };
 
             try

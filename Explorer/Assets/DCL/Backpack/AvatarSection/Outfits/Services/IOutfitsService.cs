@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.Slots;
 
@@ -28,5 +30,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 
         // This can remain for checking banner visibility etc.
         UniTask<bool> ShouldShowExtraOutfitSlotsAsync(CancellationToken ct);
+
+        void CreateAndUpdateLocalOutfit(int slotIndex, IEquippedWearables equippedWearables, Action<OutfitItem> onUpdateOutfit);
     }
 }

@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
@@ -56,6 +57,7 @@ namespace DCL.Backpack
         private readonly IRealmData realmData;
         private readonly IWebRequestController webController;
         private readonly IEquippedWearables equippedWearables;
+        private readonly IWearableStorage wearableStorage;
         private BackpackSections lastShownSection;
         
         private CancellationTokenSource? animationCts;
@@ -87,7 +89,8 @@ namespace DCL.Backpack
             OutfitsRepository outfitsRepository,
             IRealmData realmData,
             IWebRequestController webController,
-            IEquippedWearables equippedWearables)
+            IEquippedWearables equippedWearables,
+            IWearableStorage wearableStorage)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -104,6 +107,7 @@ namespace DCL.Backpack
             this.outfitsRepository = outfitsRepository;
             this.webController = webController;
             this.equippedWearables = equippedWearables;
+            this.wearableStorage = wearableStorage;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             var categoriesController = new CategoriesController(avatarView.CategoriesView,
@@ -115,7 +119,8 @@ namespace DCL.Backpack
             var outfitService = new OutfitsService(selfProfile,
                 webController,
                 realmData,
-                outfitsRepository);
+                outfitsRepository,
+                wearableStorage);
 
             var deleteOutfitCommand = new DeleteOutfitCommand(outfitService);
             var outfitsController = new OutfitsController(avatarView.OutfitsView,

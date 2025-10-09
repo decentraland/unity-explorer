@@ -6,8 +6,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.Backpack.Outfits.Extensions;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.Profiles.Helpers;
@@ -15,6 +19,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
+using Runtime.Wearables;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Services
 {
@@ -28,19 +33,22 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly OutfitsRepository outfitsRepository;
-
+        private readonly IWearableStorage wearableStorage;
+        
         private List<OutfitItem> localOutfits = new ();
         private bool outfitsAreDirty  ;
 
         public OutfitsService(ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IRealmData realmData,
-            OutfitsRepository outfitsRepository)
+            OutfitsRepository outfitsRepository,
+            IWearableStorage wearableStorage)
         {
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.outfitsRepository = outfitsRepository;
+            this.wearableStorage = wearableStorage;
         }
 
         public async UniTask LoadOutfitsAsync(CancellationToken ct)
@@ -180,6 +188,60 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         {
             var profile = await selfProfile.ProfileAsync(ct);
             return profile?.HasClaimedName == true;
+        }
+
+        private async UniTask CreateAndUpdateLocalOutfitAsync(int slotIndex, IEquippedWearables equippedWearables, Action<OutfitItem> onUpdateOutfit)
+        {
+            var profile = await selfProfile.ProfileAsync(CancellationToken.None);
+            if (profile == null)
+            {
+                ReportHub.LogError(ReportCategory.OUTFITS, "Cannot create outfit, self profile is not loaded.");
+                return;
+            }
+
+            // Get the list of fully-qualified "Item URNs" using the correct extension method.
+            List<string> fullItemUrns = equippedWearables.ToFullWearableUrns(wearableStorage, profile);
+
+            // 2. Get the other live data from IEquippedWearables.
+            var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
+            if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable) || bodyShapeWearable == null)
+            {
+                ReportHub.LogError(ReportCategory.OUTFITS, "Cannot save outfit, Body Shape is not equipped!");
+                return;
+            }
+
+            string liveBodyShapeUrn = bodyShapeWearable.GetUrn();
+
+            // Build the final, correct OutfitItem.
+            var newItem = new OutfitItem
+            {
+                slot = slotIndex, outfit = new Outfit
+                {
+                    bodyShape = liveBodyShapeUrn, wearables = fullItemUrns.ToArray(), eyes = new Eyes
+                    {
+                        color = eyesColor
+                    },
+                    hair = new Hair
+                    {
+                        color = hairColor
+                    },
+                    skin = new Skin
+                    {
+                        color = skinColor
+                    }
+                }
+            };
+
+            // Update the internal state (this is the same as before).
+            UpdateLocalOutfit(newItem);
+
+            // Invoke the callback to notify the caller.
+            onUpdateOutfit?.Invoke(newItem);
+        }
+
+        public void CreateAndUpdateLocalOutfit(int slotIndex, IEquippedWearables equippedWearables, Action<OutfitItem> onUpdateOutfit)
+        {
+            CreateAndUpdateLocalOutfitAsync(slotIndex, equippedWearables, onUpdateOutfit).Forget();
         }
     }
 }

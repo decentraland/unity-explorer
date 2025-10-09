@@ -247,7 +247,8 @@ namespace DCL.PluginSystem.Global
                 outfitsRepository,
                 realmData,
                 webController,
-                equippedWearables
+                equippedWearables,
+                wearableStorage
             );
         }
 
