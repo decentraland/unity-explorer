@@ -141,11 +141,11 @@ namespace DCL.AvatarRendering.Emotes
             if (!promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
                 return;
 
-            Debug.LogError("--> AUDIO PROMISE");
+            Debug.LogError("xx--> AUDIO PROMISE");
 
             if (result.Succeeded)
             {
-                Debug.LogError("--> success");
+                Debug.LogError("xx--> success");
 
                 if (emote.IsSocial)
                 {
@@ -154,17 +154,19 @@ namespace DCL.AvatarRendering.Emotes
 
                     for (int i = 0; i < emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length; ++i)
                     {
-                        Debug.LogError("--> outcome " + i);
+                        Debug.LogError("xx--> outcome " + i);
 
                         if (emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio != null)
                         {
                             string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
                             string contentName = shape + "/" + emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio;
 
-                            Debug.LogError("--> contentName " + contentName);
+                            Debug.LogError("xx--> contentName " + contentName);
 
                             for (int j = 0; j < emote.Model.Asset.content.Length; ++j)
                             {
+                                Debug.LogError("xx--> comparing: " + emote.Model.Asset.content[j].file);
+
                                 if (string.Compare(emote.Model.Asset.content[j].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
                                 {
                                     // Found the outcome sound in the content list, we can get the hash
@@ -173,10 +175,12 @@ namespace DCL.AvatarRendering.Emotes
                                 }
                             }
 
+                            Debug.LogError("xx--> contained in? " + result.Asset!.Asset.name);
+
                             // If the current result corresponds to the outcome at current position...
-                            if (result.Asset!.Asset.name.Contains(outcomeAudioHash!))
+                            if (result.Asset!.Asset.name.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                Debug.LogError("--> outcomeAudioHash " + outcomeAudioHash);
+                                Debug.LogError("xx--> outcomeAudioHash " + outcomeAudioHash);
 
                                 // This check is necessary because otherwise it will add more than one of each audio clip
                                 bool alreadyContainsAudio = false;
@@ -192,7 +196,7 @@ namespace DCL.AvatarRendering.Emotes
 
                                 if (!alreadyContainsAudio)
                                 {
-                                    Debug.LogError("--> ADDED" + outcomeAudioHash);
+                                    Debug.LogError("xx--> ADDED" + outcomeAudioHash);
 
                                     emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
                                 }
@@ -202,7 +206,7 @@ namespace DCL.AvatarRendering.Emotes
                         }
                         else
                         {
-                            Debug.LogError("--> NULL");
+                            Debug.LogError("xx--> NULL");
                             emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
                         }
                     }
