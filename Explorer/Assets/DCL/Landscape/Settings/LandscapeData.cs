@@ -54,9 +54,6 @@ namespace DCL.Landscape.Settings
         public bool RenderGround { get; set; } = true;
         [field: SerializeField] public Material? GroundMaterial { get; private set; }
         [field: SerializeField] public int GroundInstanceCapacity { get; set; }
-
-        [Obsolete("Terrain Height is hardcoded nowadays")]
-        [field: SerializeField] public int TerrainHeight { get; private set; }
         [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }
 
         [field: SerializeField] [field: EnumIndexedArray(typeof(GroundMeshPiece))]

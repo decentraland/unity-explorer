@@ -12,10 +12,14 @@ namespace DCL.SDKComponents.Tween.Components
 
         void Rewind();
 
+            void Kill(bool complete);
+
         bool IsPaused();
 
         bool IsFinished();
 
         bool IsActive();
+
+        public float GetElapsedTime();
     }
 }
