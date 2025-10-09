@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
-using DCL.Landscape.Settings;
-using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Profiling;

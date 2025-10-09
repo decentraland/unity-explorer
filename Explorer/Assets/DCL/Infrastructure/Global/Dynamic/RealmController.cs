@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Landscape.Utils;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -24,7 +23,6 @@ using System.Collections.Generic;
 using System.Threading;
  using DCL.RealmNavigation;
  using Global.AppArgs;
- using Unity.Collections;
  using Unity.Mathematics;
 
 namespace Global.Dynamic
