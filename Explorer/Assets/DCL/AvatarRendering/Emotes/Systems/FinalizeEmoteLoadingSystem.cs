@@ -175,6 +175,7 @@ namespace DCL.AvatarRendering.Emotes
                                 }
                             }
 
+                            Debug.LogError("xx--> contained in? " + promise.LoadingIntention.CommonArguments.URL.Value);
                             string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
                             // If the current result corresponds to the outcome at current position...
