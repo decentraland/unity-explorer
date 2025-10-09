@@ -8,9 +8,7 @@ namespace DCL.Optimization.PerformanceBudgeting
     {
         private readonly ulong totalBudgetAvailable;
         private readonly IBudgetProfiler profiler;
-        //TODO: (Juani) : Maybe this could be less obscure? If it works, reuse it in all the places that check it using ILoadingStatus
         private readonly Func<bool> isLoadingScreenOn;
-
 
         public FrameTimeCapBudget(float budgetCapInMS, IBudgetProfiler profiler, Func<bool> isLoadingScreenOn) : this(
             TimeSpan.FromMilliseconds(budgetCapInMS),
