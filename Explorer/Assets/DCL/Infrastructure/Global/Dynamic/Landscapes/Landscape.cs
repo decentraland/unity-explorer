@@ -23,6 +23,8 @@ namespace Global.Dynamic.Landscapes
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
+        public readonly Transform Root;
+        public Action<ITerrain>? TerrainLoaded;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
         {
@@ -30,9 +32,10 @@ namespace Global.Dynamic.Landscapes
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.landscapeEnabled = landscapeEnabled;
+            Root = new GameObject(nameof(Landscape)).transform;
         }
 
-        private ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
+        public ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
@@ -63,17 +66,24 @@ namespace Global.Dynamic.Landscapes
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
             }
 
+            TerrainLoaded?.Invoke(CurrentTerrain);
             return EnumResult<LandscapeError>.SuccessResult();
         }
 
-        public float GetHeight(float x, float z) =>
-            CurrentTerrain.GetHeight(x, z);
+        public float GetHeight(float x, float z)
+        {
+            ITerrain terrain = CurrentTerrain;
+
+            return TerrainGenerator.GetParcelNoiseHeight(x, z, terrain.OccupancyMapData,
+                terrain.OccupancyMapSize, terrain.ParcelSize, terrain.OccupancyFloor,
+                terrain.MaxHeight);
+        }
 
         public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
         {
             ITerrain terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
 
-            return !terrain.Contains(parcel)
+            return terrain.TerrainModel == null || !terrain.TerrainModel.IsInsideBounds(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
         }
@@ -95,7 +105,7 @@ namespace Global.Dynamic.Landscapes
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
 
@@ -119,7 +129,7 @@ namespace Global.Dynamic.Landscapes
                         parcels.Add(parcel.ToInt2());
                 }
 
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
     }

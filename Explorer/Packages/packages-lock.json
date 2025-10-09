@@ -206,7 +206,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.cloud.ktx": {
-      "version": "file:com.unity.cloud.ktx@9cc7165d9d20",
+      "version": "file:com.unity.cloud.ktx",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
@@ -485,7 +485,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "dd23d7ffc0deb432c8442979b60e40c1e2d3f007"
+      "hash": "6ef8fb6682b50a89a5f136ab9dab9f09b7a3399a"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
