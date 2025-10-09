@@ -57,6 +57,10 @@ namespace ECS.Unity.Textures.Components
 
         public bool IsDirty;
 
+        // Track the last applied texture scale to detect changes and handle material updates
+        private Vector2 lastAppliedTextureScale;
+        private bool hasAppliedScale;
+
         public int ConsumersCount => Texture.referenceCount;
 
         public VideoTextureConsumer(Texture2D texture)
@@ -64,6 +68,8 @@ namespace ECS.Unity.Textures.Components
             Texture = new Texture2DData(texture);
             renderers = new List<Renderer>();
             IsDirty = false;
+            lastAppliedTextureScale = Vector2.zero;
+            hasAppliedScale = false;
         }
 
         public VideoTextureConsumer(Texture2DData t2dd)
@@ -71,6 +77,8 @@ namespace ECS.Unity.Textures.Components
             Texture = t2dd;
             renderers = new List<Renderer>();
             IsDirty = false;
+            lastAppliedTextureScale = Vector2.zero;
+            hasAppliedScale = false;
         }
 
         public void Dispose()
@@ -100,11 +108,42 @@ namespace ECS.Unity.Textures.Components
 
         public void SetTextureScale(Vector2 texScale)
         {
-            foreach (var meshRenderer in renderers)
+            if (!hasAppliedScale || lastAppliedTextureScale != texScale)
             {
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+                foreach (var meshRenderer in renderers)
+                {
+                    if (meshRenderer.sharedMaterial != null)
+                    {
+                        meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
+                        meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+                    }
+                }
+
+                lastAppliedTextureScale = texScale;
+                hasAppliedScale = true;
             }
+        }
+
+        public bool NeedsScaleReapplication(Vector2 expectedScale)
+        {
+            if (!hasAppliedScale)
+                return true;
+
+            foreach (var renderer in renderers)
+            {
+                if (renderer.sharedMaterial == null)
+                    continue;
+
+                Vector2 currentBaseMapScale = renderer.sharedMaterial.GetTextureScale(ShaderUtils.BaseMap);
+                Vector2 currentAlphaScale = renderer.sharedMaterial.GetTextureScale(ShaderUtils.AlphaTexture);
+
+                if (currentBaseMapScale != expectedScale || currentAlphaScale != expectedScale)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

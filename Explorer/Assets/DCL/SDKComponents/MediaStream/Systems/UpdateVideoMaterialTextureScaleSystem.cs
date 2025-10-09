@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Unity.GLTFContainer;
 using ECS.Unity.Materials;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateAfter(typeof(MaterialLoadingGroup))]
+    [UpdateAfter(typeof(GltfContainerGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class UpdateVideoMaterialTextureScaleSystem : BaseUnityLoopSystem
     {
@@ -34,7 +36,9 @@ namespace DCL.SDKComponents.MediaStream
             if (!capFrameBudget.TrySpendBudget())
                 return;
 
-            if (!videoTextureConsumer.IsDirty)
+            bool needsUpdate = videoTextureConsumer.IsDirty || ShouldReapplyScale(mediaPlayerComponent, ref videoTextureConsumer);
+
+            if (!needsUpdate)
                 return;
 
             if (!IsReady(mediaPlayerComponent, ref videoTextureConsumer))
@@ -85,6 +89,14 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             return true;
+        }
+
+        private bool ShouldReapplyScale(in MediaPlayerComponent mediaPlayerComponent, ref VideoTextureConsumer videoTextureConsumer)
+        {
+            if (!mediaPlayerComponent.MediaPlayer.IsReady)
+                return false;
+
+            return videoTextureConsumer.NeedsScaleReapplication(mediaPlayerComponent.MediaPlayer.GetTexureScale);
         }
     }
 }
