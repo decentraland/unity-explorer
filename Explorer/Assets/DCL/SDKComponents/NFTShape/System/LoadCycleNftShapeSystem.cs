@@ -93,6 +93,9 @@ namespace DCL.SDKComponents.NFTShape.System
             if (nftLoadingComponent.ImagePromise is not { } promise) return;
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
 
+            // Need to reassign promise, otherwise it becomes outdated once it is consumed. It is a reference issue due to handling a copy of it
+            nftLoadingComponent.ImagePromise = promise;
+
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
 
             if (!result.Succeeded || result.Asset == null || result.Asset.Asset == null)
@@ -108,6 +111,9 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             if (nftLoadingComponent.VideoPromise is not { } promise) return;
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
+
+            // Need to reassign promise, otherwise it becomes outdated once it is consumed. It is a reference issue due to handling a copy of it
+            nftLoadingComponent.VideoPromise = promise;
 
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
 
