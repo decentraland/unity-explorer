@@ -55,7 +55,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             videoPlayerEntity = default;
 
-            // Check albedo texture for video
             if (materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true })
             {
                 if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlbedoTexture.Value.VideoPlayerEntity, out videoPlayerEntity))
