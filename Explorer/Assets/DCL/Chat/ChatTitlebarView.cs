@@ -84,7 +84,7 @@ namespace DCL.Chat
         public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
         {
             titlebarCanvasGroup.DOKill();
-            float targetAlpha = isFocused ? 0.9f : 0.0f;
+            float targetAlpha = isFocused ? 1f : 0.0f;
             titlebarCanvasGroup.DOFade(targetAlpha, animate ? duration : 0f);
         }
     }
