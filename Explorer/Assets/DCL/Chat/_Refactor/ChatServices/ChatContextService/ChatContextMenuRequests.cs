@@ -18,6 +18,8 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public Vector2 Position;
         public Vector2 Offset;
         public MenuAnchorPoint AnchorPoint;
+        public Action? OnHide;
+        public Action? OnShow;
 
         public CancellationTokenSource CancellationTokenSource;
         public UniTaskCompletionSource CloseCompletionSource;
@@ -30,6 +32,8 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public Vector2 Position;
         public Vector2 Offset;
         public MenuAnchorPoint AnchorPoint;
+        public Action? OnHide;
+        public Action? OnShow;
     }
 
 
