@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Audio;
 using DCL.CharacterCamera;
@@ -12,6 +13,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.LifeCycle;
+using ECS.Unity.Materials.Systems;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -60,7 +62,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems,
-            List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+            List<ISceneIsCurrentListener> sceneIsCurrentListeners, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, roomHub, sceneData, mediaPlayerCustomPool, sceneStateProvider, frameTimeBudget, volumeBus);
@@ -71,8 +73,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
-            UpdateVideoMaterialTextureScaleSystem.InjectToWorld(ref builder, frameTimeBudget);
-
+            //UpdateVideoMaterialTextureScaleSystem.InjectToWorld(ref builder, frameTimeBudget);
+            //ApplyVideoMaterialTextureScaleSystem.InjectToWorld(ref builder, entitiesMap);
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
 #endif
         }

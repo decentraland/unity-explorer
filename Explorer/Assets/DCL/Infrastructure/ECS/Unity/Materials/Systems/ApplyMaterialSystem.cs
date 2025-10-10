@@ -10,6 +10,7 @@ using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
+using ECS.Unity.Textures.Components;
 using SceneRunner.Scene;
 using UnityEngine.Rendering;
 
@@ -38,7 +39,7 @@ namespace ECS.Unity.Materials.Systems
 
         [Query]
         [All(typeof(PBMaterial))]
-        private void ApplyMaterialToPrimitiveMesh(ref PBMeshRenderer pbMeshRenderer,
+        private void ApplyMaterialToPrimitiveMesh(Entity entity, ref PBMeshRenderer pbMeshRenderer,
             ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             switch (materialComponent.Status)
@@ -54,12 +55,23 @@ namespace ECS.Unity.Materials.Systems
 
                     meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
                     meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    CheckIfVideoMaterial(entity, ref materialComponent);
                     break;
             }
         }
 
+
+        private void CheckIfVideoMaterial(Entity entity, ref MaterialComponent materialComponent)
+        {
+            // Check the albedo and alpha textures if they are video textures
+            bool hasVideoTexture = materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true } || materialComponent.Data.Textures.AlphaTexture is { IsVideoTexture: true };
+
+            if (hasVideoTexture)
+                World.Add(entity, new MaterialScaleRequestComponent());
+        }
+
         [Query]
-        private void ApplyMaterialToGltfNode(ref GltfNode gltfNode, ref MaterialComponent materialComponent, in PBMaterial pbMaterial)
+        private void ApplyMaterialToGltfNode(Entity entity, ref GltfNode gltfNode, ref MaterialComponent materialComponent, in PBMaterial pbMaterial)
         {
             // Get the container entity to check its state
             if (!World.TryGet<GltfContainerComponent>(gltfNode.ContainerEntity, out var gltfContainer) ||
@@ -84,6 +96,8 @@ namespace ECS.Unity.Materials.Systems
                         renderer.sharedMaterial = materialComponent.Result;
                         renderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
                     }
+
+                    CheckIfVideoMaterial(entity, ref materialComponent);
                     break;
             }
         }

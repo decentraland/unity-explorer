@@ -62,7 +62,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems, sceneIsCurrentListeners);
+            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems, sceneIsCurrentListeners, sharedDependencies.EntitiesMap);
         }
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
