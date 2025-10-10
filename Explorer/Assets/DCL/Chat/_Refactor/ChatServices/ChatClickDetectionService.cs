@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -40,19 +41,14 @@ namespace DCL.Chat.ChatServices
             if (IsIgnored(results[0].gameObject))
                 return;
 
-            var clickedInside = false;
-
-            foreach (RaycastResult result in results)
-            {
-                if (result.gameObject.transform.IsChildOf(targetArea))
-                {
-                    clickedInside = true;
-                    break;
-                }
-            }
-
-            if (clickedInside) OnClickInside?.Invoke();
+            if (IsClickInsideChat()) OnClickInside?.Invoke();
             else OnClickOutside?.Invoke();
+
+            return;
+
+            bool IsClickInsideChat() =>
+                results.FirstOrDefault()
+                       .gameObject?.transform.IsChildOf(targetArea) == true;
         }
 
         private bool IsIgnored(GameObject clickedObject)

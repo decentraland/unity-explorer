@@ -120,7 +120,7 @@ namespace DCL.ChatArea
 
         private void HandleGlobalClick(InputAction.CallbackContext context)
         {
-            if (EventSystem.current == null) return;
+            if (EventSystem.current == null || !context.control.IsPressed()) return;
 
             var eventData = new PointerEventData(EventSystem.current)
             {
@@ -131,21 +131,7 @@ namespace DCL.ChatArea
 
             EventSystem.current.RaycastAll(eventData, results);
 
-            // Check if click is inside any chat panel
-            var clickedInsideChat = false;
-            foreach (RaycastResult result in results)
-            {
-                if (result.gameObject.transform.IsChildOf(viewInstance!.transform))
-                {
-                    clickedInsideChat = true;
-                    break;
-                }
-            }
-
-            if (clickedInsideChat)
-                chatSharedAreaEventBus.RaiseClickInsideEvent(results);
-            else
-                chatSharedAreaEventBus.RaiseClickOutsideEvent(results);
+            chatSharedAreaEventBus.RaiseGlobalClickEvent(results);
         }
 
         private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
