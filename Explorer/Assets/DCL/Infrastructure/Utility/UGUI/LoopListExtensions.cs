@@ -7,7 +7,7 @@ namespace DCL.UI.Utilities
     public static class LoopListExtensions
     {
         private const int MAX_ARRAY_LENGTH = 4;
-        private static readonly ArrayPool<Vector3> EQUAL_TO_VERTICES = ArrayPool<Vector3>.Create(MAX_ARRAY_LENGTH, 2);
+        private static readonly ArrayPool<Vector3> CORNERS_POOL = ArrayPool<Vector3>.Create(MAX_ARRAY_LENGTH, 2);
 
         public static bool IsLastItemVisible(this LoopListView2 loopListView)
         {
@@ -26,8 +26,8 @@ namespace DCL.UI.Utilities
 
             RectTransform viewport = loopListView.ScrollRect.viewport;
 
-            Vector3[] itemCorners = EQUAL_TO_VERTICES.Rent(MAX_ARRAY_LENGTH);
-            Vector3[] viewportCorners = EQUAL_TO_VERTICES.Rent(MAX_ARRAY_LENGTH);
+            Vector3[] itemCorners = CORNERS_POOL.Rent(MAX_ARRAY_LENGTH);
+            Vector3[] viewportCorners = CORNERS_POOL.Rent(MAX_ARRAY_LENGTH);
             itemRT.GetWorldCorners(itemCorners);
             viewport.GetWorldCorners(viewportCorners);
 
@@ -47,8 +47,8 @@ namespace DCL.UI.Utilities
                     isVisible = itemCorners[2].x >= viewportCorners[3].x && itemCorners[3].x <= viewportCorners[2].x;
                     break;
             }
-            EQUAL_TO_VERTICES.Return(itemCorners);
-            EQUAL_TO_VERTICES.Return(viewportCorners);
+            CORNERS_POOL.Return(itemCorners);
+            CORNERS_POOL.Return(viewportCorners);
 
             return isVisible;
         }
