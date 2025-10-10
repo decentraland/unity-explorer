@@ -61,7 +61,7 @@ namespace DCL.Chat.ChatViews
 
             profileCtxMenuButtonNormalColors = buttonOpenProfileContextMenu.colors;
             profileCtxMenuButtonOpenColors = buttonOpenProfileContextMenu.colors;
-            profileCtxMenuButtonOpenColors.normalColor = profileCtxMenuButtonOpenColors.pressedColor;
+            profileCtxMenuButtonOpenColors.normalColor = profileCtxMenuButtonOpenColors.highlightedColor;
             profileCtxMenuButtonImage = (Image) buttonOpenProfileContextMenu.targetGraphic;
         }
 
