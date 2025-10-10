@@ -73,8 +73,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
-            //UpdateVideoMaterialTextureScaleSystem.InjectToWorld(ref builder, frameTimeBudget);
-            //ApplyVideoMaterialTextureScaleSystem.InjectToWorld(ref builder, entitiesMap);
+            ApplyVideoMaterialTextureScaleSystem.InjectToWorld(ref builder, entitiesMap);
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
 #endif
         }

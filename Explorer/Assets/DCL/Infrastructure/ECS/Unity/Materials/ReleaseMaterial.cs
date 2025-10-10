@@ -5,6 +5,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
+using Utility.Arch;
 using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -40,6 +41,9 @@ namespace ECS.Unity.Materials
                     ReleaseTextures(ref materialComponent, true);
                     break;
             }
+
+            if (world.Has<MaterialScaleRequestComponent>(entity))
+                world.Remove<MaterialScaleRequestComponent>(entity);
 
             void ReleaseTextures(ref MaterialComponent mat, bool forgetLoading)
             {

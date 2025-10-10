@@ -81,6 +81,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private void ApplyTextureScaleToMaterial(Entity e, VideoTextureConsumer videoTextureConsumer, Vector2 textureScale)
         {
+            Debug.Log($"ASD APPLYING TEXTURE {e.Id}");
+
             videoTextureConsumer.SetTextureScale(textureScale);
             World.Remove<MaterialScaleRequestComponent>(e);
         }
