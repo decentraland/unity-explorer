@@ -56,9 +56,14 @@ namespace DCL.SDKComponents.MediaStream
             videoPlayerEntity = default;
 
             // Check albedo texture for video
-            if (materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true } || materialComponent.Data.Textures.AlphaTexture is { IsVideoTexture: true })
+            if (materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true })
             {
                 if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlbedoTexture.Value.VideoPlayerEntity, out videoPlayerEntity))
+                    return true;
+            }
+            else if (materialComponent.Data.Textures.AlphaTexture is { IsVideoTexture: true })
+            {
+                if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlphaTexture.Value.VideoPlayerEntity, out videoPlayerEntity))
                     return true;
             }
 
@@ -81,8 +86,6 @@ namespace DCL.SDKComponents.MediaStream
 
         private void ApplyTextureScaleToMaterial(Entity e, VideoTextureConsumer videoTextureConsumer, Vector2 textureScale)
         {
-            Debug.Log($"ASD APPLYING TEXTURE {e.Id}");
-
             videoTextureConsumer.SetTextureScale(textureScale);
             World.Remove<MaterialScaleRequestComponent>(e);
         }
