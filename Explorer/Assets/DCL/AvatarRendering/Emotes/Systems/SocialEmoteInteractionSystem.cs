@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [All(typeof(MoveToInitiatorIntent))]
         private void MoveToSocialEmoteInteractionInitiatorTransform(in Profile profile, in CharacterController characterController, in CharacterRigidTransform characterRigidTransform)
         {
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            DCL.SocialEmotes.SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = DCL.SocialEmotes.SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (interaction.HasValue && interaction.Value.AreInteracting)
             {
@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [None(typeof(CharacterEmoteIntent), typeof(MoveToInitiatorIntent))]
         private void PlayOutcomeAnimationTransform(Entity entity, Profile profile, CharacterTransform transform, CharacterEmoteComponent emoteComponente)
         {
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            DCL.SocialEmotes.SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = DCL.SocialEmotes.SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (socialEmoteInteraction.HasValue &&
                 socialEmoteInteraction.Value.AreInteracting)

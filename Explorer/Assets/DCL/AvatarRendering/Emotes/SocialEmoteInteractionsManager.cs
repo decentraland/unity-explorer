@@ -1,9 +1,9 @@
-﻿
-using CodeLess.Attributes;
+﻿using CodeLess.Attributes;
+using DCL.AvatarRendering.Emotes;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Emotes.SocialEmotes
+namespace DCL.SocialEmotes
 {
     [Singleton]
     public partial class SocialEmoteInteractionsManager
