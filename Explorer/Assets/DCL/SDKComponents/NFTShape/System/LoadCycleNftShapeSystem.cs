@@ -90,12 +90,7 @@ namespace DCL.SDKComponents.NFTShape.System
 
         private void ResolveImage(ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (nftLoadingComponent.TypePromise.TryGetResult(World, out var type)
-                && type.Asset.Type != WebContentInfo.ContentType.Image
-                && type.Asset.Type != WebContentInfo.ContentType.KTX2) return;
-
-            NftImagePromise promise = nftLoadingComponent.ImagePromise;
-
+            if (nftLoadingComponent.ImagePromise is not { } promise) return;
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
 
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
@@ -111,11 +106,7 @@ namespace DCL.SDKComponents.NFTShape.System
 
         private void ResolveVideo(Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (nftLoadingComponent.TypePromise.TryGetResult(World, out var type)
-                && type.Asset.Type != WebContentInfo.ContentType.Video) return;
-
-            NftVideoPromise promise = nftLoadingComponent.VideoPromise;
-
+            if (nftLoadingComponent.VideoPromise is not { } promise) return;
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
 
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;

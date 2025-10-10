@@ -7,8 +7,8 @@ namespace DCL.SDKComponents.NFTShape.Component
     public struct NFTLoadingComponent
     {
         public NftTypePromise TypePromise;
-        public NftImagePromise ImagePromise;
-        public NftVideoPromise VideoPromise;
+        public NftImagePromise? ImagePromise;
+        public NftVideoPromise? VideoPromise;
 
         public readonly string OriginalUrn;
 
@@ -16,8 +16,8 @@ namespace DCL.SDKComponents.NFTShape.Component
         {
             this.OriginalUrn = originalUrn;
             TypePromise = typePromise;
-            ImagePromise = default(NftImagePromise);
-            VideoPromise = default(NftVideoPromise);
+            ImagePromise = null;
+            VideoPromise = null;
         }
 
         public readonly override string ToString() =>

@@ -51,17 +51,24 @@ namespace DCL.SDKComponents.NFTShape.System
 
         private void AbortLoading(ref NFTLoadingComponent nftLoadingComponent, bool forgetPromise)
         {
-            var imagePromise = nftLoadingComponent.ImagePromise;
-            imagePromise.TryDereference(World);
+            if (nftLoadingComponent.ImagePromise != null)
+            {
+                var imagePromise = nftLoadingComponent.ImagePromise.Value;
+                imagePromise.TryDereference(World);
+            }
 
-            var videoPromise = nftLoadingComponent.VideoPromise;
-            videoPromise.TryDereference(World);
+            if (nftLoadingComponent.VideoPromise != null)
+            {
+                var videoPromise = nftLoadingComponent.VideoPromise.Value;
+                videoPromise.TryDereference(World);
+            }
+
 
             if (forgetPromise)
             {
                 nftLoadingComponent.TypePromise.ForgetLoading(World);
-                videoPromise.ForgetLoading(World);
-                imagePromise.ForgetLoading(World);
+                nftLoadingComponent.VideoPromise?.ForgetLoading(World);
+                nftLoadingComponent.ImagePromise?.ForgetLoading(World);
             }
         }
 
