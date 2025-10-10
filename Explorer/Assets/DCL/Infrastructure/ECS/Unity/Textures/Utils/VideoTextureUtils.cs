@@ -42,7 +42,6 @@ namespace ECS.Unity.Textures.Utils
             }
 
             consumer.Texture.AddReference();
-            consumer.IsDirty = true;
 
             texture = consumer.Texture;
             return true;

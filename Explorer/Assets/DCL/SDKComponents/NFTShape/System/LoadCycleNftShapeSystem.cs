@@ -89,8 +89,6 @@ namespace DCL.SDKComponents.NFTShape.System
 
                 World.Add(entity, pbVideo, vtc);
             }
-
-            vtc.IsDirty = true;
         }
     }
 }

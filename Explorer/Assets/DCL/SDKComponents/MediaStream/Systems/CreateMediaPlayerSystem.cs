@@ -107,7 +107,6 @@ namespace DCL.SDKComponents.MediaStream
             if (address.IsLivekitAddress(out _) && !sceneStateProvider.IsCurrent)
                 return;
 
-            videoTextureConsumer.IsDirty = true;
             CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 

@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
 using DCL.Diagnostics;
+using DCL.Shaders;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Materials;
@@ -37,18 +38,15 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(MaterialScaleRequestComponent), typeof(MaterialComponent))]
-        public void UpdateVideoMaterial(Entity entity, ref MaterialComponent materialComponent)
+        private void UpdateVideoMaterial(Entity entity, ref MaterialComponent materialComponent)
         {
             if (!TryGetVideoPlayerEntity(materialComponent, out var videoPlayerEntity))
-                return;
-
-            if (!World.TryGet<VideoTextureConsumer>(videoPlayerEntity, out var videoTextureConsumer))
                 return;
 
             if (!TryGetTextureScale(videoPlayerEntity, out var textureScale))
                 return;
 
-            ApplyTextureScaleToMaterial(entity, videoTextureConsumer, textureScale);
+            ApplyTextureScaleToMaterial(entity, materialComponent, textureScale);
         }
 
         private bool TryGetVideoPlayerEntity(MaterialComponent materialComponent, out Entity videoPlayerEntity)
@@ -83,9 +81,10 @@ namespace DCL.SDKComponents.MediaStream
             return true;
         }
 
-        private void ApplyTextureScaleToMaterial(Entity e, VideoTextureConsumer videoTextureConsumer, Vector2 textureScale)
+        private void ApplyTextureScaleToMaterial(Entity e, MaterialComponent materialComponent, Vector2 textureScale)
         {
-            videoTextureConsumer.SetTextureScale(textureScale);
+            materialComponent.Result!.SetTextureScale(ShaderUtils.BaseMap, textureScale);
+            materialComponent.Result!.SetTextureScale(ShaderUtils.AlphaTexture, textureScale);
             World.Remove<MaterialScaleRequestComponent>(e);
         }
     }
