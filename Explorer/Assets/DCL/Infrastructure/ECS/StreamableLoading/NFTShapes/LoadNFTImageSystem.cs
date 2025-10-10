@@ -20,12 +20,14 @@ namespace ECS.StreamableLoading.NFTShapes
     public partial class LoadNFTImageSystem : LoadSystemBase<Texture2DData, GetNFTImageIntention>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly bool isKtxEnabled;
 
         public LoadNFTImageSystem(World world, IStreamableCache<Texture2DData, GetNFTImageIntention> cache,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController, bool isKtxEnabled)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.isKtxEnabled = isKtxEnabled;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTImageIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -33,7 +35,7 @@ namespace ECS.StreamableLoading.NFTShapes
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 new CommonLoadingArguments(URLAddress.FromString(intention.CommonArguments.URL), attempts: 1),
-                new GetTextureArguments(TextureType.Albedo, true),
+                new GetTextureArguments(TextureType.Albedo, isKtxEnabled),
                 new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 ct,
                 GetReportData()

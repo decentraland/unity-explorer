@@ -93,7 +93,7 @@ namespace DCL.PluginSystem.World
             bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
             LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
-            LoadNFTImageSystem.InjectToWorld(ref builder, imageCache, webRequestController);
+            LoadNFTImageSystem.InjectToWorld(ref builder, imageCache, webRequestController, isKtxEnabled);
             LoadNFTVideoSystem.InjectToWorld(ref builder, videoCache, videoTexturePool);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);

@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             StartQuery(World!);
             ResolveTypeQuery(World!);
-            ResolveVideoQuery(World!);
+            ResolveNftShapeQuery(World!);
         }
 
         [Query]
@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.NFTShape.System
         private void Start(in Entity entity, in PBNftShape nftShape, in PartitionComponent partitionComponent)
         {
             var promise = NftTypePromise.Create(World!, new GetNFTTypeIntention(urnSource.UrlOrEmpty(nftShape.Urn!)), partitionComponent);
-            World!.Add(entity, new NFTLoadingComponent(nftShape.Urn, promise), partitionComponent);
+            World!.Add(entity, new NFTLoadingComponent(nftShape.Urn, promise));
         }
 
         [Query]
@@ -59,29 +59,42 @@ namespace DCL.SDKComponents.NFTShape.System
             WebContentInfo.ContentType type = result.Asset.Type;
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
 
-            if (!result.Succeeded
-                || (type != WebContentInfo.ContentType.Image && type != WebContentInfo.ContentType.Video))
+            if (!result.Succeeded)
             {
                 nftRenderer.NotifyFailed();
                 return;
             }
 
+            // See https://github.com/decentraland/unity-explorer/issues/5611
             // We create different promises because the load of images and videos must be propagated into different systems due to caching issues
             switch (type)
             {
-                case WebContentInfo.ContentType.Image when nftLoadingComponent.ImagePromise == null:
-                    nftLoadingComponent.ImagePromise = NftImagePromise.Create(World!, new GetNFTImageIntention(result.Asset.URL), partitionComponent); break;
-                case WebContentInfo.ContentType.Video when nftLoadingComponent.VideoPromise == null:
-                    nftLoadingComponent.VideoPromise = NftVideoPromise.Create(World!, new GetNFTVideoIntention(result.Asset.URL), partitionComponent); break;
+                case WebContentInfo.ContentType.Image or WebContentInfo.ContentType.KTX2:
+                    nftLoadingComponent.ImagePromise = NftImagePromise.Create(World!, new GetNFTImageIntention(result.Asset.URL), partitionComponent);
+                    break;
+                case WebContentInfo.ContentType.Video:
+                    nftLoadingComponent.VideoPromise = NftVideoPromise.Create(World!, new GetNFTVideoIntention(result.Asset.URL), partitionComponent);
+                    break;
+                default:
+                    nftRenderer.NotifyFailed();
+                    break;
             }
         }
 
         [Query]
+        private void ResolveNftShape(Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
+        {
+            ResolveImage(ref nftLoadingComponent, ref nftShapeRendererComponent);
+            ResolveVideo(entity, ref nftLoadingComponent, ref nftShapeRendererComponent);
+        }
+
         private void ResolveImage(ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (nftLoadingComponent.ImagePromise == null) return;
+            if (nftLoadingComponent.TypePromise.TryGetResult(World, out var type)
+                && type.Asset.Type != WebContentInfo.ContentType.Image
+                && type.Asset.Type != WebContentInfo.ContentType.KTX2) return;
 
-            NftImagePromise promise = nftLoadingComponent.ImagePromise.Value;
+            NftImagePromise promise = nftLoadingComponent.ImagePromise;
 
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
 
@@ -96,12 +109,12 @@ namespace DCL.SDKComponents.NFTShape.System
             nftRenderer.Apply(result.Asset!);
         }
 
-        [Query]
         private void ResolveVideo(Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (nftLoadingComponent.VideoPromise == null) return;
+            if (nftLoadingComponent.TypePromise.TryGetResult(World, out var type)
+                && type.Asset.Type != WebContentInfo.ContentType.Video) return;
 
-            NftVideoPromise promise = nftLoadingComponent.VideoPromise.Value;
+            NftVideoPromise promise = nftLoadingComponent.VideoPromise;
 
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
 

@@ -51,27 +51,17 @@ namespace DCL.SDKComponents.NFTShape.System
 
         private void AbortLoading(ref NFTLoadingComponent nftLoadingComponent, bool forgetPromise)
         {
+            var imagePromise = nftLoadingComponent.ImagePromise;
+            imagePromise.TryDereference(World);
+
+            var videoPromise = nftLoadingComponent.VideoPromise;
+            videoPromise.TryDereference(World);
+
             if (forgetPromise)
+            {
                 nftLoadingComponent.TypePromise.ForgetLoading(World);
-
-            if (nftLoadingComponent.ImagePromise != null)
-            {
-                // TODO: check if we dont get a reference miss here, since .Value provides a copy of the promise
-                var promise = nftLoadingComponent.ImagePromise.Value;
-                promise.TryDereference(World);
-
-                if (forgetPromise)
-                    promise.ForgetLoading(World);
-            }
-
-            if (nftLoadingComponent.VideoPromise != null)
-            {
-                // TODO: check if we dont get a reference miss here, since .Value provides a copy of the promise
-                var promise = nftLoadingComponent.VideoPromise.Value;
-                promise.TryDereference(World);
-
-                if (forgetPromise)
-                    promise.ForgetLoading(World);
+                videoPromise.ForgetLoading(World);
+                imagePromise.ForgetLoading(World);
             }
         }
 

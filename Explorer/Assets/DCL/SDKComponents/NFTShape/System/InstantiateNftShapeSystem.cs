@@ -76,21 +76,13 @@ namespace DCL.SDKComponents.NFTShape.System
             changedNftShapes.Add(entity, nftShapeRendererComponent);
             loadingComponent.TypePromise.ForgetLoading(World);
 
-            // TODO: check if we dont have a reference issue here, since .Value provides a copy of the promise
-            if (loadingComponent.VideoPromise != null)
-            {
-                var promise = loadingComponent.VideoPromise.Value;
-                promise.TryDereference(World);
-                promise.ForgetLoading(World);
-            }
+            var videoPromise = loadingComponent.VideoPromise;
+            videoPromise.TryDereference(World);
+            videoPromise.ForgetLoading(World);
 
-            // TODO: check if we dont have a reference issue here, since .Value provides a copy of the promise
-            if (loadingComponent.ImagePromise != null)
-            {
-                var promise = loadingComponent.ImagePromise.Value;
-                promise.TryDereference(World);
-                promise.ForgetLoading(World);
-            }
+            var imagePromise = loadingComponent.ImagePromise;
+            imagePromise.TryDereference(World);
+            imagePromise.ForgetLoading(World);
 
             World.Remove<NFTLoadingComponent>(entity);
         }
