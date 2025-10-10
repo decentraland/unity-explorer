@@ -17,7 +17,7 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
@@ -42,33 +42,37 @@ namespace DCL.SDKComponents.NFTShape.Demo
             IReadOnlyFramePrefabs framePrefabs, IComponentPool<PartitionComponent> partitionComponentPool,
             IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
-            // var buffer = new EntityEventBuffer<NftShapeRendererComponent>(1);
-            //
-            // origin = new DemoWorld(
-            //     world,
-            //     w =>
-            //     {
-            //         foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
-            //         {
-            //             PartitionComponent partitionComponent = partitionComponentPool.Get();
-            //             partitionComponent.IsBehind = false;
-            //             partitionComponent.RawSqrDistance = 0f;
-            //
-            //             w.Create(nftShape, visibility, billboard, NewTransform(), partitionComponent);
-            //         }
-            //     },
-            //     w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
-            //     w => new LoadNFTTypeSystem(
-            //         w,
-            //         new NftImageCache(),
-            //         IWebRequestController.DEFAULT,
-            //         true,
-            //         new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
-            //     ).InitializeAndReturnSelf(),
-            //     w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),
-            //     w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
-            //     w => new VisibilityNftShapeSystem(w, buffer)
-            // );
+            var buffer = new EntityEventBuffer<NftShapeRendererComponent>(1);
+
+            IWebRequestController webRequestController = IWebRequestController.DEFAULT;
+
+            origin = new DemoWorld(
+                world,
+                w =>
+                {
+                    foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
+                    {
+                        PartitionComponent partitionComponent = partitionComponentPool.Get();
+                        partitionComponent.IsBehind = false;
+                        partitionComponent.RawSqrDistance = 0f;
+
+                        w.Create(nftShape, visibility, billboard, NewTransform(), partitionComponent);
+                    }
+                },
+                w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
+                w => new LoadNFTTypeSystem(
+                    w,
+                    new NoCache<NftTypeResult, GetNFTTypeIntention>(false, false),
+                    webRequestController,
+                    true,
+                    new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
+                ).InitializeAndReturnSelf(),
+                w => new LoadNFTImageSystem(w, new TexturesCache<GetNFTImageIntention>(), webRequestController, true),
+                w => new LoadNFTVideoSystem(w, new TexturesCache<GetNFTVideoIntention>(), VideoTextureFactory.CreateVideoTexturesPool()),
+                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),
+                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
+                w => new VisibilityNftShapeSystem(w, buffer)
+            );
         }
 
         private static TransformComponent NewTransform() =>
