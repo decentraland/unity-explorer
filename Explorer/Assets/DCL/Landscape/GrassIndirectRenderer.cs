@@ -29,7 +29,9 @@ namespace Decentraland.Terrain
             // QuadTreeCulling properties
             public static readonly int ViewProjMatrix = Shader.PropertyToID("viewProjMatrix");
             public static readonly int TerrainBounds = Shader.PropertyToID("TerrainBounds");
+            public static readonly int FloorValue = Shader.PropertyToID("floorValue");
             public static readonly int OccupancyTexture = Shader.PropertyToID("OccupancyTexture");
+            public static readonly int OccupancyMapSize = Shader.PropertyToID("occupancyMapSize");
             public static readonly int QuadTreeNodes = Shader.PropertyToID("quadTreeNodes");
             public static readonly int VisibleParcels = Shader.PropertyToID("visibleParcels");
             public static readonly int VisibleParcelCount = Shader.PropertyToID("visibleParcelCount");
@@ -126,15 +128,16 @@ namespace Decentraland.Terrain
         private Material flower2Material;
         private Bounds indirectRenderingBounds;
 
-        private int parcelSize = 16;
-        private float fDistanceFieldScale = 16.0f;
-        private float nHeightMapSize = 8192.0f;
-        private float fSplatMapTiling = 8.0f;
+        private readonly int parcelSize = 16;
+        private readonly float nHeightMapSize = 8192.0f;
+        private readonly float fSplatMapTiling = 8.0f;
 
-        private int grassInstancesPerParcel = 256;
-        private int flowerInstancesPerParcel = 16;
-        private int maxVisibleParcels = 256;
-        private int parcelGridSingleAxisSize = 512;
+        private readonly int grassInstancesPerParcel = 256;
+        private readonly int flowerInstancesPerParcel = 16;
+        private readonly int maxVisibleParcels = 256;
+        private readonly int parcelGridSingleAxisSize = 512;
+
+        private float fDistanceFieldScale;
 
         private MaterialPropertyBlock grassMaterialPropertyBlock;
         private MaterialPropertyBlock flowersMaterialPropertyBlock;
@@ -142,16 +145,12 @@ namespace Decentraland.Terrain
         public static uint CreateDepth8CornerIndexStart(byte depth, uint cornerIndexStart) =>
             ((uint)depth << 24) | cornerIndexStart;
 
-        public void Initialize(TerrainGenerator terrainGenerator)
+        private void Initialize(ITerrain terrainGenerator)
         {
             if (initialized)
                 return;
 
             initialized = true;
-
-            indirectRenderingBounds.SetMinMax(
-                new Vector3(terrainGenerator.TerrainModel.MinInUnits.x, 0f, terrainGenerator.TerrainModel.MinInUnits.y),
-                new Vector3(terrainGenerator.TerrainModel.MaxInUnits.x, TerrainGenerator.MAX_HEIGHT, terrainGenerator.TerrainModel.MaxInUnits.y));
 
             GenerateQuadTree();
             SetupComputeBuffers();
@@ -166,11 +165,22 @@ namespace Decentraland.Terrain
             flowersMaterialPropertyBlock = new MaterialPropertyBlock();
         }
 
-        public void Render(LandscapeData landscapeData, TerrainGenerator terrainGenerator,
+        public void OnTerrainLoaded(ITerrain terrain)
+        {
+            Initialize(terrain);
+
+            TerrainModel model = terrain.TerrainModel!;
+            int2 min = model.MinInUnits;
+            int2 max = model.MaxInUnits;
+
+            fDistanceFieldScale = terrain.MaxHeight;
+            indirectRenderingBounds.SetMinMax(new Vector3(min.x, 0f, min.y),
+                new Vector3(max.x, terrain.MaxHeight, max.y));
+        }
+
+        public void Render(LandscapeData landscapeData, ITerrain terrainGenerator,
             Camera camera, bool renderToAllCameras)
         {
-            Initialize(terrainGenerator);
-
             RunFrustumCulling(landscapeData, terrainGenerator, camera);
             GenerateScatteredGrass(terrainGenerator);
             arrInstCount.SetData(arrLOD, 0, 0, 3);
@@ -322,7 +332,7 @@ namespace Decentraland.Terrain
             quadTreeNodesComputeBuffer.SetData(quadTreeNodes.ToArray());
         }
 
-        public void RunFrustumCulling(LandscapeData landscapeData, TerrainGenerator terrainGenerator,
+        private void RunFrustumCulling(LandscapeData landscapeData, ITerrain terrainGenerator,
             Camera camera)
         {
             if (QuadTreeCullingShader == null ||
@@ -350,6 +360,9 @@ namespace Decentraland.Terrain
 
             QuadTreeCullingShader.SetMatrix(ShaderProperties.ViewProjMatrix, viewProjMatrix);
             QuadTreeCullingShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
+            QuadTreeCullingShader.SetFloat(ShaderProperties.FloorValue, terrainGenerator.OccupancyFloor / 255f);
+            QuadTreeCullingShader.SetInt(ShaderProperties.OccupancyMapSize, terrainGenerator.OccupancyMapSize);
+            QuadTreeCullingShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
 
             QuadTreeCullingShader.SetTexture(ShaderKernels.QuadTreeCullingKernel, ShaderProperties.OccupancyTexture,
                 terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMap : Texture2D.blackTexture);
@@ -362,7 +375,7 @@ namespace Decentraland.Terrain
             QuadTreeCullingShader.Dispatch(ShaderKernels.QuadTreeCullingKernel, threadGroups, 1, 1);
         }
 
-        public void GenerateScatteredGrass(TerrainGenerator terrainGenerator)
+        private void GenerateScatteredGrass(ITerrain terrainGenerator)
         {
             if (ScatterGrassShader == null ||
                 HeightMapTexture == null ||
@@ -374,13 +387,30 @@ namespace Decentraland.Terrain
 
             grassDrawArgs.SetData(grassArgs);
 
-            // Set up compute shader
+            // Set up compute shader (refresh constants every dispatch)
             var terrainBounds = new Vector4(terrainGenerator.TerrainModel.MinParcel.x, terrainGenerator.TerrainModel.MaxParcel.x + 1,
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
+            var HeightTextureSize = new int2(8192, 8192);
+            //var OccupancyTextureSize = new int2(512, 512);
+            var TerrainBlendTextureSize = new int2(1024, 1024);
+            var GroundDetailTextureSize = new int2(2048, 2048);
+            var SandDetailTextureSize = new int2(1024, 1024);
+
+            ScatterGrassShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);
+            int OccupancyHeightWidth = terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMapSize : Texture2D.blackTexture.height;
+            ScatterGrassShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyHeightWidth, OccupancyHeightWidth);
+            ScatterGrassShader.SetInt2(ShaderProperties.TerrainBlendTextureSize, TerrainBlendTextureSize.x, TerrainBlendTextureSize.y);
+            ScatterGrassShader.SetInt2(ShaderProperties.GroundDetailTextureSize, GroundDetailTextureSize.x, GroundDetailTextureSize.y);
+            ScatterGrassShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);
+
             ScatterGrassShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
-            ScatterGrassShader.SetFloat(ShaderProperties.TerrainHeight, TerrainGenerator.MAX_HEIGHT);
-            ScatterGrassShader.SetFloat(ShaderProperties.MinDistOccupancy, terrainGenerator.OccupancyFloor / 255f);
+            ScatterGrassShader.SetFloat(ShaderProperties.TerrainHeight, terrainGenerator.MaxHeight);
+            ScatterGrassShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
+            ScatterGrassShader.SetFloat(ShaderProperties.FDistanceFieldScale, fDistanceFieldScale);
+            ScatterGrassShader.SetFloat(ShaderProperties.NHeightMapSize, nHeightMapSize);
+            ScatterGrassShader.SetFloat(ShaderProperties.FSplatMapTiling, fSplatMapTiling);
+            ScatterGrassShader.SetFloat(ShaderProperties.MinDistOccupancy, terrainGenerator.OccupancyFloor / 255.0f);
             ScatterGrassShader.SetTexture(ShaderKernels.ScatterGrassKernel, ShaderProperties.HeightMapTexture, HeightMapTexture);
             ScatterGrassShader.SetTexture(ShaderKernels.ScatterGrassKernel, ShaderProperties.TerrainBlendTexture, TerrainBlendTexture);
             ScatterGrassShader.SetTexture(ShaderKernels.ScatterGrassKernel, ShaderProperties.GroundDetailTexture, GroundDetailTexture);
@@ -405,7 +435,7 @@ namespace Decentraland.Terrain
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
 
-        public void GenerateScatteredFlowers(TerrainGenerator terrainGenerator)
+        private void GenerateScatteredFlowers(ITerrain terrainGenerator)
         {
             if (ScatterFlowersShader == null ||
                 HeightMapTexture == null ||
@@ -418,12 +448,12 @@ namespace Decentraland.Terrain
             flower0DrawArgs.SetData(flower0Args);
             flower1DrawArgs.SetData(flower1Args);
 
-            // Set up compute shader
+            // Set up compute shader (refresh constants every dispatch)
             var terrainBounds = new Vector4(terrainGenerator.TerrainModel.MinParcel.x, terrainGenerator.TerrainModel.MaxParcel.x + 1,
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
             var HeightTextureSize = new int2(8192, 8192);
-            var OccupancyTextureSize = new int2(512, 512);
+            //var OccupancyTextureSize = new int2(512, 512);
             var TerrainBlendTextureSize = new int2(1024, 1024);
             var GroundDetailTextureSize = new int2(2048, 2048);
             var SandDetailTextureSize = new int2(1024, 1024);
@@ -431,13 +461,14 @@ namespace Decentraland.Terrain
             ScatterFlowersShader.EnableKeyword("THREADS_16");
             ScatterFlowersShader.SetInt(ShaderProperties.NThreads, flowerInstancesPerParcel);
             ScatterFlowersShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
-            ScatterFlowersShader.SetFloat(ShaderProperties.TerrainHeight, 4.0f);
+            ScatterFlowersShader.SetFloat(ShaderProperties.TerrainHeight, terrainGenerator.MaxHeight);
 
             ScatterFlowersShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);
-            ScatterFlowersShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyTextureSize.x, OccupancyTextureSize.y);
+            int OccupancyHeightWidth = terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMapSize : Texture2D.blackTexture.height;
+            ScatterFlowersShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyHeightWidth, OccupancyHeightWidth);
             ScatterFlowersShader.SetInt2(ShaderProperties.TerrainBlendTextureSize, TerrainBlendTextureSize.x, TerrainBlendTextureSize.y);
             ScatterFlowersShader.SetInt2(ShaderProperties.GroundDetailTextureSize, GroundDetailTextureSize.x, GroundDetailTextureSize.y);
-            ScatterFlowersShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);;
+            ScatterFlowersShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);
 
             ScatterFlowersShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
             ScatterFlowersShader.SetFloat(ShaderProperties.FDistanceFieldScale, fDistanceFieldScale);
@@ -468,7 +499,7 @@ namespace Decentraland.Terrain
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
 
-        public void GenerateScatteredCatTails(TerrainGenerator terrainGenerator)
+        private void GenerateScatteredCatTails(ITerrain terrainGenerator)
         {
             if (ScatterCatTailsShader == null ||
                 HeightMapTexture == null ||
@@ -480,14 +511,14 @@ namespace Decentraland.Terrain
 
             flower2DrawArgs.SetData(flower2Args);
 
-            // Set up compute shader
+            // Set up compute shader (refresh constants every dispatch)
 
 
             var terrainBounds = new Vector4(terrainGenerator.TerrainModel.MinParcel.x, terrainGenerator.TerrainModel.MaxParcel.x + 1,
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
             var HeightTextureSize = new int2(8192, 8192);
-            var OccupancyTextureSize = new int2(512, 512);
+            //var OccupancyTextureSize = new int2(512, 512);
             var TerrainBlendTextureSize = new int2(1024, 1024);
             var GroundDetailTextureSize = new int2(2048, 2048);
             var SandDetailTextureSize = new int2(1024, 1024);
@@ -495,9 +526,10 @@ namespace Decentraland.Terrain
             ScatterCatTailsShader.EnableKeyword("THREADS_16");
             ScatterCatTailsShader.SetInt(ShaderProperties.NThreads, flowerInstancesPerParcel);
             ScatterCatTailsShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
-            ScatterCatTailsShader.SetFloat(ShaderProperties.TerrainHeight, 4.0f);
-            ScatterCatTailsShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);;
-            ScatterCatTailsShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyTextureSize.x, OccupancyTextureSize.y);
+            ScatterCatTailsShader.SetFloat(ShaderProperties.TerrainHeight, terrainGenerator.MaxHeight);
+            ScatterCatTailsShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);
+            int OccupancyHeightWidth = terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMapSize : Texture2D.blackTexture.height;
+            ScatterCatTailsShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyHeightWidth, OccupancyHeightWidth);
             ScatterCatTailsShader.SetInt2(ShaderProperties.TerrainBlendTextureSize, TerrainBlendTextureSize.x, TerrainBlendTextureSize.y);
             ScatterCatTailsShader.SetInt2(ShaderProperties.GroundDetailTextureSize, GroundDetailTextureSize.x, GroundDetailTextureSize.y);
             ScatterCatTailsShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);
