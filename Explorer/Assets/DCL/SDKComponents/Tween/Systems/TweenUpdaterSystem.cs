@@ -80,12 +80,15 @@ namespace DCL.SDKComponents.Tween
         protected override void Update(float t)
         {
             UpdatePBTweenQuery(World);
-            UpdateTweenTransformSequenceQuery(World);
-            UpdateTweenTextureSequenceQuery(World);
+            UpdateTweenTransformQuery(World);
+            UpdateTweenTextureQuery(World);
+            UpdatePBTweenSequenceQuery(World);
+            UpdateTweenSequenceStateQuery(World);
         }
 
         [Query]
-        private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase is PBTween.ModeOneofCase.TextureMove or PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
@@ -101,7 +104,8 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove && pbTween.ModeCase != PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
@@ -227,6 +231,7 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
+        [None(typeof(PBTweenSequence))]
         private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
@@ -249,5 +254,67 @@ namespace DCL.SDKComponents.Tween
             && sdkTweenComponent.CustomTweener != null
             && !sdkTweenComponent.CustomTweener.IsFinished()
             && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
+
+        [Query]
+        private static void UpdatePBTweenSequence(ref PBTween pbTween, ref PBTweenSequence pbTweenSequence, ref SDKTweenSequenceComponent sdkTweenSequenceComponent)
+        {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            if (pbTweenSequence.IsDirty || pbTween.IsDirty)
+                sdkTweenSequenceComponent.IsDirty = true;
+        }
+
+        [Query]
+        private void UpdateTweenSequenceState(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween pbTween, in PBTweenSequence pbTweenSequence, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            if (sdkTweenSequenceComponent.IsDirty)
+            {
+                SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform);
+                UpdateTweenSequenceStateInCRDT(sdkEntity, sdkTweenSequenceComponent);
+            }
+            else
+            {
+                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, sdkEntity);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, CRDTEntity sdkEntity)
+        {
+            TweenStateStatus newState = GetCurrentTweenSequenceState(sdkTweenSequenceComponent);
+            if (newState != sdkTweenSequenceComponent.TweenStateStatus)
+            {
+                sdkTweenSequenceComponent.TweenStateStatus = newState;
+                UpdateTweenSequenceStateInCRDT(sdkEntity, sdkTweenSequenceComponent);
+            }
+        }
+
+        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform)
+        {
+            tweenerPool.ReleaseSequenceTweenerFrom(sdkTweenSequenceComponent);
+
+            TweenLoop? loopType = pbTweenSequence.HasLoop ? pbTweenSequence.Loop : null;
+            sdkTweenSequenceComponent.SequenceTweener = tweenerPool.GetSequenceTweener(firstTween, pbTweenSequence.Sequence, loopType, transform);
+
+            sdkTweenSequenceComponent.SequenceTweener.Play();
+            sdkTweenSequenceComponent.TweenStateStatus = TweenStateStatus.TsActive;
+            sdkTweenSequenceComponent.IsDirty = false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static TweenStateStatus GetCurrentTweenSequenceState(SDKTweenSequenceComponent sequenceTweener)
+        {
+            if (sequenceTweener.SequenceTweener.IsFinished()) return TweenStateStatus.TsCompleted;
+            if (sequenceTweener.SequenceTweener.IsPaused()) return TweenStateStatus.TsPaused;
+            return TweenStateStatus.TsActive;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateTweenSequenceStateInCRDT(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent)
+        {
+            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenSequenceComponent.TweenStateStatus);
+        }
     }
 }

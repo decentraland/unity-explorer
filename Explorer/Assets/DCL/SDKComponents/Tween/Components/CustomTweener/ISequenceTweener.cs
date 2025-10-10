@@ -1,11 +1,8 @@
-﻿using DG.Tweening;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public interface ITweener
+    public interface ISequenceTweener
     {
-        void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
-
         void Play();
 
         void Pause();
@@ -19,7 +16,10 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsFinished();
 
         bool IsActive();
-
-        public float GetElapsedTime();
     }
 }
+
+
+
+
+

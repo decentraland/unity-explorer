@@ -20,10 +20,11 @@ namespace DCL.SDKComponents.Tween
         protected override void Update(float t)
         {
             LoadTweenQuery(World);
+            LoadTweenSequenceQuery(World);
         }
 
         [Query]
-        [None(typeof(SDKTweenComponent))]
+        [None(typeof(SDKTweenComponent), typeof(PBTweenSequence))]
         private void LoadTween(Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
@@ -34,6 +35,21 @@ namespace DCL.SDKComponents.Tween
             };
 
             World.Add(entity, sdkTweenComponent);
+        }
+
+        [Query]
+        [None(typeof(SDKTweenSequenceComponent))]
+        private void LoadTweenSequence(Entity entity, ref PBTween pbTween, ref PBTweenSequence pbTweenSequence)
+        {
+            // For sequences, PBTween must exist and be valid
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            var sdkTweenSequenceComponent = new SDKTweenSequenceComponent
+            {
+                IsDirty = true,
+            };
+
+            World.Add(entity, sdkTweenSequenceComponent);
         }
     }
 }
