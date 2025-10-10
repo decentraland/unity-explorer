@@ -23,7 +23,6 @@ using Utility;
 
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
-using Utility.Ownership;
 # endif
 
 using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
@@ -288,7 +287,6 @@ namespace DCL.VoiceChat
                 playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
             }
-                }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}"); }
         }
 
