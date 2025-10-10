@@ -32,5 +32,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         UniTask<bool> ShouldShowExtraOutfitSlotsAsync(CancellationToken ct);
 
         void CreateAndUpdateLocalOutfit(int slotIndex, IEquippedWearables equippedWearables, Action<OutfitItem> onUpdateOutfit);
+        UniTask<OutfitItem?> CreateAndSaveOutfitToServerAsync(int slotIndex, IEquippedWearables equippedWearables, CancellationToken ct);
+
+        /// <summary>
+        ///     Deletes an outfit from the local list and immediately deploys the change to the server.
+        /// </summary>
+        /// <returns>True on success, false on failure.</returns>
+        UniTask<bool> DeleteOutfitFromServerAsync(int slotIndex, CancellationToken ct);
     }
 }

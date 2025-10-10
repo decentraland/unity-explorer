@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
 
 namespace DCL.CharacterPreview
 {
@@ -34,6 +35,7 @@ namespace DCL.CharacterPreview
         private Vector3 avatarPosition;
 
         private RenderTexture? currentRenderTexture;
+        public RenderTexture CurrentRenderTexture => currentRenderTexture;
 
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
@@ -130,7 +132,7 @@ namespace DCL.CharacterPreview
         {
             if (!currentRenderTexture) return;
             currentRenderTexture.Release();
-            UnityEngine.Object.Destroy(currentRenderTexture);
+            Object.Destroy(currentRenderTexture);
             currentRenderTexture = null;
         }
 
@@ -314,5 +316,10 @@ namespace DCL.CharacterPreview
 
         private void ResetAvatarMovement() =>
             previewController?.ResetAvatarMovement();
+
+        public void SetPlatformVisible(bool isVisible)
+        {
+            previewController?.SetPreviewPlatformActive(isVisible);
+        }
     }
 }

@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
 using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Backpack.Slots
 {
@@ -30,27 +33,32 @@ namespace DCL.Backpack.Slots
 
     public class OutfitSlotPresenter : IDisposable
     {
-        public readonly OutfitSlotView view;
-        public readonly int slotIndex;
         private readonly OutfitsController ownerController;
-
-        private CancellationTokenSource cts = new ();
         private readonly HoverHandler hoverHandler;
+        private readonly IAvatarScreenshotService screenshotService;
+        private CancellationTokenSource cts = new ();
+        
         private bool isHovered;
         private OutfitSlotState currentState;
         private OutfitItem? currentOutfitData;
+        private Texture2D? currentThumbnail;
         private readonly Sprite popupDeleteIcon;
+
+        public readonly OutfitSlotView view;
+        public readonly int slotIndex;
 
         public OutfitSlotPresenter(
             Sprite popupDeleteIcon,
             OutfitSlotView view,
             int slotIndex,
-            OutfitsController ownerController)
+            OutfitsController ownerController,
+            IAvatarScreenshotService screenshotService)
         {
             this.popupDeleteIcon = popupDeleteIcon;
             this.view = view;
             this.slotIndex = slotIndex;
             this.ownerController = ownerController;
+            this.screenshotService = screenshotService;
 
             view.OnSaveClicked += HandleSaveClicked;
             view.OnDeleteClicked += HandleDeleteClicked;
@@ -90,11 +98,22 @@ namespace DCL.Backpack.Slots
         {
             currentOutfitData = item;
             SetState(OutfitSlotState.Full, item);
+            LoadExistingScreenshotAsync().Forget();
         }
 
         public void SetEmpty()
         {
+            if (currentThumbnail != null)
+            {
+                Object.Destroy(currentThumbnail);
+                currentThumbnail = null;
+            }
             SetState(OutfitSlotState.Empty);
+        }
+
+        public void SetSaving()
+        {
+            SetState(OutfitSlotState.Save);
         }
 
         public void SetLoading()
@@ -118,9 +137,7 @@ namespace DCL.Backpack.Slots
                 case OutfitSlotState.Save: view.ShowStateSaving(); break;
                 case OutfitSlotState.Full:
 
-                    bool isEquipped = false;
-                    Sprite mockThumbnail = null;
-                    view.ShowFullState(mockThumbnail, isEquipped, isHovered);
+                    view.ShowFullState(currentThumbnail, isHovered);
                     break;
             }
         }
@@ -136,58 +153,33 @@ namespace DCL.Backpack.Slots
             ReportHub.Log(ReportCategory.OUTFITS, "Unequip outfit clicked");
         }
 
-        // private async UniTask HandleSaveClickedAsync()
-        // {
-        //     if (currentState != OutfitSlotState.Empty) return;
-        //
-        //     cts = cts.SafeRestart();
-        //
-        //     var outfitToSave = new OutfitData();
-        //
-        //     var saveCmd = new SaveOutfitCommand(outfitService);
-        //
-        //     var outcome = await saveCmd.ExecuteAsync(
-        //         slotIndex,
-        //         outfitToSave,
-        //         cts.Token,
-        //         onConfirmed: () => SetState(OutfitSlotState.Save));
-        //
-        //     if (cts.IsCancellationRequested) return;
-        //
-        //     var (state, data) = outcome switch
-        //     {
-        //         SaveOutfitOutcome.Success => (OutfitSlotState.Full, (OutfitData?)outfitToSave),
-        //         SaveOutfitOutcome.Cancelled => (OutfitSlotState.Empty, null),
-        //         SaveOutfitOutcome.Failed => (OutfitSlotState.Empty, (OutfitData?)null)
-        //     };
-        //
-        //     SetState(state, data);
-        // }
-        //
-        // private async UniTask HandleDeleteClickedAsync()
-        // {
-        //     if (currentState != OutfitSlotState.Full) return;
-        //
-        //     cts = cts.SafeRestart();
-        //
-        //     var outfitDeleteCommand = new DeleteOutfitCommand(outfitService);
-        //     var outcome = await outfitDeleteCommand.ExecuteAsync(slotIndex, cts.Token,
-        //         onConfirmed: () =>
-        //         {
-        //             SetState(OutfitSlotState.Save);
-        //         });
-        //
-        //     if (cts.IsCancellationRequested) return;
-        //
-        //     var (state, data) = outcome switch
-        //     {
-        //         DeleteOutfitOutcome.Success => (OutfitSlotState.Empty, (OutfitData?)null),
-        //         DeleteOutfitOutcome.Cancelled => (OutfitSlotState.Full, null),
-        //         DeleteOutfitOutcome.Failed => (OutfitSlotState.Full, currentOutfitData)
-        //     };
-        //
-        //     SetState(state, data);
-        // }
+        private async UniTaskVoid LoadExistingScreenshotAsync()
+        {
+            if (currentOutfitData == null) return;
+
+            try
+            {
+                // Asynchronously load the texture from the disk using the service
+                var loadedTexture = await screenshotService.LoadScreenshotAsync(slotIndex, cts.Token);
+                if (cts.IsCancellationRequested) return;
+
+                SetThumbnail(loadedTexture);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.OUTFITS);
+                SetThumbnail(null); // Ensure UI updates even if loading fails
+            }
+        }
+
+        public void SetThumbnail(Texture2D? screenshot)
+        {
+            if (currentThumbnail != null)
+                Object.Destroy(currentThumbnail);
+
+            currentThumbnail = screenshot;
+            UpdateView();
+        }
 
         public void Dispose()
         {
@@ -199,6 +191,17 @@ namespace DCL.Backpack.Slots
 
             hoverHandler.OnHoverEntered -= OnHoverEntered;
             hoverHandler.OnHoverExited -= OnHoverExited;
+
+            if (currentThumbnail != null)
+            {
+                Object.Destroy(currentThumbnail);
+                currentThumbnail = null;
+            }
+        }
+
+        public OutfitItem GetOutfitData()
+        {
+            return currentOutfitData!;
         }
     }
 }

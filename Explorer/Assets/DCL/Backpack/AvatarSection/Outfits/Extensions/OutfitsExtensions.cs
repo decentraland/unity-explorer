@@ -45,10 +45,7 @@ namespace DCL.Backpack.Outfits.Extensions
                     foreach (var profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
                     {
                         if (profileWearable.Shorten() == potentialItemUrn)
-                        {
                             potentialItemUrn = profileWearable;
-                            break;
-                        }
                     }
                 }
 

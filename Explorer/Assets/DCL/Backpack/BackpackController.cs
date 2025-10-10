@@ -108,6 +108,7 @@ namespace DCL.Backpack
             this.webController = webController;
             this.equippedWearables = equippedWearables;
             this.wearableStorage = wearableStorage;
+            this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             var categoriesController = new CategoriesController(avatarView.CategoriesView,
@@ -116,19 +117,24 @@ namespace DCL.Backpack
                 backpackEventBus,
                 inputBlock);
 
+            var screenshotService = new AvatarScreenshotService(selfProfile);
             var outfitService = new OutfitsService(selfProfile,
                 webController,
                 realmData,
                 outfitsRepository,
-                wearableStorage);
-
+                wearableStorage,
+                screenshotService);
+            
             var deleteOutfitCommand = new DeleteOutfitCommand(outfitService);
+            
             var outfitsController = new OutfitsController(avatarView.OutfitsView,
                 outfitService,
                 webBrowser,
                 backpackCommandBus,
                 equippedWearables,
-                deleteOutfitCommand);
+                deleteOutfitCommand,
+                screenshotService,
+                backpackCharacterPreviewController);
             
             avatarController = new AvatarController(
                 avatarView,
@@ -171,7 +177,7 @@ namespace DCL.Backpack
                 );
             }
 
-            this.backpackCharacterPreviewController = backpackCharacterPreviewController;
+            
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;

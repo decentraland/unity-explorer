@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;
@@ -18,7 +19,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Newtonsoft.Json;
 using Runtime.Wearables;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Services
@@ -34,7 +34,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly OutfitsRepository outfitsRepository;
         private readonly IWearableStorage wearableStorage;
-        
+        private readonly IAvatarScreenshotService avatarScreenshotService;
+
         private List<OutfitItem> localOutfits = new ();
         private bool outfitsAreDirty  ;
 
@@ -42,13 +43,15 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             IWebRequestController webRequestController,
             IRealmData realmData,
             OutfitsRepository outfitsRepository,
-            IWearableStorage wearableStorage)
+            IWearableStorage wearableStorage,
+            IAvatarScreenshotService avatarScreenshotService)
         {
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.outfitsRepository = outfitsRepository;
             this.wearableStorage = wearableStorage;
+            this.avatarScreenshotService = avatarScreenshotService;
         }
 
         public async UniTask LoadOutfitsAsync(CancellationToken ct)
@@ -242,6 +245,101 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         public void CreateAndUpdateLocalOutfit(int slotIndex, IEquippedWearables equippedWearables, Action<OutfitItem> onUpdateOutfit)
         {
             CreateAndUpdateLocalOutfitAsync(slotIndex, equippedWearables, onUpdateOutfit).Forget();
+        }
+
+        public async UniTask<OutfitItem?> CreateAndSaveOutfitToServerAsync(int slotIndex, IEquippedWearables equippedWearables, CancellationToken ct)
+        {
+            var profile = await selfProfile.ProfileAsync(CancellationToken.None);
+            if (profile == null)
+            {
+                ReportHub.LogError(ReportCategory.OUTFITS, "Cannot create outfit, self profile is not loaded.");
+                return null;
+            }
+
+            List<string> fullItemUrns = equippedWearables.ToFullWearableUrns(wearableStorage, profile);
+
+            var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
+            if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable)
+                || bodyShapeWearable == null)
+            {
+                ReportHub.LogError(ReportCategory.OUTFITS, "Cannot save outfit, Body Shape is not equipped!");
+                return null;
+            }
+
+            string liveBodyShapeUrn = bodyShapeWearable.GetUrn();
+
+            // Build the final, correct OutfitItem.
+            var newItem = new OutfitItem
+            {
+                slot = slotIndex, outfit = new Outfit
+                {
+                    bodyShape = liveBodyShapeUrn, wearables = fullItemUrns.ToArray(), eyes = new Eyes
+                    {
+                        color = eyesColor
+                    },
+                    hair = new Hair
+                    {
+                        color = hairColor
+                    },
+                    skin = new Skin
+                    {
+                        color = skinColor
+                    }
+                }
+            };
+
+            // 2. Update the local in-memory list immediately
+            UpdateLocalOutfit(newItem);
+
+            try
+            {
+                // The repository saves the *entire collection* of outfits, which is what we want.
+                await outfitsRepository.SetAsync(profile.UserId, localOutfits, ct);
+                outfitsAreDirty = false; // The save was successful, so the state is no longer dirty.
+                return newItem; // Return the new item on success
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, "Failed to deploy outfit immediately.");
+                // Optional: You could revert the local change here if the save fails.
+                return null;
+            }
+        }
+
+        public async UniTask<bool> DeleteOutfitFromServerAsync(int slotIndex, CancellationToken ct)
+        {
+            var profile = await selfProfile.ProfileAsync(ct);
+            if (profile == null)
+            {
+                ReportHub.LogError(ReportCategory.OUTFITS, "Cannot delete outfit, self profile is not loaded.");
+                return false;
+            }
+
+            var outfitToRemove = localOutfits.FirstOrDefault(o => o.slot == slotIndex);
+            if (outfitToRemove == null) return true;
+            int originalIndex = localOutfits.IndexOf(outfitToRemove);
+            localOutfits.Remove(outfitToRemove);
+
+            try
+            {
+                // 1. Deploy the metadata change to the server FIRST.
+                // This is the operation most likely to fail due to network issues.
+                await outfitsRepository.SetAsync(profile.UserId, localOutfits, ct);
+
+                // 2. If the server update succeeds, delete the local screenshot file.
+                // This is a local operation and is less likely to fail.
+                await avatarScreenshotService.DeleteScreenshotAsync(slotIndex, ct);
+
+                outfitsAreDirty = false;
+                return true; // Both operations succeeded
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, "Failed to deploy outfit deletion immediately.");
+                localOutfits.Insert(originalIndex, outfitToRemove);
+
+                return false;
+            }
         }
     }
 }

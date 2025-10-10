@@ -194,8 +194,15 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(string itemId)
+        {
+            if (itemId.Contains("croupier_shirt"))
+            {
+                Debug.Log($"INVESTIGATION (Grid): Equipping 'croupier_shirt'. URN sent to command bus: '{itemId}'");
+            }
+
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
+        }
 
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));

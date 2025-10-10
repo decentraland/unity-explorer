@@ -1,4 +1,6 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -77,7 +79,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             savingContainer.SetActive(true);
         }
 
-        public void ShowFullState(Sprite thumbnail, bool isEquipped, bool isHovered)
+        public void ShowFullState(Texture2D thumbnail, bool isHovered)
         {
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
@@ -86,21 +88,32 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             loadingView.HideLoading();
             loadingContainer.SetActive(false);
 
-            //outfitThumbnail.sprite = thumbnail;
+            if (thumbnail != null)
+            {
+                // Create a new sprite from the texture and assign it.
+                // This ensures the view is updated with the latest thumbnail from the presenter.
+                outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
+                outfitThumbnail.color = Color.white;
+            }
+            else
+            {
+                // If no thumbnail is provided, clear the sprite and show a placeholder color.
+                outfitThumbnail.sprite = null;
+                outfitThumbnail.color = new Color(1, 1, 1, 0.0f);
+            }
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
-
+            unEquipButton?.gameObject.SetActive(false);
+            
             if (isHovered)
             {
                 deleteButton?.gameObject.SetActive(true);
-                equipButton?.gameObject.SetActive(!isEquipped);
-                unEquipButton?.gameObject.SetActive(isEquipped);
+                equipButton?.gameObject.SetActive(true);
             }
             else
             {
                 deleteButton?.gameObject.SetActive(false);
                 equipButton?.gameObject.SetActive(false);
-                unEquipButton?.gameObject.SetActive(false);
             }
         }
 

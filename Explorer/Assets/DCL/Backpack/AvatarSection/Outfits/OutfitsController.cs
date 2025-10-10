@@ -17,6 +17,7 @@ using DCL.Backpack.AvatarSection.Outfits.Slots;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Slots;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI;
@@ -35,6 +36,8 @@ namespace DCL.Backpack
         private readonly BackpackCommandBus commandBus;
         private readonly OutfitBannerPresenter outfitBannerPresenter;
         private readonly DeleteOutfitCommand deleteOutfitCommand;
+        private readonly IAvatarScreenshotService screenshotService;
+        private readonly CharacterPreviewControllerBase characterPreviewController;
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
 
@@ -45,7 +48,9 @@ namespace DCL.Backpack
             IWebBrowser webBrowser,
             BackpackCommandBus commandBus,
             IEquippedWearables equippedWearables,
-            DeleteOutfitCommand deleteOutfitCommand)
+            DeleteOutfitCommand deleteOutfitCommand,
+            IAvatarScreenshotService screenshotService,
+            CharacterPreviewControllerBase characterPreviewController)
         {
             this.view = view;
             this.outfitsService = outfitsService;
@@ -53,6 +58,8 @@ namespace DCL.Backpack
             this.webBrowser = webBrowser;
             this.commandBus = commandBus;
             this.deleteOutfitCommand = deleteOutfitCommand;
+            this.screenshotService = screenshotService;
+            this.characterPreviewController = characterPreviewController;
 
             outfitBannerPresenter = new OutfitBannerPresenter(view.OutfitsBanner,
                 OnGetANameClicked, OnLinkClicked);
@@ -73,7 +80,8 @@ namespace DCL.Backpack
                 view.OutfitPopoupDeleteIcon,
                 slotView,
                 slotIndex,
-                this
+                this,
+                screenshotService
             );
             return presenter;
         }
@@ -95,6 +103,8 @@ namespace DCL.Backpack
 
                 var currentOutfits = outfitsService.GetCurrentOutfits();
                 PopulateAllSlots(currentOutfits);
+
+                ReportHub.Log(ReportCategory.OUTFITS, currentOutfits.Count);
 
                 CheckBannerVisibilityAsync(cts.Token).Forget();
             }
@@ -121,75 +131,75 @@ namespace DCL.Backpack
             view.BackpackSortDropdown.Activate(true);
         }
 
-        public void OnSaveOutfitRequested(int slotIndex)
+        public async void OnSaveOutfitRequested(int slotIndex)
         {
-            outfitsService.CreateAndUpdateLocalOutfit(slotIndex, equippedWearables, item =>
+            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
+            if (presenter == null) return;
+
+            presenter.SetSaving();
+
+            try
             {
-                slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex)?.SetData(item);
-                OnEquipOutfitRequested(item);
-            });
+                // 2. Call and AWAIT the new service method.
+                var savedItem = await outfitsService.CreateAndSaveOutfitToServerAsync(slotIndex, equippedWearables, cts.Token);
 
-            // var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
-            //
-            // var liveWearableUrns = new List<string>();
-            //
-            // foreach (var equippedItem in equippedWearables.Items())
-            // {
-            //     if (equippedItem.Value != null)
-            //     {
-            //         liveWearableUrns.Add(equippedItem.Value.GetUrn());
-            //     }
-            // }
-            //
-            // if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE,
-            //         out var bodyShapeWearable) || bodyShapeWearable == null)
-            // {
-            //     ReportHub.LogError(ReportCategory.OUTFITS, "Cannot save outfit, Body Shape is not equipped!");
-            //     return;
-            // }
-            //
-            // string liveBodyShapeUrn = bodyShapeWearable.GetUrn();
-            //
-            // ReportHub.Log(ReportCategory.OUTFITS, $"INVESTIGATION (FINAL): BodyShape='{liveBodyShapeUrn}'," +
-            //                                       $" Colors='{skinColor}, {eyesColor}, {hairColor}'," +
-            //                                       $" Wearables='{liveWearableUrns.Count}'");
-            //
-            // var newItem = new OutfitItem
-            // {
-            //     slot = slotIndex, outfit = new Outfit
-            //     {
-            //         bodyShape = liveBodyShapeUrn, wearables = liveWearableUrns.ToArray(), eyes = new Eyes
-            //         {
-            //             color = eyesColor
-            //         },
-            //         hair = new Hair
-            //         {
-            //             color = hairColor
-            //         },
-            //         skin = new Skin
-            //         {
-            //             color = skinColor
-            //         }
-            //     }
-            // };
-            //
-            // outfitsService.UpdateLocalOutfit(newItem);
+                if (cts.Token.IsCancellationRequested) return;
 
-            // slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex)?.SetData(newItem);
-            //
-            // OnEquipOutfitRequested(newItem);
-
-            ReportHub.LogWarning(ReportCategory.OUTFITS, $"Save requested for outfit in slot {slotIndex} with UPDATED live data. ---");
+                // 3. Update UI based on the outcome.
+                if (savedItem != null)
+                {
+                    // Success! Update the slot with the confirmed saved data.
+                    presenter.SetData(savedItem);
+                    OnEquipOutfitRequested(savedItem); // Keep this if you want to auto-equip
+                    TakeScreenshotAndDisplay(slotIndex).Forget(); // Take screenshot on success
+                }
+                else
+                {
+                    // Failure! Revert the slot to its empty state and notify the user.
+                    presenter.SetEmpty();
+                    // Optionally, show a toast/popup: "Failed to save outfit."
+                }
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.OUTFITS);
+                presenter.SetEmpty(); // Revert on exception
+            }
         }
 
-        public void OnDeleteOutfitRequested(int slotIndex)
+        private async UniTaskVoid TakeScreenshotAndDisplay(int slotIndex)
         {
-            // Tell the service to update its in-memory state
-            deleteOutfitCommand.ExecuteAsync(slotIndex, CancellationToken.None, onConfirmed: () =>
+            var screenshot = await screenshotService
+                .TakeAndSaveScreenshotAsync(characterPreviewController, slotIndex, cts.Token);
+
+            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
+            presenter?.SetThumbnail(screenshot);
+        }
+
+        public async UniTask OnDeleteOutfitRequested(int slotIndex)
+        {
+            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
+            if (presenter == null) return;
+
+            var originalOutfitData = presenter.GetOutfitData();
+            presenter.SetSaving();
+
+            // This command now represents a trustworthy, atomic operation.
+            var outcome = await deleteOutfitCommand.ExecuteAsync(slotIndex, cts.Token);
+
+            if (cts.Token.IsCancellationRequested) return;
+
+            if (outcome == DeleteOutfitOutcome.Success)
             {
-                outfitsService.DeleteLocalOutfit(slotIndex);
-                slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex)?.SetEmpty();
-            }).Forget();
+                // Success! The server AND local files are consistent. Update the UI.
+                presenter.SetEmpty();
+            }
+            else
+            {
+                // Failure or Cancelled. The service has already reverted its state.
+                // Now, we just revert the UI. This is correct.
+                presenter.SetData(originalOutfitData);
+            }
         }
 
         public void OnEquipOutfitRequested(OutfitItem outfitItem)
@@ -202,6 +212,11 @@ namespace DCL.Backpack
 
             foreach (string wearableId in outfitItem.outfit.wearables)
             {
+                if (wearableId.Contains("croupier_shirt"))
+                {
+                    Debug.Log($"INVESTIGATION (Outfit): Equipping 'croupier_shirt'. URN sent to command bus: '{wearableId}'");
+                }
+                
                 var wearableUrn = new URN(wearableId);
                 commandBus.SendCommand(new BackpackEquipWearableCommand(wearableUrn.Shorten()));
             }

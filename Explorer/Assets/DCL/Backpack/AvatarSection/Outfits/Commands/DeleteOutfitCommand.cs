@@ -58,12 +58,18 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             if (ct.IsCancellationRequested || decision == ConfirmationResult.CANCEL)
                 return DeleteOutfitOutcome.Cancelled;
 
-            onConfirmed?.Invoke();
-
             try
             {
-                outfitsService.DeleteLocalOutfit(slotIndex);
-                return DeleteOutfitOutcome.Success;
+                // The command now makes a SINGLE, simple call to the service.
+                bool success = await outfitsService.DeleteOutfitFromServerAsync(slotIndex, ct);
+
+                if (success)
+                {
+                    onConfirmed?.Invoke();
+                    return DeleteOutfitOutcome.Success;
+                }
+
+                return DeleteOutfitOutcome.Failed;
             }
             catch (OperationCanceledException)
             {
