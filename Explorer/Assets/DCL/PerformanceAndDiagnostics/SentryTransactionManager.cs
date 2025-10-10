@@ -97,7 +97,7 @@ namespace DCL.PerformanceAndDiagnostics
             transactionsSpans.Remove(transactionName);
         }
 
-        public void EndTransactionWithError(string transactionName, string errorMessage, System.Exception? exception = null)
+        public void EndTransactionWithError(string transactionName, string errorMessage, Exception? exception = null)
         {
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
             {
@@ -134,7 +134,7 @@ namespace DCL.PerformanceAndDiagnostics
             transactionsSpans.Remove(transactionName);
         }
 
-        public void EndCurrentSpanWithError(string transactionName, string errorMessage, System.Exception? exception = null)
+        public void EndCurrentSpanWithError(string transactionName, string errorMessage, Exception? exception = null)
         {
             if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
             {
@@ -178,7 +178,7 @@ namespace DCL.PerformanceAndDiagnostics
             {
                 try
                 {
-                    EndTransactionWithError(transactionName, "Application is quitting", null);
+                    EndTransaction(transactionName);
                 }
                 catch (Exception ex)
                 {
