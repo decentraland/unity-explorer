@@ -1166,6 +1166,8 @@ MonoBehaviour:
   chatProfileView: {fileID: 2421909096625825891}
   nearbyElementsContainer: {fileID: 6507667801213409173}
   nearbyAutoTranslateIndicator: {fileID: 8857041112661088423}
+  communityGraphicsPixelMultiplier: 3
+  dmGraphicsPixelMultiplier: 1.5
   connectionStatusIndicator: {fileID: 4603889402875222658}
   offlineThumbnailGreyOutOpacity: 0.6
 --- !u!1 &7949499053157811884
