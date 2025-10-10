@@ -41,8 +41,6 @@ namespace DCL.Nametags
         private CameraComponent cameraComponent;
         private bool cameraInitialized;
 
-        private float timer;
-
         public NametagPlacementSystem(
             World world,
             IObjectPool<NametagHolder> nametagHolderPool,
@@ -79,12 +77,11 @@ namespace DCL.Nametags
             UpdateOwnTagQuery(World);
             ProcessChatBubbleComponentsQuery(World);
             UpdateNametagSpeakingStateQuery(World);
-
-            timer += t;
         }
 
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
+        [All(typeof(AvatarBase))]
         private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
@@ -100,7 +97,7 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
-        [All(typeof(PBAvatarShape))]
+        [All(typeof(PBAvatarShape), typeof(AvatarBase))]
         private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {

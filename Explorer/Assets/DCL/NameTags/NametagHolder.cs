@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.Nametags
 {
@@ -8,14 +9,7 @@ namespace DCL.Nametags
     {
         public NametagElement Nametag { get; private set; }
 
-        private void OnEnable()
-        {
+        private void OnEnable() =>
             Nametag = GetComponent<UIDocument>().rootVisualElement.Q<NametagElement>();
-        }
-
-        public void RefreshNametagElement()
-        {
-            Nametag = GetComponent<UIDocument>().rootVisualElement.Q<NametagElement>();
-        }
     }
 }
