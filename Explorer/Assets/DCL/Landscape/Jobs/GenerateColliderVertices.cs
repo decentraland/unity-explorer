@@ -14,6 +14,7 @@ namespace DCL.Landscape.Jobs
         public int OccupancyMapSize;
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> Parcels;
         public int ParcelSize;
+        public float MaxHeight;
         [WriteOnly] public NativeArray<GroundColliderVertex> Vertices;
 
         public void Execute(int startIndex, int count)
@@ -37,7 +38,7 @@ namespace DCL.Landscape.Jobs
                     int z = (vertexIndex - meshStart) / sideVertexCount;
 
                     float y = TerrainGenerator.GetHeight(x + parcelOriginXZ.x, z + parcelOriginXZ.y,
-                        ParcelSize, OccupancyMap, OccupancyMapSize, OccupancyFloor);
+                        ParcelSize, OccupancyMap, OccupancyMapSize, OccupancyFloor, MaxHeight);
 
                     var vertex = new GroundColliderVertex() { Position = float3(x, y, z) };
 #if UNITY_EDITOR // Only needed for drawing gizmos.
