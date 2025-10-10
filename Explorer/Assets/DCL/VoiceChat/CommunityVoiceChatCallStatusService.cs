@@ -95,7 +95,6 @@ namespace DCL.VoiceChat
         {
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
-            locallyStartedCommunityId = null;
         }
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
@@ -257,6 +256,28 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void MuteSpeakerInCurrentCall(string walletId, bool muted)
+        {
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            MuteSpeakerAsync(callId.Value, walletId, muted, cts.Token).Forget();
+            return;
+
+            async UniTaskVoid MuteSpeakerAsync(string communityId, string walletId, bool muted, CancellationToken ct)
+            {
+                try
+                {
+                    MuteSpeakerFromCommunityVoiceChatResponse response = await voiceChatService.MuteSpeakerFromCommunityVoiceChatAsync(communityId, walletId, muted, ct);
+
+                    string action = muted ? "mute" : "unmute";
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} MuteSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}, action: {action}");
+                }
+                catch (Exception e) { }
+            }
+        }
+
         public void EndStreamInCurrentCall()
         {
             if (string.IsNullOrEmpty(callId.Value)) return;
@@ -295,6 +316,7 @@ namespace DCL.VoiceChat
         public void UpdateStatus(VoiceChatStatus newStatus)
         {
             UpdateStatusAsync().Forget();
+            return;
 
             async UniTaskVoid UpdateStatusAsync()
             {
@@ -355,8 +377,8 @@ namespace DCL.VoiceChat
                 isMember = communityUpdate.IsMember,
                 positions = new List<string>(communityUpdate.Positions),
                 worlds = new List<string>(communityUpdate.Worlds),
-                participantCount = 0, // This would need to be populated from other sources
-                moderatorCount = 0, // This would need to be populated from other sources
+                participantCount = 0,
+                moderatorCount = 0,
             };
 
             // Update the active community voice chats dictionary
