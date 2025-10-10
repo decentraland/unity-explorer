@@ -15,10 +15,13 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     input.positionWS = TransformObjectToWorld(positionOS);
     input.positionWS = ClampPosition(input.positionWS, terrainBounds);
 
-    float2 heightUV = (input.positionWS.xz + 4096.0f) / 8192.0f;
-   
-    float fHeightMapValue = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
-    fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, heightUV, 0).r;
+    // Convert extent to parcels and compute pow2 size in pixels (parcels), with 1px border on each side
+    float maxExtent = max(max(abs(terrainBounds.x), abs(terrainBounds.z)), max(abs(terrainBounds.y), abs(terrainBounds.w)));
+    float occupancyMapSize = exp2(ceil(log2(2.0 * maxExtent / _ParcelSize + 2.0)));
+    float2 occupancyUV = ((input.positionWS.xz / _ParcelSize) + occupancyMapSize * 0.5f) / occupancyMapSize;
+
+    // IMPORTANT: Should be aligned with CPU TerrainGenerator.CreateOccupancyMap()/GetParcelNoiseHeight() and ScatterFunctions.cginc
+    fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occupancyUV, 0).r;
 
     float minValue = _MinDistOccupancy;
 
@@ -29,25 +32,22 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     }
     else
     {
-        // Calculate normalized height first
-        float normalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
+        float2 heightUV = (input.positionWS.xz + 4096.0f) / 8192.0f;
 
         /// Value taken from generating HeightMap via TerrainGeneratorWithAnalysis. 
         float min = -4.135159f; // min value of the GeoffNoise.GetHeight
         float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
+        float saturationFactor = 20.f;
+        
+        float fHeightMapValue = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
 
         // the result from the heightmap should be equal to this function
         // float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
         float noiseH = fHeightMapValue * range + min;
-        
-        float saturationFactor = 20;
-        input.positionWS.y = (normalizedHeight * _DistanceFieldScale) + (noiseH * saturate( normalizedHeight * saturationFactor));
 
-        // Ensure no negative heights
-        if (input.positionWS.y < 0.0)
-        {
-            input.positionWS.y = 0.0;
-        }
+        // Calculate normalized height first
+        float normalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
+        input.positionWS.y = max(0.0f, normalizedHeight * _DistanceFieldScale) + (noiseH * saturate( normalizedHeight * saturationFactor));
     }
 
     input.positionVS = TransformWorldToView(input.positionWS);
