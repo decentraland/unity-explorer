@@ -8,6 +8,7 @@ namespace DCL.ChatArea
         public struct ChatPanelPointerEnterEvent { }
         public struct ChatPanelPointerExitEvent { }
         public struct ChatPanelFocusEvent { }
+
         public struct ChatPanelVisibilityEvent
         {
             public bool IsVisible { get; }
@@ -35,20 +36,11 @@ namespace DCL.ChatArea
         public struct ChatPanelMvcViewShowedEvent { }
         public struct ChatPanelMvcViewClosedEvent { }
 
-        public struct ChatPanelClickInsideEvent
+        public struct ChatPanelGlobalClickEvent
         {
             public IReadOnlyList<RaycastResult> RaycastResults { get; }
 
-            public ChatPanelClickInsideEvent(IReadOnlyList<RaycastResult> raycastResults)
-            {
-                RaycastResults = raycastResults;
-            }
-        }
-        public struct ChatPanelClickOutsideEvent
-        {
-            public IReadOnlyList<RaycastResult> RaycastResults { get; }
-
-            public ChatPanelClickOutsideEvent(IReadOnlyList<RaycastResult> raycastResults)
+            public ChatPanelGlobalClickEvent(IReadOnlyList<RaycastResult> raycastResults)
             {
                 RaycastResults = raycastResults;
             }

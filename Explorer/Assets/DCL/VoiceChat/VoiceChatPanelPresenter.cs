@@ -1,3 +1,4 @@
+using DCL.Chat.ChatServices;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -14,9 +15,10 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelView view;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly ChatClickDetectionService chatClickDetectionService;
 
         private readonly PrivateVoiceChatController? privateVoiceChatController;
-        private readonly CommunityVoiceChatController? communitiesVoiceChatController;
+        private readonly CommunityVoiceChatPresenter? communitiesVoiceChatController;
         private readonly VoiceChatPanelResizeController? voiceChatPanelResizeController;
         private readonly SceneVoiceChatController? sceneVoiceChatController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
@@ -30,26 +32,32 @@ namespace DCL.VoiceChat
             VoiceChatMicrophoneHandler voiceChatHandler,
             VoiceChatRoomManager roomManager,
             IRoomHub roomHub,
-            PlayerEntryView playerEntry,
-            ChatSharedAreaEventBus chatSharedAreaEventBus)
+            VoiceChatParticipantEntryView participantEntryView,
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            ChatClickDetectionService chatClickDetectionService)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.chatClickDetectionService = chatClickDetectionService;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(view.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 
+            eventSubscriptions.Add(chatClickDetectionService);
+
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(OnPointerEnterChatArea));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(OnPointerExitChatArea));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
+            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelGlobalClickEvent>(HandleGlobalClick));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
             eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
+
+            chatClickDetectionService.OnClickInside += HandleClickInside;
+            chatClickDetectionService.OnClickOutside += HandleClickOutside;
         }
 
         private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
@@ -85,14 +93,17 @@ namespace DCL.VoiceChat
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent _)
+        private void HandleGlobalClick(ChatSharedAreaEvents.ChatPanelGlobalClickEvent evt) =>
+            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
+
+        private void HandleClickInside()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent _)
+        private void HandleClickOutside()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
 
@@ -105,6 +116,9 @@ namespace DCL.VoiceChat
             communitiesVoiceChatController?.Dispose();
             sceneVoiceChatController?.Dispose();
             voiceChatPanelResizeController?.Dispose();
+
+            chatClickDetectionService.OnClickInside -= HandleClickInside;
+            chatClickDetectionService.OnClickOutside -= HandleClickOutside;
 
             eventSubscriptions.Dispose();
         }
