@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
@@ -63,6 +64,9 @@ namespace ECS.SceneLifeCycle.Systems
                 definitionComponent.SceneGeometry,
                 definitionComponent.Parcels,
                 new StaticSceneMessages(crdt));
+
+            // Set the flag is we are using the special DTO for builder collection preview
+            sceneData.IsWearableBuilderCollectionPreview = wearable.DTO is BuilderWearableDTO;
 
             var requiredPermissions = sceneDefinition.metadata.requiredPermissions;
             var scenePermissions = new RestrictedJsApiPermissionsProvider(requiredPermissions);

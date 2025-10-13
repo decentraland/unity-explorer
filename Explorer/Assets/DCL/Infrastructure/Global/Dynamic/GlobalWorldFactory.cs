@@ -73,6 +73,7 @@ namespace Global.Dynamic
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly bool isBuilderCollectionPreview;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -90,7 +91,8 @@ namespace Global.Dynamic
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
-            SceneLoadingLimit sceneLoadingLimit)
+            SceneLoadingLimit sceneLoadingLimit,
+            bool isBuilderCollectionPreview)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -120,6 +122,7 @@ namespace Global.Dynamic
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.isBuilderCollectionPreview = isBuilderCollectionPreview;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
         }
@@ -216,7 +219,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
 
             return globalWorld;
         }

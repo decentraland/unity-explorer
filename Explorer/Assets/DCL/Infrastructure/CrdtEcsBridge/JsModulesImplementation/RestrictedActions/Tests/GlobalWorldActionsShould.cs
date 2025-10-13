@@ -37,7 +37,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world = World.Create();
             playerEntity = world.Create();
             mockMessageBus = new MockEmotesMessageBus();
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
 
             // camera entity for camera global actions
             world.Create(new CameraComponent());
@@ -149,7 +149,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void CreatePromiseForLocalSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData { SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "localSceneTest") };
@@ -170,7 +170,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void NotCreatePromiseForLocalSceneSceneEmoteInvalidSrc()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false); // local development, no remote ABs
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false, false); // local development, no remote ABs
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData();
@@ -193,7 +193,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void CreatePromiseForRealmSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = true });
 
             var sceneId = "remoteSceneId";
@@ -215,7 +215,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void ShouldNotTriggerSceneEmoteIfAvatarNotVisible()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = false });
 
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };

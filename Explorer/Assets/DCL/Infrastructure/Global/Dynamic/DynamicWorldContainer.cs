@@ -1129,7 +1129,8 @@ namespace Global.Dynamic
                 profileRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
-                staticContainer.SceneLoadingLimit
+                staticContainer.SceneLoadingLimit,
+                builderCollectionsPreview
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

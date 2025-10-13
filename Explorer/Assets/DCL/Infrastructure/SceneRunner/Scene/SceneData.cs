@@ -22,15 +22,15 @@ namespace SceneRunner.Scene
 #endif
 
         public ISceneContent SceneContent { get; }
-
         public SceneEntityDefinition SceneEntityDefinition { get; }
-
         public StaticSceneMessages StaticSceneMessages { get; }
-        public bool SceneLoadingConcluded { get; set; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
+
+        public bool SceneLoadingConcluded { get; set; }
+        public bool IsWearableBuilderCollectionPreview { get; set; }
 
         public SceneData(
             ISceneContent sceneContent,
