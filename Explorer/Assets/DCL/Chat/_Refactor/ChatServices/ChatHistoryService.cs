@@ -47,6 +47,7 @@ namespace DCL.Chat.ChatServices
                 string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
                 var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, message);
                 chatHistory.AddMessage(channel, type, newChatMessage);
+
             }
             else
 

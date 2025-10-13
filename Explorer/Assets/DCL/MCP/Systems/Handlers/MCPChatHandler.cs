@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.MCP;
 using DCL.Utilities;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
+using UnityEngine;
 
 namespace DCL.MCP.Handlers
 {
@@ -15,6 +17,26 @@ namespace DCL.MCP.Handlers
     /// </summary>
     public class MCPChatHandler
     {
+        public MCPChatHandler(IChatMessagesBus chatMessagesBus)
+        {
+            chatMessagesBus.MessageAdded += OnChatMessageAdded;
+        }
+
+        private void OnChatMessageAdded(ChatChannel.ChannelId channel, ChatChannel.ChatChannelType type, ChatMessage message)
+        {
+            // Notify MCP WS subscribers about inbound chat message (unformatted original for AI triggers)
+            try { OnInboundMessage(channel, type, message); }
+            catch
+            { /* ignore */
+            }
+        }
+
+        private static MCPWebSocketServer ServerInstance;
+
+        public static void AttachServer(MCPWebSocketServer server)
+        {
+            ServerInstance = server;
+        }
         public async UniTask<object> HandleChatSendMessageAsync(JObject parameters)
         {
             // params: { text: string, channel?: "nearby" | "user" | "community", targetId?: string, topic?: string }
@@ -53,6 +75,26 @@ namespace DCL.MCP.Handlers
             try
             {
                 sendMethod.Invoke(chatMessagesBus, new object[] { chatChannel, text, "MCP", topic ?? string.Empty });
+
+                // Broadcast to WS subscribers about new outgoing message
+                if (ServerInstance != null)
+                {
+                    try
+                    {
+                        await ServerInstance.BroadcastEventAsync("chat/message", new
+                        {
+                            direction = "outgoing",
+                            channelId = chatChannel.Id.Id,
+                            type = chatChannel.ChannelType.ToString(),
+                            message = text,
+                            topic = topic ?? string.Empty,
+                            timestamp = DateTime.UtcNow.ToString("o"),
+                        });
+                    }
+                    catch
+                    { /* ignore broadcast errors */
+                    }
+                }
                 return new { success = true };
             }
             catch (Exception e) { return new { success = false, error = e.Message }; }
@@ -135,6 +177,37 @@ namespace DCL.MCP.Handlers
                                       .ToArray();
 
             return new { success = true, channels };
+        }
+
+        // Hook for inbound messages (from bus) to broadcast to WS
+        public static void OnInboundMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type, ChatMessage message)
+        {
+            if (ServerInstance == null) return;
+
+            // Avoid system messages spam
+            if (message.IsSystemMessage) return;
+
+            try
+            {
+                ServerInstance.BroadcastEventAsync("chat/message", new
+                               {
+                                   direction = "incoming",
+                                   channelId = channelId.Id,
+                                   type = type.ToString(),
+                                   message = message.Message,
+                                   senderName = message.SenderValidatedName,
+                                   senderWalletId = message.SenderWalletId,
+                                   senderWalletAddress = message.SenderWalletAddress,
+                                   isOwn = message.IsSentByOwnUser,
+                                   isMention = message.IsMention,
+                                   sentTimestamp = message.SentTimestamp?.ToString("o"),
+                                   sentTimestampRaw = message.SentTimestampRaw,
+                               })
+                              .Forget();
+            }
+            catch
+            { /* ignore */
+            }
         }
     }
 }

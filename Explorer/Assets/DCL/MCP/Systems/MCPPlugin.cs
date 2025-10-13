@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.InWorldCamera.Systems;
 using DCL.MCP.Handlers;
@@ -27,13 +28,15 @@ namespace DCL.MCP
         private readonly World globalWorld;
         private readonly IScenesCache scenesCache;
         private readonly IProfileRepository profileRepository;
+        private readonly IChatMessagesBus chatMessagesBus;
         private MCPWebSocketServer server;
 
-        public MCPPlugin(World globalWorld, IScenesCache scenesCache, IProfileRepository profileRepository)
+        public MCPPlugin(World globalWorld, IScenesCache scenesCache, IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus)
         {
             this.globalWorld = globalWorld;
             this.scenesCache = scenesCache;
             this.profileRepository = profileRepository;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         public async UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -57,7 +60,7 @@ namespace DCL.MCP
                 var sceneStaticHandler = new MCPSceneStaticHandler(scenesCache);
                 var sceneCodeHandler = new MCPSceneCodeHandler(scenesCache);
                 var sceneInjectionHandler = new MCPSceneInjectionHandler(scenesCache);
-                var chatHandler = new MCPChatHandler();
+                var chatHandler = new MCPChatHandler(chatMessagesBus);
                 var playersHandler = new MCPPlayersHandler(globalWorld, profileRepository);
 
                 // Регистрация обработчиков камеры

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.MCP.Handlers;
 using Fleck;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -76,6 +77,9 @@ namespace DCL.MCP
 
                 isRunning = true;
                 ReportHub.Log(ReportCategory.DEBUG, $"[MCP WS] Server started on ws://0.0.0.0:{DEFAULT_PORT}");
+
+                // Attach server instance for handlers that want to broadcast events
+                MCPChatHandler.AttachServer(this);
             }
             catch (Exception e)
             {
@@ -203,15 +207,15 @@ namespace DCL.MCP
             {
                 pong = true,
                 timestamp = DateTime.UtcNow.ToString("o"),
-                unityTime = Time.realtimeSinceStartup,
+                unityTime = UnityEngine.Time.realtimeSinceStartup.ToString("o"),
             };
 
         private async UniTask<object> HandleGetFPS(JObject parameters)
         {
             // Вычисляем FPS несколькими способами
-            float instantFps = 1.0f / Time.deltaTime;
-            float smoothedFps = 1.0f / Time.smoothDeltaTime;
-            float frameTime = Time.deltaTime * 1000f;
+            float instantFps = 1.0f / UnityEngine.Time.deltaTime;
+            float smoothedFps = 1.0f / UnityEngine.Time.smoothDeltaTime;
+            float frameTime = UnityEngine.Time.deltaTime * 1000f;
 
             return new
             {
