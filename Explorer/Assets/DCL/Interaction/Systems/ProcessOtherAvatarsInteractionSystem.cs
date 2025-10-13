@@ -145,10 +145,13 @@ namespace DCL.Interaction.Systems
             }
             else
             {
+                // The initiator is probably interacting with another avatar so the menu should be hidden immediately
+                if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
+                    socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
+
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
                 hoverFeedbackComponent.Add(viewProfileTooltip);
             }
-
         }
 
         private void OpenContextMenu(InputAction.CallbackContext context)
