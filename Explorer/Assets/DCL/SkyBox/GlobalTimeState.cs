@@ -4,15 +4,16 @@ namespace DCL.SkyBox
     {
         private readonly SkyboxSettingsAsset settings;
         private readonly InterpolateTimeOfDayState transition;
-        private readonly SkyboxTimeProgressionService timeProgressionService;
+        private float refreshAccumulatedTime;
+        private float globalTimeOfDay;
+        private bool isTransitioning;
 
         public GlobalTimeState(SkyboxSettingsAsset settings,
-            InterpolateTimeOfDayState transition,
-            SkyboxTimeProgressionService timeProgressionService)
+            InterpolateTimeOfDayState transition)
         {
             this.settings = settings;
             this.transition = transition;
-            this.timeProgressionService = timeProgressionService;
+            globalTimeOfDay = settings.TimeOfDayNormalized;
         }
 
         public bool Applies() =>
@@ -21,13 +22,40 @@ namespace DCL.SkyBox
 
         public void Enter()
         {
+            refreshAccumulatedTime = 0f;
+            settings.TargetTimeOfDayNormalized = globalTimeOfDay;
             settings.IsDayCycleEnabled = true;
-            timeProgressionService.Reset();
+            isTransitioning = true;
+
             transition.Enter();
         }
 
-        public void Update(float dt) =>
-            timeProgressionService.UpdateTimeProgression(dt);
+        public void Update(float dt)
+        {
+            if (isTransitioning)
+            {
+                if (transition.Applies())
+                {
+                    transition.Update(dt);
+                    return;
+                }
+
+                isTransitioning = false;
+            }
+
+            globalTimeOfDay += dt * settings.FullCycleSpeed;
+
+            while (globalTimeOfDay >= 1f)
+                globalTimeOfDay -= 1f;
+
+            refreshAccumulatedTime += dt;
+
+            if (refreshAccumulatedTime >= settings.RefreshInterval)
+            {
+                settings.TimeOfDayNormalized = globalTimeOfDay;
+                refreshAccumulatedTime = 0f;
+            }
+        }
 
         public void Exit()
         {
