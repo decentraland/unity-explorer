@@ -1,8 +1,9 @@
 using Cysharp.Threading.Tasks;
-using JetBrains.Annotations;
+using DCL.AvatarRendering.Emotes;
+using DCL.Input;
+using DCL.Input.Component;
 using MVC;
 using System.Threading;
-using Utility;
 using UnityEngine;
 
 namespace DCL.SocialEmotes.UI
@@ -17,10 +18,29 @@ namespace DCL.SocialEmotes.UI
             public bool IsCloseEnoughToAvatar;
         }
 
-        private CancellationTokenSource cts;
+        private readonly IInputBlock inputBlock;
+        private readonly EmotesBus emotesBus;
+        private bool isInputEnabled;
 
-        public SocialEmoteOutcomeMenuController([NotNull] ViewFactoryMethod viewFactory) : base(viewFactory)
+        public SocialEmoteOutcomeMenuController(ViewFactoryMethod viewFactory, IInputBlock inputBlock, EmotesBus emotesBus) : base(viewFactory)
         {
+            this.inputBlock = inputBlock;
+            this.emotesBus = emotesBus;
+            DCLInput.Instance.SocialEmoteOutcomes.Outcome1.performed += (_) => OnOutcomePerformed(0);
+            DCLInput.Instance.SocialEmoteOutcomes.Outcome2.performed += (_) => OnOutcomePerformed(1);
+            DCLInput.Instance.SocialEmoteOutcomes.Outcome3.performed += (_) => OnOutcomePerformed(2);
+        }
+
+        private void OnOutcomePerformed(int outcomeIndex)
+        {
+            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
+
+            // Checks if the current emote has an outcome for the given index
+            if (outcomeIndex >= interaction.Value.Emote.Model.Asset.metadata.emoteDataADR287.outcomes.Length)
+                return;
+
+            if (interaction is { AreInteracting: false })
+                emotesBus.PlaySocialEmoteReaction(interaction.Value.InitiatorWalletAddress, interaction.Value.Emote, outcomeIndex);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -28,30 +48,84 @@ namespace DCL.SocialEmotes.UI
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        protected override void OnViewShow()
+        protected override void OnViewInstantiated()
         {
-          //  public void Show(string interactingUserWalletAddress, string username, bool isCloseEnoughToAvatar)
+            base.OnViewInstantiated();
+            EnableOutcomeInputs(false);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            FillUI();
+            UpdateDistanceMessage();
+            viewInstance.Show();
+        }
+
+        protected override void OnViewClose()
+        {
+            EnableOutcomeInputs(false);
+            viewInstance.Hide();
+        }
+
+        public void SetParams(SocialEmoteOutcomeMenuParams socialEmoteOutcomeMenuParams)
+        {
+            if (inputData.InteractingUserWalletAddress != socialEmoteOutcomeMenuParams.InteractingUserWalletAddress)
+            {
+                inputData.Username = socialEmoteOutcomeMenuParams.Username;
+                FillUI();
+            }
+
+            if(inputData.IsCloseEnoughToAvatar != socialEmoteOutcomeMenuParams.IsCloseEnoughToAvatar)
+            {
+                inputData.UsernameColor = socialEmoteOutcomeMenuParams.UsernameColor;
+                inputData.InteractingUserWalletAddress = socialEmoteOutcomeMenuParams.InteractingUserWalletAddress;
+                inputData.IsCloseEnoughToAvatar = socialEmoteOutcomeMenuParams.IsCloseEnoughToAvatar;
+                UpdateDistanceMessage();
+            }
+        }
+
+        private void FillUI()
+        {
             SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
 
             if (interaction.HasValue)
             {
-                viewInstance!.RemoveAllChoices();
+                viewInstance!.ResetChoices();
 
                 for (int i = 0; i < interaction.Value.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!.Length; ++i)
                     viewInstance.AddChoice(interaction.Value.Emote.Model.Asset.metadata.emoteDataADR287!.outcomes![i].title);
 
                 viewInstance.SetEmoteTitle(interaction.Value.Emote.Model.Asset.metadata.name);
-
-                if (inputData.IsCloseEnoughToAvatar)
-                    viewInstance.HideDistanceMessage();
-                else
-                    viewInstance.ShowDistanceMessage(inputData.Username, inputData.UsernameColor);
-
-                cts = cts.SafeRestart();
-                viewInstance.ShowAsync(cts.Token).Forget();
             }
+        }
 
-            base.OnViewShow();
+        private void UpdateDistanceMessage()
+        {
+            if (inputData.IsCloseEnoughToAvatar)
+            {
+                EnableOutcomeInputs(true);
+
+                viewInstance.HideDistanceMessage();
+            }
+            else
+            {
+                EnableOutcomeInputs(false);
+
+                viewInstance.ShowDistanceMessage(inputData.Username, inputData.UsernameColor);
+            }
+        }
+
+        private void EnableOutcomeInputs(bool enable)
+        {
+            if(enable == isInputEnabled)
+                return;
+
+            if(enable)
+                inputBlock.Enable(InputMapComponent.Kind.SOCIAL_EMOTE_OUTCOME_SELECTION);
+            else
+                inputBlock.Disable(InputMapComponent.Kind.SOCIAL_EMOTE_OUTCOME_SELECTION);
+
+            isInputEnabled = enable;
         }
     }
 }

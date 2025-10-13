@@ -534,7 +534,7 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
-            SocialEmoteOutcomeMenuController outcomeMenu = new SocialEmoteOutcomeMenuController(() => mainUIView.SocialEmoteOutcomeMenuView.EnsureNotNull());
+            SocialEmoteOutcomeMenuController outcomeMenu = new SocialEmoteOutcomeMenuController(() => mainUIView.SocialEmoteOutcomeMenuView.EnsureNotNull(), staticContainer.InputBlock, emotesBus);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),

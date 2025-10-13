@@ -1,9 +1,6 @@
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DG.Tweening;
 using MVC;
-using System;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 
@@ -44,23 +41,15 @@ namespace DCL.SocialEmotes.UI
         SocialEmoteOutcomeChoiceView[] outcomeItems = new SocialEmoteOutcomeChoiceView[3];
         private int enabledOutcomes;
 
-        protected override async UniTask PlayShowAnimationAsync(CancellationToken ct)
+        public void Show()
         {
-            await mainCanvasGroup.DOFade(1.0f, 0.3f).AsyncWaitForCompletion();
+            // Note: Not using the PlayHideAnimationAsync method because the fields are filled after the animation, which looks bad
+            mainCanvasGroup.DOFade(1.0f, 0.3f);
         }
 
-        protected override async UniTask PlayHideAnimationAsync(CancellationToken ct)
+        public void Hide()
         {
-            await mainCanvasGroup.DOFade(0.0f, 0.3f).AsyncWaitForCompletion();
-        }
-
-        private void Start()
-        {
-            for (int i = 0; i < outcomeItems.Length; ++i)
-            {
-                outcomeItems[i] = Instantiate(outcomeChoicePrefab, outcomeList);
-                outcomeItems[i].gameObject.SetActive(false);
-            }
+            mainCanvasGroup.DOFade(0.0f, 0.3f);
         }
 
         public void ShowDistanceMessage(string username, Color usernameColor)
@@ -90,10 +79,13 @@ namespace DCL.SocialEmotes.UI
             enabledOutcomes++;
         }
 
-        public void RemoveAllChoices()
+        public void ResetChoices()
         {
-            for(int i = 0; i < outcomeItems.Length; ++i)
+            for (int i = 0; i < outcomeItems.Length; ++i)
             {
+                if(outcomeItems[i] == null)
+                    outcomeItems[i] = Instantiate(outcomeChoicePrefab, outcomeList);
+
                 outcomeItems[i].gameObject.SetActive(false);
             }
 

@@ -56,7 +56,6 @@ namespace DCL.Interaction.Systems
             this.mvcManager = mvcManager;
             this.emotesBus = emotesBus;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
-//            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
 
             dclInput.Player.Pointer!.performed += OpenContextMenu;
         }
@@ -86,7 +85,9 @@ namespace DCL.Interaction.Systems
 
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
             {
-                socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
+                if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
+                    socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
+
                 return;
             }
 
@@ -97,7 +98,9 @@ namespace DCL.Interaction.Systems
                 || World.Has<BlockedPlayerComponent>(entityRef)
                 || World.Has<IgnoreInteractionComponent>(entityRef))
             {
-                socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
+                if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
+                    socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
+
                 return;
             }
 
@@ -111,19 +114,34 @@ namespace DCL.Interaction.Systems
             {
                 Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
                 Vector3 playerPosition = Vector3.zero;
-                World.Query<CharacterTransform>(in new QueryDescription().WithAll<CharacterTransform, PlayerComponent>(),
+                World.Query(in new QueryDescription().WithAll<CharacterTransform, PlayerComponent>(),
                 (ref CharacterTransform characterTransform) => playerPosition = characterTransform.Position);
 
                 const float MAX_SQR_DISTANCE_TO_INTERACT = 2.0f * 2.0f; // TODO: Move to a proper place
                 float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
 
-                mvcManager.ShowAsync(SocialEmoteOutcomeMenuController.IssueCommand(new SocialEmoteOutcomeMenuController.SocialEmoteOutcomeMenuParams()
+                if (socialEmoteOutcomeMenuController.State == ControllerState.ViewHidden)
                 {
-                    InteractingUserWalletAddress = currentProfileHovered.UserId,
-                    Username = profile.ValidatedName,
-                    UsernameColor = profile.UserNameColor,
-                    IsCloseEnoughToAvatar = sqrDistanceToAvatar < MAX_SQR_DISTANCE_TO_INTERACT
-                }), cts.Token).Forget();
+                    // From hidden to showing
+                    mvcManager.ShowAsync(SocialEmoteOutcomeMenuController.IssueCommand(new SocialEmoteOutcomeMenuController.SocialEmoteOutcomeMenuParams()
+                    {
+                        InteractingUserWalletAddress = currentProfileHovered.UserId,
+                        Username = profile.ValidatedName,
+                        UsernameColor = profile.UserNameColor,
+                        IsCloseEnoughToAvatar = sqrDistanceToAvatar < MAX_SQR_DISTANCE_TO_INTERACT
+                    }), cts.Token).Forget();
+                }
+                else
+                {
+                    // Is visible, updates data
+                    socialEmoteOutcomeMenuController.SetParams(new SocialEmoteOutcomeMenuController.SocialEmoteOutcomeMenuParams()
+                    {
+                        InteractingUserWalletAddress = currentProfileHovered.UserId,
+                        Username = profile.ValidatedName,
+                        UsernameColor = profile.UserNameColor,
+                        IsCloseEnoughToAvatar = sqrDistanceToAvatar < MAX_SQR_DISTANCE_TO_INTERACT
+                    });
+                }
             }
             else
             {
@@ -133,7 +151,7 @@ namespace DCL.Interaction.Systems
 
         }
 
-        private void OpenContextMenu(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        private void OpenContextMenu(InputAction.CallbackContext context)
         {
             if (context.control!.IsPressed() || currentProfileHovered == null)
                 return;
@@ -145,20 +163,13 @@ namespace DCL.Interaction.Systems
 
             SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
 
-            if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
-            {
-                // The hovered avatar is playing a social emote, in the starting step
-                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Value.Emote, 0);
-            }
-            else
+            if (!socialEmoteInteraction.HasValue || socialEmoteInteraction.Value.AreInteracting)
             {
                 // A context menu will be available if no social emote interaction is in process
                 contextMenuTask.TrySetResult();
                 contextMenuTask = new UniTaskCompletionSource();
                 menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
             }
-
-
         }
     }
 }
