@@ -15,6 +15,7 @@ using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.SDKComponents.NFTShape.Renderer;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
+using DCL.SDKComponents.VideoPlayer;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -37,7 +38,6 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
-        private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly NftShapeCache nftShapeCache;
         private readonly TexturesCache<GetNFTImageIntention> imageCache;
         private readonly TexturesCache<GetNFTVideoIntention> videoCache;
@@ -53,8 +53,7 @@ namespace DCL.PluginSystem.World
             IPerformanceBudget instantiationFrameTimeBudgetProvider,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
-            CacheCleaner cacheCleaner,
-            ExtendedObjectPool<Texture2D> videoTexturePool)
+            CacheCleaner cacheCleaner)
         {
             this.framePrefabs = new AssetProvisionerFramePrefabs(assetsProvisioner);
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -63,7 +62,6 @@ namespace DCL.PluginSystem.World
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
-            this.videoTexturePool = videoTexturePool;
             // See https://github.com/decentraland/unity-explorer/issues/5611
             // videos & images requires different caches
             imageCache = new TexturesCache<GetNFTImageIntention>();
@@ -94,7 +92,7 @@ namespace DCL.PluginSystem.World
 
             LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
             LoadNFTImageSystem.InjectToWorld(ref builder, imageCache, webRequestController, isKtxEnabled);
-            LoadNFTVideoSystem.InjectToWorld(ref builder, videoCache, videoTexturePool);
+            LoadNFTVideoSystem.InjectToWorld(ref builder, videoCache, VideoTextureFactory.CreateVideoTexturesPool());
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
