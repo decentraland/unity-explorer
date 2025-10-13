@@ -144,7 +144,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Hold <b><#fcfcfc>[b+num]</color></b> to run an emote while the wheel is
+  m_text: Hold <b><#fcfcfc>[B+num]</color></b> to play an Emote while the wheel is
     closed
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -401,7 +401,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Customise <b><#fcfcfc>[E]</color></b>
+  m_text: Customize <b><#fcfcfc>[E]</color></b>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}

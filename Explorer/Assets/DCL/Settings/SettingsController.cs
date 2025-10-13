@@ -173,6 +173,8 @@ namespace DCL.Settings
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
+                if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
+
                 SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
