@@ -72,7 +72,7 @@ namespace DCL.Chat
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
 
             this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
-            
+
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
             scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
@@ -198,7 +198,8 @@ namespace DCL.Chat
 
         private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
-            view.SelectConversation(evt.Channel.Id);
+            if (evt.FromInitialization)
+                view.SelectConversation(evt.Channel.Id);
         }
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
