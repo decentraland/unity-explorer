@@ -80,6 +80,11 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
 
+        [Header("Splats")]
+        [SerializeField] private GameObject _splatsParent;
+        [SerializeField] private GameObject[] _allSplats;
+
+
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
@@ -173,6 +178,16 @@ namespace Global.Dynamic
             var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
+
+            // Splats
+            var splatsWidget = debugContainer.Builder.TryAddWidget("Gaussian Splats")
+                                       !.AddToggleField("Global Enable", e => _splatsParent.SetActive(e.newValue), false);
+
+            for (var i = 0; i < _allSplats.Length; i++)
+            {
+                var splat = _allSplats[i];
+                splatsWidget.AddToggleField($"Splat {i + 1}", e => splat.SetActive(e.newValue), true);
+            }
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
