@@ -20,12 +20,14 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading;
 using MVC;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using UnityEngine.Pool;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
@@ -112,6 +114,8 @@ namespace DCL.SmartWearables
 
             var partition = PartitionComponent.TOP_PRIORITY;
             var intention = GetSmartWearableSceneIntention.Create(wearable, partition);
+
+            await UniTask.SwitchToMainThread();
             var promise = ScenePromise.Create(World, intention, partition);
 
             pendingScenes.Add(metadata.id, promise);
