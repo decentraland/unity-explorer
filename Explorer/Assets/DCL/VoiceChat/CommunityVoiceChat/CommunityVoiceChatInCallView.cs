@@ -22,6 +22,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private const string END_COMMUNITY_STREAM_TEXT_FORMAT = "Are you sure you want to end {0}'s live voice stream?";
         private const string END_COMMUNITY_STREAM_CONFIRM_TEXT = "YES";
         private const string END_COMMUNITY_STREAM_CANCEL_TEXT = "NO";
+        private const string DEFAULT_NAME = "[Missing Name]";
+
+        private static readonly Vector2 RAISE_HAND_TOOLTIP_COLLAPSED_POSITION = new Vector2(199, -23);
+        private static readonly Vector2 RAISE_HAND_TOOLTIP_NORMAL_POSITION = new Vector2(199, -66);
 
         public event Action? EndStreamButtonCLicked;
 
@@ -55,13 +59,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public GameObject FooterPanel { get; private set; } = null!;
 
-        [field: FormerlySerializedAs("<InCallButtonsView>k__BackingField")]
-        [field: FormerlySerializedAs("<InCallFooterView>k__BackingField")]
         [field: SerializeField]
         public CommunityVoiceChatInCallButtonsView ExpandedPanelInCallButtonsView { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject RaiseHandTooltip { get; private set; } = null!;
+        public RectTransform RaiseHandTooltip { get; private set; } = null!;
 
         [field: SerializeField]
         public TMP_Text RaiseHandTooltipText { get; private set; } = null!;
@@ -101,8 +103,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] public RectMask2D RectMask2D { get; private set; } = null!;
 
         [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
-
-
+        [field: SerializeField] public AudioClipConfig RaiseHandAudio { get; private set; } = null!;
 
         private CancellationTokenSource? endStreamButtonConfirmationDialogCts;
 
@@ -146,12 +147,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ParticipantCount.text = $"{participantCount}";
         }
 
-        public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string playerName, CancellationToken ct)
+        public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string? playerName, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(playerName)) playerName = DEFAULT_NAME;
+
             RaiseHandTooltipText.text = string.Format(TOOLTIP_CONTENT, playerName);
-            RaiseHandTooltip.SetActive(true);
+            RaiseHandTooltip.gameObject.SetActive(true);
             await UniTask.Delay(5000, cancellationToken: ct);
-            RaiseHandTooltip.SetActive(false);
+            RaiseHandTooltip.gameObject.SetActive(false);
         }
 
         public void SetCollapsedState(bool isCollapsed)
@@ -164,6 +167,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             FooterPanel.SetActive(!isCollapsed);
             OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
             Separator.SetActive(!isCollapsed);
+            RaiseHandTooltip.anchoredPosition = isCollapsed ? RAISE_HAND_TOOLTIP_COLLAPSED_POSITION : RAISE_HAND_TOOLTIP_NORMAL_POSITION;
         }
 
         public void SetButtonsVisibility(bool isVisible, VoiceChatPanelSize size)

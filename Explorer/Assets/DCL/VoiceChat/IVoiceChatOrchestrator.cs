@@ -56,6 +56,7 @@ namespace DCL.VoiceChat
         bool HasActiveVoiceChatCall(string communityId);
         ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId);
         bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
+        bool IsEqualToCurrentStreamingCommunity(string communityId);
     }
 
     public interface IVoiceChatOrchestratorActions
@@ -83,6 +84,7 @@ namespace DCL.VoiceChat
         void DenySpeakerInCurrentCall(string walletId);
         void DemoteFromSpeakerInCurrentCall(string walletId);
         void KickPlayerFromCurrentCall(string walletId);
+        void NotifyMuteSpeakerInCurrentCall(string walletId, bool muted);
         void EndStreamInCurrentCall();
     }
 

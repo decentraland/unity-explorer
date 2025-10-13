@@ -1,5 +1,3 @@
-#if UNITY_EDITOR
-#endif
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
@@ -11,6 +9,7 @@ using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -52,6 +51,13 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.WebRequests.ChromeDevtool;
+using DCL.Settings.ModuleControllers;
+using DCL.Utility;
+using DCL.Utility.Types;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -224,6 +230,8 @@ namespace Global.Dynamic
 
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+
+                OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,

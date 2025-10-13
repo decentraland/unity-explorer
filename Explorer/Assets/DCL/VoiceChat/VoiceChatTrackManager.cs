@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
-using DCL.VoiceChat.Permissions;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -21,7 +21,10 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+#if UNITY_STANDALONE_OSX
+using DCL.VoiceChat.Permissions;
 using Utility.Ownership;
+# endif
 using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
@@ -37,6 +40,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly IDisposable microphoneChangeSubscription;
 
         private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;
@@ -67,6 +71,7 @@ namespace DCL.VoiceChat
 
             UnpublishLocalTrack();
             StopListeningToRemoteTracks();
+            microphoneChangeSubscription.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
@@ -101,14 +106,13 @@ namespace DCL.VoiceChat
                 return;
             }
 #endif
-
             try
             {
                 Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
 
                 if (reachable.Success == false)
                 {
-                    NotificationsBus.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
                     throw new Exception(reachable.ErrorMessage!);
                 }
 
@@ -120,10 +124,10 @@ namespace DCL.VoiceChat
 
                 if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
-                var rtcAudioSource = result.Value;
+                MicrophoneRtcAudioSource rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
 
-                var livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
+                ITrack livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
                     rtcAudioSource
                 );
@@ -170,7 +174,7 @@ namespace DCL.VoiceChat
             {
                 playbackSourcesHub.Reset();
 
-                foreach (var remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                foreach (KeyValuePair<string, Participant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 {
                     foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
                     {
@@ -253,15 +257,16 @@ namespace DCL.VoiceChat
         {
             try
             {
-                if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
-                {
-                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
+                if (publication.Kind != TrackKind.KindAudio) return;
 
-                    if (stream.Resource.Has)
-                    {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
-                    }
+                if (!configuration.EnableLocalTrackPlayback) return;
+
+                Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
+
+                if (stream.Resource.Has)
+                {
+                    playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track published: {ex.Message}"); }
@@ -271,11 +276,12 @@ namespace DCL.VoiceChat
         {
             try
             {
-                if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
-                {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, participant.Sid));
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
-                }
+                if (publication.Kind != TrackKind.KindAudio) return;
+
+                if (!configuration.EnableLocalTrackPlayback) return;
+
+                playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}"); }
         }
@@ -298,13 +304,13 @@ namespace DCL.VoiceChat
 
             public MicrophoneTrack(ITrack track, Owned<MicrophoneRtcAudioSource> source)
             {
-                this.Track = track;
+                Track = track;
                 this.source = source;
             }
 
             public void Dispose()
             {
-                source.Dispose(out var inner);
+                source.Dispose(out MicrophoneRtcAudioSource? inner);
                 inner?.Dispose();
             }
         }

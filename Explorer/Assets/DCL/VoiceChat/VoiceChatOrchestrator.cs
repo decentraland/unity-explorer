@@ -108,9 +108,9 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid ShowCommunityInChatAndJoinAsync()
             {
+                JoinCommunityVoiceChat(notification.CommunityId, true);
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(notification.CommunityId);
-                JoinCommunityVoiceChat(notification.CommunityId, true);
             }
 
         }
@@ -303,6 +303,12 @@ namespace DCL.VoiceChat
                 communityVoiceChatCallStatusService.KickPlayerFromCurrentCall(walletId);
         }
 
+        public void NotifyMuteSpeakerInCurrentCall(string walletId, bool muted)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.MuteSpeakerInCurrentCall(walletId, muted);
+        }
+
         public void EndStreamInCurrentCall()
         {
             if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
@@ -314,6 +320,10 @@ namespace DCL.VoiceChat
 
         public bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData) =>
             communityVoiceChatCallStatusService.TryGetActiveCommunityVoiceChat(communityId, out activeCommunityData);
+
+        public bool IsEqualToCurrentStreamingCommunity(string communityId) =>
+            CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
+            string.Equals(communityVoiceChatCallStatusService.CallId.Value, communityId, StringComparison.InvariantCultureIgnoreCase);
 
         public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId) =>
             communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);

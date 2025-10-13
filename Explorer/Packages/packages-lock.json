@@ -92,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "c346fe721d9a61109aee1a50c5d4bf955fe04c05"
+      "hash": "e1f81406edc9df5d67e713f0cb7b66036d097dee"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -206,7 +206,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.cloud.ktx": {
-      "version": "file:com.unity.cloud.ktx@9cc7165d9d20",
+      "version": "file:com.unity.cloud.ktx",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
@@ -291,7 +291,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.memoryprofiler": {
-      "version": "1.1.8",
+      "version": "1.1.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -304,7 +304,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.multiplayer.playmode": {
-      "version": "1.6.0",
+      "version": "1.6.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -420,7 +420,7 @@
       }
     },
     "com.unity.test-framework": {
-      "version": "1.5.1",
+      "version": "1.6.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
