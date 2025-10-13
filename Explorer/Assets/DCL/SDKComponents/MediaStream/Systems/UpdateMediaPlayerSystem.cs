@@ -16,7 +16,6 @@ using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
-using System;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Utility;
@@ -67,14 +66,12 @@ namespace DCL.SDKComponents.MediaStream
             worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
         }
 
-        private void OnWorldVolumeChanged(float volume)
+        protected override void OnDispose()
         {
-            worldVolumePercentage = volume;
-        }
-
-        private void OnMasterVolumeChanged(float volume)
-        {
-            masterVolumePercentage = volume;
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
+            volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
+#endif
         }
 
         protected override void Update(float t)
@@ -82,8 +79,12 @@ namespace DCL.SDKComponents.MediaStream
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
-
             UpdateVideoTextureQuery(World);
+        }
+
+        public void OnSceneIsCurrentChanged(bool enteredScene)
+        {
+            ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
         [Query]
@@ -93,12 +94,20 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent, [Data] float dt)
+        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
+            var address = MediaAddress.New(sdkComponent.Url!);
+
+            // In case of source updating we wait until the next update
+            if (TryUpdateSource(ref component, address)) return;
+
             if (component.State != VideoState.VsError)
             {
+                if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
+                    component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+
                 float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
 
                 if (!sceneStateProvider.IsCurrent)
@@ -107,20 +116,26 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
             }
 
-            var address = MediaAddress.New(sdkComponent.Url!);
-            if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
-
-            HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing);
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
         }
 
         [Query]
-        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
+        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
+            var address = MediaAddress.New(sdkComponent.Src!);
+
+            if (TryUpdateSource(ref component, address)) return;
+
             if (component.State != VideoState.VsError)
             {
+                if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
+                {
+                    component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+                    component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
+                }
+
                 float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
 
                 if (!sceneStateProvider.IsCurrent)
@@ -129,39 +144,8 @@ namespace DCL.SDKComponents.MediaStream
                 component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
             }
 
-            var address = MediaAddress.New(sdkComponent.Src!);
-            if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
-
-            HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
-            ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
-        }
-
-        private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
-        {
-            if (sdkComponent.IsNotDirty())
-                return false;
-
-            if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
-            {
-                string selfUrl = urlMediaAddress!.Value.Url;
-                string otherUrl = other!.Value.Url;
-
-                if (selfUrl != otherUrl
-                    && (!sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) || selfUrl != localMediaUrl))
-                    return PerformRemove(World, ref component, sdkComponent, entity);
-            }
-            else if (component.MediaAddress != address)
-                return PerformRemove(World, ref component, sdkComponent, entity);
-
-            return false;
-
-            static bool PerformRemove(World world, ref MediaPlayerComponent component, IDirtyMarker sdkComponent, Entity entity)
-            {
-                component.Dispose();
-                sdkComponent.IsDirty = false;
-                world.Remove<MediaPlayerComponent>(entity);
-                return true;
-            }
+            if (ConsumePromise(ref component, false))
+                component.MediaPlayer.SetPlaybackProperties(sdkComponent);
         }
 
         [Query]
@@ -189,17 +173,37 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private void HandleComponentChange(
-            ref MediaPlayerComponent component,
-            IDirtyMarker sdkComponent,
-            MediaAddress mediaAddress,
-            bool hasPlaying,
-            bool isPlaying,
-            PBVideoPlayer? sdkVideoComponent = null,
-            Action<MultiMediaPlayer, PBVideoPlayer>? onPlaybackUpdate = null
-        )
+        [Query]
+        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
         {
-            if (!sdkComponent.IsDirty) return;
+            if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
+            {
+                //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
+                //the regular CreateMediaPlayerSystem
+                mediaPlayerComponent.Dispose();
+                World.Remove<MediaPlayerComponent>(entity);
+            }
+        }
+
+        private bool TryUpdateSource(ref MediaPlayerComponent component,
+            MediaAddress mediaAddress)
+        {
+            if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
+            {
+                component.MediaPlayer.CloseCurrentStream();
+
+                UpdateStreamUrl(ref component, mediaAddress);
+
+                if (component.State != VideoState.VsError)
+                {
+                    component.Cts = component.Cts.SafeRestart();
+                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, GetReportData(), component.Cts.Token).Forget();
+                }
+
+                return true;
+            }
+
+            return false;
 
             bool ShouldUpdateSource(in MediaPlayerComponent component) =>
                 component.MediaAddress.Match(
@@ -212,32 +216,37 @@ namespace DCL.SDKComponents.MediaStream
                     onLivekitAddress: static (_, _) => true
                 );
 
-            if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
+            void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)
             {
-                component.MediaPlayer.CloseCurrentStream();
-
-                UpdateStreamUrl(ref component, mediaAddress);
-
-                if (component.State != VideoState.VsError)
+                if (component.MediaAddress.IsLivekitAddress(out _))
                 {
-                    component.Cts = component.Cts.SafeRestart();
-                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, GetReportData(), component.Cts.Token).Forget();
+                    component.MediaAddress = mediaAddress;
+                    return;
                 }
-            }
-            else if (component.State != VideoState.VsError)
-            {
-                component.MediaPlayer.UpdatePlayback(hasPlaying, isPlaying);
 
-                if (sdkVideoComponent != null)
-                    onPlaybackUpdate?.Invoke(component.MediaPlayer, sdkVideoComponent);
-            }
+                mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
+                string url = urlMediaAddress!.Value.Url;
 
-            sdkComponent.IsDirty = false;
+                bool isValidStreamUrl = url.IsValidUrl();
+                bool isValidLocalPath = false;
+
+                if (!isValidStreamUrl)
+                {
+                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+
+                    if (isValidLocalPath)
+                        mediaAddress = MediaAddress.New(mediaUrl.Value);
+                }
+
+                component.MediaAddress = mediaAddress;
+                component.SetState(isValidStreamUrl || isValidLocalPath || mediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+            }
         }
 
-        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MultiMediaPlayer, PBVideoPlayer>? onOpened = null)
+        private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
         {
-            if (!component.OpenMediaPromise.IsResolved) return;
+            if (!component.OpenMediaPromise.IsResolved) return false;
+            if (component.OpenMediaPromise.IsConsumed) return false;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
@@ -248,69 +257,26 @@ namespace DCL.SDKComponents.MediaStream
                 try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
 
-                if (sdkVideoComponent != null)
-                    onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
+                return true;
             }
-            else
-            {
-                component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
-                Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
 
-                try { component.MediaPlayer.CloseCurrentStream(); }
-                finally { Profiler.EndSample(); }
-            }
+            component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+            Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
+
+            try { component.MediaPlayer.CloseCurrentStream(); }
+            finally { Profiler.EndSample(); }
+
+            return false;
         }
 
-        private void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)
+        private void OnWorldVolumeChanged(float volume)
         {
-            if (component.MediaAddress.IsLivekitAddress(out _))
-            {
-                component.MediaAddress = mediaAddress;
-                return;
-            }
-
-            mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
-            string url = urlMediaAddress!.Value.Url;
-
-            bool isValidStreamUrl = url.IsValidUrl();
-            bool isValidLocalPath = false;
-
-            if (!isValidStreamUrl)
-            {
-                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
-
-                if (isValidLocalPath)
-                    mediaAddress = MediaAddress.New(mediaUrl.Value);
-            }
-
-            component.MediaAddress = mediaAddress;
-            component.SetState(isValidStreamUrl || isValidLocalPath || mediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+            worldVolumePercentage = volume;
         }
 
-        protected override void OnDispose()
+        private void OnMasterVolumeChanged(float volume)
         {
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
-            volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
-#endif
-        }
-
-        public void OnSceneIsCurrentChanged(bool enteredScene)
-        {
-            ToggleCurrentStreamsStateQuery(World, enteredScene);
-        }
-
-        [Query]
-        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
-        {
-            if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
-            {
-                //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
-                //the regular CreateMediaPlayerSystem
-                mediaPlayerComponent.Dispose();
-                World.Remove<MediaPlayerComponent>(entity);
-            }
-
+            masterVolumePercentage = volume;
         }
     }
 }
