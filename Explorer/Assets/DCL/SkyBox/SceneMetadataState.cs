@@ -2,6 +2,7 @@ using DCL.Ipfs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS.SceneLifeCycle;
+using UnityEngine;
 using static DCL.Ipfs.SceneMetadata;
 
 namespace DCL.SkyBox
@@ -26,52 +27,63 @@ namespace DCL.SkyBox
 
         public bool Applies()
         {
-            SceneMetadata? metadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
-
-            if (metadata == null) return false;
-
-            return GetConfigFixedTime(metadata) != null;
+            var metadata = GetCurrentMetadata();
+            return metadata != null && GetFixedTime(metadata).HasValue;
         }
 
         public void Enter()
         {
+            sceneRestrictionController.PushSceneRestriction(
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+
+            settings.IsDayCycleEnabled = false;
+            TryApplySceneMetadata();
             transition.Enter();
-
-            SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
-
-            if (sceneMetadata != null)
-                UpdateSkyboxSettings(sceneMetadata);
-
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
 
         public void Exit()
         {
+            sceneRestrictionController.PushSceneRestriction(
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+
             transition.Exit();
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
         }
 
         public void Update(float dt)
         {
+            TryApplySceneMetadata();
             transition.Update(dt);
         }
 
-        private void UpdateSkyboxSettings(SceneMetadata metadata)
+        private SceneMetadata? GetCurrentMetadata() =>
+            scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+
+        private void TryApplySceneMetadata()
         {
-            // Scene config overrides world config
-            float? time = GetConfigFixedTime(metadata);
-            TransitionMode transitionMode = GetConfigTransitionModeOrDefault(metadata);
+            var metadata = GetCurrentMetadata();
+            if (metadata == null)
+                return;
 
-            settings.TransitionMode = transitionMode;
+            settings.TransitionMode = GetTransitionMode(metadata);
 
-            if (time.HasValue)
-                settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time.Value);
+            float? fixedTime = GetFixedTime(metadata);
+            if (!fixedTime.HasValue)
+                return;
+
+            float normalizedTime = SkyboxSettingsAsset.NormalizeTime(fixedTime.Value);
+
+            // Skip if target hasn't changed to avoid transitioning
+            if (Mathf.Approximately(settings.TargetTimeOfDayNormalized, normalizedTime))
+                return;
+
+            settings.TargetTimeOfDayNormalized = normalizedTime;
         }
 
-        private float? GetConfigFixedTime(SceneMetadata sceneMetadata) =>
-            sceneMetadata.skyboxConfig?.fixedTime ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.fixedTime;
+        private static float? GetFixedTime(SceneMetadata metadata) =>
+            metadata.skyboxConfig?.fixedTime
+            ?? metadata.worldConfiguration?.SkyboxConfig?.fixedTime;
 
-        private TransitionMode GetConfigTransitionModeOrDefault(SceneMetadata sceneMetadata) =>
+        private TransitionMode GetTransitionMode(SceneMetadata sceneMetadata) =>
             sceneMetadata.skyboxConfig?.transitionMode
             ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.transitionMode
             ?? TransitionMode.FORWARD;
