@@ -274,6 +274,7 @@ namespace DCL.Chat
 
         public void Dispose()
         {
+            SetSelectionStatus(false);
             openButton.onClick.RemoveAllListeners();
             removeButton.onClick.RemoveAllListeners();
             OpenButtonClicked = null;
