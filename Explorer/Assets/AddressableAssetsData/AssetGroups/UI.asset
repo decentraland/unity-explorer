@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1801d33e8e688a74ea5dd704a91cfac1
+    m_Address: NotoSansSC-SemiBold SDF
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19167fed20773434b8bb06d4ca81f60c
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/GenericUserProfileContextMenuSettings.asset
     m_ReadOnly: 0
@@ -87,11 +92,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
     m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/LogoDCL154x154SpriteAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
-    m_Address: Nametag
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f25e6657ed14c647b36a55141610e05
+    m_Address: M_SpinnerRuby.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2fe097e0595decf4cbb812bf06bd1651
     m_Address: Assets/Textures/ExplorePanel/MapTabHoverUnhoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -215,8 +220,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3df1198e2008a4f0abdf407103681813
+    m_Address: Assets/DCL/NameTags/Assets/NametagUIDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3efe8a48fc3905f47a0648abd6859394
     m_Address: MapCameraObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 404f87890895f5f4bb7f733c75373620
+    m_Address: Inter-SemiBold SDF (Cyr)
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -262,6 +277,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4b896bc1397444f00a2b45725af2b263
     m_Address: NotificationIconTypesSO
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4cc5b9c92b8be214dbbd4f1f502110de
+    m_Address: NotoSansKR-SemiBold SDF
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -352,6 +372,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65104014709704f75838386ed5173c45
     m_Address: Assets/DCL/MapRenderer/Addressables/SearchResultMarkerObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65718726e8675f3438790051aed58b6a
+    m_Address: Inter-SemiBold SDF (Gr)
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -470,6 +495,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82f86e6c95d775f4e8488447b6885323
+    m_Address: NotoSansJP-SemiBold SDF
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8521b529ac852454480e3f6596bca3ba
     m_Address: DebugMenuRootCanvas
     m_ReadOnly: 0
@@ -565,11 +595,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b028edf69a2c54c9194c4ce6524befff
-    m_Address: ChatBubbleConfiguration
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b54d9d4189903c2438fa811308f14ceb
     m_Address: MapConfiguration
     m_ReadOnly: 0
@@ -647,6 +672,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: dcc6085d51c3e443f82d4d58e0087519
     m_Address: Assets/DCL/Friends/Prefabs/FriendRequest.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de88bd0dde8feda4393664330ac8afb4
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTitleIconAndCheck.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

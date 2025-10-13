@@ -13,7 +13,7 @@ namespace DCL.Chat
         [field: SerializeField] public ChatChannelsView ConversationToolbarView2 { get; private set; } = null!;
         [field: SerializeField] public ChatMessageFeedView MessageFeedView { get; private set; } = null!;
         [field: SerializeField] public ChatInputView InputView { get; private set; } = null!;
-        [field: SerializeField] public ChatTitlebarView2 TitlebarView { get; private set; } = null!;
+        [field: SerializeField] public ChatTitlebarView TitlebarView { get; private set; } = null!;
         [field: SerializeField] public ChannelMemberFeedView MemberListView { get; private set; } = null!;
 
         [field: Header("Voice Chat")]

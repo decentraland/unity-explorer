@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+﻿using CRDT;
+using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -60,7 +61,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                         ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
                         : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
 
-                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness, recipient);
+                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness, recipient, useFilter: true);
                 }
         }
 
@@ -78,11 +79,24 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             }
         }
 
-        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertivenes, string? specialRecipient)
+        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertivenes, string? specialRecipient, bool useFilter)
         {
-            Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
+            Span<byte> filtered = stackalloc byte[message.Length];
+
+            if (useFilter)
+            {
+                CRDTFilter.FilterSceneMessageBatch(message, filtered, out int totalWrite);
+                filtered = filtered.Slice(0, totalWrite);
+            }
+            else
+            {
+                message.CopyTo(filtered);
+            }
+
+            Span<byte> encodedMessage = stackalloc byte[filtered.Length + 1];
             encodedMessage[0] = (byte)msgType;
-            message.CopyTo(encodedMessage[1..]);
+            filtered.CopyTo(encodedMessage[1..]);
+
             sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, assertivenes, cancellationTokenSource.Token, specialRecipient);
         }
 

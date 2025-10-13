@@ -24,8 +24,9 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>, IBlocksChat
     {
+
         private readonly BackpackController backpackController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;

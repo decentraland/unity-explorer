@@ -104,7 +104,7 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct,
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string? faceSnapshotUrl, string _, CancellationToken ct,
             bool rethrowError = false)
         {
             profileRepositoryWrapper = profileDataProvider;
@@ -113,7 +113,7 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _ = "")
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string? faceSnapshotUrl, string _ = "")
         {
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
@@ -152,7 +152,7 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, bool rethrowError, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string? faceSnapshotUrl, bool rethrowError, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(faceSnapshotUrl)) return;
             if (faceSnapshotUrl.Equals(currentUrl)) return;

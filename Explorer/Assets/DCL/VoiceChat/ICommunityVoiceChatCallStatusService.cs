@@ -28,6 +28,7 @@ namespace DCL.VoiceChat
 
         void KickPlayerFromCurrentCall(string walletId);
         void DenySpeakerInCurrentCall(string walletId);
+        void MuteSpeakerInCurrentCall(string walletId, bool muted);
         void LowerHandInCurrentCall();
         void EndStreamInCurrentCall();
     }

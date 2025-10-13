@@ -49,6 +49,14 @@ def validate_branch_name(branch_name):
         print(f"Error: Branch name '{branch_name}' contains invalid characters (+, ., or @).")
         sys.exit(1)
 
+def resolve_cache_source(template_target: str) -> str:
+    t = (template_target or "").lower()
+    if t == "t_macos":
+        return os.getenv("CACHE_SOURCE_MACOS", "macos-dev")
+    if t == "t_windows64":
+        return os.getenv("CACHE_SOURCE_WINDOWS", "windows64-dev")
+    return template_target
+
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
 
@@ -125,8 +133,9 @@ def clone_current_target(use_cache):
         print(f"New target found")
         # Create new target with template cache
         if use_cache:
-            body['settings']['buildTargetCopyCache'] = template_target
-            print(f"Using template cache build target: {template_target}")
+            cache_source = resolve_cache_source(template_target)
+            body['settings']['buildTargetCopyCache'] = cache_source
+            print(f"Using cache from: {cache_source}")
         else:
             print(f"Not using cache")
         try:
@@ -509,7 +518,6 @@ else:
     # Also sets the branch to $BRANCH_NAME
     #
     # If the target already exists, it will check if it has running builds on it
-    # If it has running builds, a new target will be created with an added timestamp (Unity can't queue)
     try:
         clone_current_target(True)
     except Exception as e:
