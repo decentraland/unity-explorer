@@ -42,7 +42,6 @@ namespace DCL.ResourcesUnloading.Tests
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
-        private NftShapeCache nftShapeCache;
         private IEmoteStorage emoteStorage;
         private IProfileCache profileCache;
         private IComponentPoolsRegistry poolsRegistry;
@@ -68,7 +67,6 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new IRealmData.Fake(), new List<GameObject>());
-            nftShapeCache = new NftShapeCache(new TexturesCache<GetNFTImageIntention>(), new TexturesCache<GetNFTVideoIntention>());
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
 
@@ -85,7 +83,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(lodAssets);
             cacheCleaner.Register(roadAssets);
-            cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(profileCache);
             cacheCleaner.Register(jsSourcesCache);

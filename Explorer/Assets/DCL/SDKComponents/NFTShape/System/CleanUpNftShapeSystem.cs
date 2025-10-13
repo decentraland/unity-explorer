@@ -9,11 +9,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.NFTShapes;
-using ECS.StreamableLoading.Textures;
-using UnityEngine;
-using UnityEngine.Networking;
 
 namespace DCL.SDKComponents.NFTShape.System
 {

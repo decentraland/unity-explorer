@@ -38,9 +38,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IFramePrefabs framePrefabs;
-        private readonly NftShapeCache nftShapeCache;
         private readonly TexturesCache<GetNFTImageIntention> imageCache;
-        private readonly TexturesCache<GetNFTVideoIntention> videoCache;
 
         static NFTShapePlugin()
         {
@@ -65,17 +63,13 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.videoTexturePool = videoTexturePool;
 
-            // See https://github.com/decentraland/unity-explorer/issues/5611
-            // videos & images requires different caches
             imageCache = new TexturesCache<GetNFTImageIntention>();
-            videoCache = new TexturesCache<GetNFTVideoIntention>();
-            nftShapeCache = new NftShapeCache(imageCache, videoCache);
-            cacheCleaner.Register(nftShapeCache);
+            cacheCleaner.Register(imageCache);
         }
 
         public void Dispose()
         {
-            nftShapeCache.Dispose();
+            imageCache.Dispose();
         }
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
@@ -95,7 +89,7 @@ namespace DCL.PluginSystem.World
 
             LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
             LoadNFTImageSystem.InjectToWorld(ref builder, imageCache, webRequestController, isKtxEnabled);
-            LoadNFTVideoSystem.InjectToWorld(ref builder, videoCache, videoTexturePool);
+            LoadNFTVideoSystem.InjectToWorld(ref builder, NoCache<Texture2DData, GetNFTVideoIntention>.INSTANCE, videoTexturePool);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
