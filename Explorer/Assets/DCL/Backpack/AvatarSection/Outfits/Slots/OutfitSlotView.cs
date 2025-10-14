@@ -33,6 +33,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         private Image outfitThumbnail;
 
         [SerializeField]
+        private Image outfitEquippedOutline;
+        
+        [SerializeField]
         private Image outfitHoverOutline;
 
         [field: SerializeField]
@@ -120,6 +123,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             saveButton?.onClick.RemoveAllListeners();
             equipButton?.onClick.RemoveAllListeners();
             deleteButton?.onClick.RemoveAllListeners();
+        }
+
+        public void SetEquipped(bool equipped)
+        {
+            outfitEquippedOutline.gameObject.SetActive(equipped);
         }
     }
 }

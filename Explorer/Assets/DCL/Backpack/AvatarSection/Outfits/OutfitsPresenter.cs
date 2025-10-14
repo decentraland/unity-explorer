@@ -40,7 +40,7 @@ namespace DCL.Backpack
         private readonly SaveOutfitCommand saveOutfitCommand;
         private readonly DeleteOutfitCommand deleteOutfitCommand;
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
-        private readonly CheckOutfitEquippedStateCommand equippedStateCommand;
+        private readonly CheckOutfitEquippedStateCommand checkOutfitEquippedCommand;
         private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
         
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
@@ -56,7 +56,7 @@ namespace DCL.Backpack
             SaveOutfitCommand saveOutfitCommand,
             DeleteOutfitCommand deleteOutfitCommand,
             CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand,
-            CheckOutfitEquippedStateCommand equippedStateCommand,
+            CheckOutfitEquippedStateCommand checkOutfitEquippedCommand,
             PrewarmWearablesCacheCommand prewarmWearablesCacheCommand,
             IAvatarScreenshotService screenshotService,
             CharacterPreviewControllerBase characterPreviewController,
@@ -72,7 +72,7 @@ namespace DCL.Backpack
             this.saveOutfitCommand = saveOutfitCommand;
             this.deleteOutfitCommand = deleteOutfitCommand;
             this.bannerVisibilityCommand = bannerVisibilityCommand;
-            this.equippedStateCommand = equippedStateCommand;
+            this.checkOutfitEquippedCommand = checkOutfitEquippedCommand;
             this.prewarmWearablesCacheCommand = prewarmWearablesCacheCommand;
             this.screenshotService = screenshotService;
             this.characterPreviewController = characterPreviewController;
@@ -135,6 +135,8 @@ namespace DCL.Backpack
                 prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrns, ct).Forget();
 
                 PopulateAllSlots(outfitsCollection.Get());
+
+                UpdateAllSlotsEquippedStateAsync(ct).Forget();
             }
             catch (OperationCanceledException)
             {
@@ -146,6 +148,33 @@ namespace DCL.Backpack
                 foreach (var presenter in slotPresenters)
                     presenter.SetEmpty();
             }
+        }
+
+        private async UniTask UpdateAllSlotsEquippedStateAsync(CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested) return;
+
+            var updateTasks = new List<UniTask>();
+            foreach (var slotPresenter in slotPresenters)
+                updateTasks.Add(UpdateSlotEquippedStateAsync(slotPresenter, ct));
+
+            await UniTask.WhenAll(updateTasks);
+        }
+
+        // This method also remains the same. It checks a single slot.
+        private async UniTask UpdateSlotEquippedStateAsync(OutfitSlotPresenter slotPresenter, CancellationToken ct)
+        {
+            var outfitItem = slotPresenter.GetOutfitData();
+            if (outfitItem == null)
+            {
+                slotPresenter.SetEquipped(false);
+                return;
+            }
+
+            bool isEquipped = await checkOutfitEquippedCommand.ExecuteAsync(outfitItem, equippedWearables, ct);
+            if (ct.IsCancellationRequested) return;
+
+            slotPresenter.SetEquipped(isEquipped);
         }
 
         private void OnSaveOutfitRequested(int slotIndex)
@@ -222,7 +251,10 @@ namespace DCL.Backpack
                 if (outcome == DeleteOutfitOutcome.Success)
                 {
                     outfitsCollection.Remove(slotIndex);
+                    
                     presenter.SetEmpty();
+
+                    UpdateAllSlotsEquippedStateAsync(cts.Token).Forget();
                 }
                 else
                 {
@@ -239,8 +271,12 @@ namespace DCL.Backpack
         private void OnEquipOutfitRequested(OutfitItem outfitItem)
         {
             if (outfitItem?.outfit == null) return;
+            
             outfitApplier.Apply(outfitItem.outfit);
+            
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
+
+            UpdateAllSlotsEquippedStateAsync(cts.Token).Forget();
         }
 
         private void PopulateAllSlots(IReadOnlyList<OutfitItem> outfits)

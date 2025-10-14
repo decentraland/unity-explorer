@@ -127,6 +127,12 @@ namespace DCL.Backpack.Slots
             SetState(OutfitSlotState.Loading);
         }
 
+        public void SetEquipped(bool equipped)
+        {
+            ReportHub.Log(ReportCategory.OUTFITS, $"SetEquipped {equipped} in slot {slotIndex}");
+            view.SetEquipped(equipped);
+        }
+
         private void SetState(OutfitSlotState newState, OutfitItem? item = null)
         {
             currentState = newState;

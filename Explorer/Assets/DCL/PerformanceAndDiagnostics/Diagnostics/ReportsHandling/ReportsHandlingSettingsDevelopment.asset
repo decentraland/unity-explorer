@@ -588,6 +588,8 @@ MonoBehaviour:
       Severity: 3
     - Category: OUTFITS
       Severity: 2
+    - Category: ANALYTICS
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1
