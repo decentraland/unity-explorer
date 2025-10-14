@@ -201,7 +201,10 @@ namespace DCL.Chat
             view.TryRemoveConversation(removedChannel);
 
             if (currentChannelService.CurrentChannelId.Equals(removedChannel))
+            {
                 selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID, lifeCts.Token);
+                view.SelectConversation(ChatChannel.NEARBY_CHANNEL_ID);
+            }
         }
 
         private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
@@ -211,7 +214,8 @@ namespace DCL.Chat
 
         private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
-            view.SelectConversation(evt.Channel.Id);
+            if (evt.FromInitialization)
+                view.SelectConversation(evt.Channel.Id);
         }
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)

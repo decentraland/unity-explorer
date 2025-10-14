@@ -58,7 +58,9 @@ namespace DCL.Chat
             {
                 var data = new UserProfileMenuRequest
                 {
-                    WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT, Offset = Vector2.zero
+                    WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT, Offset = Vector2.zero,
+                    OnShow = defaultTitlebarView.SetContextMenuButtonSelectedAppearance,
+                    OnHide = defaultTitlebarView.SetContextMenuButtonNormalAppearance
                 };
                 OnProfileContextMenuRequested?.Invoke(data);
             }
@@ -66,7 +68,9 @@ namespace DCL.Chat
             {
                 var data = new ShowContextMenuRequest
                 {
-                    Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT, Offset = Vector2.zero
+                    Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT, Offset = Vector2.zero,
+                    OnShow = defaultTitlebarView.SetContextMenuButtonSelectedAppearance,
+                    OnHide = defaultTitlebarView.SetContextMenuButtonNormalAppearance
                 };
                 OnCommunityContextMenuRequested?.Invoke(data);
             }
@@ -84,7 +88,7 @@ namespace DCL.Chat
         public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
         {
             titlebarCanvasGroup.DOKill();
-            float targetAlpha = isFocused ? 0.9f : 0.0f;
+            float targetAlpha = isFocused ? 1f : 0.0f;
             titlebarCanvasGroup.DOFade(targetAlpha, animate ? duration : 0f);
         }
     }
