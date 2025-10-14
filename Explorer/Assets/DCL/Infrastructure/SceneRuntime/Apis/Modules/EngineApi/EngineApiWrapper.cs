@@ -1,6 +1,6 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using Microsoft.ClearScript.V8.FastProxy;
 using Microsoft.ClearScript.V8.SplitProxy;
-using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
@@ -9,38 +9,38 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8HostObject
+    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8FastHostObject, IV8FastHostObjectOperations
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
-        private readonly InvokeHostObject crdtSendToRenderer;
-        private readonly InvokeHostObject crdtGetState;
-        private readonly InvokeHostObject sendBatch;
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => this;
+
+        private static readonly V8FastHostMethodInvoker<EngineApiWrapper> CRDT_SEND_TO_RENDERER =
+            static (EngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                self.CrdtSendToRenderer(args.GetUint8Array(0));
+
+        private static readonly V8FastHostMethodInvoker<EngineApiWrapper> CRDT_GET_STATE =
+            static (EngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                result.Set(self.CrdtGetState());
+
+        private readonly V8FastHostMethodInvoker<EngineApiWrapper> sendBatch =
+            static (EngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                result.Set(self.SendBatch());
 
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
-
-            crdtSendToRenderer = CrdtSendToRenderer;
-            crdtGetState = CrdtGetState;
-            sendBatch = SendBatch;
         }
 
         protected override void DisposeInternal()
         {
             // Dispose the last input buffer
             lastInput.ReleaseAndDispose();
-        }
-
-        private void CrdtSendToRenderer(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
-        {
-            Uint8Array data = args[0].GetUint8Array();
-            result.SetHostObject(CrdtSendToRenderer(data));
         }
 
         private ScriptableByteArray CrdtSendToRenderer(Uint8Array data)
@@ -71,9 +71,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
         }
 
-        private void CrdtGetState(ReadOnlySpan<V8Value.Decoded> args, V8Value result) =>
-            result.SetHostObject(CrdtGetState());
-
         private ScriptableByteArray CrdtGetState()
         {
             if (disposeCts.IsCancellationRequested)
@@ -99,17 +96,17 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         protected virtual ScriptableSDKObservableEventArray? SendBatch() => null;
 
-        void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst) =>
-            GetNamedProperty(name, value, out isConst);
+        void IV8FastHostObjectOperations.GetProperty(IV8FastHostObject instance, string name, in V8FastResult value, out bool isCacheable) =>
+            GetProperty(name, value, out isCacheable);
 
-        protected virtual void GetNamedProperty(StdString name, V8Value value, out bool isConst)
+        protected virtual void GetProperty(string name, V8FastResult value, out bool isCacheable)
         {
-            isConst = true;
+            isCacheable = true;
 
             if (name.Equals(nameof(CrdtSendToRenderer)))
-                value.SetHostObject(crdtSendToRenderer);
+                value.Set(CRDT_SEND_TO_RENDERER);
             else if (name.Equals(nameof(CrdtGetState)))
-                value.SetHostObject(crdtGetState);
+                value.SetHostObject(CRDT_GET_STATE);
             else if (name.Equals(nameof(SendBatch)))
                 value.SetHostObject(sendBatch);
             else

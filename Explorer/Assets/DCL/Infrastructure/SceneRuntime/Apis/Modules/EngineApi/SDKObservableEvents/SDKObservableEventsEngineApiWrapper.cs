@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using Microsoft.ClearScript.V8.FastProxy;
 using Microsoft.ClearScript.V8.SplitProxy;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -9,13 +10,34 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
-    public class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
+    public sealed class SDKObservableEventsEngineApiWrapper : EngineApiWrapper, IV8FastHostObject
     {
         private readonly ISDKObservableEventsEngineApi engineApi;
         private readonly ISDKMessageBusCommsControllerAPI commsApi;
 
         private readonly InvokeHostObject subscribeToSDKObservableEvent;
         private readonly InvokeHostObject unsubscribeFromSDKObservableEvent;
+
+        private static readonly V8FastHostObjectOperations<SDKObservableEventsEngineApiWrapper> OPERATIONS = new ();
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
+
+        static SDKObservableEventsEngineApiWrapper()
+        {
+            OPERATIONS.Configure(static configuration =>
+            {
+                configuration.AddMethodGetter(nameof(CrdtSendToRenderer),
+                    static (SDKObservableEventsEngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                        self.CrdtSendToRenderer(args.GetUint8Array(0)));
+
+                configuration.AddMethodGetter(nameof(CrdtGetState),
+                    static (SDKObservableEventsEngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                        result.Set(self.CrdtGetState()));
+
+                configuration.AddMethodGetter(nameof(SendBatch),
+                    static (SDKObservableEventsEngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                        result.Set(self.SendBatch()));
+            });
+        }
 
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api,
             ISDKMessageBusCommsControllerAPI commsApi,
@@ -95,7 +117,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             engineApi.RemoveSubscriptionIfExists(eventId);
         }
 
-        protected override void GetNamedProperty(StdString name, V8Value value, out bool isConst)
+        protected override void GetProperty(StdString name, V8Value value, out bool isConst)
         {
             isConst = true;
 
@@ -104,7 +126,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             else if (name.Equals(nameof(UnsubscribeFromSDKObservableEvent)))
                 value.SetHostObject(unsubscribeFromSDKObservableEvent);
             else
-                base.GetNamedProperty(name, value, out isConst);
+                base.GetProperty(name, value, out isConst);
         }
     }
 }
