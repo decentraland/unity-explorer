@@ -6,7 +6,6 @@ using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;

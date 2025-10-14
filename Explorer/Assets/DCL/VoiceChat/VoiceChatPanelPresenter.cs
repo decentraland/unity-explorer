@@ -17,7 +17,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
         private readonly EventSubscriptionScope presenterScope = new();
-        private readonly ChatClickDetectionService clickDetectionService;
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -46,14 +46,14 @@ namespace DCL.VoiceChat
             presenterScope.Add(sceneVoiceChatController);
 
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
-            clickDetectionService = new ChatClickDetectionService(view.transform);
-            presenterScope.Add(clickDetectionService);
+            clickDetectionHandler = new ChatClickDetectionHandler(view.transform);
+            presenterScope.Add(clickDetectionHandler);
 
             view.PointerEnter += OnPointerEnter;
             view.PointerExit += OnPointerExit;
 
-            clickDetectionService.OnClickInside += HandleClickInside;
-            clickDetectionService.OnClickOutside += HandleClickOutside;
+            clickDetectionHandler.OnClickInside += HandleClickInside;
+            clickDetectionHandler.OnClickOutside += HandleClickOutside;
 
             presenterScope.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
             presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
@@ -65,9 +65,9 @@ namespace DCL.VoiceChat
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
             if (status.IsNotConnected())
-                clickDetectionService.Pause();
+                clickDetectionHandler.Pause();
             else
-                clickDetectionService.Resume();
+                clickDetectionHandler.Resume();
         }
 
         private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
@@ -77,12 +77,12 @@ namespace DCL.VoiceChat
             if (evt.IsVisible)
             {
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, force: true);
-                clickDetectionService.Resume();
+                clickDetectionHandler.Resume();
             }
             else
             {
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
-                clickDetectionService.Pause();
+                clickDetectionHandler.Pause();
             }
         }
 
@@ -91,20 +91,20 @@ namespace DCL.VoiceChat
             if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.HIDDEN)
             {
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, force: true);
-                clickDetectionService.Resume();
+                clickDetectionHandler.Resume();
             }
         }
 
         private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent _)
         {
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
-            clickDetectionService.Pause();
+            clickDetectionHandler.Pause();
         }
 
         private void HandleChatPanelShownInSharedSpace(ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent evt)
         {
             voiceChatOrchestrator.ChangePanelState(evt.Focus? VoiceChatPanelState.FOCUSED : VoiceChatPanelState.UNFOCUSED, force: true);
-            clickDetectionService.Resume();
+            clickDetectionHandler.Resume();
         }
 
         private void OnPointerExit()
@@ -140,7 +140,7 @@ namespace DCL.VoiceChat
             view.PointerEnter -= OnPointerEnter;
             view.PointerExit -= OnPointerExit;
 
-            clickDetectionService.Dispose();
+            clickDetectionHandler.Dispose();
         }
     }
 }

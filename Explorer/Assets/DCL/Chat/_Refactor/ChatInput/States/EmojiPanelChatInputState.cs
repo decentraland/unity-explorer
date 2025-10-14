@@ -12,7 +12,7 @@ namespace DCL.Chat.ChatInput
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatInputView.EmojiContainer emojiContainer;
         private readonly CustomInputField inputField;
-        private readonly ChatClickDetectionService clickDetectionService;
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
 
         public EmojiPanelChatInputState(ChatInputStateContext context) : base(context)
         {
@@ -28,9 +28,9 @@ namespace DCL.Chat.ChatInput
 
             inputField = context.ChatInputView.inputField;
 
-            clickDetectionService = new ChatClickDetectionService(emojiContainer.emojiPanel.transform);
-            clickDetectionService.OnClickOutside += Deactivate;
-            clickDetectionService.Pause();
+            clickDetectionHandler = new ChatClickDetectionHandler(emojiContainer.emojiPanel.transform);
+            clickDetectionHandler.OnClickOutside += Deactivate;
+            clickDetectionHandler.Pause();
         }
 
         protected override void Activate(ControllerNoData input)
@@ -39,7 +39,7 @@ namespace DCL.Chat.ChatInput
             emojiContainer.emojiPanelButton.SetState(true);
             emojiContainer.emojiPanel.EmojiContainer.gameObject.SetActive(true);
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
-            clickDetectionService.Resume();
+            clickDetectionHandler.Resume();
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(emojiContainer.openEmojiPanelAudio);
         }
@@ -50,7 +50,7 @@ namespace DCL.Chat.ChatInput
             emojiContainer.emojiPanelButton.SetState(false);
             emojiContainer.emojiPanel.EmojiContainer.gameObject.SetActive(false);
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
-            clickDetectionService.Pause();
+            clickDetectionHandler.Pause();
         }
 
         private void OnEmojiSelected(string emoji)

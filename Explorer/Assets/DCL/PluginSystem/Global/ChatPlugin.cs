@@ -256,7 +256,7 @@ namespace DCL.PluginSystem.Global
 
             var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
 
-            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)chatPanelView.transform,
+            var chatClickDetectionService = new ChatClickDetectionHandler((RectTransform)chatPanelView.transform,
                     chatPanelView.TitlebarView.CloseChatButton.transform,
                     chatPanelView.TitlebarView.CloseMemberListButton.transform,
                     chatPanelView.TitlebarView.OpenMemberListButton.transform,

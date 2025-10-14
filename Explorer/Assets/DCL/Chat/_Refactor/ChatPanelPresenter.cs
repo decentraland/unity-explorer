@@ -56,7 +56,7 @@ namespace DCL.Chat
             ChatInputBlockingService chatInputBlockingService,
             IEventBus eventBus,
             ChatContextMenuService chatContextMenuService,
-            ChatClickDetectionService chatClickDetectionService,
+            ChatClickDetectionHandler chatClickDetectionHandler,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
@@ -149,7 +149,7 @@ namespace DCL.Chat
             uiScope.Add(messageFeedPresenter);
             uiScope.Add(inputPresenter);
             uiScope.Add(memberListPresenter);
-            uiScope.Add(chatClickDetectionService);
+            uiScope.Add(chatClickDetectionHandler);
 
             var mediator = new ChatUIMediator(
                 view,
@@ -164,7 +164,7 @@ namespace DCL.Chat
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
                 chatInputBlockingService,
-                chatClickDetectionService,
+                chatClickDetectionHandler,
                 this);
 
             uiScope.Add(chatStateMachine);

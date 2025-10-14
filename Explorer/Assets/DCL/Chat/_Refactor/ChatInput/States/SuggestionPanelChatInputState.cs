@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatInput
 
         private readonly InputSuggestionPanelController suggestionPanelController;
         private readonly CustomInputField inputField;
-        private readonly ChatClickDetectionService clickDetectionService;
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
 
         private readonly Dictionary<string, ProfileInputSuggestionData> profileSuggestionsDictionary = new ();
         private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
@@ -33,9 +33,9 @@ namespace DCL.Chat.ChatInput
         public SuggestionPanelChatInputState(ChatInputStateContext context) : base(context)
         {
             suggestionPanelController = new InputSuggestionPanelController(context.ChatInputView.suggestionPanel);
-            clickDetectionService = new ChatClickDetectionService(context.ChatInputView.suggestionPanel.transform);
-            clickDetectionService.OnClickOutside += Deactivate;
-            clickDetectionService.Pause();
+            clickDetectionHandler = new ChatClickDetectionHandler(context.ChatInputView.suggestionPanel.transform);
+            clickDetectionHandler.OnClickOutside += Deactivate;
+            clickDetectionHandler.Pause();
 
             inputField = context.ChatInputView.inputField;
 
@@ -48,7 +48,7 @@ namespace DCL.Chat.ChatInput
         public void Dispose()
         {
             suggestionPanelController.Dispose();
-            clickDetectionService.Dispose();
+            clickDetectionHandler.Dispose();
         }
 
         internal bool TryFindMatch(string inputText)
@@ -102,7 +102,7 @@ namespace DCL.Chat.ChatInput
         {
             suggestionPanelController.SetPanelVisibility(true);
             inputField.UpAndDownArrowsEnabled = false;
-            clickDetectionService.Resume();
+            clickDetectionHandler.Resume();
         }
 
         protected override void Deactivate()
@@ -110,7 +110,7 @@ namespace DCL.Chat.ChatInput
             suggestionPanelController.SetPanelVisibility(false);
             inputField.UpAndDownArrowsEnabled = true;
             lastMatch = Match.Empty;
-            clickDetectionService.Pause();
+            clickDetectionHandler.Pause();
         }
 
         private void UpdateProfileNameMap()

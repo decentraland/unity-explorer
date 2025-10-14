@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatServices
     /// <summary>
     /// Click detection service that uses centralized raycast results.
     /// </summary>
-    public class ChatClickDetectionService : IDisposable
+    public class ChatClickDetectionHandler : IDisposable
     {
         public event Action? OnClickInside;
         public event Action? OnClickOutside;
@@ -19,7 +19,7 @@ namespace DCL.Chat.ChatServices
 
         private bool isPaused;
 
-        public ChatClickDetectionService(
+        public ChatClickDetectionHandler(
             Transform targetArea,
             params Transform[] ignoredElements)
         {

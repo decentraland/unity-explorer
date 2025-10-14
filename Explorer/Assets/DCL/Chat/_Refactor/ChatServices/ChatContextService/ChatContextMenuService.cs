@@ -9,23 +9,23 @@ namespace DCL.Chat.ChatServices.ChatContextService
     public class ChatContextMenuService : IDisposable
     {
         private readonly IMVCManagerMenusAccessFacade mvcFacade;
-        private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly ChatClickDetectionHandler chatClickDetectionHandler;
 
         private CancellationTokenSource activeMenuCts = new();
         private UniTaskCompletionSource activeMenuTcs = new();
 
         public ChatContextMenuService(IMVCManagerMenusAccessFacade mvcFacade,
-            ChatClickDetectionService chatClickDetectionService)
+            ChatClickDetectionHandler chatClickDetectionHandler)
         {
             this.mvcFacade = mvcFacade;
-            this.chatClickDetectionService = chatClickDetectionService;
+            this.chatClickDetectionHandler = chatClickDetectionHandler;
         }
 
 
         public async UniTask ShowCommunityContextMenuAsync(ShowContextMenuRequest request)
         {
             RestartLifecycleControls();
-            chatClickDetectionService.Pause();
+            chatClickDetectionHandler.Pause();
 
             try
             {
@@ -46,7 +46,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
             finally
             {
-                chatClickDetectionService.Resume();
+                chatClickDetectionHandler.Resume();
             }
         }
 
@@ -60,7 +60,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         {
             RestartLifecycleControls();
 
-            chatClickDetectionService.Pause();
+            chatClickDetectionHandler.Pause();
             try
             {
                 await mvcFacade.ShowUserProfileContextMenuFromWalletIdAsync(
@@ -80,7 +80,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
             finally
             {
-                chatClickDetectionService.Resume();
+                chatClickDetectionHandler.Resume();
             }
         }
 
@@ -91,7 +91,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public async UniTask ShowChannelContextMenuAsync(ShowChannelContextMenuRequest request)
         {
             RestartLifecycleControls();
-            chatClickDetectionService.Pause();
+            chatClickDetectionHandler.Pause();
 
             try
             {
@@ -108,7 +108,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
             finally
             {
-                chatClickDetectionService.Resume();
+                chatClickDetectionHandler.Resume();
             }
         }
 
