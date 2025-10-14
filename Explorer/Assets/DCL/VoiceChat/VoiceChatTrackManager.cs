@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
@@ -89,7 +90,7 @@ namespace DCL.VoiceChat
         /// </summary>
         public async UniTaskVoid PublishLocalTrackAsync(CancellationToken ct)
         {
-            using var _ = await SlimScope.LockAsync(semaphoreSlimMicrophone);
+            using var _ = await semaphoreSlimMicrophone.LockAsync();
 
             if (microphoneTrack.HasValue)
             {
@@ -316,27 +317,6 @@ namespace DCL.VoiceChat
             {
                 source.Dispose(out MicrophoneRtcAudioSource? inner);
                 inner?.Dispose();
-            }
-        }
-
-        private readonly struct SlimScope : IDisposable
-        {
-            private readonly SemaphoreSlim slim;
-
-            private SlimScope(SemaphoreSlim slim)
-            {
-                this.slim = slim;
-            }
-
-            public static async UniTask<SlimScope> LockAsync(SemaphoreSlim slim)
-            {
-                await slim.WaitAsync();
-                return new SlimScope(slim);
-            }
-
-            public void Dispose()
-            {
-                slim.Release();
             }
         }
     }
