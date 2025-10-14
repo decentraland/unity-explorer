@@ -241,10 +241,10 @@ namespace Global
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
+            var transformPlugin = new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
-                new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, videoTexturePool),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
@@ -278,6 +278,12 @@ namespace Global
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
+                // Transform plugin has to be the last, because of component release flow.
+                // During scene unloading some components are parented to temporary transforms, and if ReleasePoolableComponentSystem
+                // is called for transform, before it is for said component, and transform pool has reached its max capacity,
+                // transform is marked to deletion by ObjectPool.actionOnDestroy, which disables all components in it's 
+                // children, which has caused AudioSources being disabled.
+                transformPlugin,
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
