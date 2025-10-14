@@ -137,7 +137,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             {
                 int messageLength = PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength;
                 writeHead.Write(messageLength);
-                writeHead.Write((uint) CRDTMessageType.PUT_COMPONENT_NETWORK);
+                // writeHead.Write((uint) CRDTMessageType.PUT_COMPONENT_NETWORK);
                 writeHead.Write(rand.Next()); // entity id
                 writeHead.Write(rand.Next(0, 2048)); // component id
                 writeHead.Write(rand.Next()); // timestamp

@@ -37,19 +37,6 @@ namespace Utility
         }
 
         /// <summary>
-        ///     Read an unmanaged type from the span
-        /// </summary>
-        /// <param name="span"></param>
-        /// <typeparam name="T">Unmanaged type</typeparam>
-        /// <returns>The value read</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T ReadConst<T>(this ReadOnlySpan<byte> span) where T: unmanaged
-        {
-            T result = MemoryMarshal.Read<T>(span);
-            return result;
-        }
-
-        /// <summary>
         ///     Read an unmanaged type from the memory and advances its pointer accordingly
         /// </summary>
         /// <param name="memory"></param>
@@ -78,27 +65,6 @@ namespace Utility
         {
             // Read the required number of bytes from the memory
             T stream = MemoryMarshal.Read<T>(memory.Span);
-            memory = memory.Slice(sizeof(T));
-
-            // Then reinterpret them accordingly to the `TEnum` size
-            return Unsafe.As<T, TEnum>(ref stream);
-        }
-
-        /// <summary>
-        ///     Read <see cref="Enum" /> if it is represented by different size in the span and in the memory
-        ///     (E.g. in the memory it is <see cref="byte" />, and in the stream it is <see cref="int" />)
-        /// </summary>
-        /// <param name="memory">Memory stream</param>
-        /// <typeparam name="TEnum">Enum representation in the memory</typeparam>
-        /// <typeparam name="T">Enum representation in the stream</typeparam>
-        /// <returns>Teh value read</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe TEnum ReadEnumAs<TEnum, T>(this ref ReadOnlySpan<byte> memory)
-            where T: unmanaged
-            where TEnum: unmanaged, Enum
-        {
-            // Read the required number of bytes from the memory
-            T stream = MemoryMarshal.Read<T>(memory);
             memory = memory.Slice(sizeof(T));
 
             // Then reinterpret them accordingly to the `TEnum` size
