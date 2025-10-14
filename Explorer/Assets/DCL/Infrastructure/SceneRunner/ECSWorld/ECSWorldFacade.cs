@@ -3,14 +3,15 @@ using Arch.SystemGroups;
 using CRDT;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
-using ECS.ComponentsPooling.Systems;
-using ECS.Unity.Transforms.Components;
+using System.Linq;
+using SystemGroups.Visualiser;
 using UnityEngine;
 using UnityEngine.Profiling;
-using SystemGroups.Visualiser;
 
 namespace SceneRunner.ECSWorld
 {
@@ -46,19 +47,9 @@ namespace SceneRunner.ECSWorld
                 // is called for transform, before it is for said component, and transform pool has reached its max capacity,
                 // transform is marked to deletion by ObjectPool.actionOnDestroy, which disables all components in its 
                 // children, which has caused AudioSources being disabled.
-                List<IFinalizeWorldSystem> result = new(systems);
-            
-                for (int i = 0; i < result.Count; i++)
-                {
-                    if(result[i] is not ReleasePoolableComponentSystem<Transform, TransformComponent>)
-                        continue;
-                
-                    result.Add(result[i]);
-                    result.RemoveAt(i);
-                    break;
-                }
-
-                return result;
+                return systems
+                    .OrderBy(s => s is ReleasePoolableComponentSystem<Transform, TransformComponent> ? 1 : 0)
+                    .ToList();
             }
         }
 
