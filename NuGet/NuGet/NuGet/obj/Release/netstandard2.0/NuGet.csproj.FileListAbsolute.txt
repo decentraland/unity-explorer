@@ -1,0 +1,11 @@
+C:\DCL\EA\NuGet\NuGet\NuGet\bin\Release\netstandard2.0\NuGet.deps.json
+C:\DCL\EA\NuGet\NuGet\NuGet\bin\Release\netstandard2.0\NuGet.dll
+C:\DCL\EA\NuGet\NuGet\NuGet\bin\Release\netstandard2.0\NuGet.pdb
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.csproj.AssemblyReference.cache
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.GeneratedMSBuildEditorConfig.editorconfig
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.AssemblyInfoInputs.cache
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.AssemblyInfo.cs
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.csproj.CoreCompileInputs.cache
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.sourcelink.json
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.dll
+C:\DCL\EA\NuGet\NuGet\NuGet\obj\Release\netstandard2.0\NuGet.pdb

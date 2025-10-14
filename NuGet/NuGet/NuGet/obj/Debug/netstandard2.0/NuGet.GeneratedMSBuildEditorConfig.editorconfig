@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = NuGet
+build_property.ProjectDir = C:\DCL\EA\NuGet\NuGet\NuGet\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
