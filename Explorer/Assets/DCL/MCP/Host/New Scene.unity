@@ -382,6 +382,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7df0047641f68fd4ea18412e248d8aa8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MCP.Host::MCPHost
+  modelName: gemini-2.5-flash
 --- !u!4 &1590534716
 Transform:
   m_ObjectHideFlags: 0
