@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -56,12 +57,12 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteInUse != null)
             {
-                Debug.LogError("Stopping emoteInUse " + emoteInUse.avatarClip.name + " BECAUSE PLAYING " + mainAsset.name);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Stopping emoteInUse " + emoteInUse.avatarClip.name + " BECAUSE PLAYING " + mainAsset.name);
                 Stop(emoteInUse);
             }
             else
             {
-                Debug.LogError("emoteInUse is null PLAYING " + mainAsset.name);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteInUse is null PLAYING " + mainAsset.name);
             }
 
             if (!pools.ContainsKey(mainAsset))
@@ -127,7 +128,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
-            Debug.LogError("emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.IsPlayingSocialEmoteOutcome);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.IsPlayingSocialEmoteOutcome);
             emoteComponent.HasOutcomeAnimationStarted = emoteComponent.IsPlayingSocialEmoteOutcome;
 
             return true;
@@ -378,8 +379,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                                 animationClip.name == emoteMetadata.socialEmoteData.outcomes![i].clips!.Armature_Other!.animation)
                             {
                                 outcomeClips[i].OtherAvatarAnimation = animationClip;
-                                // In order to apply the animation to the "reacting" avatar, the name of the armature object in the clip must match the name in the avatar model
-                               /* ReplaceBoundObjectNameInAnimationClip(animationClip, "Armature_Other", "Armature");*/
                             }
                             else if (emoteMetadata.socialEmoteData.outcomes[i].clips!.Armature != null &&
                                      animationClip.name == emoteMetadata.socialEmoteData.outcomes![i].clips!.Armature!.animation)
@@ -423,14 +422,5 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
         }
-
-        /*private static void ReplaceBoundObjectNameInAnimationClip(AnimationClip animationClip, string patternToSearch, string replacement)
-        {
-            EditorCurveBinding[] bindings = AnimationUtility.GetObjectReferenceCurveBindings(animationClip);
-
-            for (int i = 0; i < bindings.Length; ++i)
-                if (bindings[i].propertyName.Contains(patternToSearch, StringComparison.InvariantCultureIgnoreCase))
-                    bindings[i].propertyName = replacement;
-        }*/
     }
 }

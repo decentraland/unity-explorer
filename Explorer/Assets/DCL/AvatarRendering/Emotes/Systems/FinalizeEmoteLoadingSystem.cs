@@ -141,11 +141,11 @@ namespace DCL.AvatarRendering.Emotes
             if (!promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
                 return;
 
-            Debug.LogError("xx--> AUDIO PROMISE");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> AUDIO PROMISE");
 
             if (result.Succeeded)
             {
-                Debug.LogError("xx--> success");
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> success");
 
                 if (emote.IsSocial)
                 {
@@ -154,18 +154,18 @@ namespace DCL.AvatarRendering.Emotes
 
                     for (int i = 0; i < emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length; ++i)
                     {
-                        Debug.LogError("xx--> outcome " + i);
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> outcome " + i);
 
                         if (emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio != null)
                         {
                             string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
                             string contentName = shape + "/" + emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio;
 
-                            Debug.LogError("xx--> contentName " + contentName);
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contentName " + contentName);
 
                             for (int j = 0; j < emote.Model.Asset.content.Length; ++j)
                             {
-                                Debug.LogError("xx--> comparing: " + emote.Model.Asset.content[j].file);
+                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> comparing: " + emote.Model.Asset.content[j].file);
 
                                 if (string.Compare(emote.Model.Asset.content[j].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
                                 {
@@ -175,13 +175,13 @@ namespace DCL.AvatarRendering.Emotes
                                 }
                             }
 
-                            Debug.LogError("xx--> contained in? " + promise.LoadingIntention.CommonArguments.URL.Value);
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contained in? " + promise.LoadingIntention.CommonArguments.URL.Value);
                             string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
                             // If the current result corresponds to the outcome at current position...
                             if (audioURL.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                Debug.LogError("xx--> outcomeAudioHash " + outcomeAudioHash);
+                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> outcomeAudioHash " + outcomeAudioHash);
 
                                 // This check is necessary because otherwise it will add more than one of each audio clip
                                 bool alreadyContainsAudio = false;
@@ -197,7 +197,7 @@ namespace DCL.AvatarRendering.Emotes
 
                                 if (!alreadyContainsAudio)
                                 {
-                                    Debug.LogError("xx--> ADDED" + outcomeAudioHash);
+                                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> ADDED" + outcomeAudioHash);
 
                                     result.Asset!.Asset.name = audioURL;
                                     emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
@@ -208,7 +208,7 @@ namespace DCL.AvatarRendering.Emotes
                         }
                         else
                         {
-                            Debug.LogError("xx--> NULL");
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> NULL");
                             emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
                         }
                     }
