@@ -14,7 +14,7 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class PrivateVoiceChatController : IDisposable
+    public class PrivateVoiceChatPresenter : IDisposable
     {
         private readonly PrivateVoiceChatView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
 
         private CancellationTokenSource cts = new ();
 
-        public PrivateVoiceChatController(
+        public PrivateVoiceChatPresenter(
             PrivateVoiceChatView view,
             IVoiceChatOrchestrator privateCallOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,

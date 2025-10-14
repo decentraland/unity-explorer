@@ -4,14 +4,14 @@ using System;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class SceneVoiceChatController : IDisposable
+    public class SceneVoiceChatPresenter : IDisposable
     {
         private readonly SceneVoiceChatPanelView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IDisposable currentSceneActiveCallSubscription;
         private readonly IDisposable currentCallStatusSubscription;
 
-        public SceneVoiceChatController(
+        public SceneVoiceChatPresenter(
             SceneVoiceChatPanelView view,
             IVoiceChatOrchestrator voiceChatOrchestrator)
         {

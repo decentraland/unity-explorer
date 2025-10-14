@@ -18,7 +18,7 @@ namespace DCL.Chat.ChatServices
         public event Action<RaycastResult?>? OnClickDetected;
 
         private bool isPaused;
-        private static readonly ObjectPool<PointerEventData> PointerEventDataPool =
+        private static readonly ObjectPool<PointerEventData> POINTER_EVENT_DATA_POOL =
             new(() => new PointerEventData(EventSystem.current));
 
         public CentralizedChatClickDetectionService()
@@ -43,8 +43,8 @@ namespace DCL.Chat.ChatServices
             if (isPaused) return;
 
             var clickPosition = GetPointerPosition(context);
-            
-            using PooledObject<PointerEventData> pooledEventData = PointerEventDataPool.Get(out PointerEventData eventData);
+
+            using PooledObject<PointerEventData> pooledEventData = POINTER_EVENT_DATA_POOL.Get(out PointerEventData eventData);
             eventData.position = clickPosition;
 
             using PooledObject<List<RaycastResult>> pooledResults = ListPool<RaycastResult>.Get(out List<RaycastResult> results);
