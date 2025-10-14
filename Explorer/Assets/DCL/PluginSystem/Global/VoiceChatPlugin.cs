@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
-        private VoiceChatPanelPresenter? voiceChatPanelController;
+        private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
 
         public VoiceChatPlugin(
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
                 return;
             }
 
-            voiceChatPanelController?.Dispose();
+            voiceChatPanelPresenter?.Dispose();
             voiceChatPluginSettingsAsset.Dispose();
             microphoneStateManager?.Dispose();
             nametagsHandler?.Dispose();
@@ -127,12 +127,7 @@ namespace DCL.PluginSystem.Global
             AudioClipConfig unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
-            // Ignore buttons that would lead to the conflicting state
-            var chatClickDetectionService = new ChatClickDetectionService(
-                (RectTransform)voiceChatPanelView.transform
-            );
-
-            voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus, chatClickDetectionService);
+            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
         }

@@ -140,8 +140,6 @@ namespace DCL.VoiceChat
             view.PointerEnter -= OnPointerEnter;
             view.PointerExit -= OnPointerExit;
 
-            clickDetectionService.OnClickInside -= HandleClickInside;
-            clickDetectionService.OnClickOutside -= HandleClickOutside;
             clickDetectionService.Dispose();
         }
     }
