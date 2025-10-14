@@ -214,8 +214,7 @@ namespace DCL.Chat
 
         private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
-            if (evt.FromInitialization)
-                view.SelectConversation(evt.Channel.Id);
+            view.SelectConversation(evt.Channel.Id, !evt.FromInitialization);
         }
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
