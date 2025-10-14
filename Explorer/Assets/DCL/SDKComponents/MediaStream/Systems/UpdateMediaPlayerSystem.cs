@@ -94,14 +94,13 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent, [Data] float dt)
+        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             var address = MediaAddress.New(sdkComponent.Url!);
 
-            // In case of source updating we wait until the next update
-            if (TryUpdateSource(ref component, address)) return;
+            if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
             if (component.State != VideoState.VsError)
             {
@@ -120,13 +119,13 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
+        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             var address = MediaAddress.New(sdkComponent.Src!);
 
-            if (TryUpdateSource(ref component, address)) return;
+            if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
             if (component.State != VideoState.VsError)
             {
@@ -185,61 +184,29 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private bool TryUpdateSource(ref MediaPlayerComponent component,
-            MediaAddress mediaAddress)
+        private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
         {
-            if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
+            if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
-                component.MediaPlayer.CloseCurrentStream();
+                string selfUrl = urlMediaAddress!.Value.Url;
+                string otherUrl = other!.Value.Url;
 
-                UpdateStreamUrl(ref component, mediaAddress);
+                if (selfUrl == otherUrl
+                    || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
 
-                if (component.State != VideoState.VsError)
-                {
-                    component.Cts = component.Cts.SafeRestart();
-                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, GetReportData(), component.Cts.Token).Forget();
-                }
-
+                RemoveAndForceReInitialization(ref component, entity);
                 return true;
             }
 
-            return false;
+            if (component.MediaAddress == address) return false;
 
-            bool ShouldUpdateSource(in MediaPlayerComponent component) =>
-                component.MediaAddress.Match(
-                    (sceneData, mediaAddress),
-                    onUrlMediaAddress: static (ctx, componentAddress) =>
-                    {
-                        string mediaAddressUrl = ctx.mediaAddress.IsUrlMediaAddress(out var otherUrl) ? otherUrl!.Value.Url : "";
-                        return !ctx.sceneData.TryGetMediaUrl(mediaAddressUrl, out URLAddress localMediaUrl) || componentAddress.Url != localMediaUrl;
-                    },
-                    onLivekitAddress: static (_, _) => true
-                );
+            RemoveAndForceReInitialization(ref component, entity);
+            return true;
 
-            void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)
+            void RemoveAndForceReInitialization(ref MediaPlayerComponent component, Entity entity)
             {
-                if (component.MediaAddress.IsLivekitAddress(out _))
-                {
-                    component.MediaAddress = mediaAddress;
-                    return;
-                }
-
-                mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
-                string url = urlMediaAddress!.Value.Url;
-
-                bool isValidStreamUrl = url.IsValidUrl();
-                bool isValidLocalPath = false;
-
-                if (!isValidStreamUrl)
-                {
-                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
-
-                    if (isValidLocalPath)
-                        mediaAddress = MediaAddress.New(mediaUrl.Value);
-                }
-
-                component.MediaAddress = mediaAddress;
-                component.SetState(isValidStreamUrl || isValidLocalPath || mediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+                component.Dispose();
+                World.Remove<MediaPlayerComponent>(entity);
             }
         }
 
