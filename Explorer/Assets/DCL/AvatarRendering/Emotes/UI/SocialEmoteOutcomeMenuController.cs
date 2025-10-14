@@ -92,8 +92,10 @@ namespace DCL.SocialEmotes.UI
             {
                 viewInstance!.ResetChoices();
 
-                for (int i = 0; i < interaction.Value.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!.Length; ++i)
-                    viewInstance.AddChoice(interaction.Value.Emote.Model.Asset.metadata.emoteDataADR287!.outcomes![i].title);
+                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Value.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!;
+
+                for (int i = 0; i < outcomes.Length; ++i)
+                    viewInstance.AddChoice(outcomes[i].title);
 
                 viewInstance.SetEmoteTitle(interaction.Value.Emote.Model.Asset.metadata.name);
             }
