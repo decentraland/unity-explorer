@@ -198,6 +198,8 @@ MonoBehaviour:
       Severity: 1
     - Category: COMMS_SCENE_HANDLER
       Severity: 0
+    - Category: LIVEKIT
+      Severity: 2
     - Category: UNSPECIFIED
       Severity: 3
     - Category: UNSPECIFIED
@@ -576,52 +578,6 @@ MonoBehaviour:
       Severity: 2
     - Category: TRANSLATE
       Severity: 3
-    - Category: ASSET_BUNDLES
-      Severity: 3
-    - Category: ASSETS_PROVISION
-      Severity: 3
-    - Category: ASSETS_PROVISION
-      Severity: 2
-    - Category: ASSET_BUNDLES
-      Severity: 2
-    - Category: AUTHENTICATION
-      Severity: 3
-    - Category: AUTHENTICATION
-      Severity: 2
-    - Category: WEARABLE
-      Severity: 3
-    - Category: WEARABLE
-      Severity: 2
-    - Category: VERSION_CONTROL
-      Severity: 3
-    - Category: VERSION_CONTROL
-      Severity: 2
-    - Category: STARTUP
-      Severity: 3
-    - Category: STARTUP
-      Severity: 2
-    - Category: REALM
-      Severity: 3
-    - Category: REALM
-      Severity: 2
-    - Category: PROFILE
-      Severity: 2
-    - Category: PLUGINS
-      Severity: 3
-    - Category: PLUGINS
-      Severity: 2
-    - Category: ONBOARDING
-      Severity: 3
-    - Category: ONBOARDING
-      Severity: 2
-    - Category: FEATURE_FLAGS
-      Severity: 3
-    - Category: FEATURE_FLAGS
-      Severity: 2
-    - Category: DEBUG
-      Severity: 3
-    - Category: DEBUG
-      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
