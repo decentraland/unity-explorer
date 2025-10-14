@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
+using DCL.Landscape.Parcel;
 using DCL.LOD;
 using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
@@ -78,6 +79,7 @@ namespace Global.Dynamic
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly StartParcel startParcel;
+        private readonly LandscapeParcelData landscapeParcelData;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -96,7 +98,8 @@ namespace Global.Dynamic
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
-            StartParcel startParcel)
+            StartParcel startParcel,
+            LandscapeParcelData landscapeParcelData)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -127,6 +130,7 @@ namespace Global.Dynamic
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.startParcel = startParcel;
+            this.landscapeParcelData = landscapeParcelData;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
         }
@@ -173,7 +177,7 @@ namespace Global.Dynamic
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData);
+                partitionSettings, roadCoordinates, realmData, landscapeParcelData);
 
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);

@@ -68,6 +68,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             if (stage == LoadingStatus.LoadingStage.Completed)
             {
+                var spanData = new SpanData
+                {
+                    TransactionName = LOADING_TRANSACTION_NAME,
+                    SpanName = stage.ToString(),
+                    SpanOperation = $"loading_completed",
+                    Depth = 0
+                };
+                sentryTransactionManager.StartSpan(spanData);
                 sentryTransactionManager.EndTransaction(LOADING_TRANSACTION_NAME);
             }
         }

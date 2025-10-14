@@ -14,6 +14,8 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
+using DCL.Landscape.Parcel;
+using DCL.Landscape.Utils;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -75,6 +77,7 @@ namespace Global
         public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
+        public readonly LandscapeParcelData LandscapeParcelData = new ();
 
         private ProvidedInstance<CharacterObject> characterObject;
 
@@ -114,6 +117,7 @@ namespace Global
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
+        public LandscapeParcelController LandscapeParcelController { get; private set; }
 
         public void Dispose()
         {
@@ -149,6 +153,7 @@ namespace Global
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             ObjectProxy<IProfileRepository> profileRepository,
+            DecentralandEnvironment environment,
             CancellationToken ct,
             bool hasDebugFlag,
             bool enableGPUInstancing = true)
@@ -293,6 +298,13 @@ namespace Global
                 promisesAnalyticsPlugin,
                 gltfPlugin
             };
+
+            container.LandscapeParcelController = new LandscapeParcelController(
+                    assetsProvisioner,
+                    new LandscapeParcelService(webRequestsContainer.WebRequestController,
+                        environment.Equals(DecentralandEnvironment.Zone)),
+                    container.LandscapeParcelData
+                );
 
             return (container, true);
         }
