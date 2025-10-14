@@ -40,45 +40,17 @@
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Landscape/Assets/Trees/Tree03/Tree03_Billboard_LOD3.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Landscape/Assets/Trees/Tree03/Tree03_Billboard_LOD3.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Landscape/Assets/Trees/Tree03/Tree03_LOD0.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Landscape/Assets/Trees/Tree03/Tree03_LOD0.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Landscape/Assets/Trees/Tree03/Trunk_LOD0.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Landscape/Assets/Trees/Tree03/Trunk_LOD0.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/MCP/Host/MCPClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/MCP/Host/MCPClient.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/MCP/Host/MCPHost.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/MCP/Host/MCPHost.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/MCP/Host/New Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/MCP/Host/New Scene.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Roads/Data/RoadAssets/RoadRedesign/TreeRoad.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Roads/Data/RoadAssets/RoadRedesign/TreeRoad.mat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Roads/Data/RoadAssets/RoadRedesign/TreeRoad_Billboard.mat" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/DCL/Roads/Data/RoadAssets/RoadRedesign/TreeRoad_Billboard.mat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Buffers.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Buffers.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Memory.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Memory.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Numerics.Vectors.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Numerics.Vectors.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Runtime.CompilerServices.Unsafe.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Runtime.CompilerServices.Unsafe.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Threading.Tasks.Extensions.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Plugins/GoogleGemini/System.Threading.Tasks.Extensions.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Rendering/ForwardRenderer - Low.asset" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Rendering/ForwardRenderer - Low.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Rendering/ForwardRenderer - Medium.asset" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Rendering/ForwardRenderer - Medium.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Resources/DOTweenSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Resources/DOTweenSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/Scenes/Main.unity" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/Scenes/Main.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Explorer/Assets/TextMesh Pro/Fonts &amp; Materials/Inter-Bold SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/../../Explorer/Assets/TextMesh Pro/Fonts &amp; Materials/Inter-Bold SDF.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/NuGet.deps.json" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/NuGet.deps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/NuGet.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/NuGet.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/NuGet.deps.json" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/NuGet.deps.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/NuGet.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/NuGet.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Buffers.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Buffers.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Memory.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Memory.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Numerics.Vectors.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Numerics.Vectors.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Runtime.CompilerServices.Unsafe.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Runtime.CompilerServices.Unsafe.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Threading.Tasks.Extensions.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/bin/Release/netstandard2.0/publish/System.Threading.Tasks.Extensions.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.assets.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.assets.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Debug/netstandard2.0/NuGet.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/NuGet.csproj.nuget.dgspec.json" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/NuGet.csproj.nuget.dgspec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.assets.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.assets.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.csproj.CoreCompileInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.csproj.CoreCompileInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.dll" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/NuGet.sourcelink.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/PublishOutputs.ef2c1d8943.txt" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/Release/netstandard2.0/PublishOutputs.ef2c1d8943.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/project.assets.json" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/project.assets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/project.nuget.cache" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/project.nuget.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/project.packagespec.json" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/project.packagespec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/rider.project.model.nuget.info" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NuGet/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/NuGet/obj/rider.project.restore.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.NuGet/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.NuGet/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,6 +111,7 @@
       <updated>1760457619202</updated>
       <workItem from="1760457620510" duration="3123000" />
       <workItem from="1760466812818" duration="2177000" />
+      <workItem from="1760476885335" duration="844000" />
     </task>
     <servers />
   </component>

@@ -10,23 +10,16 @@ namespace DCL.MCP.Host
 {
     public class MCPClient : MonoBehaviour
     {
+        [SerializeField] private string serverEntry = @"c:\\DCL\\MCPServers\\explorer-mcp-server\\build\\index.js";
+        private McpClient _client;
+
         [ContextMenu("TEST AI")]
         public void Test() =>
             TestAsync().Forget();
 
         public async UniTask TestAsync()
         {
-            // Абсолютный путь к вашему TS MCP серверу
-            string serverEntry = @"c:\\DCL\\MCPServers\\explorer-mcp-server\\build\\index.js";
-
-            var clientTransport = new StdioClientTransport(new StdioClientTransportOptions
-            {
-                Name = "explorer-mcp-server",
-                Command = "node",
-                Arguments = new[] { serverEntry },
-            });
-
-            McpClient client = await McpClient.CreateAsync(clientTransport);
+            McpClient client = await EnsureConnectedAsync();
 
             // Tools
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: CancellationToken.None);
@@ -57,6 +50,34 @@ namespace DCL.MCP.Host
                 if (!string.IsNullOrEmpty(text))
                     Debug.Log($"[MCP] Resource content: {text}");
             }
+        }
+
+        public async UniTask<McpClient> EnsureConnectedAsync(CancellationToken cancellationToken = default)
+        {
+            if (_client != null)
+                return _client;
+
+            var clientTransport = new StdioClientTransport(new StdioClientTransportOptions
+            {
+                Name = "explorer-mcp-server",
+                Command = "node",
+                Arguments = new[] { serverEntry },
+            });
+
+            _client = await McpClient.CreateAsync(clientTransport, cancellationToken: cancellationToken);
+            return _client;
+        }
+
+        public async UniTask<IList<McpClientTool>> GetToolsAsync(CancellationToken cancellationToken = default)
+        {
+            McpClient client = await EnsureConnectedAsync(cancellationToken);
+            return await client.ListToolsAsync(cancellationToken: cancellationToken);
+        }
+
+        public async UniTask<CallToolResult> InvokeToolAsync(string toolName, IDictionary<string, object?> arguments, CancellationToken cancellationToken = default)
+        {
+            McpClient client = await EnsureConnectedAsync(cancellationToken);
+            return await client.CallToolAsync(toolName, new Dictionary<string, object?>(arguments), cancellationToken: cancellationToken);
         }
     }
 }
