@@ -36,7 +36,7 @@
     width: 40px;
     height: 28px;
     align-self: center;
-    bottom: -28px;
+    bottom: -27px;
     overflow: hidden;
     scale: 0 0;
     transition: scale var(--message-transition-duration);

@@ -47,7 +47,7 @@ namespace DCL.Nametags
             World world,
             IObjectPool<NametagHolder> nametagHolderPool,
             NametagsData nametagsData
-            ) : base(world)
+        ) : base(world)
         {
             this.nametagHolderPool = nametagHolderPool;
             this.nametagsData = nametagsData;
@@ -84,7 +84,8 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind ||
@@ -99,7 +100,8 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (avatarShape.HiddenByModifierArea ||
@@ -149,7 +151,8 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
+        private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
             if (avatarShape.HiddenByModifierArea ||
@@ -185,7 +188,7 @@ namespace DCL.Nametags
 
             // TODO: Maybe optimize?
             float normalizedDistance = (distance - NametagViewConstants.DEFAULT_OPACITY_MAX_DISTANCE) / (MAX_DISTANCE - NametagViewConstants.DEFAULT_OPACITY_MAX_DISTANCE);
-            float opacity = 1f - normalizedDistance;
+            float opacity = Mathf.Clamp01(1f - normalizedDistance);
 
             nametagHolder.Nametag.style.opacity = opacity;
         }
