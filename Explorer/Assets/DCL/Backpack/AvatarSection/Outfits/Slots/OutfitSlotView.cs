@@ -11,7 +11,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
     {
         public event Action? OnSaveClicked;
         public event Action? OnEquipClicked;
-        public event Action? OnUnEquipClicked;
         public event Action? OnDeleteClicked;
 
         [Header("Containers")]
@@ -46,7 +45,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         {
             saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
             equipButton?.onClick.AddListener(() => OnEquipClicked?.Invoke());
-            unEquipButton?.onClick.AddListener(() => OnUnEquipClicked?.Invoke());
             deleteButton?.onClick.AddListener(() => OnDeleteClicked?.Invoke());
         }
 
@@ -119,10 +117,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         private void OnDestroy()
         {
-            // Clean up listeners
             saveButton?.onClick.RemoveAllListeners();
             equipButton?.onClick.RemoveAllListeners();
-            unEquipButton?.onClick.RemoveAllListeners();
             deleteButton?.onClick.RemoveAllListeners();
         }
     }

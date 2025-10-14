@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Models;
+using DCL.Profiles;
+using DCL.Web3;
 using ECS;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Repository
@@ -28,33 +30,40 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             };
 
         private readonly IRealmData realm;
+        private readonly INftNamesProvider nftNamesProvider;
 
-        public OutfitsRepository(IRealmData realm)
+        public OutfitsRepository(IRealmData realm,
+            INftNamesProvider nftNamesProvider)
         {
             this.realm = realm;
+            this.nftNamesProvider = nftNamesProvider;
         }
 
         /// <summary>
         ///     Deploys the complete set of outfits for a user to the Catalyst network.
         /// </summary>
-        public async UniTask SetAsync(string userId, List<OutfitItem> outfits, CancellationToken ct)
+        public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct, bool noExtraSlots = false)
         {
             if (realm is { Configured: false })
                 return;
 
-            if (string.IsNullOrEmpty(userId))
+            if (profile == null)
+                throw new ArgumentException("Cannot save outfits for a null profile");
+
+            if (string.IsNullOrEmpty(profile?.UserId))
                 throw new ArgumentException("Cannot save outfits for a user with an empty UserId");
 
+            var namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
             var metadata = new OutfitsMetadata
             {
-                outfits = outfits, namesForExtraSlots = new List<string>()
+                outfits = outfits, namesForExtraSlots = noExtraSlots ? new List<string>() : new List<string>(namesForExtraSlots.Names)
             };
 
             var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
             {
                 version = OutfitsEntity.DEFAULT_VERSION, pointers = new[]
                 {
-                    $"{userId}:outfits"
+                    $"{profile.UserId}:outfits"
                 },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>()
             };

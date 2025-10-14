@@ -17,8 +17,8 @@ namespace DCL.Backpack
         private readonly RectTransform rectTransform;
         private readonly IWebBrowser webBrowser;
         private readonly BackpackSlotsController slotsController;
-        private readonly CategoriesController categoriesController;
-        private readonly OutfitsController outfitsController;
+        private readonly CategoriesPresenter categoriesPresenter;
+        private readonly OutfitsPresenter outfitsPresenter;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
         private readonly BackpackGridController backpackGridController;
@@ -32,8 +32,8 @@ namespace DCL.Backpack
             IBackpackEventBus backpackEventBus,
             BackpackInfoPanelController backpackInfoPanelController,
             BackpackGridController backpackGridController,
-            CategoriesController categoriesController,
-            OutfitsController outfitsController,
+            CategoriesPresenter categoriesPresenter,
+            OutfitsPresenter outfitsPresenter,
             IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
@@ -41,8 +41,8 @@ namespace DCL.Backpack
             this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
-            this.categoriesController = categoriesController;
-            this.outfitsController = outfitsController;
+            this.categoriesPresenter = categoriesPresenter;
+            this.outfitsPresenter = outfitsPresenter;
             
             rectTransform = view.GetComponent<RectTransform>();
 
@@ -56,8 +56,8 @@ namespace DCL.Backpack
 
             tabsManager = AvatarTabsManager.CreateFromView(
                 view,
-                categoriesController,
-                outfitsController);
+                categoriesPresenter,
+                outfitsPresenter);
 
             tabsManager.InitializeAndEnable();
         }
@@ -71,8 +71,8 @@ namespace DCL.Backpack
         {
             tabsManager.Dispose();
             slotsController?.Dispose();
-            categoriesController?.Dispose();
-            outfitsController?.Dispose();
+            categoriesPresenter?.Dispose();
+            outfitsPresenter?.Dispose();
             backpackInfoPanelController?.Dispose();
             view.marketplaceButton.onClick.RemoveAllListeners();
         }

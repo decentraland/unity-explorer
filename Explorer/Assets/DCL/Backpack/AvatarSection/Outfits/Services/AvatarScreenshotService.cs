@@ -36,7 +36,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 await UniTask.SwitchToMainThread(ct);
 
                 controller.SetPlatformVisible(false);
-
+                controller.ResetAvatarMovement();
+                controller.ResetZoom();
+                await UniTask.DelayFrame(2, PlayerLoopTiming.LastPostLateUpdate, ct);
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
                 var source = controller.CurrentRenderTexture;

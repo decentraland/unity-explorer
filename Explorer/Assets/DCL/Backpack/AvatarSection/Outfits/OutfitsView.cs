@@ -21,5 +21,19 @@ namespace DCL.Backpack.AvatarSection.Outfits
 
         [SerializeField]
         public Sprite OutfitPopoupDeleteIcon;
+
+        public void Activate()
+        {
+            gameObject.SetActive(true);
+            BackpackSearchBar.Activate(false);
+            BackpackSortDropdown.Activate(false);
+        }
+
+        public void Deactivate()
+        {
+            gameObject.SetActive(false);
+            BackpackSearchBar.Activate(true);
+            BackpackSortDropdown.Activate(true);
+        }
     }
 }

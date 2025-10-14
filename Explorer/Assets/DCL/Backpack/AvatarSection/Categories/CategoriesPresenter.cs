@@ -7,14 +7,14 @@ using UnityEngine;
 
 namespace DCL.Backpack
 {
-    public class CategoriesController : ISection, IDisposable
+    public class CategoriesPresenter : ISection, IDisposable
     {
         private readonly CategoriesView view;
         private readonly BackpackGridController backpackGridController;
         private readonly BackpackSearchController backpackSearchController;
         private readonly BackpackCommandBus commandBus;
 
-        public CategoriesController(
+        public CategoriesPresenter(
             CategoriesView view,
             BackpackGridController backpackGridController,
             BackpackCommandBus commandBus,

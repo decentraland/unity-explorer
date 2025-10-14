@@ -87,31 +87,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 outfitsAreDirty = true;
         }
 
-        public async UniTask DeployOutfitsIfDirtyAsync(CancellationToken ct)
+        public UniTask DeployOutfitsIfDirtyAsync(CancellationToken ct)
         {
-            if (!outfitsAreDirty) return;
-
-            try
-            {
-                var profile = await selfProfile.ProfileAsync(ct);
-                if (profile != null)
-                {
-                    string? userId = profile?.UserId;
-                    if (userId != null)
-                        await outfitsRepository.SetAsync(userId, localOutfits, ct);
-                    else
-                        ReportHub.LogError(ReportCategory.OUTFITS,
-                            "Cannot deploy outfits, self profile has no UserId.");
-                }
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex, $"{ex.Message}");
-            }
-            finally
-            {
-                outfitsAreDirty = false;
-            }
+            throw new NotImplementedException();
         }
 
         private OutfitItem ConvertOutfitDataToOutfitItem(int slot, OutfitData data)
@@ -294,7 +272,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             try
             {
                 // The repository saves the *entire collection* of outfits, which is what we want.
-                await outfitsRepository.SetAsync(profile.UserId, localOutfits, ct);
+                await outfitsRepository.SetAsync(profile, localOutfits, ct);
                 outfitsAreDirty = false; // The save was successful, so the state is no longer dirty.
                 return newItem; // Return the new item on success
             }
@@ -324,7 +302,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             {
                 // 1. Deploy the metadata change to the server FIRST.
                 // This is the operation most likely to fail due to network issues.
-                await outfitsRepository.SetAsync(profile.UserId, localOutfits, ct);
+                await outfitsRepository.SetAsync(profile, localOutfits, ct);
 
                 // 2. If the server update succeeds, delete the local screenshot file.
                 // This is a local operation and is less likely to fail.

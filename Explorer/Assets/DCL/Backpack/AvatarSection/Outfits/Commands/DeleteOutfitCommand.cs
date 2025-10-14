@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack.AvatarSection.Outfits.Models;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Diagnostics;
+using DCL.Profiles.Self;
 using DCL.UI.ConfirmationDialog.Opener;
 using MVC;
 
@@ -25,17 +30,23 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private const string OUTFIT_POPUP_DELETE_CANCEL_TEXT = "CANCEL";
         private const string OUTFIT_POPUP_DELETE_CONFIRM_TEXT = "YES";
 
-        private readonly IOutfitsService outfitsService;
+        private readonly ISelfProfile selfProfile;
+        private readonly OutfitsRepository outfitsRepository;
+        private readonly IAvatarScreenshotService screenshotService;
 
-        public DeleteOutfitCommand(IOutfitsService outfitsService)
+        public DeleteOutfitCommand(ISelfProfile selfProfile,
+            OutfitsRepository outfitsRepository,
+            IAvatarScreenshotService screenshotService)
         {
-            this.outfitsService = outfitsService;
+            this.selfProfile = selfProfile;
+            this.outfitsRepository = outfitsRepository;
+            this.screenshotService = screenshotService;
         }
 
         public async UniTask<DeleteOutfitOutcome> ExecuteAsync(
             int slotIndex,
-            CancellationToken ct,
-            Action? onConfirmed = null)
+            IReadOnlyList<OutfitItem> currentOutfits,
+            CancellationToken ct)
         {
             ConfirmationResult decision;
             try
@@ -60,16 +71,23 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             try
             {
-                // The command now makes a SINGLE, simple call to the service.
-                bool success = await outfitsService.DeleteOutfitFromServerAsync(slotIndex, ct);
-
-                if (success)
+                var profile = await selfProfile.ProfileAsync(ct);
+                if (profile == null)
                 {
-                    onConfirmed?.Invoke();
-                    return DeleteOutfitOutcome.Success;
+                    ReportHub.LogError(ReportCategory.OUTFITS, "Delete failed: user profile not found.");
+                    return DeleteOutfitOutcome.Failed;
                 }
 
-                return DeleteOutfitOutcome.Failed;
+                // Create the new state without the deleted outfit
+                List<OutfitItem> updatedOutfits = currentOutfits.Where(o => o.slot != slotIndex).ToList();
+
+                // First, deploy the metadata change. This is the most likely to fail.
+                await outfitsRepository.SetAsync(profile, updatedOutfits, ct, noExtraSlots: true);
+
+                // If server update succeeds, delete the local screenshot.
+                await screenshotService.DeleteScreenshotAsync(slotIndex, ct);
+
+                return DeleteOutfitOutcome.Success;
             }
             catch (OperationCanceledException)
             {

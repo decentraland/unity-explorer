@@ -62,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly OutfitsRepository outfitsRepository;
         private readonly IRealmData realmData;
         private readonly IWebRequestController webController;
+        private readonly INftNamesProvider nftNamesProvider;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -95,7 +96,8 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             OutfitsRepository outfitsRepository,
             IRealmData realmData,
-            IWebRequestController webController)
+            IWebRequestController webController,
+            INftNamesProvider nftNamesProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -125,6 +127,7 @@ namespace DCL.PluginSystem.Global
             this.outfitsRepository = outfitsRepository;
             this.realmData = realmData;
             this.webController = webController;
+            this.nftNamesProvider = nftNamesProvider;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -248,7 +251,9 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 webController,
                 equippedWearables,
-                wearableStorage
+                wearableStorage,
+                wearablesProvider,
+                nftNamesProvider
             );
         }
 

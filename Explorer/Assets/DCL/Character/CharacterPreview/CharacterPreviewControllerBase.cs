@@ -314,8 +314,15 @@ namespace DCL.CharacterPreview
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);
 
-        private void ResetAvatarMovement() =>
+        public void ResetAvatarMovement()
+        {
             previewController?.ResetAvatarMovement();
+        }
+
+        public void ResetZoom()
+        {
+            previewController?.ResetZoom();
+        }
 
         public void SetPlatformVisible(bool isVisible)
         {

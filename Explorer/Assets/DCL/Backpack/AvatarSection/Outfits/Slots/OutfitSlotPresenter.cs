@@ -33,7 +33,13 @@ namespace DCL.Backpack.Slots
 
     public class OutfitSlotPresenter : IDisposable
     {
-        private readonly OutfitsController ownerController;
+        public event Action<int> OnSaveRequested;
+        public event Action<int> OnDeleteRequested;
+        public event Action<OutfitItem> OnEquipRequested;
+
+        public readonly OutfitSlotView view;
+        public readonly int slotIndex;
+        
         private readonly HoverHandler hoverHandler;
         private readonly IAvatarScreenshotService screenshotService;
         private CancellationTokenSource cts = new ();
@@ -42,44 +48,42 @@ namespace DCL.Backpack.Slots
         private OutfitSlotState currentState;
         private OutfitItem? currentOutfitData;
         private Texture2D? currentThumbnail;
-        private readonly Sprite popupDeleteIcon;
 
-        public readonly OutfitSlotView view;
-        public readonly int slotIndex;
-
-        public OutfitSlotPresenter(
-            Sprite popupDeleteIcon,
-            OutfitSlotView view,
+        public OutfitSlotPresenter( OutfitSlotView view,
             int slotIndex,
-            OutfitsController ownerController,
             IAvatarScreenshotService screenshotService)
         {
-            this.popupDeleteIcon = popupDeleteIcon;
             this.view = view;
             this.slotIndex = slotIndex;
-            this.ownerController = ownerController;
             this.screenshotService = screenshotService;
 
             view.OnSaveClicked += HandleSaveClicked;
             view.OnDeleteClicked += HandleDeleteClicked;
             view.OnEquipClicked += HandleEquipClicked;
-            view.OnUnEquipClicked += HandleUnequipClicked;
             
             hoverHandler = view.hoverHandler;
             hoverHandler.OnHoverEntered += OnHoverEntered;
             hoverHandler.OnHoverExited += OnHoverExited;
         }
 
+        public OutfitItem GetOutfitData()
+        {
+            return currentOutfitData!;
+        }
+
         private void HandleSaveClicked()
         {
-            // HandleSaveClickedAsync().Forget();
-            ownerController.OnSaveOutfitRequested(slotIndex);
+            OnSaveRequested?.Invoke(slotIndex);
         }
 
         private void HandleDeleteClicked()
         {
-            // HandleDeleteClickedAsync().Forget();
-            ownerController.OnDeleteOutfitRequested(slotIndex);
+            OnDeleteRequested?.Invoke(slotIndex);
+        }
+
+        private void HandleEquipClicked()
+        {
+            OnEquipRequested?.Invoke(currentOutfitData!);
         }
 
         private void OnHoverEntered()
@@ -94,11 +98,13 @@ namespace DCL.Backpack.Slots
             UpdateView();
         }
 
-        public void SetData(OutfitItem item)
+        public void SetData(OutfitItem item, bool loadThumbnail = true)
         {
             currentOutfitData = item;
             SetState(OutfitSlotState.Full, item);
-            LoadExistingScreenshotAsync().Forget();
+
+            if (loadThumbnail)
+                LoadExistingScreenshotAsync().Forget();
         }
 
         public void SetEmpty()
@@ -142,17 +148,6 @@ namespace DCL.Backpack.Slots
             }
         }
 
-        private void HandleEquipClicked()
-        {
-            ReportHub.Log(ReportCategory.OUTFITS, "Equip outfit clicked");
-            ownerController.OnEquipOutfitRequested(currentOutfitData);
-        }
-
-        private void HandleUnequipClicked()
-        {
-            ReportHub.Log(ReportCategory.OUTFITS, "Unequip outfit clicked");
-        }
-
         private async UniTaskVoid LoadExistingScreenshotAsync()
         {
             if (currentOutfitData == null) return;
@@ -186,7 +181,6 @@ namespace DCL.Backpack.Slots
             cts.SafeCancelAndDispose();
             view.OnSaveClicked -= HandleSaveClicked;
             view.OnEquipClicked -= HandleEquipClicked;
-            view.OnUnEquipClicked -= HandleUnequipClicked;
             view.OnDeleteClicked -= HandleDeleteClicked;
 
             hoverHandler.OnHoverEntered -= OnHoverEntered;
@@ -197,11 +191,6 @@ namespace DCL.Backpack.Slots
                 Object.Destroy(currentThumbnail);
                 currentThumbnail = null;
             }
-        }
-
-        public OutfitItem GetOutfitData()
-        {
-            return currentOutfitData!;
         }
     }
 }

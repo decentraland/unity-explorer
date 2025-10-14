@@ -18,9 +18,11 @@ using System.Linq;
 using System.Threading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
+using DCL.Backpack.AvatarSection.Outfits.Slots;
 using DCL.Browser;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
@@ -58,6 +60,8 @@ namespace DCL.Backpack
         private readonly IWebRequestController webController;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearableStorage wearableStorage;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly INftNamesProvider nftNamesProvider;
         private BackpackSections lastShownSection;
         
         private CancellationTokenSource? animationCts;
@@ -90,7 +94,9 @@ namespace DCL.Backpack
             IRealmData realmData,
             IWebRequestController webController,
             IEquippedWearables equippedWearables,
-            IWearableStorage wearableStorage)
+            IWearableStorage wearableStorage,
+            IWearablesProvider wearablesProvider,
+            INftNamesProvider nftNamesProvider)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -108,33 +114,42 @@ namespace DCL.Backpack
             this.webController = webController;
             this.equippedWearables = equippedWearables;
             this.wearableStorage = wearableStorage;
+            this.wearablesProvider = wearablesProvider;
+            this.nftNamesProvider = nftNamesProvider;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
-            var categoriesController = new CategoriesController(avatarView.CategoriesView,
+            var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
                 backpackGridController,
                 backpackCommandBus,
                 backpackEventBus,
                 inputBlock);
 
             var screenshotService = new AvatarScreenshotService(selfProfile);
-            var outfitService = new OutfitsService(selfProfile,
-                webController,
-                realmData,
-                outfitsRepository,
-                wearableStorage,
-                screenshotService);
-            
-            var deleteOutfitCommand = new DeleteOutfitCommand(outfitService);
-            
-            var outfitsController = new OutfitsController(avatarView.OutfitsView,
-                outfitService,
+            var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
+            var outfitsCollection = new OutfitsCollection();
+            var outfitApplier = new OutfitApplier(backpackCommandBus);
+            var loadOutfitsCommand = new LoadOutfitsCommand(webController, selfProfile, realmData);
+            var saveOutfitCommand = new SaveOutfitCommand(selfProfile, outfitsRepository, wearableStorage);
+            var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService);
+            var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
+            var checkOutfitEquippedCommand = new CheckOutfitEquippedStateCommand(selfProfile, wearableStorage);
+            var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider);
+
+            var outfitsController = new OutfitsPresenter(avatarView.OutfitsView,
+                outfitApplier,
+                outfitsCollection,
                 webBrowser,
-                backpackCommandBus,
                 equippedWearables,
+                loadOutfitsCommand,
+                saveOutfitCommand,
                 deleteOutfitCommand,
+                checkOutfitsBannerCommand,
+                checkOutfitEquippedCommand,
+                prewarmWearablesCacheCommand,
                 screenshotService,
-                backpackCharacterPreviewController);
+                backpackCharacterPreviewController,
+                outfitSlotFactory);
             
             avatarController = new AvatarController(
                 avatarView,
@@ -145,7 +160,7 @@ namespace DCL.Backpack
                 backpackEventBus,
                 wearableInfoPanelController,
                 backpackGridController,
-                categoriesController,
+                categoriesPresenter,
                 outfitsController,
                 thumbnailProvider);
 
