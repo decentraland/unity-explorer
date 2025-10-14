@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
@@ -48,7 +49,9 @@ namespace DCL.SocialEmotes.UI
             }
 
             CreatePinQuery(World, mainCameraComponent);
-            UpdatePinPositionQuery(World, mainCameraComponent);
+            UpdatePinPositionQuery(World);
+            AddNametagHeightToPinPositionQuery(World);
+            MakePinFaceCameraQuery(World, mainCameraComponent);
             RemovePinQuery(World, mainCameraComponent);
         }
 
@@ -70,10 +73,20 @@ namespace DCL.SocialEmotes.UI
         }
 
         [Query]
-        private void UpdatePinPosition([Data] CameraComponent camera, in SocialEmotePin emotePin, NametagHolder nametag)
+        private void UpdatePinPosition(in SocialEmotePin emotePin, AvatarBase avatarBase)
         {
-            emotePin.transform.position = nametag.transform.position + new Vector3(0.0f, nametag.Nametag.worldBound.height * nametag.transform.lossyScale.y, 0.0f);
+            emotePin.transform.position = avatarBase.GetAdaptiveNametagPosition();
+        }
 
+        [Query]
+        private void AddNametagHeightToPinPosition(in SocialEmotePin emotePin, NametagHolder nametag)
+        {
+            emotePin.transform.position += new Vector3(0.0f, nametag.Nametag.worldBound.height * nametag.transform.lossyScale.y, 0.0f);
+        }
+        
+        [Query]
+        private void MakePinFaceCamera([Data] CameraComponent camera, in SocialEmotePin emotePin)
+        {
             emotePin.transform.LookAt(emotePin.transform.position + camera.Camera.transform.forward, camera.Camera.transform.up);
         }
 
