@@ -12,7 +12,6 @@ using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
 using Global.Versioning;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility;
 

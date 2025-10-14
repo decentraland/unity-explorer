@@ -10,8 +10,6 @@
     --dcl-color-white-10: rgba(255, 255, 255, 0.1);
     --dcl-color-white-70: rgba(255, 255, 255, 0.7);
     --dcl-color-silver: #A09BA8;
-    --dcl-color-shadow: #161518;
-    --dcl-color-green: #12E34D;
     
     --dcl-font-azeretmono-medium: url('/Assets/DCL/UIToolkit/Fonts/AzeretMono-Medium SDF.asset');
     --dcl-font-inter-regular: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Regular SDF.asset');

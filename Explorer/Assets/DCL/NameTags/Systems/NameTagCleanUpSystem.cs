@@ -14,12 +14,12 @@ namespace DCL.Nametags
     public partial class NameTagCleanUpSystem : BaseUnityLoopSystem
     {
         private readonly NametagsData nametagsData;
-        private readonly IObjectPool<NametagHolder> nametagHolderPool;
+        private readonly IObjectPool<NametagView> nametagViewPool;
 
-        public NameTagCleanUpSystem(World world, NametagsData nametagsData, IObjectPool<NametagHolder> nametagHolderPool) : base(world)
+        public NameTagCleanUpSystem(World world, NametagsData nametagsData, IObjectPool<NametagView> nametagViewPool) : base(world)
         {
             this.nametagsData = nametagsData;
-            this.nametagHolderPool = nametagHolderPool;
+            this.nametagViewPool = nametagViewPool;
         }
 
         protected override void Update(float t)
@@ -34,17 +34,17 @@ namespace DCL.Nametags
         }
 
         [Query]
-        private void RemoveTag(NametagHolder nametagHolder, in DeleteEntityIntention deleteEntityIntention)
+        private void RemoveTag(NametagView nametagView, in DeleteEntityIntention deleteEntityIntention)
         {
-            if (!deleteEntityIntention.DeferDeletion)
-                nametagHolderPool.Release(nametagHolder);
+            if (deleteEntityIntention.DeferDeletion == false)
+                nametagViewPool.Release(nametagView);
         }
 
         [Query]
-        private void RemoveAllTags(Entity e, NametagHolder nametagHolder)
+        private void RemoveAllTags(Entity e, NametagView nametagView)
         {
-            nametagHolderPool.Release(nametagHolder);
-            World.Remove<NametagHolder>(e);
+            nametagViewPool.Release(nametagView);
+            World.Remove<NametagView>(e);
         }
     }
 }

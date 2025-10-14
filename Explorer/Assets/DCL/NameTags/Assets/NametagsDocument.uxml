@@ -1,4 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/DCL/NameTags/Assets/NametagStyle.uss?fileID=7433441132597879392&amp;guid=7d840ff87e3164a2f87075ae975335de&amp;type=3#NametagStyle" />
-    <DCL.Nametags.NametagElement />
-</ui:UXML>

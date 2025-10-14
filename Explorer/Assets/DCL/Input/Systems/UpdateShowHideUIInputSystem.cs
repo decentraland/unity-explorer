@@ -67,7 +67,7 @@ namespace DCL.Input.Systems
             }
 
             foreach (UIDocument doc in UIDocumentTracker.ActiveDocuments)
-                doc.rootVisualElement.SetVisible(currentUIVisibilityState);
+                doc.rootVisualElement.SetDisplayed(currentUIVisibilityState);
         }
 
         private void ShowOrHideToast()

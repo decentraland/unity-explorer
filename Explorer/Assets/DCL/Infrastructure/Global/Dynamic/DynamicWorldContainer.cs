@@ -298,6 +298,7 @@ namespace Global.Dynamic
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
+            NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
@@ -719,7 +720,7 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    dynamicSettings.NametagsData,
+                    nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCacheProxy),
@@ -747,7 +748,7 @@ namespace Global.Dynamic
                     chatHistory,
                     clipboardManager,
                     entityParticipantTable,
-                    dynamicSettings.NametagsData,
+                    nametagsData,
                     mainUIView,
                     staticContainer.InputBlock,
                     globalWorld,
@@ -1019,7 +1020,7 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     globalWorld,
                     debugBuilder,
-                    dynamicSettings.NametagsData,
+                    nametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache,

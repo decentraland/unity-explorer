@@ -225,6 +225,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d65049d6f7a244863b39c4dda5ba538e
+    m_Address: NametagsData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d9a7adc162dc338449107a4654a26d50
     m_Address: WorldAudioContainer
     m_ReadOnly: 0
