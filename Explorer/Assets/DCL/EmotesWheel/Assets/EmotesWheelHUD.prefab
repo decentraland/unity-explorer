@@ -744,6 +744,8 @@ MonoBehaviour:
   <SocialEmoteNameWithUser>k__BackingField: {fileID: 1528560793484644285}
   <SocialEmoteNameAndUserText>k__BackingField: Invite <color=#{0}><b>{1}</b></color>
     to <color=#FCFCFC><b>{2}</b></color> with you
+  <SocialEmoteSlotIcon>k__BackingField: {fileID: 21300000, guid: 9e36906f94c964559bbf308c863b6290, type: 3}
+  <EmoteSlotIcon>k__BackingField: {fileID: 21300000, guid: 05bc7d6b12857fb4b9b7634bf2a4f440, type: 3}
 --- !u!223 &7899065392233343085
 Canvas:
   m_ObjectHideFlags: 0
