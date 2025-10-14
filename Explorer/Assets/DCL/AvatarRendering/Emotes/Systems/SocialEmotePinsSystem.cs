@@ -83,7 +83,7 @@ namespace DCL.SocialEmotes.UI
         {
             emotePin.transform.position += new Vector3(0.0f, nametag.Nametag.worldBound.height * nametag.transform.lossyScale.y, 0.0f);
         }
-        
+
         [Query]
         private void MakePinFaceCamera([Data] CameraComponent camera, in SocialEmotePin emotePin)
         {
