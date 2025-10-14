@@ -289,7 +289,7 @@ namespace DCL.PluginSystem.Global
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
-            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
+            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider, eventBus);
             
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
@@ -320,7 +320,8 @@ namespace DCL.PluginSystem.Global
                 outfitsRepository,
                 realmData,
                 webRequestController,
-                nftNamesProvider
+                nftNamesProvider,
+                eventBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

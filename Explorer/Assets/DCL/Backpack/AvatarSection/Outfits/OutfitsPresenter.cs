@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
@@ -24,6 +25,7 @@ namespace DCL.Backpack
     public class OutfitsPresenter : ISection, IDisposable
     {
         private readonly OutfitsView view;
+        private readonly IEventBus eventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWebBrowser webBrowser;
         private readonly IOutfitApplier outfitApplier;
@@ -45,6 +47,7 @@ namespace DCL.Backpack
         private CancellationTokenSource cts = new ();
 
         public OutfitsPresenter(OutfitsView view,
+            IEventBus eventBus,
             IOutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
@@ -60,6 +63,7 @@ namespace DCL.Backpack
             OutfitSlotPresenterFactory slotFactory)
         {
             this.view = view;
+            this.eventBus = eventBus;
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
@@ -236,6 +240,7 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
             outfitApplier.Apply(outfitItem.outfit);
+            eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
         }
 
         private void PopulateAllSlots(IReadOnlyList<OutfitItem> outfits)
@@ -260,6 +265,8 @@ namespace DCL.Backpack
         private void OnGetANameClicked()
         {
             webBrowser.OpenUrl("https://decentraland.org/marketplace/names/claim");
+            eventBus.Publish(new OutfitsEvents.ClaimExtraOutfitsEvent());
+
         }
 
         private async UniTask CheckBannerVisibilityAsync(CancellationToken ct)

@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -63,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IWebRequestController webController;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IEventBus eventBus;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -97,7 +99,8 @@ namespace DCL.PluginSystem.Global
             OutfitsRepository outfitsRepository,
             IRealmData realmData,
             IWebRequestController webController,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -128,6 +131,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.webController = webController;
             this.nftNamesProvider = nftNamesProvider;
+            this.eventBus = eventBus;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -253,7 +257,8 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 wearableStorage,
                 wearablesProvider,
-                nftNamesProvider
+                nftNamesProvider,
+                eventBus
             );
         }
 

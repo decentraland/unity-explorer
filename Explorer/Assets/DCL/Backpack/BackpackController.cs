@@ -62,6 +62,7 @@ namespace DCL.Backpack
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IEventBus eventBus;
         private BackpackSections lastShownSection;
         
         private CancellationTokenSource? animationCts;
@@ -96,7 +97,8 @@ namespace DCL.Backpack
             IEquippedWearables equippedWearables,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            IEventBus eventBus)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -116,6 +118,7 @@ namespace DCL.Backpack
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
             this.nftNamesProvider = nftNamesProvider;
+            this.eventBus = eventBus;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -137,6 +140,7 @@ namespace DCL.Backpack
             var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider);
 
             var outfitsController = new OutfitsPresenter(avatarView.OutfitsView,
+                eventBus,
                 outfitApplier,
                 outfitsCollection,
                 webBrowser,

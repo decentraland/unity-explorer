@@ -3,9 +3,6 @@ using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using DCL.Browser;
 using UnityEngine;
 

@@ -5,10 +5,12 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS;
+using Utility;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Repository
 {
@@ -31,12 +33,15 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         private readonly IRealmData realm;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IEventBus eventBus;
 
         public OutfitsRepository(IRealmData realm,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            IEventBus eventBus)
         {
             this.realm = realm;
             this.nftNamesProvider = nftNamesProvider;
+            this.eventBus = eventBus;
         }
 
         /// <summary>
@@ -54,9 +59,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
                 throw new ArgumentException("Cannot save outfits for a user with an empty UserId");
 
             var namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+            
             var metadata = new OutfitsMetadata
             {
-                outfits = outfits, namesForExtraSlots = noExtraSlots ? new List<string>() : new List<string>(namesForExtraSlots.Names)
+                // outfits = outfits, namesForExtraSlots = noExtraSlots ? new List<string>() : new List<string>(namesForExtraSlots.Names)
+                outfits = outfits, namesForExtraSlots = new List<string>()
             };
 
             var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
@@ -71,6 +78,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             try
             {
                 await realm.Ipfs.PublishAsync(outfitsEntity, ct, new Dictionary<string, byte[]>());
+                eventBus.Publish(new OutfitsEvents.SaveOutfitEvent());
             }
             catch (Exception e)
             {
