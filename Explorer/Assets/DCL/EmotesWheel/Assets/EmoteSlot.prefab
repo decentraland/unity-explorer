@@ -659,6 +659,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playButton: {fileID: 3371400824876200992}
   <BackgroundRarity>k__BackingField: {fileID: 565546086535874787}
+  <TypeIcon>k__BackingField: {fileID: 6816188203518687405}
   hoverBackground: {fileID: 4818858513106688900}
   <Thumbnail>k__BackingField: {fileID: 428376574878408969}
   <EmptyContainer>k__BackingField: {fileID: 439997931696817573}
