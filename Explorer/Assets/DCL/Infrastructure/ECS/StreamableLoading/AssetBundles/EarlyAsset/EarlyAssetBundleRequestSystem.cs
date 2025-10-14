@@ -30,6 +30,7 @@ namespace DefaultNamespace
         [None(typeof(AssetBundlePromise))]
         private void StartEarlyDownload(Entity entity, ref EarlyDownloadComponentFlag earlyDownloadComponentFlag)
         {
+            //TODO (JUANI): Lose this ifs
             if (!string.IsNullOrEmpty(earlyDownloadComponentFlag.AsssetBundleHash))
             {
                 AssetBundlePromise promise = AssetBundlePromise.Create(World,
