@@ -6,9 +6,11 @@ using DCL.PluginSystem.World;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
+using ECS.ComponentsPooling.Systems;
+using ECS.Unity.Transforms.Components;
+using UnityEngine;
 using UnityEngine.Profiling;
 using SystemGroups.Visualiser;
-
 
 namespace SceneRunner.ECSWorld
 {
@@ -31,9 +33,33 @@ namespace SceneRunner.ECSWorld
         {
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
-            this.finalizeWorldSystems = finalizeWorldSystems;
+            this.finalizeWorldSystems = ReorderFinalizeWorldSystems(finalizeWorldSystems);
             this.sceneIsCurrentListeners = sceneIsCurrentListeners;
             PersistentEntities = persistentEntities;
+
+            return;
+            
+            List<IFinalizeWorldSystem> ReorderFinalizeWorldSystems(IReadOnlyList<IFinalizeWorldSystem> systems)
+            {
+                // Transform plugin has to be the last, because of component release flow.
+                // During scene unloading some components are parented to temporary transforms, and if ReleasePoolableComponentSystem
+                // is called for transform, before it is for said component, and transform pool has reached its max capacity,
+                // transform is marked to deletion by ObjectPool.actionOnDestroy, which disables all components in its 
+                // children, which has caused AudioSources being disabled.
+                List<IFinalizeWorldSystem> result = new(systems);
+            
+                for (int i = 0; i < result.Count; i++)
+                {
+                    if(result[i] is not ReleasePoolableComponentSystem<Transform, TransformComponent>)
+                        continue;
+                
+                    result.Add(result[i]);
+                    result.RemoveAt(i);
+                    break;
+                }
+
+                return result;
+            }
         }
 
         public void Initialize()
