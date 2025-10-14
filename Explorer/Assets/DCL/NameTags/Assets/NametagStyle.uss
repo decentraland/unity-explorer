@@ -31,24 +31,34 @@
     padding-left: 24px;
 }
 
+.nametag__pointer-container {
+    position: absolute;
+    width: 40px;
+    height: 28px;
+    align-self: center;
+    bottom: -28px;
+    overflow: hidden;
+    scale: 0 0;
+    transition: scale var(--message-transition-duration);
+    transform-origin: top;
+}
+
+.nametag--show-message > .nametag__pointer-container {
+    scale: 1 1;
+}
+
 .nametag__pointer {
     width: 28px;
     height: 28px;
     background-color: var(--dcl-color-pale-black);
     align-self: center;
-    position: absolute;
-    bottom: -6px;
     rotate: 45deg;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     border-bottom-right-radius: 6px;
     border-bottom-left-radius: 0;
     transition: background-color var(--message-transition-duration), scale var(--message-transition-duration);
-    scale: 1 0;
-}
-
-.nametag--show-message > .nametag__pointer {
-    scale: 1 1;
+    top: -14px;
 }
 
 .nametag--show-message.nametag--mention > .nametag__pointer {
