@@ -107,12 +107,8 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.InWorldCamera;
 using DCL.NotificationsBus;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
-using Global.Versioning;
-using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -770,11 +766,9 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    includeTranslationChat,
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    bootstrapContainer.Environment,
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,

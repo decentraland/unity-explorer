@@ -253,12 +253,12 @@ namespace DCL.Chat
 
         private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent evt)
         {
-            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
+            //chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
         }
 
         private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent evt)
         {
-            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
+            //chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
         }
 
         private void SubscribeToCoordinationEvents()

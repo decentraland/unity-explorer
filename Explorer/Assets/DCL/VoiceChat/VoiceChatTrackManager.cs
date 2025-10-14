@@ -40,7 +40,6 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
-        private readonly IDisposable microphoneChangeSubscription;
 
         private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;
@@ -67,11 +66,11 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             if (isDisposed) return;
+
             isDisposed = true;
 
             UnpublishLocalTrack();
             StopListeningToRemoteTracks();
-            microphoneChangeSubscription.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }

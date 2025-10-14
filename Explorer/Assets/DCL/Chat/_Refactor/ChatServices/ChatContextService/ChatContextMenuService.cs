@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.UI;
-using DCL.UI.Communities;
 using MVC;
 using System;
 using System.Threading;
@@ -12,8 +11,8 @@ namespace DCL.Chat.ChatServices.ChatContextService
         private readonly IMVCManagerMenusAccessFacade mvcFacade;
         private readonly ChatClickDetectionService chatClickDetectionService;
 
-        private CancellationTokenSource? activeMenuCts;
-        private UniTaskCompletionSource? activeMenuTcs;
+        private CancellationTokenSource activeMenuCts = new();
+        private UniTaskCompletionSource activeMenuTcs = new();
 
         public ChatContextMenuService(IMVCManagerMenusAccessFacade mvcFacade,
             ChatClickDetectionService chatClickDetectionService)
@@ -22,7 +21,6 @@ namespace DCL.Chat.ChatServices.ChatContextService
             this.chatClickDetectionService = chatClickDetectionService;
         }
 
-        private CommunityChatConversationContextMenuSettings contextMenuSettings;
 
         public async UniTask ShowCommunityContextMenuAsync(ShowContextMenuRequest request)
         {
@@ -77,36 +75,6 @@ namespace DCL.Chat.ChatServices.ChatContextService
         }
 
         /// <summary>
-        ///     Show channel options context menu.
-        ///     Pause and Resume click detection service to prevent
-        ///     clicks from being registered while the menu is open.
-        /// </summary>
-        /// <param name="request"></param>
-        public async UniTask ShowChannelOptionsAsync(ChatContextMenuRequest request)
-        {
-            RestartLifecycleControls();
-
-            chatClickDetectionService.Pause();
-
-            try
-            {
-                mvcFacade.ShowChatContextMenuAsync(
-                    request.Position,
-                    request.contextMenuData,
-                    request.OnDeleteHistory,
-                    onContextMenuHide: () => activeMenuTcs!.TrySetResult(),
-                    closeMenuTask: activeMenuTcs.Task
-                );
-
-                await activeMenuTcs.Task;
-            }
-            finally
-            {
-                chatClickDetectionService.Resume();
-            }
-        }
-
-        /// <summary>
         ///     Shows the generic context menu for channel options.
         ///     This uses the standard lifecycle management for context menus.
         /// </summary>
@@ -134,27 +102,11 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
         }
 
-        public async UniTask ShowChatOptionsAsync(ChatEntryMenuPopupData request)
-        {
-            RestartLifecycleControls();
-
-            chatClickDetectionService.Pause();
-
-            try
-            {
-                await mvcFacade.ShowChatEntryMenuPopupAsync(request, activeMenuCts.Token);
-            }
-            finally
-            {
-                chatClickDetectionService.Resume();
-            }
-        }
-
         private void RestartLifecycleControls()
         {
-            activeMenuCts?.Cancel();
-            activeMenuTcs?.TrySetResult();
-            activeMenuCts?.Dispose();
+            activeMenuCts.Cancel();
+            activeMenuTcs.TrySetResult();
+            activeMenuCts.Dispose();
 
             activeMenuCts = new CancellationTokenSource();
             activeMenuTcs = new UniTaskCompletionSource();
@@ -162,9 +114,9 @@ namespace DCL.Chat.ChatServices.ChatContextService
 
         public void Dispose()
         {
-            activeMenuCts?.Cancel();
-            activeMenuTcs?.TrySetResult();
-            activeMenuCts?.Dispose();
+            activeMenuCts.Cancel();
+            activeMenuTcs.TrySetResult();
+            activeMenuCts.Dispose();
         }
     }
 }

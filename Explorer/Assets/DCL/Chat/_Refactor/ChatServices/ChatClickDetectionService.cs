@@ -5,6 +5,9 @@ using UnityEngine.EventSystems;
 
 namespace DCL.Chat.ChatServices
 {
+    /// <summary>
+    /// Click detection service that uses centralized raycast results.
+    /// </summary>
     public class ChatClickDetectionService : IDisposable
     {
         public event Action? OnClickInside;
@@ -12,47 +15,49 @@ namespace DCL.Chat.ChatServices
 
         private readonly RectTransform targetArea;
         private readonly HashSet<Transform> ignoredElementsSet;
+        private readonly CentralizedChatClickDetectionService centralizedChatService;
 
         private bool isPaused;
 
-        public ChatClickDetectionService(Transform targetArea, params Transform[] ignoredElements)
+        public ChatClickDetectionService(
+            Transform targetArea,
+            params Transform[] ignoredElements)
         {
+            this.centralizedChatService = CentralizedChatClickDetectionService.Instance;
             this.targetArea = (RectTransform)targetArea;
             ignoredElementsSet = new HashSet<Transform>(ignoredElements);
+
+            centralizedChatService.OnClickDetected += HandleClickDetected;
         }
 
-        public void Pause() =>
-            isPaused = true;
+        public void Dispose()
+        {
+            centralizedChatService.OnClickDetected -= HandleClickDetected;
+        }
 
-        public void Resume() =>
-            isPaused = false;
+        public void Pause() => isPaused = true;
 
-        public void ProcessRaycastResults(IReadOnlyList<RaycastResult> results)
+        public void Resume() => isPaused = false;
+
+        private void HandleClickDetected(RaycastResult? raycastResult)
         {
             if (isPaused) return;
 
-            if (results.Count == 0)
+            if (raycastResult == null)
             {
                 OnClickOutside?.Invoke();
                 return;
             }
 
-            if (IsIgnored(results[0].gameObject))
+            if (IsIgnored(raycastResult.Value.gameObject))
                 return;
 
-            var clickedInside = false;
+            bool clickedInside = raycastResult.Value.gameObject.transform.IsChildOf(targetArea);
 
-            foreach (RaycastResult result in results)
-            {
-                if (result.gameObject.transform.IsChildOf(targetArea))
-                {
-                    clickedInside = true;
-                    break;
-                }
-            }
-
-            if (clickedInside) OnClickInside?.Invoke();
-            else OnClickOutside?.Invoke();
+            if (clickedInside)
+                OnClickInside?.Invoke();
+            else
+                OnClickOutside?.Invoke();
         }
 
         private bool IsIgnored(GameObject clickedObject)
@@ -74,8 +79,5 @@ namespace DCL.Chat.ChatServices
 
             return false;
         }
-
-        public void Dispose()
-        { }
     }
 }
