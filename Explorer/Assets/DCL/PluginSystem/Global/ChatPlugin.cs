@@ -36,6 +36,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -48,7 +49,6 @@ using DCL.ChatArea;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -194,7 +194,7 @@ namespace DCL.PluginSystem.Global
         {
             translationMemory.Clear();
             translationCache.Clear();
-            
+
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
@@ -249,7 +249,6 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 translationMemory);
 
-            var viewInstance = mainUIView.ChatMainView.ChatPanelView;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -273,19 +272,24 @@ namespace DCL.PluginSystem.Global
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
 
+            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
+
             // Ignore buttons that would lead to the conflicting state
-            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform,
-                chatViewRectTransform);
+            var chatClickDetectionService = new ChatClickDetectionService(
+                (RectTransform)chatPanelView.transform,
+                chatPanelView.TitlebarView.CloseChatButton.transform,
+                chatPanelView.TitlebarView.CloseMemberListButton.transform,
+                chatPanelView.TitlebarView.OpenMemberListButton.transform,
+                chatPanelView.TitlebarView.BackFromMemberList.transform,
+                chatPanelView.InputView.inputField.transform,
+                mainUIView.SidebarView.unreadMessagesButton.transform
+            );
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
+
             communityUserStateService = new CommunityUserStateService(
                 communityDataProvider,
                 communitiesEventBus,
@@ -329,7 +333,7 @@ namespace DCL.PluginSystem.Global
                 translationSettings);
 
             pluginScope.Add(commandRegistry);
-            
+
             chatPanelPresenter = new ChatPanelPresenter(
                 mainUIView.ChatMainView.ChatPanelView,
                 hyperlinkTextFormatter,
@@ -361,7 +365,8 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                chatSharedAreaEventBus
+                chatSharedAreaEventBus,
+                commandRegistry
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus,
@@ -429,10 +434,7 @@ namespace DCL.PluginSystem.Global
                 await commandRegistry.InitializeChat.ExecuteAsync(ct);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
-            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
         }
     }
 
