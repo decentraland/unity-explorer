@@ -85,21 +85,20 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
-            CreateAudioStreamQuery(World, t);
-            CreateVideoPlayerQuery(World, t);
+            CreateAudioStreamQuery(World);
+            CreateVideoPlayerQuery(World);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
-        private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent, [Data] float dt)
+        private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            CreateMediaPlayer(dt, entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
-        [All(typeof(VideoTextureConsumer))]
-        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, ref VideoTextureConsumer videoTextureConsumer, [Data] float dt)
+        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, ref VideoTextureConsumer videoTextureConsumer)
         {
             var address = MediaAddress.New(sdkComponent.Src!);
 
@@ -108,10 +107,10 @@ namespace DCL.SDKComponents.MediaStream
                 return;
 
             videoTextureConsumer.IsDirty = true;
-            CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(float dt, Entity entity, string url, bool hasVolume, float volume)
+        private void CreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 

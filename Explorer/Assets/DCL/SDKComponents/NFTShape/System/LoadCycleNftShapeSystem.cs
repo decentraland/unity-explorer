@@ -82,10 +82,10 @@ namespace DCL.SDKComponents.NFTShape.System
         }
 
         [Query]
-        private void ResolveNftShape(Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
+        private void ResolveNftShape(in Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
         {
             ResolveImage(ref nftLoadingComponent, ref nftShapeRendererComponent);
-            ResolveVideo(entity, ref nftLoadingComponent, ref nftShapeRendererComponent);
+            ResolveVideo(in entity, ref nftLoadingComponent, ref nftShapeRendererComponent);
         }
 
         private void ResolveImage(ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
@@ -107,7 +107,7 @@ namespace DCL.SDKComponents.NFTShape.System
             nftRenderer.Apply(result.Asset!);
         }
 
-        private void ResolveVideo(Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
+        private void ResolveVideo(in Entity entity, ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
         {
             if (nftLoadingComponent.VideoPromise is not { } promise) return;
             if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
@@ -124,10 +124,12 @@ namespace DCL.SDKComponents.NFTShape.System
             }
 
             nftRenderer.Apply(result.Asset!);
-            InitializeNftVideo(entity, result.Asset);
+
+            if (result.Asset.VideoURL != null)
+                PlayNftVideo(entity, result.Asset);
         }
 
-        private void InitializeNftVideo(Entity entity, Texture2DData textureData)
+        private void PlayNftVideo(in Entity entity, Texture2DData textureData)
         {
             var vtc = new VideoTextureConsumer(textureData);
             var texture2D = vtc.Texture.Asset;

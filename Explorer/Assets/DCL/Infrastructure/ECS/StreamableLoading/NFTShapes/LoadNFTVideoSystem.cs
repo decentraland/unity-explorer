@@ -20,9 +20,8 @@ namespace ECS.StreamableLoading.NFTShapes
         private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
 
         public LoadNFTVideoSystem(World world,
-            IStreamableCache<Texture2DData, GetNFTVideoIntention> cache,
             ExtendedObjectPool<Texture2D> videoTexturePool)
-            : base(world, cache)
+            : base(world, NoCache<Texture2DData, GetNFTVideoIntention>.INSTANCE)
         {
             this.videoTexturePool = videoTexturePool;
         }
@@ -31,7 +30,10 @@ namespace ECS.StreamableLoading.NFTShapes
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             var texture2D = videoTexturePool.Get();
-            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture2D, intention.CommonArguments.URL));
+            var data = new Texture2DData(texture2D, intention.CommonArguments.URL);
+            // Since we dont use a cache, we need to add a reference so it doesn't get automatically cleaned
+            data.AddReference();
+            return new StreamableLoadingResult<Texture2DData>(data);
         }
     }
 }
