@@ -75,14 +75,7 @@ namespace DCL.Landscape
                              .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
                              .xyx;
 
-            bool overlaps = OverlapsOccupiedParcel(float2(position.x, position.z),
-                prototype.radius * scale.x);
-
-            if (all(parcel == int2(-114, -36)))
-                ReportHub.Log(ReportCategory.ALWAYS,
-                    $"x: {position.x}, z: {position.z}, prototype: {prototype.name}, radius: {prototype.radius}, scale: {scale.x}, overlaps: {overlaps}");
-
-            if (overlaps)
+            if (OverlapsOccupiedParcel(float2(position.x, position.z), prototype.radius * scale.x))
             {
                 position.y = 0f;
                 rotation = default(Quaternion);
