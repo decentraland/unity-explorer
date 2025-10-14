@@ -33,6 +33,8 @@ namespace DCL.Chat.ChatServices
         public void Dispose()
         {
             centralizedChatService.OnClickDetected -= HandleClickDetected;
+            OnClickInside = null;
+            OnClickOutside = null;
         }
 
         public void Pause() => isPaused = true;

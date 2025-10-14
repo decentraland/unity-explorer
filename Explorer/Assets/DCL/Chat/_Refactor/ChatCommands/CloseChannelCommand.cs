@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Prefs;
 using DCL.Web3.Identities;
+using System;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -10,6 +11,8 @@ namespace DCL.Chat.ChatCommands
     /// </summary>
     public class CloseChannelCommand
     {
+        public event Action? ChannelClosed;
+
         private readonly IChatHistory chatHistory;
         private readonly IWeb3IdentityCache identityCache;
 
@@ -31,6 +34,8 @@ namespace DCL.Chat.ChatCommands
                 AddCommunityToClosedPrefs(channelId.Id);
 
             chatHistory.RemoveChannel(channelId);
+
+            ChannelClosed?.Invoke();
         }
 
         private void AddCommunityToClosedPrefs(string communityId)

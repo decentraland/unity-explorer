@@ -15,13 +15,8 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelView view;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
-
-        private readonly PrivateVoiceChatPresenter? privateVoiceChatController;
-        private readonly CommunityVoiceChatPresenter? communitiesVoiceChatController;
-        private readonly VoiceChatPanelResizeController? voiceChatPanelResizeController;
-        private readonly SceneVoiceChatPresenter? sceneVoiceChatController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
-        private readonly EventSubscriptionScope eventSubscriptions = new();
+        private readonly EventSubscriptionScope presenterScope = new();
         private readonly ChatClickDetectionService clickDetectionService;
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
@@ -38,13 +33,21 @@ namespace DCL.VoiceChat
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
-            voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
-            privateVoiceChatController = new PrivateVoiceChatPresenter(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
-            sceneVoiceChatController = new SceneVoiceChatPresenter(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
-            voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
+            var voiceChatPanelResizePresenter = new VoiceChatPanelResizePresenter(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
+            presenterScope.Add(voiceChatPanelResizePresenter);
 
+            var privateVoiceChatController = new PrivateVoiceChatPresenter(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            presenterScope.Add(privateVoiceChatController);
+
+            var communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            presenterScope.Add(communitiesVoiceChatController);
+
+            var sceneVoiceChatController = new SceneVoiceChatPresenter(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
+            presenterScope.Add(sceneVoiceChatController);
+
+            voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
             clickDetectionService = new ChatClickDetectionService(view.transform);
+            presenterScope.Add(clickDetectionService);
 
             view.PointerEnter += OnPointerEnter;
             view.PointerExit += OnPointerExit;
@@ -52,11 +55,11 @@ namespace DCL.VoiceChat
             clickDetectionService.OnClickInside += HandleClickInside;
             clickDetectionService.OnClickOutside += HandleClickOutside;
 
-            eventSubscriptions.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
+            presenterScope.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
@@ -132,12 +135,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            privateVoiceChatController?.Dispose();
-            communitiesVoiceChatController?.Dispose();
-            sceneVoiceChatController?.Dispose();
-            voiceChatPanelResizeController?.Dispose();
-
-            eventSubscriptions.Dispose();
+            presenterScope.Dispose();
 
             view.PointerEnter -= OnPointerEnter;
             view.PointerExit -= OnPointerExit;

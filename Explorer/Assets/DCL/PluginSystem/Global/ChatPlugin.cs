@@ -36,6 +36,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -48,7 +49,6 @@ using DCL.ChatArea;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -229,7 +229,6 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 translationMemory);
 
-            var viewInstance = mainUIView.ChatMainView.ChatPanelView;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -255,20 +254,23 @@ namespace DCL.PluginSystem.Global
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
 
-            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform,
-                chatViewRectTransform);
+            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
+
+            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)chatPanelView.transform,
+                    chatPanelView.TitlebarView.CloseChatButton.transform,
+                    chatPanelView.TitlebarView.CloseMemberListButton.transform,
+                    chatPanelView.TitlebarView.OpenMemberListButton.transform,
+                    chatPanelView.TitlebarView.BackFromMemberList.transform,
+                    chatPanelView.InputView.inputField.transform,
+                    chatViewRectTransform,
+                    mainUIView.SidebarView.unreadMessagesButton.transform);
 
             pluginScope.Add(chatClickDetectionService);
 
-            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
-                chatClickDetectionService);
+            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
+
             var communityUserStateService = new CommunityUserStateService(
                 communityDataProvider,
                 communitiesEventBus,
@@ -347,7 +349,8 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                chatSharedAreaEventBus
+                chatSharedAreaEventBus,
+                commandRegistry
             );
 
             var chatBusListenerService = new ChatHistoryService(chatMessagesBus,
@@ -416,10 +419,7 @@ namespace DCL.PluginSystem.Global
                 await commandRegistry.InitializeChat.ExecuteAsync(ct);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
-            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
         }
     }
 

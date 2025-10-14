@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatCommands;
 using DCL.Chat.ControllerShowParams;
 using DCL.UI.SharedSpaceManager;
 using MVC;
@@ -17,15 +18,18 @@ namespace DCL.ChatArea
         private readonly EventSubscriptionScope eventScope = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+        public readonly CommandRegistry CommandRegistry;
 
         public bool IsVisibleInSharedSpace { get; private set; }
 
         public ChatMainSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            ChatSharedAreaEventBus chatSharedAreaEventBus) : base(viewFactory)
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            CommandRegistry commandRegistry) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
+            this.CommandRegistry = commandRegistry;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;

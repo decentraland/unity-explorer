@@ -32,7 +32,12 @@ namespace DCL.Chat.ChatServices.ChatContextService
                 var parameter = new GenericContextMenuParameter(
                     request.MenuConfiguration,
                     request.Position, // Cast the Vector3 to Vector2
-                    actionOnHide: () => activeMenuTcs.TrySetResult(),
+                    actionOnHide: () =>
+                    {
+                        activeMenuTcs.TrySetResult();
+                        request.OnHide?.Invoke();
+                    },
+                    actionOnShow: () => request.OnShow?.Invoke(),
                     closeTask: activeMenuTcs.Task
                 );
 
@@ -64,8 +69,13 @@ namespace DCL.Chat.ChatServices.ChatContextService
                     default,
                     activeMenuCts.Token,
                     activeMenuTcs.Task,
-                    onHide: () => activeMenuTcs.TrySetResult(),
-                    request.AnchorPoint
+                    onHide: () =>
+                    {
+                        activeMenuTcs.TrySetResult();
+                        request.OnHide?.Invoke();
+                    },
+                    request.AnchorPoint,
+                    onShow: () => request.OnShow?.Invoke()
                 );
             }
             finally
