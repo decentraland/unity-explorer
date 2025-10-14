@@ -82,6 +82,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
+            world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading());
+
             if (localSceneDevelopment && !useRemoteAssetBundles)
             {
                 // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
@@ -98,6 +100,8 @@ namespace CrdtEcsBridge.RestrictedActions
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
                     hash, loop, ct);
             }
+
+            world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
         }
 
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
