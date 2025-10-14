@@ -1125,7 +1125,7 @@ namespace Global.Dynamic
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
-                dynamicWorldParams.StartParcel
+                dynamicWorldParams.StartParcel,
                 staticContainer.LandscapeParcelData
             );
 
