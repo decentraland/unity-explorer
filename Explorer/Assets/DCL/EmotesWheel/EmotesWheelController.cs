@@ -29,6 +29,7 @@ namespace DCL.EmotesWheel
         private readonly SelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly NftTypeIconSO emoteTypeIcons;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -91,10 +92,8 @@ namespace DCL.EmotesWheel
             viewInstance!.Closed += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpackAsync);
 
-            if(inputData.IsSocialEmote)
-                viewInstance.SocialEmoteName.text = "";
-            else
-                viewInstance.CurrentEmoteName.text = "";
+            viewInstance.SocialEmoteNameWithUser.text = string.Empty;
+            viewInstance.CurrentEmoteName.text = string.Empty;
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
             {
@@ -111,14 +110,8 @@ namespace DCL.EmotesWheel
             UnblockUnwantedInputs();
             cursor.Unlock();
 
-            viewInstance.CurrentEmoteName.gameObject.SetActive(!inputData.IsSocialEmote);
-            viewInstance.SocialEmote.SetActive(inputData.IsSocialEmote);
-
-            if (inputData.IsSocialEmote)
-            {
-                viewInstance.TargetUsername.text = inputData.TargetUsername;
-                viewInstance.TargetUsername.color = inputData.TargetUsernameColor;
-            }
+            viewInstance.CurrentEmoteName.gameObject.SetActive(!inputData.IsDirectedEmote);
+            viewInstance.SocialEmoteNameWithUser.gameObject.SetActive(inputData.IsDirectedEmote);
 
             fetchProfileCts = fetchProfileCts.SafeRestart();
             InitializeEverythingAsync(fetchProfileCts.Token).Forget();
@@ -187,6 +180,8 @@ namespace DCL.EmotesWheel
 
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
+            bool isSocialEmote = true; // TODO
+            view.TypeIcon.sprite = isSocialEmote ? viewInstance.SocialEmoteSlotIcon : viewInstance.EmoteSlotIcon;
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
 
@@ -219,16 +214,16 @@ namespace DCL.EmotesWheel
             if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
             else
-                if(inputData.IsSocialEmote)
-                    viewInstance.SocialEmoteName.text = emote.GetName();
+                if(inputData.IsDirectedEmote)
+                    viewInstance.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
                 else
                     viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
 
         private void ClearCurrentEmote(int slot)
         {
-            if(inputData.IsSocialEmote)
-                viewInstance.SocialEmoteName.text = "";
+            if(inputData.IsDirectedEmote)
+                viewInstance.SocialEmoteNameWithUser.text = string.Empty;
             else
                 viewInstance!.CurrentEmoteName.text = string.Empty;
         }
