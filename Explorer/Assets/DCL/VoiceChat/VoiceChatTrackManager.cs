@@ -16,15 +16,16 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
+
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
-using Utility.Ownership;
 # endif
+
 using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
@@ -40,6 +41,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly SemaphoreSlim semaphoreSlimMicrophone = new (1, 1);
         private readonly IDisposable microphoneChangeSubscription;
 
         private CancellationTokenSource? trackPublishingCts;
@@ -48,6 +50,8 @@ namespace DCL.VoiceChat
         private MicrophoneTrack? microphoneTrack;
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
+
+        public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
 
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
@@ -58,10 +62,7 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
 
-            playbackSourcesHub = new PlaybackSourcesHub(
-                new ConcurrentDictionary<StreamKey, LivekitAudioSource>(),
-                configuration.ChatAudioMixerGroup.EnsureNotNull()
-            );
+            playbackSourcesHub = new PlaybackSourcesHub(configuration.ChatAudioMixerGroup.EnsureNotNull());
         }
 
         public void Dispose()
@@ -74,6 +75,8 @@ namespace DCL.VoiceChat
             microphoneChangeSubscription.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+
+            semaphoreSlimMicrophone.Dispose();
         }
 
         public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output)
@@ -87,6 +90,8 @@ namespace DCL.VoiceChat
         /// </summary>
         public async UniTaskVoid PublishLocalTrackAsync(CancellationToken ct)
         {
+            using var _ = await semaphoreSlimMicrophone.LockAsync();
+
             if (microphoneTrack.HasValue)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track already published");
