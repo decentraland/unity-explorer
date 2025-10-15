@@ -308,6 +308,7 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand,
+                voiceChatOrchestrator,
                 clipboardManager,
                 translationService,
                 translationMemory,

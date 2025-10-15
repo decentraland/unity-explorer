@@ -14,10 +14,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
-        /// <summary>
-        ///     Special signal to receive CRDT State from a peer
-        /// </summary>
-        private const byte REQ_CRDT_STATE = 2;
+        // Must be aligned with SDK runtime 1st-byte values at:
+        // https://github.com/decentraland/js-sdk-toolchain/blob/c8695cd9b94e87ad567520089969583d9d36637f/packages/@dcl/sdk/src/network/binary-message-bus.ts#L3-L7
+        enum CommsMessageType {
+          CRDT = 1,
+          REQ_CRDT_STATE = 2,   // Special signal to receive CRDT State from a peer
+          RES_CRDT_STATE = 3    // Special signal to send CRDT State to a peer
+        }
 
         protected readonly List<ITypedArray<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
@@ -57,11 +60,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             foreach (PoolableByteArray poolable in broadcastData)
                 if (poolable.Length > 0)
                 {
-                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = poolable.Span[0] == REQ_CRDT_STATE
+                    byte firstByte = poolable.Span[0];
+                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)CommsMessageType.REQ_CRDT_STATE
                         ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
                         : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
 
-                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness, recipient, useFilter: true);
+                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness, recipient, useFilter: firstByte == (int)CommsMessageType.CRDT);
                 }
         }
 
