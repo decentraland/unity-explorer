@@ -62,6 +62,7 @@ namespace ECS.Unity.Materials
 
             if (promiseValue.LoadingIntention.IsVideoTexture)
             {
+                //TODO (Will this entity have the video texture consumor?)
                 ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(entity, out bool hasConsumer);
 
                 if (hasConsumer)
