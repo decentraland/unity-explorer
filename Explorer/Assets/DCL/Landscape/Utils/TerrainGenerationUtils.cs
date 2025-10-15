@@ -32,7 +32,7 @@ namespace DCL.Landscape
         }
 
         public static void ExtractEmptyParcels(int2 minParcel, int2 maxParcel,
-            ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
         {
             if (!emptyParcels.IsCreated)
                 emptyParcels = new NativeList<int2>(Allocator.Persistent);
@@ -51,7 +51,7 @@ namespace DCL.Landscape
             ref NativeParallelHashMap<int2, int> emptyParcelsData,
             ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData,
             in NativeArray<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels,
+            ref NativeHashSet<int2> ownedParcels,
             int2 minParcel, int2 maxParcel,
             float heightScaleNerf)
         {

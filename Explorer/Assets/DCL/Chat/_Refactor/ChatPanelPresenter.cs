@@ -71,6 +71,7 @@ namespace DCL.Chat
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed += OnUIClose;
             uiScope.Add(eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
 
             communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
@@ -186,15 +187,17 @@ namespace DCL.Chat
             }
         }
 
-        public void OnUIClose()
+        private void OnUIClose(InputAction.CallbackContext obj)
         {
             if (chatStateMachine.IsMinimized) return;
+
             chatStateMachine.SetVisibility(true);
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
             initCts.SafeCancelAndDispose();
 
@@ -248,15 +251,8 @@ namespace DCL.Chat
             chatStateMachine.Minimize();
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent evt)
-        {
+        private void HandleGlobalClick(ChatSharedAreaEvents.ChatPanelGlobalClickEvent evt) =>
             chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
-        }
-
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent evt)
-        {
-            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
-        }
 
         private void SubscribeToCoordinationEvents()
         {
@@ -270,8 +266,7 @@ namespace DCL.Chat
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(OnHiddenInSharedSpace));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent>(OnMvcViewShowed));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent>(OnMvcViewClosed));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelGlobalClickEvent>(HandleGlobalClick));
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)
