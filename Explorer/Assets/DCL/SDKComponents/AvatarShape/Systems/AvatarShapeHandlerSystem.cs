@@ -18,17 +18,13 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.AvatarShape.Components;
-
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Utility.Arch;
-
-using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
-using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
+using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -92,7 +88,7 @@ namespace ECS.Unity.AvatarShape.Systems
             var sdkAvatarShapeComponent = new SDKAvatarShapeComponent(globalWorldEntity);
 
             if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
-                AddCharacterEmoteIntent(globalWorldEntity, ref sdkAvatarShapeComponent, pbAvatarShape.ExpressionTriggerId, BodyShape.FromStringSafe(pbAvatarShape.BodyShape));
+                PlayEmote(pbAvatarShape, ref sdkAvatarShapeComponent);
 
             World.Add(entity, sdkAvatarShapeComponent);
         }
@@ -105,8 +101,34 @@ namespace ECS.Unity.AvatarShape.Systems
 
             globalWorld.Set(sdkAvatarShapeComponent.GlobalWorldEntity, pbAvatarShape);
 
-            if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
-                AddCharacterEmoteIntent(sdkAvatarShapeComponent.GlobalWorldEntity, ref sdkAvatarShapeComponent, pbAvatarShape.ExpressionTriggerId, BodyShape.FromStringSafe(pbAvatarShape.BodyShape));
+            CharacterEmoteComponent emoteComponent = globalWorld.Get<CharacterEmoteComponent>(sdkAvatarShapeComponent.GlobalWorldEntity);
+
+            bool shouldPlayEmote = !string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId);
+            if (shouldPlayEmote)
+            {
+                bool emoteAlreadyBeingPlayed = emoteComponent.IsPlayingEmote &&
+                                               string.Equals(pbAvatarShape.ExpressionTriggerId, sdkAvatarShapeComponent.EmoteId, StringComparison.Ordinal);
+                bool isNewerTimestamp = pbAvatarShape.ExpressionTriggerTimestamp > sdkAvatarShapeComponent.EmoteTimestamp;
+                if (emoteAlreadyBeingPlayed && !isNewerTimestamp) return;
+
+                PlayEmote(pbAvatarShape, ref sdkAvatarShapeComponent);
+            }
+            else if (!string.IsNullOrEmpty(sdkAvatarShapeComponent.EmoteId))
+            {
+                sdkAvatarShapeComponent.EmoteId = null;
+
+                // Signal the emote system we need to stop the animation playback
+                emoteComponent.StopEmote = true;
+                globalWorld.Set(sdkAvatarShapeComponent.GlobalWorldEntity, emoteComponent);
+            }
+        }
+
+        private void PlayEmote(PBAvatarShape pbAvatarShape, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
+        {
+            sdkAvatarShapeComponent.EmoteId = pbAvatarShape.ExpressionTriggerId;
+            sdkAvatarShapeComponent.EmoteTimestamp = pbAvatarShape.ExpressionTriggerTimestamp;
+
+            AddCharacterEmoteIntent(sdkAvatarShapeComponent.GlobalWorldEntity, ref sdkAvatarShapeComponent, pbAvatarShape.ExpressionTriggerId, BodyShape.FromStringSafe(pbAvatarShape.BodyShape));
         }
 
         private void AddCharacterEmoteIntent(Entity globalWorldEntity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent, string emoteId, BodyShape bodyShape)

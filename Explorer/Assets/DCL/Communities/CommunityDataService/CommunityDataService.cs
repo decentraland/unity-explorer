@@ -3,7 +3,6 @@ using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
@@ -92,14 +91,16 @@ namespace DCL.Communities
             var data = result.Value.data;
             var channelId = ChatChannel.NewCommunityChannelId(data.id);
 
-            communities[channelId] = new GetUserCommunitiesData.CommunityData(data.id,
+            communities[channelId] = new GetUserCommunitiesData.CommunityData(
+                data.id,
                 data.thumbnails,
                 data.name,
                 data.description,
                 data.privacy,
                 data.role,
                 data.ownerAddress,
-                data.membersCount);
+                data.membersCount,
+                data.voiceChatStatus);
 
             // Notify anyone who cares (titlebar, channels list, etc.)
             CommunityMetadataUpdated?.Invoke(new CommunityMetadataUpdatedEvent(channelId));
@@ -170,7 +171,8 @@ namespace DCL.Communities
                     response.data.privacy,
                     response.data.role,
                     response.data.ownerAddress,
-                    response.data.membersCount));
+                    response.data.membersCount,
+                    response.data.voiceChatStatus));
 
                 chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
 
@@ -192,7 +194,8 @@ namespace DCL.Communities
                 newCommunity.privacy,
                 CommunityMemberRole.owner,
                 newCommunity.ownerAddress,
-                1);
+                1,
+                new GetCommunityResponse.VoiceChatStatus());
 
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
