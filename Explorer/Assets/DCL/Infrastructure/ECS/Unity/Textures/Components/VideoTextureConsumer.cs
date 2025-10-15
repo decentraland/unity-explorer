@@ -47,31 +47,41 @@ namespace ECS.Unity.Textures.Components
         }
 
         // All the renderers that use the video texture
-        private readonly List<Renderer> renderers;
+        private List<Renderer> renderers;
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
         ///     we don't use the original texture from AVPro
         /// </summary>
-        public Texture2DData Texture { get; private set; }
+        public RenderTexture Texture { get; private set; }
 
-        public bool IsDirty;
 
-        public int ConsumersCount => Texture.referenceCount;
 
-        public VideoTextureConsumer(Texture2D texture)
+        public static VideoTextureConsumer CreateVideoTextureConsumer()
         {
-            Texture = new Texture2DData(texture);
-            renderers = new List<Renderer>();
-            IsDirty = false;
+            // This allows to clear the existing data on the texture,
+            // to avoid "ghost" images in the textures before they are loaded with new data,
+            // particularly when dealing with streaming textures from videos
+            /*texture.Reinitialize(1, 1);
+            texture.SetPixel(0, 0, Color.clear);
+            texture.Apply();*/
+
+
+            VideoTextureConsumer consumer = new VideoTextureConsumer();
+
+            RenderTexture Texture = new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32)
+            {
+                useMipMap = false,
+                autoGenerateMips = false,
+            };
+            Texture.Create();
+            consumer.Texture = Texture;
+            consumer.renderers = new List<Renderer>();
+            consumer.referenceCount = 0;
+
+            return consumer;
         }
 
-        public VideoTextureConsumer(Texture2DData t2dd)
-        {
-            Texture = t2dd;
-            renderers = new List<Renderer>();
-            IsDirty = false;
-        }
 
         public void Dispose()
         {
@@ -106,5 +116,34 @@ namespace ECS.Unity.Textures.Components
                 meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
             }
         }
+
+        public int referenceCount;
+
+        public void AddReference()
+        {
+            referenceCount++;
+
+        }
+
+        public void DecreaseReference()
+        {
+            referenceCount--;
+        }
+
+        public void ResizeAndReassing(Texture to)
+        {
+            //TODO (Leak?)
+            Texture = new RenderTexture(to.width, to.height, 0, RenderTextureFormat.BGRA32)
+            {
+                useMipMap = false,
+                autoGenerateMips = false,
+            };
+            Texture.Create();
+
+            //TODO (Will the renderer be assigned at this point)
+            foreach (var meshRenderer in renderers)
+                meshRenderer.sharedMaterial.SetTexture(ShaderUtils.BaseMap, Texture);
+        }
+
     }
 }

@@ -87,19 +87,20 @@ namespace DCL.SDKComponents.MediaStream
         {
             CreateAudioStreamQuery(World, t);
             CreateVideoPlayerQuery(World, t);
+            CreateVideoPlayerWithConsumerQuery(World, t);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent, [Data] float dt)
         {
-            CreateMediaPlayer(dt, entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(dt, entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, false);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
         [All(typeof(VideoTextureConsumer))]
-        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, ref VideoTextureConsumer videoTextureConsumer, [Data] float dt)
+        private void CreateVideoPlayerWithConsumer(in Entity entity, PBVideoPlayer sdkComponent, [Data] float dt)
         {
             var address = MediaAddress.New(sdkComponent.Src!);
 
@@ -107,14 +108,25 @@ namespace DCL.SDKComponents.MediaStream
             if (address.IsLivekitAddress(out _) && !sceneStateProvider.IsCurrent)
                 return;
 
-            videoTextureConsumer.IsDirty = true;
-            CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, false);
         }
 
-        private void CreateMediaPlayer(float dt, Entity entity, string url, bool hasVolume, float volume)
+        [Query]
+        [None(typeof(MediaPlayerComponent), typeof(VideoTextureConsumer))]
+        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, [Data] float dt)
+        {
+            var address = MediaAddress.New(sdkComponent.Src!);
+
+            //Streams rely on livekit room being active; which can only be in we are on the same scene. Lets not create media that is wrong
+            if (address.IsLivekitAddress(out _) && !sceneStateProvider.IsCurrent)
+                return;
+
+            CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, true);
+        }
+
+        private void CreateMediaPlayer(float dt, Entity entity, string url, bool hasVolume, float volume, bool createConsumer)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
-
 
             MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
@@ -127,7 +139,10 @@ namespace DCL.SDKComponents.MediaStream
                 // At the moment we consider streams as global audio always, until there is a way to change it from the scene
                 mediaPlayerAudio!.spatialBlend = 0.0f;
 
-            World.Add(entity, component);
+            if (createConsumer)
+                World.Add(entity, component, VideoTextureConsumer.CreateVideoTextureConsumer());
+            else
+                World.Add(entity, component);
         }
 
         [SuppressMessage("ReSharper", "RedundantAssignment")]

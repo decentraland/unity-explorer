@@ -27,8 +27,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             HandleSdkAudioStreamComponentRemovalQuery(World);
             HandleSdkVideoPlayerComponentRemovalQuery(World);
-
-            HandleMediaPlayerDestructionQuery(World);
         }
 
         [Query]
@@ -40,26 +38,24 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        [All(typeof(VideoTextureConsumer))]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
+        private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer, ref VideoTextureConsumer videoTextureConsumer)
         {
             CleanUpMediaPlayer(ref mediaPlayer);
+            CleanUpVideoTextureConsumer(ref videoTextureConsumer);
             World.Remove<MediaPlayerComponent>(entity);
             World.Remove<VideoStateByPriorityComponent>(entity);
         }
 
 
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleMediaPlayerDestruction(ref MediaPlayerComponent mediaPlayer)
-        {
-            CleanUpMediaPlayer(ref mediaPlayer);
-        }
-
         private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
         {
             mediaPlayerComponent.Dispose();
+        }
+
+        private void CleanUpVideoTextureConsumer(ref VideoTextureConsumer videoTextureConsumer)
+        {
+            videoTextureConsumer.Dispose();
         }
 
         public void FinalizeComponents(in Query query)

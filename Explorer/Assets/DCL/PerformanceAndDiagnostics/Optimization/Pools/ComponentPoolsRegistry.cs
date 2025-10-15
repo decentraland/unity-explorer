@@ -64,7 +64,7 @@ namespace DCL.Optimization.Pools
                     return (GameObjectPool<T>) existingPool;
                 }
 
-                var newPool = new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize, onGet);
+                var newPool = new GameObjectPool<T>(rootContainer, creationHandler, onRelease, 10_000, onGet);
                 pools.Add(typeof(T), newPool);
                 return newPool;
             }

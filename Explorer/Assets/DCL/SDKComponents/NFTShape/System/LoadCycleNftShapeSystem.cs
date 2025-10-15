@@ -36,6 +36,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             StartQuery(World!);
             FinishAndApplyQuery(World!);
+            FinishAndApplyVideoResultQuery(World!);
         }
 
         [Query]
@@ -59,27 +60,21 @@ namespace DCL.SDKComponents.NFTShape.System
                 return;
             }
 
-            nftRenderer.Apply(result.Asset!);
-            if (result.Asset.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
+            if (result.Asset.VideoURL != null)
+                InitializeNftVideo(entity, result.Asset, nftRenderer);
+            else
+                nftRenderer.Apply(result.Asset!);
+        }
+
+        [Query]
+        private void FinishAndApplyVideoResult(in Entity entity, ref NftShapeRendererComponent nftRenderer, in VideoTextureConsumer videoTextureConsumer)
+        {
+            //TODO (Avoid it being applied over and over)
+                nftRenderer.PoolableComponent.ApplyVideoTexture(videoTextureConsumer.Texture);
         }
 
         private void InitializeNftVideo(Entity entity, Texture2DData textureData, INftShapeRenderer nftRenderer)
         {
-            var vtc = new VideoTextureConsumer(textureData);
-            var texture2D = vtc.Texture.Asset;
-            texture2D.Reinitialize(1, 1);
-            texture2D.SetPixel(0, 0, Color.clear);
-            texture2D.Apply();
-
-            if (World.TryGet<PBVideoPlayer>(entity, out var videoPlayer))
-            {
-                videoPlayer!.Src = textureData.VideoURL;
-                videoPlayer.IsDirty = true;
-
-                World.Add(entity, vtc);
-            }
-            else
-            {
                 var pbVideo = new PBVideoPlayer
                 {
                     Src = textureData.VideoURL,
@@ -87,10 +82,8 @@ namespace DCL.SDKComponents.NFTShape.System
                     Loop = true,
                 };
 
-                World.Add(entity, pbVideo, vtc);
-            }
+                World.Add(entity, pbVideo);
 
-            vtc.IsDirty = true;
         }
     }
 }

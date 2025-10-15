@@ -12,6 +12,8 @@ namespace DCL.SDKComponents.NFTShape.Renderer
 
         void Apply(Texture2D tex);
 
+        void ApplyVideoTexture(Texture tex);
+
         void NotifyFailed();
 
         void Hide();

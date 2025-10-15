@@ -16,9 +16,8 @@ namespace ECS.Unity.Textures.Utils
             this in TextureComponent textureComponent,
             Entity entity,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
-            IObjectPool<Texture2D> videoTexturesPool,
             World world,
-            out Texture2DData? texture)
+            out Texture? texture)
         {
             texture = null;
 
@@ -28,8 +27,7 @@ namespace ECS.Unity.Textures.Utils
             ref var consumer = ref world.TryGetRef<VideoTextureConsumer>(videoPlayerEntity, out bool hasConsumer);
 
             if (!hasConsumer)
-                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), videoPlayerEntity);
-
+                return false;
 
             if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
             {
@@ -41,24 +39,9 @@ namespace ECS.Unity.Textures.Utils
                     consumer.AddConsumer(renderer);
             }
 
-            consumer.Texture.AddReference();
-            consumer.IsDirty = true;
-
+            consumer.AddReference();
             texture = consumer.Texture;
             return true;
-        }
-
-        private static ref VideoTextureConsumer CreateTextureConsumer(World world, Texture2D texture, Entity videoPlayerEntity)
-        {
-            // This allows to clear the existing data on the texture,
-            // to avoid "ghost" images in the textures before they are loaded with new data,
-            // particularly when dealing with streaming textures from videos
-            texture.Reinitialize(1, 1);
-            texture.SetPixel(0, 0, Color.clear);
-            texture.Apply();
-
-            world.Add(videoPlayerEntity, new VideoTextureConsumer(texture));
-            return ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
         }
 
         public struct VideoRenderingInfo

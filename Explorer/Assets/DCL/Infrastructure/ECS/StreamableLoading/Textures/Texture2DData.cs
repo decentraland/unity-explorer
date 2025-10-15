@@ -27,6 +27,13 @@ namespace ECS.StreamableLoading.Textures
                 UnityObjectUtils.SafeDestroy(Asset);
         }
 
+        public Texture hack;
+
+        public Texture2DData(Texture texture) : base(null, ReportCategory.TEXTURES)
+        {
+            hack = texture;
+        }
+
         public Texture2DData(Texture2D texture) : base(texture, ReportCategory.TEXTURES) { }
 
         public Texture2DData(Texture2D texture, string videoUrl) : base(texture, ReportCategory.TEXTURES)

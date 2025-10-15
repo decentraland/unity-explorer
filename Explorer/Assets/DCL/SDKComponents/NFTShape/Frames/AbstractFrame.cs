@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NFTShape.Frames
@@ -16,5 +17,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
 
         public abstract void UpdateStatus(Status status);
 
+        public abstract void Place(Texture picture);
     }
 }

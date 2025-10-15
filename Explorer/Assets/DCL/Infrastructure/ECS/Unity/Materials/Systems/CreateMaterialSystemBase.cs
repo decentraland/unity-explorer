@@ -59,21 +59,15 @@ namespace ECS.Unity.Materials.Systems
         {
             if (!textureResult.Succeeded) return;
 
-            material.SetTexture(propId, textureResult.Asset!);
-
-            if (textureComponent == null)
-            {
-                // When the material is re-used for another texture we need to restore the texture scale
-                // Otherwise in case it was previously a video texture it might have x:1,y:-1 scale which is undesired
-                // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
-                // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
-                material.SetTextureScale(propId, Vector2.one);
-            }
+            if (textureResult.Asset!.hack != null)
+                material.SetTexture(propId, textureResult.Asset!.hack);
             else
-            {
-                material.SetTextureScale(propId, textureComponent.Value.TextureTiling);
-                material.SetTextureOffset(propId, textureComponent.Value.TextureOffset);
-            }
+                material.SetTexture(propId, textureResult.Asset!);
+
+            material.SetTextureScale(propId, textureComponent.Value.TextureTiling);
+            material.SetTextureOffset(propId, textureComponent.Value.TextureOffset);
+
+            //TODO (Materials should be cleaned on a pool)
         }
     }
 }

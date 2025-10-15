@@ -76,6 +76,13 @@ namespace DCL.SDKComponents.NFTShape.Frames
             current.SetActive(true);
         }
 
+        public override void Place(Texture picture)
+        {
+            viewNftMaterialPropertyBlock.SetTexture(albedoColorPropertyId, picture);
+            renderer.SetPropertyBlock(viewNftMaterialPropertyBlock, placeIndex);
+            HideStatuses();
+        }
+
         private void ApplyCanvasMaterial(Material material)
         {
             var materials = renderer.materials!;

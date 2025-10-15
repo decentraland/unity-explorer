@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(PBVideoPlayer))]
-        private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
+        private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer videoTextureConsumer)
         {
             playerComponent.MediaPlayer.EnsurePlaying();
 
@@ -183,10 +183,16 @@ namespace DCL.SDKComponents.MediaStream
             if (avText == null) return;
 
             // Handle texture update
-            if (assignedTexture.Texture.Asset.HasEqualResolution(to: avText))
-                Graphics.CopyTexture(avText, assignedTexture.Texture);
+            if (videoTextureConsumer.Texture.HasEqualResolution(to: avText))
+            {
+                bool requiresFlip = playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1));
+                if (requiresFlip)
+                    Graphics.Blit(avText, videoTextureConsumer.Texture, new Vector2(1, -1), new Vector2(0, 1));
+                else
+                    Graphics.CopyTexture(avText, videoTextureConsumer.Texture);
+            }
             else
-                assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
+                videoTextureConsumer.ResizeAndReassing(avText);
         }
 
         private void HandleComponentChange(
@@ -301,14 +307,15 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
+        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, ref VideoTextureConsumer videoTextureConsumer, [Data] bool enteredScene)
         {
             if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
             {
                 //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
                 //the regular CreateMediaPlayerSystem
                 mediaPlayerComponent.Dispose();
-                World.Remove<MediaPlayerComponent>(entity);
+                videoTextureConsumer.Dispose();
+                World.Remove<MediaPlayerComponent, VideoTextureConsumer>(entity);
             }
 
         }

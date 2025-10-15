@@ -33,8 +33,6 @@ namespace ECS.Unity.Materials.Systems
         protected override void Update(float t)
         {
             TryReleaseQuery(World);
-            TryReleaseConsumerQuery(World);
-            HandleTextureWithoutConsumersQuery(World);
         }
 
         [Query]
@@ -44,52 +42,15 @@ namespace ECS.Unity.Materials.Systems
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
         }
 
-        /// <summary>
-        /// Release of VideoTextureConsumer component should be in this scope because it is a part of the material system
-        /// StartMaterialsLoadingSystem -> CleanUpMaterialsSystem
-        /// </summary>
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void TryReleaseConsumer(Entity entity, ref VideoTextureConsumer textureConsumer)
-        {
-            CleanUpVideoTexture(ref textureConsumer);
-            World.Remove<VideoTextureConsumer>(entity);
-        }
-
-        /// <summary>
-        ///     Prevents CPU and memory leaks by cleaning up video textures and media players that are not being used anymore.
-        /// </summary>
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void HandleTextureWithoutConsumers(Entity entity, ref VideoTextureConsumer textureConsumer)
-        {
-            if (textureConsumer.ConsumersCount == 0)
-            {
-                CleanUpVideoTexture(ref textureConsumer);
-                World.Remove<VideoTextureConsumer>(entity);
-            }
-        }
-
-        private void CleanUpVideoTexture(ref VideoTextureConsumer videoTextureConsumer)
-        {
-            videoTexturesPool.Release(videoTextureConsumer.Texture);
-            videoTextureConsumer.Dispose();
-        }
-
         [Query]
         private void ReleaseUnconditionally(Entity entity, ref MaterialComponent materialComponent)
         {
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
         }
 
-        [Query]
-        private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
-            CleanUpVideoTexture(ref component);
-
         public void FinalizeComponents(in Query query)
         {
             ReleaseUnconditionallyQuery(World);
-            FinalizeVideoTextureConsumerComponentQuery(World);
         }
     }
 }

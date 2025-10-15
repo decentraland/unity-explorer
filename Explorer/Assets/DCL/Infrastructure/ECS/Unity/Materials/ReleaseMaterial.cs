@@ -66,6 +66,8 @@ namespace ECS.Unity.Materials
 
                 if (hasConsumer)
                 {
+                    consumer.DecreaseReference();
+
                     if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
                         consumer.RemoveConsumer(primitiveMeshComponent.MeshRenderer);
                     else if (world.TryGet(entity, out GltfNode gltfNode))

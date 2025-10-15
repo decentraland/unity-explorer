@@ -3,6 +3,7 @@ using DCL.SDKComponents.NFTShape.Frames;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.Utilities.Extensions;
 using ECS.Unity.ColorComponent;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NFTShape.Renderer
@@ -43,6 +44,11 @@ namespace DCL.SDKComponents.NFTShape.Renderer
         }
 
         public void Apply(Texture2D tex)
+        {
+            frame.EnsureNotNull().Place(tex);
+        }
+
+        public void ApplyVideoTexture(Texture tex)
         {
             frame.EnsureNotNull().Place(tex);
         }

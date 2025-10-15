@@ -39,7 +39,6 @@ namespace ECS.Unity.Materials.Systems
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
 
         public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
@@ -49,7 +48,6 @@ namespace ECS.Unity.Materials.Systems
             this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
             this.entitiesMap = entitiesMap;
-            this.videoTexturesPool = videoTexturesPool;
         }
 
         protected override void Update(float t)
@@ -221,10 +219,11 @@ namespace ECS.Unity.Materials.Systems
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var texture);
+                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, World, out var texture);
                 if (!foundConsumeEntity) return false;
 
-                var result = new StreamableLoadingResult<Texture2DData>(texture);
+                //TODO (Juani) : Can I cast?
+                var result = new StreamableLoadingResult<Texture2DData>(new Texture2DData((Texture)texture));
 
                 promise = Promise.CreateFinalized(intention, result);
             }
