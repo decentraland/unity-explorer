@@ -53,24 +53,9 @@ namespace DCL.SDKComponents.NFTShape.System
                 nftLoadingComponent.ImagePromise = imagePromise;
             }
 
-            if (nftLoadingComponent.VideoPromise != null)
-            {
-                var videoPromise = nftLoadingComponent.VideoPromise.Value;
-                videoPromise.TryDereference(World);
-                nftLoadingComponent.VideoPromise = videoPromise;
-            }
-
             if (forgetPromise)
             {
                 nftLoadingComponent.TypePromise.ForgetLoading(World);
-
-                if (nftLoadingComponent.VideoPromise != null)
-                {
-                    var videoPromise = nftLoadingComponent.VideoPromise.Value;
-                    videoPromise.ForgetLoading(World);
-                    // Need to reassign reference, otherwise it becomes outdated due to handling a copy
-                    nftLoadingComponent.VideoPromise = videoPromise;
-                }
 
                 if (nftLoadingComponent.ImagePromise != null)
                 {

@@ -15,7 +15,6 @@ using NSubstitute;
 using NUnit.Framework;
 using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
 using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
-using NftVideoPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTVideoIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Tests
 {
@@ -46,7 +45,6 @@ namespace DCL.SDKComponents.NFTShape.Tests
             var loadingComponent = new NFTLoadingComponent(INITIAL_URN,
                 NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString(INITIAL_URN)), PartitionComponent.TOP_PRIORITY))
             {
-                VideoPromise = NftVideoPromise.Create(world, new GetNFTVideoIntention(URLAddress.FromString(INITIAL_URN)), PartitionComponent.TOP_PRIORITY),
                 ImagePromise = NftImagePromise.Create(world, new GetNFTImageIntention(URLAddress.FromString(INITIAL_URN)), PartitionComponent.TOP_PRIORITY),
             };
 
@@ -66,7 +64,6 @@ namespace DCL.SDKComponents.NFTShape.Tests
             if (urnChanged)
             {
                 Assert.That(loadingComponent.TypePromise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
-                Assert.That(loadingComponent.VideoPromise.Value.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
                 Assert.That(loadingComponent.ImagePromise.Value.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
 
                 CollectionAssert.AreEqual(new EntityRelation<NftShapeRendererComponent>[] { new (entity, component) }, changedNftShapes!.Relations);
