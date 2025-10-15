@@ -25,7 +25,6 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
-using DCL.SceneBannedUsers;
 using DCL.UI.Controls.Configs;
 using DG.Tweening;
 using ECS;
@@ -79,7 +78,6 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
-        private bool isOtherPlayersBanned;
         private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -139,8 +137,8 @@ namespace DCL.Minimap
             if (includeBannedUsersFromScene)
             {
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowOwnPlayerBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomConnected -= HideAllBannedMarks;
-                roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideAllBannedMarks;
+                roomHub.SceneRoom().CurrentSceneRoomConnected -= HideOwnPlayerBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideOwnPlayerBannedMark;
                 showBannedTooltipCts.SafeCancelAndDispose();
             }
 
@@ -193,8 +191,8 @@ namespace DCL.Minimap
             if (includeBannedUsersFromScene)
             {
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowOwnPlayerBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomConnected += HideAllBannedMarks;
-                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideAllBannedMarks;
+                roomHub.SceneRoom().CurrentSceneRoomConnected += HideOwnPlayerBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideOwnPlayerBannedMark;
             }
         }
 
@@ -287,14 +285,6 @@ namespace DCL.Minimap
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
                 GetPlaceInfoAsync(position);
-            }
-
-            if (includeBannedUsersFromScene && !isOwnPlayerBanned)
-            {
-                if (BannedUsersFromCurrentScene.Instance.BannedUsersCount() > 0)
-                    ShowOtherPlayersBannedMark();
-                else
-                    HideOtherPlayersBannedMark();
             }
         }
 
@@ -435,11 +425,10 @@ namespace DCL.Minimap
                 return;
 
             isOwnPlayerBanned = true;
-            HideOtherPlayersBannedMark();
             viewInstance!.ownPlayerBannedMark.SetActive(true);
 
             showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
-            ShowBannedTooltipAsync(showOwnPlayerTooltip: true, showBannedTooltipCts.Token).Forget();
+            ShowBannedTooltipAsync(showBannedTooltipCts.Token).Forget();
         }
 
         private void HideOwnPlayerBannedMark()
@@ -449,38 +438,12 @@ namespace DCL.Minimap
             isOwnPlayerBanned = false;
         }
 
-        private void ShowOtherPlayersBannedMark()
-        {
-            if (isOtherPlayersBanned)
-                return;
-
-            isOtherPlayersBanned = true;
-            viewInstance!.otherPlayersBannedMark.SetActive(true);
-
-            showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
-            ShowBannedTooltipAsync(showOwnPlayerTooltip: false, showBannedTooltipCts.Token).Forget();
-        }
-
-        private void HideOtherPlayersBannedMark()
-        {
-            showBannedTooltipCts.SafeCancelAndDispose();
-            viewInstance!.otherPlayersBannedMark.SetActive(false);
-            isOtherPlayersBanned = false;
-        }
-
-        private void HideAllBannedMarks()
-        {
-            HideOwnPlayerBannedMark();
-            HideOtherPlayersBannedMark();
-        }
-
-        private async UniTaskVoid ShowBannedTooltipAsync(bool showOwnPlayerTooltip, CancellationToken ct)
+        private async UniTaskVoid ShowBannedTooltipAsync(CancellationToken ct)
         {
             await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
-            var tooltip = showOwnPlayerTooltip ? viewInstance!.ownPlayerBannedTooltip : viewInstance!.otherPlayersBannedTooltip;
-            tooltip.SetActive(true);
+            viewInstance!.ownPlayerBannedTooltip.SetActive(true);
             await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
-            tooltip.SetActive(false);
+            viewInstance!.ownPlayerBannedTooltip.SetActive(false);
         }
     }
 
