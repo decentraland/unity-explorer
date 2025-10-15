@@ -166,11 +166,6 @@ namespace DCL.Interaction.Systems
 
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
 
-            if (socialEmoteInteraction is { AreInteracting: false })
-            {
-                // The hovered avatar is playing a social emote, in the starting step
-                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Emote, 0);
-            }
             else
             {
                 // A context menu will be available if no social emote interaction is in process
