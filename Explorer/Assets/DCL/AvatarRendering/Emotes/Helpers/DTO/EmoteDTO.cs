@@ -27,7 +27,6 @@ namespace DCL.AvatarRendering.Emotes
             public string? audio;
         }
 
-
         [Serializable]
         public class EmoteOutcomeAnimationDTO
         {

@@ -126,8 +126,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
 
-//            Debug.LogError("CANCEL EMOTES " + profile.UserId);
-
             if (emoteReference == null)
                 return;
 
@@ -280,7 +278,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
 
-                    // TODO: Move this to a system with intents?
                     if (emoteComponent.Metadata.IsSocialEmote)
                     {
                         if (emoteComponent.IsPlayingSocialEmoteOutcome)

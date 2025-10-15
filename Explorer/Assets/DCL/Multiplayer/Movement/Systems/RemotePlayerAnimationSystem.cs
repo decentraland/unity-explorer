@@ -4,13 +4,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
@@ -37,20 +35,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
-            StopSocialEmoteOutcomeAnimationQuery(World);
             UpdatePlayersAnimationQuery(World);
-        }
-
-        [Query]
-        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void StopSocialEmoteOutcomeAnimation(ref CharacterEmoteComponent emote, Profile profile)
-        {
-            if (!emote.IsPlayingEmote && emote.HasOutcomeAnimationStarted && emote.SocialEmoteInitiatorWalletAddress == profile.UserId)
-            {
-                // Finished outcome emote animation in remote avatar that initiated the interaction
-  //              Debug.LogError("RESET!!!! StopSocialEmoteOutcomeAnimation " + profile.UserId);
-  //              emote.StopEmote = true; //.Reset();
-            }
         }
 
         [Query]

@@ -8,13 +8,6 @@ namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmote : IAvatarAttachment<EmoteDTO>
     {
-        struct SocialEmoteOutcomeAudioAssetResult
-        {
-            public string EmoteId;
-            public int Outcome;
-            public StreamableLoadingResult<AudioClipData> Result;
-        }
-
         StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
         StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
         List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; }

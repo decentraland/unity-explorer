@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
                 {
-                    SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.WalletId);
+                    SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.WalletId);
 
                     // Corner case:
                     // While the start animation is looping, a new message is received and the intention is queued and consumed
@@ -49,10 +49,10 @@ namespace DCL.AvatarRendering.Emotes
                     // The message that arrives after the outcome animation played queued but was not consumed since there is a check below that prevents that from happening while there is another animation interpolation
                     // That message has to be discarded as it does not make sense anymore, the outcome animation is playing, the start animation is not going to play again
                     // If not removed, then it would play the start animation after the interaction finishes, which leads the system in an undesired state
-                    if (interaction.HasValue &&
-                        interaction.Value.InitiatorWalletAddress == remoteEmoteIntention.WalletId &&
+                    if (interaction != null &&
+                        interaction.InitiatorWalletAddress == remoteEmoteIntention.WalletId &&
                         !remoteEmoteIntention.IsUsingSocialOutcomeAnimation &&
-                        interaction.Value.AreInteracting)
+                        interaction.AreInteracting)
                     {
                         ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PENDING savedIntention IGNORED " + remoteEmoteIntention.EmoteId);
                         continue;

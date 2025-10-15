@@ -211,7 +211,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayLegacyEmote(GameObject avatarAnimatorGameObject, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
-// TODO: Adapt this to social emtes like PlayMecanimEmote
+// TODO: Adapt this to social emotes like PlayMecanimEmote
             Animation animationComp;
             if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
                 animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
@@ -354,7 +354,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteMetadata.IsSocialEmote)
             {
-                outcomeClips = new EmoteReferences.EmoteOutcome[emoteMetadata.socialEmoteData!.outcomes!.Length]; // TODO: Make static List
+                outcomeClips = new EmoteReferences.EmoteOutcome[emoteMetadata.socialEmoteData!.outcomes!.Length];
 
                 foreach (AnimationClip animationClip in uniqueClips)
                 {
