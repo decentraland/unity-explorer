@@ -275,7 +275,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnParticipantIsSpeaking(bool isSpeaking, VoiceChatParticipantState participantState)
         {
             if (isSpeaking)
-                currentlySpeakingUsers.Add(participantState.WalletId, participantState.Name.Value);
+                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name.Value);
             else
                 currentlySpeakingUsers.Remove(participantState.WalletId);
 

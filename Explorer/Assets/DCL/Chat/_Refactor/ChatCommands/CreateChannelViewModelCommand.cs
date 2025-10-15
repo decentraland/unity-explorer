@@ -6,9 +6,11 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -23,6 +25,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
         private readonly IDecentralandUrlsSource urlsSource;
 
@@ -33,7 +36,8 @@ namespace DCL.Chat.ChatCommands
             ProfileRepositoryWrapper profileRepository,
             GetUserChatStatusCommand getUserChatStatusCommand,
             GetCommunityThumbnailCommand getCommunityThumbnailCommand,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
@@ -42,12 +46,13 @@ namespace DCL.Chat.ChatCommands
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.urlsSource = urlsSource;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
         {
             int unreadCount = channel.Messages.Count - channel.ReadMessages;
-            bool hasMentions = false;
+            var hasMentions = false;
             if (unreadCount > 0)
             {
                 for (int i = channel.ReadMessages; i < channel.Messages.Count; i++)
@@ -98,6 +103,9 @@ namespace DCL.Chat.ChatCommands
             {
                 viewModel.DisplayName = communityData.name;
                 viewModel.ImageUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.id);
+                viewModel.CommunityConnectionUpdates = voiceChatOrchestrator.CommunityConnectionUpdates(ChatChannel.GetCommunityIdFromChannelId(channel.Id));
+                viewModel.CurrentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created ViewModel for: {communityData.name} -> is Streaming: {viewModel.CommunityConnectionUpdates.Value} - current community ID: {viewModel.CurrentCommunityCallId.Value}");
 
                 FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
             }

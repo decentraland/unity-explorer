@@ -325,6 +325,7 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand,
+                voiceChatOrchestrator,
                 clipboardManager,
                 translationService,
                 translationMemory,
@@ -366,7 +367,8 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                chatSharedAreaEventBus
+                chatSharedAreaEventBus,
+                commandRegistry
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus,

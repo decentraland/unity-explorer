@@ -274,7 +274,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "No valid cached identity found - user needs to login");
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 SwitchState(ViewState.Login);
             }
 
@@ -294,9 +294,9 @@ namespace DCL.AuthenticationScreenFlow
 
             FeatureFlagsConfiguration flags = FeatureFlagsConfiguration.Instance;
 
-            if (!flags.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
+            if (!flags.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLET_VARIANT)) return true;
 
-            if (!flags.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
+            if (!flags.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLET_VARIANT, out List<List<string>>? allowedUsersCsv))
                 return true;
 
             bool isUserAllowed = allowedUsersCsv![0]
