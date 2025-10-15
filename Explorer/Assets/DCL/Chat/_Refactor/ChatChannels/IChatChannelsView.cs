@@ -26,7 +26,7 @@ namespace DCL.Chat
 
         void SetOnlineStatus(string userId, bool isOnline);
 
-        void SelectConversation(ChatChannel.ChannelId channelId);
+        void SelectConversation(ChatChannel.ChannelId channelId, bool invoke);
 
         void AddItem(ChatConversationsToolbarViewItem item);
 
