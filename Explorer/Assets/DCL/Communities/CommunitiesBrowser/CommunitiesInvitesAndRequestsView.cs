@@ -248,7 +248,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             invitedCommunityCardView.SetActionLoadingActive(false);
             invitedCommunityCardView.ConfigureListenersCount(false, 0);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(community.id, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(community.communityId, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events
             invitedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;
@@ -287,7 +287,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetInviteOrRequestId(community.id);
             requestedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             requestedCommunityCardView.SetActionLoadingActive(false);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(community.id, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(community.communityId, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events
             requestedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;
