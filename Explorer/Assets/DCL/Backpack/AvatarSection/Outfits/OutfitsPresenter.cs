@@ -314,12 +314,7 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
 
-            var presenter = slotPresenters.Find(p => p.slotIndex == outfitItem.slot);
-            if (presenter != null && !presenter.HasThumbnail())
-            {
-                ReportHub.Log(ReportCategory.OUTFITS, $"Thumbnail for slot {outfitItem.slot} is missing. Generating on equip.");
-                TakeScreenshotAndDisplayAsync(outfitItem.slot).Forget();
-            }
+            GenerateThumbnailIfMissingAsync(outfitItem.slot);
 
             previewOutfitCommand.Commit();
             
@@ -338,19 +333,17 @@ namespace DCL.Backpack
 
             previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token).Forget();
 
-            var presenter = slotPresenters.Find(p => p.slotIndex == outfitItem.slot);
-            if (presenter == null) return;
+            GenerateThumbnailIfMissingAsync(outfitItem.slot);
+        }
 
-            // 3. Use the HasThumbnail() method to check if a screenshot needs to be generated.
-            if (!presenter.HasThumbnail())
+        private void GenerateThumbnailIfMissingAsync(int slotIndex)
+        {
+            var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
+
+            if (presenter != null && !presenter.HasThumbnail())
             {
-                ReportHub.Log(ReportCategory.OUTFITS, $"Thumbnail for slot {outfitItem.slot} is missing. Generating now.");
-
-                // If the thumbnail is missing, start the process to create and save it.
-                // We use Forget() because this is a background task. The thumbnail will
-                // appear on the slot once the process is complete.
-                // Pass the cancellation token to ensure it stops if the user navigates away.
-                TakeScreenshotAndDisplayAsync(outfitItem.slot).Forget();
+                ReportHub.Log(ReportCategory.OUTFITS, $"Thumbnail for slot {slotIndex} is missing. Generating on demand.");
+                TakeScreenshotAndDisplayAsync(slotIndex).Forget();
             }
         }
 
