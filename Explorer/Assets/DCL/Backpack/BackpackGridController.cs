@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
@@ -15,7 +14,6 @@ using DCL.UI;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -196,11 +194,6 @@ namespace DCL.Backpack
 
         private void EquipItem(string itemId)
         {
-            if (itemId.Contains("croupier_shirt"))
-            {
-                Debug.Log($"INVESTIGATION (Grid): Equipping 'croupier_shirt'. URN sent to command bus: '{itemId}'");
-            }
-
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
         }
 
