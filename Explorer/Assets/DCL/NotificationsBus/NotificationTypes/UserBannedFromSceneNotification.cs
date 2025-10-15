@@ -5,7 +5,7 @@ namespace DCL.NotificationsBus.NotificationTypes
 {
     public class UserBannedFromSceneNotification : NotificationBase
     {
-        private const string NOTIFICATION_TITLE = "Your access to this scene has been restricted.";
+        private const string NOTIFICATION_TITLE = "Your access to this scene has been restricted by scene admins.";
 
         [JsonProperty("metadata")]
         public UserBannedFromSceneNotificationMetadata Metadata { get; set; }
