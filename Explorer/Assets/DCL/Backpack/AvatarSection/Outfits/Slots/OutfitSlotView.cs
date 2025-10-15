@@ -1,6 +1,4 @@
 ﻿using System;
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +10,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public event Action? OnSaveClicked;
         public event Action? OnEquipClicked;
         public event Action? OnDeleteClicked;
+        public event Action? OnPreviewClicked;
 
         [Header("Containers")]
         [SerializeField] private GameObject emptyContainer;
@@ -27,10 +26,17 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [SerializeField] private Button? equipButton;
         [SerializeField] private Button? unEquipButton;
         [SerializeField] private Button? deleteButton;
+        [SerializeField] private Button? previewButton;
 
         [Header("Full State UI")]
         [SerializeField]
         private Image outfitThumbnail;
+
+        [SerializeField]
+        private Image outfitThumbnailEmpty;
+
+        [Header("Placeholders & Empty State")]
+        [SerializeField] private Image emptyStateSilhouette; 
 
         [SerializeField]
         private Image outfitEquippedOutline;
@@ -49,6 +55,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
             equipButton?.onClick.AddListener(() => OnEquipClicked?.Invoke());
             deleteButton?.onClick.AddListener(() => OnDeleteClicked?.Invoke());
+            previewButton?.onClick.AddListener(() => OnPreviewClicked?.Invoke());
+
+            if (outfitThumbnailEmpty != null && emptyStateSilhouette != null)
+                outfitThumbnailEmpty.sprite = emptyStateSilhouette.sprite;
         }
 
         public void ShowEmptyState(bool isHovering)
@@ -89,18 +99,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             loadingView.HideLoading();
             loadingContainer.SetActive(false);
 
-            if (thumbnail != null)
+            bool hasRealThumbnail = thumbnail != null;
+
+            outfitThumbnail.gameObject.SetActive(hasRealThumbnail);
+            outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
+            if (hasRealThumbnail)
             {
-                // Create a new sprite from the texture and assign it.
-                // This ensures the view is updated with the latest thumbnail from the presenter.
+                // We have a real thumbnail, so configure the 'outfitThumbnail' Image.
+                // Using .sprite is fine here since this Image component will only ever show generated sprites.
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
                 outfitThumbnail.color = Color.white;
-            }
-            else
-            {
-                // If no thumbnail is provided, clear the sprite and show a placeholder color.
-                outfitThumbnail.sprite = null;
-                outfitThumbnail.color = new Color(1, 1, 1, 0.0f);
             }
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
@@ -123,6 +131,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             saveButton?.onClick.RemoveAllListeners();
             equipButton?.onClick.RemoveAllListeners();
             deleteButton?.onClick.RemoveAllListeners();
+            previewButton?.onClick.RemoveAllListeners();
         }
 
         public void SetEquipped(bool equipped)

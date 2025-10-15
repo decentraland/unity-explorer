@@ -36,6 +36,12 @@ namespace DCL.Backpack.Slots
         public event Action<int> OnSaveRequested;
         public event Action<int> OnDeleteRequested;
         public event Action<OutfitItem> OnEquipRequested;
+        public event Action<OutfitItem> OnPreviewRequested;
+
+        public bool HasThumbnail()
+        {
+            return currentThumbnail != null;
+        }
 
         public readonly OutfitSlotView view;
         public readonly int slotIndex;
@@ -60,6 +66,7 @@ namespace DCL.Backpack.Slots
             view.OnSaveClicked += HandleSaveClicked;
             view.OnDeleteClicked += HandleDeleteClicked;
             view.OnEquipClicked += HandleEquipClicked;
+            view.OnPreviewClicked += HandlePreviewClicked;
             
             hoverHandler = view.hoverHandler;
             hoverHandler.OnHoverEntered += OnHoverEntered;
@@ -79,6 +86,11 @@ namespace DCL.Backpack.Slots
         private void HandleDeleteClicked()
         {
             OnDeleteRequested?.Invoke(slotIndex);
+        }
+
+        private void HandlePreviewClicked()
+        {
+            OnPreviewRequested?.Invoke(currentOutfitData!);
         }
 
         private void HandleEquipClicked()
@@ -169,7 +181,7 @@ namespace DCL.Backpack.Slots
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
-                SetThumbnail(null); // Ensure UI updates even if loading fails
+                SetThumbnail(null);
             }
         }
 
@@ -188,6 +200,7 @@ namespace DCL.Backpack.Slots
             view.OnSaveClicked -= HandleSaveClicked;
             view.OnEquipClicked -= HandleEquipClicked;
             view.OnDeleteClicked -= HandleDeleteClicked;
+            view.OnPreviewClicked -= HandlePreviewClicked;
 
             hoverHandler.OnHoverEntered -= OnHoverEntered;
             hoverHandler.OnHoverExited -= OnHoverExited;

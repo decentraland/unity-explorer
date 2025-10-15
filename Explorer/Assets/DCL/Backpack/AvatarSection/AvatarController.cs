@@ -81,10 +81,14 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
+            tabsManager.DeactivateAll();
+            
             backpackCommandBus.SendCommand(new BackpackFilterCommand(string.Empty,
                 AvatarWearableCategoryEnum.Body, string.Empty));
             
             backpackGridController.Deactivate();
+
+            
         }
 
         public void Animate(int triggerId) =>

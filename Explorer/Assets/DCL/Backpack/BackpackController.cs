@@ -137,8 +137,13 @@ namespace DCL.Backpack
             var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
             var checkOutfitEquippedCommand = new CheckOutfitEquippedStateCommand(selfProfile, wearableStorage);
+            var checkDuplicateOutfitCommand = new CheckForDuplicateOutfitCommand(checkOutfitEquippedCommand);
             var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider);
-
+            var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
+                equippedWearables,
+                selfProfile,
+                wearableStorage);
+            
             var outfitsController = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,
                 outfitApplier,
@@ -150,7 +155,9 @@ namespace DCL.Backpack
                 deleteOutfitCommand,
                 checkOutfitsBannerCommand,
                 checkOutfitEquippedCommand,
+                checkDuplicateOutfitCommand,
                 prewarmWearablesCacheCommand,
+                previewOutfitCommand,
                 screenshotService,
                 backpackCharacterPreviewController,
                 outfitSlotFactory);

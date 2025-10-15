@@ -59,7 +59,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
                 throw new ArgumentException("Cannot save outfits for a user with an empty UserId");
 
             var namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
-            
             var metadata = new OutfitsMetadata
             {
                 // outfits = outfits, namesForExtraSlots = noExtraSlots ? new List<string>() : new List<string>(namesForExtraSlots.Names)

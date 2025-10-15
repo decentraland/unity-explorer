@@ -41,7 +41,9 @@ namespace DCL.Backpack
         private readonly DeleteOutfitCommand deleteOutfitCommand;
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
         private readonly CheckOutfitEquippedStateCommand checkOutfitEquippedCommand;
+        private readonly CheckForDuplicateOutfitCommand checkForDuplicateOutfitCommand;
         private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
+        private readonly PreviewOutfitCommand previewOutfitCommand;
         
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
@@ -57,7 +59,9 @@ namespace DCL.Backpack
             DeleteOutfitCommand deleteOutfitCommand,
             CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand,
             CheckOutfitEquippedStateCommand checkOutfitEquippedCommand,
+            CheckForDuplicateOutfitCommand checkForDuplicateOutfitCommand,
             PrewarmWearablesCacheCommand prewarmWearablesCacheCommand,
+            PreviewOutfitCommand previewOutfitCommand,
             IAvatarScreenshotService screenshotService,
             CharacterPreviewControllerBase characterPreviewController,
             OutfitSlotPresenterFactory slotFactory)
@@ -73,7 +77,9 @@ namespace DCL.Backpack
             this.deleteOutfitCommand = deleteOutfitCommand;
             this.bannerVisibilityCommand = bannerVisibilityCommand;
             this.checkOutfitEquippedCommand = checkOutfitEquippedCommand;
+            this.checkForDuplicateOutfitCommand = checkForDuplicateOutfitCommand;
             this.prewarmWearablesCacheCommand = prewarmWearablesCacheCommand;
+            this.previewOutfitCommand = previewOutfitCommand;
             this.screenshotService = screenshotService;
             this.characterPreviewController = characterPreviewController;
             this.slotFactory = slotFactory;
@@ -92,26 +98,29 @@ namespace DCL.Backpack
                 var slotPresenter = slotFactory.Create(slotView, slotIndex);
 
                 slotPresenter.OnSaveRequested += OnSaveOutfitRequested;
-                slotPresenter.OnDeleteRequested += OnDeleteOutfitRequested;
+                slotPresenter.OnDeleteRequested += OnDeleteOutfitRequestedAsync;
                 slotPresenter.OnEquipRequested += OnEquipOutfitRequested;
+                slotPresenter.OnPreviewRequested += OnPreviewOutfitRequested;
 
                 slotPresenters.Add(slotPresenter);
             }
         }
 
-        public async void Activate()
+        public void Activate()
         {
             view.Activate();
             
             cts = cts.SafeRestart();
-            await RefreshOutfitsAsync(cts.Token);
-            await CheckBannerVisibilityAsync(cts.Token);
+            RefreshOutfitsAsync(cts.Token).Forget();
+            CheckBannerVisibilityAsync(cts.Token).Forget();
+
+            previewOutfitCommand.Restore();
         }
 
         public void Deactivate()
         {
+            previewOutfitCommand.Restore();
             cts.SafeCancelAndDispose();
-
             view.Deactivate();
         }
 
@@ -119,23 +128,18 @@ namespace DCL.Backpack
         {
             try
             {
-                foreach (var p in slotPresenters) p.SetLoading();
-                var outfits = await loadOutfitsCommand.ExecuteAsync(ct);
+                SetAllSlotsToLoading();
+
+                var outfits = await LoadAndCacheOutfitsAsync(ct);
                 if (ct.IsCancellationRequested) return;
 
-                outfitsCollection.Update(outfits);
+                // Precache wearables in the background.
+                PrewarmWearablesCacheAsync(outfits, ct).Forget();
 
-                var uniqueUrnStrings = outfits
-                    .Where(o => o.outfit?.wearables != null)
-                    .SelectMany(o => o.outfit.wearables)
-                    .Distinct()
-                    .ToList();
+                // Update the UI with the primary data.
+                PopulateAllSlots(outfits);
 
-                var uniqueUrns = new HashSet<URN>(uniqueUrnStrings.Select(s => new URN(s)));
-                prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrns, ct).Forget();
-
-                PopulateAllSlots(outfitsCollection.Get());
-
+                // Secondary UI state update.
                 UpdateAllSlotsEquippedStateAsync(ct).Forget();
             }
             catch (OperationCanceledException)
@@ -150,6 +154,33 @@ namespace DCL.Backpack
             }
         }
 
+        private void SetAllSlotsToLoading()
+        {
+            foreach (var p in slotPresenters)
+                p.SetLoading();
+        }
+
+        private async UniTask<IReadOnlyList<OutfitItem>> LoadAndCacheOutfitsAsync(CancellationToken ct)
+        {
+            var outfits = await loadOutfitsCommand.ExecuteAsync(ct);
+            if (ct.IsCancellationRequested) return Array.Empty<OutfitItem>();
+            outfitsCollection.Update(outfits);
+            return outfits;
+        }
+
+        private async UniTaskVoid PrewarmWearablesCacheAsync(IReadOnlyList<OutfitItem> outfits, CancellationToken ct)
+        {
+            var uniqueUrnsToPrewarm = new HashSet<URN>();
+            foreach (var outfitItem in outfits)
+            {
+                if (outfitItem.outfit?.wearables == null) continue;
+                foreach (string urnString in outfitItem.outfit.wearables)
+                    uniqueUrnsToPrewarm.Add(new URN(urnString));
+            }
+
+            await prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrnsToPrewarm, ct);
+        }
+
         private async UniTask UpdateAllSlotsEquippedStateAsync(CancellationToken ct)
         {
             if (ct.IsCancellationRequested) return;
@@ -160,8 +191,8 @@ namespace DCL.Backpack
 
             await UniTask.WhenAll(updateTasks);
         }
-
-        // This method also remains the same. It checks a single slot.
+        
+        
         private async UniTask UpdateSlotEquippedStateAsync(OutfitSlotPresenter slotPresenter, CancellationToken ct)
         {
             var outfitItem = slotPresenter.GetOutfitData();
@@ -187,16 +218,25 @@ namespace DCL.Backpack
             var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
             if (presenter == null) return;
 
+            var duplicateCheckOutcome = await checkForDuplicateOutfitCommand.ExecuteAsync(
+                equippedWearables,
+                outfitsCollection.GetAll(), ct);
+
+            // If the user aborted the save (either by cancelling the dialog or a duplicate was found), simply stop.
+            if (duplicateCheckOutcome != DuplicateCheckOutcome.NotDuplicate || ct.IsCancellationRequested)
+            {
+                // No need to revert the UI, because we haven't changed it to "Saving..." yet.
+                return;
+            }
+            
             presenter.SetSaving();
 
             try
             {
                 var savedItem = await saveOutfitCommand.ExecuteAsync(slotIndex,
                     equippedWearables,
-                    outfitsCollection.Get(),
-                    ct);
-
-                if (ct.IsCancellationRequested) return;
+                    outfitsCollection.GetAll(),
+                    CancellationToken.None);
 
                 if (savedItem == null)
                 {
@@ -206,13 +246,13 @@ namespace DCL.Backpack
 
                 outfitsCollection.AddOrReplace(savedItem);
 
-                await TakeScreenshotAndDisplay(slotIndex);
+                await TakeScreenshotAndDisplayAsync(slotIndex);
 
                 if (cts.Token.IsCancellationRequested) return;
 
                 presenter.SetData(savedItem, loadThumbnail: false);
 
-                OnEquipOutfitRequested(savedItem);
+                //OnEquipOutfitRequested(savedItem);
             }
             catch (Exception e)
             {
@@ -221,18 +261,18 @@ namespace DCL.Backpack
             }
         }
 
-        private async UniTask TakeScreenshotAndDisplay(int slotIndex)
+        private async UniTask TakeScreenshotAndDisplayAsync(int slotIndex)
         {
             var screenshot = await screenshotService
-                .TakeAndSaveScreenshotAsync(characterPreviewController, slotIndex, cts.Token);
+                .TakeAndSaveScreenshotAsync(characterPreviewController, slotIndex, CancellationToken.None);
 
             var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
             presenter?.SetThumbnail(screenshot);
         }
 
-        private async void OnDeleteOutfitRequested(int slotIndex)
+        private async void OnDeleteOutfitRequestedAsync(int slotIndex)
         {
-            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
+            var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
             if (presenter == null) return;
 
             var originalOutfitData = presenter.GetOutfitData();
@@ -240,7 +280,9 @@ namespace DCL.Backpack
 
             try
             {
-                var outcome = await deleteOutfitCommand.ExecuteAsync(slotIndex, outfitsCollection.Get(), cts.Token);
+                var outcome = await deleteOutfitCommand.ExecuteAsync(slotIndex,
+                    outfitsCollection.GetAll(),
+                    CancellationToken.None);
 
                 if (cts.Token.IsCancellationRequested)
                 {
@@ -271,12 +313,45 @@ namespace DCL.Backpack
         private void OnEquipOutfitRequested(OutfitItem outfitItem)
         {
             if (outfitItem?.outfit == null) return;
+
+            var presenter = slotPresenters.Find(p => p.slotIndex == outfitItem.slot);
+            if (presenter != null && !presenter.HasThumbnail())
+            {
+                ReportHub.Log(ReportCategory.OUTFITS, $"Thumbnail for slot {outfitItem.slot} is missing. Generating on equip.");
+                TakeScreenshotAndDisplayAsync(outfitItem.slot).Forget();
+            }
+
+            previewOutfitCommand.Commit();
             
             outfitApplier.Apply(outfitItem.outfit);
             
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
 
             UpdateAllSlotsEquippedStateAsync(cts.Token).Forget();
+        }
+
+        private void OnPreviewOutfitRequested(OutfitItem outfitItem)
+        {
+            if (outfitItem?.outfit == null) return;
+
+            ReportHub.Log(ReportCategory.OUTFITS, $"Previewing outfit in slot {outfitItem.slot}");
+
+            previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token).Forget();
+
+            var presenter = slotPresenters.Find(p => p.slotIndex == outfitItem.slot);
+            if (presenter == null) return;
+
+            // 3. Use the HasThumbnail() method to check if a screenshot needs to be generated.
+            if (!presenter.HasThumbnail())
+            {
+                ReportHub.Log(ReportCategory.OUTFITS, $"Thumbnail for slot {outfitItem.slot} is missing. Generating now.");
+
+                // If the thumbnail is missing, start the process to create and save it.
+                // We use Forget() because this is a background task. The thumbnail will
+                // appear on the slot once the process is complete.
+                // Pass the cancellation token to ensure it stops if the user navigates away.
+                TakeScreenshotAndDisplayAsync(outfitItem.slot).Forget();
+            }
         }
 
         private void PopulateAllSlots(IReadOnlyList<OutfitItem> outfits)
@@ -321,8 +396,9 @@ namespace DCL.Backpack
             foreach (var presenter in slotPresenters)
             {
                 presenter.OnSaveRequested -= OnSaveOutfitRequested;
-                presenter.OnDeleteRequested -= OnDeleteOutfitRequested;
+                presenter.OnDeleteRequested -= OnDeleteOutfitRequestedAsync;
                 presenter.OnEquipRequested -= OnEquipOutfitRequested;
+                presenter.OnPreviewRequested -= OnPreviewOutfitRequested;
                 presenter.Dispose();
             }
         }

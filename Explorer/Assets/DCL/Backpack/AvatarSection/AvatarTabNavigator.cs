@@ -159,5 +159,14 @@ namespace DCL.Backpack
             DisableTabs();
             animationCts.SafeCancelAndDispose();
         }
+
+        public void DeactivateAll()
+        {
+            foreach (var section in sectionsByKey.Values)
+                section.Deactivate();
+
+            foreach (var tab in tabsByKey.Values)
+                tab.TabSelectorToggle.SetIsOnWithoutNotify(false);
+        }
     }
 }

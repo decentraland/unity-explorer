@@ -28,7 +28,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             this.wearableStorage = wearableStorage;
         }
 
-        public async UniTask<OutfitItem> ExecuteAsync(int slotIndex, IEquippedWearables equippedWearables, IReadOnlyList<OutfitItem> currentOutfits, CancellationToken ct)
+        public async UniTask<OutfitItem> ExecuteAsync(int slotIndex,
+            IEquippedWearables equippedWearables,
+            IReadOnlyCollection<OutfitItem> currentOutfits, CancellationToken ct)
         {
             var profile = await selfProfile.ProfileAsync(ct);
             if (profile == null)

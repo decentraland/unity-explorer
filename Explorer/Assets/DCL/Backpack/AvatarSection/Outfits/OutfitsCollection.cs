@@ -5,31 +5,33 @@ namespace DCL.Backpack.AvatarSection.Outfits
 {
     public class OutfitsCollection
     {
-        private readonly List<OutfitItem> outfits = new();
+        private readonly Dictionary<int, OutfitItem> outfitsBySlot = new ();
 
-        public IReadOnlyList<OutfitItem> Get()
+        public IReadOnlyCollection<OutfitItem> GetAll()
         {
-            return outfits;
+            return outfitsBySlot.Values;
+        }
+
+        public bool TryGet(int slotIndex, out OutfitItem outfitItem)
+        {
+            return outfitsBySlot.TryGetValue(slotIndex, out outfitItem);
         }
 
         public void Update(IEnumerable<OutfitItem> newOutfits)
         {
-            outfits.Clear();
-            outfits.AddRange(newOutfits);
+            outfitsBySlot.Clear();
+            foreach (var outfit in newOutfits)
+                outfitsBySlot[outfit.slot] = outfit;
         }
 
         public void AddOrReplace(OutfitItem outfitItem)
         {
-            int existingIndex = outfits.FindIndex(o => o.slot == outfitItem.slot);
-            if (existingIndex != -1)
-                outfits[existingIndex] = outfitItem;
-            else
-                outfits.Add(outfitItem);
+            outfitsBySlot[outfitItem.slot] = outfitItem;
         }
 
         public void Remove(int slotIndex)
         {
-            outfits.RemoveAll(o => o.slot == slotIndex);
+            outfitsBySlot.Remove(slotIndex);
         }
     }
 }

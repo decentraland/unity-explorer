@@ -45,7 +45,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         public async UniTask<DeleteOutfitOutcome> ExecuteAsync(
             int slotIndex,
-            IReadOnlyList<OutfitItem> currentOutfits,
+            IReadOnlyCollection<OutfitItem> currentOutfits,
             CancellationToken ct)
         {
             ConfirmationResult decision;
