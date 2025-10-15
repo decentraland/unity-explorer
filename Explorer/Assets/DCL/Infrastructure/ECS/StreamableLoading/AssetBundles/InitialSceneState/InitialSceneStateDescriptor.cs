@@ -90,8 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         {
             foreach (var valueTuple in AssetsInstantiated)
             {
-                //TODO (JUANI) : Can we clean this up?
-                valueTuple.Item2.Scene_LOD_Bridge_Asset = true;
+                valueTuple.Item2.Root.transform.SetParent(null);
                 assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
         }
@@ -102,7 +101,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 return;
 
             foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
-                gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
+                gltfContainerAsset.Item2.Root.transform.SetParent(null);
         }
 
     }

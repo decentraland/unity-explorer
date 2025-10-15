@@ -57,7 +57,6 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 initialSceneStateDescriptor.MarkAssetToMoveToBridge();
 
-                //TODO: Wait until LOD is Ready
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);

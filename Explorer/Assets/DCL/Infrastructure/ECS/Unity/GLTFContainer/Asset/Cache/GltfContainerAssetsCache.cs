@@ -87,13 +87,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            if (asset.Scene_LOD_Bridge_Asset)
-            {
-                asset.Root.transform.SetParent(null);
-                asset.Root.SetActive(true);
-                asset.Scene_LOD_Bridge_Asset = false;
-            }
-            else
+            //If the parent is null, it means that the asset is waiting on the scene-lod state
+            if (asset.Root.transform.parent)
             {
                 asset.Root.SetActive(false);
                 asset.Root.transform.SetParent(parentContainer, true);
