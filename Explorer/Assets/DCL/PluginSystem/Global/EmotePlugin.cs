@@ -186,10 +186,10 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(socialEmoteOutcomeMenuController);
 
-            await CreateNametagPoolAsync(settings, ct);
+            await CreateSocialEmotePinPoolAsync(settings, ct);
         }
 
-        private async UniTask CreateNametagPoolAsync(EmoteSettings settings, CancellationToken ct)
+        private async UniTask CreateSocialEmotePinPoolAsync(EmoteSettings settings, CancellationToken ct)
         {
             SocialEmotePin pinPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SocialEmotePinPrefab, ct: ct)).Value;
 
