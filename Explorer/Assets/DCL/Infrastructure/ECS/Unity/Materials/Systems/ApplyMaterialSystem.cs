@@ -63,11 +63,15 @@ namespace ECS.Unity.Materials.Systems
 
         private void CheckIfVideoMaterial(Entity entity, ref MaterialComponent materialComponent)
         {
-            // Check the albedo and alpha textures if they are video textures
-            bool hasVideoTexture = materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true } || materialComponent.Data.Textures.AlphaTexture is { IsVideoTexture: true };
+            bool isAlbedoVideoTexture = materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true };
+            bool isAlphaVideoTexture = materialComponent.Data.Textures.AlphaTexture is { IsVideoTexture: true };
 
-            if (hasVideoTexture)
-                World.Add(entity, new MaterialScaleRequestComponent());
+            if (isAlbedoVideoTexture || isAlphaVideoTexture)
+                World.Add(entity, new MaterialScaleRequestComponent
+                {
+                    IsAlbedoVideoTexture = isAlbedoVideoTexture,
+                    IsAlphaVideoTexture = isAlphaVideoTexture
+                });
         }
 
         [Query]

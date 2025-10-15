@@ -7,6 +7,7 @@ namespace ECS.Unity.Materials.Components
     /// </summary>
     public struct MaterialScaleRequestComponent
     {
-
+        public bool IsAlbedoVideoTexture;
+        public bool IsAlphaVideoTexture;
     }
 }

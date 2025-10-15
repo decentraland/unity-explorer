@@ -38,9 +38,9 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(MaterialScaleRequestComponent), typeof(MaterialComponent))]
-        private void UpdateVideoMaterial(Entity entity, ref MaterialComponent materialComponent)
+        private void UpdateVideoMaterial(Entity entity, ref MaterialComponent materialComponent, ref MaterialScaleRequestComponent materialScaleRequestComponent)
         {
-            if (!TryGetVideoPlayerEntity(materialComponent, out var videoPlayerEntity))
+            if (!TryGetVideoPlayerEntity(materialComponent, ref materialScaleRequestComponent, out var videoPlayerEntity))
                 return;
 
             if (!TryGetTextureScale(videoPlayerEntity, out var textureScale))
@@ -49,18 +49,18 @@ namespace DCL.SDKComponents.MediaStream
             ApplyTextureScaleToMaterial(entity, materialComponent, textureScale);
         }
 
-        private bool TryGetVideoPlayerEntity(MaterialComponent materialComponent, out Entity videoPlayerEntity)
+        private bool TryGetVideoPlayerEntity(MaterialComponent materialComponent, ref MaterialScaleRequestComponent materialScaleRequestComponent, out Entity videoPlayerEntity)
         {
             videoPlayerEntity = default;
 
-            if (materialComponent.Data.Textures.AlbedoTexture is { IsVideoTexture: true })
+            if (materialScaleRequestComponent.IsAlbedoVideoTexture)
             {
-                if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlbedoTexture.Value.VideoPlayerEntity, out videoPlayerEntity))
+                if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlbedoTexture!.Value.VideoPlayerEntity, out videoPlayerEntity))
                     return true;
             }
-            else if (materialComponent.Data.Textures.AlphaTexture is { IsVideoTexture: true })
+            else if (materialScaleRequestComponent.IsAlphaVideoTexture)
             {
-                if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlphaTexture.Value.VideoPlayerEntity, out videoPlayerEntity))
+                if(entitiesMap.TryGetValue(materialComponent.Data.Textures.AlphaTexture!.Value.VideoPlayerEntity, out videoPlayerEntity))
                     return true;
             }
 
