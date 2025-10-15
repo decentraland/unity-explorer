@@ -40,9 +40,6 @@ namespace DCL.ChatArea
         public void RaiseMvcViewClosedEvent() =>
             Publish(new ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent());
 
-        public void RaiseGlobalClickEvent(System.Collections.Generic.IReadOnlyList<UnityEngine.EventSystems.RaycastResult> raycastResults) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelGlobalClickEvent(raycastResults));
-
         public void RaiseVisibilityStateChangedEvent(bool isVisibleInSharedSpace) =>
             Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisibleInSharedSpace));
     }
