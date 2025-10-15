@@ -1,4 +1,5 @@
 ﻿using CRDT.Protocol;
+using CRDT;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Ipfs;
@@ -101,6 +102,89 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             api.EventsToProcess[0].ReadBytes(0ul, (ulong)eventBytes.Length, eventBytes, 0ul);
 
             CollectionAssert.AreEqual(expectedMessage, eventBytes);
+        }
+
+        [Test]
+        public void ApplyFilterOnlyToCRDTMessages()
+        {
+            // Build three messages: CRDT (should be filtered), REQ_CRDT_STATE and RES_CRDT_STATE (should not be filtered)
+
+            // 1) CRDT message with two PUT_COMPONENT_NETWORK frames:
+            //    - First uses NO_SYNC_COMPONENT_ID (2092194694) -> should be dropped by filter
+            //    - Second uses a different component id -> should be kept
+            const int PUT_NETWORK_MESSAGE_HEADER_LENGTH =
+                CRDTConstants.MESSAGE_HEADER_LENGTH // message header
+                + 20; // put network component header
+
+            const byte COMMS_CRDT = 1;
+            const byte COMMS_REQ_CRDT_STATE = 2;
+            const byte COMMS_RES_CRDT_STATE = 3;
+
+            const uint NO_SYNC_COMPONENT_ID = 2092194694; // mirrors CRDTFilter's value
+
+            int droppableContentLength = 0;
+            int keepableContentLength = 0;
+
+            int crdtTotalLength = 1 // comms type
+                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + droppableContentLength)
+                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + keepableContentLength);
+
+            var crdtMessage = new byte[crdtTotalLength];
+            var crdtWrite = crdtMessage.AsSpan();
+            crdtWrite[0] = COMMS_CRDT;
+            var crdtBody = crdtWrite.Slice(1);
+
+            // Droppable frame (PUT_COMPONENT_NETWORK + NO_SYNC component id)
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + droppableContentLength);
+            crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
+            crdtBody.Write(123); // entity id
+            crdtBody.Write(NO_SYNC_COMPONENT_ID); // component id -> this should trigger drop
+            crdtBody.Write(1); // timestamp
+            crdtBody.Write(1); // network id
+            crdtBody.Write(droppableContentLength); // content length
+            crdtBody = crdtBody.Slice(droppableContentLength);
+
+            // Keepable frame (PUT_COMPONENT_NETWORK + different component id)
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + keepableContentLength);
+            crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
+            crdtBody.Write(456); // entity id
+            crdtBody.Write(1234u); // component id -> should be kept
+            crdtBody.Write(2); // timestamp
+            crdtBody.Write(2); // network id
+            crdtBody.Write(keepableContentLength); // content length
+            crdtBody = crdtBody.Slice(keepableContentLength);
+
+            // 2) REQ_CRDT_STATE: arbitrary payload
+            var reqMessage = new byte[] { COMMS_REQ_CRDT_STATE, 9, 8, 7, 6 };
+
+            // 3) RES_CRDT_STATE: arbitrary payload
+            var resMessage = new byte[] { COMMS_RES_CRDT_STATE, 1, 2, 3 };
+
+            var inputs = new PoolableByteArray[]
+            {
+                new PoolableByteArray(crdtMessage, crdtMessage.Length, null),
+                new PoolableByteArray(reqMessage, reqMessage.Length, null),
+                new PoolableByteArray(resMessage, resMessage.Length, null),
+            };
+
+            api.SendBinary(inputs);
+            api.GetResult();
+
+            // Expected 1: CRDT message should be filtered
+            var filteredBuffer = new byte[crdtMessage.Length];
+            CRDTFilter.FilterSceneMessageBatch(crdtMessage, filteredBuffer, out int filteredWrite);
+            var expectedCrdtEncoded = new byte[filteredWrite + 1];
+            expectedCrdtEncoded[0] = (byte)ISceneCommunicationPipe.MsgType.Uint8Array;
+            Buffer.BlockCopy(filteredBuffer, 0, expectedCrdtEncoded, 1, filteredWrite);
+
+            // Expected 2: REQ/RES should be forwarded unchanged (apart from the transport type prefix)
+            var expectedReqEncoded = reqMessage.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
+            var expectedResEncoded = resMessage.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
+
+            Assert.AreEqual(3, sceneCommunicationPipe.sendMessageCalls.Count);
+            CollectionAssert.AreEqual(expectedCrdtEncoded, sceneCommunicationPipe.sendMessageCalls[0]);
+            CollectionAssert.AreEqual(expectedReqEncoded, sceneCommunicationPipe.sendMessageCalls[1]);
+            CollectionAssert.AreEqual(expectedResEncoded, sceneCommunicationPipe.sendMessageCalls[2]);
         }
 
         private static byte[] GetRandomBytes(int size)
