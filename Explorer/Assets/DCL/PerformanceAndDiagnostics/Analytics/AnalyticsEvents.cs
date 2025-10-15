@@ -132,7 +132,7 @@
         {
             public const string SAVE_OUTFIT = "save_outfit";
             public const string EQUIP_OUTFIT = "equip_outfit";
-            public const string CLAIM_EXTRA_OUTFITS = "claim_extra_outfits";
+            public const string OUTFIT_CLICK_NAME = "outfit_click_name";
         }
     }
 }

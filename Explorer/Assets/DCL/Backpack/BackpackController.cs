@@ -24,6 +24,7 @@ using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
 using DCL.Browser;
+using DCL.FeatureFlags;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -63,6 +64,7 @@ namespace DCL.Backpack
         private readonly IWearablesProvider wearablesProvider;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IEventBus eventBus;
+        private readonly FeatureFlagsConfiguration featureFlags;
         private BackpackSections lastShownSection;
         
         private CancellationTokenSource? animationCts;
@@ -73,6 +75,7 @@ namespace DCL.Backpack
 
         public BackpackController(
             BackpackView view,
+            FeatureFlagsConfiguration featureFlags,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache identityCache,
@@ -101,6 +104,7 @@ namespace DCL.Backpack
             IEventBus eventBus)
         {
             this.view = view;
+            this.featureFlags = featureFlags;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.identityCache = identityCache;
@@ -164,6 +168,7 @@ namespace DCL.Backpack
             
             avatarController = new AvatarController(
                 avatarView,
+                featureFlags,
                 webBrowser,
                 avatarSlotViews,
                 rarityInfoPanelBackgrounds,

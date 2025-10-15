@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.FeatureFlags;
 using UnityEngine.Pool;
 using Utility;
 
@@ -34,6 +35,7 @@ namespace DCL.PluginSystem.Global
 {
     internal class BackpackSubPlugin : IDisposable
     {
+        private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableStorage wearableStorage;
         private readonly ISelfProfile selfProfile;
@@ -71,6 +73,7 @@ namespace DCL.PluginSystem.Global
         internal BackpackController? backpackController { get; private set; }
 
         public BackpackSubPlugin(
+            FeatureFlagsConfiguration featureFlags,
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -102,6 +105,7 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus)
         {
+            this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -232,6 +236,7 @@ namespace DCL.PluginSystem.Global
 
             backpackController = new BackpackController(
                 view,
+                featureFlags,
                 selfProfile,
                 webBrowser,
                 web3Identity,

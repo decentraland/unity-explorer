@@ -780,6 +780,7 @@ namespace Global.Dynamic
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,
+                    featureFlags,
                     assetsProvisioner,
                     mvcManager,
                     mapRendererContainer,

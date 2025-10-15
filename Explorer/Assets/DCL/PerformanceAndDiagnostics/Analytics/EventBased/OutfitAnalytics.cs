@@ -37,7 +37,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Analytics
 
         private void OnClaimExtraOutfits(OutfitsEvents.ClaimExtraOutfitsEvent evt)
         {
-            analytics.Track(AnalyticsEvents.Outfits.CLAIM_EXTRA_OUTFITS);
+            analytics.Track(AnalyticsEvents.Outfits.OUTFIT_CLICK_NAME);
         }
     }
 }

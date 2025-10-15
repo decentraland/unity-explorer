@@ -44,6 +44,7 @@ using DCL.Clipboard;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -78,6 +79,7 @@ namespace DCL.PluginSystem.Global
     public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IEventBus eventBus;
+        private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
@@ -152,6 +154,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
 
         public ExplorePanelPlugin(IEventBus eventBus,
+            FeatureFlagsConfiguration featureFlags,
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
@@ -211,6 +214,7 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus)
         {
             this.eventBus = eventBus;
+            this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -292,6 +296,7 @@ namespace DCL.PluginSystem.Global
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider, eventBus);
             
             backpackSubPlugin = new BackpackSubPlugin(
+                featureFlags,
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,

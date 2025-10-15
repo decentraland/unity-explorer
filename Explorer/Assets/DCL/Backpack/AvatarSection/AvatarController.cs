@@ -4,6 +4,7 @@ using DCL.CharacterPreview;
 using DCL.UI;
 using System;
 using DCL.Browser;
+using DCL.FeatureFlags;
 using UnityEngine;
 
 namespace DCL.Backpack
@@ -20,8 +21,10 @@ namespace DCL.Backpack
         private readonly BackpackInfoPanelController backpackInfoPanelController;
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarTabsManager tabsManager;
+        private readonly FeatureFlagsConfiguration featureFlags;
 
         public AvatarController(AvatarView view,
+            FeatureFlagsConfiguration featureFlags,
             IWebBrowser webBrowser,
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
@@ -34,6 +37,7 @@ namespace DCL.Backpack
             IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
+            this.featureFlags = featureFlags;
             this.webBrowser = webBrowser;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
@@ -56,6 +60,10 @@ namespace DCL.Backpack
                 categoriesPresenter,
                 outfitsPresenter);
 
+            bool isOutfitsEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED);
+            if (!isOutfitsEnabled)
+                tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
+            
             tabsManager.InitializeAndEnable();
         }
 

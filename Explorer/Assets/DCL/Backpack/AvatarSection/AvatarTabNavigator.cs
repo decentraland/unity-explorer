@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine.Events;
 using Utility;
@@ -30,11 +31,11 @@ namespace DCL.Backpack
             TabSelectorView outfitsTab,
             AvatarSubSection defaultSection)
         {
-            this.selector      = selector;
+            this.selector = selector;
             this.sectionsByKey = sectionsByKey;
-            this.tabsByKey     = tabsByKey;
+            this.tabsByKey = tabsByKey;
             this.categoriesTab = categoriesTab;
-            this.outfitsTab    = outfitsTab;
+            this.outfitsTab = outfitsTab;
             this.defaultSection = defaultSection;
 
             lastShownSection = defaultSection;
@@ -78,7 +79,36 @@ namespace DCL.Backpack
             EnableTabs();
         }
 
-        public void WireTabMappingHandlers()
+        public void SetTabEnabled(AvatarSubSection section, bool isEnabled)
+        {
+            // Find the tab view associated with the section.
+            if (!tabsByKey.TryGetValue(section, out var tabView))
+            {
+                ReportHub.LogWarning(ReportCategory.OUTFITS, $"AvatarTabsManager: Could not find tab for section '{section}'.");
+                return;
+            }
+
+            // Enable or disable the tab's GameObject.
+            tabView.gameObject.SetActive(isEnabled);
+
+            // If we are disabling the section, we must also remove it from our internal logic.
+            if (!isEnabled)
+            {
+                // Remove from the dictionaries that drive the manager's logic.
+                if (sectionsByKey.TryGetValue(section, out var sectionController))
+                {
+                    // Ensure it's deactivated and its resources are released.
+                    sectionController.Deactivate();
+                    sectionsByKey.Remove(section);
+                }
+
+                tabsByKey.Remove(section);
+
+                WireTabMappingHandlers();
+            }
+        }
+
+        private void WireTabMappingHandlers()
         {
             foreach (var (section, tabSelector) in tabsByKey)
             {
