@@ -720,7 +720,7 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, outcomeMenu),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, outcomeMenu, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
