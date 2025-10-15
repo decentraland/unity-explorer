@@ -156,14 +156,10 @@ namespace DCL.Nametags
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
                 || World.Has<BlockedPlayerComponent>(e))
             {
-                ReportHub.Log(ReportCategory.ALWAYS, "Nametags: Removing nametag");
                 nametagHolderPool.Release(nametagHolder);
                 World.Remove<NametagHolder>(e);
                 return;
             }
-            
-            if(World.Has<PlayerComponent>(e))
-                ReportHub.Log(ReportCategory.ALWAYS, $"Nametags: Updating player nametag. Camera mode: {camera.Mode}");
 
             UpdateTagPositionAndRotation(nametagHolder.transform, avatarBase.GetAdaptiveNametagPosition(), cameraForward, cameraUp);
             UpdateTagTransparencyAndScale(nametagHolder, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
