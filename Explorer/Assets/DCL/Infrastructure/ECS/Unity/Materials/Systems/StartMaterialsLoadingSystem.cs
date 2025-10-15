@@ -102,7 +102,7 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(MaterialComponent))]
         private void CreateMaterialComponent(Entity entity, ref PBMaterial material, ref PartitionComponent partitionComponent)
         {
-            if (!capFrameTimeBudget.TrySpendBudget())
+            if (!capFrameTimeBudget.TrySpendBudget() || material.MaterialCase == PBMaterial.MaterialOneofCase.None)
                 return;
 
             var materialComponent = new MaterialComponent(CreateMaterialData(in material));

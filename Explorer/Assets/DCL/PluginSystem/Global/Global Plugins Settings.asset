@@ -435,12 +435,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        DebugRoomIndicator:
-          m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -704,12 +698,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        nametagView:
-          m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         celShadingMaterial:
           m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
           m_SubObjectName: 
@@ -725,12 +713,6 @@ MonoBehaviour:
         startFadeDistanceDithering: 2
         endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
-        <ChatBubbleConfiguration>k__BackingField:
-          m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
           m_SubObjectName: 
@@ -739,6 +721,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <AvatarRandomizerSettingsRef>k__BackingField:
           m_AssetGUID: e18034962a56eac40ab5df62e159c314
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NametagHolder>k__BackingField:
+          m_AssetGUID: 3df1198e2008a4f0abdf407103681813
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
