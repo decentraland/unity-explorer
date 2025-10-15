@@ -567,11 +567,10 @@ namespace DCL.Passport
                 alreadyLoadedSections |= sectionToLoad;
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
+            catch (Exception)
             {
                 const string ERROR_MESSAGE = "There was an error while opening the Passport. Please try again!";
                 passportErrorsController!.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
@@ -729,7 +728,7 @@ namespace DCL.Passport
             {
                 const string ERROR_MESSAGE = "There was an error while opening the Badges section into the Passport. Please try again!";
                 passportErrorsController!.Show(ERROR_MESSAGE);
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                ReportHub.LogException(e, ReportCategory.PROFILE);
             }
         }
 

@@ -32,7 +32,9 @@ namespace DCL.Nametags
 
         private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
         private const float MAX_DISTANCE = 40;
+        private const float MIN_DISTANCE = 2;
         private const float MAX_DISTANCE_SQR = MAX_DISTANCE * MAX_DISTANCE;
+        private const float MIN_DISTANCE_SQR = MIN_DISTANCE * MIN_DISTANCE;
 
         private readonly IObjectPool<NametagHolder> nametagHolderPool;
         private readonly NametagsData nametagsData;
@@ -45,7 +47,7 @@ namespace DCL.Nametags
             World world,
             IObjectPool<NametagHolder> nametagHolderPool,
             NametagsData nametagsData
-            ) : base(world)
+        ) : base(world)
         {
             this.nametagHolderPool = nametagHolderPool;
             this.nametagsData = nametagsData;
@@ -71,10 +73,10 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             AddTagForPlayerAvatarsQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             AddTagForNonPlayerAvatarsQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             UpdateOwnTagQuery(World);
+            UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
             UpdateNametagSpeakingStateQuery(World);
         }
@@ -82,33 +84,33 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR))
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
                 return;
 
             NametagHolder nametagHolder = CreateNameTag(in avatarShape, profile);
-            UpdateTagPositionAndRotation(nametagHolder.transform, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagHolder);
         }
 
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR) ||
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR) ||
                 string.IsNullOrEmpty(avatarShape.Name))
                 return;
 
             NametagHolder nametagHolder = CreateNameTag(in avatarShape);
-            UpdateTagPositionAndRotation(nametagHolder.transform, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagHolder);
         }
 
@@ -149,12 +151,13 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
+        private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind
-                || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR)
+                || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
                 || World.Has<HiddenPlayerComponent>(e))
             {
@@ -163,22 +166,9 @@ namespace DCL.Nametags
                 return;
             }
 
-            // UpdateTagPositionAndRotation(nametagHolder, avatarBase.GetAdaptiveNametagPosition(), camera.Camera);
-            // UpdateTagTransparency(nametagHolder, camera.Camera.transform.position, characterTransform.Position);
-
-
             UpdateTagPositionAndRotation(nametagHolder.transform, avatarBase.GetAdaptiveNametagPosition(), cameraForward, cameraUp);
             UpdateTagTransparencyAndScale(nametagHolder, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
         }
-
-        // private static void UpdateTagPositionAndRotation(NametagHolder element, Vector3 newPosition, Camera camera)
-        // {
-        //     var panelPosition = RuntimePanelUtils.CameraTransformWorldToPanel(element.panel, newPosition, camera);
-        //     panelPosition.x -= element.resolvedStyle.width / 2f;
-        //     panelPosition.y -= element.resolvedStyle.height;
-        //
-        //     element.transform.position = panelPosition;
-        // }
 
         private static void UpdateTagPositionAndRotation(Transform view, float3 newPosition, float3 cameraForward, float3 cameraUp)
         {
@@ -198,7 +188,7 @@ namespace DCL.Nametags
 
             // TODO: Maybe optimize?
             float normalizedDistance = (distance - NametagViewConstants.DEFAULT_OPACITY_MAX_DISTANCE) / (MAX_DISTANCE - NametagViewConstants.DEFAULT_OPACITY_MAX_DISTANCE);
-            float opacity = 1f - normalizedDistance;
+            float opacity = Mathf.Clamp01(1f - normalizedDistance);
 
             nametagHolder.Nametag.style.opacity = opacity;
         }
