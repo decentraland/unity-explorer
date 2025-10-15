@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -79,7 +80,7 @@ namespace DCL.VoiceChat
             {
                 foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
                 {
-                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct);
+                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
                     if (profileAsync != null) userName = profileAsync.Name;
                 }
             }
