@@ -45,7 +45,6 @@ using DCL.Translation.Processors;
 using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
-using DCL.ChatArea;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -330,7 +329,8 @@ namespace DCL.PluginSystem.Global
                 translationService,
                 translationMemory,
                 translationCache,
-                translationSettings);
+                translationSettings,
+                decentralandUrlsSource);
 
             pluginScope.Add(commandRegistry);
 
@@ -354,7 +354,8 @@ namespace DCL.PluginSystem.Global
                 chatSharedAreaEventBus,
                 translationSettings,
                 translationMemory,
-                translationCache
+                translationCache,
+                decentralandUrlsSource
             );
 
             chatSharedAreaController = new ChatMainSharedAreaController(

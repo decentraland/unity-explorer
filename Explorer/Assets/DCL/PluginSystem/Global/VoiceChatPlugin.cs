@@ -7,6 +7,7 @@ using DCL.Audio;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.MainUI;
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -60,8 +62,8 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer
-        )
+            IDebugContainerBuilder debugContainer,
+            IDecentralandUrlsSource urlsSource)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -74,6 +76,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
+            this.urlsSource = urlsSource;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -132,7 +135,7 @@ namespace DCL.PluginSystem.Global
                 (RectTransform)voiceChatPanelView.transform
             );
 
-            voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus, chatClickDetectionService);
+            voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus, chatClickDetectionService, urlsSource);
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
         }

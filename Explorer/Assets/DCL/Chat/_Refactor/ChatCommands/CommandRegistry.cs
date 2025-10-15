@@ -13,6 +13,7 @@ using System;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Clipboard;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Web3.Identities;
@@ -72,7 +73,8 @@ namespace DCL.Chat.ChatCommands
             ITranslationService translationService,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            ITranslationSettings translationSettings)
+            ITranslationSettings translationSettings,
+            IDecentralandUrlsSource urlsSource)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -143,7 +145,8 @@ namespace DCL.Chat.ChatCommands
                 profileRepositoryWrapper,
                 chatConfig,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail);
+                GetCommunityThumbnail,
+                urlsSource);
 
             SendMessage = new SendMessageCommand(
                 chatMessageBus,
@@ -159,7 +162,8 @@ namespace DCL.Chat.ChatCommands
                 chatConfig,
                 profileRepositoryWrapper,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail);
+                GetCommunityThumbnail,
+                urlsSource);
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand,
                 currentChannelService);

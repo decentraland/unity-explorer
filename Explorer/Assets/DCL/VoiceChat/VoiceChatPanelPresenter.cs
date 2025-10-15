@@ -1,6 +1,7 @@
 using DCL.Chat.ChatServices;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
@@ -34,7 +35,8 @@ namespace DCL.VoiceChat
             IRoomHub roomHub,
             VoiceChatParticipantEntryView participantEntryView,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            ChatClickDetectionService chatClickDetectionService)
+            ChatClickDetectionService chatClickDetectionService,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -42,7 +44,7 @@ namespace DCL.VoiceChat
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController, urlsSource);
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 

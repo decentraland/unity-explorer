@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -43,7 +44,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             VoiceChatMicrophoneHandler microphoneHandler,
             VoiceChatRoomManager roomManager,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -52,7 +54,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.communityDataProvider = communityDataProvider;
 
             communityVoiceChatSearchPresenter = new CommunityVoiceChatSearchPresenter(view.CommunityVoiceChatSearchView);
-            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
+            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController, urlsSource);
 
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;

@@ -5,6 +5,7 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
@@ -39,14 +40,15 @@ namespace DCL.Communities.EventInfo
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource urlsSource)
             : base(viewFactory)
         {
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
-            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
+            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController), urlsSource);
         }
 
         public override void Dispose()

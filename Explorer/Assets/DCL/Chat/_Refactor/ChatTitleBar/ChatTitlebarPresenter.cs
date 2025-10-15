@@ -13,6 +13,7 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.EventBus;
 using DCL.Communities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.UI;
@@ -44,6 +45,7 @@ namespace DCL.Chat
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
         private readonly CallButtonPresenter callButtonPresenter;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private CancellationTokenSource profileLoadCts = new ();
         private CancellationTokenSource thumbCts = new ();
@@ -72,7 +74,8 @@ namespace DCL.Chat
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IChatEventBus chatEventBus,
             GetUserCallStatusCommand getUserCallStatusCommand,
-            ToggleAutoTranslateCommand toggleAutoTranslateCommand)
+            ToggleAutoTranslateCommand toggleAutoTranslateCommand,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             this.chatConfig = chatConfig;
@@ -86,6 +89,7 @@ namespace DCL.Chat
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.deleteChatHistoryCommand = deleteChatHistoryCommand;
             this.toggleAutoTranslateCommand = toggleAutoTranslateCommand;
+            this.urlsSource = urlsSource;
             this.getUserCallStatusCommand = getUserCallStatusCommand;
 
             view.Initialize();
@@ -177,8 +181,8 @@ namespace DCL.Chat
 
                 UpdateAutoTranslateIndicator();
 
-                if (cd.thumbnails?.raw != null)
-                    RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
+                var thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), cd.id);
+                RefreshTitlebarCommunityThumbnailAsync(thumbnailUrl).Forget();
             }
         }
 

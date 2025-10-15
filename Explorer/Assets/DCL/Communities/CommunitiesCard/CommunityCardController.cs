@@ -133,7 +133,7 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.thumbnailLoader = new ThumbnailLoader(null);
+            this.thumbnailLoader = new ThumbnailLoader(null, decentralandUrlsSource);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;

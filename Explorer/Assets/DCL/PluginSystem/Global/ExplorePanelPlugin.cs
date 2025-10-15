@@ -447,7 +447,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 communityCallOrchestrator,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus,
+                decentralandUrlsSource);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

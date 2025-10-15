@@ -5,6 +5,7 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
@@ -23,6 +24,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public CreateChannelViewModelCommand(
             IEventBus eventBus,
@@ -30,7 +32,8 @@ namespace DCL.Chat.ChatCommands
             ChatConfig.ChatConfig chatConfig,
             ProfileRepositoryWrapper profileRepository,
             GetUserChatStatusCommand getUserChatStatusCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
+            IDecentralandUrlsSource urlsSource)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
@@ -38,6 +41,7 @@ namespace DCL.Chat.ChatCommands
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
+            this.urlsSource = urlsSource;
         }
 
         public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
@@ -93,7 +97,7 @@ namespace DCL.Chat.ChatCommands
             if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
             {
                 viewModel.DisplayName = communityData.name;
-                viewModel.ImageUrl = communityData.thumbnails?.raw;
+                viewModel.ImageUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.id);
 
                 FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
             }

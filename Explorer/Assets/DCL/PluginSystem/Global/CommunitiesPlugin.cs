@@ -173,7 +173,8 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 selfProfile,
                 mvcManager,
-                lambdasProfilesProvider);
+                lambdasProfilesProvider,
+                decentralandUrlsSource);
             mvcManager.RegisterController(communityCreationEditionController);
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
@@ -183,7 +184,8 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                realmNavigator);
+                realmNavigator,
+                decentralandUrlsSource);
             mvcManager.RegisterController(eventInfoController);
 
             rpcCommunitiesService.SubscribeToConnectivityStatusAsync(ct).Forget();

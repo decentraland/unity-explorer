@@ -6,6 +6,7 @@ using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
@@ -82,7 +83,8 @@ namespace DCL.Communities.CommunitiesBrowser
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -95,7 +97,7 @@ namespace DCL.Communities.CommunitiesBrowser
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
             browserStateService = new CommunitiesBrowserStateService(browserEventBus, orchestrator);
-            var thumbnailLoader = new ThumbnailLoader(spriteCache);
+            var thumbnailLoader = new ThumbnailLoader(spriteCache, urlsSource);
             commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, sharedSpaceManager, chatEventBus, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
 
             myCommunitiesPresenter = new CommunitiesBrowserMyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader, browserEventBus, orchestrator);

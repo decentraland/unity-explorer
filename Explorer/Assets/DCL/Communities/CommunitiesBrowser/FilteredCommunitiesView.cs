@@ -183,7 +183,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             cardView.SetActionButtonsState(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none, isStreaming, hasJoined);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.id, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
             cardView.SetActionLoadingActive(false);
 
             if (communityVoiceChatOrchestrator?.CurrentCommunityId.Value == communityData.id)

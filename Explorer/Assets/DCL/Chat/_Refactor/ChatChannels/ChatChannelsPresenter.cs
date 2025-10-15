@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Communities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using Utility;
 
 namespace DCL.Chat
@@ -28,6 +29,7 @@ namespace DCL.Chat
         private readonly OpenConversationCommand openConversationCommand;
         private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
         private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new ();
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private bool isInitialized;
 
@@ -44,7 +46,8 @@ namespace DCL.Chat
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
             OpenConversationCommand openConversationCommand,
-            CreateChannelViewModelCommand createChannelViewModelCommand)
+            CreateChannelViewModelCommand createChannelViewModelCommand,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             this.view.Initialize(profileRepositoryWrapper);
@@ -58,6 +61,7 @@ namespace DCL.Chat
             this.closeChannelCommand = closeChannelCommand;
             this.openConversationCommand = openConversationCommand;
             this.createChannelViewModelCommand = createChannelViewModelCommand;
+            this.urlsSource = urlsSource;
 
             lifeCts = new CancellationTokenSource();
 
@@ -72,7 +76,7 @@ namespace DCL.Chat
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
 
             this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
-            
+
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
             scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
@@ -95,8 +99,8 @@ namespace DCL.Chat
                 {
                     vm.DisplayName = cd.name;
 
-                    // Optional: if you want to also refresh the picture:
-                    vm.ImageUrl = cd.thumbnails?.raw;
+                    // Use community ID to construct the thumbnail URL
+                    vm.ImageUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), cd.id);
                     view.UpdateConversation(vm);
 
                     if (!string.IsNullOrEmpty(vm.ImageUrl))

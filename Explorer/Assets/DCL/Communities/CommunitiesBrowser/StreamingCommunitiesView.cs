@@ -103,7 +103,7 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
 
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.id, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
 
             cardView.MainButtonClicked -= JoinStreamClicked;
             cardView.MainButtonClicked += JoinStreamClicked;

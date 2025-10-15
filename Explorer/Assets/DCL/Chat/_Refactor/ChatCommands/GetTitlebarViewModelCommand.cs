@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using DCL.Chat.ChatServices;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
@@ -22,6 +23,7 @@ namespace DCL.Chat.ChatCommands
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
         private readonly ChatConfig.ChatConfig chatConfig;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public GetTitlebarViewModelCommand(
             IEventBus eventBus,
@@ -29,13 +31,15 @@ namespace DCL.Chat.ChatCommands
             ProfileRepositoryWrapper profileRepository,
             ChatConfig.ChatConfig chatConfig,
             GetUserChatStatusCommand getUserChatStatusCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
+            IDecentralandUrlsSource urlsSource)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
+            this.urlsSource = urlsSource;
             this.chatConfig = chatConfig;
         }
 
@@ -60,8 +64,9 @@ namespace DCL.Chat.ChatCommands
                 };
             }
 
+            var thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.id);
             Sprite thumbnail = await getCommunityThumbnailCommand
-                .ExecuteAsync(communityData.thumbnails?.raw, ct);
+                .ExecuteAsync(thumbnailUrl, ct);
 
             var viewModel = new ChatTitlebarViewModel
             {

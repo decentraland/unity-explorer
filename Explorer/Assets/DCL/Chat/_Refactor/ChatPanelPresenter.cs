@@ -11,6 +11,7 @@ using DCL.Chat.History;
 using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
@@ -61,7 +62,8 @@ namespace DCL.Chat
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
-            ITranslationCache translationCache)
+            ITranslationCache translationCache,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -96,7 +98,7 @@ namespace DCL.Chat
                 voiceChatOrchestrator,
                 chatEventBus,
                 commandRegistry.GetUserCallStatusCommand,
-                commandRegistry.ToggleAutoTranslateCommand);
+                commandRegistry.ToggleAutoTranslateCommand,urlsSource);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
@@ -109,7 +111,8 @@ namespace DCL.Chat
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
                 commandRegistry.OpenConversation,
-                commandRegistry.CreateChannelViewModel);
+                commandRegistry.CreateChannelViewModel,
+                urlsSource);
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
                 eventBus,

@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -23,6 +24,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
         private readonly IDisposable panelSizeChangeSubscription;
         private readonly IDisposable panelStateChangeSubscription;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private int speakersCount;
 
@@ -33,10 +35,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CommunityVoiceChatInCallView view,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.urlsSource = urlsSource;
             expandedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.ExpandedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             collapsedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.CollapsedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
@@ -118,10 +122,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void SetCommunityData(GetCommunityResponse communityData)
         {
             view.SetCommunityName(communityData.data.name);
-            if (communityData.data.thumbnails != null)
-                thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw, defaultSprite: view.DefaultCommunitySprite);
-            else
-                view.CommunityThumbnail.SetImage(view.DefaultCommunitySprite);
+            string thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.data.id);
+            thumbnailController.RequestImage(thumbnailUrl, useKtx: true, defaultSprite: view.DefaultCommunitySprite);
         }
 
         public void SetTalkingStatus(int speakingCount, string username)
