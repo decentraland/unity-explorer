@@ -82,7 +82,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 List<OutfitItem> updatedOutfits = currentOutfits.Where(o => o.slot != slotIndex).ToList();
 
                 // First, deploy the metadata change. This is the most likely to fail.
-                await outfitsRepository.SetAsync(profile, updatedOutfits, ct, noExtraSlots: true);
+                await outfitsRepository.SetAsync(profile, updatedOutfits, ct);
 
                 // If server update succeeds, delete the local screenshot.
                 await screenshotService.DeleteScreenshotAsync(slotIndex, ct);

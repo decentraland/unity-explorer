@@ -4,6 +4,7 @@ using DCL.Ipfs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
@@ -47,7 +48,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
         /// <summary>
         ///     Deploys the complete set of outfits for a user to the Catalyst network.
         /// </summary>
-        public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct, bool noExtraSlots = false)
+        public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct)
         {
             if (realm is { Configured: false })
                 return;
@@ -61,8 +62,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             var namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
             var metadata = new OutfitsMetadata
             {
-                // outfits = outfits, namesForExtraSlots = noExtraSlots ? new List<string>() : new List<string>(namesForExtraSlots.Names)
-                outfits = outfits, namesForExtraSlots = new List<string>()
+                outfits = outfits, namesForExtraSlots = namesForExtraSlots.Names.Count > 0
+                    ? new List<string>
+                    {
+                        namesForExtraSlots.Names[0]
+                    }
+                    : new List<string>()
             };
 
             var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
