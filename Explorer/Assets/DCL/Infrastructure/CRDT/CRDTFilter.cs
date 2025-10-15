@@ -1,6 +1,7 @@
 #nullable enable
 
 using CRDT.Protocol;
+using DCL.Diagnostics;
 using System;
 using Utility;
 
@@ -50,7 +51,7 @@ namespace CRDT
             // Read the address length (1 byte)
             byte addressLength = memory[1];
 
-            UnityEngine.Debug.Log($"FilterCRDTState - Message type: {memory[0]}, Address length: {addressLength}, Total length: {memory.Length}");
+            ReportHub.Log(ReportCategory.CRDT, $"FilterCRDTState - Message type: {memory[0]}, Address length: {addressLength}, Total length: {memory.Length}");
 
             if (memory.Length < 2 + addressLength)
                 return; // Not enough data
