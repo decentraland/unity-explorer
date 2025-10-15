@@ -55,14 +55,16 @@ namespace DCL.Chat
         /// Marks an item as selected.
         /// </summary>
         /// <param name="channelId">The Id of the conversation to find the item.</param>
-        public void SelectConversation(ChatChannel.ChannelId channelId)
+        /// <param name="invoke">Whether to raise the ConversationSelected event</param>
+        public void SelectConversation(ChatChannel.ChannelId channelId, bool invoke = true)
         {
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
                 itemPair.Value.SetSelectionStatus(false);
 
             items[channelId].SetSelectionStatus(true);
 
-            ConversationSelected?.Invoke(channelId);
+            if (invoke)
+                ConversationSelected?.Invoke(channelId);
         }
 
         /// <summary>

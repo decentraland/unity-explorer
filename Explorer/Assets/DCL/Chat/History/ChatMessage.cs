@@ -61,7 +61,7 @@ namespace DCL.Chat.History
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                DCL_SYSTEM_SENDER, DateTime.UtcNow.ToOADate(), false, true);
+                string.Empty, DateTime.UtcNow.ToOADate(), false, true);
 
         public bool Equals(ChatMessage other) => MessageId == other.MessageId;
         public override bool Equals(object? obj) => obj is ChatMessage other && Equals(other);

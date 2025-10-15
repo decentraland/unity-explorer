@@ -251,15 +251,8 @@ namespace DCL.Chat
             chatStateMachine.Minimize();
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent evt)
-        {
+        private void HandleGlobalClick(ChatSharedAreaEvents.ChatPanelGlobalClickEvent evt) =>
             chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
-        }
-
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent evt)
-        {
-            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
-        }
 
         private void SubscribeToCoordinationEvents()
         {
@@ -273,8 +266,7 @@ namespace DCL.Chat
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(OnHiddenInSharedSpace));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent>(OnMvcViewShowed));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent>(OnMvcViewClosed));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelGlobalClickEvent>(HandleGlobalClick));
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)

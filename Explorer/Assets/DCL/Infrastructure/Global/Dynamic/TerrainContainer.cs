@@ -23,7 +23,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugBuilder) =>
             new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer,
-                staticContainer.WebRequestsContainer.WebRequestController, landscapeEnabled,
+                staticContainer.WebRequestsContainer.WebRequestController, staticContainer.LandscapeParcelData, staticContainer.LandscapeParcelController, landscapeEnabled,
                 bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone), (Landscape)Landscape);
 
         public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
