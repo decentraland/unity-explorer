@@ -91,9 +91,9 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
 
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
-            if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
+            if (socialEmoteInteraction is { AreInteracting: false })
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip("INTERACT!", dclInput.Player.Pointer);
             else
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
@@ -111,12 +111,12 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
 
-            if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
+            if (socialEmoteInteraction is { AreInteracting: false })
             {
                 // The hovered avatar is playing a social emote, in the starting step
-                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Value.Emote, 0);
+                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Emote, 0);
             }
             else
             {

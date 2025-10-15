@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -86,7 +87,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress?? string.Empty;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
 
-            Debug.LogError("SENT TO [" + emote.Payload.IncrementalId + "]: " + emote.Payload.Urn + " reacting? " + emote.Payload.IsReacting );
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "SENT TO [" + emote.Payload.IncrementalId + "]: " + emote.Payload.Urn + " reacting? " + emote.Payload.IsReacting );
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress)
@@ -110,7 +111,7 @@ namespace DCL.Multiplayer.Emotes
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
-                Debug.LogError("RECEIVED [" + receivedMessage.Payload.IncrementalId + "]");
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "RECEIVED [" + receivedMessage.Payload.IncrementalId + "]");
 
                 Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp, receivedMessage.Payload.SocialEmoteOutcome > -1, receivedMessage.Payload.SocialEmoteOutcome, receivedMessage.Payload.IsReacting, receivedMessage.Payload.SocialEmoteInitiator);
             }
@@ -126,7 +127,7 @@ namespace DCL.Multiplayer.Emotes
 
             using (sync.GetScope())
             {
-                Debug.LogError("INBOX: " + walletId + " " + emoteURN + " is outcome? " + isUsingSocialEmoteOutcome + " reacting? " + isReactingToSocialEmote + " outcome index:" + socialEmoteOutcomeIndex);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "INBOX: " + walletId + " " + emoteURN + " is outcome? " + isUsingSocialEmoteOutcome + " reacting? " + isReactingToSocialEmote + " outcome index:" + socialEmoteOutcomeIndex);
                 emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress));
             }
         }

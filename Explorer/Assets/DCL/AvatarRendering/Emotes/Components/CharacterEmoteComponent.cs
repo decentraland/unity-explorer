@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility.Animations;
 
@@ -26,7 +27,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Reset()
         {
-            Debug.LogError("-emote Reset-");
+            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "-emote Reset-");
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;

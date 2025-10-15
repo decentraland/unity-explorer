@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Emotes.SocialEmotes;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
@@ -35,14 +36,12 @@ namespace DCL.AvatarRendering.Emotes
             // this using cleans up the intention list
             using (OwnedBunch<RemoteEmoteIntention> emoteIntentions = emotesMessageBus.EmoteIntentions())
             {
-       //         Debug.Log("update emoteIntentions.Available: " + emoteIntentions.Available());
-
                 if (!emoteIntentions.Available())
                     return;
 
                 foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
                 {
-                    SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.WalletId);
+                    SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.WalletId);
 
                     // Corner case:
                     // While the start animation is looping, a new message is received and the intention is queued and consumed
@@ -50,19 +49,19 @@ namespace DCL.AvatarRendering.Emotes
                     // The message that arrives after the outcome animation played queued but was not consumed since there is a check below that prevents that from happening while there is another animation interpolation
                     // That message has to be discarded as it does not make sense anymore, the outcome animation is playing, the start animation is not going to play again
                     // If not removed, then it would play the start animation after the interaction finishes, which leads the system in an undesired state
-                    if (interaction.HasValue &&
-                        interaction.Value.InitiatorWalletAddress == remoteEmoteIntention.WalletId &&
+                    if (interaction != null &&
+                        interaction.InitiatorWalletAddress == remoteEmoteIntention.WalletId &&
                         !remoteEmoteIntention.IsUsingSocialOutcomeAnimation &&
-                        interaction.Value.AreInteracting)
+                        interaction.AreInteracting)
                     {
-                        Debug.LogError("PENDING savedIntention IGNORED " + remoteEmoteIntention.EmoteId);
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PENDING savedIntention IGNORED " + remoteEmoteIntention.EmoteId);
                         continue;
                     }
 
                     // The entity was not created yet, so we wait until its created to be able to consume the intent
                     if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
-                        Debug.LogError("savedIntentions +1   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "savedIntentions +1   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
                         savedIntentions!.Add(remoteEmoteIntention);
                         continue;
                     }
@@ -73,7 +72,7 @@ namespace DCL.AvatarRendering.Emotes
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
                     if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
                     {
-                        Debug.LogError("PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
 
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
@@ -85,7 +84,7 @@ namespace DCL.AvatarRendering.Emotes
                     }
                     else
                     {
-                        Debug.LogError("savedIntentions ++2 (" + emoteIntentions.Collection().Count + ")   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "savedIntentions ++2 (" + emoteIntentions.Collection().Count + ")   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
                         savedIntentions.Add(remoteEmoteIntention);
                     }
                 }

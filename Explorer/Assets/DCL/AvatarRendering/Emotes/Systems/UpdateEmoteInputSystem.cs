@@ -101,7 +101,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (!string.IsNullOrEmpty(emoteUrn))
             {
-                Debug.LogError("<color=red>--------TRIGGER EMOTE----------</color>");
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>--------TRIGGER EMOTE----------</color>");
 
                 // It's a social emote
                 SendEmoteMessage(emoteUrn, profile.UserId, entity,  socialEmoteOutcomeIndexForTrigger, useOutcomeReactionAnimationForTrigger, useSocialEmoteOutcomeAnimationForTrigger, socialEmoteInitiatorWalletAddressForTrigger);
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Emotes
                 IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
                 if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
-                Debug.LogError("<color=red>--------TRIGGER EMOTE----------</color>");
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>--------TRIGGER EMOTE----------</color>");
 
                 URN emoteId = emotes[emoteIndex];
 
