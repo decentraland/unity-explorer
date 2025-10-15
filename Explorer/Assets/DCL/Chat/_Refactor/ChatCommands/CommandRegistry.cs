@@ -12,6 +12,7 @@ using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.VoiceChat;
 using DCL.Clipboard;
 using DCL.Translation;
 using DCL.Translation.Service;
@@ -68,6 +69,7 @@ namespace DCL.Chat.ChatCommands
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             ClipboardManager clipboardManager,
             ITranslationService translationService,
             ITranslationMemory translationMemory,
@@ -159,7 +161,8 @@ namespace DCL.Chat.ChatCommands
                 chatConfig,
                 profileRepositoryWrapper,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail);
+                GetCommunityThumbnail,
+                voiceChatOrchestrator);
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand,
                 currentChannelService);
