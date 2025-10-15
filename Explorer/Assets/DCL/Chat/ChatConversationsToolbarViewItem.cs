@@ -144,7 +144,7 @@ namespace DCL.Chat
         /// Changes the visual aspect of the connection status indicator.
         /// </summary>
         /// <param name="connectionStatus">The current connection status.</param>
-        public void SetConnectionStatus(OnlineStatus connectionStatus)
+        public virtual void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
             connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.ONLINE);
@@ -180,10 +180,10 @@ namespace DCL.Chat
             thumbnailView.gameObject.SetActive(false);
         }
 
-        public void Configure(bool isClosable, bool hasOnlineStatus)
+        public void Configure(bool isClosable)
         {
             removeButton.gameObject.SetActive(isClosable);
-            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
+            connectionStatusIndicatorContainer.SetActive(false);
         }
 
 
