@@ -31,6 +31,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
+using Utility.UIToolkit;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -197,12 +198,14 @@ namespace DCL.PluginSystem.Global
                 () =>
                 {
                     var nametagHolder = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, poolParent);
-                    nametagHolder.gameObject.SetActive(false);
                     return nametagHolder;
                 },
-                actionOnRelease: nh => nh.gameObject.SetActive(false),
+                actionOnRelease: nh =>
+                {
+                    nh.Nametag.SetDisplayed(false);
+                },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
-                actionOnGet: nh => nh.gameObject.SetActive(true));
+                actionOnGet: nh => nh.Nametag.SetDisplayed(true));
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
