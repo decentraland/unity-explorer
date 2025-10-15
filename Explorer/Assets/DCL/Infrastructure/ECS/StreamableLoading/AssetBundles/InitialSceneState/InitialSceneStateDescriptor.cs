@@ -55,6 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         {
             InitialSceneStateDescriptor unsuportedStaticSceneAB = new InitialSceneStateDescriptor();
             unsuportedStaticSceneAB.AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {sceneID}"));
+            unsuportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
             return unsuportedStaticSceneAB;
         }
 
@@ -86,22 +87,35 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             }
         }
 
-        public void MoveToCache()
+        private bool assetsAreInCache = false;
+
+        /// <summary>
+        /// Returns if the assets could be moves to the GLTFAssetCache
+        /// </summary>
+        /// <param name="bridgingBetweenScene"></param>
+        /// <returns></returns>
+        public void AnalyzeCacheState(bool bridgingBetweenScene, bool assetsAreInUse)
         {
             foreach (var valueTuple in AssetsInstantiated)
             {
-                valueTuple.Item2.Root.transform.SetParent(null);
-                assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
+                if (bridgingBetweenScene)
+                    assetsCache.PutInBridge(valueTuple.Item2);
+                else
+                    assetsCache.PutInCache(valueTuple.Item2);
+
+                if(assetsAreInUse)
+                    assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
         }
 
         public void MarkAssetToMoveToBridge()
         {
-            if (!IsSupported())
-                return;
-
             foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
-                gltfContainerAsset.Item2.Root.transform.SetParent(null);
+            {
+                UnityEngine.Debug.Log($"JUANI PUTTING ASSET IN BRIDGE {gltfContainerAsset.Item2.Root.name}");
+                assetsCache.PutInBridge(gltfContainerAsset.Item2);
+
+            }
         }
 
     }

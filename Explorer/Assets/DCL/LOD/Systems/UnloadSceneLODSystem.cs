@@ -45,8 +45,11 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(DeleteEntityIntention))]
         [None(typeof(ISceneFacade))]
-        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
+            //Assets are being used, they need to be moved to cache
+            initialSceneStateDescriptor.AnalyzeCacheState(false, sceneLODInfo.HasLOD(0));
+
             sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
         }
@@ -58,17 +61,17 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                //TODO (JUANI): Cleanup this further. Too may ifs
-                if (sceneDefinitionComponent.Definition.SupportInitialSceneState() && sceneLODInfo.HasLOD(0))
-                {
-                    initialSceneStateDescriptor.MoveToCache();
+                initialSceneStateDescriptor.AnalyzeCacheState(true, sceneLODInfo.HasLOD(0));
 
+                //TODO(Juani) : This `if` is required for retro-compatibility with non Single Asset Bundles scenes.
+                //If all scenes were built with SAB scenes, we could remove it
+                if (sceneDefinitionComponent.Definition.SupportInitialSceneState())
+                {
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
                     sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                     World.Remove<SceneLODInfo>(entity);
                     return;
                 }
-
 
                 if (!sceneFacade.IsSceneReady())
                     return;

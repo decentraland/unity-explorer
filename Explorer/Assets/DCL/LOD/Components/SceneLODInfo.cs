@@ -137,14 +137,13 @@ namespace DCL.LOD.Components
 
         public bool HasLOD(byte lodForAcquisition)
         {
-            return SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
+            return !IsInitialized() ||
+                   SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
                    SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition) ||
                    CurrentLODLevelPromise == lodForAcquisition;
         }
 
-        public bool IsInitialized()
-        {
-            return !string.IsNullOrEmpty(id);
-        }
+        public bool IsInitialized() =>
+            !string.IsNullOrEmpty(id);
     }
 }

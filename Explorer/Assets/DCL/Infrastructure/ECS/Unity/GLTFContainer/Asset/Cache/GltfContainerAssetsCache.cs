@@ -22,6 +22,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     {
         internal readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly Transform parentContainer;
+        private readonly Transform sceneLODBridge;
+
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
@@ -35,6 +37,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}").transform;
             parentContainer.transform.parent = poolParent;
             parentContainer.gameObject.SetActive(false);
+
+            sceneLODBridge = new GameObject($"SCENE_LOD_BRIDGE").transform;
 
             cache = new Dictionary<string, List<GltfContainerAsset>>(this);
             OngoingRequests = new FakeDictionaryCache<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
@@ -87,12 +91,24 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            //If the parent is null, it means that the asset is waiting on the scene-lod state
-            if (asset.Root.transform.parent)
+            //If the parent is the bridge, it means that the asset is waiting on the scene-lod state
+            Transform parent = asset.Root.transform.parent;
+            if (!parent || parent != sceneLODBridge)
             {
-                asset.Root.SetActive(false);
-                asset.Root.transform.SetParent(parentContainer, true);
+                PutInCache(asset);
+                UnityEngine.Debug.Log($"JUANI PUTTING ASSET IN THE CACHE {asset.Root.name}");
             }
+        }
+
+        public void PutInBridge(GltfContainerAsset gltfContainerAsset)
+        {
+            gltfContainerAsset.Root.transform.SetParent(sceneLODBridge, true);
+        }
+
+        public void PutInCache(GltfContainerAsset gltfContainerAsset)
+        {
+            valueTupleItem2.Root.SetActive(false);
+            valueTupleItem2.Root.transform.SetParent(parentContainer, true);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
