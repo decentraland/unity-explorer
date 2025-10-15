@@ -41,8 +41,12 @@ namespace CRDT
         {
             totalWrite = 0;
 
-            if (memory.Length < 3) // Need at least: 1 byte type + 1 byte address length + some data
+            // Need at least 3 -> 1 byte type + 1 byte address length + some data
+            // Schema at https://github.com/decentraland/js-sdk-toolchain/blob/f122eaa2acaaed80db7ee0302e8d60ca7d2337bf/packages/@dcl/sdk/src/network/message-bus-sync.ts#L197-L208
+            if (memory.Length < 3)
                 return;
+
+            const int MIN_OFFSET = 2;
 
             // Write the first byte (message type: RES_CRDT_STATE = 3)
             output[0] = memory[0];
@@ -53,20 +57,20 @@ namespace CRDT
 
             ReportHub.Log(ReportCategory.CRDT, $"FilterCRDTState - Message type: {memory[0]}, Address length: {addressLength}, Total length: {memory.Length}");
 
-            if (memory.Length < 2 + addressLength)
+            if (memory.Length < MIN_OFFSET + addressLength)
                 return; // Not enough data
 
             // Copy the address length and address bytes as-is
             output[1] = addressLength;
-            memory.Slice(2, addressLength).CopyTo(output.Slice(2));
+            memory.Slice(MIN_OFFSET, addressLength).CopyTo(output.Slice(2));
             totalWrite += 1 + addressLength;
 
             // The CRDT messages start after: type byte (1) + address length (1) + address bytes
-            int crdtStartOffset = 2 + addressLength;
+            int crdtStartOffset = MIN_OFFSET + addressLength;
             ReadOnlySpan<byte> crdtMessages = memory.Slice(crdtStartOffset);
 
             // Filter the CRDT messages into the output after the address
-            int outputCrdtOffset = 2 + addressLength;
+            int outputCrdtOffset = MIN_OFFSET + addressLength;
             FilterCRDTMessages(crdtMessages, output.Slice(outputCrdtOffset), out int filteredLength);
             totalWrite += filteredLength; // Already counted: type byte + address length + address bytes, now add filtered data
         }
