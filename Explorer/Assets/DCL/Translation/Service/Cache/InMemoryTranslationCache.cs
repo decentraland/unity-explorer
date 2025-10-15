@@ -11,7 +11,7 @@ namespace DCL.Translation.Service
     ///     - Fast O(1) lookups with LRU eviction.
     ///     - Maintains a secondary index messageId -> { (messageId, lang) } for bulk deletion.
     /// </summary>
-    public sealed class InMemoryTranslationCache : ITranslationCache
+    public sealed class InMemoryTranslationCache : ITranslationCache, IDisposable
     {
         private readonly LRUCache<MessageLangKey, TranslationResult> cache;
 
@@ -137,6 +137,11 @@ namespace DCL.Translation.Service
 
             // External telemetry/counters
             onEvictedExternal?.Invoke(key, _);
+        }
+
+        public void Dispose()
+        {
+            Clear();
         }
     }
 
