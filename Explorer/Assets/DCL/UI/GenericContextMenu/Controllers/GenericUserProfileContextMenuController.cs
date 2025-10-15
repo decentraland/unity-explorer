@@ -359,7 +359,7 @@ namespace DCL.UI
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.EmotesWheel,
                                          new EmotesWheelParams()
                                          {
-                                             IsSocialEmote = true,
+                                             IsDirectedEmote = true,
                                              TargetUsername = targetProfile.ValidatedName,
                                              TargetUsernameColor = targetProfile.UserNameColor
                                          });

@@ -33,14 +33,14 @@ namespace DCL.SocialEmotes.UI
 
         private void OnOutcomePerformed(int outcomeIndex)
         {
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
 
             // Checks if the current emote has an outcome for the given index
-            if (outcomeIndex >= interaction.Value.Emote.Model.Asset.metadata.emoteDataADR287.outcomes.Length)
+            if (outcomeIndex >= interaction!.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!.Length)
                 return;
 
             if (interaction is { AreInteracting: false })
-                emotesBus.PlaySocialEmoteReaction(interaction.Value.InitiatorWalletAddress, interaction.Value.Emote, outcomeIndex);
+                emotesBus.PlaySocialEmoteReaction(interaction.InitiatorWalletAddress, interaction.Emote, outcomeIndex);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -86,18 +86,18 @@ namespace DCL.SocialEmotes.UI
 
         private void FillUI()
         {
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
 
-            if (interaction.HasValue)
+            if (interaction != null)
             {
                 viewInstance!.ResetChoices();
 
-                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Value.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!;
+                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!;
 
                 for (int i = 0; i < outcomes.Length; ++i)
                     viewInstance.AddChoice(outcomes[i].title);
 
-                viewInstance.SetEmoteTitle(interaction.Value.Emote.Model.Asset.metadata.name);
+                viewInstance.SetEmoteTitle(interaction.Emote.Model.Asset.metadata.name);
             }
         }
 

@@ -394,16 +394,16 @@ MonoBehaviour:
       Severity: 0
     - Category: DEBUG
       Severity: 0
-    - Category: DEBUG
+    - Category: EMOTE_DEBUG
       Severity: 3
-    - Category: DEBUG
+    - Category: EMOTE_DEBUG
       Severity: 2
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
-    - Category: UNSPECIFIED
+    - Category: EMOTE_DEBUG
       Severity: 0
+    - Category: EMOTE_DEBUG
+      Severity: 4
+    - Category: EMOTE_DEBUG
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

@@ -108,9 +108,9 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
 
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
-            if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
+            if (socialEmoteInteraction is { AreInteracting: false })
             {
                 Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
                 Vector3 playerPosition = Vector3.zero;
@@ -164,9 +164,14 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
 
-            if (!socialEmoteInteraction.HasValue || socialEmoteInteraction.Value.AreInteracting)
+            if (socialEmoteInteraction is { AreInteracting: false })
+            {
+                // The hovered avatar is playing a social emote, in the starting step
+                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Emote, 0);
+            }
+            else
             {
                 // A context menu will be available if no social emote interaction is in process
                 contextMenuTask.TrySetResult();

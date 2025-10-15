@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
         public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
-        public List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; } = new List<StreamableLoadingResult<AudioClipData>>();
+        public List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; } = new ();
 
         public bool IsLoading { get; private set; }
 

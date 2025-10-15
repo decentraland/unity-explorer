@@ -165,6 +165,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.ResetTrigger(hash);
         }
 
+        /// <summary>
+        /// Replaces the name of the Armature object with the name it had originally.
+        /// The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
+        /// </summary>
         public void RestoreArmatureName()
         {
             if (ArmatureObject.name != originalArmatureName)
@@ -190,6 +194,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public float GetAnimatorFloat(int hash) =>
             AvatarAnimator.GetFloat(hash);
 
+        /// <summary>
+        /// Replaces the animation clip of the emote state in the animator.
+        /// </summary>
+        /// <param name="animationClip">The clip to be stored.</param>
+        /// <param name="armatureNameOverride">Optional. The name of the Armature object will be replaced with this. Call <see cref="RestoreArmatureName"/> to undo.</param>
         public void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null)
         {
             if (overrideController["Emote"] == animationClip)
@@ -265,6 +274,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         bool GetAnimatorBool(int hash);
 
+        /// <summary>
+        /// Replaces the animation clip of the emote state in the animator.
+        /// </summary>
+        /// <param name="animationClip">The clip to be stored.</param>
+        /// <param name="armatureNameOverride">Optional. The name of the Armature object will be replaced with this. Call <see cref="RestoreArmatureName"/> to undo.</param>
         void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null);
 
         float GetAnimatorFloat(int hash);
@@ -275,6 +289,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void ResetTrigger(int hash);
 
+        /// <summary>
+        /// Replaces the name of the Armature object with the name it had originally.
+        /// The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
+        /// </summary>
         void RestoreArmatureName();
     }
 }

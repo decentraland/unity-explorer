@@ -46,7 +46,7 @@ namespace DCL.SocialEmotes
             areInteractingToggle.isOn = areInteracting;
         }
 
-        public void OnInteractionStarted(SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly interaction)
+        public void OnInteractionStarted(SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction)
         {
             SetInitiatorWalletAddress(interaction.InitiatorWalletAddress);
             SetEmoteUrn(interaction.Emote.Model!.Asset!.id!);
@@ -55,14 +55,14 @@ namespace DCL.SocialEmotes
             SetAreInteracting(false);
         }
 
-        public void OnInteractionStopped(SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly interaction)
+        public void OnInteractionStopped(SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction)
         {
             SetInitiatorWalletAddress("STOPPED " + interaction.InitiatorWalletAddress);
             SetInitiatorWalletAddress("STOPPED " + interaction.ReceiverWalletAddress);
             SetAreInteracting(interaction.AreInteracting);
         }
 
-        public void OnParticipantAdded(string participantWalletAddress, SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly interaction)
+        public void OnParticipantAdded(string participantWalletAddress, SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction)
         {
             SetInitiatorWalletAddress(interaction.InitiatorWalletAddress);
             SetEmoteUrn(interaction.Emote.Model!.Asset!.id!);
