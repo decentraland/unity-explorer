@@ -306,17 +306,17 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            profileLoadingCts.SafeCancelAndDispose();
-
-            if (isAvatarLoaded)
-                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
-
             foreach (ISection backpackSectionsValue in backpackSections.Values)
                 backpackSectionsValue.Deactivate();
 
             //Resets the tab selector to the default state (Avatar selected and open)
             foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
                 tabSelector.TabSelectorViews.TabSelectorToggle.isOn = tabSelector.Section == BackpackSections.Avatar;
+
+            profileLoadingCts.SafeCancelAndDispose();
+
+            if (isAvatarLoaded)
+                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
