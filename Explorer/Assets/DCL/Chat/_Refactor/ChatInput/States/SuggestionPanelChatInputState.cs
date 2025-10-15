@@ -8,7 +8,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
 namespace DCL.Chat.ChatInput
@@ -21,7 +20,7 @@ namespace DCL.Chat.ChatInput
 
         private readonly InputSuggestionPanelController suggestionPanelController;
         private readonly CustomInputField inputField;
-        private readonly ChatClickDetectionService clickDetection;
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
 
         private readonly Dictionary<string, ProfileInputSuggestionData> profileSuggestionsDictionary = new ();
         private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
@@ -34,7 +33,10 @@ namespace DCL.Chat.ChatInput
         public SuggestionPanelChatInputState(ChatInputStateContext context) : base(context)
         {
             suggestionPanelController = new InputSuggestionPanelController(context.ChatInputView.suggestionPanel);
-            clickDetection = new ChatClickDetectionService(context.ChatInputView.suggestionPanel.transform);
+            clickDetectionHandler = new ChatClickDetectionHandler(context.ChatInputView.suggestionPanel.transform);
+            clickDetectionHandler.OnClickOutside += Deactivate;
+            clickDetectionHandler.Pause();
+
             inputField = context.ChatInputView.inputField;
 
             emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(context.EmojiMapping.NameMapping.Count);
@@ -46,6 +48,7 @@ namespace DCL.Chat.ChatInput
         public void Dispose()
         {
             suggestionPanelController.Dispose();
+            clickDetectionHandler.Dispose();
         }
 
         internal bool TryFindMatch(string inputText)
@@ -99,15 +102,15 @@ namespace DCL.Chat.ChatInput
         {
             suggestionPanelController.SetPanelVisibility(true);
             inputField.UpAndDownArrowsEnabled = false;
-            clickDetection.OnClickOutside += Deactivate;
+            clickDetectionHandler.Resume();
         }
 
         protected override void Deactivate()
         {
             suggestionPanelController.SetPanelVisibility(false);
             inputField.UpAndDownArrowsEnabled = true;
-            clickDetection.OnClickOutside -= Deactivate;
             lastMatch = Match.Empty;
+            clickDetectionHandler.Pause();
         }
 
         private void UpdateProfileNameMap()

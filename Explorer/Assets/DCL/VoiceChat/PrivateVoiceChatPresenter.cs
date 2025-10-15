@@ -7,7 +7,6 @@ using DCL.Utilities.Extensions;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,7 +14,7 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class PrivateVoiceChatController : IDisposable
+    public class PrivateVoiceChatPresenter : IDisposable
     {
         private readonly PrivateVoiceChatView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
@@ -26,7 +25,7 @@ namespace DCL.VoiceChat
 
         private CancellationTokenSource cts = new ();
 
-        public PrivateVoiceChatController(
+        public PrivateVoiceChatPresenter(
             PrivateVoiceChatView view,
             IVoiceChatOrchestrator privateCallOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
