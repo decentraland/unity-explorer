@@ -24,7 +24,7 @@ namespace DCL.VoiceChat
             false;
 
         public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId) =>
-            null;
+            new ReactiveProperty<bool>(false);
 
         public bool TryGetActiveCommunityVoiceChat(string communityId, out ActiveCommunityVoiceChat activeCommunityVoiceChat)
         {
