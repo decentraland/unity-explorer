@@ -107,8 +107,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public void PutInCache(GltfContainerAsset gltfContainerAsset)
         {
-            valueTupleItem2.Root.SetActive(false);
-            valueTupleItem2.Root.transform.SetParent(parentContainer, true);
+            gltfContainerAsset.Root.SetActive(false);
+            gltfContainerAsset.Root.transform.SetParent(parentContainer, true);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
