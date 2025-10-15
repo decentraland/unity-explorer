@@ -83,46 +83,45 @@ namespace DCL.VoiceChat
             communityCts = communityCts.SafeRestart();
             view.gameObject.SetActive(false);
             currentCommunityCallStatusSubscription?.Dispose();
-            currentCommunityCallStatusSubscription = null;
         }
 
         private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
-            currentCommunityCallStatusSubscription = communityCallOrchestrator.CommunityConnectionUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = communityCallOrchestrator.CommunityConnectionUpdates(communityId).Subscribe(OnCurrentCommunityCallStatusChanged);
 
+            //We add a small delay to avoid UI issues when switching from window to panel
             await UniTask.Delay(1000, cancellationToken: communityCts.Token);
+
             //We subscribe to the call events but if the button cant be visible we don't need to check further.
             if (!canBeVisible || communityCts.IsCancellationRequested) return;
 
-            while (!communityCts.IsCancellationRequested)
+            try
             {
-                try
-                {
-                    GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
-                    GetCommunityResponse.VoiceChatStatus dataVoiceChatStatus = communityData.data.voiceChatStatus;
+                GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
+                GetCommunityResponse.VoiceChatStatus dataVoiceChatStatus = communityData.data.voiceChatStatus;
 
-                    if (!dataVoiceChatStatus.isActive)
-                    {
-                        view.gameObject.SetActive(false);
-                        return;
-                    }
-
-                    bool isOurCurrentConversation = communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(communityId);
-
-                    if (!isOurCurrentConversation)
-                    {
-                        view.gameObject.SetActive(dataVoiceChatStatus.isActive);
-                        view.ParticipantsAmount.SetText(dataVoiceChatStatus.participantCount.ToString());
-                    }
-
-                    await UniTask.Delay(5000, cancellationToken: communityCts.Token);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e)
+                if (!dataVoiceChatStatus.isActive)
                 {
                     view.gameObject.SetActive(false);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    return;
                 }
+
+                bool isOurCurrentConversation = communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(communityId);
+
+                if (!isOurCurrentConversation)
+                {
+                    view.gameObject.SetActive(dataVoiceChatStatus.isActive);
+                    view.ParticipantsAmount.SetText(dataVoiceChatStatus.participantCount.ToString());
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                view.gameObject.SetActive(false);
+            }
+            catch (Exception e)
+            {
+                view.gameObject.SetActive(false);
+                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
             }
         }
 
