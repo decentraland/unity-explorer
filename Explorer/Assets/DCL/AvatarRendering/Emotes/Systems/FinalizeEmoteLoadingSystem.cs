@@ -158,22 +158,7 @@ namespace DCL.AvatarRendering.Emotes
 
                         if (emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio != null)
                         {
-                            string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
-                            string contentName = shape + "/" + emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio;
-
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contentName " + contentName);
-
-                            for (int j = 0; j < emote.Model.Asset.content.Length; ++j)
-                            {
-                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> comparing: " + emote.Model.Asset.content[j].file);
-
-                                if (string.Compare(emote.Model.Asset.content[j].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
-                                {
-                                    // Found the outcome sound in the content list, we can get the hash
-                                    outcomeAudioHash = emote.Model.Asset.content[j].hash;
-                                    break;
-                                }
-                            }
+                            outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio);
 
                             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contained in? " + promise.LoadingIntention.CommonArguments.URL.Value);
                             string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
@@ -212,6 +197,22 @@ namespace DCL.AvatarRendering.Emotes
                             emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
                         }
                     }
+
+                    // Stores the audio clip of the start animation
+                    if (emote.Model.Asset!.metadata.socialEmoteData!.startAnimation!.audio != null)
+                    {
+                        string? audioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.socialEmoteData!.startAnimation!.audio);
+                        string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
+
+                        // If the current result corresponds to the start animation...
+                        if (audioHash != null && audioURL.Contains(audioHash, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> START AUDIO SET " + audioHash);
+
+                            result.Asset!.Asset.name = audioURL;
+                            emote.AudioAssetResults[bodyShape] = result;
+                        }
+                    }
                 }
                 else
                 {
@@ -220,6 +221,29 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             World.Destroy(entity);
+        }
+
+        private string? FindAudioFileHashInContent(IEmote emote, in BodyShape bodyShape, string? audioFileName)
+        {
+            string? audioHash = null;
+            string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
+            string contentName = shape + "/" + audioFileName;
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contentName " + contentName);
+
+            for (int i = 0; i < emote.Model.Asset!.content.Length; ++i)
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> comparing: " + emote.Model.Asset.content[i].file);
+
+                if (string.Compare(emote.Model.Asset.content[i].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    // Found the outcome sound in the content list, we can get the hash
+                    audioHash = emote.Model.Asset.content[i].hash;
+                    break;
+                }
+            }
+
+            return audioHash;
         }
 
         [Query]
