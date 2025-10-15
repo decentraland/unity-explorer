@@ -49,7 +49,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null
+                null,
+                false
             );
         }
 
@@ -71,7 +72,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null
+                null,
+                false
             );
         }
 
@@ -92,7 +94,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
-                null
+                null,
+                false
             );
         }
 
@@ -113,7 +116,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "delete"),
-                null
+                null,
+                false
             );
         }
 
@@ -135,7 +139,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch"),
-                null
+                null,
+                false
             );
         }
 
@@ -157,7 +162,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "put"),
-                null
+                null,
+                false
             );
         }
     }

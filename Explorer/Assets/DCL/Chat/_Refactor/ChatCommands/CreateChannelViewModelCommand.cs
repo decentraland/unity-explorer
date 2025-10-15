@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
@@ -126,7 +127,7 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct);
+            Profile? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct).SuppressAnyExceptionWithFallback(null);
 
             if (ct.IsCancellationRequested) return;
 

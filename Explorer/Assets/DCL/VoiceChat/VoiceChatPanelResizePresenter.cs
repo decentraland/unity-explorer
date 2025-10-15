@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatPanelResizeController : IDisposable
+    public class VoiceChatPanelResizePresenter : IDisposable
     {
         private const float DEFAULT_VOICE_CHAT_SIZE = 46;
         private const int EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE = 215;
@@ -20,7 +20,7 @@ namespace DCL.VoiceChat
         private readonly IDisposable panelStateChangedSubscription;
 
 
-        public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
+        public VoiceChatPanelResizePresenter(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
             this.view = view;
             this.voiceChatState = voiceChatState;
