@@ -436,7 +436,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CANCEL
+  m_text: NO
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -1669,7 +1669,7 @@ GameObject:
   - component: {fileID: 3261568379768116101}
   - component: {fileID: 4926627074250405861}
   m_Layer: 5
-  m_Name: Text_Info
+  m_Name: PermissionsText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1722,7 +1722,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Equipping this Wearable activates a Portable Experience that can:'
+  m_text: 'The PEX linked to this Wearable can:'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -2679,7 +2679,7 @@ GameObject:
   - component: {fileID: 2319237563249679805}
   - component: {fileID: 6393870236578005487}
   m_Layer: 5
-  m_Name: Text_Caption
+  m_Name: PromptText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2732,7 +2732,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Review Smart Wearable permissions
+  m_text: Do you want to activate the [Wearable Name] Portable Experience (PEX)?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -3530,7 +3530,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ALLOW AND EQUIP
+  m_text: YES
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -4167,6 +4167,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
+  <PromptFormat>k__BackingField: Do you want to activate the {0} Portable Experience
+    (PEX)?
+  <PromptText>k__BackingField: {fileID: 2319237563249679805}
   <AuthorizeButton>k__BackingField: {fileID: 4323582271544481263}
   <DenyButton>k__BackingField: {fileID: 2493130869277956874}
   <WearableRarity>k__BackingField: {fileID: 7217611200185452485}

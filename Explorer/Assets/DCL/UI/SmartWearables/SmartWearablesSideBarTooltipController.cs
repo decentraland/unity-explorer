@@ -33,7 +33,8 @@ namespace DCL.UI.Skybox
         {
             bool smartWearablesAllowed = smartWearableCache.CurrentSceneAllowsSmartWearables;
             int smartWearableCount = smartWearableCache.RunningSmartWearables.Count;
-            viewInstance?.Setup(smartWearablesAllowed, smartWearableCount);
+            int killedCount = smartWearableCache.KilledPortableExperiences.Count;
+            viewInstance?.Setup(smartWearablesAllowed, smartWearableCount, killedCount);
         }
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;

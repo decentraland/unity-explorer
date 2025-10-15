@@ -7,6 +7,7 @@ using DCL.Ipfs;
 using JetBrains.Annotations;
 using MVC;
 using System.Threading;
+using UnityEngine;
 
 namespace Runtime.Wearables
 {
@@ -57,11 +58,12 @@ namespace Runtime.Wearables
         {
             base.OnViewShow();
 
-            IWearable wearable = inputData.Wearable;
-            viewInstance!.WearableRarity.sprite = rarityBackgrounds.GetTypeImage(wearable.GetRarity());
-            viewInstance.WearableThumbnail.sprite = wearable.ThumbnailAssetResult?.Asset.Sprite;
-            viewInstance.WearableThumbnailFlap.color = rarityColors.GetColor(wearable.GetRarity());
-            viewInstance.WearableCategoryIcon.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
+            var wearable = inputData.Wearable;
+            var thumbnail = wearable.ThumbnailAssetResult?.Asset.Sprite;
+            var rarityBackground = rarityBackgrounds.GetTypeImage(wearable.GetRarity());
+            var rarityColor = rarityColors.GetColor(wearable.GetRarity());
+            var categoryIcon = categoryIcons.GetTypeImage(wearable.GetCategory());
+            viewInstance.Setup(wearable.GetName(), thumbnail, rarityBackground, rarityColor, categoryIcon);
 
             UpdatePermissionsAsync(wearable).Forget();
         }

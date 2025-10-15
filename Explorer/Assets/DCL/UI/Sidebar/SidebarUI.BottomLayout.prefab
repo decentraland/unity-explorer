@@ -377,7 +377,9 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 0}
   <SmartWearablesAllowedContent>k__BackingField: {fileID: 0}
   EquippedCountText: {fileID: 0}
-  <EquippedCountFormat>k__BackingField: 
+  <FormatActiveCountOnly>k__BackingField: 
+  <FormatInactiveCountOnly>k__BackingField: 
+  <FormatBothActiveAndInactiveCount>k__BackingField: 
   <SmartWearablesBannedContent>k__BackingField: {fileID: 0}
 --- !u!114 &3184538925018078414
 MonoBehaviour:
@@ -1385,7 +1387,12 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 0}
   <SmartWearablesAllowedContent>k__BackingField: {fileID: 6093987255534047385}
   EquippedCountText: {fileID: 649383202263004908}
-  <EquippedCountFormat>k__BackingField: You have {0} Portable Experiences activated
+  <FormatActiveCountOnly>k__BackingField: You have {count:Portable Experience|Portable
+    Experiences} activated
+  <FormatInactiveCountOnly>k__BackingField: You have {count:inactive Portable Experience|inactive
+    Portable Experiences}
+  <FormatBothActiveAndInactiveCount>k__BackingField: You've equipped Wearables with
+    active & inactive Portable Experiences
   <SmartWearablesBannedContent>k__BackingField: {fileID: 3146443076386070593}
 --- !u!114 &6689772253005174359 stripped
 MonoBehaviour:

@@ -2,6 +2,7 @@
 using MVC;
 using SceneRuntime.ScenePermissions;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,13 @@ namespace Runtime.Wearables
     public class SmartWearableAuthorizationPopupView : ViewBase, IView
     {
         [field: Header("Smart Wearable Authorization Popup")]
+        [field: SerializeField]
+        [field: TextArea]
+        public string PromptFormat { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text PromptText { get; private set; }
+
         [field: SerializeField]
         public Button AuthorizeButton { get; private set; }
 
@@ -43,6 +51,15 @@ namespace Runtime.Wearables
         public async UniTask WaitChoiceAsync()
         {
             await UniTask.WhenAny(AuthorizeButton.OnClickAsync(), DenyButton.OnClickAsync());
+        }
+
+        public void Setup(string wearableName, Sprite thumbnail, Sprite rarityBackground, Color rarityColor, Sprite categoryIcon)
+        {
+            PromptText.text = string.Format(PromptFormat, wearableName);
+            WearableThumbnail.sprite = thumbnail;
+            WearableRarity.sprite = rarityBackground;
+            WearableThumbnailFlap.color = rarityColor;
+            WearableCategoryIcon.sprite = categoryIcon;
         }
 
         public void SetPermissions(List<string> permissions)
