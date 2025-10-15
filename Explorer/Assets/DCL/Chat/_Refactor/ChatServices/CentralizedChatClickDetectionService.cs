@@ -41,6 +41,7 @@ namespace DCL.Chat.ChatServices
         {
             if (EventSystem.current == null) return;
             if (isPaused) return;
+            if (OnClickDetected == null) return;
 
             var clickPosition = GetPointerPosition(context);
 

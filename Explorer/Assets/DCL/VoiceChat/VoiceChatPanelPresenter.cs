@@ -73,17 +73,6 @@ namespace DCL.VoiceChat
         private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
         {
             voiceChatOrchestrator.ChangePanelState(evt.IsVisible ? VoiceChatPanelState.UNFOCUSED : VoiceChatPanelState.HIDDEN, force: true);
-
-            if (evt.IsVisible)
-            {
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, force: true);
-                clickDetectionHandler.Resume();
-            }
-            else
-            {
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
-                clickDetectionHandler.Pause();
-            }
         }
 
         private void HandleChatPanelToggle(ChatSharedAreaEvents.ChatPanelToggleEvent evt)
@@ -98,13 +87,11 @@ namespace DCL.VoiceChat
         private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent _)
         {
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
-            clickDetectionHandler.Pause();
         }
 
         private void HandleChatPanelShownInSharedSpace(ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent evt)
         {
             voiceChatOrchestrator.ChangePanelState(evt.Focus? VoiceChatPanelState.FOCUSED : VoiceChatPanelState.UNFOCUSED, force: true);
-            clickDetectionHandler.Resume();
         }
 
         private void OnPointerExit()

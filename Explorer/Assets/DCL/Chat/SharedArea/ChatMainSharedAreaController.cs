@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ControllerShowParams;
 using DCL.UI.SharedSpaceManager;
 using MVC;
@@ -45,10 +46,12 @@ namespace DCL.ChatArea
 
             // Subscribe to visibility state changes
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
+            CentralizedChatClickDetectionService.Instance.Resume();
         }
 
         protected override void OnViewShow()
         {
+            CentralizedChatClickDetectionService.Instance.Resume();
             chatSharedAreaEventBus.RaiseViewShowEvent();
         }
 
@@ -75,6 +78,7 @@ namespace DCL.ChatArea
             // 2. Another panel (like Friends) that was obscuring the chat is closed.
             if (State == ControllerState.ViewHidden)
             {
+                CentralizedChatClickDetectionService.Instance.Pause();
                 // If the entire controller view is not even active, we can't proceed.
                 await UniTask.CompletedTask;
                 return;
@@ -84,7 +88,7 @@ namespace DCL.ChatArea
             // If it was minimized, transition to Default or Focused based on the input.
             // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
             chatSharedAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
-
+            CentralizedChatClickDetectionService.Instance.Resume();
 
             ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
@@ -92,6 +96,7 @@ namespace DCL.ChatArea
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
+            CentralizedChatClickDetectionService.Instance.Pause();
             chatSharedAreaEventBus.RaiseHiddenInSharedSpaceEvent();
             await UniTask.CompletedTask;
         }
@@ -100,6 +105,7 @@ namespace DCL.ChatArea
         {
             ViewShowingComplete?.Invoke(this);
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+            CentralizedChatClickDetectionService.Instance.Pause();
         }
 
         private void HandlePointerEnter()
@@ -149,6 +155,10 @@ namespace DCL.ChatArea
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)
         {
             IsVisibleInSharedSpace = evt.IsVisibleInSharedSpace;
+            if (IsVisibleInSharedSpace)
+                CentralizedChatClickDetectionService.Instance.Resume();
+            else
+                CentralizedChatClickDetectionService.Instance.Pause();
         }
     }
 }
