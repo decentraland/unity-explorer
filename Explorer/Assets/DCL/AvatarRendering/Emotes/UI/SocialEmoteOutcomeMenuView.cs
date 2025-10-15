@@ -8,6 +8,9 @@ namespace DCL.SocialEmotes.UI
 {
     public class SocialEmoteOutcomeMenuView : ViewBase, IView
     {
+        [field: SerializeField]
+        public string RandomizedOutcomeText { get; set; } = "Emote Together";
+
         [SerializeField]
         private CanvasGroup mainCanvasGroup;
 
