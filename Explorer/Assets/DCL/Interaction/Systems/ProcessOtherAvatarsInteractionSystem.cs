@@ -164,20 +164,9 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
-
-            if (socialEmoteInteraction is { AreInteracting: false })
-            {
-                // The hovered avatar is playing a social emote, in the starting step
-                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Emote, 0);
-            }
-            else
-            {
-                // A context menu will be available if no social emote interaction is in process
-                contextMenuTask.TrySetResult();
-                contextMenuTask = new UniTaskCompletionSource();
-                menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
-            }
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
         }
     }
 }
