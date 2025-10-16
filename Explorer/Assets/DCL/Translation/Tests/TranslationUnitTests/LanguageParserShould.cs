@@ -7,10 +7,17 @@ namespace DCL.Translation
     public class LanguageCodeParserShould
     {
         [TestCase("zh-Hans", LanguageCode.ZH)]
+        [TestCase("zh-hans", LanguageCode.ZH)]
+        [TestCase("ZH-hans", LanguageCode.ZH)]
+        [TestCase("ZH-hans", LanguageCode.ZH)]
         [TestCase("ZH-Hant", LanguageCode.ZH)]
+        [TestCase("ZH-hant", LanguageCode.ZH)]
+        [TestCase("zh-Hant", LanguageCode.ZH)]
+        [TestCase("zh-hant", LanguageCode.ZH)]
         [TestCase("zh-CN",   LanguageCode.ZH)]
         [TestCase("zh_TW",   LanguageCode.ZH)]
         [TestCase("pt-BR",   LanguageCode.PT)]
+        [TestCase("pt-br",   LanguageCode.PT)]
         [TestCase("PT-pt",   LanguageCode.PT)]
         [TestCase("es-419",  LanguageCode.ES)]
         [TestCase("en-US",   LanguageCode.EN)]
