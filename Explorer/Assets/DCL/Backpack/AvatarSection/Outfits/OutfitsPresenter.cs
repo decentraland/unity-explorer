@@ -40,8 +40,6 @@ namespace DCL.Backpack
         private readonly SaveOutfitCommand saveOutfitCommand;
         private readonly DeleteOutfitCommand deleteOutfitCommand;
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
-        private readonly CheckOutfitEquippedStateCommand checkOutfitEquippedCommand;
-        private readonly CheckForDuplicateOutfitCommand checkForDuplicateOutfitCommand;
         private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
         private readonly PreviewOutfitCommand previewOutfitCommand;
         
@@ -58,8 +56,6 @@ namespace DCL.Backpack
             SaveOutfitCommand saveOutfitCommand,
             DeleteOutfitCommand deleteOutfitCommand,
             CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand,
-            CheckOutfitEquippedStateCommand checkOutfitEquippedCommand,
-            CheckForDuplicateOutfitCommand checkForDuplicateOutfitCommand,
             PrewarmWearablesCacheCommand prewarmWearablesCacheCommand,
             PreviewOutfitCommand previewOutfitCommand,
             IAvatarScreenshotService screenshotService,
@@ -76,8 +72,6 @@ namespace DCL.Backpack
             this.saveOutfitCommand = saveOutfitCommand;
             this.deleteOutfitCommand = deleteOutfitCommand;
             this.bannerVisibilityCommand = bannerVisibilityCommand;
-            this.checkOutfitEquippedCommand = checkOutfitEquippedCommand;
-            this.checkForDuplicateOutfitCommand = checkForDuplicateOutfitCommand;
             this.prewarmWearablesCacheCommand = prewarmWearablesCacheCommand;
             this.previewOutfitCommand = previewOutfitCommand;
             this.screenshotService = screenshotService;
@@ -138,9 +132,6 @@ namespace DCL.Backpack
 
                 // Update the UI with the primary data.
                 PopulateAllSlots(outfits);
-
-                // Secondary UI state update.
-                UpdateAllSlotsEquippedStateAsync(ct).Forget();
             }
             catch (OperationCanceledException)
             {
@@ -181,33 +172,6 @@ namespace DCL.Backpack
             await prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrnsToPrewarm, ct);
         }
 
-        private async UniTask UpdateAllSlotsEquippedStateAsync(CancellationToken ct)
-        {
-            if (ct.IsCancellationRequested) return;
-
-            var updateTasks = new List<UniTask>();
-            foreach (var slotPresenter in slotPresenters)
-                updateTasks.Add(UpdateSlotEquippedStateAsync(slotPresenter, ct));
-
-            await UniTask.WhenAll(updateTasks);
-        }
-        
-        
-        private async UniTask UpdateSlotEquippedStateAsync(OutfitSlotPresenter slotPresenter, CancellationToken ct)
-        {
-            var outfitItem = slotPresenter.GetOutfitData();
-            if (outfitItem == null)
-            {
-                slotPresenter.SetEquipped(false);
-                return;
-            }
-
-            bool isEquipped = await checkOutfitEquippedCommand.ExecuteAsync(outfitItem, equippedWearables, ct);
-            if (ct.IsCancellationRequested) return;
-
-            slotPresenter.SetEquipped(isEquipped);
-        }
-
         private void OnSaveOutfitRequested(int slotIndex)
         {
             OnSaveOutfitRequestedAsync(slotIndex, cts.Token).Forget();
@@ -217,17 +181,6 @@ namespace DCL.Backpack
         {
             var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
             if (presenter == null) return;
-
-            var duplicateCheckOutcome = await checkForDuplicateOutfitCommand.ExecuteAsync(
-                equippedWearables,
-                outfitsCollection.GetAll(), ct);
-
-            // If the user aborted the save (either by cancelling the dialog or a duplicate was found), simply stop.
-            if (duplicateCheckOutcome != DuplicateCheckOutcome.NotDuplicate || ct.IsCancellationRequested)
-            {
-                // No need to revert the UI, because we haven't changed it to "Saving..." yet.
-                return;
-            }
             
             presenter.SetSaving();
 
@@ -251,8 +204,6 @@ namespace DCL.Backpack
                 if (cts.Token.IsCancellationRequested) return;
 
                 presenter.SetData(savedItem, loadThumbnail: false);
-
-                //OnEquipOutfitRequested(savedItem);
             }
             catch (Exception e)
             {
@@ -295,8 +246,6 @@ namespace DCL.Backpack
                     outfitsCollection.Remove(slotIndex);
                     
                     presenter.SetEmpty();
-
-                    UpdateAllSlotsEquippedStateAsync(cts.Token).Forget();
                 }
                 else
                 {
@@ -321,8 +270,6 @@ namespace DCL.Backpack
             outfitApplier.Apply(outfitItem.outfit);
             
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
-
-            UpdateAllSlotsEquippedStateAsync(cts.Token).Forget();
         }
 
         private void OnPreviewOutfitRequested(OutfitItem outfitItem)
@@ -370,7 +317,6 @@ namespace DCL.Backpack
         {
             webBrowser.OpenUrl("https://decentraland.org/marketplace/names/claim");
             eventBus.Publish(new OutfitsEvents.ClaimExtraOutfitsEvent());
-
         }
 
         private async UniTask CheckBannerVisibilityAsync(CancellationToken ct)
