@@ -16,8 +16,8 @@ using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading.Common.Components;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using System;
 using DCL.Diagnostics;
+using ECS.StreamableLoading.Common;
 using UnityEngine.TestTools;
 
 namespace ECS.Unity.AvatarShape.Tests
@@ -143,7 +143,7 @@ namespace ECS.Unity.AvatarShape.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
             var sceneContent = Substitute.For<ISceneContent>();
-            const string emoteId = "emote.glb";
+            const string emoteId = "test_emote.glb";
             const string hash = "emote_hash";
 
             sceneContent.TryGetHash(emoteId, out Arg.Any<string>())
@@ -232,7 +232,7 @@ namespace ECS.Unity.AvatarShape.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
             var sceneContent = Substitute.For<ISceneContent>();
-            const string emoteId = "emote.glb";
+            const string emoteId = "test_emote.glb";
             const string hash = "emote_hash";
 
             sceneContent.TryGetHash(emoteId, out Arg.Any<string>())
@@ -322,7 +322,7 @@ namespace ECS.Unity.AvatarShape.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
             var sceneContent = Substitute.For<ISceneContent>();
-            const string emoteId = "emote.glb";
+            const string emoteId = "test_emote.glb";
 
             sceneContent.TryGetHash(emoteId, out Arg.Any<string>())
                         .Returns(false);
@@ -359,7 +359,7 @@ namespace ECS.Unity.AvatarShape.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
             var sceneContent = Substitute.For<ISceneContent>();
-            const string emoteId = "emote.glb";
+            const string emoteId = "test_emote.glb";
             const string hash = "emote_hash";
 
             sceneContent.TryGetHash(emoteId, out Arg.Any<string>())
@@ -382,11 +382,62 @@ namespace ECS.Unity.AvatarShape.Tests
             var sdkAvatarShapeComponent = world.Get<SDKAvatarShapeComponent>(entity);
             Assert.IsTrue(sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue);
             var promise = sdkAvatarShapeComponent.LocalSceneEmotePromise.Value;
-            LogAssert.Expect(LogType.Exception, "Exception: Emote loading failed");
-            var result = new StreamableLoadingResult<EmotesResolution>(ReportData.UNSPECIFIED, new Exception("Emote loading failed"));
+            var exception = new StreamableLoadingException(LogType.Exception, "Emote loading failed");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
+            var result = new StreamableLoadingResult<EmotesResolution>(ReportData.UNSPECIFIED, exception);
             globalWorld.Add(promise.Entity, result);
 
             system.Update(0);
+
+            // ASSERT
+            // Emote is not triggered
+            sdkAvatarShapeComponent = world.Get<SDKAvatarShapeComponent>(entity);
+            Assert.IsFalse(sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue);
+
+            var globalEntity = sdkAvatarShapeComponent.GlobalWorldEntity;
+            Assert.IsFalse(globalWorld.Has<CharacterEmoteIntent>(globalEntity));
+        }
+
+        [Test]
+        public void NotTriggerSceneEmoteIfEmoteNamingIsInvalid()
+        {
+            // ARRANGE
+            // System
+            IComponentPool<Transform> pool = Substitute.For<IComponentPool<Transform>>();
+            pool.Get().Returns(new GameObject().transform);
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
+            var sceneContent = Substitute.For<ISceneContent>();
+            const string emoteId = "test.glb"; // invalid naming, it must end in "_emote.glb"
+            const string hash = "emote_hash";
+
+            sceneContent.TryGetHash(emoteId, out Arg.Any<string>())
+                        .Returns(x =>
+                         {
+                             x[1] = hash;
+                             return true;
+                         });
+
+            sceneData.SceneContent.Returns(sceneContent);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, true);
+
+            // Avatar Shape
+            var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString() };
+            world.Add(entity, pbAvatarShapeComponent);
+            system.Update(0);
+
+            var sdkAvatarShapeComponent = world.Get<SDKAvatarShapeComponent>(entity);
+            Assert.IsFalse(sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue);
+
+            // ACT
+            // Update component to trigger emote
+            var shape = world.Get<PBAvatarShape>(entity);
+            shape.ExpressionTriggerId = emoteId;
+            shape.IsDirty = true;
+            world.Set(entity, shape);
+            system.Update(0);
+
+            LogAssert.Expect(LogType.Error, $"'{emoteId}' scene emote cannot be played. It must follow the naming convention ending in '_emote.glb'");
 
             // ASSERT
             // Emote is not triggered
@@ -407,9 +458,9 @@ namespace ECS.Unity.AvatarShape.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
             var sceneContent = Substitute.For<ISceneContent>();
-            const string firstEmoteId = "emote1.glb";
+            const string firstEmoteId = "test1_emote.glb";
             const string firstHash = "emote1_hash";
-            const string secondEmoteId = "emote2.glb";
+            const string secondEmoteId = "test2_emote.glb";
             const string secondHash = "emote2_hash";
 
             sceneContent.TryGetHash(firstEmoteId, out Arg.Any<string>())

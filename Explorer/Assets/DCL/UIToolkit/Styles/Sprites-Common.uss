@@ -1,5 +1,6 @@
 /* AUTO GENERATED */
 :root {
+    --sprite-common__background-gradient-mention: url('/Assets/Textures/UI/Common/background-gradient-mention.png');
     --sprite-common__icon-checkmark-thin: url('/Assets/Textures/UI/Common/icon-checkmark-thin.png');
     --sprite-common__icon-close: url('/Assets/Textures/UI/Common/icon-close.png');
     --sprite-common__icon-connection: url('/Assets/Textures/UI/Common/icon-connection.png');
@@ -9,6 +10,14 @@
     --sprite-common__icon-pause: url('/Assets/Textures/UI/Common/icon-pause.png');
     --sprite-common__icon-play: url('/Assets/Textures/UI/Common/icon-play.png');
     --sprite-common__icon-search: url('/Assets/Textures/UI/Common/icon-search.png');
+    --sprite-common__icon-verified: url('/Assets/Textures/UI/Common/icon-verified.png');
+    --sprite-common__label-dcl-official: url('/Assets/Textures/UI/Common/label-dcl-official.png');
+}
+
+.sprite-common__background-gradient-mention {
+    background-image: var(--sprite-common__background-gradient-mention);
+    width: 32px;
+    height: 32px;
 }
 
 .sprite-common__icon-checkmark-thin {
@@ -62,6 +71,18 @@
 .sprite-common__icon-search {
     background-image: var(--sprite-common__icon-search);
     width: 20.5px;
+    height: 19.5px;
+}
+
+.sprite-common__icon-verified {
+    background-image: var(--sprite-common__icon-verified);
+    width: 14px;
+    height: 14px;
+}
+
+.sprite-common__label-dcl-official {
+    background-image: var(--sprite-common__label-dcl-official);
+    width: 117px;
     height: 19.5px;
 }
 

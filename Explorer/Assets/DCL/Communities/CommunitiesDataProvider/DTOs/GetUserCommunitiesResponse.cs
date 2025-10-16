@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -24,6 +25,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+            [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
             public string inviteOrRequestId;
@@ -40,7 +42,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 CommunityPrivacy privacy,
                 CommunityMemberRole role,
                 string ownerAddress,
-                int membersCount)
+                int membersCount,
+                GetCommunityResponse.VoiceChatStatus voiceChatStatus)
             {
                 this.id = id;
                 this.thumbnails = thumbnails;
@@ -50,6 +53,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 this.role = role;
                 this.ownerAddress = ownerAddress;
                 this.membersCount = membersCount;
+                this.voiceChatStatus = voiceChatStatus;
             }
 
             public void SetAsJoined(bool isJoined)

@@ -22,67 +22,74 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private const string END_COMMUNITY_STREAM_TEXT_FORMAT = "Are you sure you want to end {0}'s live voice stream?";
         private const string END_COMMUNITY_STREAM_CONFIRM_TEXT = "YES";
         private const string END_COMMUNITY_STREAM_CANCEL_TEXT = "NO";
+        private const string DEFAULT_NAME = "[Missing Name]";
 
-        public event Action EndStreamButtonCLicked;
+        private static readonly Vector2 RAISE_HAND_TOOLTIP_COLLAPSED_POSITION = new Vector2(199, -23);
+        private static readonly Vector2 RAISE_HAND_TOOLTIP_NORMAL_POSITION = new Vector2(199, -66);
 
-        [field: SerializeField]
-        public TMP_Text CommunityName { get; private set; }
-
-        [field: SerializeField]
-        public Button CommunityButton { get; private set; }
+        public event Action? EndStreamButtonCLicked;
 
         [field: SerializeField]
-        public Sprite DefaultCommunitySprite { get; private set; }
+        public TMP_Text CommunityName { get; private set; } = null!;
 
         [field: SerializeField]
-        public ImageView CommunityThumbnail { get; private set; }
+        public Button CommunityButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text ParticipantCount { get; private set; }
+        public Sprite DefaultCommunitySprite { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text SpeakersCount { get; private set; }
+        public ImageView CommunityThumbnail { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform SpeakersParent { get; private set; }
+        public TMP_Text ParticipantCount { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ConnectingPanel { get; private set; }
+        public TMP_Text SpeakersCount { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ContentPanel { get; private set; }
+        public RectTransform SpeakersParent { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject FooterPanel { get; private set; }
-
-        [field: FormerlySerializedAs("<InCallButtonsView>k__BackingField")]
-        [field: FormerlySerializedAs("<InCallFooterView>k__BackingField")]
-        [field: SerializeField]
-        public CommunityVoiceChatInCallButtonsView ExpandedPanelInCallButtonsView { get; private set; }
+        public GameObject ConnectingPanel { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject RaiseHandTooltip { get; private set; }
+        public GameObject ContentPanel { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text RaiseHandTooltipText { get; private set; }
+        public GameObject FooterPanel { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button EndStreamButton { get; private set; }
+        public CommunityVoiceChatInCallButtonsView ExpandedPanelInCallButtonsView { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button OpenListenersSectionButton  { get; private set; }
+        public RectTransform RaiseHandTooltip { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject CollapseButtonImage  { get; private set; }
+        public TMP_Text RaiseHandTooltipText { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject Separator  { get; private set; }
+        public Button EndStreamButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ExpandButtonImage  { get; private set; }
+        public Button OpenListenersSectionButton  { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CollapseButton  { get; private set; }
+        public GameObject CollapseButtonImage  { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject Separator  { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject ExpandButtonImage  { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button CollapseButton  { get; private set; } = null!;
+        [field: SerializeField]
+        public GameObject RaisedHandTooltip  { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text RaisedHandTooltipText  { get; private set; } = null!;
 
         [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
         [field: SerializeField]
@@ -91,8 +98,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] public CommunityVoiceChatInCallButtonsView CollapsedPanelInCallButtonsView { get; private set; } = null!;
         [field: SerializeField] public GameObject CollapsedPanelRightLayoutContainer { get; private set; } = null!;
         [field: SerializeField] public GameObject ExpandedPanelRightLayoutContainer { get; private set; } = null!;
+        [field: SerializeField] public Image MaskImage { get; private set; } = null!;
+        [field: SerializeField] public ScrollRect ScrollRect { get; private set; } = null!;
+        [field: SerializeField] public RectMask2D RectMask2D { get; private set; } = null!;
 
         [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig RaiseHandAudio { get; private set; } = null!;
 
         private CancellationTokenSource? endStreamButtonConfirmationDialogCts;
 
@@ -120,6 +131,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             });
         }
 
+        public void ConfigureRaisedHandTooltip(int raisedHandCount)
+        {
+            RaisedHandTooltipText.text = $"{raisedHandCount}";
+            RaisedHandTooltip.SetActive(raisedHandCount >= 1);
+        }
+
         public void SetCommunityName(string communityName)
         {
             CommunityName.text = communityName;
@@ -130,12 +147,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ParticipantCount.text = $"{participantCount}";
         }
 
-        public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string playerName, CancellationToken ct)
+        public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string? playerName, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(playerName)) playerName = DEFAULT_NAME;
+
             RaiseHandTooltipText.text = string.Format(TOOLTIP_CONTENT, playerName);
-            RaiseHandTooltip.SetActive(true);
+            RaiseHandTooltip.gameObject.SetActive(true);
             await UniTask.Delay(5000, cancellationToken: ct);
-            RaiseHandTooltip.SetActive(false);
+            RaiseHandTooltip.gameObject.SetActive(false);
         }
 
         public void SetCollapsedState(bool isCollapsed)
@@ -148,11 +167,24 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             FooterPanel.SetActive(!isCollapsed);
             OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
             Separator.SetActive(!isCollapsed);
+            RaiseHandTooltip.anchoredPosition = isCollapsed ? RAISE_HAND_TOOLTIP_COLLAPSED_POSITION : RAISE_HAND_TOOLTIP_NORMAL_POSITION;
         }
 
-        public void SetHiddenButtonsState(bool isHidden)
+        public void SetButtonsVisibility(bool isVisible, VoiceChatPanelSize size)
         {
-            FooterPanel.SetActive(!isHidden);
+            bool showExpanded = isVisible && size is VoiceChatPanelSize.EXPANDED;
+            bool showCollapsed = isVisible && size is VoiceChatPanelSize.COLLAPSED;
+
+            FooterPanel.SetActive(showExpanded);
+            ExpandedPanelRightLayoutContainer.SetActive(showExpanded);
+            CollapsedPanelRightLayoutContainer.SetActive(showCollapsed);
+        }
+
+        public void SetScrollAndMasksVisibility(bool isVisible)
+        {
+            ScrollRect.vertical = isVisible;
+            MaskImage.enabled = isVisible;
+            RectMask2D.enabled = isVisible;
         }
     }
 }

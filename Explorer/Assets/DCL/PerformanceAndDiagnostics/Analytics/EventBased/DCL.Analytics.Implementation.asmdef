@@ -29,7 +29,11 @@
         "GUID:45fc0f02fe4e57c4a93a421d8f6f53df",
         "GUID:543b8f091a5947a3880b7f2bca2358bd",
         "GUID:f3634757d00dab2429c6c11e69404e97",
-        "GUID:8322ea9340a544c59ddc56d4793eac74"
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:9887bf5401cdc9140916d3edbea10b69",
+        "GUID:5556c2cd8a339d54ba194f39bbd30d73"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -38,7 +42,8 @@
     "precompiledReferences": [
         "Segment.Analytics.CSharp.dll",
         "Serialization.NET.dll",
-        "Coroutine.NET.dll"
+        "Coroutine.NET.dll",
+        "Sentry.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

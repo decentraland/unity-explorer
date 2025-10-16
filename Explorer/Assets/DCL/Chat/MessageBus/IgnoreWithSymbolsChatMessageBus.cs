@@ -35,10 +35,10 @@ namespace DCL.Chat.MessageBus
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
-        public void Send(ChatChannel channel, string message, string origin, string topic)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
         {
             if (Valid(message))
-                this.origin.Send(channel, message, origin, topic);
+                this.origin.Send(channel, message, origin, timestamp);
             else
                 MessageAdded?.Invoke(channel.Id,
                     channel.ChannelType,
