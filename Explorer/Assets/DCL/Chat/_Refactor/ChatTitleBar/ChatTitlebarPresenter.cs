@@ -13,7 +13,6 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.EventBus;
 using DCL.Communities;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.UI;

@@ -936,8 +936,7 @@ namespace Global.Dynamic
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
-                        debugBuilder,
-                        bootstrapContainer.DecentralandUrlsSource)
+                        debugBuilder)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

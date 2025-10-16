@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Communities;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using Utility;
 

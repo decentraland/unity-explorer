@@ -5,7 +5,6 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;

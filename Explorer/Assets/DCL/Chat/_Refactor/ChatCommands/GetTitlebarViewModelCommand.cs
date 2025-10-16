@@ -8,7 +8,6 @@ using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using DCL.Chat.ChatServices;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;

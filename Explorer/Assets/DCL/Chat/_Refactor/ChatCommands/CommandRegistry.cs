@@ -14,7 +14,6 @@ using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.VoiceChat;
 using DCL.Clipboard;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Web3.Identities;
