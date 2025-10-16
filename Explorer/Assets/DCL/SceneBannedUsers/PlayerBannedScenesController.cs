@@ -14,6 +14,8 @@ namespace DCL.SceneBannedUsers
     /// </summary>
     public class PlayerBannedScenesController
     {
+        private const string RESTRICTED_ACCESS_NOTIFICATION_MESSAGE = "Scene access restricted: You will not be visible to\nothers in this scene or be able to participate in the\nNearby chat.";
+
         private readonly IRoomHub roomHub;
         private readonly ECSBannedScene bannedSceneController;
         private readonly ILoadingStatus loadingStatus;
@@ -63,7 +65,7 @@ namespace DCL.SceneBannedUsers
                 await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
 
                 playerIsCurrentlyBanned = await bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct);
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("Scene access restricted: You will not be visible to others in this scene or be able to participate in the Nearby chat."));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(RESTRICTED_ACCESS_NOTIFICATION_MESSAGE));
             }
         }
 
