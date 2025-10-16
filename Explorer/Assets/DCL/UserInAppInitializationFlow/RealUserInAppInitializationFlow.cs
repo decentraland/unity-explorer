@@ -13,15 +13,14 @@ using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
-using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
 using Utility;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -146,16 +145,19 @@ namespace DCL.UserInAppInitializationFlow
                     ? reloginOps
                     : initOps;
 
-                //Set initial position and start async livekit connection
-                characterExposedTransform.Position.Value
-                    = characterObject.Controller.transform.position
-                        = startParcel.Peek().ParcelToPositionFlat();
-                UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
-
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            await checkOnboardingStartupOperation.ExecuteAsync(ct);
+
+                            //Set initial position and start async livekit connection
+                            characterExposedTransform.Position.Value
+                                = characterObject.Controller.transform.position
+                                    = startParcel.Peek().ParcelToPositionFlat();
+
+                            UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+
                             //Create a child report to be able to hold the parallel livekit operation
                             AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
                             EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);

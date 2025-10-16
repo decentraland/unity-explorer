@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Systems;
@@ -10,7 +9,6 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;

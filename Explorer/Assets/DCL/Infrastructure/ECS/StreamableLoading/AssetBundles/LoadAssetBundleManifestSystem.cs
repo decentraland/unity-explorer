@@ -5,7 +5,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Platforms;
+using DCL.Utility;
 using DCL.WebRequests;
+using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -18,7 +20,7 @@ using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
     {

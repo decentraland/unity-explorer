@@ -1,22 +1,24 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuToggleWithCheckView : GenericContextMenuComponentBase
     {
-        [SerializeField] private Toggle toggleComponent;
-        [SerializeField] private TMP_Text textComponent;
+        [SerializeField] protected Toggle toggleComponent;
+        [SerializeField] protected TMP_Text textComponent;
 
         public override void UnregisterListeners() =>
             toggleComponent.onValueChanged.RemoveAllListeners();
 
-        private void RegisterListener(Action<bool> listener) =>
+        protected void RegisterListener(Action<bool> listener)
+        {
             toggleComponent.onValueChanged.AddListener(new UnityAction<bool>(listener));
+        }
 
         public void Configure(ToggleWithCheckContextMenuControlSettings settings, bool initialValue)
         {

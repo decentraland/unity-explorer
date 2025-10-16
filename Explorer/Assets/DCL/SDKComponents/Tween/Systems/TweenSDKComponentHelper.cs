@@ -7,7 +7,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using System.Runtime.CompilerServices;
 
-namespace DCL.SDKComponents.Tween.Helpers
+namespace DCL.SDKComponents.Tween
 {
     public static class TweenSDKComponentHelper
     {
@@ -27,7 +27,6 @@ namespace DCL.SDKComponents.Tween.Helpers
             if (shouldUpdateTransform)
             {
                 sdkTweenComponent.CustomTweener.UpdateTransform(transformComponent.Transform, sdkTweenComponent.TweenMode);
-
                 transformComponent.UpdateCache();
             }
             else

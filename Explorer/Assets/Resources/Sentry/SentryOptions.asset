@@ -19,9 +19,9 @@ MonoBehaviour:
   <DebounceTimeLog>k__BackingField: 1000
   <DebounceTimeWarning>k__BackingField: 1000
   <DebounceTimeError>k__BackingField: 1000
-  <TracesSampleRate>k__BackingField: 0.00019999999494757503
-  <AutoStartupTraces>k__BackingField: 1
-  <AutoSceneLoadTraces>k__BackingField: 1
+  <TracesSampleRate>k__BackingField: 1
+  <AutoStartupTraces>k__BackingField: 0
+  <AutoSceneLoadTraces>k__BackingField: 0
   <AutoAwakeTraces>k__BackingField: 0
   <AutoSessionTracking>k__BackingField: 1
   <AutoSessionTrackingInterval>k__BackingField: 30000

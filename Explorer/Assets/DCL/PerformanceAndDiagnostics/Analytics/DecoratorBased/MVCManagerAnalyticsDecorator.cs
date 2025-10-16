@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
+using DCL.ChatArea;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera.PhotoDetail;
@@ -34,7 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
-                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
+                { typeof(ChatMainSharedAreaController), CreateAnalytics<ChatMainSharedAreaController>(c => new ChatEventsAnalytics(analytics, c)) },
                 { typeof(PhotoDetailController), CreateAnalytics<PhotoDetailController>(c => new PhotoDetailAnalytics(analytics, c)) },
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },

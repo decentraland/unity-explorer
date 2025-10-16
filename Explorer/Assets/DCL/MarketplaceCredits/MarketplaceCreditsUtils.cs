@@ -1,5 +1,4 @@
 using DCL.FeatureFlags;
-using DCL.MarketplaceCreditsAPIService;
 using System;
 using System.Globalization;
 using System.Threading;
@@ -90,9 +89,9 @@ namespace DCL.MarketplaceCredits
         public static string FormatSecondsToMonthDays(uint timeLeftInSeconds)
         {
             DateTime startDate = DateTime.Now;
-            
+
             DateTime targetDate = startDate.AddSeconds(timeLeftInSeconds);
-            
+
             return targetDate.ToString("MMMM d", CultureInfo.InvariantCulture);
         }
 
@@ -191,7 +190,7 @@ namespace DCL.MarketplaceCredits
             if (!includeMarketplaceCredits)
                 return false;
 
-            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
+            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
 
             return !string.IsNullOrEmpty(userId) && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase));
         }

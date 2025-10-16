@@ -36,12 +36,19 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Communities;
+using DCL.ChatArea;
+using DCL.Clipboard;
 using DCL.Diagnostics;
-using ECS.SceneLifeCycle.Realm;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Translation;
+using DCL.Translation.Processors;
+using DCL.Translation.Service;
+using DCL.WebRequests;
+using System.Collections.Generic;
+using DCL.ChatArea;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -50,7 +57,9 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
+        private readonly ClipboardManager clipboardManager;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IEventBus eventBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private readonly IInputBlock inputBlock;
@@ -66,36 +75,36 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ChatMessageFactory chatMessageFactory;
-        private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
         private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
-        private readonly bool isCallEnabled;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
-        private ChatMainController chatMainController;
-        private PrivateConversationUserStateService? chatUserStateService;
-        private ChatHistoryService? chatBusListenerService;
-        private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
-        private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
-        private CommandRegistry commandRegistry;
+        private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private readonly ITranslationSettings translationSettings;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        private ChatMainSharedAreaController? chatSharedAreaController;
+        private CommandRegistry? commandRegistry;
+        private ChatHistoryStorage? chatStorage;
 
         public ChatPlugin(
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
             IChatMessagesBus chatMessagesBus,
+            IEventBus eventBus,
             IChatHistory chatHistory,
+            ClipboardManager clipboardManager,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             MainUIView mainUIView,
@@ -119,17 +128,20 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled,
-            IRealmNavigator realmNavigator,
-            Transform chatViewRectTransform)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            Transform chatViewRectTransform,
+            ITranslationSettings translationSettings,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ChatSharedAreaEventBus chatSharedAreaEventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
             this.chatMessagesBus = chatMessagesBus;
+            this.eventBus = eventBus;
             this.chatHistory = chatHistory;
+            this.clipboardManager = clipboardManager;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.mainUIView = mainUIView;
@@ -145,18 +157,21 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.socialServiceProxy = socialServiceProxy; //
+            this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsServiceProxy = friendsServiceProxy;
-            communityDataProvider = communitiesDataProvider;
-            this.communityDataService = communityDataService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.communitiesEventBus = communitiesEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
-            this.isCallEnabled = isCallEnabled;
+            this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.chatSharedAreaEventBus = chatSharedAreaEventBus;
+            this.translationSettings = translationSettings;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -164,11 +179,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             chatStorage?.Dispose();
-            chatBusListenerService?.Dispose();
-            chatUserStateService?.Dispose();
-            communityUserStateService?.Dispose();
             pluginScope.Dispose();
-
             pluginCts.Cancel();
             pluginCts.Dispose();
         }
@@ -186,11 +197,38 @@ namespace DCL.PluginSystem.Global
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
-                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
-            var viewInstance = mainUIView.ChatView2;
+            var translationPolicy = new ConversationTranslationPolicy(translationSettings);
+
+            var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource, translationSettings);
+
+            var translationCache = new InMemoryTranslationCache(chatConfig.TranslationCacheCapacity, onEvicted: (key, _) =>
+            {
+                ReportHub.Log(ReportCategory.TRANSLATE, $"Cache evicted {key.MessageId}:{key.Lang}");
+            });
+
+            pluginScope.Add(translationCache);
+
+            var translationMemory = new InMemoryTranslationMemory(chatConfig.TranslationMemoryCapacity, onEvicted: (messageId, _) =>
+            {
+                ReportHub.Log(ReportCategory.TRANSLATE, $"Memory evicted {messageId}");
+            });
+
+            pluginScope.Add(translationMemory);
+
+            var messageProcessor = new ChatMessageProcessor(translationProvider);
+
+            var translationService = new TranslationService(translationProvider,
+                messageProcessor,
+                translationCache,
+                translationPolicy,
+                translationSettings,
+                eventBus,
+                translationMemory);
+
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -202,7 +240,7 @@ namespace DCL.PluginSystem.Global
 
             var currentChannelService = new CurrentChannelService();
 
-            chatUserStateService = new PrivateConversationUserStateService(
+            var chatUserStateService = new PrivateConversationUserStateService(
                 currentChannelService,
                 eventBus,
                 userBlockingCacheProxy,
@@ -212,26 +250,35 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 roomHub.ChatRoom());
 
+            pluginScope.Add(chatUserStateService);
+
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
 
-            // Ignore buttons that would lead to the conflicting state
-            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform,
-                chatViewRectTransform);
+            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
 
-            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
-                chatClickDetectionService);
+            var chatClickDetectionService = new ChatClickDetectionHandler((RectTransform)chatPanelView.transform,
+                    chatPanelView.TitlebarView.CloseChatButton.transform,
+                    chatPanelView.TitlebarView.CloseMemberListButton.transform,
+                    chatPanelView.TitlebarView.OpenMemberListButton.transform,
+                    chatPanelView.TitlebarView.BackFromMemberList.transform,
+                    chatPanelView.InputView.inputField.transform,
+                    chatViewRectTransform,
+                    mainUIView.SidebarView.unreadMessagesButton.transform);
+
+            pluginScope.Add(chatClickDetectionService);
+
+            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            communityUserStateService = new CommunityUserStateService(communityDataProvider,
+
+            var communityUserStateService = new CommunityUserStateService(
+                communityDataProvider,
                 communitiesEventBus,
                 eventBus,
                 chatHistory,
                 web3IdentityCache);
+
+            pluginScope.Add(communityUserStateService);
 
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,
@@ -260,41 +307,66 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand
-            );
+                getParticipantProfilesCommand,
+                voiceChatOrchestrator,
+                clipboardManager,
+                translationService,
+                translationMemory,
+                translationCache,
+                translationSettings);
 
             pluginScope.Add(commandRegistry);
 
-            chatMainController = new ChatMainController(
+            var chatPanelPresenter = new ChatPanelPresenter(
+                mainUIView.ChatMainView.ChatPanelView,
+                hyperlinkTextFormatter,
+                voiceChatOrchestrator,
+                currentChannelService,
+                communityDataProvider,
+                chatConfig,
+                chatEventBus,
+                chatHistory,
+                communityDataService,
+                chatMemberService,
+                profileRepositoryWrapper,
+                commandRegistry,
+                chatInputBlockingService,
+                eventBus,
+                chatContextMenuService,
+                chatClickDetectionService,
+                chatSharedAreaEventBus,
+                translationSettings,
+                translationMemory,
+                translationCache
+            );
+
+            pluginScope.Add(chatPanelPresenter);
+
+            chatSharedAreaController = new ChatMainSharedAreaController(
                 () =>
                 {
-                    ChatMainView? view = mainUIView.ChatView2;
+                    ChatMainSharedAreaView? view = mainUIView.ChatMainView;
                     view.gameObject.SetActive(false);
                     return view;
                 },
-                chatConfig,
-                eventBus,
                 mvcManager,
-                chatMessagesBus,
-                chatEventBus,
-                currentChannelService,
-                chatInputBlockingService,
-                commandRegistry,
-                chatHistory,
-                profileRepositoryWrapper,
-                chatMemberService,
-                chatContextMenuService,
-                communityDataService,
-                chatClickDetectionService
+                chatSharedAreaEventBus,
+                commandRegistry
             );
 
-            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
+            var chatBusListenerService = new ChatHistoryService(chatMessagesBus,
+                chatHistory,
+                hyperlinkTextFormatter,
+                chatConfig,
+                settings.ChatSettingsAsset,
+                translationService);
 
-            pluginScope.Add(chatMainController);
+            pluginScope.Add(chatSharedAreaController);
             pluginScope.Add(chatWorldBubbleService);
+            pluginScope.Add(chatBusListenerService);
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
-            mvcManager.RegisterController(chatMainController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatSharedAreaController);
+            mvcManager.RegisterController(chatSharedAreaController);
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
@@ -306,16 +378,16 @@ namespace DCL.PluginSystem.Global
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
             if (status == LoadingStatus.LoadingStage.Completed)
-                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
+                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, false)).Forget();
         }
 
         private void OnIdentityCleared()
         {
             ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityCleared");
-            commandRegistry.ResetChat.Execute();
+            commandRegistry?.ResetChat.Execute();
 
-            if (chatMainController.IsVisibleInSharedSpace)
-                chatMainController.HideViewAsync(CancellationToken.None).Forget();
+            if (chatSharedAreaController is { IsVisibleInSharedSpace: true })
+                chatSharedAreaController.HideViewAsync(CancellationToken.None).Forget();
         }
 
         private void OnIdentityChanged()
@@ -335,6 +407,8 @@ namespace DCL.PluginSystem.Global
                 chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.EnsuredIdentity().Address);
 
                 // STEP 2: RESTART BACKGROUND SERVICES
+                if (commandRegistry == null) return;
+
                 await commandRegistry.RestartChatServices.ExecuteAsync(ct);
                 ct.ThrowIfCancellationRequested();
 
@@ -346,10 +420,7 @@ namespace DCL.PluginSystem.Global
                 await commandRegistry.InitializeChat.ExecuteAsync(ct);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
-            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
         }
     }
 
@@ -357,6 +428,7 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
+        [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; }
 
         [Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }

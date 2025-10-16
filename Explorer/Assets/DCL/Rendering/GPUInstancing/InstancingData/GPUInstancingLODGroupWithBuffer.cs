@@ -7,15 +7,29 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     public class GPUInstancingLODGroupWithBuffer : IEquatable<GPUInstancingLODGroupWithBuffer>
     {
         public string Name;
-        public GPUInstancingLODGroup LODGroup;
+        public CombinedLODGroupData combinedLODGroupData;
         public List<PerInstanceBuffer> InstancesBuffer;
 
-        public GPUInstancingLODGroupWithBuffer() { }
+        public LODGroupData LODGroupData;
+        public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
-        public GPUInstancingLODGroupWithBuffer(GPUInstancingLODGroup lodGroup, List<PerInstanceBuffer> instances)
+        public GPUInstancingLODGroupWithBuffer(CombinedLODGroupData combinedLODGroupData, List<PerInstanceBuffer> instances)
         {
-            Name = lodGroup.Name;
-            LODGroup = lodGroup;
+            Name = combinedLODGroupData.Name;
+            this.combinedLODGroupData = combinedLODGroupData;
+
+            LODGroupData = combinedLODGroupData.LODGroupData;
+            CombinedLodsRenderers = this.combinedLODGroupData.CombinedLodsRenderers;
+            InstancesBuffer = instances;
+        }
+
+        public GPUInstancingLODGroupWithBuffer(string name, LODGroupData lodGroupData, CombinedLodsRenderer renderer, List<PerInstanceBuffer> instances)
+        {
+            Name = name;
+            combinedLODGroupData = null;
+
+            LODGroupData = lodGroupData;
+            CombinedLodsRenderers = new List<CombinedLodsRenderer> { renderer };
             InstancesBuffer = instances;
         }
 
@@ -23,13 +37,16 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Name == other.Name && Equals(LODGroup, other.LODGroup);
+
+            return Name == other.Name &&
+                   Equals(combinedLODGroupData, other.combinedLODGroupData) &&
+                   LODGroupData.Equals(other.LODGroupData); // for case when both are extracted groups (i.e. combinedLODGroupData == null)
         }
 
         public override bool Equals(object obj) =>
             obj is GPUInstancingLODGroupWithBuffer other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Name, LODGroup);
+            HashCode.Combine(Name, combinedLODGroupData, LODGroupData);
     }
 }

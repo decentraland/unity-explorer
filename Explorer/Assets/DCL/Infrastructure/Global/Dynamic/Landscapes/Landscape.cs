@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -13,7 +14,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace Global.Dynamic.Landscapes
 {
@@ -23,6 +23,8 @@ namespace Global.Dynamic.Landscapes
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
+        public readonly Transform Root;
+        public Action<ITerrain>? TerrainLoaded;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
         {
@@ -30,9 +32,10 @@ namespace Global.Dynamic.Landscapes
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.landscapeEnabled = landscapeEnabled;
+            Root = new GameObject(nameof(Landscape)).transform;
         }
 
-        private ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
+        public ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
@@ -63,17 +66,27 @@ namespace Global.Dynamic.Landscapes
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
             }
 
+            TerrainLoaded?.Invoke(CurrentTerrain);
             return EnumResult<LandscapeError>.SuccessResult();
         }
 
-        public float GetHeight(float x, float z) =>
-            CurrentTerrain.GetHeight(x, z);
+        public float GetHeight(float x, float z)
+        {
+            ITerrain terrain = CurrentTerrain;
 
-        //TODO should it accept isLocal instead of encapsulating it?
-        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal) =>
-            !CurrentTerrain.Contains(parcel)
+            return TerrainGenerator.GetParcelNoiseHeight(x, z, terrain.OccupancyMapData,
+                terrain.OccupancyMapSize, terrain.ParcelSize, terrain.OccupancyFloor,
+                terrain.MaxHeight);
+        }
+
+        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
+        {
+            ITerrain terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
+
+            return terrain.TerrainModel == null || !terrain.TerrainModel.IsInsideBounds(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
+        }
 
         private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
@@ -85,14 +98,14 @@ namespace Global.Dynamic.Landscapes
 
             int parcelsAmount = staticScenesEntityDefinitions.Value.Value.Count;
 
-            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
+            using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
                 foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
                 {
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
 
@@ -108,7 +121,7 @@ namespace Global.Dynamic.Landscapes
             foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
 
-            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
+            using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
                 foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 {
@@ -116,7 +129,7 @@ namespace Global.Dynamic.Landscapes
                         parcels.Add(parcel.ToInt2());
                 }
 
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
     }

@@ -30,7 +30,7 @@ namespace DCL.Chat.ChatServices
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly IEventBus eventBus;
 
-        private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
+        private readonly List<ChatMemberListData> membersBuffer = new ();
 
         private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
 
@@ -56,7 +56,7 @@ namespace DCL.Chat.ChatServices
         ///     Fires with a detailed list of members after an update is triggered.
         ///     This is used to populate the full member list view.
         /// </summary>
-        private Action<IReadOnlyList<ChatMemberListView.MemberData>>? onMemberListUpdated;
+        private Action<IReadOnlyList<ChatMemberListData>>? onMemberListUpdated;
 
         public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
             ObjectProxy<IFriendsService> friendsServiceProxy,
@@ -117,7 +117,7 @@ namespace DCL.Chat.ChatServices
         ///     The polling strategy is optimized based on the current channel type.
         ///     This should be called AFTER the initial list is displayed.
         /// </summary>
-        public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListView.MemberData>> onMemberListUpdated)
+        public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListData>> onMemberListUpdated)
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Starting live member updates...");
 
@@ -285,7 +285,7 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private ChatMemberListView.MemberData CreateMemberDataFromProfile(Profile profile) =>
+        private ChatMemberListData CreateMemberDataFromProfile(Profile profile) =>
             new ()
             {
                 Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,

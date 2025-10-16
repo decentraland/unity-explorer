@@ -1,4 +1,4 @@
-#pragma enable_d3d11_debug_symbols
+//#pragma enable_d3d11_debug_symbols
 
 #include "ScatterFunctions.cginc"
 
@@ -14,8 +14,16 @@ struct PerInst
 cbuffer ConstBuffer : register(b0)
 {
     float4 TerrainBounds;
+    int2 HeightTextureSize;
+    int2 OccupancyTextureSize;
+    int2 TerrainBlendTextureSize;
+    int2 GroundDetailTextureSize;
+    int2 SandDetailTextureSize;
     float TerrainHeight;
-    uint parcelSize;
+    int parcelSize;
+    float fDistanceFieldScale;
+    float nHeightMapSize;
+    float fSplatMapTiling;
     float _MinDistOccupancy;
 }
 
@@ -38,22 +46,21 @@ void ScatterGrass(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, ui
 
     PerInst perInst;
 
-    int2 corner0 = (int2)(visibleParcels[groupId.x] * 16.0f);
-    int2 gridPosition = int2((int)(localId.x % 16), (int)(localId.x / 16));
+    int2 corner0 = (int2)(visibleParcels[groupId.x] * parcelSize);
+    int2 gridPosition = int2((int)(localId.x % parcelSize), (int)(localId.x / parcelSize));
 
     half random_X = hash_int_to_float(corner0 + gridPosition) + gridPosition.x;
     half random_Z = hash_int_to_float(-corner0 + gridPosition) + gridPosition.y;
     float2 worldSpaceCoord = corner0 + float2(random_X, random_Z);
-    float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
-
-    float fDistanceFieldScale = 16;
-    float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture, _MinDistOccupancy);
+    float2 UV_coords = (worldSpaceCoord + (nHeightMapSize/2.0f)) / nHeightMapSize;
+    
+    float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, nHeightMapSize, parcelSize, OccupancyTextureSize.x, HeightMapTexture, OccupancyTexture, _MinDistOccupancy);
     float fScale = 1.0f + hash_int_to_float(corner0 + gridPosition);
     perInst.position = float4(random_X, height, random_Z, fScale);
     
     float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale,  HeightMapTexture, OccupancyTexture, _MinDistOccupancy);
     perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(corner0 + gridPosition) * 2.0f);
-    perInst.colour = SplatmapMix(UV_coords * 8.0f, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture);
+    perInst.colour = SplatmapMix(UV_coords * fSplatMapTiling, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture);
     grassInstances[id.x] = perInst;
 
     InterlockedAdd(drawArgs[1], 1);

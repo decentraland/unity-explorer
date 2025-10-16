@@ -21,6 +21,12 @@ namespace DCL.MarketplaceCredits.Fields
         public TMP_Text GoalTitleText { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text GoalDescriptionText { get; private set; }
+
+        [field: SerializeField]
+        public GameObject GoalDescriptionButton { get; private set; }
+
+        [field: SerializeField]
         public RectTransform ProgressBar { get; private set; }
 
         [field: SerializeField]
@@ -73,6 +79,12 @@ namespace DCL.MarketplaceCredits.Fields
 
         public void SetTitle(string goalTitle) =>
             GoalTitleText.text = goalTitle;
+
+        public void SetDescription(string goalDescription) =>
+            GoalDescriptionText.text = goalDescription;
+
+        public void SetDescriptionButtonActive(bool active) =>
+            GoalDescriptionButton.SetActive(active);
 
         public void SetCredits(string credits) =>
             GoalCreditsValueText.text = credits;

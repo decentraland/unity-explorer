@@ -166,7 +166,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
-    m_Address: CharacterTriggerArea
+    m_Address: SDKEntityTriggerArea
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -210,6 +210,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be91903945b0c44fdb1908049ce868b1
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/ArtWeek.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7939fa59480e654a8537b6fc2f007e3
     m_Address: MediaPlayer
     m_ReadOnly: 0
@@ -217,11 +222,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9870b17ce36346458f07a63c096a16a
     m_Address: FaillingLODCubePivot.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d65049d6f7a244863b39c4dda5ba538e
-    m_Address: NametagsData
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

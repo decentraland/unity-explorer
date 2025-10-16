@@ -1,11 +1,13 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.SDKComponents.Tween.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using DCL.SDKComponents.Tween.Components;
+using TweenCleanUpSystem = DCL.SDKComponents.Tween.TweenCleanUpSystem;
+using TweenLoaderSystem = DCL.SDKComponents.Tween.TweenLoaderSystem;
+using TweenUpdaterSystem = DCL.SDKComponents.Tween.TweenUpdaterSystem;
 
 namespace DCL.PluginSystem.World
 {

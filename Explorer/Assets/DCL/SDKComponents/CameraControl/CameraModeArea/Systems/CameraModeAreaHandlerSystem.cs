@@ -2,7 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
-using DCL.CharacterTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.InWorldCamera;
@@ -57,44 +57,47 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         }
 
         [Query]
-        [None(typeof(CharacterTriggerAreaComponent), typeof(CameraModeAreaComponent))]
+        [None(typeof(SDKEntityTriggerAreaComponent), typeof(CameraModeAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
-            World.Add(entity, new CameraModeAreaComponent(), new CharacterTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true));
+            World.Add(entity,
+                new SDKEntityTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true),
+                new CameraModeAreaComponent()
+            );
         }
 
         [Query]
-        [All(typeof(TransformComponent))]
-        private void UpdateCameraModeArea(Entity entity, ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
+        [All(typeof(TransformComponent), typeof(CameraModeAreaComponent))]
+        private void UpdateCameraModeArea(Entity entity, ref PBCameraModeArea pbCameraModeArea, ref SDKEntityTriggerAreaComponent sdkEntityTriggerAreaComponent)
         {
             if (pbCameraModeArea.IsDirty)
-                characterTriggerAreaComponent.UpdateAreaSize(pbCameraModeArea.Area);
+                sdkEntityTriggerAreaComponent.UpdateAreaSize(pbCameraModeArea.Area);
 
             if (cameraData.CameraMode == CameraMode.SDKCamera) return;
 
-            if (characterTriggerAreaComponent.EnteredAvatarsToBeProcessed.Count > 0)
+            if (sdkEntityTriggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
             {
                 if (!activeAreas.Contains(entity))
                 {
                     OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode);
                     activeAreas.Add(entity);
                 }
-                characterTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+                sdkEntityTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
             }
-            else if (characterTriggerAreaComponent.ExitedAvatarsToBeProcessed.Count > 0)
+            else if (sdkEntityTriggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
             {
                 if (activeAreas.Contains(entity))
                 {
                     OnExitedCameraModeArea();
                     activeAreas.Remove(entity);
                 }
-                characterTriggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+                sdkEntityTriggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
             }
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(CameraModeAreaComponent))]
+        [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea))]
         private void HandleEntityDestruction(Entity entity)
         {
             OnExitedCameraModeArea();
@@ -144,8 +147,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         {
             if (activeAreas.Remove(entity))
                 OnExitedCameraModeArea();
-
-            World.Remove<CameraModeAreaComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)

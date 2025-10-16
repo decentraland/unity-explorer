@@ -2,6 +2,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,6 +12,9 @@ namespace DCL.UI.InputFieldFormatting
 {
     public class HyperlinkTextFormatter : ITextFormatter
     {
+        private const string LEAD = @"(?<!\S)"; // BOS or whitespace
+        private const string TRAIL = @"(?=$|\s|[!?.,])"; // EOS, whitespace, or basic punct
+        
         private const string LINK_OPENING_STYLE = "<#00B2FF><link=";
         private const string LINK_CLOSING_STYLE = "</link></color>";
         private const string OWN_PROFILE_OPENING_STYLE = "<#00B2FF>";
@@ -31,7 +35,10 @@ namespace DCL.UI.InputFieldFormatting
 
         private static readonly string URL_PATTERN = $@"(?<{URL_GROUP_NAME}>(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{{2,}}(\/[^\s]*)?(?=\s|$))";
         private static readonly string SCENE_PATTERN = $@"(?<{SCENE_GROUP_NAME}>(?<=^|\s)(?<{X_COORD_GROUP_NAME}>-?\d{{1,3}}),(?<{Y_COORD_GROUP_NAME}>-?\d{{1,3}})(?=\s|!|\?|\.|,|$))";
-        private static readonly string WORLD_PATTERN = $@"(?<{WORLD_GROUP_NAME}>(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$))";
+
+        private static readonly string WORLD_PATTERN =
+            $@"(?<{WORLD_GROUP_NAME}>{LEAD}[A-Za-z0-9]+\.dcl\.eth{TRAIL})";
+        
         private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{3,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
         private static readonly string RICH_TEXT_PATTERN = $@"(?<{RICHTEXT_GROUP_NAME}><(?!\/?(b|i)(>|\s))[^>]+>)";
 
@@ -70,6 +77,42 @@ namespace DCL.UI.InputFieldFormatting
             ProcessMainStringBuilder();
 
             return mainStringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Extracts matches from the given text based on the recognized elements (URLs, scene coordinates, world names, and usernames).
+        /// The results are stored in the provided list as tuples containing the type of match and the match object.
+        /// </summary>
+        /// <param name="text">The input text to search for matches.</param>
+        /// <param name="matchesResult">
+        /// A list to store the results of the matches. Each match is represented as a tuple containing:
+        /// - <see cref="TextFormatMatchType"/>: The type of the match (e.g., URL, SCENE, WORLD, NAME).
+        /// - <see cref="Match"/>: The actual match object.
+        /// </param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void GetMatches(string text, List<(TextFormatMatchType, Match)> matchesResult)
+        {
+            matchesResult.Clear();
+
+            if (string.IsNullOrEmpty(text)) return;
+
+            var currentMatch = COMBINED_LINK_REGEX.Match(text);
+
+            while (currentMatch.Success)
+            {
+                if (currentMatch.Groups[URL_GROUP_NAME].Success)
+                    matchesResult.Add((TextFormatMatchType.URL, currentMatch));
+                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success && AreCoordsValid(
+                             int.Parse(currentMatch.Groups[X_COORD_GROUP_NAME].Value),
+                             int.Parse(currentMatch.Groups[Y_COORD_GROUP_NAME].Value)))
+                    matchesResult.Add((TextFormatMatchType.SCENE, currentMatch));
+                else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
+                    matchesResult.Add((TextFormatMatchType.WORLD, currentMatch));
+                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success && IsUserNameValid(currentMatch.Groups[USERNAME_NAME_GROUP_NAME].Value))
+                    matchesResult.Add((TextFormatMatchType.NAME, currentMatch));
+
+                currentMatch = currentMatch.NextMatch();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

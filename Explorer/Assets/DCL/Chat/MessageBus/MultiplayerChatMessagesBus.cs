@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Utilities;
+using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
 using System.Threading;
@@ -59,9 +60,9 @@ namespace DCL.Chat.MessageBus
         {
             isCommunitiesIncluded = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
         }
 
         public void Dispose()
@@ -135,12 +136,11 @@ namespace DCL.Chat.MessageBus
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
 
-        public void Send(ChatChannel channel, string message, string origin, string topic)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");
 
-            double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             switch (channel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:

@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -41,7 +42,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.SelectEmoteEvent += OnEmoteSelected;
             backpackEventBus.EmoteSlotSelectEvent += OnEmoteSlotSelected;
             backpackEventBus.UnEquipEmoteEvent += OnEmoteUnEquipped;
-            backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
+            backpackEventBus.FilterEvent += OnFilterEvent;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
             backpackEventBus.DeactivateEvent += OnDeactivate;
@@ -84,7 +85,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.UnEquipEmoteEvent -= OnEmoteUnEquipped;
             backpackEventBus.SelectEmoteEvent -= OnEmoteSelected;
             backpackEventBus.EmoteSlotSelectEvent -= OnEmoteSlotSelected;
-            backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
+            backpackEventBus.FilterEvent -= OnFilterEvent;
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
@@ -92,9 +93,10 @@ namespace DCL.Backpack.CharacterPreview
             emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
-        private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            inputEventBus.OnChangePreviewFocus(categoryEnum);
+            if (categoryEnum is AvatarWearableCategoryEnum c)
+                inputEventBus.OnChangePreviewFocus(c);
         }
 
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
@@ -121,13 +123,13 @@ namespace DCL.Backpack.CharacterPreview
         {
             switch (category)
             {
-                case WearablesConstants.Categories.EYES:
+                case WearableCategories.Categories.EYES:
                     previewAvatarModel.EyesColor = newColor;
                     break;
-                case WearablesConstants.Categories.HAIR:
+                case WearableCategories.Categories.HAIR:
                     previewAvatarModel.HairColor = newColor;
                     break;
-                case WearablesConstants.Categories.BODY_SHAPE:
+                case WearableCategories.Categories.BODY_SHAPE:
                     previewAvatarModel.SkinColor = newColor;
                     break;
             }
@@ -159,6 +161,7 @@ namespace DCL.Backpack.CharacterPreview
             previewAvatarModel.Emotes ??= new HashSet<URN>();
 
             URN urn = emote.GetUrn().Shorten();
+
             if (!previewAvatarModel.Emotes.Add(urn))
                 return;
 

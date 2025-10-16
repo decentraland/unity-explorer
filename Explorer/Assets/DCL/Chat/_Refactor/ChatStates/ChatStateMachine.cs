@@ -8,11 +8,12 @@ namespace DCL.Chat.ChatStates
     public class ChatStateMachine : IDisposable
     {
         private readonly ChatInputBlockingService inputBlocker;
-        private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly ChatClickDetectionHandler chatClickDetectionHandler;
+        private readonly IEventBus eventBus;
         private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
+        private readonly ChatPanelPresenter chatPanelPresenter;
 
-        public ChatMainController MainController { get; }
         public bool IsFocused => fsm.CurrentState is FocusedChatState;
         public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
         public bool IsHidden => fsm.CurrentState is HiddenChatState;
@@ -21,13 +22,14 @@ namespace DCL.Chat.ChatStates
             IEventBus eventBus,
             ChatUIMediator mediator,
             ChatInputBlockingService inputBlocker,
-            ChatClickDetectionService chatClickDetectionService,
-            ChatMainController mainController)
+            ChatClickDetectionHandler chatClickDetectionHandler,
+            ChatPanelPresenter chatPanelPresenter)
         {
             this.inputBlocker = inputBlocker;
-            this.chatClickDetectionService = chatClickDetectionService;
+            this.chatClickDetectionHandler = chatClickDetectionHandler;
+            this.eventBus = eventBus;
 
-            MainController = mainController;
+            this.chatPanelPresenter = chatPanelPresenter;
 
             var context = new ChatStateContext(mediator, inputBlocker);
 
@@ -37,28 +39,37 @@ namespace DCL.Chat.ChatStates
             fsm.AddState(new MembersChatState());
             fsm.AddState(new MinimizedChatState());
             fsm.AddState(new HiddenChatState());
+            fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(HandleToggleMembersEvent));
 
-            chatClickDetectionService.OnClickInside += HandleClickInside;
-            chatClickDetectionService.OnClickOutside += HandleClickOutside;
+            chatClickDetectionHandler.OnClickInside += HandleClickInside;
+            chatClickDetectionHandler.OnClickOutside += HandleClickOutside;
 
-            MainController.PointerEntered += HandlePointerEntered;
-            MainController.PointerExited += HandlePointerExited;
+            this.chatPanelPresenter.PointerEntered += HandlePointerEntered;
+            this.chatPanelPresenter.PointerExited += HandlePointerExited;
         }
 
         public void Dispose()
         {
-            chatClickDetectionService.OnClickInside -= HandleClickInside;
-            chatClickDetectionService.OnClickOutside -= HandleClickOutside;
+            chatClickDetectionHandler.OnClickInside -= HandleClickInside;
+            chatClickDetectionHandler.OnClickOutside -= HandleClickOutside;
 
-            MainController.PointerEntered -= HandlePointerEntered;
-            MainController.PointerExited -= HandlePointerExited;
+            chatPanelPresenter.PointerEntered -= HandlePointerEntered;
+            chatPanelPresenter.PointerExited -= HandlePointerExited;
+
+            fsm.OnStateChanged -= PropagateStateChange;
 
             scope.Dispose();
         }
+
+        private void PropagateStateChange() =>
+            eventBus.Publish(new ChatEvents.ChatStateChangedEvent
+            {
+                CurrentState = fsm.CurrentState
+            });
 
         public void OnViewShow()
         {
@@ -130,7 +141,7 @@ namespace DCL.Chat.ChatStates
         {
             fsm.PopState();
         }
-        
+
         /// <summary>
         /// NOTE: called from the SharedSpaceManager
         /// </summary>

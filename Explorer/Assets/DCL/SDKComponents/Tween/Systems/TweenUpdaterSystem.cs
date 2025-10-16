@@ -2,25 +2,25 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Helpers;
 using DG.Tweening;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
-using System.Collections.Generic;
-using CrdtEcsBridge.Components.Transform;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
+using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
-namespace DCL.SDKComponents.Tween.Systems
+namespace DCL.SDKComponents.Tween
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformSystem))]
@@ -87,12 +87,11 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove) return;
+            if (pbTween.ModeCase is PBTween.ModeOneofCase.TextureMove or PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
             if (sdkTweenComponent.IsDirty)
             {
-                LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
-                SetupTween(ref sdkTweenComponent, in pbTween);
+                SetupTween(ref sdkTweenComponent, in pbTween, transformComponent.Transform);
                 UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent);
             }
             else
@@ -104,15 +103,21 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
-            if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove) return;
+            if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove && pbTween.ModeCase != PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
             if (sdkTweenComponent.IsDirty)
             {
-                SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
+                SetupTween(ref sdkTweenComponent, in pbTween, null, materialComponent);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent,
+                    pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove ? pbTween.TextureMove.MovementType
+                        : pbTween.TextureMoveContinuous.MovementType);
             }
             else
-                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
+            {
+                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent,
+                    pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove ? pbTween.TextureMove.MovementType
+                        : pbTween.TextureMoveContinuous.MovementType);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -125,7 +130,10 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, movementType);
             }
-            else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent); }
+            else if (newState == TweenStateStatus.TsActive)
+            {
+                UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -142,13 +150,12 @@ namespace DCL.SDKComponents.Tween.Systems
                 TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent, ref materialComponent, movementType, isInCurrentScene);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)
+        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween, Transform? transform = null, MaterialComponent? materialComponent = null)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
             float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-            SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying);
+            SetupTweener(ref sdkTweenComponent, in pbTween, durationInSeconds, isPlaying, transform, materialComponent);
 
             if (isPlaying)
             {
@@ -168,7 +175,6 @@ namespace DCL.SDKComponents.Tween.Systems
         private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
-
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
@@ -194,30 +200,22 @@ namespace DCL.SDKComponents.Tween.Systems
             TweenSDKComponentHelper.WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying)
+        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, in PBTween tweenModel, float durationInSeconds, bool isPlaying, Transform? transform, MaterialComponent? materialComponent)
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
-            Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
+            Ease ease = IsTweenContinuous(tweenModel) ? Linear : EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
-            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds);
-            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void LegacySetupSupport(SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform,
-            ref TransformComponent transformComponent, CRDTEntity entity, bool isInCurrentScene)
-        {
-            //NOTE: Left this per legacy reasons, I'm not sure if this can happen in new renderer
-            // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-            if (sdkTweenComponent.IsActive())
+            Vector2? textureStart = null;
+            if (tweenModel.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous)
             {
-                sdkTweenComponent.Rewind();
-                TweenSDKComponentHelper.UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
-                TweenSDKComponentHelper.WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, entity);
+                textureStart = materialComponent.HasValue && materialComponent.Value.Result ?
+                        materialComponent.Value.Result!.mainTextureOffset : Vector2.zero;
             }
+
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform, textureStart);
+            sdkTweenComponent.CustomTweener.DoTween(ease, Mathf.Clamp(tweenModel.CurrentTime, 0f, 1f) * durationInSeconds, isPlaying);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -235,6 +233,21 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (pbTween.IsDirty)
                 sdkTweenComponent.IsDirty = true;
+
+            // If duration is finite and we've reached the end of the timeline, kill the continuous tween
+            if (IsTweenContinuous(pbTween) && TweenSurpassedDuration(pbTween, sdkTweenComponent))
+                sdkTweenComponent.CustomTweener.Kill(true);
         }
+
+        private static bool IsTweenContinuous(in PBTween pbTween) =>
+            pbTween.ModeCase == PBTween.ModeOneofCase.RotateContinuous ||
+            pbTween.ModeCase == PBTween.ModeOneofCase.MoveContinuous ||
+            pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous;
+
+        private static bool TweenSurpassedDuration(in PBTween pbTween, in SDKTweenComponent sdkTweenComponent) =>
+            pbTween.Duration > 0
+            && sdkTweenComponent.CustomTweener != null
+            && !sdkTweenComponent.CustomTweener.IsFinished()
+            && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
     }
 }

@@ -12,6 +12,7 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -25,15 +26,13 @@ namespace DCL.SDKComponents.MediaStream
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
-    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem
+    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
         private readonly VolumeBus volumeBus;
-#endif
 
         private readonly float audioFadeSpeed;
 
@@ -61,13 +60,11 @@ namespace DCL.SDKComponents.MediaStream
             //the volume control for the video and audio streams, as it doesn’t allow to route audio
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
             //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             this.volumeBus = volumeBus;
             this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
             this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
             masterVolumePercentage = volumeBus.GetSerializedMasterVolume();
             worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
-#endif
         }
 
         private void OnWorldVolumeChanged(float volume)
@@ -296,6 +293,24 @@ namespace DCL.SDKComponents.MediaStream
             volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
             volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
 #endif
+        }
+
+        public void OnSceneIsCurrentChanged(bool enteredScene)
+        {
+            ToggleCurrentStreamsStateQuery(World, enteredScene);
+        }
+
+        [Query]
+        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
+        {
+            if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
+            {
+                //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
+                //the regular CreateMediaPlayerSystem
+                mediaPlayerComponent.Dispose();
+                World.Remove<MediaPlayerComponent>(entity);
+            }
+
         }
     }
 }

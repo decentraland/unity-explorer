@@ -1,6 +1,7 @@
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using Segment.Serialization;
+using Sentry;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -8,9 +9,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly ILoadingStatus core;
         private const string STAGE_KEY = "state";
+        private const string STAGE_NAME = "stage_name";
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;
+        private readonly SentryTransactionManager sentryTransactionManager;
+
+        private const string LOADING_TRANSACTION_NAME = "loading_process";
 
         public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
         public ReactiveProperty<string> AssetState => core.AssetState;
@@ -21,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core = loadingStatus;
             isFirstLoading = true;
             this.analytics = analytics;
+            this.sentryTransactionManager = SentryTransactionManager.Instance;;
         }
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
@@ -29,6 +35,48 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { STAGE_KEY, $"7.{(byte)stage} - loading screen: {stage.ToString()}" },
             });
+
+            TrackLoadingStageWithSentry(stage);
+        }
+
+        private void TrackLoadingStageWithSentry(LoadingStatus.LoadingStage stage)
+        {
+            if (stage == LoadingStatus.LoadingStage.Init)
+            {
+                var transactionData = new TransactionData
+                {
+                    TransactionName = LOADING_TRANSACTION_NAME,
+                    TransactionOperation = "loading",
+                    TransactionTag = "loading_type",
+                    TransactionTagValue = "initial_loading"
+                };
+                sentryTransactionManager.StartSentryTransaction(transactionData);
+            }
+
+            if (stage != LoadingStatus.LoadingStage.Completed)
+            {
+                var spanData = new SpanData
+                {
+                    TransactionName = LOADING_TRANSACTION_NAME,
+                    SpanName = stage.ToString(),
+                    SpanOperation = $"loading_stage_{stage.ToString().ToLower()}",
+                    Depth = 0
+                };
+                sentryTransactionManager.StartSpan(spanData);
+            }
+
+            if (stage == LoadingStatus.LoadingStage.Completed)
+            {
+                var spanData = new SpanData
+                {
+                    TransactionName = LOADING_TRANSACTION_NAME,
+                    SpanName = stage.ToString(),
+                    SpanOperation = $"loading_completed",
+                    Depth = 0
+                };
+                sentryTransactionManager.StartSpan(spanData);
+                sentryTransactionManager.EndTransaction(LOADING_TRANSACTION_NAME);
+            }
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
@@ -46,7 +94,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             }
             return core.SetCurrentStage(stage);
         }
-
-
     }
 }

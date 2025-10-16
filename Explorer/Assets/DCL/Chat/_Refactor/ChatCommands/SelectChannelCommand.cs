@@ -1,16 +1,16 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatServices;
+﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using DCL.Diagnostics;
-using DCL.Utilities.Extensions;
 using System.Threading;
 using DCL.Chat.EventBus;
+using System;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
     public class SelectChannelCommand
     {
+        public event Action<bool>? ChannelOpened;
+
         private readonly IEventBus eventBus;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
@@ -43,13 +43,14 @@ namespace DCL.Chat.ChatCommands
         public void Execute(ChatChannel.ChannelId channelId, CancellationToken ct)
         {
             if (currentChannelService.CurrentChannelId.Equals(channelId))
+            {
+                ChannelOpened?.Invoke(true);
                 return;
+            }
 
             if (chatHistory.Channels.TryGetValue(channelId, out ChatChannel? channel))
             {
                 oneOpAtATimeCts = oneOpAtATimeCts.SafeRestart();
-
-                ct = CancellationTokenSource.CreateLinkedTokenSource(ct, oneOpAtATimeCts.Token).Token;
 
                 currentChannelService.UserStateService?.Deactivate();
 
@@ -75,6 +76,7 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService.SetCurrentChannel(channel, userStateService);
 
                 eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
+                ChannelOpened?.Invoke(false);
             }
 
             // If the channel doesn't exist, we simply do nothing.

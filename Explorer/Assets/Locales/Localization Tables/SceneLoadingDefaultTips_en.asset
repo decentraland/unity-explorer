@@ -101,9 +101,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 197099055790153728
-    m_Localized: "<color=#FFFF00><size=30>COMING SOON!</size></color> \nExplore Communities
-      to connect over shared interests. Hang in the group chat, get event updates,
-      and enjoy that cozy sense of belonging!\n"
+    m_Localized: 'Explore Communities to connect over shared interests. Hang in the
+      group chat, get event updates, and enjoy that cozy sense of belonging!
+
+'
     m_Metadata:
       m_Items: []
   - m_Id: 197397929998147584
@@ -114,6 +115,25 @@ MonoBehaviour:
     m_Localized: Build anything you can imagine from the perfect hangout, to alien
       worlds, or a full on gaming experience. Deploy to your World or LAND to invite
       the community!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 219996672412868608
+    m_Localized: Art Week
+    m_Metadata:
+      m_Items: []
+  - m_Id: 219996789945655296
+    m_Localized: "Can virtual art make us feel more human?\nFind out Sept 24\u201327,
+      2025 through 30+ immersive installations, creator tours, workshops, parties,
+      and more."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232214342377889792
+    m_Localized: Join The Vibe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232214434111512576
+    m_Localized: "Join DCL Regenesis Labs first hackathon\n(Oct 13\u2013Nov 9). Vibe
+      coding, spooky vibes, and $7.5K+ in prizes await!"
     m_Metadata:
       m_Items: []
   references:

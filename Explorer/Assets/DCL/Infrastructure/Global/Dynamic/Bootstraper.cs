@@ -33,6 +33,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -124,6 +125,7 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 profileRepositoryProxy,
+                bootstrapContainer.Environment,
                 ct,
                 hasDebugFlag
             );
@@ -214,6 +216,11 @@ namespace Global.Dynamic
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
+        }
+
+        public void InitializeFeaturesRegistry()
+        {
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
         }
 
         public GlobalWorld CreateGlobalWorld(

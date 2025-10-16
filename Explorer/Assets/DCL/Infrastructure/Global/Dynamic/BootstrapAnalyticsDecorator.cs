@@ -14,6 +14,7 @@ using Global.Versioning;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
@@ -170,6 +171,11 @@ namespace Global.Dynamic
             core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache);
 
             //No analytics to track on this step
+        }
+
+        public void InitializeFeaturesRegistry()
+        {
+            core.InitializeFeaturesRegistry();
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)

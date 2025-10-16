@@ -6,25 +6,31 @@ using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 using TMPro;
 using UnityEngine;
+using DCL.SkyBox;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class GraphicsQualitySettingsController : SettingsFeatureController
     {
+        // Used when system doesn't meet minimum requirements
+        public const int MIN_SPECS_GRAPHICS_QUALITY_LEVEL = 0;
+
         private const int DEFAULT_QUALITY_LEVEL_INDEX = 1;
 
         private readonly SettingsDropdownModuleView view;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
 
-        public GraphicsQualitySettingsController(SettingsDropdownModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData, QualitySettingsAsset qualitySettingsAsset)
+        public GraphicsQualitySettingsController(SettingsDropdownModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData, QualitySettingsAsset qualitySettingsAsset, SkyboxSettingsAsset skyboxSettingsAsset)
         {
             this.view = view;
 
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
 
             LoadGraphicsQualityOptions();
 
@@ -54,6 +60,7 @@ namespace DCL.Settings.ModuleControllers
                 ForceSetQualityLevel(index);
 
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
+            skyboxSettingsAsset.SetRefreshInterval(index);
         }
 
         private void ForceSetQualityLevel(int index)

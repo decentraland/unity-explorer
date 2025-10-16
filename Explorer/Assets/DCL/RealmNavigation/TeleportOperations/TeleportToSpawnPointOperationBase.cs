@@ -5,6 +5,7 @@ using DCL.Ipfs;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
@@ -15,7 +16,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility.Types;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {

@@ -3,9 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -21,7 +23,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Utility.Types;
 using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
@@ -88,7 +89,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public async Task ParallelABLoadsWithoutCacheShould()
         {
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()));
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), ChromeDevtoolProtocolClient.NewForTest());
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 
@@ -119,8 +120,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             string assetUrl;
             #if UNITY_STANDALONE_WIN
             assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_windows";
-            #endif
-            #if UNITY_STANDALONE_OSX
+            #elif UNITY_STANDALONE_OSX
+            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
+            #else 
             assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
             #endif
             var intention = new GetAssetBundleIntention(new CommonLoadingArguments(assetUrl));

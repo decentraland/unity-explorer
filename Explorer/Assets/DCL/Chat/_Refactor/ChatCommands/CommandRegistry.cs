@@ -12,6 +12,10 @@ using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.VoiceChat;
+using DCL.Clipboard;
+using DCL.Translation;
+using DCL.Translation.Service;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -39,6 +43,10 @@ namespace DCL.Chat.ChatCommands
         public ResetChatCommand ResetChat { get; }
         public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
+        public GetUserCallStatusCommand GetUserCallStatusCommand { get; }
+        public ToggleAutoTranslateCommand ToggleAutoTranslateCommand { get; }
+        public TranslateMessageCommand TranslateMessageCommand { get; }
+        public RevertToOriginalCommand RevertToOriginalCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
@@ -60,7 +68,13 @@ namespace DCL.Chat.ChatCommands
             ISpriteCache spriteCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
-            GetParticipantProfilesCommand getParticipantProfilesCommand)
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            ClipboardManager clipboardManager,
+            ITranslationService translationService,
+            ITranslationMemory translationMemory,
+            ITranslationCache translationCache,
+            ITranslationSettings translationSettings)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -73,7 +87,9 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService,
                 privateConversationUserStateService,
                 communityUserStateService,
-                chatMemberListService);
+                chatMemberListService,
+                translationMemory,
+                translationCache);
 
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
@@ -89,7 +105,9 @@ namespace DCL.Chat.ChatCommands
                 nearbyUserStateService,
                 chatMemberListService);
 
-            CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper, chatConfig);
+            CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper,
+                chatConfig,
+                translationMemory);
 
             SelectChannel = new SelectChannelCommand(eventBus,
                 chatEventBus,
@@ -135,17 +153,27 @@ namespace DCL.Chat.ChatCommands
                 sendMessageSound,
                 chatSettings);
 
-            CloseChannel = new CloseChannelCommand(chatHistory
-                , identityCache);
+            CloseChannel = new CloseChannelCommand(chatHistory,
+                identityCache);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 communityDataService,
                 chatConfig,
                 profileRepositoryWrapper,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail);
+                GetCommunityThumbnail,
+                voiceChatOrchestrator);
 
-            ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand, currentChannelService);
+            ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand,
+                currentChannelService);
+
+            ToggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings,
+                eventBus);
+
+            TranslateMessageCommand = new TranslateMessageCommand(translationService);
+            RevertToOriginalCommand = new RevertToOriginalCommand(translationService);
+
+            GetUserCallStatusCommand = new GetUserCallStatusCommand(privateConversationUserStateService);
         }
 
         public void Dispose()
