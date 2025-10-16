@@ -9,6 +9,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Nametags;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using UnityEngine;
@@ -25,13 +26,15 @@ namespace DCL.SocialEmotes.UI
         private const float MAX_DISTANCE_SQR = MAX_DISTANCE * MAX_DISTANCE;
 
         private readonly IObjectPool<SocialEmotePin> pinsPool;
+        private readonly IWeb3IdentityCache identityCache;
         private SingleInstanceEntity playerCamera;
         private CameraComponent mainCameraComponent;
         private bool isCameraSet;
 
-        public SocialEmotePinsSystem(World world, IObjectPool<SocialEmotePin> pinsPool) : base(world)
+        public SocialEmotePinsSystem(World world, IObjectPool<SocialEmotePin> pinsPool, IWeb3IdentityCache identityCache) : base(world)
         {
             this.pinsPool = pinsPool;
+            this.identityCache = identityCache;
         }
 
         public override void Initialize()
@@ -48,7 +51,10 @@ namespace DCL.SocialEmotes.UI
                 isCameraSet = true;
             }
 
-            CreatePinQuery(World, mainCameraComponent);
+            if(identityCache.Identity == null)
+                return;
+
+            CreatePinQuery(World, identityCache.Identity.Address.OriginalFormat, mainCameraComponent);
             UpdatePinPositionQuery(World);
             AddNametagHeightToPinPositionQuery(World);
             MakePinFaceCameraQuery(World, mainCameraComponent);
@@ -57,7 +63,7 @@ namespace DCL.SocialEmotes.UI
 
         [Query]
         [None(typeof(SocialEmotePin), typeof(PlayerComponent))]
-        private void CreatePin([Data] CameraComponent camera, in Entity entity, in CharacterEmoteComponent emoteComponent,
+        private void CreatePin([Data] string playerWalletAddress, [Data] CameraComponent camera, in Entity entity, in CharacterEmoteComponent emoteComponent,
             in CharacterTransform characterTransform, in AvatarShapeComponent avatarShape, in PartitionComponent partitionComponent)
         {
             if (avatarShape.HiddenByModifierArea ||
@@ -68,7 +74,8 @@ namespace DCL.SocialEmotes.UI
             if(emoteComponent.IsPlayingEmote &&
                emoteComponent.Metadata != null &&
                emoteComponent.Metadata.IsSocialEmote &&
-               !emoteComponent.IsPlayingSocialEmoteOutcome)// TODO && is directed to this player
+               !emoteComponent.IsPlayingSocialEmoteOutcome &&
+               (string.IsNullOrEmpty(emoteComponent.TargetAvatarWalletAddress) || emoteComponent.TargetAvatarWalletAddress == playerWalletAddress))
                 World.Add(entity, pinsPool.Get());
         }
 

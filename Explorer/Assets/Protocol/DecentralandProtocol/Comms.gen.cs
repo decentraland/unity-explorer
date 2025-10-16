@@ -57,23 +57,25 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhISCgpp",
             "c19pbnN0YW50GBEgASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgiQgoSTW92ZW1l",
             "bnRDb21wcmVzc2VkEhUKDXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1l",
-            "bnRfZGF0YRgCIAEoAyLrAQoLUGxheWVyRW1vdGUSFgoOaW5jcmVtZW50YWxf",
+            "bnRfZGF0YRgCIAEoAyKZAgoLUGxheWVyRW1vdGUSFgoOaW5jcmVtZW50YWxf",
             "aWQYASABKA0SCwoDdXJuGAIgASgJEhEKCXRpbWVzdGFtcBgDIAEoAhIhChRz",
             "b2NpYWxfZW1vdGVfb3V0Y29tZRgEIAEoBUgAiAEBEhgKC2lzX3JlYWN0aW5n",
             "GAUgASgISAGIAQESIwoWc29jaWFsX2Vtb3RlX2luaXRpYXRvchgGIAEoCUgC",
-            "iAEBQhcKFV9zb2NpYWxfZW1vdGVfb3V0Y29tZUIOCgxfaXNfcmVhY3RpbmdC",
-            "GQoXX3NvY2lhbF9lbW90ZV9pbml0aWF0b3IiNQoKU2NlbmVFbW90ZRIXCg9z",
-            "Y2VuZV9lbnRpdHlfaWQYASABKAkSDgoGc291cmNlGAIgASgJIjEKFkFubm91",
-            "bmNlUHJvZmlsZVZlcnNpb24SFwoPcHJvZmlsZV92ZXJzaW9uGAEgASgNIjoK",
-            "DlByb2ZpbGVSZXF1ZXN0Eg8KB2FkZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92",
-            "ZXJzaW9uGAMgASgNIj8KD1Byb2ZpbGVSZXNwb25zZRIaChJzZXJpYWxpemVk",
-            "X3Byb2ZpbGUYASABKAkSEAoIYmFzZV91cmwYAiABKAkiWgoEQ2hhdBIPCgdt",
-            "ZXNzYWdlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoARIbCg5mb3J3YXJkZWRf",
-            "ZnJvbRgDIAEoCUgAiAEBQhEKD19mb3J3YXJkZWRfZnJvbSInCgVTY2VuZRIQ",
-            "CghzY2VuZV9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIosBCgVWb2ljZRIXCg9l",
-            "bmNvZGVkX3NhbXBsZXMYASABKAwSDQoFaW5kZXgYAiABKA0SPwoFY29kZWMY",
-            "AyABKA4yMC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuVm9pY2Uu",
-            "Vm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVjEgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
+            "iAEBEhoKDXRhcmdldF9hdmF0YXIYByABKAlIA4gBAUIXChVfc29jaWFsX2Vt",
+            "b3RlX291dGNvbWVCDgoMX2lzX3JlYWN0aW5nQhkKF19zb2NpYWxfZW1vdGVf",
+            "aW5pdGlhdG9yQhAKDl90YXJnZXRfYXZhdGFyIjUKClNjZW5lRW1vdGUSFwoP",
+            "c2NlbmVfZW50aXR5X2lkGAEgASgJEg4KBnNvdXJjZRgCIAEoCSIxChZBbm5v",
+            "dW5jZVByb2ZpbGVWZXJzaW9uEhcKD3Byb2ZpbGVfdmVyc2lvbhgBIAEoDSI6",
+            "Cg5Qcm9maWxlUmVxdWVzdBIPCgdhZGRyZXNzGAQgASgJEhcKD3Byb2ZpbGVf",
+            "dmVyc2lvbhgDIAEoDSI/Cg9Qcm9maWxlUmVzcG9uc2USGgoSc2VyaWFsaXpl",
+            "ZF9wcm9maWxlGAEgASgJEhAKCGJhc2VfdXJsGAIgASgJIloKBENoYXQSDwoH",
+            "bWVzc2FnZRgBIAEoCRIRCgl0aW1lc3RhbXAYAiABKAESGwoOZm9yd2FyZGVk",
+            "X2Zyb20YAyABKAlIAIgBAUIRCg9fZm9yd2FyZGVkX2Zyb20iJwoFU2NlbmUS",
+            "EAoIc2NlbmVfaWQYASABKAkSDAoEZGF0YRgCIAEoDCKLAQoFVm9pY2USFwoP",
+            "ZW5jb2RlZF9zYW1wbGVzGAEgASgMEg0KBWluZGV4GAIgASgNEj8KBWNvZGVj",
+            "GAMgASgOMjAuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LlZvaWNl",
+            "LlZvaWNlQ29kZWMiGQoKVm9pY2VDb2RlYxILCgdWQ19PUFVTEABiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -81,7 +83,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator" }, new[]{ "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, new[]{ "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest), global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest.Parser, new[]{ "Address", "ProfileVersion" }, null, null, null, null),
@@ -2458,6 +2460,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       socialEmoteOutcome_ = other.socialEmoteOutcome_;
       isReacting_ = other.isReacting_;
       socialEmoteInitiator_ = other.socialEmoteInitiator_;
+      targetAvatar_ = other.targetAvatar_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2586,6 +2589,33 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       socialEmoteInitiator_ = null;
     }
 
+    /// <summary>Field number for the "target_avatar" field.</summary>
+    public const int TargetAvatarFieldNumber = 7;
+    private string targetAvatar_;
+    /// <summary>
+    /// wallet address of the user whose avatar is the target of a directed emote
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string TargetAvatar {
+      get { return targetAvatar_ ?? ""; }
+      set {
+        targetAvatar_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "target_avatar" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTargetAvatar {
+      get { return targetAvatar_ != null; }
+    }
+    /// <summary>Clears the value of the "target_avatar" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTargetAvatar() {
+      targetAvatar_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2607,6 +2637,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (SocialEmoteOutcome != other.SocialEmoteOutcome) return false;
       if (IsReacting != other.IsReacting) return false;
       if (SocialEmoteInitiator != other.SocialEmoteInitiator) return false;
+      if (TargetAvatar != other.TargetAvatar) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2620,6 +2651,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (HasSocialEmoteOutcome) hash ^= SocialEmoteOutcome.GetHashCode();
       if (HasIsReacting) hash ^= IsReacting.GetHashCode();
       if (HasSocialEmoteInitiator) hash ^= SocialEmoteInitiator.GetHashCode();
+      if (HasTargetAvatar) hash ^= TargetAvatar.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2662,6 +2694,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(50);
         output.WriteString(SocialEmoteInitiator);
       }
+      if (HasTargetAvatar) {
+        output.WriteRawTag(58);
+        output.WriteString(TargetAvatar);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2696,6 +2732,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(50);
         output.WriteString(SocialEmoteInitiator);
       }
+      if (HasTargetAvatar) {
+        output.WriteRawTag(58);
+        output.WriteString(TargetAvatar);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2723,6 +2763,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (HasSocialEmoteInitiator) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(TargetAvatar);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2753,6 +2796,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.HasSocialEmoteInitiator) {
         SocialEmoteInitiator = other.SocialEmoteInitiator;
+      }
+      if (other.HasTargetAvatar) {
+        TargetAvatar = other.TargetAvatar;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2793,6 +2839,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             SocialEmoteInitiator = input.ReadString();
             break;
           }
+          case 58: {
+            TargetAvatar = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -2830,6 +2880,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 50: {
             SocialEmoteInitiator = input.ReadString();
+            break;
+          }
+          case 58: {
+            TargetAvatar = input.ReadString();
             break;
           }
         }

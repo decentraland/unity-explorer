@@ -232,7 +232,11 @@ namespace DCL.EmotesWheel
             if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
                 return;
 
-            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
+            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent
+            {
+                Slot = slot,
+                TargetAvatrWalletAddress = inputData.IsDirectedEmote ? inputData.TargetWalletAddress : string.Empty
+            });
 
             Close();
         }

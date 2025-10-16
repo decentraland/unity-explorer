@@ -19,6 +19,7 @@ using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.SocialEmotes.UI;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IWeb3IdentityCache identityCache;
 
         private Transform? socialPinsPoolParent = null;
         private Transform poolParent;
@@ -95,7 +97,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
             SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
-            IComponentPoolsRegistry componentPoolsRegistry)
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IWeb3IdentityCache identityCache)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -119,6 +122,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
+            this.identityCache = identityCache;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -156,7 +160,7 @@ namespace DCL.PluginSystem.Global
 
             SocialEmoteInteractionSystem.InjectToWorld(ref builder);
 
-            SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool);
+            SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

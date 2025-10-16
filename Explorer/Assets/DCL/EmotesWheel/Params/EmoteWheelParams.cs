@@ -12,5 +12,6 @@ namespace DCL.EmotesWheel.Params
         public bool IsDirectedEmote;
         public string TargetUsername;
         public Color TargetUsernameColor;
+        public string TargetWalletAddress;
     }
 }

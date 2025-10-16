@@ -295,8 +295,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                         }
                         else // Starting interaction
                         {
-                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, emote, characterTransform.Transform);
+                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, emote, characterTransform.Transform, emoteIntent.TargetAvatarWalletAddress);
                             emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
+                            emoteComponent.TargetAvatarWalletAddress = emoteIntent.TargetAvatarWalletAddress;
                         }
                     }
 
@@ -335,7 +336,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
 
-            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress);
+            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress, emoteComponent.TargetAvatarWalletAddress);
         }
 
         [Query]
