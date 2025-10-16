@@ -7,7 +7,7 @@ namespace DCL.Translation.Service
     ///     Holds UI-facing translation state per messageId (Original/Pending/Success/Failed).
     ///     Drives spinners, error badges, and the displayed text in the feed.
     /// </summary>
-    public sealed class InMemoryTranslationMemory : ITranslationMemory
+    public sealed class InMemoryTranslationMemory : ITranslationMemory, IDisposable
     {
         private readonly LRUCache<string, MessageTranslation> memory;
         private readonly Action<string, MessageTranslation>? onEvictedExternal;
@@ -108,6 +108,11 @@ namespace DCL.Translation.Service
         {
             Evictions++;
             onEvictedExternal?.Invoke(messageId, mt);
+        }
+
+        public void Dispose()
+        {
+            Clear();
         }
     }
 }
