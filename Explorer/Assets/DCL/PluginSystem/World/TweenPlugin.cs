@@ -8,6 +8,7 @@ using DCL.SDKComponents.Tween.Components;
 using TweenCleanUpSystem = DCL.SDKComponents.Tween.TweenCleanUpSystem;
 using TweenLoaderSystem = DCL.SDKComponents.Tween.TweenLoaderSystem;
 using TweenUpdaterSystem = DCL.SDKComponents.Tween.TweenUpdaterSystem;
+using TweenSequenceUpdaterSystem = DCL.SDKComponents.Tween.TweenSequenceUpdaterSystem;
 
 namespace DCL.PluginSystem.World
 {
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.World
             TweenLoaderSystem.InjectToWorld(ref builder);
 
             TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider);
+            TweenSequenceUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider);
 
             finalizeWorldSystems.Add(TweenCleanUpSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool));
         }

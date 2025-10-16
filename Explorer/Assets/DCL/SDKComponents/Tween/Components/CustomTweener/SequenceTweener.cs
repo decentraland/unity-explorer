@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public class SequenceTweener : ISequenceTweener
+    public class SequenceTweener : ITweener
     {
         private readonly TweenCallback onCompleteCallback;
         private bool finished;
@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.Tween.Components
             var firstDOTween = CreateTweenForPBTween(firstTween, firstTween.Duration / 1000f, transform);
             if (firstDOTween != null)
             {
-                Ease firstEase = GetEase(firstTween.EasingFunction);
+                Ease firstEase = TweenSDKComponentHelper.GetEase(firstTween.EasingFunction);
                 firstDOTween.SetEase(firstEase);
                 sequence.Append(firstDOTween);
             }
@@ -39,7 +39,7 @@ namespace DCL.SDKComponents.Tween.Components
                 var tween = CreateTweenForPBTween(pbTween, pbTween.Duration / 1000f, transform);
                 if (tween != null)
                 {
-                    Ease ease = GetEase(pbTween.EasingFunction);
+                    Ease ease = TweenSDKComponentHelper.GetEase(pbTween.EasingFunction);
                     tween.SetEase(ease);
                     sequence.Append(tween);
                 }
@@ -69,90 +69,22 @@ namespace DCL.SDKComponents.Tween.Components
                     returnTween = transform.DOLocalMove(pbTween.Move.End, durationInSeconds)
                                          .From(pbTween.Move.Start, false)
                                            .SetAutoKill(false).Pause();
-                    /*returnTween = DOTween.To(
-                        () => transform.localPosition,
-                        x => transform.localPosition = x,
-                        pbTween.Move.End,
-                        durationInSeconds
-                    ).From(pbTween.Move.Start, false)
-                   .SetAutoKill(false).Pause();*/
                     break;
 
                 case PBTween.ModeOneofCase.Rotate:
                     returnTween = transform.DOLocalRotateQuaternion(pbTween.Rotate.End.ToUnityQuaternion(), durationInSeconds)
                                            .From(pbTween.Rotate.Start.ToUnityQuaternion(), false)
                                            .SetAutoKill(false).Pause();
-                    /*float slerpTime = 0f;
-                    returnTween = DOTween.To(
-                        () => slerpTime,
-                        x =>
-                        {
-                            slerpTime = x;
-
-                            transform.rotation = Quaternion.Slerp(
-                                pbTween.Rotate.Start.ToUnityQuaternion(),
-                                pbTween.Rotate.End.ToUnityQuaternion(), slerpTime);
-                        },
-                        1f, // target value (100% of interpolation)
-                        durationInSeconds
-                    )
-                   .SetAutoKill(false).Pause();*/
                     break;
 
                 case PBTween.ModeOneofCase.Scale:
                     returnTween = transform.DOScale(pbTween.Scale.End, durationInSeconds)
                                            .From(pbTween.Scale.Start, false)
                                            .SetAutoKill(false).Pause();
-                    /*returnTween = DOTween.To(
-                        () => transform.localScale,
-                        x => transform.localScale = x,
-                        pbTween.Scale.End,
-                        durationInSeconds
-                    ).From(pbTween.Scale.Start, false)
-                   .SetAutoKill(false).Pause();*/
                     break;
             }
 
             return returnTween;
-        }
-
-        private Ease GetEase(EasingFunction easingFunction)
-        {
-            return easingFunction switch
-            {
-                EasingFunction.EfLinear => Ease.Linear,
-                EasingFunction.EfEaseinsine => Ease.InSine,
-                EasingFunction.EfEaseoutsine => Ease.OutSine,
-                EasingFunction.EfEasesine => Ease.InOutSine,
-                EasingFunction.EfEaseinquad => Ease.InQuad,
-                EasingFunction.EfEaseoutquad => Ease.OutQuad,
-                EasingFunction.EfEasequad => Ease.InOutQuad,
-                EasingFunction.EfEaseinexpo => Ease.InExpo,
-                EasingFunction.EfEaseoutexpo => Ease.OutExpo,
-                EasingFunction.EfEaseexpo => Ease.InOutExpo,
-                EasingFunction.EfEaseinelastic => Ease.InElastic,
-                EasingFunction.EfEaseoutelastic => Ease.OutElastic,
-                EasingFunction.EfEaseelastic => Ease.InOutElastic,
-                EasingFunction.EfEaseinbounce => Ease.InBounce,
-                EasingFunction.EfEaseoutbounce => Ease.OutBounce,
-                EasingFunction.EfEasebounce => Ease.InOutBounce,
-                EasingFunction.EfEaseincubic => Ease.InCubic,
-                EasingFunction.EfEaseoutcubic => Ease.OutCubic,
-                EasingFunction.EfEasecubic => Ease.InOutCubic,
-                EasingFunction.EfEaseinquart => Ease.InQuart,
-                EasingFunction.EfEaseoutquart => Ease.OutQuart,
-                EasingFunction.EfEasequart => Ease.InOutQuart,
-                EasingFunction.EfEaseinquint => Ease.InQuint,
-                EasingFunction.EfEaseoutquint => Ease.OutQuint,
-                EasingFunction.EfEasequint => Ease.InOutQuint,
-                EasingFunction.EfEaseincirc => Ease.InCirc,
-                EasingFunction.EfEaseoutcirc => Ease.OutCirc,
-                EasingFunction.EfEasecirc => Ease.InOutCirc,
-                EasingFunction.EfEaseinback => Ease.InBack,
-                EasingFunction.EfEaseoutback => Ease.OutBack,
-                EasingFunction.EfEaseback => Ease.InOutBack,
-                _ => Ease.Linear
-            };
         }
 
         public void Play() =>
@@ -181,6 +113,12 @@ namespace DCL.SDKComponents.Tween.Components
 
         public float GetElapsedTime() =>
             sequence?.Elapsed() ?? 0f;
+
+        public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
+        {
+            // Sequences don't use DoTween - they're configured in Initialize()
+            // This is just here to satisfy the ITweener interface
+        }
 
         private void OnSequenceComplete()
         {

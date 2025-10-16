@@ -6,7 +6,7 @@ namespace DCL.SDKComponents.Tween.Components
     {
         public bool IsDirty { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
-        public ISequenceTweener SequenceTweener { get; set; }
+        public ITweener SequenceTweener { get; set; }
 
         public bool IsActive() =>
             SequenceTweener != null && SequenceTweener.IsActive();

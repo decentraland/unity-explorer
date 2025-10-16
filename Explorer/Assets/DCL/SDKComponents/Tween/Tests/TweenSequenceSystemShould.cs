@@ -15,7 +15,7 @@ using Vector3 = Decentraland.Common.Vector3;
 namespace DCL.SDKComponents.Tween.Tests
 {
     [TestFixture]
-    public class TweenSequenceSystemShould : UnitySystemTestBase<TweenUpdaterSystem>
+    public class TweenSequenceSystemShould : UnitySystemTestBase<TweenSequenceUpdaterSystem>
     {
         private TweenerPool tweenerPool;
         private TweenLoaderSystem loaderSystem;
@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.Tween.Tests
             var sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
             tweenerPool = new TweenerPool();
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool, sceneStateProvider);
+            system = new TweenSequenceUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool, sceneStateProvider);
             loaderSystem = new TweenLoaderSystem(world);
         }
 

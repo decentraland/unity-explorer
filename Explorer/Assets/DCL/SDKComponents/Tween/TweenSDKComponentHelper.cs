@@ -3,14 +3,57 @@ using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
+using DG.Tweening;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static DCL.ECSComponents.EasingFunction;
+using static DG.Tweening.Ease;
 
 namespace DCL.SDKComponents.Tween
 {
     public static class TweenSDKComponentHelper
     {
+        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new()
+        {
+            [EfLinear] = Linear,
+            [EfEaseinsine] = InSine,
+            [EfEaseoutsine] = OutSine,
+            [EfEasesine] = InOutSine,
+            [EfEaseinquad] = InQuad,
+            [EfEaseoutquad] = OutQuad,
+            [EfEasequad] = InOutQuad,
+            [EfEaseinexpo] = InExpo,
+            [EfEaseoutexpo] = OutExpo,
+            [EfEaseexpo] = InOutExpo,
+            [EfEaseinelastic] = InElastic,
+            [EfEaseoutelastic] = OutElastic,
+            [EfEaseelastic] = InOutElastic,
+            [EfEaseinbounce] = InBounce,
+            [EfEaseoutbounce] = OutBounce,
+            [EfEasebounce] = InOutBounce,
+            [EfEaseincubic] = InCubic,
+            [EfEaseoutcubic] = OutCubic,
+            [EfEasecubic] = InOutCubic,
+            [EfEaseinquart] = InQuart,
+            [EfEaseoutquart] = OutQuart,
+            [EfEasequart] = InOutQuart,
+            [EfEaseinquint] = InQuint,
+            [EfEaseoutquint] = OutQuint,
+            [EfEasequint] = InOutQuint,
+            [EfEaseincirc] = InCirc,
+            [EfEaseoutcirc] = OutCirc,
+            [EfEasecirc] = InOutCirc,
+            [EfEaseinback] = InBack,
+            [EfEaseoutback] = OutBack,
+            [EfEaseback] = InOutBack,
+        };
+
+        public static Ease GetEase(EasingFunction easingFunction) =>
+            EASING_FUNCTIONS_MAP.GetValueOrDefault(easingFunction, Linear);
+
+
         public static void WriteTweenStateInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, TweenStateStatus tweenStateStatus)
         {
             ecsToCrdtWriter.PutMessage<PBTweenState, TweenStateStatus>(

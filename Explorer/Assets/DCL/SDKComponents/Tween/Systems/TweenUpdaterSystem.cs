@@ -14,11 +14,8 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using static DCL.ECSComponents.EasingFunction;
-using static DG.Tweening.Ease;
 
 namespace DCL.SDKComponents.Tween
 {
@@ -30,41 +27,6 @@ namespace DCL.SDKComponents.Tween
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
-
-        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
-        {
-            [EfLinear] = Linear,
-            [EfEaseinsine] = InSine,
-            [EfEaseoutsine] = OutSine,
-            [EfEasesine] = InOutSine,
-            [EfEaseinquad] = InQuad,
-            [EfEaseoutquad] = OutQuad,
-            [EfEasequad] = InOutQuad,
-            [EfEaseinexpo] = InExpo,
-            [EfEaseoutexpo] = OutExpo,
-            [EfEaseexpo] = InOutExpo,
-            [EfEaseinelastic] = InElastic,
-            [EfEaseoutelastic] = OutElastic,
-            [EfEaseelastic] = InOutElastic,
-            [EfEaseinbounce] = InBounce,
-            [EfEaseoutbounce] = OutBounce,
-            [EfEasebounce] = InOutBounce,
-            [EfEaseincubic] = InCubic,
-            [EfEaseoutcubic] = OutCubic,
-            [EfEasecubic] = InOutCubic,
-            [EfEaseinquart] = InQuart,
-            [EfEaseoutquart] = OutQuart,
-            [EfEasequart] = InOutQuart,
-            [EfEaseinquint] = InQuint,
-            [EfEaseoutquint] = OutQuint,
-            [EfEasequint] = InOutQuint,
-            [EfEaseincirc] = InCirc,
-            [EfEaseoutcirc] = OutCirc,
-            [EfEasecirc] = InOutCirc,
-            [EfEaseinback] = InBack,
-            [EfEaseoutback] = OutBack,
-            [EfEaseback] = InOutBack,
-        };
 
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -82,8 +44,6 @@ namespace DCL.SDKComponents.Tween
             UpdatePBTweenQuery(World);
             UpdateTweenTransformQuery(World);
             UpdateTweenTextureQuery(World);
-            UpdatePBTweenSequenceQuery(World);
-            UpdateTweenSequenceStateQuery(World);
         }
 
         [Query]
@@ -208,7 +168,7 @@ namespace DCL.SDKComponents.Tween
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
-            Ease ease = IsTweenContinuous(tweenModel) ? Linear : EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
+            Ease ease = IsTweenContinuous(tweenModel) ? Ease.Linear : TweenSDKComponentHelper.GetEase(tweenModel.EasingFunction);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             Vector2? textureStart = null;
@@ -254,67 +214,5 @@ namespace DCL.SDKComponents.Tween
             && sdkTweenComponent.CustomTweener != null
             && !sdkTweenComponent.CustomTweener.IsFinished()
             && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
-
-        [Query]
-        private static void UpdatePBTweenSequence(ref PBTween pbTween, ref PBTweenSequence pbTweenSequence, ref SDKTweenSequenceComponent sdkTweenSequenceComponent)
-        {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
-
-            if (pbTweenSequence.IsDirty || pbTween.IsDirty)
-                sdkTweenSequenceComponent.IsDirty = true;
-        }
-
-        [Query]
-        private void UpdateTweenSequenceState(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween pbTween, in PBTweenSequence pbTweenSequence, CRDTEntity sdkEntity, TransformComponent transformComponent)
-        {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
-
-            if (sdkTweenSequenceComponent.IsDirty)
-            {
-                SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform);
-                UpdateTweenSequenceStateInCRDT(sdkEntity, sdkTweenSequenceComponent);
-            }
-            else
-            {
-                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, sdkEntity);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, CRDTEntity sdkEntity)
-        {
-            TweenStateStatus newState = GetCurrentTweenSequenceState(sdkTweenSequenceComponent);
-            if (newState != sdkTweenSequenceComponent.TweenStateStatus)
-            {
-                sdkTweenSequenceComponent.TweenStateStatus = newState;
-                UpdateTweenSequenceStateInCRDT(sdkEntity, sdkTweenSequenceComponent);
-            }
-        }
-
-        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform)
-        {
-            tweenerPool.ReleaseSequenceTweenerFrom(sdkTweenSequenceComponent);
-
-            TweenLoop? loopType = pbTweenSequence.HasLoop ? pbTweenSequence.Loop : null;
-            sdkTweenSequenceComponent.SequenceTweener = tweenerPool.GetSequenceTweener(firstTween, pbTweenSequence.Sequence, loopType, transform);
-
-            sdkTweenSequenceComponent.SequenceTweener.Play();
-            sdkTweenSequenceComponent.TweenStateStatus = TweenStateStatus.TsActive;
-            sdkTweenSequenceComponent.IsDirty = false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static TweenStateStatus GetCurrentTweenSequenceState(SDKTweenSequenceComponent sequenceTweener)
-        {
-            if (sequenceTweener.SequenceTweener.IsFinished()) return TweenStateStatus.TsCompleted;
-            if (sequenceTweener.SequenceTweener.IsPaused()) return TweenStateStatus.TsPaused;
-            return TweenStateStatus.TsActive;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateInCRDT(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent)
-        {
-            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenSequenceComponent.TweenStateStatus);
-        }
     }
 }
