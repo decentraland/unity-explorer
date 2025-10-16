@@ -6,6 +6,8 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using System;
+using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DefaultNamespace
@@ -26,32 +28,33 @@ namespace DefaultNamespace
         }
 
         [Query]
-        [All(typeof(EarlyDownloadComponentFlag))]
+        [All(typeof(EarlyAssetBundleFlag))]
         [None(typeof(AssetBundlePromise))]
-        private void StartEarlyDownload(Entity entity, ref EarlyDownloadComponentFlag earlyDownloadComponentFlag)
+        private void StartEarlyDownload(Entity entity, ref EarlyAssetBundleFlag earlySceneFlag)
         {
-            //TODO (JUANI): Lose this ifs
-            if (!string.IsNullOrEmpty(earlyDownloadComponentFlag.AsssetBundleHash))
-            {
-                AssetBundlePromise promise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(earlyDownloadComponentFlag.AsssetBundleHash),
-                    PartitionComponent.TOP_PRIORITY);
-                requestDone = true;
-                World.Add(entity, promise);
-            }
+            AssetBundlePromise promise = AssetBundlePromise.Create(World,
+                GetAssetBundleIntention.FromHash(earlySceneFlag.AsssetBundleHash),
+                PartitionComponent.TOP_PRIORITY);
+
+            requestDone = true;
+            World.Add(entity, promise);
         }
 
 
         [Query]
-        [All(typeof(EarlyDownloadComponentFlag))]
+        [All(typeof(EarlyAssetBundleFlag))]
         private void ResolveEarlyDownload(Entity entity, ref AssetBundlePromise promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 //Do nothing. We just needed loaded in memory, we dont care the result.
                 //Whoever needs it, will grab it later
+                //TODO (JUANI) : Maybe we should instantiate it already?
                 World.Destroy(entity);
+
+                if (Result.Succeeded) { Debug.Log("JUANI THE ASSET BUNDLE WAS LOADED IN MEMORY"); }
             }
         }
+
     }
 }

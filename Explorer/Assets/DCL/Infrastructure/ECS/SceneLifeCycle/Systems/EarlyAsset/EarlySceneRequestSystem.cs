@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Ipfs;
 using DCL.RealmNavigation;
+using DCL.Utility;
 using DefaultNamespace;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -42,28 +43,28 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                 return;
 
             if (!sceneRequestInitialized)
-            {
-                List<SceneEntityDefinition> entityDefinitionList = new List<SceneEntityDefinition>( );
-                List<int2> pointersList = new List<int2>() { startParcel.Peek().ToInt2() };
-                var promise = ScenePromise.Create(World,
-                    new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)),
-                    PartitionComponent.TOP_PRIORITY);
-                World.Create(promise, new EarlyDownloadComponentFlag());
-                sceneRequestInitialized = true;
-                return;
-            }
+                RequestEarlyScene();
 
             CompleteEarlySceneRequestQuery(World);
         }
 
-        [Query]
-        [All(typeof(EarlyDownloadComponentFlag))]
-        private void CompleteEarlySceneRequest(Entity entity, ref ScenePromise promise, ref EarlyDownloadComponentFlag flag)
+        private void RequestEarlyScene()
         {
-            if (!string.IsNullOrEmpty(flag.AsssetBundleHash))
-                return;
+            var entityDefinitionList = new List<SceneEntityDefinition>();
+            var pointersList = new List<int2> { startParcel.Peek().ToInt2() };
 
+            var promise = ScenePromise.Create(World,
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)),
+                PartitionComponent.TOP_PRIORITY);
 
+            World.Create(promise, new EarlySceneFlag());
+            sceneRequestInitialized = true;
+        }
+
+        [Query]
+        [All(typeof(EarlySceneFlag))]
+        private void CompleteEarlySceneRequest(Entity entity, ref ScenePromise promise, ref EarlySceneFlag flag)
+        {
             if (promise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> Result))
             {
                 if (Result.Succeeded)
@@ -73,22 +74,13 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                         //Do nothing. We just needed loaded in memory, we dont care the result.
                         //Whoever needs it, will grab it later
                         //Test URL
-                        flag.AsssetBundleHash = $"staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.ToString()}";
+                        World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest($"staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.ToString()}{PlatformUtils.GetCurrentPlatform()}"));
                     }
-                    else
-                    {
-                        //Temporal destroy
-                        World.Destroy(entity);
-                    }
-                }
-                else
-                {
-                    //If it failed, we need to destroy it
-                    World.Destroy(entity);
                 }
 
+                //Nothing to do with it after creation of the early asset bundle request
+                World.Destroy(entity);
             }
-
         }
     }
 }

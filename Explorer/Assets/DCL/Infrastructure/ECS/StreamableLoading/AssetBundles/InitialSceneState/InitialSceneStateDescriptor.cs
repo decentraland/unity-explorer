@@ -1,5 +1,6 @@
     using Arch.Core;
 using DCL.Diagnostics;
+using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -35,7 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}"),
+                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}"),
                     PartitionComponent.TOP_PRIORITY);
             }
 
