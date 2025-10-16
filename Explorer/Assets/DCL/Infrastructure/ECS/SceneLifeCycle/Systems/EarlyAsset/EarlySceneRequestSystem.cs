@@ -50,7 +50,6 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                     PartitionComponent.TOP_PRIORITY);
                 World.Create(promise, new EarlyDownloadComponentFlag());
                 sceneRequestInitialized = true;
-                UnityEngine.Debug.Log("JUANI THE EARLY SCENE WAS REQUESTED");
                 return;
             }
 
@@ -73,7 +72,6 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                     {
                         //Do nothing. We just needed loaded in memory, we dont care the result.
                         //Whoever needs it, will grab it later
-                        UnityEngine.Debug.Log($"JUANI THE EARLY SCENE WAS RETRIEVED staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.ToString()}");
                         //Test URL
                         flag.AsssetBundleHash = $"staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.ToString()}";
                     }

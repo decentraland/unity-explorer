@@ -38,7 +38,6 @@ namespace DefaultNamespace
                     PartitionComponent.TOP_PRIORITY);
                 requestDone = true;
                 World.Add(entity, promise);
-                UnityEngine.Debug.Log("JUANI THE EARLY ASSET BUNDLE WAS REQUESTED");
             }
         }
 
@@ -51,8 +50,6 @@ namespace DefaultNamespace
             {
                 //Do nothing. We just needed loaded in memory, we dont care the result.
                 //Whoever needs it, will grab it later
-                if(Result.Succeeded)
-                    UnityEngine.Debug.Log("JUANI THE EARLY ASSET BUNDLE WAS DOWNLOADED " + promise.LoadingIntention.Hash);
                 World.Destroy(entity);
             }
         }
