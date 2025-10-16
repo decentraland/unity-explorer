@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using System.Threading;
@@ -61,6 +63,7 @@ namespace DCL.SceneBannedUsers
                 await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
 
                 playerIsCurrentlyBanned = await bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct);
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("Scene access restricted: You will not be visible to others in this scene or be able to participate in the Nearby chat."));
             }
         }
 
