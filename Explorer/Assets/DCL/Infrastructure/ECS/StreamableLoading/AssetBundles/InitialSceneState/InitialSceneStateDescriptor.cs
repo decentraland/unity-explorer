@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         public bool IsReady()
         {
-            if (!IsSupported())
+            if (AssetBundleData.Exception != null)
                 return true;
 
             if (AssetBundleData.IsInitialized && AllAssetsInstantiated)
@@ -41,9 +41,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
             return false;
         }
-
-        private bool IsSupported() =>
-            AssetBundleData.Exception == null;
 
         public void AddInstantiatedAsset(string hash, GltfContainerAsset asset)
         {
@@ -87,8 +84,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             }
         }
 
-        private bool assetsAreInCache = false;
-
         /// <summary>
         /// Returns if the assets could be moves to the GLTFAssetCache
         /// </summary>
@@ -111,11 +106,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         public void MarkAssetToMoveToBridge()
         {
             foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
-            {
-                UnityEngine.Debug.Log($"JUANI PUTTING ASSET IN BRIDGE {gltfContainerAsset.Item2.Root.name}");
                 assetsCache.PutInBridge(gltfContainerAsset.Item2);
-
-            }
         }
 
     }

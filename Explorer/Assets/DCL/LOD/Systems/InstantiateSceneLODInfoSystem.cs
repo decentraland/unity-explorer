@@ -57,49 +57,45 @@ namespace DCL.LOD.Systems
         protected override void Update(float t)
         {
             ResolveCurrentLODPromiseQuery(World);
-            InstantiateSingleSceneLODPromiseQuery(World );
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void InstantiateSingleSceneLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, in InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
-            //TODO (JUANI): Merge this initial checks
-            if (!sceneDefinitionComponent.Definition.SupportInitialSceneState() || sceneLODInfo.CurrentLODLevelPromise != 0) return;
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
+                return;
 
+            if (!sceneLODInfo.HasActiveLODPromise())
+                return;
+
+            //Means it has already been resolved
+            if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
+                return;
+
+            if (sceneDefinitionComponent.Definition.SupportInitialSceneState() && sceneLODInfo.CurrentLODLevelPromise == 0)
+                ResolveInitialSceneStateDescriptorLOD(initialSceneStateDescriptor, sceneDefinitionComponent, ref sceneLODInfo);
+            else
+                ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
+        }
+
+        private void ResolveInitialSceneStateDescriptorLOD(in InitialSceneStateDescriptor initialSceneStateDescriptor, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
             if (!initialSceneStateDescriptor.IsReady())
                 return;
 
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
+            var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
+            initialSceneStateDescriptor.RepositionStaticAssets(instantiatedLOD);
+            instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
 
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
-                return;
+            var newLod = new LODAsset(instantiatedLOD, initialSceneStateDescriptor.AssetBundleData.Asset,
+                GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
-            //Little bit obscure
-            if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
-            {
-                var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
-                initialSceneStateDescriptor.RepositionStaticAssets(instantiatedLOD);
-                instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
-
-                var newLod = new LODAsset(instantiatedLOD, result.Asset,
-                    GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
-
-                sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
-            }
+            sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
         }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void ResolveSceneLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            if (sceneDefinitionComponent.Definition.SupportInitialSceneState() && sceneLODInfo.CurrentLODLevelPromise == 0) return;
-
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
-
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
-                return;
-
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
@@ -122,6 +118,8 @@ namespace DCL.LOD.Systems
                     scenesCache);
             }
         }
+
+
 
         private TextureArraySlot?[] GetTextureSlot(byte lodLevel, SceneEntityDefinition sceneDefinitionComponent, GameObject instantiatedLOD)
         {

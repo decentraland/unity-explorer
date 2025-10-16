@@ -70,12 +70,6 @@ namespace DCL.LOD.Systems
 
             if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState())
             {
-                //TODO (JUANI) : Just to start the loop
-                initialSceneStateDescriptor.IsReady();
-                //TODO (JUANI) : Duplicate promise that will point to the same place
-                sceneLODInfo.CurrentLODPromise = Promise.Create(World,
-                    GetAssetBundleIntention.FromHash($"staticscene_{sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.ToString()}"),
-                    PartitionComponent.TOP_PRIORITY);
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;
             }
