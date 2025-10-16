@@ -11,6 +11,7 @@ namespace DCL.Ipfs
         public string main;
         public SceneMetadataScene scene;
         public string runtimeVersion;
+        public string sdkVersion;
         public List<string> allowedMediaHostnames;
         public List<string> requiredPermissions;
         public List<SpawnPoint>? spawnPoints;

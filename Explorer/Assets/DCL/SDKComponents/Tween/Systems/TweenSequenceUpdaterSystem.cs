@@ -25,17 +25,19 @@ namespace DCL.SDKComponents.Tween
     {
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly ISceneData sceneData;
 
-        public TweenSequenceUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneStateProvider sceneStateProvider) : base(world)
+        public TweenSequenceUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneData sceneData) : base(world)
         {
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.sceneStateProvider = sceneStateProvider;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
+            // if (!sceneData.IsSDKVersionOrHigher("7.11.1")) return;
+
             UpdatePBTweenSequenceQuery(World);
             UpdateTweenSequenceStateQuery(World);
         }

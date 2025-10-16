@@ -23,10 +23,9 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneStateProvider.IsCurrent.Returns(true);
+            var sceneData = Substitute.For<ISceneData>();
             tweenerPool = new TweenerPool();
-            system = new TweenSequenceUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool, sceneStateProvider);
+            system = new TweenSequenceUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool, sceneData);
             loaderSystem = new TweenLoaderSystem(world);
         }
 
@@ -343,12 +342,12 @@ namespace DCL.SDKComponents.Tween.Tests
                 await Task.Delay(updateInterval);
                 currentInterval += updateInterval;
                 system!.Update(updateInterval);
-                
+
                 if (world.Has<PBTweenSequence>(testEntity))
                 {
                     var pbTweenSequence = world.TryGetRef<PBTweenSequence>(testEntity, out bool exists);
                     pbTweenSequence.IsDirty = false; // simulate dirty reset system
-                    
+
                     var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists2);
                     pbTween.IsDirty = false; // simulate dirty reset system
                 }

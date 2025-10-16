@@ -65,6 +65,23 @@ namespace SceneRunner.Scene
 
         bool IsPortableExperience();
 
+        /// <summary>
+        ///     Gets the specific SDK version (e.g., "7.5.6") from package.json, or null if not available
+        /// </summary>
+        string GetSDKVersion();
+
+        /// <summary>
+        ///     Checks if the scene's SDK version is the specified version or higher
+        /// </summary>
+        /// <param name="minVersion">Minimum version to check (e.g., "7.5.0")</param>
+        /// <returns>True if scene SDK version >= minVersion, false if version unknown or less than minVersion</returns>
+        bool IsSDKVersionOrHigher(string minVersion);
+
+        /// <summary>
+        ///     Checks if the scene's SDK version matches a specific version
+        /// </summary>
+        bool IsSDKVersion(string version);
+
         class Fake : ISceneData
         {
             public bool SceneLoadingConcluded
@@ -121,6 +138,15 @@ namespace SceneRunner.Scene
                 true;
 
             public bool IsPortableExperience() =>
+                false;
+
+            public string GetSDKVersion() =>
+                null;
+
+            public bool IsSDKVersionOrHigher(string minVersion) =>
+                false;
+
+            public bool IsSDKVersion(string version) =>
                 false;
         }
     }
