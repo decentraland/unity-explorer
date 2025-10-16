@@ -4,39 +4,39 @@ using System;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class SceneVoiceChatController : IDisposable
+    public class SceneVoiceChatPresenter : IDisposable
     {
         private readonly SceneVoiceChatPanelView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IDisposable currentSceneActiveCallSubscription;
         private readonly IDisposable currentCallStatusSubscription;
 
-        public SceneVoiceChatController(
+        public SceneVoiceChatPresenter(
             SceneVoiceChatPanelView view,
             IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            currentSceneActiveCallSubscription = voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Subscribe(OnActiveCommunityChanged);
+            currentSceneActiveCallSubscription = voiceChatOrchestrator.CurrentSceneSceneActiveCommunityVoiceChatData.Subscribe(OnActiveCommunityChanged);
             currentCallStatusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
             view.SceneVoiceChatActiveCallView.JoinStreamButton.onClick.AddListener(OnJoinStreamClicked);
         }
 
         private void OnJoinStreamClicked()
         {
-            if (voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Value != null)
-                voiceChatOrchestrator.JoinCommunityVoiceChat(voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Value.Value.communityId, true);
+            if (voiceChatOrchestrator.CurrentSceneSceneActiveCommunityVoiceChatData.Value != null)
+                voiceChatOrchestrator.JoinCommunityVoiceChat(voiceChatOrchestrator.CurrentSceneSceneActiveCommunityVoiceChatData.Value.Value.communityId, true);
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
-            if (status is not (VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR))
+            if (status is not (VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL))
             {
                 view.VoiceChatContainer.gameObject.SetActive(false);
                 return;
             }
 
-            var communityData = voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Value;
+            var communityData = voiceChatOrchestrator.CurrentSceneSceneActiveCommunityVoiceChatData.Value;
 
             if (communityData != null)
             {
@@ -48,7 +48,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnActiveCommunityChanged(ActiveCommunityVoiceChat? activeCommunityVoiceChat)
         {
-            if (voiceChatOrchestrator.CurrentCallStatus.Value is not (VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR))
+            if (voiceChatOrchestrator.CurrentCallStatus.Value is not (VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL))
             {
                 view.VoiceChatContainer.gameObject.SetActive(false);
                 return;
