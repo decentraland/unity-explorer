@@ -21,7 +21,6 @@ namespace DCL.Backpack
         private readonly BackpackInfoPanelController backpackInfoPanelController;
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarTabsManager tabsManager;
-        private readonly FeatureFlagsConfiguration featureFlags;
 
         public AvatarController(AvatarView view,
             FeatureFlagsConfiguration featureFlags,
@@ -37,7 +36,6 @@ namespace DCL.Backpack
             IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
-            this.featureFlags = featureFlags;
             this.webBrowser = webBrowser;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;

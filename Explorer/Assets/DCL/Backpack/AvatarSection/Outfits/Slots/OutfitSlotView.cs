@@ -105,10 +105,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
             if (hasRealThumbnail)
             {
-                // We have a real thumbnail, so configure the 'outfitThumbnail' Image.
-                // Using .sprite is fine here since this Image component will only ever show generated sprites.
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
-                outfitThumbnail.color = Color.white;
+                outfitThumbnail.color = new Color(1, 1, 1, 1);
             }
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
