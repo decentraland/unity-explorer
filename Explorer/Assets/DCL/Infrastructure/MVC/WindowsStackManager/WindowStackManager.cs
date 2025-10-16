@@ -20,6 +20,7 @@ namespace MVC
         public IController CurrentFullscreenController => fullscreenController;
 
         private readonly List<(IController controller, UniTaskCompletionSource? onClose)> closeableStack = new ();
+        private readonly List<(IController controller, UniTaskCompletionSource closer)> controllersClosures = new ();
 
         public WindowStackManager()
         {
@@ -56,6 +57,8 @@ namespace MVC
             if (controller.CanBeClosedByEscape)
                 closeableStack.Add((controller, onClose = new UniTaskCompletionSource()));
 
+            controllersClosures.Add((controller, new UniTaskCompletionSource()));
+
             foreach (var persistant in persistentStack)
                 if (persistant.State == ControllerState.ViewFocused)
                     persistant.Blur();
@@ -76,6 +79,8 @@ namespace MVC
             if (controller.CanBeClosedByEscape)
                 closeableStack.Add((controller, onClose = new UniTaskCompletionSource()));
 
+            controllersClosures.Add((controller, new UniTaskCompletionSource()));
+
             foreach (IController persistentController in persistentStack)
                 if(persistentController.State == ControllerState.ViewFocused)
                     persistentController.Blur();
@@ -85,6 +90,8 @@ namespace MVC
 
         public void PopFullscreen(IController controller)
         {
+            TryGracefulClose(controller);
+
             foreach (IController persistentController in persistentStack)
                 persistentController.Focus();
 
@@ -98,26 +105,53 @@ namespace MVC
         public PersistentPushInfo PushPersistent(IController controller)
         {
             persistentStack.Add(controller);
+            controllersClosures.Add((controller, new UniTaskCompletionSource()));
             return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, -20));
         }
 
         public void RemovePersistent(IController controller)
         {
+            TryGracefulClose(controller);
             persistentStack.Remove(controller);
         }
 
         public OverlayPushInfo PushOverlay(IController controller)
         {
             topController = controller;
+            controllersClosures.Add((controller, new UniTaskCompletionSource()));
             return new OverlayPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 1));
         }
 
-        public void PopOverlay(IController controller) =>
+        private void TryGracefulClose(IController controller)
+        {
+            for (int i = 0; i < controllersClosures.Count; i++)
+                if (controllersClosures[i].controller == controller)
+                {
+                    controllersClosures[i].closer.TrySetResult();
+                    controllersClosures.RemoveAt(i);
+                    break;
+                }
+        }
+
+        public UniTaskCompletionSource? GetControllerClosure(IController controller)
+        {
+            for (int i = 0; i < controllersClosures.Count; i++)
+                if (controllersClosures[i].controller == controller)
+                    return controllersClosures[i].closer;
+
+            return null;
+        }
+
+        public void PopOverlay(IController controller)
+        {
+            TryGracefulClose(controller);
             topController = null;
+        }
 
         public PopupPopInfo PopPopup(IController controller)
         {
             RemovePopup(controller);
+            TryGracefulClose(controller);
 
             if (popupStack.Count == 0)
             {

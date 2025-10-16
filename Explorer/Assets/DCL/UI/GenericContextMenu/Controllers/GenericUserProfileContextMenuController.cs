@@ -134,7 +134,7 @@ namespace DCL.UI
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action onContextMenuShow = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -192,7 +192,7 @@ namespace DCL.UI
             if (ct.IsCancellationRequested) return;
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, actionOnShow: onContextMenuShow, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
@@ -311,7 +311,7 @@ namespace DCL.UI
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true), PanelsSharingSpace.Chat);
             onChatShown?.Invoke();
         }
 

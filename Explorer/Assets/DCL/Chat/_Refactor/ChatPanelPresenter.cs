@@ -37,7 +37,6 @@ namespace DCL.Chat
         private readonly ChatStateMachine chatStateMachine;
         private readonly EventSubscriptionScope uiScope;
         private readonly CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
-        private readonly ChatClickDetectionService chatClickDetectionService;
 
         private CancellationTokenSource initCts = new ();
         private bool isVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
@@ -57,7 +56,7 @@ namespace DCL.Chat
             ChatInputBlockingService chatInputBlockingService,
             IEventBus eventBus,
             ChatContextMenuService chatContextMenuService,
-            ChatClickDetectionService chatClickDetectionService,
+            ChatClickDetectionHandler chatClickDetectionHandler,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
@@ -67,10 +66,10 @@ namespace DCL.Chat
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
             this.commandRegistry = commandRegistry;
-            this.chatClickDetectionService = chatClickDetectionService;
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed += OnUIClose;
             uiScope.Add(eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
 
             communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
@@ -104,7 +103,6 @@ namespace DCL.Chat
                 chatHistory,
                 currentChannelService,
                 communityDataService,
-                profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
                 commandRegistry.OpenConversation,
@@ -150,7 +148,7 @@ namespace DCL.Chat
             uiScope.Add(messageFeedPresenter);
             uiScope.Add(inputPresenter);
             uiScope.Add(memberListPresenter);
-            uiScope.Add(chatClickDetectionService);
+            uiScope.Add(chatClickDetectionHandler);
 
             var mediator = new ChatUIMediator(
                 view,
@@ -165,7 +163,7 @@ namespace DCL.Chat
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
                 chatInputBlockingService,
-                chatClickDetectionService,
+                chatClickDetectionHandler,
                 this);
 
             uiScope.Add(chatStateMachine);
@@ -186,15 +184,17 @@ namespace DCL.Chat
             }
         }
 
-        public void OnUIClose()
+        private void OnUIClose(InputAction.CallbackContext obj)
         {
             if (chatStateMachine.IsMinimized) return;
+
             chatStateMachine.SetVisibility(true);
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
             initCts.SafeCancelAndDispose();
 
@@ -248,16 +248,6 @@ namespace DCL.Chat
             chatStateMachine.Minimize();
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent evt)
-        {
-            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
-        }
-
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent evt)
-        {
-            chatClickDetectionService.ProcessRaycastResults(evt.RaycastResults);
-        }
-
         private void SubscribeToCoordinationEvents()
         {
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(HandlePointerEnter));
@@ -270,8 +260,6 @@ namespace DCL.Chat
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(OnHiddenInSharedSpace));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent>(OnMvcViewShowed));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent>(OnMvcViewClosed));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)
