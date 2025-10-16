@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
                 {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "STOP EMOTE Outcome? " + emote.IsPlayingSocialEmoteOutcome);
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "STOP EMOTE MOVED Outcome? " + emote.IsPlayingSocialEmoteOutcome);
                     emote.StopEmote = true;
                     emote.CurrentEmoteReference?.animatorComp?.ResetTrigger(emote.CurrentEmoteReference.propClipHash);
                     view.AvatarAnimator.SetTrigger(AnimationHashes.EMOTE_STOP);

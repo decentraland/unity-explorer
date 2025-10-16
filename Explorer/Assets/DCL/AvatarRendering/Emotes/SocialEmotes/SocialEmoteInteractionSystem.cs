@@ -27,6 +27,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             MoveToSocialEmoteInteractionInitiatorTransformQuery(World);
             PlayInitiatorOutcomeAnimationQuery(World);
             MoveReceiverWhileOutcomeAnimationQuery(World);
+            StopAnimationWhenInteractionFinishesQuery(World);
         }
 
         /// <summary>
@@ -99,6 +100,25 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                     OriginalRotation = transform.Rotation
                 };
                 World.Add(entity, newIntent);
+            }
+        }
+
+        /// <summary>
+        /// Cancels the emote animation when the interaction has finished (it could be cancelled by any of the participants).
+        /// </summary>
+        [Query]
+        private void StopAnimationWhenInteractionFinishes(Profile profile, ref CharacterEmoteComponent emoteComponent)
+        {
+            if (emoteComponent.IsPlayingEmote && emoteComponent.Metadata is { IsSocialEmote: true })
+            {
+                SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+
+                if (interaction == null)
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "STOP no interaction " + profile.UserId);
+                    emoteComponent.StopEmote = true;
+                }
+
             }
         }
     }
