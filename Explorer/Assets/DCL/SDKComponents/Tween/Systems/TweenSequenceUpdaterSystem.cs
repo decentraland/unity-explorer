@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, CRDTEntity sdkEntity)
         {
-            TweenStateStatus newState = GetCurrentTweenSequenceState(sdkTweenSequenceComponent);
+            TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenSequenceComponent.SequenceTweener);
             if (newState != sdkTweenSequenceComponent.TweenStateStatus)
             {
                 sdkTweenSequenceComponent.TweenStateStatus = newState;
@@ -86,14 +86,6 @@ namespace DCL.SDKComponents.Tween
             sdkTweenSequenceComponent.SequenceTweener.Play();
             sdkTweenSequenceComponent.TweenStateStatus = TweenStateStatus.TsActive;
             sdkTweenSequenceComponent.IsDirty = false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static TweenStateStatus GetCurrentTweenSequenceState(SDKTweenSequenceComponent sequenceTweener)
-        {
-            if (sequenceTweener.SequenceTweener.IsFinished()) return TweenStateStatus.TsCompleted;
-            if (sequenceTweener.SequenceTweener.IsPaused()) return TweenStateStatus.TsPaused;
-            return TweenStateStatus.TsActive;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

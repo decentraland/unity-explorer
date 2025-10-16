@@ -87,7 +87,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
         {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+            TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenComponent.CustomTweener);
 
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
@@ -138,7 +138,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+            TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenComponent.CustomTweener);
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
@@ -180,14 +180,6 @@ namespace DCL.SDKComponents.Tween
 
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, durationInSeconds, transform, textureStart);
             sdkTweenComponent.CustomTweener.DoTween(ease, Mathf.Clamp(tweenModel.CurrentTime, 0f, 1f) * durationInSeconds, isPlaying);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
-        {
-            if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
-            if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
-            return TweenStateStatus.TsActive;
         }
 
         [Query]

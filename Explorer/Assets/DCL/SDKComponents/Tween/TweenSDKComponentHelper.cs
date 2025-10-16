@@ -53,6 +53,13 @@ namespace DCL.SDKComponents.Tween
         public static Ease GetEase(EasingFunction easingFunction) =>
             EASING_FUNCTIONS_MAP.GetValueOrDefault(easingFunction, Linear);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TweenStateStatus GetTweenerState(ITweener tweener)
+        {
+            if (tweener.IsFinished()) return TweenStateStatus.TsCompleted;
+            if (tweener.IsPaused()) return TweenStateStatus.TsPaused;
+            return TweenStateStatus.TsActive;
+        }
 
         public static void WriteTweenStateInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, TweenStateStatus tweenStateStatus)
         {
