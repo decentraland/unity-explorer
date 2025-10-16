@@ -114,7 +114,7 @@ namespace MVC
 
             // Hide all popups in the stack and clear it
             if (overlayPushInfo.PopupControllers != null)
-                CloseAllPopups(overlayPushInfo.PopupControllers, ct);
+                CloseAllPopups(overlayPushInfo.PopupControllers);
 
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)
@@ -147,7 +147,7 @@ namespace MVC
             }
         }
 
-        private void CloseAllPopups(List<(IController, int)> popupControllers, CancellationToken ct)
+        private void CloseAllPopups(List<(IController, int)> popupControllers)
         {
             // Hide all popups in the stack and clear it
             for (int i = popupControllers.Count - 1; i >= 0; i--)
@@ -171,7 +171,7 @@ namespace MVC
 
             try
             {
-                CloseAllPopups(fullscreenPushInfo.PopupControllers, ct);
+                CloseAllPopups(fullscreenPushInfo.PopupControllers);
 
                 // Hide the popup closer
                 popupCloser.HideAsync(ct).Forget();
