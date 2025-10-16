@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
 using System;
@@ -40,7 +41,7 @@ namespace DCL.UI.ProfileElements
         {
             this.profileRepositoryWrapper = profileDataProvider;
             currentWalledId = new Web3Address("");
-            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct).SuppressAnyExceptionWithFallback(null);
 
             connectionStatusIndicatorContainer.gameObject.SetActive(profile != null);
 
