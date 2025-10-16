@@ -69,11 +69,11 @@ namespace DCL.SDKComponents.Tween.Tests
             Vector3 startValue2 = CreateVector3(5, 0, 0);
             Vector3 endValue2 = CreateVector3(10, 0, 0);
 
-            Entity testEntity = CreateTweenSequence(new[]
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
             {
                 CreateMoveTween(startValue1, endValue1, 500),
                 CreateMoveTween(startValue2, endValue2, 500)
-            }, TweenLoop.TlRestart);
+            });
 
             loaderSystem.Update(0);
             system.Update(0);
@@ -98,11 +98,11 @@ namespace DCL.SDKComponents.Tween.Tests
             Quaternion startRot = CreateQuaternion(UnityEngine.Quaternion.identity);
             Quaternion endRot = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
 
-            Entity testEntity = CreateTweenSequence(new[]
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
             {
                 CreateMoveTween(startMove, endMove, 500),
                 CreateRotateTween(startRot, endRot, 500)
-            }, TweenLoop.TlRestart);
+            });
 
             loaderSystem.Update(0);
             system.Update(0);
@@ -124,11 +124,11 @@ namespace DCL.SDKComponents.Tween.Tests
             Vector3 startScale2 = CreateVector3(2, 2, 2);
             Vector3 endScale2 = CreateVector3(1, 1, 1);
 
-            Entity testEntity = CreateTweenSequence(new[]
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
             {
                 CreateScaleTween(startScale1, endScale1, 500),
                 CreateScaleTween(startScale2, endScale2, 500)
-            }, TweenLoop.TlRestart);
+            });
 
             loaderSystem.Update(0);
             system.Update(0);
@@ -204,13 +204,13 @@ namespace DCL.SDKComponents.Tween.Tests
             Vector3 pos3 = CreateVector3(3, 3, 0);
             Vector3 pos4 = CreateVector3(0, 3, 0);
 
-            Entity testEntity = CreateTweenSequence(new[]
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
             {
                 CreateMoveTween(pos1, pos2, 250),
                 CreateMoveTween(pos2, pos3, 250),
                 CreateMoveTween(pos3, pos4, 250),
                 CreateMoveTween(pos4, pos1, 250)
-            }, TweenLoop.TlRestart);
+            });
 
             loaderSystem.Update(0);
             system.Update(0);
@@ -348,6 +348,9 @@ namespace DCL.SDKComponents.Tween.Tests
                 {
                     var pbTweenSequence = world.TryGetRef<PBTweenSequence>(testEntity, out bool exists);
                     pbTweenSequence.IsDirty = false; // simulate dirty reset system
+                    
+                    var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists2);
+                    pbTween.IsDirty = false; // simulate dirty reset system
                 }
             }
         }
