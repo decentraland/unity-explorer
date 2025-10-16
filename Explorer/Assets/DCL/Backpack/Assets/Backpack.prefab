@@ -3693,6 +3693,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a0a4c4177912421880c7561a4776a68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blitMaterial: {fileID: 2100000, guid: 61d056381ff62c04ca156e7f6a884421, type: 2}
   <TabSelectorMappedViews>k__BackingField:
   - <TabSelectorView>k__BackingField: {fileID: 1673658121928411856}
     <Section>k__BackingField: 0

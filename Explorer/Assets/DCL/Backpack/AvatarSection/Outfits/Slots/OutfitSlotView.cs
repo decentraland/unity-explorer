@@ -1,4 +1,5 @@
 ﻿using System;
+using DCL.Audio;
 using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -50,10 +51,18 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [field: SerializeField]
         private SkeletonLoadingView loadingView { get; set; }
 
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig EquipWearableAudio { get; private set; }
+
         private void Awake()
         {
             saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
-            equipButton?.onClick.AddListener(() => OnEquipClicked?.Invoke());
+            equipButton?.onClick.AddListener(() =>
+            {
+                OnEquipClicked?.Invoke();
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
+            });
             deleteButton?.onClick.AddListener(() => OnDeleteClicked?.Invoke());
             previewButton?.onClick.AddListener(() => OnPreviewClicked?.Invoke());
 

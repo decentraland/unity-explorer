@@ -308,6 +308,7 @@ MonoBehaviour:
   outfitHoverOutline: {fileID: 6166669799993606460}
   <hoverHandler>k__BackingField: {fileID: 6898318520030988549}
   <loadingView>k__BackingField: {fileID: 7150460334382701551}
+  <EquipWearableAudio>k__BackingField: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
 --- !u!114 &6898318520030988549
 MonoBehaviour:
   m_ObjectHideFlags: 0

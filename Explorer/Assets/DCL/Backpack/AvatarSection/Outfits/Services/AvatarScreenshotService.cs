@@ -17,7 +17,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         public AvatarScreenshotService(ISelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
-
             if (!Directory.Exists(baseOutfitsDirectory))
                 Directory.CreateDirectory(baseOutfitsDirectory);
         }
@@ -60,6 +59,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 // Set the temporary RT as active and read its (now small) contents.
                 RenderTexture.active = tempRT;
                 screenshotTexture.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+
+                var pixels = screenshotTexture.GetPixels();
+                for (int p = 0; p < pixels.Length; p++)
+                {
+                    pixels[p] = pixels[p].gamma;
+                }
+
+                screenshotTexture.SetPixels(pixels);
+                
+                
                 screenshotTexture.Apply();
 
                 // Clean up: release the temporary RT and reset the active one.
