@@ -15,12 +15,5 @@ namespace DCL.Utilities.Extensions
             videoTexture.Reinitialize(to.width, to.height);
             videoTexture.Apply();
         }
-
-        public static void ResizeTexture(this RenderTexture videoTexture, Texture to)
-        {
-            videoTexture.width = to.width;
-            videoTexture.height = to.height;
-            videoTexture.Create(); // reallocates GPU surface
-        }
     }
 }

@@ -49,33 +49,25 @@ namespace ECS.Unity.Textures.Components
         // All the renderers that use the video texture
         private List<Renderer> renderers;
 
+        public int referenceCount;
+
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
         ///     we don't use the original texture from AVPro
         /// </summary>
         public RenderTexture Texture { get; private set; }
 
-
-
         public static VideoTextureConsumer CreateVideoTextureConsumer()
         {
-            // This allows to clear the existing data on the texture,
-            // to avoid "ghost" images in the textures before they are loaded with new data,
-            // particularly when dealing with streaming textures from videos
-            /*texture.Reinitialize(1, 1);
-            texture.SetPixel(0, 0, Color.clear);
-            texture.Apply();*/
-
-
             VideoTextureConsumer consumer = new VideoTextureConsumer();
 
-            RenderTexture Texture = new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32)
+            RenderTexture texture = new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32)
             {
                 useMipMap = false,
                 autoGenerateMips = false,
             };
-            Texture.Create();
-            consumer.Texture = Texture;
+            texture.Create();
+            consumer.Texture = texture;
             consumer.renderers = new List<Renderer>();
             consumer.referenceCount = 0;
 
@@ -108,21 +100,9 @@ namespace ECS.Unity.Textures.Components
             renderers.Remove(renderer);
         }
 
-        public void SetTextureScale(Vector2 texScale)
-        {
-            foreach (var meshRenderer in renderers)
-            {
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
-            }
-        }
-
-        public int referenceCount;
-
         public void AddReference()
         {
             referenceCount++;
-
         }
 
         public void DecreaseReference()
@@ -132,12 +112,9 @@ namespace ECS.Unity.Textures.Components
 
         public void ResizeAndReassing(Texture to)
         {
-            //TODO (Leak?)
-            Texture = new RenderTexture(to.width, to.height, 0, RenderTextureFormat.BGRA32)
-            {
-                useMipMap = false,
-                autoGenerateMips = false,
-            };
+            Texture.Release();
+            Texture.width = to.width;
+            Texture.height = to.height;
             Texture.Create();
 
             //TODO (Will the renderer be assigned at this point)
