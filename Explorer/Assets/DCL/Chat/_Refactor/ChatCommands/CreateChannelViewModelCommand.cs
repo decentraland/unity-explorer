@@ -27,7 +27,6 @@ namespace DCL.Chat.ChatCommands
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
-        private readonly IDecentralandUrlsSource urlsSource;
 
         public CreateChannelViewModelCommand(
             IEventBus eventBus,
@@ -36,7 +35,6 @@ namespace DCL.Chat.ChatCommands
             ProfileRepositoryWrapper profileRepository,
             GetUserChatStatusCommand getUserChatStatusCommand,
             GetCommunityThumbnailCommand getCommunityThumbnailCommand,
-            IDecentralandUrlsSource urlsSource,
             IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.eventBus = eventBus;
@@ -45,7 +43,6 @@ namespace DCL.Chat.ChatCommands
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
-            this.urlsSource = urlsSource;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
@@ -102,7 +99,7 @@ namespace DCL.Chat.ChatCommands
             if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
             {
                 viewModel.DisplayName = communityData.name;
-                viewModel.ImageUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.id);
+                viewModel.ImageUrl = communityData.thumbnailUrl;
                 viewModel.CommunityConnectionUpdates = voiceChatOrchestrator.CommunityConnectionUpdates(ChatChannel.GetCommunityIdFromChannelId(channel.Id));
                 viewModel.CurrentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created ViewModel for: {communityData.name} -> is Streaming: {viewModel.CommunityConnectionUpdates.Value} - current community ID: {viewModel.CurrentCommunityCallId.Value}");

@@ -44,7 +44,7 @@ namespace DCL.VoiceChat
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController, urlsSource);
+            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 

@@ -62,8 +62,7 @@ namespace DCL.Chat
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
-            ITranslationCache translationCache,
-            IDecentralandUrlsSource urlsSource)
+            ITranslationCache translationCache)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -98,7 +97,7 @@ namespace DCL.Chat
                 voiceChatOrchestrator,
                 chatEventBus,
                 commandRegistry.GetUserCallStatusCommand,
-                commandRegistry.ToggleAutoTranslateCommand,urlsSource);
+                commandRegistry.ToggleAutoTranslateCommand);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
@@ -110,8 +109,7 @@ namespace DCL.Chat
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
                 commandRegistry.OpenConversation,
-                commandRegistry.CreateChannelViewModel,
-                urlsSource);
+                commandRegistry.CreateChannelViewModel);
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
                 eventBus,

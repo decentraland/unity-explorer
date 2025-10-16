@@ -40,15 +40,14 @@ namespace DCL.Communities.EventInfo
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            IRealmNavigator realmNavigator,
-            IDecentralandUrlsSource urlsSource)
+            IRealmNavigator realmNavigator)
             : base(viewFactory)
         {
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
-            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController), urlsSource);
+            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
         }
 
         public override void Dispose()

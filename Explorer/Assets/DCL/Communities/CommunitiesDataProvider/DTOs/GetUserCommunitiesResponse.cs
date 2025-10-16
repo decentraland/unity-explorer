@@ -16,7 +16,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public class CommunityData
         {
             public string id;
-            public CommunityThumbnails? thumbnails;
+            public string thumbnailUrl;
             public string name;
             public string description;
             public string ownerAddress;
@@ -36,7 +36,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             {
             }
             public CommunityData(string id,
-                CommunityThumbnails? thumbnails,
+                string thumbnailUrl,
                 string name,
                 string description,
                 CommunityPrivacy privacy,
@@ -46,7 +46,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 GetCommunityResponse.VoiceChatStatus voiceChatStatus)
             {
                 this.id = id;
-                this.thumbnails = thumbnails;
+                this.thumbnailUrl = thumbnailUrl;
                 this.name = name;
                 this.description = description;
                 this.privacy = privacy;

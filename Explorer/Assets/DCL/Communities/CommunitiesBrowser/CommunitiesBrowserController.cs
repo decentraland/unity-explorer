@@ -83,8 +83,7 @@ namespace DCL.Communities.CommunitiesBrowser
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus,
-            IDecentralandUrlsSource urlsSource)
+            IChatEventBus chatEventBus)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -97,7 +96,7 @@ namespace DCL.Communities.CommunitiesBrowser
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
             browserStateService = new CommunitiesBrowserStateService(browserEventBus, orchestrator);
-            var thumbnailLoader = new ThumbnailLoader(spriteCache, urlsSource);
+            var thumbnailLoader = new ThumbnailLoader(spriteCache);
             commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, sharedSpaceManager, chatEventBus, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
 
             myCommunitiesPresenter = new CommunitiesBrowserMyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader, browserEventBus, orchestrator);

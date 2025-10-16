@@ -51,6 +51,9 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             GetCommunityResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                       .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft);
+
+            response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
+
             return response;
         }
 
@@ -63,6 +66,11 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             GetUserCommunitiesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                             .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
+
+            foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
+            {
+                community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);
+            }
 
             if (includeRequestsReceivedPerCommunity)
             {
@@ -154,6 +162,8 @@ namespace DCL.Communities.CommunitiesDataProvider
 
                 CommunityUpdated?.Invoke(communityId);
             }
+
+            response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
 
             return response;
         }
@@ -314,6 +324,9 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             GetUserInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                               .CreateFromJson<GetUserInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            foreach (GetUserInviteRequestData.UserInviteRequestData inviteRequest in response.data.results)
+                inviteRequest.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), inviteRequest.communityId);
 
             return response;
         }

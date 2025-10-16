@@ -28,7 +28,6 @@ namespace DCL.Chat
         private readonly OpenConversationCommand openConversationCommand;
         private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
         private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new ();
-        private readonly IDecentralandUrlsSource urlsSource;
         private readonly EventSubscriptionScope scope = new ();
 
         private bool isInitialized;
@@ -44,8 +43,7 @@ namespace DCL.Chat
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
             OpenConversationCommand openConversationCommand,
-            CreateChannelViewModelCommand createChannelViewModelCommand,
-            IDecentralandUrlsSource urlsSource)
+            CreateChannelViewModelCommand createChannelViewModelCommand)
         {
             this.view = view;
             this.chatEventBus = chatEventBus;
@@ -56,7 +54,6 @@ namespace DCL.Chat
             this.closeChannelCommand = closeChannelCommand;
             this.openConversationCommand = openConversationCommand;
             this.createChannelViewModelCommand = createChannelViewModelCommand;
-            this.urlsSource = urlsSource;
 
             lifeCts = new CancellationTokenSource();
 
@@ -112,7 +109,7 @@ namespace DCL.Chat
                 {
                     vm.DisplayName = cd.name;
 
-                    vm.ImageUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), cd.id);
+                    vm.ImageUrl = cd.thumbnailUrl;
                     view.UpdateConversation(vm);
 
                     if (!string.IsNullOrEmpty(vm.ImageUrl))

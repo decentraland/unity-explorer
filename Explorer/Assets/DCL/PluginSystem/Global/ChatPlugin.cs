@@ -330,8 +330,7 @@ namespace DCL.PluginSystem.Global
                 translationService,
                 translationMemory,
                 translationCache,
-                translationSettings,
-                decentralandUrlsSource);
+                translationSettings);
 
             pluginScope.Add(commandRegistry);
 
@@ -355,8 +354,7 @@ namespace DCL.PluginSystem.Global
                 chatSharedAreaEventBus,
                 translationSettings,
                 translationMemory,
-                translationCache,
-                decentralandUrlsSource
+                translationCache
             );
 
             chatSharedAreaController = new ChatMainSharedAreaController(

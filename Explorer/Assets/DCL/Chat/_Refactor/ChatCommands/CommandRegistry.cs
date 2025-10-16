@@ -75,8 +75,7 @@ namespace DCL.Chat.ChatCommands
             ITranslationService translationService,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            ITranslationSettings translationSettings,
-            IDecentralandUrlsSource urlsSource)
+            ITranslationSettings translationSettings)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -147,8 +146,7 @@ namespace DCL.Chat.ChatCommands
                 profileRepositoryWrapper,
                 chatConfig,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail,
-                urlsSource);
+                GetCommunityThumbnail);
 
             SendMessage = new SendMessageCommand(
                 chatMessageBus,
@@ -165,7 +163,6 @@ namespace DCL.Chat.ChatCommands
                 profileRepositoryWrapper,
                 GetUserChatStatusCommand,
                 GetCommunityThumbnail,
-                urlsSource,
                 voiceChatOrchestrator);
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand,

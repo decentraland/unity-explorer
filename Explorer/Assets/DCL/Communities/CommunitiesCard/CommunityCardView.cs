@@ -336,7 +336,7 @@ namespace DCL.Communities.CommunitiesCard
             publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
             privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.id, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, CommunityThumbnail, defaultCommunityImage, cancellationToken, true).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;

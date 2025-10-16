@@ -23,7 +23,6 @@ namespace DCL.Chat.ChatCommands
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
         private readonly ChatConfig.ChatConfig chatConfig;
-        private readonly IDecentralandUrlsSource urlsSource;
 
         public GetTitlebarViewModelCommand(
             IEventBus eventBus,
@@ -31,15 +30,13 @@ namespace DCL.Chat.ChatCommands
             ProfileRepositoryWrapper profileRepository,
             ChatConfig.ChatConfig chatConfig,
             GetUserChatStatusCommand getUserChatStatusCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
-            IDecentralandUrlsSource urlsSource)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
-            this.urlsSource = urlsSource;
             this.chatConfig = chatConfig;
         }
 
@@ -64,9 +61,8 @@ namespace DCL.Chat.ChatCommands
                 };
             }
 
-            var thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.id);
             Sprite thumbnail = await getCommunityThumbnailCommand
-                .ExecuteAsync(thumbnailUrl, ct);
+                .ExecuteAsync(communityData.thumbnailUrl, ct);
 
             var viewModel = new ChatTitlebarViewModel
             {

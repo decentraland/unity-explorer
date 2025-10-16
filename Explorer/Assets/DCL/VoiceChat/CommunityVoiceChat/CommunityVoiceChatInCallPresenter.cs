@@ -24,7 +24,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
         private readonly IDisposable panelSizeChangeSubscription;
         private readonly IDisposable panelStateChangeSubscription;
-        private readonly IDecentralandUrlsSource urlsSource;
 
         private int speakersCount;
 
@@ -35,12 +34,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CommunityVoiceChatInCallView view,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
-            IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource)
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.urlsSource = urlsSource;
             expandedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.ExpandedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             collapsedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.CollapsedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
@@ -122,8 +119,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void SetCommunityData(GetCommunityResponse communityData)
         {
             view.SetCommunityName(communityData.data.name);
-            string thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), communityData.data.id);
-            thumbnailController.RequestImage(thumbnailUrl, useKtx: true, defaultSprite: view.DefaultCommunitySprite);
+            thumbnailController.RequestImage(communityData.data.thumbnailUrl, useKtx: true, defaultSprite: view.DefaultCommunitySprite);
         }
 
         public void SetTalkingStatus(int speakingCount, string username)

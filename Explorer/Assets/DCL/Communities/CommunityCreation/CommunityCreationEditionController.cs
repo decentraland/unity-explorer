@@ -55,7 +55,6 @@ namespace DCL.Communities.CommunityCreation
         private readonly IMVCManager mvcManager;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
-        private readonly IDecentralandUrlsSource urlsSource;
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource? createCommunityCts;
@@ -106,8 +105,7 @@ namespace DCL.Communities.CommunityCreation
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
-            LambdasProfilesProvider lambdasProfilesProvider,
-            IDecentralandUrlsSource urlsSource) : base(viewFactory)
+            LambdasProfilesProvider lambdasProfilesProvider) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -116,7 +114,6 @@ namespace DCL.Communities.CommunityCreation
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
-            this.urlsSource = urlsSource;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -139,7 +136,7 @@ namespace DCL.Communities.CommunityCreation
         {
             lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
-            thumbnailLoader = new ThumbnailLoader(inputData.ThumbnailSpriteCache, urlsSource);
+            thumbnailLoader = new ThumbnailLoader(inputData.ThumbnailSpriteCache);
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
@@ -408,9 +405,7 @@ namespace DCL.Communities.CommunityCreation
             originalCommunityLandsForEdition.Clear();
             originalCommunityWorldsForEdition.Clear();
 
-            // Construct the thumbnail URL from the community ID
-            string thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), inputData.CommunityId);
-            viewInstance!.SetProfileSelectedImage(thumbnailUrl, thumbnailLoader);
+            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCommunityPrivacy(getCommunityResult.Value.data.privacy, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
@@ -613,8 +608,7 @@ namespace DCL.Communities.CommunityCreation
             {
                 if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
                 {
-                    string thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), result.Value.data.id);
-                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(thumbnailUrl, lastSelectedProfileThumbnail);
+                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnailUrl, lastSelectedProfileThumbnail);
                     isProfileThumbnailDirty = false;
                     lastSelectedProfileThumbnail = null;
                 }
