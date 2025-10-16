@@ -116,10 +116,6 @@ namespace ECS.Unity.Textures.Components
             Texture.width = to.width;
             Texture.height = to.height;
             Texture.Create();
-
-            //TODO (Will the renderer be assigned at this point)
-            foreach (var meshRenderer in renderers)
-                meshRenderer.sharedMaterial.SetTexture(ShaderUtils.BaseMap, Texture);
         }
 
     }
