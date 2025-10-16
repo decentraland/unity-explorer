@@ -15,5 +15,13 @@ namespace DCL.Utilities.Extensions
             videoTexture.Reinitialize(to.width, to.height);
             videoTexture.Apply();
         }
+
+        public static void ResizeTexture(this RenderTexture videoTexture, Texture targetTexture)
+        {
+            videoTexture.Release();
+            videoTexture.width = targetTexture.width;
+            videoTexture.height = targetTexture.height;
+            videoTexture.Create();
+        }
     }
 }

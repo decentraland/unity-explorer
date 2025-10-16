@@ -192,7 +192,7 @@ namespace DCL.SDKComponents.MediaStream
                     Graphics.CopyTexture(avText, videoTextureConsumer.Texture);
             }
             else
-                videoTextureConsumer.ResizeAndReassing(avText);
+                videoTextureConsumer.Texture.ResizeTexture(avText);
         }
 
         private void HandleComponentChange(

@@ -109,14 +109,5 @@ namespace ECS.Unity.Textures.Components
         {
             referenceCount--;
         }
-
-        public void ResizeAndReassing(Texture to)
-        {
-            Texture.Release();
-            Texture.width = to.width;
-            Texture.height = to.height;
-            Texture.Create();
-        }
-
     }
 }
