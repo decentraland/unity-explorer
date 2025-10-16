@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,12 +9,11 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
 {
-    public class EmojiPanelController
+    public class EmojiPanelPresenter : IDisposable
     {
-        public event Action<string> EmojiSelected;
+        public event Action<string>? EmojiSelected;
 
-        public readonly EmojiMapping EmojiMapping;
-
+        private readonly EmojiMapping emojiMapping;
         private readonly EmojiPanelView view;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly EmojiButton emojiButtonPrefab;
@@ -23,12 +21,11 @@ namespace DCL.Emoji
         private readonly EmojiSearchController emojiSearchController;
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
-        private readonly Dictionary<string, RectTransform> sectionTransforms = new ();
         private readonly List<EmojiData> foundEmojis = new ();
 
         private CancellationTokenSource cts = new ();
 
-        public EmojiPanelController(
+        public EmojiPanelPresenter(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             EmojiMapping emojiMapping,
@@ -39,7 +36,7 @@ namespace DCL.Emoji
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
-            EmojiMapping = emojiMapping;
+            this.emojiMapping = emojiMapping;
             emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
             emojiSearchController.SearchTextChanged += OnSearchTextChanged;
             emojiSearchController.EmojiSelected += emoji => EmojiSelected?.Invoke(emoji);
@@ -48,13 +45,6 @@ namespace DCL.Emoji
             ConfigureEmojiSections();
             view.SectionSelected += OnSectionSelected;
         }
-
-        [Obsolete("This constructor is obsolete, use the one that takes an EmojiMapping object instead.")]
-        public EmojiPanelController(
-            EmojiPanelView view,
-            EmojiPanelConfigurationSO emojiPanelConfiguration,
-            EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab) : this(view, emojiPanelConfiguration, new EmojiMapping(emojiPanelConfiguration), emojiSectionPrefab, emojiButtonPrefab) { }
 
         private void OnSearchTextChanged(string searchText)
         {
@@ -70,7 +60,7 @@ namespace DCL.Emoji
         private async UniTaskVoid OnSearchTextChangedAsync(string searchText, CancellationToken ct)
         {
             // Uses the new EmojiMapping class, as per the July 17th refactor
-            await DictionaryUtils.GetKeysContainingTextAsync(EmojiMapping.NameMapping, searchText, foundEmojis, ct);
+            await DictionaryUtils.GetKeysContainingTextAsync(emojiMapping.NameMapping, searchText, foundEmojis, ct);
             emojiSearchController.SetValues(foundEmojis);
         }
 
@@ -111,7 +101,6 @@ namespace DCL.Emoji
             sectionView.EmojiContainer.sizeDelta = new Vector2(sectionView.EmojiContainer.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.EmojiContainer));
             LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
             sectionView.SectionRectTransform.sizeDelta = new Vector2(sectionView.SectionRectTransform.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.SectionRectTransform));
-            sectionTransforms.Add(sectionView.SectionTitle.text, sectionView.SectionRectTransform);
         }
 
         private void GenerateEmojis(List<SerializableKeyValuePair<string, int>> emojis, EmojiSectionView sectionView)
@@ -135,7 +124,7 @@ namespace DCL.Emoji
             emojiSearchController.SearchTextChanged -= OnSearchTextChanged;
             view.EmojiFirstOpen -= ConfigureEmojiSectionSizes;
             view.SectionSelected -= OnSectionSelected;
-            emojiSearchController?.Dispose();
+            emojiSearchController.Dispose();
 
             foreach (EmojiSectionView sectionView in emojiSectionViews)
             {
@@ -143,12 +132,10 @@ namespace DCL.Emoji
                 {
                     UnityObjectUtils.SafeDestroy(emojiButtonTransform.gameObject);
                 }
-
                 UnityObjectUtils.SafeDestroy(sectionView.gameObject);
             }
 
             emojiSectionViews.Clear();
-            sectionTransforms.Clear();
             foundEmojis.Clear();
         }
     }

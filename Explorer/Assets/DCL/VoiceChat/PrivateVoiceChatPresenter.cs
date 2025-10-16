@@ -3,10 +3,10 @@ using DCL.Audio;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,7 +14,7 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class PrivateVoiceChatController : IDisposable
+    public class PrivateVoiceChatPresenter : IDisposable
     {
         private readonly PrivateVoiceChatView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
 
         private CancellationTokenSource cts = new ();
 
-        public PrivateVoiceChatController(
+        public PrivateVoiceChatPresenter(
             PrivateVoiceChatView view,
             IVoiceChatOrchestrator privateCallOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
@@ -80,7 +80,7 @@ namespace DCL.VoiceChat
             {
                 foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
                 {
-                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct);
+                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
                     if (profileAsync != null) userName = profileAsync.Name;
                 }
             }
