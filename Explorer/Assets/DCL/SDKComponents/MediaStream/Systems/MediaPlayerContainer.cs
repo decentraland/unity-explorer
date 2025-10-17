@@ -55,6 +55,9 @@ namespace DCL.SDKComponents.MediaStream
                 {
                     if (rt.IsCreated())
                         rt.Release();
+
+                    rt.width = 1;
+                    rt.height = 1;
                 },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
                 maxSize: 20);

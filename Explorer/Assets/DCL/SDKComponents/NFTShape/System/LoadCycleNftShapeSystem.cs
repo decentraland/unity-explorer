@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Renderer;
 using ECS.Abstract;
@@ -60,7 +61,7 @@ namespace DCL.SDKComponents.NFTShape.System
             nftRenderer.Apply(anyTexture.Texture);
 
             if (anyTexture.IsVideoTextureData(out VideoTextureData? videoTextureData))
-                nftLoadingComponent.VideoPlayerEntity = World.Create(result.Asset!, videoTextureData!.Value.Consumer, videoTextureData.Value.MediaPlayer);
+                nftLoadingComponent.VideoPlayerEntity = World.Create(result.Asset!, new CustomMediaStream(MediaPlayerComponent.DEFAULT_VOLUME, true), videoTextureData!.Value.Consumer, videoTextureData.Value.MediaPlayer);
         }
     }
 }

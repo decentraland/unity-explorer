@@ -69,23 +69,6 @@ namespace ECS.Unity.Textures.Components
             renderers = new List<Renderer>();
         }
 
-        //
-        // public int ConsumersCount => Texture.referenceCount;
-
-        // public VideoTextureConsumer(Texture2D texture)
-        // {
-        //     Texture = new Texture2DData(texture);
-        //     renderers = new List<Renderer>();
-        //     IsDirty = false;
-        // }
-        //
-        // public VideoTextureConsumer(Texture2DData t2dd)
-        // {
-        //     Texture = t2dd;
-        //     renderers = new List<Renderer>();
-        //     IsDirty = false;
-        // }
-
         public void Dispose()
         {
             videoTexturesPool.Release(Texture);
@@ -120,14 +103,5 @@ namespace ECS.Unity.Textures.Components
 
             Texture.Create();
         }
-
-        // public void SetTextureScale(Vector2 texScale)
-        // {
-        //     foreach (var meshRenderer in renderers)
-        //     {
-        //         meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
-        //         meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
-        //     }
-        // }
     }
 }

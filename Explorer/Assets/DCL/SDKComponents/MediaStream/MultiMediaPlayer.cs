@@ -131,7 +131,7 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx));
         }
 
-        public void CrossfadeVolume(float volume, float volumeDelta = 1)
+        public readonly void CrossfadeVolume(float volume, float volumeDelta = 1)
         {
             Match(
                 (volume, volumeDelta),

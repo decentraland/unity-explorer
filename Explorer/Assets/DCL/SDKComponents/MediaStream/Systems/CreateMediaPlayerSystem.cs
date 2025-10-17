@@ -68,17 +68,5 @@ namespace DCL.SDKComponents.MediaStream
             if (!World.Has<VideoTextureConsumer>(entity))
                 World.Add(entity, mediaFactory.CreateVideoConsumer());
         }
-
-        //        private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
-        //        {
-        //            var component = mediaFactory.CreateMediaPlayerComponent(url, hasVolume, volume);
-        //
-        // #if UNITY_EDITOR
-        //             if (component.MediaPlayer.TryGetAvProPlayer(out var avPro))
-        //                 avPro!.gameObject.name = $"MediaPlayer_Entity_{entity}";
-        // #endif
-        //
-        //            return component;
-        //        }
     }
 }

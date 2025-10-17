@@ -20,8 +20,8 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
-            HandleSdkAudioStreamComponentRemovalQuery(World);
-            HandleSdkVideoPlayerComponentRemovalQuery(World);
+            HandleOriginalComponentRemovalQuery(World);
+            RemoveVideoPriorityQuery(World);
 
             TryReleaseConsumerQuery(World);
             HandleTextureWithoutConsumersQuery(World);
@@ -29,22 +29,25 @@ namespace DCL.SDKComponents.MediaStream
             HandleMediaPlayerDestructionQuery(World);
         }
 
+        /// <summary>
+        ///     Removes Media Player when the component that originated it is removed.
+        /// </summary>
         [Query]
-        [None(typeof(PBAudioStream), typeof(DeleteEntityIntention), typeof(VideoTextureConsumer))]
-        private void HandleSdkAudioStreamComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
+        [None(typeof(PBAudioStream), typeof(CustomMediaStream), typeof(PBVideoPlayer))]
+        private void HandleOriginalComponentRemoval(Entity e, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpMediaPlayer(ref mediaPlayer);
-            World.Remove<MediaPlayerComponent>(entity);
+            World.Remove<MediaPlayerComponent>(e);
         }
 
+        /// <summary>
+        ///     Removes <see cref="VideoStateByPriorityComponent" /> component when the attached Media Player is removed
+        /// </summary>
         [Query]
-        [All(typeof(VideoTextureConsumer))]
-        [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
-        {
-            CleanUpMediaPlayer(ref mediaPlayer);
-            World.Remove<MediaPlayerComponent, VideoStateByPriorityComponent>(entity);
-        }
+        [All(typeof(VideoStateByPriorityComponent))]
+        [None(typeof(MediaPlayerComponent))]
+        private void RemoveVideoPriority(Entity e) =>
+            World.Remove<VideoStateByPriorityComponent>(e);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
@@ -52,21 +55,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             CleanUpMediaPlayer(ref mediaPlayer);
         }
-
-        private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
-        {
-            mediaPlayerComponent.Dispose();
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeMediaPlayerComponentQuery(World);
-            FinalizeVideoTextureConsumerComponentQuery(World);
-        }
-
-        [Query]
-        private void FinalizeMediaPlayerComponent(ref MediaPlayerComponent component) =>
-            CleanUpMediaPlayer(ref component);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
@@ -90,8 +78,21 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
+        private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent) =>
+            mediaPlayerComponent.Dispose();
+
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeMediaPlayerComponentQuery(World);
+            FinalizeVideoTextureConsumerComponentQuery(World);
+        }
+
         private void CleanUpVideoTexture(ref VideoTextureConsumer videoTextureConsumer) =>
             videoTextureConsumer.Dispose();
+
+        [Query]
+        private void FinalizeMediaPlayerComponent(ref MediaPlayerComponent component) =>
+            CleanUpMediaPlayer(ref component);
 
         [Query]
         private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>

@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.MediaStream
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
-            OpenMediaAutomaticallyQuery(World);
+            UpdateCustomStreamQuery(World, t);
 
             UpdateVideoTextureQuery(World);
         }
@@ -77,15 +77,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            if (component.State != VideoState.VsError)
-            {
-                float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
-
-                if (!sceneStateProvider.IsCurrent)
-                    targetVolume = 0f;
-
-                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
-            }
+            FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
             var address = MediaAddress.New(sdkComponent.Url!);
             if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
@@ -99,15 +91,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            if (component.State != VideoState.VsError)
-            {
-                float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
-
-                if (!sceneStateProvider.IsCurrent)
-                    targetVolume = 0f;
-
-                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
-            }
+            FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
             var address = MediaAddress.New(sdkComponent.Src!);
             if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
@@ -116,18 +100,31 @@ namespace DCL.SDKComponents.MediaStream
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
+        private void FadeVolume(ref MediaPlayerComponent component, float volume, float dt)
+        {
+            if (component.State != VideoState.VsError)
+            {
+                float targetVolume = volume * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
+
+                if (!sceneStateProvider.IsCurrent)
+                    targetVolume = 0f;
+
+                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
+            }
+        }
+
         /// <summary>
         ///     If there is no SDK component which controls the playback state, the video is looped and started automatically
         /// </summary>
-        /// <param name="mediaPlayer"></param>
         [Query]
-        [None(typeof(PBVideoPlayer), typeof(PBAudioStream), typeof(DeleteEntityIntention))]
-        private void OpenMediaAutomatically(ref MediaPlayerComponent mediaPlayer)
+        private void UpdateCustomStream(ref MediaPlayerComponent mediaPlayer, CustomMediaStream customMediaStream, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
+            FadeVolume(ref mediaPlayer, customMediaStream.Volume, dt);
+
             if (ConsumePromise(ref mediaPlayer, true))
-                mediaPlayer.MediaPlayer.SetLooping(true);
+                mediaPlayer.MediaPlayer.SetLooping(customMediaStream.Loop);
         }
 
         private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
