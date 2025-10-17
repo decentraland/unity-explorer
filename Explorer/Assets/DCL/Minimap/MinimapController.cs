@@ -78,6 +78,7 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
+        private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -138,6 +139,7 @@ namespace DCL.Minimap
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomConnected -= HideOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideOwnPlayerBannedMark;
+                showBannedTooltipCts.SafeCancelAndDispose();
             }
 
             sceneRestrictionsController?.Dispose();
@@ -424,12 +426,23 @@ namespace DCL.Minimap
 
             isOwnPlayerBanned = true;
             viewInstance!.ownPlayerBannedMark.SetActive(true);
+
+            showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
+            ShowBannedTooltipAsync(showBannedTooltipCts.Token).Forget();
         }
 
         private void HideOwnPlayerBannedMark()
         {
             viewInstance!.ownPlayerBannedMark.SetActive(false);
             isOwnPlayerBanned = false;
+        }
+
+        private async UniTaskVoid ShowBannedTooltipAsync(CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+            viewInstance!.ownPlayerBannedTooltip.SetActive(true);
+            await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
+            viewInstance!.ownPlayerBannedTooltip.SetActive(false);
         }
     }
 
