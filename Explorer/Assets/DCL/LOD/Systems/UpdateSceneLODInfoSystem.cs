@@ -81,7 +81,6 @@ namespace DCL.LOD.Systems
                 typeof(GameObject),
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                lookForShaderAsset: true,
                 assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate")
                 );
 

@@ -4,7 +4,6 @@ namespace DefaultNamespace
 {
     public struct EarlySceneFlag
     {
-        public string AsssetBundleHash;
     }
 
     public struct EarlyAssetBundleFlag

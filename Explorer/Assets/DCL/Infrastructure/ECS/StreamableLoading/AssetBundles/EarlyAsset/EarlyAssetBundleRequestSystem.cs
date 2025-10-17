@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -23,7 +24,8 @@ namespace DefaultNamespace
 
         protected override void Update(float t)
         {
-            StartEarlyDownloadQuery(World);
+            if (!requestDone)
+                StartEarlyDownloadQuery(World);
             ResolveEarlyDownloadQuery(World);
         }
 
@@ -33,7 +35,7 @@ namespace DefaultNamespace
         private void StartEarlyDownload(Entity entity, ref EarlyAssetBundleFlag earlySceneFlag)
         {
             AssetBundlePromise promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash(earlySceneFlag.AsssetBundleHash),
+                GetAssetBundleIntention.FromHash(earlySceneFlag.AsssetBundleHash, assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
                 PartitionComponent.TOP_PRIORITY);
 
             requestDone = true;

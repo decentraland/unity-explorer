@@ -77,7 +77,7 @@ namespace ECS.StreamableLoading.AssetBundles
             new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
         public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
-            URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null,
+            URLSubdirectory customEmbeddedSubDirectory = default, CancellationTokenSource cancellationTokenSource = null,
             AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false) =>
             new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, cancellationTokenSource: cancellationTokenSource);
 
