@@ -5,7 +5,7 @@ namespace DCL.NotificationsBus.NotificationTypes
 {
     public class UserUnbannedFromSceneNotification : NotificationBase
     {
-        private const string NOTIFICATION_TITLE = "This scene is no longer restricting access to chat and interactions.";
+        private const string NOTIFICATION_TITLE = "Your access to this scene has been restored by scene admins.";
 
         [JsonProperty("metadata")]
         public UserUnbannedFromSceneNotificationMetadata Metadata { get; set; }
