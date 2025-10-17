@@ -6,6 +6,7 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Threading.Tasks;
 using Entity = Arch.Core.Entity;
 using Quaternion = Decentraland.Common.Quaternion;
@@ -18,12 +19,17 @@ namespace DCL.SDKComponents.Tween.Tests
     {
         private TweenerPool tweenerPool;
         private TweenLoaderSystem loaderSystem;
+        private ISceneStateProvider sceneStateProvider;
+        private IECSToCRDTWriter ecsToCRDTWriter;
 
         [SetUp]
         public void SetUp()
         {
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
             tweenerPool = new TweenerPool();
-            system = new TweenSequenceUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool);
+            system = new TweenSequenceUpdaterSystem(world, ecsToCRDTWriter, tweenerPool, sceneStateProvider);
             loaderSystem = new TweenLoaderSystem(world);
         }
 
@@ -191,6 +197,89 @@ namespace DCL.SDKComponents.Tween.Tests
 
             comp = world.Get<SDKTweenSequenceComponent>(testEntity);
             Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus, "Sequence should remain completed without loop");
+        }
+
+        [Test]
+        public async Task TweenSequenceUpdatesSDKTransform()
+        {
+            Vector3 startValue = CreateVector3(0, 0, 0);
+            Vector3 endValue = CreateVector3(10, 0, 0);
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateMoveTween(startValue, endValue, 500)
+            });
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            // Initial SDKTransform should be at start
+            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            Assert.AreEqual(startValue.X, sdkTransform.Position.Value.x, 0.01f);
+
+            // Wait for sequence to complete
+            await RunSystemForSeconds(600, testEntity);
+
+            // SDKTransform should be updated to end value (verifying sync works)
+            sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            Assert.AreEqual(endValue.X, sdkTransform.Position.Value.x, 0.5f, "SDKTransform should be synced to Unity Transform at end");
+        }
+
+        [Test]
+        public async Task TweenSequenceWritesTransformToCRDT()
+        {
+            Vector3 startValue = CreateVector3(0, 0, 0);
+            Vector3 endValue = CreateVector3(10, 0, 0);
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateMoveTween(startValue, endValue, 500)
+            });
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            // Clear any calls from setup
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            // Should write transform updates to CRDT during sequence
+            await RunSystemForSeconds(250, testEntity);
+
+            // Verify CRDT writer was called with SDKTransform updates
+            ecsToCRDTWriter.Received().PutMessage<CrdtEcsBridge.Components.Transform.SDKTransform, CrdtEcsBridge.Components.Transform.SDKTransform>(
+                Arg.Any<System.Action<CrdtEcsBridge.Components.Transform.SDKTransform, CrdtEcsBridge.Components.Transform.SDKTransform>>(),
+                Arg.Any<CRDTEntity>(),
+                Arg.Any<CrdtEcsBridge.Components.Transform.SDKTransform>());
+        }
+
+        [Test]
+        public async Task TweenSequenceMarksSDKTransformDirtyWhenSceneNotCurrent()
+        {
+            Vector3 startValue = CreateVector3(0, 0, 0);
+            Vector3 endValue = CreateVector3(10, 0, 0);
+
+            // Start with scene current to set up the sequence
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateMoveTween(startValue, endValue, 500)
+            });
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            // Now change scene state to not current
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            await RunSystemForSeconds(250, testEntity);
+
+            // SDKTransform should be marked as dirty (not updating cache) when scene is not current
+            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            Assert.IsTrue(sdkTransform.IsDirty, "SDKTransform should be marked dirty when scene is not current");
+
+            // Verify SDKTransform was synced from Unity Transform (even though scene not current)
+            Assert.Greater(sdkTransform.Position.Value.x, startValue.X, "SDKTransform should still be synced from Unity Transform");
         }
 
         [Test]

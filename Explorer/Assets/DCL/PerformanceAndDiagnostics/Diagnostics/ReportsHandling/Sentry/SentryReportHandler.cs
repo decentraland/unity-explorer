@@ -190,7 +190,7 @@ namespace DCL.Diagnostics.Sentry
             {
                 scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
                 scope.SetTag("scene.name", data.SceneShortInfo.Name);
-                
+
                 if (!string.IsNullOrEmpty(data.SceneShortInfo.SdkVersion))
                     scope.SetTag("scene.sdk_version", data.SceneShortInfo.SdkVersion);
             }

@@ -8,6 +8,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -87,6 +88,21 @@ namespace DCL.SDKComponents.Tween
         {
             if (shouldUpdateMaterial)
                 sdkTweenComponent.CustomTweener.UpdateMaterial(materialComponent.Result!, movementType);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SyncTransformToSDKTransform(Transform transform, ref SDKTransform sdkTransform, ref TransformComponent transformComponent, bool isInCurrentScene)
+        {
+            // Read back from Unity Transform (DOTween Sequence updates it directly) and sync to SDKTransform
+            sdkTransform.Position.Value = transform.localPosition;
+            sdkTransform.Rotation.Value = transform.localRotation;
+            sdkTransform.Scale = transform.localScale;
+            
+            // Update the transform component cache if we're in the current scene
+            if (isInCurrentScene)
+                transformComponent.UpdateCache();
+            else
+                sdkTransform.IsDirty = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
