@@ -322,7 +322,7 @@ namespace DCL.Communities.CommunitiesBrowser
             var communityFromInviteRequestData = new CommunityData
             {
                 id = userInviteRequestData.communityId,
-                thumbnails = userInviteRequestData.thumbnails,
+                thumbnailUrl = userInviteRequestData.thumbnailUrl,
                 name = userInviteRequestData.name,
                 description = userInviteRequestData.description,
                 ownerAddress = userInviteRequestData.ownerAddress,

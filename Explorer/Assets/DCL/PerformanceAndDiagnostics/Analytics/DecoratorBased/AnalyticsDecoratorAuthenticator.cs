@@ -1,16 +1,16 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using System.Threading;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class IdentityAnalyticsDecorator : IWeb3VerifiedAuthenticator
+    public class AnalyticsDecoratorAuthenticator : IWeb3Authenticator
     {
-        private readonly IWeb3VerifiedAuthenticator core;
+        private readonly IWeb3Authenticator core;
         private readonly IAnalyticsController analytics;
 
-        public IdentityAnalyticsDecorator(IWeb3VerifiedAuthenticator core, IAnalyticsController analytics)
+        public AnalyticsDecoratorAuthenticator(IWeb3Authenticator core, IAnalyticsController analytics)
         {
             this.core = core;
             this.analytics = analytics;
@@ -30,8 +30,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await core.LogoutAsync(cancellationToken);
-
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
-            core.SetVerificationListener(callback);
     }
 }

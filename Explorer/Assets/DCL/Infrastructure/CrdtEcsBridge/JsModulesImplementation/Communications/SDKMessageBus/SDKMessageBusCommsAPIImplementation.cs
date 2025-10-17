@@ -30,11 +30,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            messages.Add(new CommsPayload
+            lock (SceneCommsMessages)
             {
-                sender = message.FromWalletId,
-                message = Encoding.UTF8.GetString(message.Data),
-            });
+                messages.Add(new CommsPayload
+                {
+                    sender = message.FromWalletId,
+                    message = Encoding.UTF8.GetString(message.Data),
+                });
+            }
         }
     }
 }
