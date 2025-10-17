@@ -69,8 +69,15 @@ namespace ECS.StreamableLoading.NFTShapes
             return promise.Result!.Value;
         }
 
-        private StreamableLoadingResult<TextureData> HandleVideo(string url) =>
-            new (new TextureData(AnyTexture.FromVideoTextureData(mediaFactory.CreateVideoPlayback(url))));
+        private StreamableLoadingResult<TextureData> HandleVideo(string url)
+        {
+            var textureData = new TextureData(AnyTexture.FromVideoTextureData(mediaFactory.CreateVideoPlayback(url)));
+
+            // The system won't add reference as it uses NoCache that has an empty implementation of AddReference
+            textureData.AddReference();
+
+            return new StreamableLoadingResult<TextureData>(textureData);
+        }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {

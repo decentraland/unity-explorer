@@ -160,6 +160,12 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
+        public readonly void SetLooping(bool isLooping) =>
+            Match(
+                isLooping,
+                static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
+                static (_, _) => { });
+
         public void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))

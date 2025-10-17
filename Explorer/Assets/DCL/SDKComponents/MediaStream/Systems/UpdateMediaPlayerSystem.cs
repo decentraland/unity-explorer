@@ -13,6 +13,7 @@ using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -60,6 +61,7 @@ namespace DCL.SDKComponents.MediaStream
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
+            OpenMediaAutomaticallyQuery(World);
 
             UpdateVideoTextureQuery(World);
         }
@@ -112,6 +114,20 @@ namespace DCL.SDKComponents.MediaStream
 
             HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
             ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+        }
+
+        /// <summary>
+        ///     If there is no SDK component which controls the playback state, the video is looped and started automatically
+        /// </summary>
+        /// <param name="mediaPlayer"></param>
+        [Query]
+        [None(typeof(PBVideoPlayer), typeof(PBAudioStream), typeof(DeleteEntityIntention))]
+        private void OpenMediaAutomatically(ref MediaPlayerComponent mediaPlayer)
+        {
+            if (!frameTimeBudget.TrySpendBudget()) return;
+
+            if (ConsumePromise(ref mediaPlayer, true))
+                mediaPlayer.MediaPlayer.SetLooping(true);
         }
 
         private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
@@ -215,9 +231,9 @@ namespace DCL.SDKComponents.MediaStream
             sdkComponent.IsDirty = false;
         }
 
-        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MultiMediaPlayer, PBVideoPlayer>? onOpened = null)
+        private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MultiMediaPlayer, PBVideoPlayer>? onOpened = null)
         {
-            if (!component.OpenMediaPromise.IsResolved) return;
+            if (!component.OpenMediaPromise.IsResolved) return false;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
@@ -230,15 +246,17 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
-            }
-            else
-            {
-                component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
-                Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
 
-                try { component.MediaPlayer.CloseCurrentStream(); }
-                finally { Profiler.EndSample(); }
+                return true;
             }
+
+            component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+            Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
+
+            try { component.MediaPlayer.CloseCurrentStream(); }
+            finally { Profiler.EndSample(); }
+
+            return false;
         }
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)

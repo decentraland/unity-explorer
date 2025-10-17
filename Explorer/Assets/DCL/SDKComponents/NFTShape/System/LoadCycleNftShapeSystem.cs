@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.NFTShape.System
             nftRenderer.Apply(anyTexture.Texture);
 
             if (anyTexture.IsVideoTextureData(out VideoTextureData? videoTextureData))
-                nftLoadingComponent.VideoPlayerEntity = World.Create(videoTextureData!.Value.Consumer, videoTextureData.Value.MediaPlayer);
+                nftLoadingComponent.VideoPlayerEntity = World.Create(result.Asset!, videoTextureData!.Value.Consumer, videoTextureData.Value.MediaPlayer);
         }
     }
 }
