@@ -43,6 +43,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 var source = controller.CurrentRenderTexture;
                 if (source == null) return null;
 
+                ReportHub.Log(ReportCategory.OUTFITS, $"[Screenshot] Source RenderTexture sRGB: {source.sRGB}");
+                ReportHub.Log(ReportCategory.OUTFITS, $"[Screenshot] Source RenderTexture format: {source.graphicsFormat}");
                 int targetWidth = source.width / 2;
                 int targetHeight = source.height / 2;
 
