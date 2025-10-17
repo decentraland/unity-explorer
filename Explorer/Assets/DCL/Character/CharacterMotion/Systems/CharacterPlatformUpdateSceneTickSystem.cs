@@ -29,7 +29,7 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void UpdateTick(ref CharacterPlatformComponent platformComponent)
         {
-            ISceneFacade? currentScene = scenesCache.CurrentScene.Value;
+            ISceneFacade? currentScene = scenesCache.CurrentScene;
             platformComponent.LastUpdateTick = currentScene?.SceneStateProvider.TickNumber ?? 0;
         }
     }
