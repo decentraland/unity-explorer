@@ -12,7 +12,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Tests
 {
@@ -30,13 +30,13 @@ namespace DCL.SDKComponents.NFTShape.Tests
         [Test]
         public void AbortLoadingIfComponentDeleted()
         {
-            var texData = new Texture2DData(Texture2D.grayTexture);
+            var texData = new TextureData(Texture2D.grayTexture);
             texData.AddReference();
 
             var promise = Promise.Create(world, new GetNFTShapeIntention("URN", urnSource!), PartitionComponent.TOP_PRIORITY);
 
             Entity entity = world.Create(new NFTLoadingComponent(promise));
-            world.Add(promise.Entity, new StreamableLoadingResult<Texture2DData>(texData));
+            world.Add(promise.Entity, new StreamableLoadingResult<TextureData>(texData));
 
             system!.Update(0);
 
@@ -50,14 +50,14 @@ namespace DCL.SDKComponents.NFTShape.Tests
         [Test]
         public void AbortLoadingIfEntityDeleted()
         {
-            var texData = new Texture2DData(Texture2D.grayTexture);
+            var texData = new TextureData(Texture2D.grayTexture);
             texData.AddReference();
 
             var promise = Promise.Create(world, new GetNFTShapeIntention("URN", urnSource!), PartitionComponent.TOP_PRIORITY);
 
             Entity entity = world.Create(new PBNftShape(), new DeleteEntityIntention(), new NFTLoadingComponent(promise));
 
-            world.Add(promise.Entity, new StreamableLoadingResult<Texture2DData>(texData));
+            world.Add(promise.Entity, new StreamableLoadingResult<TextureData>(texData));
 
             system!.Update(0);
 

@@ -8,7 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.ResourcesUnloading;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
@@ -26,7 +26,6 @@ using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -38,9 +37,13 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
-        private readonly IDiskCache<Texture2DData> diskCache;
-        private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
-        private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
+        private readonly IDiskCache<TextureData> diskCache;
+        private readonly MediaFactoryBuilder mediaFactory;
+
+        /// <summary>
+        ///     We redirect to <see cref="TexturesCache{TIntention}" /> for plain images and no-cache for NFTs themselves, videos do not go through the cache
+        /// </summary>
+        private readonly IStreamableCache<TextureData, GetNFTShapeIntention> cache = new NoCache<TextureData, GetNFTShapeIntention>(true, true);
 
         static NFTShapePlugin()
         {
@@ -53,20 +56,16 @@ namespace DCL.PluginSystem.World
             IPerformanceBudget instantiationFrameTimeBudgetProvider,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
-            CacheCleaner cacheCleaner,
-            IDiskCache<Texture2DData> diskCache,
-            ExtendedObjectPool<Texture2D> videoTexturePool
-        ) : this(
+            IDiskCache<TextureData> diskCache,
+            MediaFactoryBuilder mediaFactory) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             new FramesPool(NewFramePrefabs(assetsProvisioner, out var framePrefabs), componentPoolsRegistry),
             framePrefabs,
             webRequestController,
-            cacheCleaner,
             diskCache,
-            videoTexturePool
-        ) { }
+            mediaFactory) { }
 
         public NFTShapePlugin(
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -75,20 +74,16 @@ namespace DCL.PluginSystem.World
             IFramesPool framesPool,
             IFramePrefabs framePrefabs,
             IWebRequestController webRequestController,
-            CacheCleaner cacheCleaner,
-            IDiskCache<Texture2DData> diskCache,
-            ExtendedObjectPool<Texture2D> videoTexturePool
-        ) : this(
+            IDiskCache<TextureData> diskCache,
+            MediaFactoryBuilder mediaFactory) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             webRequestController,
-            cacheCleaner,
             framePrefabs,
             diskCache,
-            videoTexturePool
-        ) { }
+            mediaFactory) { }
 
         public NFTShapePlugin(
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -96,11 +91,9 @@ namespace DCL.PluginSystem.World
             IPerformanceBudget instantiationFrameTimeBudgetProvider,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
-            CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
-            IDiskCache<Texture2DData> diskCache,
-            ExtendedObjectPool<Texture2D> videoTexturePool
-        )
+            IDiskCache<TextureData> diskCache,
+            MediaFactoryBuilder mediaFactory)
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.nftShapeRendererFactory = nftShapeRendererFactory;
@@ -109,8 +102,9 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.framePrefabs = framePrefabs;
             this.diskCache = diskCache;
-            this.videoTexturePool = videoTexturePool;
-            cacheCleaner.Register(cache);
+            this.mediaFactory = mediaFactory;
+
+            // cacheCleaner.Register(cache);
         }
 
         public void Dispose()
@@ -133,7 +127,7 @@ namespace DCL.PluginSystem.World
 
             bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, videoTexturePool, decentralandUrlsSource);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, mediaFactory.CreateForScene(builder.World, sharedDependencies), decentralandUrlsSource);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

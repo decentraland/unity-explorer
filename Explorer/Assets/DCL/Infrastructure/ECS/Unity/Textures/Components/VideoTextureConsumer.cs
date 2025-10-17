@@ -1,13 +1,14 @@
-using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
-using DCL.Shaders;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace ECS.Unity.Textures.Components
 {
     public struct VideoTextureConsumer : IDisposable
     {
+        private readonly IObjectPool<RenderTexture> videoTexturesPool;
+
         /// <summary>
         /// Gets the current world position of the maximum corner of the bounding box that contains all the mesh renderers used by video consumers of one texture.
         /// </summary>
@@ -49,34 +50,45 @@ namespace ECS.Unity.Textures.Components
         // All the renderers that use the video texture
         private readonly List<Renderer> renderers;
 
+        public RenderTexture Texture { get; }
+
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
         ///     we don't use the original texture from AVPro
         /// </summary>
-        public Texture2DData Texture { get; private set; }
 
-        public bool IsDirty;
+        // public Texture2DData Texture { get; private set; }
 
-        public int ConsumersCount => Texture.referenceCount;
-
-        public VideoTextureConsumer(Texture2D texture)
+        // public bool IsDirty;
+        public VideoTextureConsumer(IObjectPool<RenderTexture> videoTexturesPool)
         {
-            Texture = new Texture2DData(texture);
+            this.videoTexturesPool = videoTexturesPool;
+            Texture = videoTexturesPool.Get();
+
+            // TODO should be pooled
             renderers = new List<Renderer>();
-            IsDirty = false;
         }
 
-        public VideoTextureConsumer(Texture2DData t2dd)
-        {
-            Texture = t2dd;
-            renderers = new List<Renderer>();
-            IsDirty = false;
-        }
+        //
+        // public int ConsumersCount => Texture.referenceCount;
+
+        // public VideoTextureConsumer(Texture2D texture)
+        // {
+        //     Texture = new Texture2DData(texture);
+        //     renderers = new List<Renderer>();
+        //     IsDirty = false;
+        // }
+        //
+        // public VideoTextureConsumer(Texture2DData t2dd)
+        // {
+        //     Texture = t2dd;
+        //     renderers = new List<Renderer>();
+        //     IsDirty = false;
+        // }
 
         public void Dispose()
         {
-            // On Dispose video textures are dereferenced by material that acquired it
-            Texture = null!;
+            videoTexturesPool.Release(Texture);
             renderers.Clear();
         }
 
@@ -98,13 +110,24 @@ namespace ECS.Unity.Textures.Components
             renderers.Remove(renderer);
         }
 
-        public void SetTextureScale(Vector2 texScale)
+        public void Resize(int width, int height)
         {
-            foreach (var meshRenderer in renderers)
-            {
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
-            }
+            if (Texture.IsCreated())
+                Texture.Release();
+
+            Texture.width = width;
+            Texture.height = height;
+
+            Texture.Create();
         }
+
+        // public void SetTextureScale(Vector2 texScale)
+        // {
+        //     foreach (var meshRenderer in renderers)
+        //     {
+        //         meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
+        //         meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+        //     }
+        // }
     }
 }

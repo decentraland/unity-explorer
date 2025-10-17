@@ -7,12 +7,12 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
-using DCL.SDKComponents.VideoPlayer;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -62,9 +62,9 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     w,
                     new NftShapeCache(),
                     IWebRequestController.DEFAULT,
-                    IDiskCache<Texture2DData>.Null.INSTANCE,
+                    IDiskCache<TextureData>.Null.INSTANCE,
                     true,
-                    VideoTextureFactory.CreateVideoTexturesPool(),
+                    new MockMediaFactory(),
                     new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),

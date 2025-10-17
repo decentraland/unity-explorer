@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 
 namespace DCL.SDKComponents.MediaStream
@@ -16,17 +17,14 @@ namespace DCL.SDKComponents.MediaStream
     public partial class CleanUpMediaPlayerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         internal CleanUpMediaPlayerSystem(World world) : base(world) { }
-        private readonly MediaPlayerCustomPool mediaPlayerPool;
-
-        internal CleanUpMediaPlayerSystem(World world, MediaPlayerCustomPool mediaPlayerPool) : base(world)
-        {
-            this.mediaPlayerPool = mediaPlayerPool;
-        }
 
         protected override void Update(float t)
         {
             HandleSdkAudioStreamComponentRemovalQuery(World);
             HandleSdkVideoPlayerComponentRemovalQuery(World);
+
+            TryReleaseConsumerQuery(World);
+            HandleTextureWithoutConsumersQuery(World);
 
             HandleMediaPlayerDestructionQuery(World);
         }
@@ -45,10 +43,8 @@ namespace DCL.SDKComponents.MediaStream
         private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpMediaPlayer(ref mediaPlayer);
-            World.Remove<MediaPlayerComponent>(entity);
-            World.Remove<VideoStateByPriorityComponent>(entity);
+            World.Remove<MediaPlayerComponent, VideoStateByPriorityComponent>(entity);
         }
-
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
@@ -65,10 +61,40 @@ namespace DCL.SDKComponents.MediaStream
         public void FinalizeComponents(in Query query)
         {
             FinalizeMediaPlayerComponentQuery(World);
+            FinalizeVideoTextureConsumerComponentQuery(World);
         }
 
         [Query]
         private void FinalizeMediaPlayerComponent(ref MediaPlayerComponent component) =>
             CleanUpMediaPlayer(ref component);
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void TryReleaseConsumer(Entity entity, ref VideoTextureConsumer textureConsumer)
+        {
+            CleanUpVideoTexture(ref textureConsumer);
+            World.Remove<VideoTextureConsumer>(entity);
+        }
+
+        /// <summary>
+        ///     Prevents CPU and memory leaks by cleaning up video textures and media players that are not being used anymore.
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void HandleTextureWithoutConsumers(Entity entity, ref VideoTextureConsumer textureConsumer, TextureData textureData)
+        {
+            if (textureData.referenceCount == 0)
+            {
+                CleanUpVideoTexture(ref textureConsumer);
+                World.Remove<VideoTextureConsumer>(entity);
+            }
+        }
+
+        private void CleanUpVideoTexture(ref VideoTextureConsumer videoTextureConsumer) =>
+            videoTextureConsumer.Dispose();
+
+        [Query]
+        private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
+            CleanUpVideoTexture(ref component);
     }
 }

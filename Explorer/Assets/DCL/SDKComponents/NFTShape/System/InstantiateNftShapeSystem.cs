@@ -10,6 +10,7 @@ using DCL.SDKComponents.NFTShape.Renderer;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
 
 using ECS.Unity.Materials.Components;
@@ -76,8 +77,12 @@ namespace DCL.SDKComponents.NFTShape.System
             changedNftShapes.Add(entity, nftShapeRendererComponent);
             loadingComponent.Promise.TryDereference(World);
             loadingComponent.Promise.ForgetLoading(World);
-            World.Remove<NFTLoadingComponent>(entity);
 
+            // Instead of going through the obscure flow of Media Player initialization simply destroy the previous player
+            if (loadingComponent.VideoPlayerEntity != Entity.Null)
+                World.Add(loadingComponent.VideoPlayerEntity, new DeleteEntityIntention());
+
+            World.Remove<NFTLoadingComponent>(entity);
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)
