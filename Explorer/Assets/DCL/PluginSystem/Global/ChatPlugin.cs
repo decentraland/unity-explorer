@@ -45,7 +45,6 @@ using DCL.Translation.Processors;
 using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
-using DCL.ChatArea;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;

@@ -11,6 +11,7 @@ using DCL.Chat.History;
 using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
