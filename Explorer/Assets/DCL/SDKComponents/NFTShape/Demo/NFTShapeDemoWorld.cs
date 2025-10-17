@@ -67,8 +67,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     true,
                     new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
                 ).InitializeAndReturnSelf(),
-                w => new LoadNFTImageSystem(w, new TexturesCache<GetNFTImageIntention>(), webRequestController, true),
-                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY)), VideoTextureFactory.CreateVideoTexturesPool()),
+                w => new LoadNFTImageSystem(w, new TexturesCache<GetNFTImageIntention>()),
+                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY)), new MockMediaFactory()),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
                 w => new VisibilityNftShapeSystem(w, buffer)
             );

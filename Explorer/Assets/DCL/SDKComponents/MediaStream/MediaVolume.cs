@@ -6,6 +6,10 @@ namespace DCL.SDKComponents.MediaStream
     {
         private readonly VolumeBus volumeBus;
 
+        public float WorldVolumePercentage { get; private set; } = 1f;
+
+        public float MasterVolumePercentage { get; private set; } = 1f;
+
         public MediaVolume(VolumeBus volumeBus)
         {
             //This following part is a workaround applied for the MacOS platform, the reason
@@ -17,17 +21,10 @@ namespace DCL.SDKComponents.MediaStream
             this.volumeBus = volumeBus;
             this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
             this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
-            masterVolumePercentage = volumeBus.GetSerializedMasterVolume();
-            worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
-
-            void OnWorldVolumeChanged(float volume) => worldVolumePercentage = volume;
-            void OnMasterVolumeChanged(float volume) => masterVolumePercentage = volume;
+            MasterVolumePercentage = volumeBus.GetSerializedMasterVolume();
+            WorldVolumePercentage = volumeBus.GetSerializedWorldVolume();
 #endif
         }
-
-        public float WorldVolumePercentage { get; private set; } = 1f;
-
-        public float MasterVolumePercentage { get; private set; } = 1f;
 
         public void Dispose()
         {
@@ -36,5 +33,9 @@ namespace DCL.SDKComponents.MediaStream
             volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
 #endif
         }
+
+        private void OnWorldVolumeChanged(float volume) => WorldVolumePercentage = volume;
+
+        private void OnMasterVolumeChanged(float volume) => MasterVolumePercentage = volume;
     }
 }

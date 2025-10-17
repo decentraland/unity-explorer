@@ -23,19 +23,16 @@ namespace DCL.PluginSystem.World
     public class MediaPlayerPlugin : IDCLWorldPlugin<MediaPlayerPlugin.MediaPlayerPluginSettings>
     {
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly IWebRequestController webRequestController;
         private readonly ExposedCameraData exposedCameraData;
         private readonly MediaFactoryBuilder mediaFactory;
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper = null!;
 
         public MediaPlayerPlugin(
             IPerformanceBudget frameTimeBudget,
-            IWebRequestController webRequestController,
             ExposedCameraData exposedCameraData,
             MediaFactoryBuilder mediaFactory)
         {
             this.frameTimeBudget = frameTimeBudget;
-            this.webRequestController = webRequestController;
             this.exposedCameraData = exposedCameraData;
             this.mediaFactory = mediaFactory;
         }
@@ -48,7 +45,6 @@ namespace DCL.PluginSystem.World
         public UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
-                webRequestController,
                 frameTimeBudget,
                 exposedCameraData,
                 settings.FadeSpeed,

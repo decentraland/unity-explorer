@@ -13,14 +13,13 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class MediaPlayerPluginWrapper
     {
-        private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IExposedCameraData exposedCameraData;
         private readonly float audioFadeSpeed;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly MediaFactoryBuilder mediaFactory;
 
-        public MediaPlayerPluginWrapper(IWebRequestController webRequestController,
+        public MediaPlayerPluginWrapper(
             IPerformanceBudget frameTimeBudget,
             IExposedCameraData exposedCameraData,
             float audioFadeSpeed,
@@ -33,8 +32,6 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaFactory = mediaFactory;
 
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            this.webRequestController = webRequestController;
-
             this.frameTimeBudget = frameTimeBudget;
 #endif
         }
@@ -46,7 +43,7 @@ namespace DCL.SDKComponents.MediaStream
             MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, mediaFactory);
-            sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed));
+            sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
                 UpdateMediaPlayerPrioritizationSystem.InjectToWorld(ref builder, exposedCameraData, videoPrioritizationSettings);

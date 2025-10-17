@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
                 ImagePromise = imagePromise,
             });
 
-            world.Add(imagePromise.Entity, new StreamableLoadingResult<Texture2DData>(texData));
+            world.Add(imagePromise.Entity, new StreamableLoadingResult<TextureData>(texData));
 
             system!.Update(0);
 
@@ -64,7 +64,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
                 ImagePromise = imagePromise,
             });
 
-            world.Add(imagePromise.Entity, new StreamableLoadingResult<Texture2DData>(texData));
+            world.Add(imagePromise.Entity, new StreamableLoadingResult<TextureData>(texData));
 
             system!.Update(0);
 

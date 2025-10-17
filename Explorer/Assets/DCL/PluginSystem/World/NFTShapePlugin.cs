@@ -8,6 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
 using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
@@ -37,13 +38,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly TexturesCache<GetNFTImageIntention> imageCache;
         private readonly IFramePrefabs framePrefabs;
-        private readonly IDiskCache<TextureData> diskCache;
         private readonly MediaFactoryBuilder mediaFactory;
-
-        /// <summary>
-        ///     We redirect to <see cref="TexturesCache{TIntention}" /> for plain images and no-cache for NFTs themselves, videos do not go through the cache
-        /// </summary>
-        private readonly IStreamableCache<TextureData, GetNFTShapeIntention> cache = new NoCache<TextureData, GetNFTShapeIntention>(true, true);
 
         static NFTShapePlugin()
         {
@@ -56,7 +51,8 @@ namespace DCL.PluginSystem.World
             IPerformanceBudget instantiationFrameTimeBudgetProvider,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
-            CacheCleaner cacheCleaner)
+            CacheCleaner cacheCleaner,
+            MediaFactoryBuilder mediaFactoryBuilder)
         {
             this.framePrefabs = new AssetProvisionerFramePrefabs(assetsProvisioner);
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -65,6 +61,7 @@ namespace DCL.PluginSystem.World
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
+            this.mediaFactory = mediaFactoryBuilder;
             imageCache = new TexturesCache<GetNFTImageIntention>();
             cacheCleaner.Register(imageCache);
         }
@@ -89,11 +86,9 @@ namespace DCL.PluginSystem.World
 
             bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, mediaFactory.CreateForScene(builder.World, sharedDependencies), decentralandUrlsSource);
             LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
-            LoadNFTImageSystem.InjectToWorld(ref builder, imageCache, webRequestController, isKtxEnabled);
-            //LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
-            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource), videoTexturePool);
+            LoadNFTImageSystem.InjectToWorld(ref builder, imageCache);
+            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource), mediaFactory.CreateForScene(builder.World, sharedDependencies));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
             ResetDirtyFlagSystem<PBNftShape>.InjectToWorld(ref builder);

@@ -2,8 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -13,13 +11,11 @@ using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Profiling;
-using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -28,18 +24,15 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
-        private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-        private readonly VolumeBus volumeBus;
 
         private readonly float audioFadeSpeed;
 
         public UpdateMediaPlayerSystem(
             World world,
-            IWebRequestController webRequestController,
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
@@ -47,7 +40,6 @@ namespace DCL.SDKComponents.MediaStream
             float audioFadeSpeed
         ) : base(world)
         {
-            this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
@@ -63,11 +55,6 @@ namespace DCL.SDKComponents.MediaStream
             UpdateCustomStreamQuery(World, t);
 
             UpdateVideoTextureQuery(World);
-        }
-
-        public void OnSceneIsCurrentChanged(bool enteredScene)
-        {
-            ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
         public void OnSceneIsCurrentChanged(bool enteredScene)

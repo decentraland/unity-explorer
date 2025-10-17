@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.MediaStream
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
 
         public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData) =>
-            new (frameBudget, webRequestController, exposedCameraData, mediaFactoryBuilder);
+            new (frameBudget, exposedCameraData, mediaFactoryBuilder);
 
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
