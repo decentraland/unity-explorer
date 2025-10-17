@@ -102,12 +102,14 @@ namespace DCL.Backpack.Slots
         {
             isHovered = true;
             UpdateView();
+            view.AnimateHover();
         }
 
         private void OnHoverExited()
         {
             isHovered = false;
             UpdateView();
+            view.AnimateExit();
         }
 
         public void SetData(OutfitItem item, bool loadThumbnail = true)

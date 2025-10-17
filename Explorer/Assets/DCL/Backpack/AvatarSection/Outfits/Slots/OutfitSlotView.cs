@@ -1,13 +1,21 @@
 ﻿using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Slots
 {
     public class OutfitSlotView : MonoBehaviour
     {
+        private readonly Vector3 hoveredScale = new (1.03f, 1.03f, 1.03f);
+        private const float ANIMATION_TIME = 0.1f;
+        private CancellationTokenSource cts;
+        
         public event Action? OnSaveClicked;
         public event Action? OnEquipClicked;
         public event Action? OnDeleteClicked;
@@ -131,6 +139,25 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
                 deleteButton?.gameObject.SetActive(false);
                 equipButton?.gameObject.SetActive(false);
             }
+        }
+
+        public void AnimateHover()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            outfitHoverOutline.transform.localScale = Vector3.zero;
+            outfitHoverOutline.gameObject.SetActive(true);
+            transform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            outfitHoverOutline.transform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+        }
+
+        public void AnimateExit()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            transform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            outfitHoverOutline.transform.DOScale(Vector3.zero, ANIMATION_TIME).SetEase(Ease.Flash)
+                .OnComplete(() => outfitHoverOutline.gameObject.SetActive(false)).ToUniTask(cancellationToken: cts.Token);
         }
 
         private void OnDestroy()

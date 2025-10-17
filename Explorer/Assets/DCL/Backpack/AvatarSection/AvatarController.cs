@@ -56,7 +56,8 @@ namespace DCL.Backpack
             tabsManager = AvatarTabsManager.CreateFromView(
                 view,
                 categoriesPresenter,
-                outfitsPresenter);
+                outfitsPresenter,
+                view.transform as RectTransform);
 
             bool isOutfitsEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED);
             if (!isOutfitsEnabled)
@@ -82,7 +83,8 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            tabsManager.ActivateDefault();
+            // tabsManager.ActivateDefault();
+            tabsManager.Show();
         }
 
         public void Deactivate()

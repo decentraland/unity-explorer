@@ -5,39 +5,40 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
-using UnityEngine.Events;
+using DG.Tweening;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
 {
     public sealed class AvatarTabsManager : IDisposable
     {
-        private readonly SectionSelectorController<AvatarSubSection> selector;
         private readonly Dictionary<AvatarSubSection, ISection> sectionsByKey;
         private readonly Dictionary<AvatarSubSection, TabSelectorView> tabsByKey;
-        private readonly TabSelectorView categoriesTab;
-        private readonly TabSelectorView outfitsTab;
+        private readonly List<AvatarSubSection> tabOrder;
+        private readonly RectTransform contentContainer;
+        private readonly float animationDuration = 0.4f;
         private readonly AvatarSubSection defaultSection;
+        private readonly bool useAnimation;
 
-        private readonly Dictionary<AvatarSubSection, UnityAction<bool>> handlers = new();
         private CancellationTokenSource? animationCts;
         private AvatarSubSection lastShownSection;
+        private bool isAnimating;
 
         private AvatarTabsManager(
-            SectionSelectorController<AvatarSubSection> selector,
             Dictionary<AvatarSubSection, ISection> sectionsByKey,
             Dictionary<AvatarSubSection, TabSelectorView> tabsByKey,
-            TabSelectorView categoriesTab,
-            TabSelectorView outfitsTab,
-            AvatarSubSection defaultSection)
+            RectTransform contentContainer,
+            List<AvatarSubSection> tabOrder,
+            AvatarSubSection defaultSection,
+            bool useAnimation)
         {
-            this.selector = selector;
             this.sectionsByKey = sectionsByKey;
             this.tabsByKey = tabsByKey;
-            this.categoriesTab = categoriesTab;
-            this.outfitsTab = outfitsTab;
+            this.contentContainer = contentContainer;
+            this.tabOrder = tabOrder;
             this.defaultSection = defaultSection;
-
+            this.useAnimation = useAnimation;
             lastShownSection = defaultSection;
         }
 
@@ -45,6 +46,8 @@ namespace DCL.Backpack
             AvatarView view,
             ISection categoriesSection,
             ISection outfitsSection,
+            RectTransform contentContainer,
+            bool useAnimation = true,
             AvatarSubSection defaultSection = AvatarSubSection.Categories)
         {
             var sections = new Dictionary<AvatarSubSection, ISection>
@@ -53,59 +56,37 @@ namespace DCL.Backpack
                     AvatarSubSection.Categories, categoriesSection
                 },
                 {
-                    AvatarSubSection.Outfits,    outfitsSection
-                }
+                    AvatarSubSection.Outfits, outfitsSection
+                },
             };
 
             foreach (var s in sections.Values)
                 s.Deactivate();
 
             var tabs = view.TabSelectorMappedViews.ToDictionary(m => m.Section, m => m.TabSelectorView);
-
-            var selector = new SectionSelectorController<AvatarSubSection>(sections, defaultSection);
+            var tabOrder = new List<AvatarSubSection>
+            {
+                AvatarSubSection.Categories, AvatarSubSection.Outfits
+            };
 
             return new AvatarTabsManager(
-                selector,
                 sections,
                 tabs,
-                view.CategoriesTabSelector,
-                view.OutfitsTabSelector,
-                defaultSection);
+                contentContainer,
+                tabOrder,
+                defaultSection,
+                useAnimation);
         }
 
         public void InitializeAndEnable()
         {
             WireTabMappingHandlers();
-            EnableTabs();
+            ActivateDefault();
         }
 
-        public void SetTabEnabled(AvatarSubSection section, bool isEnabled)
+        public void Show()
         {
-            // Find the tab view associated with the section.
-            if (!tabsByKey.TryGetValue(section, out var tabView))
-            {
-                ReportHub.LogWarning(ReportCategory.OUTFITS, $"AvatarTabsManager: Could not find tab for section '{section}'.");
-                return;
-            }
-
-            // Enable or disable the tab's GameObject.
-            tabView.gameObject.SetActive(isEnabled);
-
-            // If we are disabling the section, we must also remove it from our internal logic.
-            if (!isEnabled)
-            {
-                // Remove from the dictionaries that drive the manager's logic.
-                if (sectionsByKey.TryGetValue(section, out var sectionController))
-                {
-                    // Ensure it's deactivated and its resources are released.
-                    sectionController.Deactivate();
-                    sectionsByKey.Remove(section);
-                }
-
-                tabsByKey.Remove(section);
-
-                WireTabMappingHandlers();
-            }
+            ActivateDefault();
         }
 
         private void WireTabMappingHandlers()
@@ -113,81 +94,162 @@ namespace DCL.Backpack
             foreach (var (section, tabSelector) in tabsByKey)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-                UnityAction<bool> handler = isOn =>
+                var currentSection = section;
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(isOn =>
                 {
-                    if (isOn) ToggleSection(true, tabSelector, section, animate: true);
-                };
-                handlers[section] = handler;
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(handler);
+                    if (isOn)
+                        ToggleSection(currentSection);
+                });
             }
-        }
-
-        public void EnableTabs()
-        {
-            categoriesTab.TabSelectorToggle.onValueChanged.AddListener(isOn =>
-            {
-                if (isOn)
-                    ToggleSection(true, tabsByKey[AvatarSubSection.Categories], AvatarSubSection.Categories, true);
-            });
-
-            outfitsTab.TabSelectorToggle.onValueChanged.AddListener(isOn =>
-            {
-                if (isOn)
-                    ToggleSection(true, tabsByKey[AvatarSubSection.Outfits], AvatarSubSection.Outfits, true);
-            });
         }
 
         public void ActivateDefault()
         {
-            sectionsByKey[defaultSection].Activate();
+            foreach (var sectionController in sectionsByKey.Values)
+            {
+                sectionController.Deactivate();
+                sectionController.GetRectTransform().gameObject.SetActive(false);
+            }
+
+            if (sectionsByKey.TryGetValue(defaultSection, out var defaultSectionController))
+            {
+                var rt = defaultSectionController.GetRectTransform();
+                float originalY = rt.anchoredPosition.y;
+                rt.anchoredPosition = new Vector2(0, originalY);
+                rt.gameObject.SetActive(true);
+
+                var canvasGroup = rt.GetComponent<CanvasGroup>();
+                if (canvasGroup != null)
+                    canvasGroup.alpha = 1f;
+
+                defaultSectionController.Activate();
+            }
 
             foreach (var (section, tab) in tabsByKey)
-                ToggleSection(section == AvatarSubSection.Categories, tab, section, animate: true);
-
-            var defaultTab = tabsByKey[AvatarSubSection.Categories];
-            defaultTab.TabSelectorToggle.SetIsOnWithoutNotify(true);
-
-            foreach (var kv in tabsByKey)
-                if (kv.Key != AvatarSubSection.Categories)
-                    kv.Value.TabSelectorToggle.SetIsOnWithoutNotify(false);
+            {
+                tab.TabSelectorToggle.SetIsOnWithoutNotify(section == defaultSection);
+                if (section != defaultSection)
+                    SetTabAnimationState(tab, false);
+            }
 
             UniTask.Void(async () =>
             {
                 await UniTask.Yield();
-                selector.SetAnimationState(true, defaultTab);
+                if (tabsByKey.TryGetValue(defaultSection, out var defaultTabView))
+                    SetTabAnimationState(defaultTabView, true);
             });
+
+            lastShownSection = defaultSection;
         }
 
-        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, AvatarSubSection shownSection, bool animate)
+        private void ToggleSection(AvatarSubSection newSection)
         {
-            if (isOn && animate && shownSection != lastShownSection)
-                selector.SetAnimationState(false, tabsByKey[lastShownSection]);
+            if (isAnimating || newSection == lastShownSection)
+                return;
 
-            animationCts.SafeCancelAndDispose();
-            animationCts = new CancellationTokenSource();
+            if (tabsByKey.TryGetValue(lastShownSection, out var lastTabView))
+                SetTabAnimationState(lastTabView, false);
+            if (tabsByKey.TryGetValue(newSection, out var newTabView))
+                SetTabAnimationState(newTabView, true);
 
-            selector.OnTabSelectorToggleValueChangedAsync(
-                    isOn,
-                    tabSelectorView,
-                    shownSection,
-                    animationCts.Token,
-                    animate)
-                .Forget();
+            var lastSectionController = sectionsByKey[lastShownSection];
+            var newSectionController = sectionsByKey[newSection];
 
-            if (isOn)
-                lastShownSection = shownSection;
+            if (useAnimation)
+            {
+                isAnimating = true;
+                animationCts.SafeCancelAndDispose();
+                animationCts = new CancellationTokenSource();
+
+                int lastIndex = tabOrder.IndexOf(lastShownSection);
+                int newIndex = tabOrder.IndexOf(newSection);
+                float slideDirection = newIndex > lastIndex ? 1f : -1f;
+
+                var lastSectionRT = lastSectionController.GetRectTransform();
+                var newSectionRT = newSectionController.GetRectTransform();
+                var lastSectionCG = lastSectionRT.GetComponent<CanvasGroup>();
+                var newSectionCG = newSectionRT.GetComponent<CanvasGroup>();
+                float containerWidth = contentContainer.rect.width;
+
+                newSectionController.Activate();
+
+                float originalY = newSectionRT.anchoredPosition.y;
+                newSectionRT.gameObject.SetActive(true);
+                newSectionRT.anchoredPosition = new Vector2(containerWidth * slideDirection, originalY);
+
+                if (newSectionCG != null) newSectionCG.alpha = 0f;
+
+                var sequence = DOTween.Sequence();
+                sequence.Append(lastSectionRT.DOAnchorPosX(-containerWidth * slideDirection, animationDuration).SetEase(Ease.OutBack))
+                    .Join(newSectionRT.DOAnchorPosX(0, animationDuration).SetEase(Ease.OutBack));
+
+                if (lastSectionCG != null) sequence.Join(lastSectionCG.DOFade(0f, animationDuration * 0.5f));
+                if (newSectionCG != null) sequence.Join(newSectionCG.DOFade(1f, animationDuration * 0.7f));
+
+                sequence.SetUpdate(true)
+                    .OnComplete(() =>
+                    {
+                        lastSectionRT.gameObject.SetActive(false);
+                        lastSectionController.Deactivate();
+                        lastShownSection = newSection;
+                        isAnimating = false;
+                    });
+            }
+            else // Instant fallback logic
+            {
+                lastSectionController.GetRectTransform().gameObject.SetActive(false);
+                lastSectionController.Deactivate();
+                newSectionController.GetRectTransform().gameObject.SetActive(true);
+                newSectionController.Activate();
+                lastShownSection = newSection;
+            }
         }
 
-        private void DisableTabs()
+        public void SetTabEnabled(AvatarSubSection section, bool isEnabled)
         {
-            foreach (var tab in tabsByKey.Values)
-                tab.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+            if (!tabsByKey.TryGetValue(section, out var tabView))
+            {
+                ReportHub.LogWarning(ReportCategory.OUTFITS, $"AvatarTabsManager: Could not find tab for section '{section}'.");
+                return;
+            }
+
+            tabView.gameObject.SetActive(isEnabled);
+
+            if (!isEnabled)
+            {
+                if (sectionsByKey.Remove(section, out var sectionController))
+                    sectionController.Deactivate();
+
+                tabsByKey.Remove(section);
+                tabOrder.Remove(section);
+                WireTabMappingHandlers();
+            }
+        }
+
+        private void SetTabAnimationState(TabSelectorView tabView, bool isActive)
+        {
+            if (tabView.tabAnimator == null || !tabView.gameObject.activeInHierarchy) return;
+
+            if (isActive)
+                tabView.tabAnimator.SetTrigger(UIAnimationHashes.ACTIVE);
+            else
+            {
+                tabView.tabAnimator.Rebind();
+                tabView.tabAnimator.Update(0);
+            }
         }
 
         public void Dispose()
         {
             DisableTabs();
             animationCts.SafeCancelAndDispose();
+            DOTween.KillAll(true);
+        }
+
+        private void DisableTabs()
+        {
+            foreach (var tab in tabsByKey.Values)
+                tab.TabSelectorToggle.onValueChanged.RemoveAllListeners();
         }
 
         public void DeactivateAll()
