@@ -42,7 +42,7 @@ namespace DCL.UI.SharedSpaceManager
         private float lastQuickEmoteTime;
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
-        private bool isCameraReelPanelVisible { get; set; }
+        private bool isChatBlockerVisible { get; set; }
 
         public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled,
             EmotesBus emotesBus)
@@ -123,12 +123,12 @@ namespace DCL.UI.SharedSpaceManager
 
         private void OnMvcViewShowed(IController controller)
         {
-            if (controller is IBlocksChat) isCameraReelPanelVisible = true;
+            if (controller is IBlocksChat) isChatBlockerVisible = true;
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            if (controller is IBlocksChat) isCameraReelPanelVisible = false;
+            if (controller is IBlocksChat) isChatBlockerVisible = false;
         }
 
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
@@ -351,7 +351,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible && !isCameraReelPanelVisible)
+            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible && !isChatBlockerVisible)
                 await ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
         }
 
