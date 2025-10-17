@@ -98,7 +98,6 @@ namespace DCL.MCP.Host
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[MCP] PlanAndCallToolAsync failed: {ex.Message}");
                 return null;
             }
         }

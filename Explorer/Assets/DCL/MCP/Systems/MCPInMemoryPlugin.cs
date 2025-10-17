@@ -13,11 +13,19 @@ using Mscc.GenerativeAI;
 using System;
 using System.IO.Pipelines;
 using System.Threading;
+using System.Threading.Tasks;
 using DCL.Chat.History;
-using DCL.MCP.Handlers;
 using DCL.MCP.Host;
 using ChatMessage = DCL.Chat.History.ChatMessage;
 using Newtonsoft.Json.Linq;
+using DCL.MCP.Handlers;
+using ModelContextProtocol;
+using System.Text.Json;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using Tool = UnityEditor.Tool;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace DCL.MCP
@@ -66,71 +74,57 @@ namespace DCL.MCP
 
             // Handlers (reuse existing game logic)
             var cameraHandler = new MCPCameraHandler(globalWorld);
+            var screenshotHandler = new MCPScreenshotHandler(globalWorld);
+
+            var options = new McpServerOptions
+            {
+                ServerInfo = new Implementation { Name = "MyServer", Version = "1.0.0" },
+                Handlers = new McpServerHandlers
+                {
+                    ListToolsHandler = (request, cancellationToken) =>
+                        new ValueTask<ListToolsResult>(new ListToolsResult
+                        {
+                            Tools = new ModelContextProtocol.Protocol.Tool[]
+                            {
+                                new ()
+                                {
+                                    Name = "echo",
+                                    Description = "Echoes the input back to the client.",
+                                    InputSchema = JsonSerializer.Deserialize<JsonElement>(@"{
+  ""type"": ""object"",
+  ""properties"": {
+    ""message"": {
+      ""type"": ""string"",
+      ""description"": ""The input to echo back""
+    }
+  },
+  ""required"": [""message""]
+}"),
+                                },
+                            },
+                        }),
+
+                    CallToolHandler = (request, cancellationToken) =>
+                    {
+                        if (request.Params?.Name == "echo")
+                        {
+                            if (request.Params.Arguments?.TryGetValue("message", out JsonElement message) != true) { throw new Exception($"{nameof(McpErrorCode.InvalidParams)} : Missing required argument 'message'"); }
+
+                            return new ValueTask<CallToolResult>(new CallToolResult
+                            {
+                                Content = new ContentBlock[] { new TextContentBlock { Text = $"Echo: {message}", Type = "text" } },
+                            });
+                        }
+
+                        throw new Exception($"{nameof(McpErrorCode.InvalidRequest)} : Unknown tool: '{request.Params?.Name}'");
+                    },
+                },
+            };
 
             server = McpServer.Create(
                 new StreamServerTransport(clientToServerPipe.Reader.AsStream(), serverToClientPipe.Writer.AsStream()),
-                new McpServerOptions
-                {
-                    ToolCollection = new McpServerPrimitiveCollection<McpServerTool>
-                    {
-                        // Echo tool: также пишет в игровой чат с префиксом [AI] :
-                        McpServerTool.Create(new Func<string, string>(arg =>
-                        {
-                            string text = "[AI] : " + (arg ?? string.Empty);
-                            chatMessagesBus?.Send(ChatChannel.NEARBY_CHANNEL, text, "MCP", string.Empty);
-                            return $"Echo: {arg}";
-                        }), new McpServerToolCreateOptions { Name = "Echo" }),
-
-                        // Camera tools (JSON string in 'arg')
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleStartCameraControlAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "start_inworld_camera_control" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleStopCameraControlAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "stop_inworld_camera_control" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleSetCameraPositionAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_position" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleSetCameraRotationAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_rotation" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleSetCameraLookAtAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_look_at" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleSetCameraLookAtPlayerAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_look_at_player" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleSetCameraFOVAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_fov" }),
-
-                        McpServerTool.Create(new Func<string, object>(json =>
-                        {
-                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
-                            return cameraHandler.HandleGetCameraStateAsync(j).AsTask().Result;
-                        }), new McpServerToolCreateOptions { Name = "get_inworld_camera_state" }),
-                    },
-                });
+                options
+            );
 
             _ = server.RunAsync(ct);
 
@@ -215,7 +209,6 @@ namespace DCL.MCP
                     if (plan == null)
                     {
                         string reply = await host.AskLLMAsync(prompt, CancellationToken.None);
-
                         if (!string.IsNullOrWhiteSpace(reply))
                             aiText = "AI: " + reply;
                     }
