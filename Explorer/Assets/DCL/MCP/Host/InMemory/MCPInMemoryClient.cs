@@ -28,14 +28,14 @@ public class MCPInMemoryClient : MonoBehaviour
         return _client;
     }
 
-    public async UniTask<CallToolResult> EchoAsync(string message)
-    {
-        McpClient client = await EnsureConnectedAsync();
-        if (client == null) throw new InvalidOperationException("Client not connected");
-
-        return await client.CallToolAsync("Echo", new System.Collections.Generic.Dictionary<string, object?>
-        {
-            ["message"] = message,
-        });
-    }
+    // public async UniTask<CallToolResult> EchoAsync(string message)
+    // {
+    //     McpClient client = await EnsureConnectedAsync();
+    //     if (client == null) throw new InvalidOperationException("Client not connected");
+    //
+    //     return await client.CallToolAsync("Echo", new System.Collections.Generic.Dictionary<string, object?>
+    //     {
+    //         ["message"] = message,
+    //     });
+    // }
 }

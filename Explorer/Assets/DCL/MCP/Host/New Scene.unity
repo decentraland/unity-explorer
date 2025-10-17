@@ -361,6 +361,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 459170665079450360, guid: aa39952ecb613c74db1e5d0e0a60d48b, type: 3}
+      propertyPath: modelName
+      value: gemini-2.5-flash
+      objectReference: {fileID: 0}
+    - target: {fileID: 459170665079450360, guid: aa39952ecb613c74db1e5d0e0a60d48b, type: 3}
+      propertyPath: geminiApiKey
+      value: AIzaSyANdi9MKBS1xb73K-A-1orCwGTeNLtbrRQ
+      objectReference: {fileID: 0}
     - target: {fileID: 850619568987385873, guid: aa39952ecb613c74db1e5d0e0a60d48b, type: 3}
       propertyPath: server
       value: 
