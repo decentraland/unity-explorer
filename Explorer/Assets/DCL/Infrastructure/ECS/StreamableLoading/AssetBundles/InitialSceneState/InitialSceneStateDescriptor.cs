@@ -37,7 +37,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}", assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
+                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}_LZ4", assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
                     PartitionComponent.TOP_PRIORITY);
             }
 
