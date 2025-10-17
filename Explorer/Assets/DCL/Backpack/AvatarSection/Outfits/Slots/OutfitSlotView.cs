@@ -12,7 +12,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 {
     public class OutfitSlotView : MonoBehaviour
     {
-        private readonly Vector3 hoveredScale = new (1.03f, 1.03f, 1.03f);
+        private readonly Vector3 hoveredScale = new (1.02f, 1.02f, 1.02f);
         private const float ANIMATION_TIME = 0.1f;
         private CancellationTokenSource cts;
         
@@ -63,16 +63,37 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [field: SerializeField]
         public AudioClipConfig EquipWearableAudio { get; private set; }
 
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio { get; private set; }
+
         private void Awake()
         {
-            saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
+            saveButton?.onClick.AddListener(() =>
+            {
+                OnSaveClicked?.Invoke();
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+            });
+            
             equipButton?.onClick.AddListener(() =>
             {
                 OnEquipClicked?.Invoke();
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
             });
-            deleteButton?.onClick.AddListener(() => OnDeleteClicked?.Invoke());
-            previewButton?.onClick.AddListener(() => OnPreviewClicked?.Invoke());
+
+            deleteButton?.onClick.AddListener(() =>
+            {
+                OnDeleteClicked?.Invoke();
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+            });
+
+            previewButton?.onClick.AddListener(() =>
+            {
+                OnPreviewClicked?.Invoke();
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+            });
 
             if (outfitThumbnailEmpty != null && emptyStateSilhouette != null)
                 outfitThumbnailEmpty.sprite = emptyStateSilhouette.sprite;
@@ -143,6 +164,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void AnimateHover()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
+            
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             outfitHoverOutline.transform.localScale = Vector3.zero;
