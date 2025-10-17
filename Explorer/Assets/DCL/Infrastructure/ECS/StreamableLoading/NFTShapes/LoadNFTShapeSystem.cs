@@ -60,7 +60,7 @@ namespace ECS.StreamableLoading.NFTShapes
         {
             // To prevent caching NFT Videos reuse the existing textures cache which is by design for Plain Images only
 
-            var getTexture = new GetTextureIntention(url, GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, TextureType.Albedo, nameof(LoadNFTShapeSystem), 1);
+            var getTexture = new GetTextureIntention(url, string.Empty, GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, TextureType.Albedo, nameof(LoadNFTShapeSystem), 1);
 
             var promise = AssetPromise<TextureData, GetTextureIntention>.Create(World, getTexture, partition);
 
