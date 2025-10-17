@@ -19,9 +19,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaFactory mediaFactory;
 
-        private float worldVolumePercentage = 1f;
-        private float masterVolumePercentage = 1f;
-
         public CreateMediaPlayerSystem(
             World world,
             ISceneStateProvider sceneStateProvider,
