@@ -83,7 +83,6 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            // tabsManager.ActivateDefault();
             tabsManager.Show();
         }
 
@@ -93,10 +92,8 @@ namespace DCL.Backpack
             
             backpackCommandBus.SendCommand(new BackpackFilterCommand(string.Empty,
                 AvatarWearableCategoryEnum.Body, string.Empty));
-            
-            backpackGridController.Deactivate();
 
-            
+            backpackGridController.Deactivate();
         }
 
         public void Animate(int triggerId) =>

@@ -16,7 +16,8 @@ namespace DCL.Backpack.AvatarSection.Outfits
 
         public void Apply(Outfit outfit)
         {
-            bus.SendCommand(new BackpackUnEquipAllCommand());
+            //bus.SendCommand(new BackpackUnEquipAllCommand());
+            bus.SendCommand(new BackpackUnEquipAllWearablesCommand());
 
             if (!string.IsNullOrEmpty(outfit.bodyShape))
                 bus.SendCommand(new BackpackEquipWearableCommand(new URN(outfit.bodyShape).Shorten()));

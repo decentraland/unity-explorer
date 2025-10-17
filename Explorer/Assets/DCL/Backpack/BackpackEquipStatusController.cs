@@ -74,6 +74,7 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent += UnEquipAllWearables;
             // Avoid publishing an invalid profile
             // For example: logout while the update operation is being processed
             // See: https://github.com/decentraland/unity-explorer/issues/4413
@@ -97,6 +98,7 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent -= ChangeColor;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAllWearables;
             web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
             publishProfileCts?.SafeCancelAndDispose();
@@ -105,6 +107,12 @@ namespace DCL.Backpack
         private void UnEquipAll()
         {
             equippedEmotes.UnEquipAll();
+            equippedWearables.UnEquipAll();
+            forceRender.Clear();
+        }
+
+        private void UnEquipAllWearables()
+        {
             equippedWearables.UnEquipAll();
             forceRender.Clear();
         }

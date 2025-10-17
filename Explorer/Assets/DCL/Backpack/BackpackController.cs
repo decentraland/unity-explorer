@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits;
@@ -60,6 +61,7 @@ namespace DCL.Backpack
         private readonly IRealmData realmData;
         private readonly IWebRequestController webController;
         private readonly IEquippedWearables equippedWearables;
+        private readonly IEquippedEmotes equippedEmotes;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
         private readonly INftNamesProvider nftNamesProvider;
@@ -98,6 +100,7 @@ namespace DCL.Backpack
             IRealmData realmData,
             IWebRequestController webController,
             IEquippedWearables equippedWearables,
+            IEquippedEmotes equippedEmotes,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             INftNamesProvider nftNamesProvider,
@@ -119,6 +122,7 @@ namespace DCL.Backpack
             this.outfitsRepository = outfitsRepository;
             this.webController = webController;
             this.equippedWearables = equippedWearables;
+            this.equippedEmotes = equippedEmotes;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
             this.nftNamesProvider = nftNamesProvider;
@@ -145,13 +149,14 @@ namespace DCL.Backpack
                 equippedWearables,
                 selfProfile,
                 wearableStorage);
-            
-            var outfitsController = new OutfitsPresenter(avatarView.OutfitsView,
+
+            var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,
                 outfitApplier,
                 outfitsCollection,
                 webBrowser,
                 equippedWearables,
+                equippedEmotes,
                 loadOutfitsCommand,
                 saveOutfitCommand,
                 deleteOutfitCommand,
@@ -173,7 +178,7 @@ namespace DCL.Backpack
                 wearableInfoPanelController,
                 backpackGridController,
                 categoriesPresenter,
-                outfitsController,
+                outfitsPresenter,
                 thumbnailProvider);
 
             backpackSections = new Dictionary<BackpackSections, ISection>

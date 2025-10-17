@@ -296,8 +296,10 @@ namespace DCL.CharacterPreview
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>
             await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask);
 
-        protected void StopEmotes() =>
+        public void StopEmotes()
+        {
             previewController?.StopEmotes();
+        }
 
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
@@ -311,8 +313,15 @@ namespace DCL.CharacterPreview
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
         }
 
-        protected void PlayEmote(string emoteId) =>
+        public void PlayEmote(string emoteId)
+        {
             previewController?.PlayEmote(emoteId);
+        }
+
+        public void ResetEmote()
+        {
+            previewController?.ResetEmote();
+        }
 
         public void ResetAvatarMovement()
         {

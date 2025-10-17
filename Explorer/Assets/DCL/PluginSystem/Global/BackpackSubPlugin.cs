@@ -260,6 +260,7 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 webController,
                 equippedWearables,
+                equippedEmotes,
                 wearableStorage,
                 wearablesProvider,
                 nftNamesProvider,

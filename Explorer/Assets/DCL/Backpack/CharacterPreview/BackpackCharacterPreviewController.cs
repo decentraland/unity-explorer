@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Random = UnityEngine.Random;
 
 namespace DCL.Backpack.CharacterPreview
 {
@@ -37,6 +38,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.ChangeColorEvent += OnColorChange;
             backpackEventBus.UnEquipWearableEvent += OnWearableUnequipped;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent += UnEquipAll;
             backpackEventBus.EquipEmoteEvent += OnEmoteEquipped;
             backpackEventBus.SelectEmoteEvent += OnEmoteSelected;
             backpackEventBus.EmoteSlotSelectEvent += OnEmoteSlotSelected;
@@ -88,6 +90,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAll;
 
             emotePreviewCancellationToken.SafeCancelAndDispose();
         }
@@ -177,6 +180,27 @@ namespace DCL.Backpack.CharacterPreview
             PlayEmote(emote.GetUrn().Shorten());
         }
 
+        public void PlayRandomEmote()
+        {
+            StopEmotes();
+
+            var equippedEmotesList = new List<IEmote>();
+            for (int i = 0; i < equippedEmotes.SlotCount; i++)
+            {
+                var emoteInSlot = equippedEmotes.EmoteInSlot(i);
+                if (emoteInSlot != null)
+                    equippedEmotesList.Add(emoteInSlot);
+            }
+
+            if (equippedEmotesList.Count > 0)
+            {
+                int randomIndex = Random.Range(0, equippedEmotesList.Count);
+                var randomEmote = equippedEmotesList[randomIndex];
+
+                OnEmoteSelected(randomEmote);
+            }
+        }
+        
         private void OnEmoteSelected(IEmote emote)
         {
             async UniTaskVoid EnsureEmoteAndPlayItAsync(CancellationToken ct)

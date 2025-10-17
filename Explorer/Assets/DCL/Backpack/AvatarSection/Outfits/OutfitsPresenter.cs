@@ -4,6 +4,9 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -12,6 +15,7 @@ using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.Slots;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -19,6 +23,7 @@ using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine;
 using Utility;
+using Random = UnityEngine.Random;
 
 namespace DCL.Backpack
 {
@@ -27,6 +32,7 @@ namespace DCL.Backpack
         private readonly OutfitsView view;
         private readonly IEventBus eventBus;
         private readonly IEquippedWearables equippedWearables;
+        private readonly IEquippedEmotes equippedEmotes;
         private readonly IWebBrowser webBrowser;
         private readonly IOutfitApplier outfitApplier;
         private readonly OutfitBannerPresenter outfitBannerPresenter;
@@ -52,6 +58,7 @@ namespace DCL.Backpack
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
             IEquippedWearables equippedWearables,
+            IEquippedEmotes equippedEmotes,
             LoadOutfitsCommand loadOutfitsCommand,
             SaveOutfitCommand saveOutfitCommand,
             DeleteOutfitCommand deleteOutfitCommand,
@@ -67,6 +74,7 @@ namespace DCL.Backpack
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
+            this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
             this.loadOutfitsCommand = loadOutfitsCommand;
             this.saveOutfitCommand = saveOutfitCommand;
@@ -113,6 +121,7 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
+            characterPreviewController.StopEmotes();
             previewOutfitCommand.Restore();
             cts.SafeCancelAndDispose();
             view.Deactivate();
@@ -270,6 +279,8 @@ namespace DCL.Backpack
             outfitApplier.Apply(outfitItem.outfit);
             
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
+
+            PlayRandomEmote();
         }
 
         private void OnPreviewOutfitRequested(OutfitItem outfitItem)
@@ -328,7 +339,37 @@ namespace DCL.Backpack
             if (showExtraOutfitSlots) outfitBannerPresenter.Deactivate();
             else outfitBannerPresenter.Activate();
         }
-        
+
+        private void ResetEmotes()
+        {
+            if (characterPreviewController is BackpackCharacterPreviewController backpackController)
+                backpackController.ResetEmote();
+        }
+
+        private void PlayRandomEmote()
+        {
+            ResetEmotes();
+
+            var equippedEmotesList = new List<IEmote>();
+
+            for (int i = 0; i < equippedEmotes.SlotCount; i++)
+            {
+                var emoteInSlot = equippedEmotes.EmoteInSlot(i);
+
+                if (emoteInSlot != null)
+                    equippedEmotesList.Add(emoteInSlot);
+            }
+
+            if (equippedEmotesList.Count > 0)
+            {
+                int randomIndex = Random.Range(0, equippedEmotesList.Count);
+                var randomEmote = equippedEmotesList[randomIndex];
+
+                if (characterPreviewController is BackpackCharacterPreviewController backpackController)
+                    backpackController.PlayEmote(randomEmote.GetUrn().Shorten());
+            }
+        }
+
         public void Dispose()
         {
             outfitBannerPresenter.Dispose();

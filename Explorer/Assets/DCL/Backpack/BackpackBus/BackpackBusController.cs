@@ -50,6 +50,7 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
             this.backpackCommandBus.ChangeColorMessageReceived += HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived += HandleUnequipAll;
+            this.backpackCommandBus.UnEquipAllWearablesMessageReceived += HandleUnEquipAllWearables;
             this.backpackCommandBus.EmoteSlotSelectMessageReceived += HandleEmoteSlotSelectCommand;
         }
 
@@ -66,6 +67,7 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
             this.backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
+            backpackCommandBus.UnEquipAllWearablesMessageReceived -= HandleUnEquipAllWearables;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
         }
 
@@ -74,6 +76,11 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnequipAll(BackpackUnEquipAllCommand obj) =>
             backpackEventBus.SendUnEquipAll();
+
+        private void HandleUnEquipAllWearables(BackpackUnEquipAllWearablesCommand obj)
+        {
+            backpackEventBus.SendUnEquipAllWearables();
+        }
 
         private void HandleChangeColor(BackpackChangeColorCommand command) =>
             backpackEventBus.SendChangeColor(command.NewColor, command.Category);
