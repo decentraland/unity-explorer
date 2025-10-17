@@ -97,7 +97,9 @@ namespace DCL.SDKComponents.MediaStream
             if (RequiresURLChange(entity, ref component, address, sdkComponent)) return;
 
             HandleComponentChange(ref component, sdkComponent, address, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
-            ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+
+            if (ConsumePromise(ref component, false))
+                component.MediaPlayer.SetPlaybackProperties(sdkComponent);
         }
 
         private void FadeVolume(ref MediaPlayerComponent component, float volume, float dt)
@@ -124,7 +126,7 @@ namespace DCL.SDKComponents.MediaStream
             FadeVolume(ref mediaPlayer, customMediaStream.Volume, dt);
 
             if (ConsumePromise(ref mediaPlayer, true))
-                mediaPlayer.MediaPlayer.SetLooping(customMediaStream.Loop);
+                mediaPlayer.MediaPlayer.SetPlaybackProperties(customMediaStream);
         }
 
         private bool RequiresURLChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address, IDirtyMarker sdkComponent)
@@ -228,7 +230,7 @@ namespace DCL.SDKComponents.MediaStream
             sdkComponent.IsDirty = false;
         }
 
-        private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer? sdkVideoComponent = null, Action<MultiMediaPlayer, PBVideoPlayer>? onOpened = null)
+        private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
         {
             if (!component.OpenMediaPromise.IsResolved) return false;
 
@@ -240,9 +242,6 @@ namespace DCL.SDKComponents.MediaStream
 
                 try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
-
-                if (sdkVideoComponent != null)
-                    onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
 
                 return true;
             }

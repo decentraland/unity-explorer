@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
                 static (_, _) => { });
 
-        public void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
+        public readonly void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
@@ -176,6 +176,16 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             // Livekit streaming doesn't need to adjust playback properties
+        }
+
+        public readonly void SetPlaybackProperties(CustomMediaStream customMediaStream)
+        {
+            if (IsAvProPlayer(out AvProPlayer? mediaPlayer))
+            {
+                MediaPlayer avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
+                if (!avProPlayer.MediaOpened) return;
+                MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
+            }
         }
 
         public bool OpenMedia(MediaAddress mediaAddress, bool isFromContentServer, bool autoPlay)
