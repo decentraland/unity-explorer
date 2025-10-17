@@ -37,7 +37,7 @@ namespace DCL.MCP
         private Pipe serverToClientPipe;
         private GoogleAI googleAI;
         private GenerativeModel model;
-        private MCPInMemoryHost host;
+        private MCPHost host;
 
         public MCPInMemoryPlugin(World globalWorld, IScenesCache scenesCache, IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus)
         {
@@ -73,7 +73,7 @@ namespace DCL.MCP
                 new StreamClientTransport(clientToServerPipe.Writer.AsStream(), serverToClientPipe.Reader.AsStream()), cancellationToken: ct);
 
             // Create Host
-            host = new MCPInMemoryHost(client, server, model);
+            host = new MCPHost(client, server, model);
             host.AskGeminiToCallToolAsync(CancellationToken.None).Forget();
         }
 

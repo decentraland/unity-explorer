@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.MCP.Host;
+using Microsoft.Extensions.AI;
+using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Server;
 using Mscc.GenerativeAI;
 using System;
 using System.Collections.Generic;
@@ -9,67 +11,40 @@ using System.Text.Json;
 using System.Threading;
 using UnityEngine;
 
-public class MCPHost : MonoBehaviour
+public class MCPHost
 {
-    public string modelName;
+    private readonly McpServer server;
+    private readonly GenerativeModel model;
+    private readonly McpClient client;
 
-    [SerializeField] private string geminiApiKey;
-    [SerializeField] private string defaultUnityWsUrl = "ws://localhost:7777";
-    [SerializeField] private MCPClient mcpClient;
+    private IList<McpClientTool> tools;
 
-    [ContextMenu("TEST AI")]
-    public void TestGoogleAPI()
+    public MCPHost(McpClient client, McpServer server, GenerativeModel model)
     {
-        CallG().Forget();
-        return;
-
-        async UniTask CallG()
-        {
-            var googleAI = new GoogleAI(geminiApiKey);
-
-            GenerativeModel model = googleAI.GenerativeModel();
-            string prompt = "Объясни, что такое API, простыми словами для новичка.";
-            Debug.Log($"Ваш запрос: {prompt}\n");
-
-            try
-            {
-                GenerateContentResponse response = await model.GenerateContent(prompt);
-                Debug.Log($"Ответ Gemini: {response.Text}");
-            }
-            catch (Exception ex) { Debug.Log($"Произошла ошибка: {ex.Message}"); }
-        }
+        this.client = client;
+        this.server = server;
+        this.model = model;
     }
 
-    [ContextMenu("Gemini → MCP connect")]
-    public void AskGeminiToConnect() =>
-        AskGeminiToConnectAsync().Forget();
-
-    private async UniTask AskGeminiToConnectAsync()
+    public async UniTask AskGeminiToCallToolAsync(CancellationToken ct)
     {
-        if (mcpClient == null)
-        {
-            Debug.LogError("[MCP] MCPClient reference is not assigned in MCPHost");
-            return;
-        }
-
         try
         {
-            // 1) Попросим Gemini выдать ДОЛЖНО-ТОЛЬКО JSON команды для MCP tool
-            var googleAI = new GoogleAI(string.IsNullOrWhiteSpace(geminiApiKey) ? Environment.GetEnvironmentVariable("GEMINI_API_KEY") : geminiApiKey);
-            GenerativeModel model = string.IsNullOrWhiteSpace(modelName) ? googleAI.GenerativeModel() : googleAI.GenerativeModel(modelName);
+            tools ??= await client.ListToolsAsync(cancellationToken: ct);
 
-            string system = "Ты инструктор. Верни строго валидный JSON без каких-либо комментариев и пояснений.";
-            string instruction = $"Сформируй JSON команду для подключения к Unity по WebSocket. Используй MCP tool connect_to_unity_ws и аргумент url='{defaultUnityWsUrl}'. Формат: {{\"tool\":\"connect_to_unity_ws\",\"args\":{{\"url\":\"{defaultUnityWsUrl}\"}}}}. Верни только JSON.";
+            var toolsList = string.Join(", ", tools.Select(t => t.Name));
+            var system = "Ты планировщик MCP. Верни строго валидный JSON без каких-либо комментариев и пояснений.";
+
+            var instruction =
+                $"Доступные MCP tools: [{toolsList}]. Сформируй JSON команду формата {{\"tool\":\"<NAME>\",\"args\":{{\"arg\":\"<value>\"}}}}. Для инструмента Echo используй параметр с именем 'arg'. Верни только JSON.";
 
             GenerateContentResponse response = await model.GenerateContent(system + "\n" + instruction);
             string text = response.Text?.Trim();
 
-            // Удаляем markdown-кодовые блоки и оставляем только JSON
             if (!string.IsNullOrEmpty(text))
             {
                 string ExtractJson(string s)
                 {
-                    // Варианты: ```json { ... } ``` или ``` { ... } ``` или просто { ... }
                     int start = s.IndexOf('{');
                     int end = s.LastIndexOf('}');
 
@@ -79,16 +54,13 @@ public class MCPHost : MonoBehaviour
                     return s;
                 }
 
-                // Срезаем возможные тройные бэктики
                 if (text.StartsWith("```"))
                 {
-                    // убираем первые три бэктика и возможную метку языка
                     int firstNewLine = text.IndexOf('\n');
 
                     if (firstNewLine > 0)
                         text = text.Substring(firstNewLine + 1);
 
-                    // убираем закрывающие бэктики
                     int closeIdx = text.LastIndexOf("```", StringComparison.Ordinal);
 
                     if (closeIdx >= 0)
@@ -106,14 +78,15 @@ public class MCPHost : MonoBehaviour
                 return;
             }
 
-            // 2) Парсим JSON с полями tool/args
             using var doc = JsonDocument.Parse(text);
             JsonElement root = doc.RootElement;
-            string tool = root.GetProperty("tool").GetString();
+            string toolName = root.GetProperty("tool").GetString();
             var args = new Dictionary<string, object?>();
 
             if (root.TryGetProperty("args", out JsonElement argsEl))
+            {
                 foreach (JsonProperty p in argsEl.EnumerateObject())
+                {
                     args[p.Name] = p.Value.ValueKind switch
                                    {
                                        JsonValueKind.String => p.Value.GetString(),
@@ -122,16 +95,17 @@ public class MCPHost : MonoBehaviour
                                        JsonValueKind.False => false,
                                        _ => p.Value.ToString(),
                                    };
+                }
+            }
 
-            Debug.Log($"[MCP] Gemini tool: {tool}; args: {string.Join(", ", args.Select(kv => kv.Key + ":" + kv.Value))}");
+            Debug.Log($"[MCP] Gemini tool: {toolName}; args: {string.Join(", ", args.Select(kv => kv.Key + ":" + kv.Value))}");
 
-            // 3) Вызов MCP tool через клиент
-            await mcpClient.EnsureConnectedAsync(CancellationToken.None);
-            CallToolResult result = await mcpClient.InvokeToolAsync(tool, args, CancellationToken.None);
+            CallToolResult result = await client.CallToolAsync(toolName, new Dictionary<string, object?>(args), cancellationToken: ct);
 
-            // 4) Логируем ответ
             if (result?.Content != null && result.Content.Count > 0)
+            {
                 foreach (ContentBlock c in result.Content)
+                {
                     switch (c)
                     {
                         case TextContentBlock t:
@@ -141,12 +115,10 @@ public class MCPHost : MonoBehaviour
                             Debug.Log($"[MCP] Tool result ({c.Type})");
                             break;
                     }
-            else
-                Debug.Log("[MCP] Tool returned no content");
+                }
+            }
+            else { Debug.Log("[MCP] Tool returned no content"); }
         }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[MCP] AskGeminiToConnect failed: {ex.Message}");
-        }
+        catch (Exception ex) { Debug.LogError($"[MCP] AskGeminiToCallTool failed: {ex.Message}"); }
     }
 }
