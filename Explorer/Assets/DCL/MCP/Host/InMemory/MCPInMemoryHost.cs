@@ -6,92 +6,29 @@ using ModelContextProtocol.Server;
 using Mscc.GenerativeAI;
 using System;
 using System.Collections.Generic;
-using System.IO.Pipelines;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using UnityEngine;
 
-public class MCPInMemoryHost : MonoBehaviour
+public class MCPInMemoryHost
 {
-    private readonly Pipe clientToServerPipe = new ();
-    private readonly Pipe serverToClientPipe = new ();
-
     private McpServer server;
-    private McpClient client;
+    private readonly GenerativeModel model;
+    private readonly McpClient client;
     private IList<McpClientTool> tools;
 
-    private CancellationTokenSource tokenSource = new ();
-
-    [SerializeField] private string geminiApiKey;
-    [SerializeField] private string modelName;
-
-    [ContextMenu("CREATE")]
-    private void Create()
+    public MCPInMemoryHost(McpClient client, McpServer server, GenerativeModel model)
     {
-        tokenSource.Cancel();
-        tokenSource.Dispose();
-        tokenSource = new CancellationTokenSource();
-
-        CreateAsync(tokenSource.Token).Forget();
+        this.client = client;
+        this.server = server;
+        this.model = model;
     }
 
-    private async UniTask CreateAsync(CancellationToken ct)
-    {
-        if (server != null) await server.DisposeAsync();
-        if (client != null) await client.DisposeAsync();
-        tools?.Clear();
-
-        server = McpServer.Create(
-            new StreamServerTransport(clientToServerPipe.Reader.AsStream(), serverToClientPipe.Writer.AsStream()),
-            new McpServerOptions
-            {
-                ToolCollection = new McpServerPrimitiveCollection<McpServerTool>
-                {
-                    McpServerTool.Create(new Func<string, string>(arg => $"Echo: {arg}"), new McpServerToolCreateOptions { Name = "Echo" }),
-                },
-            });
-
-        _ = server.RunAsync(ct);
-
-        client = await McpClient.CreateAsync(
-            new StreamClientTransport(clientToServerPipe.Writer.AsStream(), serverToClientPipe.Reader.AsStream()), cancellationToken: ct);
-
-        tools = await client.ListToolsAsync(cancellationToken: ct);
-        foreach (McpClientTool tool in tools) Debug.Log($"Tool Name: {tool.Name}");
-    }
-
-    [ContextMenu("CALL ECHO")]
-    private void CallEcho()
-    {
-        CallEchoAsync(tokenSource.Token).Forget();
-        return;
-
-        async UniTask CallEchoAsync(CancellationToken ct)
-        {
-            McpClientTool echo = tools.First(t => t.Name == "Echo");
-
-            Debug.Log(await echo.InvokeAsync(new AIFunctionArguments
-            {
-                ["arg"] = "Hello World",
-            }, ct));
-        }
-    }
-
-    [ContextMenu("Gemini → Call InMemory tool")]
-    private void AskGeminiToCallTool() =>
-        AskGeminiToCallToolAsync(tokenSource.Token).Forget();
-
-    private async UniTask AskGeminiToCallToolAsync(CancellationToken ct)
+    public async UniTask AskGeminiToCallToolAsync(CancellationToken ct)
     {
         try
         {
-            var googleAI = new GoogleAI(string.IsNullOrWhiteSpace(geminiApiKey) ? Environment.GetEnvironmentVariable("GEMINI_API_KEY") : geminiApiKey);
-            GenerativeModel model = string.IsNullOrWhiteSpace(modelName) ? googleAI.GenerativeModel() : googleAI.GenerativeModel(modelName);
-
-            if (client == null || server == null)
-                await CreateAsync(ct);
-
             tools ??= await client.ListToolsAsync(cancellationToken: ct);
 
             var toolsList = string.Join(", ", tools.Select(t => t.Name));

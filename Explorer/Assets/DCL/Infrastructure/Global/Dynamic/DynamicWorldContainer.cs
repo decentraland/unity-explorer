@@ -1084,7 +1084,8 @@ namespace Global.Dynamic
                 globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));
 
             // MCP WebSocket Server - всегда включён
-            globalPlugins.Add(new MCPPlugin(globalWorld, staticContainer.ScenesCache, profileRepository, chatMessagesBus));
+            // globalPlugins.Add(new MCPPlugin(globalWorld, staticContainer.ScenesCache, profileRepository, chatMessagesBus));
+            globalPlugins.Add(new MCPInMemoryPlugin(globalWorld, staticContainer.ScenesCache, profileRepository, chatMessagesBus));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
