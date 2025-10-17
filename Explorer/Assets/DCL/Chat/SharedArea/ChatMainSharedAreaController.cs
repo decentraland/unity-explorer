@@ -1,14 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ControllerShowParams;
 using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.ChatArea
@@ -47,14 +44,14 @@ namespace DCL.ChatArea
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
 
-            DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
-
             // Subscribe to visibility state changes
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
+            CentralizedChatClickDetectionService.Instance.Resume();
         }
 
         protected override void OnViewShow()
         {
+            CentralizedChatClickDetectionService.Instance.Resume();
             chatSharedAreaEventBus.RaiseViewShowEvent();
         }
 
@@ -81,6 +78,7 @@ namespace DCL.ChatArea
             // 2. Another panel (like Friends) that was obscuring the chat is closed.
             if (State == ControllerState.ViewHidden)
             {
+                CentralizedChatClickDetectionService.Instance.Pause();
                 // If the entire controller view is not even active, we can't proceed.
                 await UniTask.CompletedTask;
                 return;
@@ -90,7 +88,7 @@ namespace DCL.ChatArea
             // If it was minimized, transition to Default or Focused based on the input.
             // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
             chatSharedAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
-
+            CentralizedChatClickDetectionService.Instance.Resume();
 
             ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
@@ -98,6 +96,7 @@ namespace DCL.ChatArea
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
+            CentralizedChatClickDetectionService.Instance.Pause();
             chatSharedAreaEventBus.RaiseHiddenInSharedSpaceEvent();
             await UniTask.CompletedTask;
         }
@@ -106,6 +105,7 @@ namespace DCL.ChatArea
         {
             ViewShowingComplete?.Invoke(this);
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+            CentralizedChatClickDetectionService.Instance.Pause();
         }
 
         private void HandlePointerEnter()
@@ -118,32 +118,6 @@ namespace DCL.ChatArea
             chatSharedAreaEventBus.RaisePointerExit();
         }
 
-        private void HandleGlobalClick(InputAction.CallbackContext context)
-        {
-            if (EventSystem.current == null || !context.control.IsPressed()) return;
-
-            var eventData = new PointerEventData(EventSystem.current)
-            {
-                position = GetPointerPosition(context)
-            };
-
-            using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
-
-            EventSystem.current.RaycastAll(eventData, results);
-
-            chatSharedAreaEventBus.RaiseGlobalClickEvent(results);
-        }
-
-        private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
-        {
-            if (ctx.control is Pointer pointer) return pointer.position.ReadValue();
-            if (Pointer.current != null) return Pointer.current.position.ReadValue();
-            if (Mouse.current != null) return Mouse.current.position.ReadValue();
-            if (Touchscreen.current?.primaryTouch != null)
-                return Touchscreen.current.primaryTouch.position.ReadValue();
-            return Vector2.zero;
-        }
-
         public override void Dispose()
         {
             if (viewInstance != null)
@@ -153,8 +127,6 @@ namespace DCL.ChatArea
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
             }
-
-            DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
 
             eventScope.Dispose();
 
@@ -183,6 +155,10 @@ namespace DCL.ChatArea
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)
         {
             IsVisibleInSharedSpace = evt.IsVisibleInSharedSpace;
+            if (IsVisibleInSharedSpace)
+                CentralizedChatClickDetectionService.Instance.Resume();
+            else
+                CentralizedChatClickDetectionService.Instance.Pause();
         }
     }
 }

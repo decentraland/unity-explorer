@@ -61,7 +61,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             Sprite thumbnail = await getCommunityThumbnailCommand
-                .ExecuteAsync(communityData.thumbnails?.raw, ct);
+                .ExecuteAsync(communityData.thumbnailUrl, ct);
 
             var viewModel = new ChatTitlebarViewModel
             {
