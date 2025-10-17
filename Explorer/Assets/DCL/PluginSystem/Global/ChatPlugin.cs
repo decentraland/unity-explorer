@@ -255,7 +255,7 @@ namespace DCL.PluginSystem.Global
 
             var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
 
-            var chatClickDetectionService = new ChatClickDetectionHandler((RectTransform)chatPanelView.transform,
+            var chatClickDetectionHandler = new ChatClickDetectionHandler((RectTransform)chatPanelView.transform,
                     chatPanelView.TitlebarView.CloseChatButton.transform,
                     chatPanelView.TitlebarView.CloseMemberListButton.transform,
                     chatPanelView.TitlebarView.OpenMemberListButton.transform,
@@ -264,9 +264,9 @@ namespace DCL.PluginSystem.Global
                     chatViewRectTransform,
                     mainUIView.SidebarView.unreadMessagesButton.transform);
 
-            pluginScope.Add(chatClickDetectionService);
+            pluginScope.Add(chatClickDetectionHandler);
 
-            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionService);
+            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionHandler);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
 
@@ -332,7 +332,7 @@ namespace DCL.PluginSystem.Global
                 chatInputBlockingService,
                 eventBus,
                 chatContextMenuService,
-                chatClickDetectionService,
+                chatClickDetectionHandler,
                 chatSharedAreaEventBus,
                 translationSettings,
                 translationMemory,
