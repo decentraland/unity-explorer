@@ -25,7 +25,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IReleasablePerformanceBudget releasablePerformanceBudget;
         private IWearableStorage wearableStorage;
         private IAttachmentsAssetsCache attachmentsAssetsCache;
-        private ISizedStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
+        private ISizedStreamableCache<TextureData, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
@@ -46,7 +46,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = Substitute.For<IWearableStorage>();
             attachmentsAssetsCache = Substitute.For<IAttachmentsAssetsCache>();
 
-            texturesCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetTextureIntention>>();
+            texturesCache = Substitute.For<ISizedStreamableCache<TextureData, GetTextureIntention>>();
             audioClipsCache = Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IGltfContainerAssetsCache>();

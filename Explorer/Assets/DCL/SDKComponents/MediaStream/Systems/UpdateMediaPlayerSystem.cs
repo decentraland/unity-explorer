@@ -13,6 +13,7 @@ using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -31,12 +32,10 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
+        private readonly MediaFactory mediaFactory;
         private readonly VolumeBus volumeBus;
 
         private readonly float audioFadeSpeed;
-
-        private float worldVolumePercentage = 1f;
-        private float masterVolumePercentage = 1f;
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -44,7 +43,7 @@ namespace DCL.SDKComponents.MediaStream
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
-            VolumeBus volumeBus,
+            MediaFactory mediaFactory,
             float audioFadeSpeed
         ) : base(world)
         {
@@ -52,26 +51,8 @@ namespace DCL.SDKComponents.MediaStream
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
+            this.mediaFactory = mediaFactory;
             this.audioFadeSpeed = audioFadeSpeed;
-
-            //This following part is a workaround applied for the MacOS platform, the reason
-            //is related to the video and audio streams, the MacOS environment does not support
-            //the volume control for the video and audio streams, as it doesn’t allow to route audio
-            //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
-            //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
-            this.volumeBus = volumeBus;
-            this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
-            this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
-            masterVolumePercentage = volumeBus.GetSerializedMasterVolume();
-            worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
-        }
-
-        protected override void OnDispose()
-        {
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
-            volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
-#endif
         }
 
         protected override void Update(float t)
@@ -79,7 +60,14 @@ namespace DCL.SDKComponents.MediaStream
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
+            UpdateCustomStreamQuery(World, t);
+
             UpdateVideoTextureQuery(World);
+        }
+
+        public void OnSceneIsCurrentChanged(bool enteredScene)
+        {
+            ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
         public void OnSceneIsCurrentChanged(bool enteredScene)
@@ -102,17 +90,12 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
+            FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
+
             if (component.State != VideoState.VsError)
             {
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
-
-                float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-
-                if (!sceneStateProvider.IsCurrent)
-                    targetVolume = 0f;
-
-                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -127,6 +110,8 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
+            FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
+
             if (component.State != VideoState.VsError)
             {
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
@@ -134,21 +119,28 @@ namespace DCL.SDKComponents.MediaStream
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
                     component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
                 }
-
-                float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-
-                if (!sceneStateProvider.IsCurrent)
-                    targetVolume = 0f;
-
-                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
             }
 
             if (ConsumePromise(ref component, false))
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
         }
 
+        /// <summary>
+        ///     If there is no SDK component which controls the playback state, the video is looped and started automatically
+        /// </summary>
         [Query]
-        [All(typeof(PBVideoPlayer))]
+        private void UpdateCustomStream(ref MediaPlayerComponent mediaPlayer, CustomMediaStream customMediaStream, [Data] float dt)
+        {
+            if (!frameTimeBudget.TrySpendBudget()) return;
+
+            FadeVolume(ref mediaPlayer, customMediaStream.Volume, dt);
+
+            if (ConsumePromise(ref mediaPlayer, true))
+                mediaPlayer.MediaPlayer.SetPlaybackProperties(customMediaStream);
+        }
+
+        // This query for all media players regardless of their origin
+        [Query]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
             playerComponent.MediaPlayer.EnsurePlaying();
@@ -165,11 +157,13 @@ namespace DCL.SDKComponents.MediaStream
             Texture? avText = playerComponent.MediaPlayer.LastTexture();
             if (avText == null) return;
 
-            // Handle texture update
-            if (assignedTexture.Texture.Asset.HasEqualResolution(to: avText))
-                Graphics.CopyTexture(avText, assignedTexture.Texture);
+            if (!assignedTexture.Texture.HasEqualResolution(to: avText))
+                assignedTexture.Resize(avText.width, avText.height);
+
+            if (playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1)))
+                Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
             else
-                assignedTexture.Texture.Asset.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
+                Graphics.CopyTexture(avText, assignedTexture.Texture);
         }
 
         [Query]
@@ -236,14 +230,17 @@ namespace DCL.SDKComponents.MediaStream
             return false;
         }
 
-        private void OnWorldVolumeChanged(float volume)
+        private void FadeVolume(ref MediaPlayerComponent component, float volume, float dt)
         {
-            worldVolumePercentage = volume;
-        }
+            if (component.State != VideoState.VsError)
+            {
+                float targetVolume = volume * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
 
-        private void OnMasterVolumeChanged(float volume)
-        {
-            masterVolumePercentage = volume;
+                if (!sceneStateProvider.IsCurrent)
+                    targetVolume = 0f;
+
+                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
+            }
         }
     }
 }

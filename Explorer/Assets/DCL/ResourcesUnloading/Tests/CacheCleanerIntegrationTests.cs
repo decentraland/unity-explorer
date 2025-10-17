@@ -199,7 +199,7 @@ namespace DCL.ResourcesUnloading.Tests
         private void FillCachesWithElements(string hashID)
         {
             var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            texturesCache.Add(textureIntention, new Texture2DData(new Texture2D(1, 1)));
+            texturesCache.Add(textureIntention, new TextureData(new Texture2D(1, 1)));
 
             var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
             var audioClip = new AudioClipData(AudioClip.Create(hashID, 1, 1, 2000, false));

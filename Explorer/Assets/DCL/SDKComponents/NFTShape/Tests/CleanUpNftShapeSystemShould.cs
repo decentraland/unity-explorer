@@ -12,7 +12,7 @@ using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
 using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
-using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Tests
 {
@@ -27,11 +27,8 @@ namespace DCL.SDKComponents.NFTShape.Tests
         [Test]
         public void AbortLoadingWhenPBNftShapeIsDeleted()
         {
-            var videoTexture = new Texture2DData(Texture2D.grayTexture);
-            videoTexture.AddReference();
-
-            var imageTexture = new Texture2DData(Texture2D.grayTexture);
-            imageTexture.AddReference();
+            var texData = new TextureData(Texture2D.grayTexture);
+            texData.AddReference();
 
             var typePromise = NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString("URN")), PartitionComponent.TOP_PRIORITY);
             var imagePromise = NftImagePromise.Create(world, new GetNFTImageIntention(URLAddress.FromString("URN")),  PartitionComponent.TOP_PRIORITY);
@@ -41,7 +38,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
                 ImagePromise = imagePromise,
             });
 
-            world.Add(imagePromise.Entity, new StreamableLoadingResult<Texture2DData>(imageTexture));
+            world.Add(imagePromise.Entity, new StreamableLoadingResult<Texture2DData>(texData));
 
             system!.Update(0);
 
@@ -50,18 +47,14 @@ namespace DCL.SDKComponents.NFTShape.Tests
             Assert.That(loadingComponent.TypePromise.Entity, Is.EqualTo(Entity.Null));
             Assert.That(loadingComponent.ImagePromise!.Value.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             Assert.That(loadingComponent.ImagePromise!.Value.Entity, Is.EqualTo(Entity.Null));
-
-            Assert.That(videoTexture.referenceCount, Is.EqualTo(0));
+            Assert.That(texData.referenceCount, Is.EqualTo(0));
         }
 
         [Test]
         public void AbortLoadingIfEntityDeleted()
         {
-            var videoTexture = new Texture2DData(Texture2D.grayTexture);
-            videoTexture.AddReference();
-
-            var imageTexture = new Texture2DData(Texture2D.grayTexture);
-            imageTexture.AddReference();
+            var texData = new TextureData(Texture2D.grayTexture);
+            texData.AddReference();
 
             var typePromise = NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString("URN")), PartitionComponent.TOP_PRIORITY);
             var imagePromise = NftImagePromise.Create(world, new GetNFTImageIntention(URLAddress.FromString("URN")),  PartitionComponent.TOP_PRIORITY);
@@ -71,7 +64,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
                 ImagePromise = imagePromise,
             });
 
-            world.Add(imagePromise.Entity, new StreamableLoadingResult<Texture2DData>(imageTexture));
+            world.Add(imagePromise.Entity, new StreamableLoadingResult<Texture2DData>(texData));
 
             system!.Update(0);
 
@@ -80,8 +73,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
             Assert.That(loadingComponent.TypePromise.Entity, Is.EqualTo(Entity.Null));
             Assert.That(loadingComponent.ImagePromise!.Value.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             Assert.That(loadingComponent.ImagePromise!.Value.Entity, Is.EqualTo(Entity.Null));
-
-            Assert.That(videoTexture.referenceCount, Is.EqualTo(0));
+            Assert.That(texData.referenceCount, Is.EqualTo(0));
         }
     }
 }

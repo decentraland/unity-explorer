@@ -5,7 +5,7 @@ using Utility.Multithreading;
 
 namespace ECS.StreamableLoading
 {
-    public abstract class StreamableRefCountData<TAsset> : IStreamableRefCountData where TAsset: class
+    public abstract class StreamableRefCountData<TAsset> : IStreamableRefCountData
     {
         public readonly struct RefAcquisition : IDisposable
         {
@@ -96,6 +96,6 @@ namespace ECS.StreamableLoading
             referenceCount <= 0;
 
         public static implicit operator TAsset?(StreamableRefCountData<TAsset>? refCountData) =>
-            refCountData?.Asset;
+            refCountData == null ? default(TAsset?) : refCountData.Asset;
     }
 }

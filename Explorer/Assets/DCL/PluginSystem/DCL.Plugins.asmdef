@@ -148,6 +148,11 @@
             "name": "com.dcl.gpui-assets",
             "expression": "",
             "define": "GPUI_PRO_PRESENT"
+        },
+        {
+            "name": "avprovideo",
+            "expression": "",
+            "define": "AV_PRO_PRESENT"
         }
     ],
     "noEngineReferences": false
