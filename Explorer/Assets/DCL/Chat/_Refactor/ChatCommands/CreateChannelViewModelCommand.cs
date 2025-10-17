@@ -99,7 +99,7 @@ namespace DCL.Chat.ChatCommands
             if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
             {
                 viewModel.DisplayName = communityData.name;
-                viewModel.ImageUrl = communityData.thumbnails?.raw;
+                viewModel.ImageUrl = communityData.thumbnailUrl;
                 viewModel.CommunityConnectionUpdates = voiceChatOrchestrator.CommunityConnectionUpdates(ChatChannel.GetCommunityIdFromChannelId(channel.Id));
                 viewModel.CurrentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created ViewModel for: {communityData.name} -> is Streaming: {viewModel.CommunityConnectionUpdates.Value} - current community ID: {viewModel.CurrentCommunityCallId.Value}");

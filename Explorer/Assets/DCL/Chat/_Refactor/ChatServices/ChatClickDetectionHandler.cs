@@ -41,14 +41,20 @@ namespace DCL.Chat.ChatServices
         public void Pause()
         {
             if (!isPaused)
+            {
+                isPaused = true;
                 centralizedChatService.OnClickDetected -= HandleClickDetected;
+            }
         }
 
 
         public void Resume()
         {
             if (isPaused)
+            {
+                isPaused = false;
                 centralizedChatService.OnClickDetected += HandleClickDetected;
+            }
         }
 
         private void HandleClickDetected(RaycastResult? raycastResult)
