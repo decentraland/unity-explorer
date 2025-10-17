@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.World
             if (sharedDependencies.SceneData.IsSDKVersionOrHigher(MIN_TWEEN_SEQUENCE_SDK_VERSION))
             {
                 ResetDirtyFlagSystem<PBTweenSequence>.InjectToWorld(ref builder);
-                TweenSequenceUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneData);
+                TweenSequenceUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool);
             }
 
             finalizeWorldSystems.Add(TweenCleanUpSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool));

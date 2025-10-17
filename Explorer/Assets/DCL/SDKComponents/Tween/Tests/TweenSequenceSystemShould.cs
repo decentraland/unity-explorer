@@ -6,7 +6,6 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
 using System.Threading.Tasks;
 using Entity = Arch.Core.Entity;
 using Quaternion = Decentraland.Common.Quaternion;
@@ -23,9 +22,8 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            var sceneData = Substitute.For<ISceneData>();
             tweenerPool = new TweenerPool();
-            system = new TweenSequenceUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool, sceneData);
+            system = new TweenSequenceUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweenerPool);
             loaderSystem = new TweenLoaderSystem(world);
         }
 

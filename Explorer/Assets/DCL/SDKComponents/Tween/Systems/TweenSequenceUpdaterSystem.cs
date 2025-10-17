@@ -10,7 +10,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
-using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -25,19 +24,15 @@ namespace DCL.SDKComponents.Tween
     {
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ISceneData sceneData;
 
-        public TweenSequenceUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneData sceneData) : base(world)
+        public TweenSequenceUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
         {
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
-            // if (!sceneData.IsSDKVersionOrHigher("7.11.1")) return;
-
             UpdatePBTweenSequenceQuery(World);
             UpdateTweenSequenceStateQuery(World);
         }
