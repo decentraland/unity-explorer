@@ -96,10 +96,11 @@ namespace DCL.SDKComponents.MediaStream
 
             // Only TextureData contains referencing mechanism
             // Create or get it from the entity
-            ref TextureData textureData = ref world.TryGetRef<TextureData>(videoPlayerEntity, out bool hasRefCounter);
-
-            if (!hasRefCounter)
-                world.Add(videoPlayerEntity, textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, mediaPlayer))));
+            if (!world.TryGet(videoPlayerEntity, out TextureData textureData))
+            {
+                textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, mediaPlayer)));
+                world.Add(videoPlayerEntity, textureData);
+            }
 
             if (world.TryGet(consumerEntity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
                 consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
