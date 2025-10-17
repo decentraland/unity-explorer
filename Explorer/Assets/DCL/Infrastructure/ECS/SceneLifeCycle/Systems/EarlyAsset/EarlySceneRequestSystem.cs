@@ -63,11 +63,11 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
 
         [Query]
         [All(typeof(EarlySceneFlag))]
-        private void CompleteEarlySceneRequest(Entity entity, ref ScenePromise promise, ref EarlySceneFlag flag)
+        private void CompleteEarlySceneRequest(Entity entity, ref ScenePromise promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> Result))
             {
-                if (Result.Succeeded)
+                if (Result.Succeeded && Result.Asset.Value.Count > 0)
                 {
                     if (Result.Asset.Value[0].SupportInitialSceneState())
                     {

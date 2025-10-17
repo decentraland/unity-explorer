@@ -103,6 +103,9 @@ namespace DCL.LOD.Systems
                     var instantiatedLOD = Object.Instantiate(result.Asset!.GetAsset<GameObject>(),
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
+
+                    //TODO (JUANI) : Remove before merge. Jsut leaving it here for showing the LOD_1 of new GP
+                    instantiatedLOD.gameObject.SetActive(true);
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
