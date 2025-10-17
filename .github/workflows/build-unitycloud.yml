@@ -2,8 +2,6 @@ name: Unity Cloud Build
 
 on:
   pull_request:
-    paths:
-      - 'Explorer/**'
     types:
       - opened
       - reopened
