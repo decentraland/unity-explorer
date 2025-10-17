@@ -46,6 +46,17 @@ jobs:
           fetch-depth: 0
           lfs: true
           submodules: recursive
+          
+      - name: Check available disk space
+        run: |
+          echo "=== Disk Usage ==="
+          df -h
+          echo ""
+          echo "=== Free Space ==="
+          df -h | grep -E "^/dev"
+          echo ""
+          echo "=== Docker Info ==="
+          docker system df
 
       - name: Create LFS file list
         run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
@@ -56,12 +67,35 @@ jobs:
         with:
           path: .git/lfs
           key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+          
+      - name: Check available disk space
+        run: |
+          echo "=== Disk Usage ==="
+          df -h
+          echo ""
+          echo "=== Free Space ==="
+          df -h | grep -E "^/dev"
+          echo ""
+          echo "=== Docker Info ==="
+          docker system df
 
       - name: Git LFS Pull
         run: |
           git lfs pull
           git add .
           git reset --hard
+          
+          
+      - name: Check available disk space
+        run: |
+          echo "=== Disk Usage ==="
+          df -h
+          echo ""
+          echo "=== Free Space ==="
+          df -h | grep -E "^/dev"
+          echo ""
+          echo "=== Docker Info ==="
+          docker system df
           
       - uses: webfactory/ssh-agent@v0.8.0
         with:
@@ -78,6 +112,17 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
+
+      - name: Check available disk space
+        run: |
+          echo "=== Disk Usage ==="
+          df -h
+          echo ""
+          echo "=== Free Space ==="
+          df -h | grep -E "^/dev"
+          echo ""
+          echo "=== Docker Info ==="
+          docker system df
       
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
@@ -122,6 +167,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
+          
+      - name: Check available disk space
+        run: |
+          echo "=== Disk Usage ==="
+          df -h
+          echo ""
+          echo "=== Free Space ==="
+          df -h | grep -E "^/dev"
+          echo ""
+          echo "=== Docker Info ==="
+          docker system df
 
       # --- Restore Unity image from GHCR (fast path) ---
       - name: Restore Unity image from GHCR
