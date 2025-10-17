@@ -198,7 +198,7 @@ namespace DCL.Communities.CommunityCreation
             if (!string.IsNullOrEmpty(imageUrl))
             {
                 thumbnailLoadingCts = thumbnailLoadingCts.SafeRestart();
-                thumbnailLoader.LoadCommunityThumbnailAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token).Forget();
+                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token, true).Forget();
             }
             else
             {

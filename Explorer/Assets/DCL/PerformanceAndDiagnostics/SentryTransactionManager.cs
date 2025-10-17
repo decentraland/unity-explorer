@@ -185,15 +185,17 @@ namespace DCL.PerformanceAndDiagnostics
 
         private void FinishAllTransactions()
         {
-            foreach (KeyValuePair<string,ITransactionTracer> transaction in sentryTransactions)
+            var transactionKeys = new List<string>(sentryTransactions.Keys);
+            
+            foreach (string transactionKey in transactionKeys)
             {
                 try
                 {
-                    EndTransaction(transaction.Key);
+                    EndTransaction(transactionKey);
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transaction.Key}' during application quit: {ex.Message}");
+                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionKey}' during application quit: {ex.Message}");
                 }
             }
         }
