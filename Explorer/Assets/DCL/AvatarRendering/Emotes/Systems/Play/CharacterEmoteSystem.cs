@@ -278,7 +278,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
 
-                    if (emoteComponent.Metadata.IsSocialEmote)
+                    if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                     {
                         if (emoteComponent.IsPlayingSocialEmoteOutcome)
                         {
