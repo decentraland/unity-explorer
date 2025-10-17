@@ -27,6 +27,82 @@ namespace DCL.MCP.Host
             this.model = model;
         }
 
+        public async UniTask<(string toolName, Dictionary<string, object?> args, CallToolResult result, string raw)?> PlanAndCallToolAsync(string userPrompt, CancellationToken ct)
+        {
+            try
+            {
+                tools ??= await client.ListToolsAsync(cancellationToken: ct);
+
+                var toolsList = string.Join(", ", tools.Select(t => t.Name));
+
+                var system =
+                    "Ты планировщик MCP. У тебя есть инструменты (tools) и текст запроса от пользователя. Верни строго валидный JSON без комментариев.";
+
+                var instruction =
+                    $"Доступные MCP tools: [{toolsList}]. Используй формат ответа строго: {{\"tool\":\"<NAME>\",\"args\":{{\"arg\":\"<json-string-args>\"}}}}. В параметре 'arg' передавай JSON-строку с нужными полями для этого инструмента. Ничего больше не добавляй. Пользовательский запрос: {userPrompt}";
+
+                Debug.Log($"[MCP]: LLM ask start with {toolsList}");
+                GenerateContentResponse response = await model.GenerateContent(system + "\n" + instruction);
+                string text = response.Text?.Trim();
+
+                Debug.Log($"[MCP]: LLM ask end, get response {text}");
+
+                if (string.IsNullOrWhiteSpace(text))
+                    return null;
+
+                if (text.StartsWith("```"))
+                {
+                    int firstNewLine = text.IndexOf('\n');
+                    if (firstNewLine > 0) text = text.Substring(firstNewLine + 1);
+                    int closeIdx = text.LastIndexOf("```", StringComparison.Ordinal);
+                    if (closeIdx >= 0) text = text.Substring(0, closeIdx);
+                    text = text.Trim();
+                }
+
+                string ExtractJson(string s)
+                {
+                    int start = s.IndexOf('{');
+                    int end = s.LastIndexOf('}');
+                    if (start >= 0 && end > start) return s.Substring(start, end - start + 1);
+                    return s;
+                }
+
+                text = ExtractJson(text).Trim();
+                if (string.IsNullOrWhiteSpace(text)) return null;
+
+                using var doc = JsonDocument.Parse(text);
+                JsonElement root = doc.RootElement;
+                string toolName = root.GetProperty("tool").GetString();
+                var args = new Dictionary<string, object?>();
+
+                if (root.TryGetProperty("args", out JsonElement argsEl))
+                {
+                    foreach (JsonProperty p in argsEl.EnumerateObject())
+                    {
+                        args[p.Name] = p.Value.ValueKind switch
+                                       {
+                                           JsonValueKind.String => p.Value.GetString(),
+                                           JsonValueKind.Number => p.Value.TryGetInt64(out long li) ? li : p.Value.GetDouble(),
+                                           JsonValueKind.True => true,
+                                           JsonValueKind.False => false,
+                                           _ => p.Value.ToString(),
+                                       };
+                    }
+                }
+
+                Debug.Log($"[MCP]: Client tool call start for {toolName}");
+                CallToolResult result = await client.CallToolAsync(toolName, new Dictionary<string, object?>(args), cancellationToken: ct);
+                Debug.Log($"[MCP]: Client tool call end for {toolName}");
+
+                return (toolName, new Dictionary<string, object?>(args), result, text);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[MCP] PlanAndCallToolAsync failed: {ex.Message}");
+                return null;
+            }
+        }
+
         public async UniTask<string> AskLLMAsync(string prompt, CancellationToken ct)
         {
             try

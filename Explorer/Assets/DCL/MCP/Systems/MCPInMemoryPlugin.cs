@@ -14,8 +14,11 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using DCL.Chat.History;
+using DCL.MCP.Handlers;
 using DCL.MCP.Host;
 using ChatMessage = DCL.Chat.History.ChatMessage;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace DCL.MCP
 {
@@ -61,6 +64,9 @@ namespace DCL.MCP
             clientToServerPipe = new Pipe();
             serverToClientPipe = new Pipe();
 
+            // Handlers (reuse existing game logic)
+            var cameraHandler = new MCPCameraHandler(globalWorld);
+
             server = McpServer.Create(
                 new StreamServerTransport(clientToServerPipe.Reader.AsStream(), serverToClientPipe.Writer.AsStream()),
                 new McpServerOptions
@@ -74,6 +80,55 @@ namespace DCL.MCP
                             chatMessagesBus?.Send(ChatChannel.NEARBY_CHANNEL, text, "MCP", string.Empty);
                             return $"Echo: {arg}";
                         }), new McpServerToolCreateOptions { Name = "Echo" }),
+
+                        // Camera tools (JSON string in 'arg')
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleStartCameraControlAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "start_inworld_camera_control" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleStopCameraControlAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "stop_inworld_camera_control" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleSetCameraPositionAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_position" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleSetCameraRotationAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_rotation" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleSetCameraLookAtAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_look_at" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleSetCameraLookAtPlayerAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_look_at_player" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleSetCameraFOVAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "set_inworld_camera_fov" }),
+
+                        McpServerTool.Create(new Func<string, object>(json =>
+                        {
+                            JObject j = string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+                            return cameraHandler.HandleGetCameraStateAsync(j).AsTask().Result;
+                        }), new McpServerToolCreateOptions { Name = "get_inworld_camera_state" }),
                     },
                 });
 
@@ -148,19 +203,33 @@ namespace DCL.MCP
             if (string.IsNullOrWhiteSpace(prompt))
                 return;
 
-            // Отправляем в LLM и публикуем ответ в чат (Nearby)
+            // MCP flow: планируем и вызываем MCP tool через LLM и публикуем результат
             UniTask.Void(async () =>
             {
-                string reply;
+                string aiText = null;
 
-                try { reply = await host.AskLLMAsync(prompt, CancellationToken.None); }
-                catch { reply = null; }
+                try
+                {
+                    (string toolName, Dictionary<string, object?> args, CallToolResult result, string raw)? plan = await host.PlanAndCallToolAsync(prompt, CancellationToken.None);
 
-                if (string.IsNullOrWhiteSpace(reply))
-                    return;
+                    if (plan == null)
+                    {
+                        string reply = await host.AskLLMAsync(prompt, CancellationToken.None);
 
-                // Префикс "AI: " как просили
-                string aiText = "AI: " + reply;
+                        if (!string.IsNullOrWhiteSpace(reply))
+                            aiText = "AI: " + reply;
+                    }
+                    else
+                    {
+                        string toolName = plan.Value.toolName;
+                        aiText = "AI: Выполнил " + toolName;
+                    }
+                }
+                catch
+                { /* ignore */
+                }
+
+                if (string.IsNullOrWhiteSpace(aiText)) return;
 
                 try { chatMessagesBus?.Send(ChatChannel.NEARBY_CHANNEL, aiText, "MCP", string.Empty); }
                 catch
