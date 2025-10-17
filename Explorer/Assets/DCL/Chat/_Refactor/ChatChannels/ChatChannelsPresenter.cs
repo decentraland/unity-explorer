@@ -108,8 +108,7 @@ namespace DCL.Chat
                 {
                     vm.DisplayName = cd.name;
 
-                    // Optional: if you want to also refresh the picture:
-                    vm.ImageUrl = cd.thumbnails?.raw;
+                    vm.ImageUrl = cd.thumbnailUrl;
                     view.UpdateConversation(vm);
 
                     if (!string.IsNullOrEmpty(vm.ImageUrl))
