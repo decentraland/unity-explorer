@@ -9,6 +9,7 @@ using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -20,16 +21,21 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.ModuleControllers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -50,8 +56,8 @@ using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
 using DCL.Utility;
 using DCL.Utility.Types;
-#if UNITY_EDITOR
-#endif
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -149,6 +155,7 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
@@ -224,6 +231,8 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
+                OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -274,7 +283,7 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -312,6 +321,7 @@ namespace Global.Dynamic
                 new PlatformDriveInfoProvider());
 
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+
             if (!hasMinimumSpecs)
             {
                 DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
@@ -321,10 +331,7 @@ namespace Global.Dynamic
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
-            {
-                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
-            });
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
@@ -332,11 +339,11 @@ namespace Global.Dynamic
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
-                .AssetsProvisioner!
-                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+                                                 .AssetsProvisioner!
+                                                 .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
             ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
-                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+               .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
             var minimumSpecsResults = minimumSpecsGuard.Results;
             var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
@@ -588,9 +595,7 @@ namespace Global.Dynamic
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
-            public SplashScreenRef(string guid) : base(guid)
-            {
-            }
+            public SplashScreenRef(string guid) : base(guid) { }
         }
     }
 }

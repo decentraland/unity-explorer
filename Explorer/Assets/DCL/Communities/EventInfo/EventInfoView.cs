@@ -82,7 +82,7 @@ namespace DCL.Communities.EventInfo
 
             ResetScrollPosition();
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(eventData.Image, eventImage, null, cancellationToken).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventData.Image, eventImage, null, cancellationToken, true).Forget();
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);

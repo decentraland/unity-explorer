@@ -405,7 +405,7 @@ namespace DCL.Communities.CommunityCreation
             originalCommunityLandsForEdition.Clear();
             originalCommunityWorldsForEdition.Clear();
 
-            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw, thumbnailLoader);
+            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCommunityPrivacy(getCommunityResult.Value.data.privacy, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
@@ -608,7 +608,7 @@ namespace DCL.Communities.CommunityCreation
             {
                 if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
                 {
-                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnailUrl, lastSelectedProfileThumbnail);
                     isProfileThumbnailDirty = false;
                     lastSelectedProfileThumbnail = null;
                 }
