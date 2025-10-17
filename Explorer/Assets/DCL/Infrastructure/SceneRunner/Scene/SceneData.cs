@@ -44,7 +44,7 @@ namespace SceneRunner.Scene
             SceneEntityDefinition = sceneDefinition;
             StaticSceneMessages = staticSceneMessages;
             Parcels = parcels;
-            SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
+            SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id, sceneDefinition.metadata.sdkVersion);
             Geometry = geometry;
         }
 
@@ -135,8 +135,8 @@ namespace SceneRunner.Scene
             SceneEntityDefinition.metadata.runtimeVersion == "7";
 
         /// <summary>
-        ///     Gets the specific SDK version (e.g., "7.5.6") that is injected in Scenes
-        ///     Metadata during their deployment
+        ///     Gets the specific SDK version (e.g.: "7.5.6" or "7.11.1-18575373673.commit-f7e8f37")
+        ///     that is injected in Scenes Metadata during their deployment
         /// </summary>
         public string GetSDKVersion() =>
             SceneEntityDefinition.metadata.sdkVersion;
