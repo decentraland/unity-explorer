@@ -14,6 +14,7 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 namespace DefaultNamespace
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     public partial class EarlyAssetBundleRequestSystem : BaseUnityLoopSystem
     {
         private bool requestDone;

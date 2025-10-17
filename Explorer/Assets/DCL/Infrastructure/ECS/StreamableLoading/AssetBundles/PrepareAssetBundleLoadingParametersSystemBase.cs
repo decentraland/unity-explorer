@@ -36,17 +36,6 @@ namespace ECS.StreamableLoading.AssetBundles
             // Remove not supported flags
             assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
 
-            if (assetBundleIntention.Hash.Contains("staticscene"))
-            {
-                CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
-                ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
-                ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
-                ca.CurrentSource = AssetSource.WEB;
-                ca.URL = URLAddress.FromString($"https://explorer-artifacts.decentraland.zone/testing/{assetBundleIntention.Hash}");
-                assetBundleIntention.CommonArguments = ca;
-                return;
-            }
-
             // First priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
             {
@@ -75,10 +64,18 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
 
+                if (assetBundleIntention.Hash.Contains("staticscene"))
+                {
+                    ca.URL = URLAddress.FromString($"https://explorer-artifacts.decentraland.zone/testing/{assetBundleIntention.Hash}");
+                    assetBundleIntention.CommonArguments = ca;
+                }
+                else
+                {
+                    assetBundleIntention.Hash = assetBundleIntention.AssetBundleManifestVersion.CheckCasing(assetBundleIntention.Hash);
+                    ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
+                    assetBundleIntention.CommonArguments = ca;
+                }
 
-                assetBundleIntention.Hash = assetBundleIntention.AssetBundleManifestVersion.CheckCasing(assetBundleIntention.Hash);
-                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
-                assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
             }
         }
