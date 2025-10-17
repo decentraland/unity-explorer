@@ -114,8 +114,8 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly VolumeBus volumeBus;
-        private readonly IEventsApiService eventsApiService;
-        private readonly IUserCalendar userCalendar;
+        private readonly HttpEventsApiService eventsApiService;
+        private readonly GoogleUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
@@ -187,8 +187,8 @@ namespace DCL.PluginSystem.Global
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
             VolumeBus volumeBus,
-            IEventsApiService eventsApiService,
-            IUserCalendar userCalendar,
+            HttpEventsApiService eventsApiService,
+            GoogleUserCalendar userCalendar,
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,

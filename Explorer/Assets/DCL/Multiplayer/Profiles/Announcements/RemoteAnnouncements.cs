@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 {
-    public class RemoteAnnouncements : IRemoteAnnouncements
+    public class RemoteAnnouncements
     {
         private readonly List<RemoteAnnouncement> list = new ();
 
