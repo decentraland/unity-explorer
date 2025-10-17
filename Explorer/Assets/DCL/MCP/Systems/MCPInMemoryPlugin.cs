@@ -13,6 +13,9 @@ using Mscc.GenerativeAI;
 using System;
 using System.IO.Pipelines;
 using System.Threading;
+using DCL.Chat.History;
+using DCL.MCP.Host;
+using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.MCP
 {
@@ -38,6 +41,7 @@ namespace DCL.MCP
         private GoogleAI googleAI;
         private GenerativeModel model;
         private MCPHost host;
+        private bool subscribedToChat;
 
         public MCPInMemoryPlugin(World globalWorld, IScenesCache scenesCache, IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus)
         {
@@ -63,7 +67,13 @@ namespace DCL.MCP
                 {
                     ToolCollection = new McpServerPrimitiveCollection<McpServerTool>
                     {
-                        McpServerTool.Create(new Func<string, string>(arg => $"Echo: {arg}"), new McpServerToolCreateOptions { Name = "Echo" }),
+                        // Echo tool: также пишет в игровой чат с префиксом [AI] :
+                        McpServerTool.Create(new Func<string, string>(arg =>
+                        {
+                            string text = "[AI] : " + (arg ?? string.Empty);
+                            chatMessagesBus?.Send(ChatChannel.NEARBY_CHANNEL, text, "MCP", string.Empty);
+                            return $"Echo: {arg}";
+                        }), new McpServerToolCreateOptions { Name = "Echo" }),
                     },
                 });
 
@@ -75,6 +85,9 @@ namespace DCL.MCP
             // Create Host
             host = new MCPHost(client, server, model);
             host.AskGeminiToCallToolAsync(CancellationToken.None).Forget();
+
+            // Подписываемся на чат, чтобы перехватывать сообщения с @ai
+            TrySubscribeToChat();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments) { }
@@ -83,6 +96,77 @@ namespace DCL.MCP
         {
             server?.DisposeAsync();
             client?.DisposeAsync();
+
+            // Отписка от чата
+            if (subscribedToChat && chatMessagesBus != null)
+            {
+                try { chatMessagesBus.MessageAdded -= OnChatMessageAdded; }
+                catch
+                { /* ignore */
+                }
+
+                subscribedToChat = false;
+            }
+        }
+
+        private void TrySubscribeToChat()
+        {
+            if (subscribedToChat) return;
+            if (chatMessagesBus == null) return;
+
+            try
+            {
+                chatMessagesBus.MessageAdded += OnChatMessageAdded;
+                subscribedToChat = true;
+            }
+            catch
+            {
+                // прототип: молча игнорируем
+            }
+        }
+
+        private void OnChatMessageAdded(ChatChannel.ChannelId channel, ChatChannel.ChatChannelType type, ChatMessage message)
+        {
+            // Игнорируем сообщения от ИИ, чтобы не зациклиться
+            if (message.IsSystemMessage) return;
+
+            string text = message.Message ?? string.Empty;
+            const string mention = "@ai";
+
+            if (!text.Contains(mention, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // Вырезаем @ai и пробелы
+            string prompt = text;
+            int idx = prompt.IndexOf(mention, StringComparison.OrdinalIgnoreCase);
+
+            if (idx >= 0)
+                prompt = prompt.Remove(idx, mention.Length);
+
+            prompt = prompt.Trim();
+
+            if (string.IsNullOrWhiteSpace(prompt))
+                return;
+
+            // Отправляем в LLM и публикуем ответ в чат (Nearby)
+            UniTask.Void(async () =>
+            {
+                string reply;
+
+                try { reply = await host.AskLLMAsync(prompt, CancellationToken.None); }
+                catch { reply = null; }
+
+                if (string.IsNullOrWhiteSpace(reply))
+                    return;
+
+                // Префикс "AI: " как просили
+                string aiText = "AI: " + reply;
+
+                try { chatMessagesBus?.Send(ChatChannel.NEARBY_CHANNEL, aiText, "MCP", string.Empty); }
+                catch
+                { /* ignore */
+                }
+            });
         }
     }
 }

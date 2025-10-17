@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -11,114 +10,137 @@ using System.Text.Json;
 using System.Threading;
 using UnityEngine;
 
-public class MCPHost
+namespace DCL.MCP.Host
 {
-    private readonly McpServer server;
-    private readonly GenerativeModel model;
-    private readonly McpClient client;
-
-    private IList<McpClientTool> tools;
-
-    public MCPHost(McpClient client, McpServer server, GenerativeModel model)
+    public class MCPHost
     {
-        this.client = client;
-        this.server = server;
-        this.model = model;
-    }
+        private readonly McpServer server;
+        private readonly GenerativeModel model;
+        private readonly McpClient client;
 
-    public async UniTask AskGeminiToCallToolAsync(CancellationToken ct)
-    {
-        try
+        private IList<McpClientTool> tools;
+
+        public MCPHost(McpClient client, McpServer server, GenerativeModel model)
         {
-            tools ??= await client.ListToolsAsync(cancellationToken: ct);
+            this.client = client;
+            this.server = server;
+            this.model = model;
+        }
 
-            var toolsList = string.Join(", ", tools.Select(t => t.Name));
-            var system = "Ты планировщик MCP. Верни строго валидный JSON без каких-либо комментариев и пояснений.";
-
-            var instruction =
-                $"Доступные MCP tools: [{toolsList}]. Сформируй JSON команду формата {{\"tool\":\"<NAME>\",\"args\":{{\"arg\":\"<value>\"}}}}. Для инструмента Echo используй параметр с именем 'arg'. Верни только JSON.";
-
-            GenerateContentResponse response = await model.GenerateContent(system + "\n" + instruction);
-            string text = response.Text?.Trim();
-
-            if (!string.IsNullOrEmpty(text))
+        public async UniTask<string> AskLLMAsync(string prompt, CancellationToken ct)
+        {
+            try
             {
-                string ExtractJson(string s)
-                {
-                    int start = s.IndexOf('{');
-                    int end = s.LastIndexOf('}');
+                if (string.IsNullOrWhiteSpace(prompt))
+                    return null;
 
-                    if (start >= 0 && end > start)
-                        return s.Substring(start, end - start + 1);
-
-                    return s;
-                }
-
-                if (text.StartsWith("```"))
-                {
-                    int firstNewLine = text.IndexOf('\n');
-
-                    if (firstNewLine > 0)
-                        text = text.Substring(firstNewLine + 1);
-
-                    int closeIdx = text.LastIndexOf("```", StringComparison.Ordinal);
-
-                    if (closeIdx >= 0)
-                        text = text.Substring(0, closeIdx);
-
-                    text = text.Trim();
-                }
-
-                text = ExtractJson(text).Trim();
+                GenerateContentResponse response = await model.GenerateContent(prompt);
+                string text = response.Text?.Trim();
+                return string.IsNullOrWhiteSpace(text) ? null : text;
             }
-
-            if (string.IsNullOrWhiteSpace(text))
+            catch (Exception ex)
             {
-                Debug.LogError("[MCP] Gemini returned empty response");
-                return;
+                Debug.LogError($"[MCP] AskLLMAsync failed: {ex.Message}");
+                return null;
             }
+        }
 
-            using var doc = JsonDocument.Parse(text);
-            JsonElement root = doc.RootElement;
-            string toolName = root.GetProperty("tool").GetString();
-            var args = new Dictionary<string, object?>();
+        public async UniTask AskGeminiToCallToolAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(1000);
 
-            if (root.TryGetProperty("args", out JsonElement argsEl))
+            try
             {
-                foreach (JsonProperty p in argsEl.EnumerateObject())
+                tools ??= await client.ListToolsAsync(cancellationToken: ct);
+
+                var toolsList = string.Join(", ", tools.Select(t => t.Name));
+                var system = "Ты планировщик MCP. Верни строго валидный JSON без каких-либо комментариев и пояснений.";
+
+                var instruction =
+                    $"Доступные MCP tools: [{toolsList}]. Сформируй JSON команду формата {{\"tool\":\"<NAME>\",\"args\":{{\"arg\":\"<value>\"}}}}. Для инструмента Echo используй параметр с именем 'arg'. Верни только JSON.";
+
+                GenerateContentResponse response = await model.GenerateContent(system + "\n" + instruction);
+                string text = response.Text?.Trim();
+
+                if (!string.IsNullOrEmpty(text))
                 {
-                    args[p.Name] = p.Value.ValueKind switch
-                                   {
-                                       JsonValueKind.String => p.Value.GetString(),
-                                       JsonValueKind.Number => p.Value.TryGetInt64(out long li) ? li : p.Value.GetDouble(),
-                                       JsonValueKind.True => true,
-                                       JsonValueKind.False => false,
-                                       _ => p.Value.ToString(),
-                                   };
-                }
-            }
-
-            Debug.Log($"[MCP] Gemini tool: {toolName}; args: {string.Join(", ", args.Select(kv => kv.Key + ":" + kv.Value))}");
-
-            CallToolResult result = await client.CallToolAsync(toolName, new Dictionary<string, object?>(args), cancellationToken: ct);
-
-            if (result?.Content != null && result.Content.Count > 0)
-            {
-                foreach (ContentBlock c in result.Content)
-                {
-                    switch (c)
+                    string ExtractJson(string s)
                     {
-                        case TextContentBlock t:
-                            Debug.Log($"[MCP] Tool result (text): {t.Text}");
-                            break;
-                        default:
-                            Debug.Log($"[MCP] Tool result ({c.Type})");
-                            break;
+                        int start = s.IndexOf('{');
+                        int end = s.LastIndexOf('}');
+
+                        if (start >= 0 && end > start)
+                            return s.Substring(start, end - start + 1);
+
+                        return s;
+                    }
+
+                    if (text.StartsWith("```"))
+                    {
+                        int firstNewLine = text.IndexOf('\n');
+
+                        if (firstNewLine > 0)
+                            text = text.Substring(firstNewLine + 1);
+
+                        int closeIdx = text.LastIndexOf("```", StringComparison.Ordinal);
+
+                        if (closeIdx >= 0)
+                            text = text.Substring(0, closeIdx);
+
+                        text = text.Trim();
+                    }
+
+                    text = ExtractJson(text).Trim();
+                }
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    Debug.LogError("[MCP] Gemini returned empty response");
+                    return;
+                }
+
+                using var doc = JsonDocument.Parse(text);
+                JsonElement root = doc.RootElement;
+                string toolName = root.GetProperty("tool").GetString();
+                var args = new Dictionary<string, object?>();
+
+                if (root.TryGetProperty("args", out JsonElement argsEl))
+                {
+                    foreach (JsonProperty p in argsEl.EnumerateObject())
+                    {
+                        args[p.Name] = p.Value.ValueKind switch
+                                       {
+                                           JsonValueKind.String => p.Value.GetString(),
+                                           JsonValueKind.Number => p.Value.TryGetInt64(out long li) ? li : p.Value.GetDouble(),
+                                           JsonValueKind.True => true,
+                                           JsonValueKind.False => false,
+                                           _ => p.Value.ToString(),
+                                       };
                     }
                 }
+
+                Debug.Log($"[MCP] Gemini tool: {toolName}; args: {string.Join(", ", args.Select(kv => kv.Key + ":" + kv.Value))}");
+
+                CallToolResult result = await client.CallToolAsync(toolName, new Dictionary<string, object?>(args), cancellationToken: ct);
+
+                if (result?.Content != null && result.Content.Count > 0)
+                {
+                    foreach (ContentBlock c in result.Content)
+                    {
+                        switch (c)
+                        {
+                            case TextContentBlock t:
+                                Debug.Log($"[MCP] Tool result (text): {t.Text}");
+                                break;
+                            default:
+                                Debug.Log($"[MCP] Tool result ({c.Type})");
+                                break;
+                        }
+                    }
+                }
+                else { Debug.Log("[MCP] Tool returned no content"); }
             }
-            else { Debug.Log("[MCP] Tool returned no content"); }
+            catch (Exception ex) { Debug.LogError($"[MCP] AskGeminiToCallTool failed: {ex.Message}"); }
         }
-        catch (Exception ex) { Debug.LogError($"[MCP] AskGeminiToCallTool failed: {ex.Message}"); }
     }
 }
