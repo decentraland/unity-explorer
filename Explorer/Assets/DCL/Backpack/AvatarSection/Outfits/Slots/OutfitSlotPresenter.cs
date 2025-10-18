@@ -28,7 +28,7 @@ namespace DCL.Backpack.Slots
         }
     }
 
-    public enum OutfitSlotState { Empty, Loading, Full, Save }
+    public enum OutfitSlotState { Empty, Loading, Full, Save, EmptyAndReadyToSave }
 
     public class OutfitSlotPresenter : IDisposable
     {
@@ -50,6 +50,7 @@ namespace DCL.Backpack.Slots
         private CancellationTokenSource cts = new ();
         
         private bool isHovered;
+        private bool isForcedHover;
         private OutfitSlotState currentState;
         private OutfitItem? currentOutfitData;
         private Texture2D? currentThumbnail;
@@ -115,6 +116,7 @@ namespace DCL.Backpack.Slots
         {
             currentOutfitData = item;
             SetState(OutfitSlotState.Full, item);
+            isForcedHover = false;
 
             if (loadThumbnail)
                 LoadExistingScreenshotAsync().Forget();
@@ -128,16 +130,36 @@ namespace DCL.Backpack.Slots
                 currentThumbnail = null;
             }
             SetState(OutfitSlotState.Empty);
+            isForcedHover = false;
         }
 
         public void SetSaving()
         {
             SetState(OutfitSlotState.Save);
+            isForcedHover = false;
         }
 
         public void SetLoading()
         {
             SetState(OutfitSlotState.Loading);
+            isForcedHover = false;
+        }
+
+        public bool IsEmpty()
+        {
+            return currentState == OutfitSlotState.Empty ||
+                   currentState == OutfitSlotState.EmptyAndReadyToSave;
+        }
+
+        public void SetAsFirstEmptyAndReadyToSave(bool active)
+        {
+            isForcedHover = active;
+            if (active)
+                SetState(OutfitSlotState.EmptyAndReadyToSave);
+            else if (currentState == OutfitSlotState.EmptyAndReadyToSave)
+                SetState(OutfitSlotState.Empty);
+
+            UpdateView();
         }
 
         public void SetEquipped(bool equipped)
@@ -155,14 +177,19 @@ namespace DCL.Backpack.Slots
 
         private void UpdateView()
         {
+            bool effectiveHover = isHovered || isForcedHover; 
+            
             switch (currentState)
             {
                 case OutfitSlotState.Empty: view.ShowEmptyState(isHovered); break;
+                case OutfitSlotState.EmptyAndReadyToSave:
+                    view.ShowEmptyState(effectiveHover);
+                    break;
                 case OutfitSlotState.Loading: view.ShowLoadingState(); break;
                 case OutfitSlotState.Save: view.ShowStateSaving(); break;
                 case OutfitSlotState.Full:
 
-                    view.ShowFullState(currentThumbnail, isHovered);
+                    view.ShowFullState(currentThumbnail, effectiveHover);
                     break;
             }
         }

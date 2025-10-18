@@ -48,7 +48,7 @@ namespace DCL.Backpack
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
         private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
         private readonly PreviewOutfitCommand previewOutfitCommand;
-        
+
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
 
@@ -111,7 +111,7 @@ namespace DCL.Backpack
         public void Activate()
         {
             view.Activate();
-            
+
             cts = cts.SafeRestart();
             RefreshOutfitsAsync(cts.Token).Forget();
             CheckBannerVisibilityAsync(cts.Token).Forget();
@@ -190,7 +190,7 @@ namespace DCL.Backpack
         {
             var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
             if (presenter == null) return;
-            
+
             presenter.SetSaving();
 
             try
@@ -213,6 +213,8 @@ namespace DCL.Backpack
                 if (cts.Token.IsCancellationRequested) return;
 
                 presenter.SetData(savedItem, loadThumbnail: false);
+
+                UpdateFirstEmptySlotPrompt();
             }
             catch (Exception e)
             {
@@ -253,8 +255,10 @@ namespace DCL.Backpack
                 if (outcome == DeleteOutfitOutcome.Success)
                 {
                     outfitsCollection.Remove(slotIndex);
-                    
+
                     presenter.SetEmpty();
+
+                    UpdateFirstEmptySlotPrompt();
                 }
                 else
                 {
@@ -275,9 +279,9 @@ namespace DCL.Backpack
             GenerateThumbnailIfMissingAsync(outfitItem.slot);
 
             previewOutfitCommand.Commit();
-            
+
             outfitApplier.Apply(outfitItem.outfit);
-            
+
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
 
             PlayRandomEmote();
@@ -312,9 +316,37 @@ namespace DCL.Backpack
             foreach (var presenter in slotPresenters)
             {
                 if (outfitsBySlot.TryGetValue(presenter.slotIndex, out var outfitItem))
+                {
                     presenter.SetData(outfitItem);
+                    presenter.SetAsFirstEmptyAndReadyToSave(false);
+                }
                 else
                     presenter.SetEmpty();
+            }
+
+            UpdateFirstEmptySlotPrompt();
+        }
+
+        private void UpdateFirstEmptySlotPrompt()
+        {
+            bool allSlotsAreEmpty = true;
+
+            foreach (var presenter in slotPresenters)
+            {
+                if (!presenter.IsEmpty())
+                {
+                    allSlotsAreEmpty = false;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < slotPresenters.Count; i++)
+            {
+                var presenter = slotPresenters[i];
+                if (allSlotsAreEmpty && i == 0)
+                    presenter.SetAsFirstEmptyAndReadyToSave(true);
+                else
+                    presenter.SetAsFirstEmptyAndReadyToSave(false);
             }
         }
 
