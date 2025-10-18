@@ -306,7 +306,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (propClip != null)
                     {
-                        isPropLooping = emoteComponent.Metadata.socialEmoteData!.startAnimation!.Armature_Prop!.loop;
+                        isPropLooping = emoteComponent.Metadata.socialEmoteData!.startAnimation!.loop;
                         propClipHash = emoteReferences.propClipHash;
                     }
                 }
