@@ -1,6 +1,6 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8.FastProxy;
-using Microsoft.ClearScript.V8.SplitProxy;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
@@ -9,26 +9,20 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8FastHostObject, IV8FastHostObjectOperations
+    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8FastHostObject
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
-        IV8FastHostObjectOperations IV8FastHostObject.Operations => this;
+        private static readonly V8FastHostObjectOperations<EngineApiWrapper> OPERATIONS = new();
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
 
-        private static readonly V8FastHostMethodInvoker<EngineApiWrapper> CRDT_SEND_TO_RENDERER =
-            static (EngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
-                self.CrdtSendToRenderer(args.GetUint8Array(0));
-
-        private static readonly V8FastHostMethodInvoker<EngineApiWrapper> CRDT_GET_STATE =
-            static (EngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
-                result.Set(self.CrdtGetState());
-
-        private readonly V8FastHostMethodInvoker<EngineApiWrapper> sendBatch =
-            static (EngineApiWrapper self, in V8FastArgs args, in V8FastResult result) =>
-                result.Set(self.SendBatch());
+        static EngineApiWrapper()
+        {
+            OPERATIONS.Configure(static configuration => Configure(configuration));
+        }
 
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
@@ -43,7 +37,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             lastInput.ReleaseAndDispose();
         }
 
-        private ScriptableByteArray CrdtSendToRenderer(Uint8Array data)
+        private ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
             if (disposeCts.IsCancellationRequested)
                 return ScriptableByteArray.EMPTY;
@@ -89,29 +83,22 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
         }
 
-        private void SendBatch(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
-        {
-            result.SetHostObject(SendBatch());
-        }
-
         protected virtual ScriptableSDKObservableEventArray? SendBatch() => null;
 
-        void IV8FastHostObjectOperations.GetProperty(IV8FastHostObject instance, string name, in V8FastResult value, out bool isCacheable) =>
-            GetProperty(name, value, out isCacheable);
-
-        protected virtual void GetProperty(string name, V8FastResult value, out bool isCacheable)
+        protected static void Configure<T>(V8FastHostObjectConfiguration<T> configuration)
+            where T: EngineApiWrapper
         {
-            isCacheable = true;
+            configuration.AddMethodGetter(nameof(CrdtGetState),
+                static (T self, in V8FastArgs _, in V8FastResult result) =>
+                    result.Set(self.CrdtGetState()));
 
-            if (name.Equals(nameof(CrdtSendToRenderer)))
-                value.Set(CRDT_SEND_TO_RENDERER);
-            else if (name.Equals(nameof(CrdtGetState)))
-                value.SetHostObject(CRDT_GET_STATE);
-            else if (name.Equals(nameof(SendBatch)))
-                value.SetHostObject(sendBatch);
-            else
-                throw new NotImplementedException(
-                    $"Named property {name.ToString()} is not implemented");
+            configuration.AddMethodGetter(nameof(CrdtSendToRenderer),
+                static (T self, in V8FastArgs args, in V8FastResult _) =>
+                    self.CrdtSendToRenderer(args.Get<ITypedArray<byte>>(0)));
+
+            configuration.AddMethodGetter(nameof(SendBatch),
+                static (T self, in V8FastArgs _, in V8FastResult result) =>
+                    result.Set(self.SendBatch()));
         }
     }
 }

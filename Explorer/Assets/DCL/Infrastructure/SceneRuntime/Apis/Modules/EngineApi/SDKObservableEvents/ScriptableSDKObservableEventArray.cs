@@ -1,13 +1,23 @@
 using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript;
-using Microsoft.ClearScript.V8.SplitProxy;
+using Microsoft.ClearScript.V8.FastProxy;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
-    public class ScriptableSDKObservableEventArray : IV8HostObject, IDisposable
+    public sealed class ScriptableSDKObservableEventArray
+        : V8FastHostObject<ScriptableSDKObservableEventArray>, IDisposable
     {
         private PoolableSDKObservableEventArray array;
+
+        static ScriptableSDKObservableEventArray()
+        {
+            Configure(static configuration =>
+            {
+                configuration.SetEnumeratorFactory(static self => new Enumerator(self));
+            });
+        }
 
         public ScriptableSDKObservableEventArray(PoolableSDKObservableEventArray array)
         {
@@ -19,21 +29,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             array.Dispose();
         }
 
-        void IV8HostObject.GetEnumerator(V8Value result) =>
-            result.SetHostObject(new Enumerator(this));
-
-        private sealed class Enumerator : IV8HostObject
+        private sealed class Enumerator : IV8FastEnumerator
         {
             private PoolableSDKObservableEventArray.Enumerator enumerator;
             private readonly ScriptObject factory;
-            private readonly InvokeHostObject scriptableMoveNext;
-            private readonly InvokeHostObject scriptableDispose;
 
             public Enumerator(ScriptableSDKObservableEventArray array)
             {
                 enumerator = array.array.GetEnumerator();
-                scriptableMoveNext = ScriptableMoveNext;
-                scriptableDispose = ScriptableDispose;
 
                 // TODO: Don't create a new factory function every time.
                 factory = (ScriptObject)ScriptEngine.Current.Evaluate(@"
@@ -48,39 +51,19 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 ");
             }
 
-            private void ScriptableMoveNext(ReadOnlySpan<V8Value.Decoded> args, V8Value result) =>
-                result.SetBoolean(enumerator.MoveNext());
+            public bool MoveNext() =>
+                enumerator.MoveNext();
 
-            private void ScriptableDispose(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
+            public void Dispose()
             {
                 enumerator.Dispose();
                 factory.Dispose();
             }
 
-            void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst)
+            public void GetCurrent(in V8FastResult item)
             {
-                if (name.Equals("ScriptableCurrent"))
-                {
-                    var current = enumerator.Current;
-                    using var fields = new StdV8ValueArray(2);
-                    fields[0].SetString(current.generic.eventId);
-                    fields[1].SetString(current.generic.eventData);
-                    new V8Object(factory).Invoke(fields, value);
-                    isConst = false;
-                }
-                else if (name.Equals(nameof(ScriptableMoveNext)))
-                {
-                    value.SetHostObject(scriptableMoveNext);
-                    isConst = true;
-                }
-                else if (name.Equals(nameof(ScriptableDispose)))
-                {
-                    value.SetHostObject(scriptableDispose);
-                    isConst = true;
-                }
-                else
-                    throw new NotImplementedException(
-                        $"Named property {name.ToString()} is not implemented");
+                SDKObservableEvent.Generic generic = enumerator.Current.generic;
+                item.Set(factory.InvokeAsFunction(generic.eventId, generic.eventData));
             }
         }
     }
