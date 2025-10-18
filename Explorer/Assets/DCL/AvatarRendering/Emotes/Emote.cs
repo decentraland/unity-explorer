@@ -51,13 +51,13 @@ namespace DCL.AvatarRendering.Emotes
             if (IsSocial)
             {
                 // The Armature applies to the avatar that plays the start animation
-                return Model.Asset is { metadata: { socialEmoteData: { startAnimation: { Armature: {loop: true } } } } };
+                return Model.Asset is { metadata: { socialEmoteData: { startAnimation: { loop: true } } } };
             }
             else
             {
                 //as the Asset is nullable the loop property might be retrieved in situations in which the Asset has not been yet loaded
                 //to avoid a breaking null reference we provide safe access to the loop property by using the is pattern
-                return Model.Asset is { metadata: { emoteDataADR74: { loop: true } } };
+                return Model.Asset is { metadata: { data: { loop: true } } };
             }
         }
 
