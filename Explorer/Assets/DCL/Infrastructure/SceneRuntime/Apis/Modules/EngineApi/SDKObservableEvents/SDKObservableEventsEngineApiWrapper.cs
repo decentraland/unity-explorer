@@ -8,13 +8,13 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
-    public sealed class SDKObservableEventsEngineApiWrapper : EngineApiWrapper, IV8FastHostObject
+    public sealed class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
     {
         private readonly ISDKObservableEventsEngineApi engineApi;
         private readonly ISDKMessageBusCommsControllerAPI commsApi;
 
         private static readonly V8FastHostObjectOperations<SDKObservableEventsEngineApiWrapper> OPERATIONS = new ();
-        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
+        protected override IV8FastHostObjectOperations operations => OPERATIONS;
 
         static SDKObservableEventsEngineApiWrapper()
         {

@@ -17,7 +17,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
         private static readonly V8FastHostObjectOperations<EngineApiWrapper> OPERATIONS = new();
-        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
+        protected virtual IV8FastHostObjectOperations operations => OPERATIONS;
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => operations;
 
         static EngineApiWrapper()
         {
