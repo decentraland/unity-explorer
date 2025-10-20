@@ -55,7 +55,6 @@ namespace DCL.UI.MainUI
 
             if (isFriendsEnabled)
             {
-                mvcManager.ShowAsync(FriendPushNotificationController.IssueCommand()).Forget();
                 mvcManager.ShowAsync(PersistentFriendPanelOpenerController.IssueCommand()).Forget();
             }
 

@@ -3,6 +3,7 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.EphemeralNotifications

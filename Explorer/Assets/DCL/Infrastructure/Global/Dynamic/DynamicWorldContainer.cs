@@ -1007,7 +1007,8 @@ namespace Global.Dynamic
                     friendsCacheProxy,
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
-                    voiceChatContainer.VoiceChatOrchestrator
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    ephemeralNotificationsController
                 );
 
                 globalPlugins.Add(friendsContainer);

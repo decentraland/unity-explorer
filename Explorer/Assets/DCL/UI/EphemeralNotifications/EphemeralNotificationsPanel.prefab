@@ -178,6 +178,10 @@ MonoBehaviour:
     mPadding: 5
     mInitCreateCount: 5
     mStartPosOffset: 0
+  - mItemPrefab: {fileID: 2108133109288396533, guid: 04c4915b0cc13d447b38c5978e0a1c00, type: 3}
+    mPadding: 5
+    mInitCreateCount: 5
+    mStartPosOffset: 0
   mArrangeType: 1
   mSupportScrollBar: 0
   mItemSnapEnable: 0
