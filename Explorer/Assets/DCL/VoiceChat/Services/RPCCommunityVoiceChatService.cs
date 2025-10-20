@@ -106,7 +106,7 @@ namespace DCL.VoiceChat.Services
                 CommunityId = communityId
             };
 
-            StartCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            StartCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                               .CallUnaryProcedure<StartCommunityVoiceChatResponse>(START_COMMUNITY_VOICE_CHAT, payload)
                                                                               .AttachExternalCancellation(ct)
                                                                               .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -124,7 +124,7 @@ namespace DCL.VoiceChat.Services
                 CommunityId = communityId
             };
 
-            JoinCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            JoinCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                               .CallUnaryProcedure<JoinCommunityVoiceChatResponse>(JOIN_COMMUNITY_VOICE_CHAT, payload)
                                                                               .AttachExternalCancellation(ct)
                                                                               .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -142,7 +142,7 @@ namespace DCL.VoiceChat.Services
                 CommunityId = communityId
             };
 
-            EndCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            EndCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                               .CallUnaryProcedure<EndCommunityVoiceChatResponse>(END_COMMUNITY_VOICE_CHAT, payload)
                                                                               .AttachExternalCancellation(ct)
                                                                               .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -172,7 +172,7 @@ namespace DCL.VoiceChat.Services
                 IsRaisingHand = isRequestingToSpeak
             };
 
-            RequestToSpeakInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            RequestToSpeakInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                          .CallUnaryProcedure<RequestToSpeakInCommunityVoiceChatResponse>(REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT, payload)
                                                                                          .AttachExternalCancellation(ct)
                                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -191,7 +191,7 @@ namespace DCL.VoiceChat.Services
                 UserAddress = userAddress
             };
 
-            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                          .CallUnaryProcedure<PromoteSpeakerInCommunityVoiceChatResponse>(PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
                                                                                          .AttachExternalCancellation(ct)
                                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -210,7 +210,7 @@ namespace DCL.VoiceChat.Services
                 UserAddress = userAddress
             };
 
-            RejectSpeakRequestInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            RejectSpeakRequestInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                              .CallUnaryProcedure<RejectSpeakRequestInCommunityVoiceChatResponse>(REJECT_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
                                                                                              .AttachExternalCancellation(ct)
                                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -229,7 +229,7 @@ namespace DCL.VoiceChat.Services
                 UserAddress = userAddress
             };
 
-            DemoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            DemoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                         .CallUnaryProcedure<DemoteSpeakerInCommunityVoiceChatResponse>(DEMOTE_FROM_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
                                                                                         .AttachExternalCancellation(ct)
                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -248,7 +248,7 @@ namespace DCL.VoiceChat.Services
                 UserAddress = userAddress
             };
 
-            KickPlayerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            KickPlayerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                        .CallUnaryProcedure<KickPlayerFromCommunityVoiceChatResponse>(KICK_FROM_COMMUNITY_VOICE_CHAT, payload)
                                                                                        .AttachExternalCancellation(ct)
                                                                                        .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -268,7 +268,7 @@ namespace DCL.VoiceChat.Services
                 Muted = muted
             };
 
-            MuteSpeakerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            MuteSpeakerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                         .CallUnaryProcedure<MuteSpeakerFromCommunityVoiceChatResponse>(MUTE_SPEAKER_FROM_COMMUNITY_VOICE_CHAT, payload)
                                                                                         .AttachExternalCancellation(ct)
                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -285,7 +285,7 @@ namespace DCL.VoiceChat.Services
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
                 IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
-                    socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
+                    socialServiceRPC.Module().CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
 
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Attempting to open community voice chat updates stream");
 
