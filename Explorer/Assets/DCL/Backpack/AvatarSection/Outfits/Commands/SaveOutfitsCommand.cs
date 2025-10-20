@@ -33,17 +33,19 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             IReadOnlyCollection<OutfitItem> currentOutfits, CancellationToken ct)
         {
             var profile = await selfProfile.ProfileAsync(ct);
+            
             if (profile == null)
                 throw new InvalidOperationException("Cannot save outfit, self profile is not loaded.");
 
             var fullWearableUrns = equippedWearables.ToFullWearableUrns(wearableStorage, profile);
+            
             ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_SAVE] Saving Outfit in Slot {slotIndex}. Contains {fullWearableUrns.Count} wearables.");
+            
             foreach (string? urn in fullWearableUrns)
-            {
                 ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_SAVE]   -> Wearable URN: '{urn}'");
-            }
 
             var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
+            
             if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable) || bodyShapeWearable == null)
                 throw new InvalidOperationException("Cannot save outfit, Body Shape is not equipped!");
 
@@ -51,7 +53,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 slot = slotIndex, outfit = new Outfit
                 {
-                    bodyShape = bodyShapeWearable.GetUrn(), wearables = equippedWearables.ToFullWearableUrns(wearableStorage, profile).ToArray(), eyes = new Eyes
+                    bodyShape = bodyShapeWearable.GetUrn(), wearables = fullWearableUrns, eyes = new Eyes
                     {
                         color = eyesColor
                     },

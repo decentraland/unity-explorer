@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components;
 
 namespace DCL.Backpack.Outfits.Extensions
 {

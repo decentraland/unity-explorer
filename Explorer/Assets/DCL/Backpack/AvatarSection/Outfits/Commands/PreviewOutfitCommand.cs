@@ -35,7 +35,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 originalOutfit = await CreateOutfitFromEquippedAsync(ct);
 
             // Apply the previewed outfit
-            outfitApplier.Apply(outfitToPreview.outfit);
+            if (outfitToPreview.outfit != null)
+                outfitApplier.Apply(outfitToPreview.outfit);
         }
 
         // Restores the original outfit if one was stored
@@ -57,12 +58,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private async UniTask<Outfit> CreateOutfitFromEquippedAsync(CancellationToken ct)
         {
             var profile = await selfProfile.ProfileAsync(ct);
+            
             var (hair, eyes, skin) = equippedWearables.GetColors();
-            var bodyShape = equippedWearables.Items().FirstOrDefault(i => i.Key == WearableCategories.Categories.BODY_SHAPE).Value?.GetUrn() ?? "";
+
+            equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable);
+
+            var bodyShape = bodyShapeWearable?.GetUrn() ?? "";
 
             return new Outfit
             {
-                bodyShape = bodyShape, wearables = equippedWearables.ToFullWearableUrns(wearableStorage, profile).ToArray(), hair = new Hair
+                bodyShape = bodyShape, wearables = equippedWearables.ToFullWearableUrns(wearableStorage, profile), hair = new Hair
                 {
                     color = hair
                 },

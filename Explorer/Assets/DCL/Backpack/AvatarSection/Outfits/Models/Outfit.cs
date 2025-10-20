@@ -1,5 +1,5 @@
 ﻿using System;
-using DCL.Backpack.AvatarSection.Outfits.Repository;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -21,7 +21,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Models
         public Skin skin;
 
         [JsonProperty("wearables")]
-        public string[] wearables;
+        public List<string> wearables;
     }
 
     [Serializable]

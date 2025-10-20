@@ -46,10 +46,5 @@ namespace DCL.Backpack.AvatarSection.Outfits.Banner
         {
             view.gameObject.SetActive(false);
         }
-
-        public async Task CheckAndShowAsync()
-        {
-            await Task.Yield();
-        }
     }
 }

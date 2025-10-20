@@ -25,6 +25,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Models
         public object[] Content;
 
         [JsonProperty("metadata")]
-        public OutfitsMetadata Metadata;
+        public OutfitsMetadata? Metadata;
     }
 }

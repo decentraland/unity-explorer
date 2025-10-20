@@ -23,15 +23,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
     /// </summary>
     public class OutfitsRepository
     {
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS =
-            new ()
-            {
-                Converters = new JsonConverter[]
-                {
-                    new OutfitsMetadataConverter()
-                }
-            };
-
         private readonly IRealmData realm;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IEventBus eventBus;

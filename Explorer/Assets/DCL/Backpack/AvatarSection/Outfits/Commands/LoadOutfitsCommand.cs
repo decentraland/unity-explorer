@@ -42,19 +42,20 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             try
             {
-                var response = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build()), ct, ReportData.UNSPECIFIED)
+                var response = await webRequestController
+                    .GetAsync(new CommonArguments(urlBuilder.Build()), ct, ReportCategory.OUTFITS)
                     .CreateFromJson<OutfitsResponse>(WRJsonParser.Newtonsoft);
 
-                // return response.Metadata.outfits ?? new List<OutfitItem>();
+                var loadedOutfits = response.Metadata?.outfits ?? new List<OutfitItem>();
 
-                var loadedOutfits = response.Metadata.outfits ?? new List<OutfitItem>();
-
-                // --- LOGGING POINT 2: What was loaded from the server? ---
                 ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD] Loaded {loadedOutfits.Count} outfits from server.");
+                
                 foreach (var outfitItem in loadedOutfits)
                 {
                     if (outfitItem.outfit == null) continue;
-                    ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD]   -> Outfit in Slot {outfitItem.slot} contains {outfitItem.outfit.wearables.Length} wearables:");
+
+                    ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD]   -> Outfit in Slot {outfitItem.slot} contains {outfitItem.outfit.wearables.Count} wearables:");
+                    
                     foreach (string urn in outfitItem.outfit.wearables)
                     {
                         ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD]      -> Wearable URN: '{urn}'");

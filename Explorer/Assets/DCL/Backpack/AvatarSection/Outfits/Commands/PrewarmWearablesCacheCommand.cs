@@ -18,7 +18,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             this.wearablesProvider = wearablesProvider;
         }
 
-        public async UniTask ExecuteAsync(IReadOnlyCollection<URN> wearableUrns, CancellationToken ct)
+        public async UniTask ExecuteAsync(IReadOnlyCollection<URN>? wearableUrns, CancellationToken ct)
         {
             if (wearableUrns == null || wearableUrns.Count == 0)
                 return;
@@ -30,6 +30,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 // but the underlying ECS system requires it to build the intention.
                 // The URN list already contains the body shape URN itself, so we can use a default placeholder.
                 await wearablesProvider.RequestPointersAsync(wearableUrns, BodyShape.MALE, ct);
+                
                 ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_PREWARM] Successfully requested cache pre-warm for {wearableUrns.Count} URNs.");
             }
             catch (OperationCanceledException)
