@@ -190,7 +190,7 @@ namespace DCL.MarketplaceCredits
             if (!includeMarketplaceCredits)
                 return false;
 
-            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
+            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
 
             return !string.IsNullOrEmpty(userId) && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase));
         }

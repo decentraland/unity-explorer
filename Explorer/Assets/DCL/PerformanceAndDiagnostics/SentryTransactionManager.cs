@@ -12,6 +12,7 @@ namespace DCL.PerformanceAndDiagnostics
     public partial class SentryTransactionManager
     {
         private readonly Dictionary<string, ITransactionTracer> sentryTransactions = new();
+        private readonly Dictionary<string, int> sentryTransactionErrors = new();
         private readonly Dictionary<string, Stack<ISpan>> transactionsSpans = new();
 
         public SentryTransactionManager()
@@ -27,7 +28,11 @@ namespace DCL.PerformanceAndDiagnostics
 
             ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
             transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
+
             sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
+
+            sentryTransactionErrors.Add(transactionData.TransactionName, 0);
+            transactionTracer.SetExtra("error_count", 0);
         }
 
         public void StartSpan(SpanData spanData)
@@ -97,7 +102,7 @@ namespace DCL.PerformanceAndDiagnostics
             transactionsSpans.Remove(transactionName);
         }
 
-        public void EndTransactionWithError(string transactionName, string errorMessage, System.Exception? exception = null)
+        public void EndTransactionWithError(string transactionName, string errorMessage, Exception? exception = null)
         {
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
             {
@@ -134,8 +139,16 @@ namespace DCL.PerformanceAndDiagnostics
             transactionsSpans.Remove(transactionName);
         }
 
-        public void EndCurrentSpanWithError(string transactionName, string errorMessage, System.Exception? exception = null)
+        public void EndCurrentSpanWithError(string transactionName, string errorMessage, Exception? exception = null)
         {
+            if (sentryTransactionErrors.TryGetValue(transactionName, out int currentErrorCount))
+            {
+                sentryTransactionErrors[transactionName] = currentErrorCount + 1;
+
+                if(sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
+                    transaction.SetExtra("error_count", sentryTransactionErrors[transactionName]);
+            }
+
             if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
             {
                 ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
@@ -172,17 +185,17 @@ namespace DCL.PerformanceAndDiagnostics
 
         private void FinishAllTransactions()
         {
-            var transactionNames = new List<string>(sentryTransactions.Keys);
-
-            foreach (string transactionName in transactionNames)
+            var transactionKeys = new List<string>(sentryTransactions.Keys);
+            
+            foreach (string transactionKey in transactionKeys)
             {
                 try
                 {
-                    EndTransactionWithError(transactionName, "Application is quitting", null);
+                    EndTransaction(transactionKey);
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionName}' during application quit: {ex.Message}");
+                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionKey}' during application quit: {ex.Message}");
                 }
             }
         }

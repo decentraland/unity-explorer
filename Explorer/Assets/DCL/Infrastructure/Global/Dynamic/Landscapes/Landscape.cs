@@ -83,7 +83,9 @@ namespace Global.Dynamic.Landscapes
         {
             ITerrain terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
 
-            return terrain.TerrainModel == null || !terrain.TerrainModel.IsInsideBounds(parcel)
+            // If terrain is disabled, allow teleporting anywhere. We're in editor and can assume the
+            // user knows what they're doing.
+            return terrain.TerrainModel != null && !terrain.TerrainModel.IsInsideBounds(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
         }
@@ -98,7 +100,7 @@ namespace Global.Dynamic.Landscapes
 
             int parcelsAmount = staticScenesEntityDefinitions.Value.Value.Count;
 
-            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
+            using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
                 foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
                 {
@@ -121,7 +123,7 @@ namespace Global.Dynamic.Landscapes
             foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
 
-            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
+            using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
                 foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 {

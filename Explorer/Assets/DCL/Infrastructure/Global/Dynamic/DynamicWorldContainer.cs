@@ -13,6 +13,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -107,12 +108,8 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.InWorldCamera;
 using DCL.NotificationsBus;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
-using Global.Versioning;
-using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -297,7 +294,6 @@ namespace Global.Dynamic
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
-            NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
@@ -567,7 +563,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus
+            );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -629,6 +626,7 @@ namespace Global.Dynamic
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+
             var communitiesDataService = new CommunityDataService(chatHistory,
                 mvcManager,
                 communitiesEventBus,
@@ -717,7 +715,7 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCacheProxy),
@@ -745,7 +743,7 @@ namespace Global.Dynamic
                     chatHistory,
                     clipboardManager,
                     entityParticipantTable,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     mainUIView,
                     staticContainer.InputBlock,
                     globalWorld,
@@ -770,11 +768,9 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    includeTranslationChat,
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    bootstrapContainer.Environment,
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,
@@ -1017,7 +1013,7 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     globalWorld,
                     debugBuilder,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache,
@@ -1117,7 +1113,8 @@ namespace Global.Dynamic
                 profileRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
-                staticContainer.SceneLoadingLimit
+                staticContainer.SceneLoadingLimit,
+                staticContainer.LandscapeParcelData
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

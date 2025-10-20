@@ -5,9 +5,12 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +25,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
         public CreateChannelViewModelCommand(
@@ -30,7 +34,8 @@ namespace DCL.Chat.ChatCommands
             ChatConfig.ChatConfig chatConfig,
             ProfileRepositoryWrapper profileRepository,
             GetUserChatStatusCommand getUserChatStatusCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
@@ -38,12 +43,13 @@ namespace DCL.Chat.ChatCommands
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
         {
             int unreadCount = channel.Messages.Count - channel.ReadMessages;
-            bool hasMentions = false;
+            var hasMentions = false;
             if (unreadCount > 0)
             {
                 for (int i = channel.ReadMessages; i < channel.Messages.Count; i++)
@@ -93,7 +99,10 @@ namespace DCL.Chat.ChatCommands
             if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
             {
                 viewModel.DisplayName = communityData.name;
-                viewModel.ImageUrl = communityData.thumbnails?.raw;
+                viewModel.ImageUrl = communityData.thumbnailUrl;
+                viewModel.CommunityConnectionUpdates = voiceChatOrchestrator.CommunityConnectionUpdates(ChatChannel.GetCommunityIdFromChannelId(channel.Id));
+                viewModel.CurrentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created ViewModel for: {communityData.name} -> is Streaming: {viewModel.CommunityConnectionUpdates.Value} - current community ID: {viewModel.CurrentCommunityCallId.Value}");
 
                 FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
             }
@@ -118,7 +127,7 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct);
+            Profile? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct).SuppressAnyExceptionWithFallback(null);
 
             if (ct.IsCancellationRequested) return;
 

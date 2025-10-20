@@ -1,3 +1,4 @@
+using DCL.Chat.ChatServices;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -14,13 +15,9 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelView view;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
-
-        private readonly PrivateVoiceChatController? privateVoiceChatController;
-        private readonly CommunityVoiceChatPresenter? communitiesVoiceChatController;
-        private readonly VoiceChatPanelResizeController? voiceChatPanelResizeController;
-        private readonly SceneVoiceChatController? sceneVoiceChatController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
-        private readonly EventSubscriptionScope eventSubscriptions = new();
+        private readonly EventSubscriptionScope presenterScope = new();
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -36,20 +33,41 @@ namespace DCL.VoiceChat
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
-            voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
-            privateVoiceChatController = new PrivateVoiceChatController(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
-            sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
-            voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
+            var voiceChatPanelResizePresenter = new VoiceChatPanelResizePresenter(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
+            presenterScope.Add(voiceChatPanelResizePresenter);
 
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(OnPointerEnterChatArea));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(OnPointerExitChatArea));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
-            eventSubscriptions.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
+            var privateVoiceChatController = new PrivateVoiceChatPresenter(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            presenterScope.Add(privateVoiceChatController);
+
+            var communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            presenterScope.Add(communitiesVoiceChatController);
+
+            var sceneVoiceChatController = new SceneVoiceChatPresenter(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
+            presenterScope.Add(sceneVoiceChatController);
+
+            voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
+            clickDetectionHandler = new ChatClickDetectionHandler(view.transform);
+            presenterScope.Add(clickDetectionHandler);
+
+            view.PointerEnter += OnPointerEnter;
+            view.PointerExit += OnPointerExit;
+
+            clickDetectionHandler.OnClickInside += HandleClickInside;
+            clickDetectionHandler.OnClickOutside += HandleClickOutside;
+
+            presenterScope.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
+        }
+
+        private void OnCallStatusChanged(VoiceChatStatus status)
+        {
+            if (status.IsNotConnected())
+                clickDetectionHandler.Pause();
+            else
+                clickDetectionHandler.Resume();
         }
 
         private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
@@ -60,7 +78,10 @@ namespace DCL.VoiceChat
         private void HandleChatPanelToggle(ChatSharedAreaEvents.ChatPanelToggleEvent evt)
         {
             if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.HIDDEN)
+            {
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, force: true);
+                clickDetectionHandler.Resume();
+            }
         }
 
         private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent _)
@@ -73,26 +94,26 @@ namespace DCL.VoiceChat
             voiceChatOrchestrator.ChangePanelState(evt.Focus? VoiceChatPanelState.FOCUSED : VoiceChatPanelState.UNFOCUSED, force: true);
         }
 
-        private void OnPointerExitChatArea(ChatSharedAreaEvents.ChatPanelPointerExitEvent _)
+        private void OnPointerExit()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.FOCUSED)
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
         }
 
-        private void OnPointerEnterChatArea(ChatSharedAreaEvents.ChatPanelPointerEnterEvent _)
+        private void OnPointerEnter()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED)
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
-        private void HandleClickInside(ChatSharedAreaEvents.ChatPanelClickInsideEvent _)
+        private void HandleClickInside()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
-        private void HandleClickOutside(ChatSharedAreaEvents.ChatPanelClickOutsideEvent _)
+        private void HandleClickOutside()
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
 
@@ -101,12 +122,12 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            privateVoiceChatController?.Dispose();
-            communitiesVoiceChatController?.Dispose();
-            sceneVoiceChatController?.Dispose();
-            voiceChatPanelResizeController?.Dispose();
+            presenterScope.Dispose();
 
-            eventSubscriptions.Dispose();
+            view.PointerEnter -= OnPointerEnter;
+            view.PointerExit -= OnPointerExit;
+
+            clickDetectionHandler.Dispose();
         }
     }
 }

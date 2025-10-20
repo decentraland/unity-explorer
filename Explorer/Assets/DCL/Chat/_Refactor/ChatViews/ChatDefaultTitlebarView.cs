@@ -1,5 +1,4 @@
 using DCL.Chat.ChatViewModels;
-using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.VoiceChat;
 using System;
@@ -11,6 +10,9 @@ namespace DCL.Chat.ChatViews
 {
     public class ChatDefaultTitlebarView : MonoBehaviour
     {
+        // Thumbnail opacity in the titlebar should never be != 0 as per design
+        private const float THUMBNAIL_GREY_OUT_OPACITY = 0f;
+
         public event Action? OnCloseRequested;
         public event Action? OnMembersRequested;
         public event Action? OnContextMenuRequested;
@@ -36,14 +38,18 @@ namespace DCL.Chat.ChatViews
         [SerializeField] private GameObject nearbyElementsContainer;
         [SerializeField] private GameObject nearbyAutoTranslateIndicator;
 
+        [Space(10)]
+        [SerializeField] private float communityGraphicsPixelMultiplier = 3.0f;
+        [SerializeField] private float dmGraphicsPixelMultiplier = 1.5f;
+
         private TitlebarViewMode currentViewMode;
         private ChatTitlebarViewModel currentTitlebarViewModel;
+        private ColorBlock profileCtxMenuButtonNormalColors;
+        private ColorBlock profileCtxMenuButtonOpenColors;
+        private Image profileCtxMenuButtonImage;
 
         [SerializeField]
         private Image connectionStatusIndicator;
-
-        [Range(0.0f, 1.0f)]
-        [SerializeField] private float offlineThumbnailGreyOutOpacity = 0.6f;
 
         private void Awake()
         {
@@ -51,7 +57,18 @@ namespace DCL.Chat.ChatViews
             buttonOpenProfileContextMenu.onClick.AddListener(() => OnProfileContextMenuRequested?.Invoke(currentViewMode));
             buttonClose.onClick.AddListener(() => OnCloseRequested?.Invoke());
             buttonOpenMembers.onClick.AddListener(() => OnMembersRequested?.Invoke());
+
+            profileCtxMenuButtonNormalColors = buttonOpenProfileContextMenu.colors;
+            profileCtxMenuButtonOpenColors = buttonOpenProfileContextMenu.colors;
+            profileCtxMenuButtonOpenColors.normalColor = profileCtxMenuButtonOpenColors.highlightedColor;
+            profileCtxMenuButtonImage = (Image) buttonOpenProfileContextMenu.targetGraphic;
         }
+
+        public void SetContextMenuButtonSelectedAppearance() =>
+            buttonOpenProfileContextMenu.colors = profileCtxMenuButtonOpenColors;
+
+        public void SetContextMenuButtonNormalAppearance() =>
+            buttonOpenProfileContextMenu.colors = profileCtxMenuButtonNormalColors;
 
         public void Setup(ChatTitlebarViewModel model)
         {
@@ -86,6 +103,7 @@ namespace DCL.Chat.ChatViews
                 chatProfileView.Setup(model);
 
             buttonOpenProfileContextMenu.interactable = model.ViewMode is TitlebarViewMode.Community or TitlebarViewMode.DirectMessage;
+            profileCtxMenuButtonImage.pixelsPerUnitMultiplier = model.ViewMode == TitlebarViewMode.Community ? communityGraphicsPixelMultiplier : dmGraphicsPixelMultiplier;
 
             if (model.ViewMode == TitlebarViewMode.DirectMessage)
             {
@@ -103,20 +121,18 @@ namespace DCL.Chat.ChatViews
             if (nearbyAutoTranslateIndicator != null)
                 nearbyAutoTranslateIndicator.SetActive(isVisible);
         }
-        
-        public void SetConnectionStatus(bool isOnline)
+
+        private void SetConnectionStatus(bool isOnline)
         {
             connectionStatusIndicator.gameObject.SetActive(isOnline);
             if (chatProfileView != null)
-                chatProfileView.SetConnectionStatus(isOnline, offlineThumbnailGreyOutOpacity);
+                chatProfileView.SetConnectionStatus(isOnline, THUMBNAIL_GREY_OUT_OPACITY);
         }
 
         public void SetMemberCount(string count) => textMembersCount.text = count;
         public void Activate(bool activate) => gameObject.SetActive(activate);
 
-        public void SetAutoTranslateIndicatorForUserAndCommunities(bool isVisible)
-        {
+        public void SetAutoTranslateIndicatorForUserAndCommunities(bool isVisible) =>
             chatProfileView.SetAutoTranslateIndicator(isVisible);
-        }
     }
 }
