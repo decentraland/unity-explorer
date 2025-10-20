@@ -45,6 +45,7 @@ namespace DCL.FeatureFlags
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
+        public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
     }
 
     public enum FeatureFlag
