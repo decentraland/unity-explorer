@@ -3,6 +3,8 @@ name: Unity Test
 on:
   workflow_dispatch:
   pull_request:
+    paths:
+      - 'Explorer/**'
     types:
       - opened
       - reopened
