@@ -398,7 +398,7 @@ namespace DCL.Backpack
                 var randomEmote = equippedEmotesList[randomIndex];
 
                 if (characterPreviewController is BackpackCharacterPreviewController backpackController)
-                    backpackController.PlayEmote(randomEmote.GetUrn().Shorten());
+                    backpackController.PlayRandomEmote(randomEmote.GetUrn().Shorten());
             }
         }
 

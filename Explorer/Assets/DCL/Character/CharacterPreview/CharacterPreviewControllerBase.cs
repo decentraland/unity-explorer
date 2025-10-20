@@ -313,6 +313,13 @@ namespace DCL.CharacterPreview
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
         }
 
+        public void PlayRandomEmote(string emoteId)
+        {
+            // if (previewController?.IsPlayingEmote() ?? true)
+            //     return;
+
+            previewController?.PlayEmote(emoteId);
+        }
         public void PlayEmote(string emoteId)
         {
             previewController?.PlayEmote(emoteId);
