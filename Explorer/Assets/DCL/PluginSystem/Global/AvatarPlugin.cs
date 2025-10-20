@@ -60,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly bool includeBannedUsersFromScene;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
@@ -100,7 +101,8 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            bool includeBannedUsersFromScene)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -114,6 +116,7 @@ namespace DCL.PluginSystem.Global
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.wearableStorage = wearableStorage;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
@@ -165,7 +168,7 @@ namespace DCL.PluginSystem.Global
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
