@@ -79,13 +79,33 @@ namespace DCL.SkyBox
             settings.TargetTimeOfDayNormalized = normalizedTime;
         }
 
+        /// <summary>
+        /// Retrieves the fixed time value for the skybox.
+        /// Prioritizes scene-level skyboxConfig over worldConfiguration.SkyboxConfig for backward compatibility.
+        /// </summary>
+        /// <param name="metadata">The scene metadata containing skybox configuration</param>
+        /// <returns>
+        /// The fixed time value if skyboxConfig exists (even if null), 
+        /// otherwise falls back to worldConfiguration.SkyboxConfig.fixedTime for legacy scenes
+        /// </returns>
         private static float? GetFixedTime(SceneMetadata metadata) =>
-            metadata.skyboxConfig?.fixedTime
-            ?? metadata.worldConfiguration?.SkyboxConfig?.fixedTime;
+            metadata.skyboxConfig.HasValue
+                ? metadata.skyboxConfig.Value.fixedTime
+                : metadata.worldConfiguration?.SkyboxConfig?.fixedTime;
 
+        /// <summary>
+        /// Retrieves the transition mode for the skybox.
+        /// Prioritizes scene-level skyboxConfig over worldConfiguration.SkyboxConfig for backward compatibility.
+        /// </summary>
+        /// <param name="sceneMetadata">The scene metadata containing skybox configuration</param>
+        /// <returns>
+        /// The transition mode from skyboxConfig if it exists, 
+        /// otherwise falls back to worldConfiguration.SkyboxConfig.transitionMode for legacy scenes,
+        /// or TransitionMode.FORWARD as the final default
+        /// </returns>
         private TransitionMode GetTransitionMode(SceneMetadata sceneMetadata) =>
-            sceneMetadata.skyboxConfig?.transitionMode
-            ?? sceneMetadata.worldConfiguration?.SkyboxConfig?.transitionMode
-            ?? TransitionMode.FORWARD;
+            sceneMetadata.skyboxConfig.HasValue
+                ? sceneMetadata.skyboxConfig.Value.transitionMode
+                : sceneMetadata.worldConfiguration?.SkyboxConfig?.transitionMode ?? TransitionMode.FORWARD;
     }
 }
