@@ -11,7 +11,7 @@ namespace DCL.MCP.Host
     public class MCPClient : MonoBehaviour
     {
         [SerializeField] private string serverEntry = @"c:\\DCL\\MCPServers\\explorer-mcp-server\\build\\index.js";
-        private McpClient _client;
+        public McpClient _client;
 
         [ContextMenu("TEST AI")]
         public void Test() =>
