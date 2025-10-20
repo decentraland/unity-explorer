@@ -145,7 +145,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: Setting button active={shouldSeeButton} for community {communityId} (isVoiceChatActive={isVoiceChatActive}");
             view.gameObject.SetActive(shouldSeeButton);
 
-            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityActiveCallStatusChanged);
+            currentCommunityCallStatusSubscription = orchestrator.CommunityConnectionUpdates(communityId).Subscribe(OnCurrentCommunityActiveCallStatusChanged);
         }
     }
 }

@@ -34,8 +34,12 @@ namespace DCL.Nametags
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]
-        public static bool IsOutOfRenderRange(in float3 cameraPos, in float3 characterPos, float maxDistanceSqr) =>
-            math.distancesq(cameraPos, characterPos) > maxDistanceSqr;
+        public static bool IsOutOfRenderRange(in float3 cameraPos, in float3 characterPos, float maxDistanceSqr, float minDistanceSqr)
+        {
+            var distancesq = math.distancesq(cameraPos, characterPos);
+
+            return distancesq > maxDistanceSqr || distancesq < minDistanceSqr;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]

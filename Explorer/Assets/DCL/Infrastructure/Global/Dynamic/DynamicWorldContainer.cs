@@ -108,12 +108,8 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.InWorldCamera;
 using DCL.NotificationsBus;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
-using Global.Versioning;
-using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -441,6 +437,7 @@ namespace Global.Dynamic
             bool includeTranslationChat = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
+            bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
@@ -547,7 +544,10 @@ namespace Global.Dynamic
                 clipboard,
                 bootstrapContainer.DecentralandUrlsSource,
                 chatMessagesBus,
-                reloadSceneChatCommand
+                reloadSceneChatCommand,
+                roomHub,
+                staticContainer.LoadingStatus,
+                includeBannedUsersFromScene
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -673,6 +673,8 @@ namespace Global.Dynamic
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
+            var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -722,7 +724,8 @@ namespace Global.Dynamic
                     dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    userBlockingCacheProxy),
+                    userBlockingCacheProxy,
+                    includeBannedUsersFromScene),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -772,11 +775,9 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    includeTranslationChat,
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    bootstrapContainer.Environment,
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,
@@ -925,6 +926,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
+                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
