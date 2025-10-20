@@ -12,7 +12,7 @@ using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
 using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
-using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Tests
 {
@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
             texData.AddReference();
 
             var typePromise = NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString("URN")), PartitionComponent.TOP_PRIORITY);
-            var imagePromise = NftImagePromise.Create(world, new GetNFTImageIntention(URLAddress.FromString("URN")),  PartitionComponent.TOP_PRIORITY);
+            var imagePromise = NftImagePromise.Create(world, GetNFTImageIntention.Create("URN"), PartitionComponent.TOP_PRIORITY);
 
             Entity entity = world.Create(new NFTLoadingComponent("URN", typePromise)
             {
@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
             texData.AddReference();
 
             var typePromise = NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString("URN")), PartitionComponent.TOP_PRIORITY);
-            var imagePromise = NftImagePromise.Create(world, new GetNFTImageIntention(URLAddress.FromString("URN")),  PartitionComponent.TOP_PRIORITY);
+            var imagePromise = NftImagePromise.Create(world, GetNFTImageIntention.Create("URN"), PartitionComponent.TOP_PRIORITY);
 
             Entity entity = world.Create(new PBNftShape(), new DeleteEntityIntention(), new NFTLoadingComponent("URN", typePromise)
             {

@@ -24,6 +24,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -36,7 +37,6 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
-        private readonly TexturesCache<GetNFTImageIntention> imageCache;
         private readonly IFramePrefabs framePrefabs;
         private readonly MediaFactoryBuilder mediaFactory;
 
@@ -62,13 +62,6 @@ namespace DCL.PluginSystem.World
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
             this.mediaFactory = mediaFactoryBuilder;
-            imageCache = new TexturesCache<GetNFTImageIntention>();
-            cacheCleaner.Register(imageCache);
-        }
-
-        public void Dispose()
-        {
-            imageCache.Dispose();
         }
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
@@ -87,7 +80,6 @@ namespace DCL.PluginSystem.World
             bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
             LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
-            LoadNFTImageSystem.InjectToWorld(ref builder, imageCache);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource), mediaFactory.CreateForScene(builder.World, sharedDependencies));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
@@ -96,5 +88,7 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(CleanUpNftShapeSystem.InjectToWorld(ref builder));
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
+
+        public void Dispose() { }
     }
 }

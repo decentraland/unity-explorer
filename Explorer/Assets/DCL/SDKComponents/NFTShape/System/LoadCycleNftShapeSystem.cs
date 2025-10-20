@@ -15,7 +15,7 @@ using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
-using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.NFTShape.System
             switch (type)
             {
                 case WebContentInfo.ContentType.Image or WebContentInfo.ContentType.KTX2:
-                    nftLoadingComponent.ImagePromise = NftImagePromise.Create(World!, new GetNFTImageIntention(result.Asset.URL), partitionComponent);
+                    nftLoadingComponent.ImagePromise = NftImagePromise.Create(World!, GetNFTImageIntention.Create(result.Asset.URL), partitionComponent);
                     break;
                 case WebContentInfo.ContentType.Video:
                     // See https://github.com/decentraland/unity-explorer/issues/5611

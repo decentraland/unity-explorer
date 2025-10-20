@@ -29,19 +29,7 @@ namespace ECS.StreamableLoading.Textures
         public static implicit operator Texture?(TextureData? textureData) =>
             textureData?.Asset.Texture;
 
-        // public Texture2DData(Texture2D texture) : base(texture, ReportCategory.TEXTURES) { }
-        //
-        // public Texture2DData(Texture2D texture, string videoUrl) : base(texture, ReportCategory.TEXTURES)
-        // {
-        //     VideoURL = videoUrl;
-        // }
-
-        // public Texture2DData(IOwnedTexture2D asset) : base(asset.Texture, ReportCategory.TEXTURES)
-        // {
-        //     ownedTexture2D = asset;
-        // }
-
-        // public override string ToString() =>
-        //     $"{nameof(Texture2DData)} {Asset.name} {Asset.width}x{Asset.height}";
+        public override string ToString() =>
+            $"{nameof(TextureData)} {Asset.Width}x{Asset.Height}";
     }
 }

@@ -14,7 +14,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
-using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.NFTShapes.GetNFTImageIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Tests
 {
@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
             var loadingComponent = new NFTLoadingComponent(INITIAL_URN,
                 NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString(INITIAL_URN)), PartitionComponent.TOP_PRIORITY))
             {
-                ImagePromise = NftImagePromise.Create(world, new GetNFTImageIntention(URLAddress.FromString(INITIAL_URN)), PartitionComponent.TOP_PRIORITY),
+                ImagePromise = NftImagePromise.Create(world, GetNFTImageIntention.Create(INITIAL_URN), PartitionComponent.TOP_PRIORITY),
             };
 
             Entity entity = world.Create(shape,

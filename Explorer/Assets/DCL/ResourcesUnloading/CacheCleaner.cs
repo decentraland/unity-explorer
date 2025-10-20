@@ -42,7 +42,6 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
         private IGltfContainerAssetsCache? gltfContainerAssetsCache;
         private IStreamableCache<TextureData, GetTextureIntention>? texturesCache;
-        private ISizedStreamableCache<TextureData, GetNFTImageIntention>? nftImageCache;
         private ILODCache? lodCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
         private IAttachmentsAssetsCache? wearableAssetsCache;
@@ -76,7 +75,6 @@ namespace DCL.ResourcesUnloading
 
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
-            nftImageCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
@@ -120,12 +118,6 @@ namespace DCL.ResourcesUnloading
         {
             this.texturesCache = texturesCache;
             TryAppendToDebug(texturesCache, "Textures");
-        }
-
-        public void Register(ISizedStreamableCache<TextureData, GetNFTImageIntention> nftImageCache)
-        {
-            this.nftImageCache = nftImageCache;
-            TryAppendToDebug(nftImageCache, "NFT Images");
         }
 
         public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>
