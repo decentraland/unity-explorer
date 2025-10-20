@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -46,11 +47,26 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                     .GetAsync(new CommonArguments(urlBuilder.Build()), ct, ReportCategory.OUTFITS)
                     .CreateFromJson<OutfitsResponse>(WRJsonParser.Newtonsoft);
 
-                var loadedOutfits = response.Metadata?.outfits ?? new List<OutfitItem>();
+                var validOutfits = new List<OutfitItem>();
 
-                ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD] Loaded {loadedOutfits.Count} outfits from server.");
-                
-                foreach (var outfitItem in loadedOutfits)
+                var outfitsFromServer = response?.Metadata?.outfits;
+
+                if (outfitsFromServer != null)
+                {
+                    foreach (var outfitItem in outfitsFromServer)
+                    {
+                        bool isValid = outfitItem.outfit != null && !string.IsNullOrEmpty(outfitItem.outfit.bodyShape);
+
+                        if (isValid)
+                        {
+                            validOutfits.Add(outfitItem);
+                        }
+                    }
+                }
+
+                ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD] Loaded {validOutfits.Count} outfits from server.");
+
+                foreach (var outfitItem in validOutfits)
                 {
                     if (outfitItem.outfit == null) continue;
 
@@ -62,7 +78,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                     }
                 }
 
-                return loadedOutfits;
+                return validOutfits;
             }
             catch (UnityWebRequestException e)
             {
