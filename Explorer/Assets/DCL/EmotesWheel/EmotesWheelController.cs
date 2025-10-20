@@ -214,7 +214,7 @@ namespace DCL.EmotesWheel
                 ClearCurrentEmote(slot);
             else
                 if(inputData.IsDirectedEmote)
-                    viewInstance.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
+                    viewInstance!.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
                 else
                     viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
@@ -222,7 +222,7 @@ namespace DCL.EmotesWheel
         private void ClearCurrentEmote(int slot)
         {
             if(inputData.IsDirectedEmote)
-                viewInstance.SocialEmoteNameWithUser.text = string.Empty;
+                viewInstance!.SocialEmoteNameWithUser.text = string.Empty;
             else
                 viewInstance!.CurrentEmoteName.text = string.Empty;
         }

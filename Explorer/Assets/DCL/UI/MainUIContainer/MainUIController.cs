@@ -2,6 +2,7 @@
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
+using DCL.UI.EphemeralNotifications;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -50,6 +51,7 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(EphemeralNotificationsController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {

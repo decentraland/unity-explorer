@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -18,6 +19,8 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SocialEmotes;
+using DCL.UI.EphemeralNotifications;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -29,7 +32,6 @@ using System;
 using System.Runtime.CompilerServices;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -56,6 +58,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly EphemeralNotificationsController ephemeralNotificationsController;
 
         public CharacterEmoteSystem(
             World world,
@@ -65,12 +69,16 @@ namespace DCL.AvatarRendering.Emotes.Play
             IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
             IAppArgs appArgs,
-            IScenesCache scenesCache) : base(world)
+            IScenesCache scenesCache,
+            IWeb3IdentityCache identityCache,
+            EphemeralNotificationsController ephemeralNotificationsController) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
+            this.identityCache = identityCache;
+            this.ephemeralNotificationsController = ephemeralNotificationsController;
             emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
@@ -256,6 +264,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    bool isPlayingDifferentEmote = emoteComponent.EmoteUrn.Shorten() != emoteIntent.EmoteId.Shorten();
+
                     // Previous social emote interaction has to be stopped before starting a new one
                     // When the avatar is already playing a social emote (outcome phase) and then it plays the same one (start phase) it cancels the interaction
                     // Playing a different emote cancels the interaction
@@ -263,7 +273,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (emoteComponent.Metadata != null &&
                         emoteComponent.Metadata.IsSocialEmote &&
                         emoteComponent.IsPlayingEmote &&
-                        (emoteComponent.EmoteUrn.Shorten() != emoteIntent.EmoteId.Shorten() || (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation))) // It's a different emote OR it was playing the outcome phase and now it wants to play the start phase of the same emote interaction (triggered the same social emote again while the previous interaction didn't finish yet, it cancels it)
+                        (isPlayingDifferentEmote || (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation))) // It's a different emote OR it was playing the outcome phase and now it wants to play the start phase of the same emote interaction (triggered the same social emote again while the previous interaction didn't finish yet, it cancels it)
                     {
                         ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "DIFFERENT PHASE? " + (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation));
                         SocialEmoteInteractionsManager.Instance.StopInteraction(emoteComponent.SocialEmoteInitiatorWalletAddress);
@@ -278,6 +288,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.IsPlayingSocialEmoteOutcome = emoteIntent.UseSocialEmoteOutcomeAnimation;
                     emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
+
+                    bool isLoopingSameEmote = emote.IsLooping() && emoteComponent.IsPlayingEmote && !isPlayingDifferentEmote;
 
                     if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                     {
@@ -298,7 +310,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                             SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, emote, characterTransform.Transform, emoteIntent.TargetAvatarWalletAddress);
                             emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
                             emoteComponent.TargetAvatarWalletAddress = emoteIntent.TargetAvatarWalletAddress;
+
+                            if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
+                            {
+                                ephemeralNotificationsController.AddNotificationAsync("DirectedSocialEmoteEphemeralNotification", emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
+                            }
                         }
+                    }
+                    else if (!emoteComponent.Metadata.IsSocialEmote && !isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
+                    {
+                        ephemeralNotificationsController.AddNotificationAsync("DirectedEmoteEphemeralNotification", emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
                     }
 
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PLAY USER: " + emoteIntent.WalletAddress);

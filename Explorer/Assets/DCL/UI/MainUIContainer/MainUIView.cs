@@ -5,6 +5,7 @@ using DCL.MarketplaceCredits;
 using DCL.Minimap;
 using DCL.SocialEmotes.UI;
 using DCL.UI.Controls;
+using DCL.UI.EphemeralNotifications;
 using DCL.UI.Sidebar;
 using MVC;
 using UnityEngine;
@@ -23,6 +24,7 @@ namespace DCL.UI.MainUI
         [field: SerializeField] public ControlsPanelView ControlsPanelView { get; private set; }
         [field: SerializeField] public WarningNotificationView WarningNotification { get; private set; }
         [field: SerializeField] public SocialEmoteOutcomeMenuView SocialEmoteOutcomeMenuView { get; private set; }
+        [field: SerializeField] public EphemeralNotificationsView EphemeralNotificationsView { get; private set; }
         [field: SerializeField] internal PointerDetectionArea pointerDetectionArea { get; private set; }
         [field: SerializeField] internal LayoutElement sidebarLayoutElement { get; private set; }
         [field: SerializeField] internal GameObject sidebarDetectionArea { get; private set; }

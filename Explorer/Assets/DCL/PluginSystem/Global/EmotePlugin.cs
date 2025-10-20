@@ -18,6 +18,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.SocialEmotes.UI;
+using DCL.UI.EphemeralNotifications;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -70,6 +71,7 @@ namespace DCL.PluginSystem.Global
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly EphemeralNotificationsController ephemeralNotificationsController;
 
         private Transform? socialPinsPoolParent = null;
         private Transform poolParent;
@@ -98,7 +100,8 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
             IComponentPoolsRegistry componentPoolsRegistry,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            EphemeralNotificationsController ephemeralNotificationsController)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -123,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
             this.identityCache = identityCache;
+            this.ephemeralNotificationsController = ephemeralNotificationsController;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -150,7 +154,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController);;
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
