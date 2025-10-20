@@ -121,8 +121,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
             if (!emoteReference) return;
 
-            bool shouldCancelEmote = wantsToCancelEmote || World.Has<BlockedPlayerComponent>(entity);
-
+            bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
             if (shouldCancelEmote)
             {
                 StopEmote(ref emoteComponent, avatarView);
