@@ -218,6 +218,8 @@ namespace DCL.Chat
         ///     Subscribers:    ChatInputPresenter: Re-runs its permission checks for the current channel and updates the input view.
         /// </summary>
         public struct CurrentChannelStateUpdatedEvent { }
+
+        public struct ClickableBlockedInputClickedEvent { }
 #endregion
     }
 }

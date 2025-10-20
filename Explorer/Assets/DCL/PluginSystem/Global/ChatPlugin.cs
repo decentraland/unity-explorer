@@ -39,7 +39,9 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Settings;
 using DCL.Translation;
 using DCL.Translation.Processors;
 using DCL.Translation.Service;
@@ -173,6 +175,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             pluginCts = new CancellationTokenSource();
+            eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
         }
 
         public void Dispose()
@@ -373,6 +376,9 @@ namespace DCL.PluginSystem.Global
 
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
+
+        private async void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT));
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
