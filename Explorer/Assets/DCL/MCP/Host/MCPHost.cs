@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.MCP.Host;
 using ModelContextProtocol.Protocol;
-using Mscc.GenerativeAI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,28 +19,28 @@ public class MCPHost : MonoBehaviour
     [SerializeField] private string defaultUnityWsUrl = "ws://localhost:7777";
     [SerializeField] private MCPClient mcpClient;
 
-    [ContextMenu("TEST AI")]
-    public void TestGoogleAPI()
-    {
-        CallG().Forget();
-        return;
-
-        async UniTask CallG()
-        {
-            var googleAI = new GoogleAI(geminiApiKey);
-
-            GenerativeModel model = googleAI.GenerativeModel();
-            string prompt = "Объясни, что такое API, простыми словами для новичка.";
-            Debug.Log($"Ваш запрос: {prompt}\n");
-
-            try
-            {
-                GenerateContentResponse response = await model.GenerateContent(prompt);
-                Debug.Log($"Ответ Gemini: {response.Text}");
-            }
-            catch (Exception ex) { Debug.Log($"Произошла ошибка: {ex.Message}"); }
-        }
-    }
+    // [ContextMenu("TEST AI")]
+    // public void TestGoogleAPI()
+    // {
+    //     CallG().Forget();
+    //     return;
+    //
+    //     async UniTask CallG()
+    //     {
+    //         var googleAI = new GoogleAI(geminiApiKey);
+    //
+    //         GenerativeModel model = googleAI.GenerativeModel();
+    //         string prompt = "Объясни, что такое API, простыми словами для новичка.";
+    //         Debug.Log($"Ваш запрос: {prompt}\n");
+    //
+    //         try
+    //         {
+    //             GenerateContentResponse response = await model.GenerateContent(prompt);
+    //             Debug.Log($"Ответ Gemini: {response.Text}");
+    //         }
+    //         catch (Exception ex) { Debug.Log($"Произошла ошибка: {ex.Message}"); }
+    //     }
+    // }
 
     [ContextMenu("Gemini → MCP connect")]
     public void AskGeminiToConnect() =>

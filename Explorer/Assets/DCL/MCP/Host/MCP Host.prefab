@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3809521449568572665}
   - component: {fileID: 6171477068178640189}
   - component: {fileID: 5892597949708895104}
+  - component: {fileID: 1352323181531846778}
   m_Layer: 0
   m_Name: MCP Host
   m_TagString: Untagged
@@ -62,3 +63,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MCP.Host::DCL.MCP.Host.MCPClient
   serverEntry: c:\\DCL\\MCPServers\\explorer-mcp-server\\build\\index.js
+--- !u!114 &1352323181531846778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5381875428151013300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 711dc64892e858044bfbbf5e269cf93f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MCP.Host::DCL.MCP.MCPChatAIBridge
+  geminiApiKey: AIzaSyANdi9MKBS1xb73K-A-1orCwGTeNLtbrRQ
+  modelName: gemini-2.5-flash
+  mcpClient: {fileID: 5892597949708895104}
