@@ -17,6 +17,7 @@ namespace DCL.Ipfs
         public bool isPortableExperience;
         public WorldConfiguration? worldConfiguration;
         public SkyboxConfigData? skyboxConfig;
+        public bool authoritativeMultiplayer;
 
         /// <summary>
         /// Configuration specific to Decentraland Worlds (Realms).

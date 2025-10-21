@@ -8,7 +8,6 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -85,8 +84,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
 
-            // Always send scene packages to authoritative-server instead of broadcasting
-            sceneMessage.AddSpecialRecipient("authoritative-server");
+            if (!string.IsNullOrEmpty(specialRecipient))
+                sceneMessage.AddSpecialRecipient(specialRecipient);
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;

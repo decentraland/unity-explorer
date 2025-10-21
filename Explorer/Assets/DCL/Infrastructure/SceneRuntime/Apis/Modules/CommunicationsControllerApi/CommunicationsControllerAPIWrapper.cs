@@ -35,7 +35,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        private void SendBinaryToParticipants(V8Object dataList, int dataCount, string recipient)
+        private void SendBinaryToParticipants(V8Object dataList, int dataCount, string? recipient)
         {
             try
             {

@@ -105,8 +105,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 crdtProcessMessagesSampler.Begin();
 
                 CRDTMessage message = messages[i];
-                if (message.Type == CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT)
-                    Debug.Log($"[UNITY CRDT] About to process AUTHORITATIVE_PUT_COMPONENT - Entity: {message.EntityId}, Component: {message.ComponentId}, Type: {message.Type}");
                 CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                 crdtProcessMessagesSampler.End();
