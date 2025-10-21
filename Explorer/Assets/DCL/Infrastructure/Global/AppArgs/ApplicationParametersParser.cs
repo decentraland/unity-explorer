@@ -13,6 +13,10 @@ namespace Global.AppArgs
     [AutoInterface]
     public class ApplicationParametersParser : IAppArgs
     {
+#if UNITY_INCLUDE_TESTS
+        public static readonly ApplicationParametersParser TEST_INSTANCE = new (Array.Empty<string>());
+#endif
+
         private readonly Dictionary<string, string> appParameters = new ();
 
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>

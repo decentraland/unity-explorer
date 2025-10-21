@@ -1,3 +1,4 @@
+using Global.AppArgs;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -14,8 +15,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public IReadOnlyList<CommsPayload> SceneCommsMessages => messages;
 
-        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ISceneCommunicationPipe sceneCommunicationPipe, IJsOperations jsOperations)
-            : base(sceneData, sceneCommunicationPipe, jsOperations, ISceneCommunicationPipe.MsgType.String) { }
+        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ISceneCommunicationPipe sceneCommunicationPipe, IJsOperations jsOperations, IAppArgs appArgs)
+            : base(sceneData, sceneCommunicationPipe, jsOperations, ISceneCommunicationPipe.MsgType.String, appArgs) { }
 
         public void ClearMessages()
         {

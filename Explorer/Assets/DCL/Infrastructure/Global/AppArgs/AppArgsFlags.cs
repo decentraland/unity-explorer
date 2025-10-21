@@ -45,6 +45,8 @@
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
+        public const string NO_CRDT_FILTER = "no-crdt-filter";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

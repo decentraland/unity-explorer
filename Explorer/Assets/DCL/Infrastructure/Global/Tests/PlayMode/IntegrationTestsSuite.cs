@@ -124,7 +124,8 @@ namespace Global.Tests.PlayMode
                 new IMessagePipesHub.Fake(),
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
-                DecentralandEnvironment.Org
+                DecentralandEnvironment.Org,
+                ApplicationParametersParser.TEST_INSTANCE
             );
 
             return (staticContainer, sceneSharedContainer);

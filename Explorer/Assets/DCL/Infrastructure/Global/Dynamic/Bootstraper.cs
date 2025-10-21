@@ -254,7 +254,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
-                bootstrapContainer.Environment
+                bootstrapContainer.Environment,
+                appArgs
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(

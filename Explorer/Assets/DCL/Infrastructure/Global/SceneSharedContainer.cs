@@ -11,6 +11,7 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
@@ -32,7 +33,8 @@ namespace Global
         /// </summary>
         public ISceneFactory SceneFactory { get; private set; }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer,
+        public static SceneSharedContainer Create(
+            in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
@@ -43,7 +45,9 @@ namespace Global
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            IAppArgs appArgs
+        )
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -73,7 +77,14 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata, dclEnvironment),
+                    new SceneCommunicationPipe(
+                        messagePipesHub,
+                        roomHub.SceneRoom()
+                    ),
+                    remoteMetadata,
+                    dclEnvironment,
+                    appArgs
+                ),
             };
         }
     }

@@ -18,6 +18,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using Global.AppArgs;
 using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
@@ -60,6 +61,7 @@ namespace SceneRunner
         private readonly ISceneCommunicationPipe messagePipesHub;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly DecentralandEnvironment dclEnvironment;
+        private readonly IAppArgs appArgs;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -82,7 +84,8 @@ namespace SceneRunner
             IPortableExperiencesController portableExperiencesController,
             ISceneCommunicationPipe messagePipesHub,
             IRemoteMetadata remoteMetadata,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            IAppArgs appArgs)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -103,6 +106,7 @@ namespace SceneRunner
             this.remoteMetadata = remoteMetadata;
             this.portableExperiencesController = portableExperiencesController;
             this.dclEnvironment = dclEnvironment;
+            this.appArgs = appArgs;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -183,12 +187,12 @@ namespace SceneRunner
 
             if (ENABLE_SDK_OBSERVABLES)
             {
-                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, appArgs);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, engineAPIMutexOwner);
+                    webRequestController, engineAPIMutexOwner, appArgs);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -217,7 +221,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    engineAPIMutexOwner);
+                    engineAPIMutexOwner, appArgs);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

@@ -1,4 +1,5 @@
-﻿using Microsoft.ClearScript;
+﻿using Global.AppArgs;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
@@ -12,8 +13,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
         public CommunicationsControllerAPIImplementation(ISceneData sceneData,
-            ISceneCommunicationPipe messagePipesHub, IJsOperations jsOperations)
-            : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
+            ISceneCommunicationPipe messagePipesHub, IJsOperations jsOperations, IAppArgs appArgs)
+            : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array, appArgs)
         {
         }
 
