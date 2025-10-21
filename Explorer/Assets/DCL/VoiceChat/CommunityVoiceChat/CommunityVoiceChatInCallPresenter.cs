@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -118,10 +119,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void SetCommunityData(GetCommunityResponse communityData)
         {
             view.SetCommunityName(communityData.data.name);
-            if (communityData.data.thumbnails != null)
-                thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw, defaultSprite: view.DefaultCommunitySprite);
-            else
-                view.CommunityThumbnail.SetImage(view.DefaultCommunitySprite);
+            thumbnailController.RequestImage(communityData.data.thumbnailUrl, useKtx: true, defaultSprite: view.DefaultCommunitySprite);
         }
 
         public void SetTalkingStatus(int speakingCount, string username)
