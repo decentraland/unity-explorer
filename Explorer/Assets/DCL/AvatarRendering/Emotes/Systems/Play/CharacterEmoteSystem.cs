@@ -288,6 +288,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.IsPlayingSocialEmoteOutcome = emoteIntent.UseSocialEmoteOutcomeAnimation;
                     emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
+                    emoteComponent.TargetAvatarWalletAddress = emoteIntent.TargetAvatarWalletAddress;
 
                     bool isLoopingSameEmote = emote.IsLooping() && emoteComponent.IsPlayingEmote && !isPlayingDifferentEmote;
 
@@ -309,7 +310,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                         {
                             SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, emote, characterTransform.Transform, emoteIntent.TargetAvatarWalletAddress);
                             emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
-                            emoteComponent.TargetAvatarWalletAddress = emoteIntent.TargetAvatarWalletAddress;
 
                             if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
                             {

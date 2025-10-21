@@ -77,8 +77,9 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 0}
   mainCanvasGroup: {fileID: 9007356566189495699}
   notificationsContainer: {fileID: 438849710600190453}
+  scrollView: {fileID: 8390723346688572533}
   loopListView: {fileID: 1208046690573542198}
-  maximumVisibleNotifications: 5
+  maximumVisibleNotifications: 6
 --- !u!1 &3437281310040422238
 GameObject:
   m_ObjectHideFlags: 0
@@ -92,6 +93,7 @@ GameObject:
   - component: {fileID: 8390723346688572533}
   - component: {fileID: 1208046690573542198}
   - component: {fileID: 9007356566189495699}
+  - component: {fileID: 2058970118631059196}
   m_Layer: 5
   m_Name: NotificationList
   m_TagString: Untagged
@@ -199,6 +201,20 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
+--- !u!114 &2058970118631059196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3437281310040422238}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 30}
 --- !u!1 &4907003008748352355
 GameObject:
   m_ObjectHideFlags: 0

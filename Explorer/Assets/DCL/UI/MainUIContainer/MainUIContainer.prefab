@@ -516,7 +516,6 @@ MonoBehaviour:
   <ChatMainView>k__BackingField: {fileID: 619325826877662910}
   <FriendsPanelViewView>k__BackingField: {fileID: 5022243188138649843}
   <MinimapView>k__BackingField: {fileID: 2530848671240461574}
-  <FriendPushNotificationView>k__BackingField: {fileID: 0}
   <MarketplaceCreditsMenuView>k__BackingField: {fileID: 4055415215529769386}
   <SidebarView>k__BackingField: {fileID: 152339575270123223}
   <ControlsPanelView>k__BackingField: {fileID: 2155008871701633240, guid: 542424588a68b46f688ef5c667aa0c68, type: 3}
@@ -2582,6 +2581,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4950822455619195612}
     m_Modifications:
+    - target: {fileID: 2058970118631059196, guid: 20aab73e98bc3794886bea5cb6c04348, type: 3}
+      propertyPath: m_Padding.y
+      value: -20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2058970118631059196, guid: 20aab73e98bc3794886bea5cb6c04348, type: 3}
+      propertyPath: m_Softness.y
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 3372781460941572463, guid: 20aab73e98bc3794886bea5cb6c04348, type: 3}
       propertyPath: m_Name
       value: EphemeralNotificationsPanel
