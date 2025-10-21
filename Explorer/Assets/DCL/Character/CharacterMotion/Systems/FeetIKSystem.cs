@@ -105,7 +105,7 @@ namespace DCL.CharacterMotion.Systems
             Transform leftLegConstraint = avatarBase.LeftLegConstraint;
 
             // Enable flags: when disabled we lerp the IK weight towards 0
-            bool disableByPlatform = platformComponent.IsMovingPlatform;
+            bool disableByPlatform = platformComponent.PositionChanged;
 
             bool isEnabled = rigidTransform.IsGrounded
                              && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) // disable IK while stuck or sliding

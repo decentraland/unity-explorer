@@ -108,7 +108,7 @@ namespace Global
         public IInputBlock InputBlock { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
-        public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
+        public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }

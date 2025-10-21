@@ -258,6 +258,9 @@ namespace DCL.Translation.Service
                     // Since TranslationResult is a struct, we create a new instance,
                     // replacing the translated text with the original body.
                     result = new TranslationResult(original, result.DetectedSourceLanguage, result.FromCache);
+
+                    ReportHub.Log(ReportCategory.TRANSLATE,
+                        $"Translation skipped: detected language is the same as target ({result.DetectedSourceLanguage}-{targetLang}) for message {original}");
                 }
 
                 cache.Set(messageId, targetLang, result);

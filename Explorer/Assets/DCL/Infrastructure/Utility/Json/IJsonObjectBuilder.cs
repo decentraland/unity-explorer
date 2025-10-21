@@ -3,34 +3,18 @@ using System;
 
 namespace Utility.Json
 {
-    public interface IJsonObjectBuilder
-    {
-        void Set(string key, string value);
-
-        void Set(string key, float value);
-
-        void Set(string key, int value);
-
-        /// <summary>
-        ///     Builds Json Object and clears internal keys. This operation is not idempotent
-        /// </summary>
-        JsonObject Build();
-
-        void Release(JsonObject jsonObject);
-    }
-
     public static class JsonObjectBuilderExtensions
     {
-        public static PooledJsonObject BuildPooled(this IJsonObjectBuilder jsonObjectBuilder) =>
+        public static PooledJsonObject BuildPooled(this JsonObjectBuilder jsonObjectBuilder) =>
             new (jsonObjectBuilder);
     }
 
     public readonly struct PooledJsonObject : IDisposable
     {
         public readonly JsonObject Json;
-        private readonly IJsonObjectBuilder source;
+        private readonly JsonObjectBuilder source;
 
-        public PooledJsonObject(IJsonObjectBuilder source)
+        public PooledJsonObject(JsonObjectBuilder source)
         {
             this.source = source;
             Json = source.Build();
