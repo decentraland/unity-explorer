@@ -1,12 +1,10 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
-using UnityEngine;
 
 namespace DCL.SkyBox
 {
@@ -47,12 +45,7 @@ namespace DCL.SkyBox
         protected override void Update(float deltaTime)
         {
             if (World.Has<PauseSkyboxTimeUpdate>(skyboxEntity))
-            {
-                // In case a transition is needed after the time update is resumed,
-                // we set the global time state
-                stateMachine.CurrentState = globalTimeState;
                 return;
-            }
 
             stateMachine.Update(deltaTime);
             skyboxRenderController.UpdateSkybox(skyboxSettings.TimeOfDayNormalized);
