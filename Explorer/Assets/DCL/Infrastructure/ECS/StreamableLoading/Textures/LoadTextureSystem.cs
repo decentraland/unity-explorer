@@ -11,7 +11,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.Unity.Textures.Utils;
 using System;
 using System.Threading;
 using UnityEngine;

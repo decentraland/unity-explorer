@@ -17,7 +17,6 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
-using ECS.Unity.Textures.Utils;
 using SceneRunner.Scene;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
