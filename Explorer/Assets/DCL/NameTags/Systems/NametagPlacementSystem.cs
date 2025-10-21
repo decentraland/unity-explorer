@@ -40,7 +40,6 @@ namespace DCL.Nametags
         private readonly NametagsData nametagsData;
 
         private SingleInstanceEntity playerCamera;
-        private bool cameraInitialized;
 
         public NametagPlacementSystem(
             World world,
