@@ -14,7 +14,7 @@ namespace Global.AppArgs
     public class ApplicationParametersParser : IAppArgs
     {
 #if UNITY_INCLUDE_TESTS
-        public static readonly ApplicationParametersParser TEST_INSTANCE = new (Array.Empty<string>());
+        public static ApplicationParametersParser TEST_INSTANCE => new (Array.Empty<string>());
 #endif
 
         private readonly Dictionary<string, string> appParameters = new ();
