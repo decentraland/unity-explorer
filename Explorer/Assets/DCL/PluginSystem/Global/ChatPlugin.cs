@@ -377,8 +377,8 @@ namespace DCL.PluginSystem.Global
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
 
-        private async void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT), PanelsSharingSpace.Chat);
+        private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT), PanelsSharingSpace.Chat).Forget();
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
