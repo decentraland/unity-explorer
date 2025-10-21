@@ -73,66 +73,88 @@ namespace DCL.MCP
 
         private void OnChatMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, DCL.Chat.History.ChatMessage message)
         {
-            if (!message.Message.TrimStart().StartsWith("@ai ", StringComparison.OrdinalIgnoreCase))
+            if (!message.IsSentByOwnUser || message.IsSystemMessage || message.IsMention)
                 return;
 
-            // Извлекаем запрос (убираем "@ai ")
-            string query = message.Message.Substring(message.Message.IndexOf("@ai", StringComparison.OrdinalIgnoreCase) + 3).Trim();
+            Debug.Log("MCP: Chat message received.");
 
-            if (string.IsNullOrWhiteSpace(query))
+            if (isProcessing)
+            {
+                Debug.Log("MCP: Обрабатываю предыдущий запрос, подождите...");
                 return;
+            }
 
-            Debug.Log($"[MCPChatAI] Получен запрос: {query}");
+            Debug.Log($"[MCPChatAI] Получен запрос: {message.Message}");
 
-            // Обрабатываем запрос асинхронно
-            ProcessAIQueryAsync(query, channelId, channelType).Forget();
+            ProcessAIQueryAsync(message.Message, channelId, channelType).Forget();
         }
 
         private async UniTask ProcessAIQueryAsync(string query, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType)
         {
-            if (isProcessing)
-            {
-                SendChatMessage("MCP: Обрабатываю предыдущий запрос, подождите...", channelId, channelType);
-                return;
-            }
-
             isProcessing = true;
 
             try
             {
-                if (geminiClient == null || availableTools == null)
+                if (geminiClient == null || availableTools == null || !availableTools.Any())
                 {
-                    SendChatMessage("MCP: AI не инициализирован", channelId, channelType);
+                    Debug.LogWarning("MCP: AI не инициализирован или нет доступных инструментов.");
                     return;
                 }
 
-                var chatOptions = new ChatOptions
-                {
-                    Tools = availableTools.ToArray<AITool>(),
-                };
+                var chatOptions = new ChatOptions { Tools = availableTools.ToArray<AITool>() };
 
                 var messages = new List<ChatMessage>
                 {
                     new (ChatRole.User, query),
                 };
 
-                // Первый запрос к AI
-                ChatResponse response = await geminiClient.GetResponseAsync(messages, chatOptions);
+                const int maxTurns = 5; // Безопасный лимит для предотвращения бесконечных циклов
 
-                // Проверяем function calls
-                IEnumerable<FunctionCallContent> functionCalls = response.Messages[0].Contents.OfType<FunctionCallContent>();
-
-                if (functionCalls.Any())
+                for (var turn = 0; turn < maxTurns; turn++)
                 {
-                    Debug.Log($"[MCPChatAI] AI вызывает {functionCalls.Count()} тулзу(тулз)");
+                    Debug.Log($"[MCPChatAI] Отправка запроса к AI. Итерация: {turn + 1}/{maxTurns}. Сообщений в истории: {messages.Count}.");
 
-                    // Добавляем ответ модели в историю
-                    messages.Add(response.Messages[0]);
+                    ChatResponse response = await geminiClient.GetResponseAsync(messages, chatOptions);
 
-                    // Вызываем каждую тулзу
+                    if (response.Messages == null || !response.Messages.Any())
+                    {
+                        Debug.LogError("[MCPChatAI] AI вернул пустой или некорректный ответ.");
+                        return;
+                    }
+
+                    // Обычно в не-стриминговом режиме от ассистента приходит одно сообщение
+                    ChatMessage assistantMessage = response.Messages[0];
+                    messages.Add(assistantMessage);
+
+                    // Сначала извлекаем текстовую часть, так как она может идти вместе с вызовом инструментов
+                    string responseText = string.Join("\n", assistantMessage.Contents.OfType<TextContent>().Select(c => c.Text)).Trim();
+
+                    IEnumerable<FunctionCallContent> functionCalls = assistantMessage.Contents.OfType<FunctionCallContent>();
+
+                    if (!functionCalls.Any())
+                    {
+                        Debug.Log($"[MCPChatAI] Получен финальный текстовый ответ: '{responseText}'");
+
+                        if (string.IsNullOrWhiteSpace(responseText))
+                        {
+                            responseText = assistantMessage.Text ?? "Готово."; // Запасной вариант
+                            Debug.Log($"[MCPChatAI] Ответ извлечен из свойства .Text: '{responseText}'");
+                        }
+
+                        SendChatMessage($"MCP: {responseText}", channelId, channelType);
+                        return; // Конец обработки
+                    }
+
+                    // Если был текст вместе с вызовом инструментов, покажем его пользователю
+                    if (!string.IsNullOrWhiteSpace(responseText))
+                        SendChatMessage($"MCP: {responseText}", channelId, channelType);
+
+                    Debug.Log($"[MCPChatAI] AI запросил вызов {functionCalls.Count()} инструментов.");
+
+                    // Выполняем все запрошенные вызовы
                     foreach (FunctionCallContent functionCall in functionCalls)
                     {
-                        Debug.Log($"[MCPChatAI] Вызов тулзы: {functionCall.Name}");
+                        Debug.Log($"[MCPChatAI] Вызов: {functionCall.Name}");
 
                         var arguments = new Dictionary<string, object?>();
 
@@ -153,35 +175,27 @@ namespace DCL.MCP
                             var resultText = string.Join("\n",
                                 toolResult.Content.OfType<TextContentBlock>().Select(t => t.Text));
 
-                            Debug.Log($"[MCPChatAI] Результат тулзы: {resultText}");
+                            Debug.Log($"[MCPChatAI] Результат '{functionCall.Name}': {resultText.Substring(0, Math.Min(resultText.Length, 120))}...");
 
-                            // Добавляем результат в историю сообщений
                             messages.Add(new ChatMessage(ChatRole.Tool, resultText));
                         }
                         catch (Exception ex)
                         {
-                            Debug.LogError($"[MCPChatAI] Ошибка вызова тулзы {functionCall.Name}: {ex.Message}");
-                            messages.Add(new ChatMessage(ChatRole.Tool, $"Ошибка: {ex.Message}"));
+                            var errorMessage = $"Ошибка вызова инструмента {functionCall.Name}: {ex.Message}";
+                            Debug.LogError($"[MCPChatAI] {errorMessage}");
+                            messages.Add(new ChatMessage(ChatRole.Tool, errorMessage));
                         }
                     }
-
-                    // Получаем финальный ответ от AI после выполнения тулз
-                    ChatResponse finalResponse = await geminiClient.GetResponseAsync(messages, chatOptions);
-                    string finalText = finalResponse.Messages[0].Text ?? "Готово";
-
-                    SendChatMessage($"MCP: {finalText}", channelId, channelType);
                 }
-                else
-                {
-                    // Прямой ответ без тулз
-                    string responseText = response.Messages[0].Text ?? "Нет ответа";
-                    SendChatMessage($"MCP: {responseText}", channelId, channelType);
-                }
+
+                // Если цикл завершился по лимиту итераций
+                Debug.LogWarning("MCP: Превышено максимальное количество вызовов инструментов.");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[MCPChatAI] Ошибка обработки: {ex}");
-                SendChatMessage($"MCP: Ошибка - {ex.Message}", channelId, channelType);
+                // Проверяем, не является ли это ошибкой о превышении лимитов
+                if (ex.Message.Contains("429") && ex.Message.ToLower().Contains("rate limit")) { Debug.LogWarning("MCP: Превышен лимит запросов к Gemini API (15 в минуту). Пожалуйста, подождите."); }
+                else { Debug.LogError($"MCP: Ошибка обработки запроса: {ex.Message}"); }
             }
             finally { isProcessing = false; }
         }
