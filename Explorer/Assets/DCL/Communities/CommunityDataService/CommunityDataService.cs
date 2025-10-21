@@ -93,7 +93,7 @@ namespace DCL.Communities
 
             communities[channelId] = new GetUserCommunitiesData.CommunityData(
                 data.id,
-                data.thumbnails,
+                data.thumbnailUrl,
                 data.name,
                 data.description,
                 data.privacy,
@@ -165,7 +165,7 @@ namespace DCL.Communities
 
                 var channelId = ChatChannel.NewCommunityChannelId(response.data.id);
                 communities.Add(channelId, new GetUserCommunitiesData.CommunityData(response.data.id,
-                    response.data.thumbnails,
+                    response.data.thumbnailUrl,
                     response.data.name,
                     response.data.description,
                     response.data.privacy,
@@ -188,7 +188,7 @@ namespace DCL.Communities
             var channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
 
             communities[channelId] = new GetUserCommunitiesData.CommunityData(newCommunity.id,
-                newCommunity.thumbnails,
+                newCommunity.thumbnailUrl,
                 newCommunity.name,
                 newCommunity.description,
                 newCommunity.privacy,

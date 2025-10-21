@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using System;
@@ -15,7 +14,7 @@ using Utility;
 
 namespace DCL.Multiplayer.Profiles.RemoteProfiles
 {
-    public class RemoteProfiles : IRemoteProfiles
+    public class RemoteProfiles
     {
         private readonly struct PendingRequest
         {

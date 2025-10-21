@@ -38,7 +38,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             if (engineApi.IsAnySubscription() == false)
             {
                 engineApi.ClearSDKObservableEvents();
-                commsApi.ClearMessages();
+
+                lock (commsApi.SceneCommsMessages) { commsApi.ClearMessages(); }
                 return null;
             }
 
@@ -64,12 +65,15 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             if (!engineApi.HasSubscription(SDKObservableEventIds.Comms))
                 return;
 
-            if (commsApi.SceneCommsMessages.Count == 0) return;
+            lock (commsApi.SceneCommsMessages)
+            {
+                if (commsApi.SceneCommsMessages.Count == 0) return;
 
-            foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
-                engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
+                foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
+                    engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
 
-            commsApi.ClearMessages();
+                commsApi.ClearMessages();
+            }
         }
 
         private void SubscribeToSDKObservableEvent(ReadOnlySpan<V8Value.Decoded> args, V8Value result)

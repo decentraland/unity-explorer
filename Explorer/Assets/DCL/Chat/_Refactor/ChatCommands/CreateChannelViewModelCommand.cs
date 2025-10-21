@@ -99,7 +99,7 @@ namespace DCL.Chat.ChatCommands
             if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
             {
                 viewModel.DisplayName = communityData.name;
-                viewModel.ImageUrl = communityData.thumbnails?.raw;
+                viewModel.ImageUrl = communityData.thumbnailUrl;
                 viewModel.CommunityConnectionUpdates = voiceChatOrchestrator.CommunityConnectionUpdates(ChatChannel.GetCommunityIdFromChannelId(channel.Id));
                 viewModel.CurrentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created ViewModel for: {communityData.name} -> is Streaming: {viewModel.CommunityConnectionUpdates.Value} - current community ID: {viewModel.CurrentCommunityCallId.Value}");
@@ -159,11 +159,11 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
         {
-            PrivateConversationUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
+            var status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
 
             if (ct.IsCancellationRequested) return;
 
-            viewModel.IsOnline = status == PrivateConversationUserStateService.ChatUserState.CONNECTED;
+            viewModel.IsOnline = status.IsConsideredOnline;
 
             eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
             {

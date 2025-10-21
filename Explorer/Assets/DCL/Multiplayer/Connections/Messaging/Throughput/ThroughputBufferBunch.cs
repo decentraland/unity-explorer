@@ -2,10 +2,10 @@
 {
     public readonly struct ThroughputBufferBunch
     {
-        public readonly IThroughputBuffer Incoming;
-        public readonly IThroughputBuffer Outgoing;
+        public readonly ThroughputBuffer Incoming;
+        public readonly ThroughputBuffer Outgoing;
 
-        public ThroughputBufferBunch(IThroughputBuffer incoming, IThroughputBuffer outgoing)
+        public ThroughputBufferBunch(ThroughputBuffer incoming, ThroughputBuffer outgoing)
         {
             this.Incoming = incoming;
             this.Outgoing = outgoing;

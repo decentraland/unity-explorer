@@ -2,7 +2,7 @@
 
 namespace DCL.Multiplayer.Connections.Systems.Throughput
 {
-    public class ThroughputBuffer : IThroughputBuffer
+    public class ThroughputBuffer
     {
         private ulong amount;
         private ulong amountFrame;
