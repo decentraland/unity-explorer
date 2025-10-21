@@ -314,7 +314,7 @@ namespace Global
                 settings.InitializePluginAsync(target.MediaContainer, ct)
             );
 
-            return results.Item1.success && results.Item2.success;
+            return results.Item1.success && results.Item2.success && results.Item3.success;
         }
     }
 }
