@@ -95,7 +95,7 @@ namespace CRDT.Protocol
                 // Server authoritative message - forces component state regardless of timestamp
                 case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                     GetReconciliationResultFromLWWMessage(in message, out CRDTReconciliationEffect authOverrideEffect, out CRDTReconciliationEffect authNewComponentEffect);
-                    var result = UpdateLWWState(in message, authOverrideEffect, authNewComponentEffect, force: true);
+                    CRDTReconciliationResult result = UpdateLWWState(in message, authOverrideEffect, authNewComponentEffect, ignoreTimestamp: true);
                     return result;
             }
 
@@ -138,6 +138,8 @@ namespace CRDT.Protocol
             switch (message.Type)
             {
                 case CRDTMessageType.PUT_COMPONENT:
+                // Same as PUT_COMPONENT but with authoritative behavior
+                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                     overrideEffect = CRDTReconciliationEffect.ComponentModified;
                     newComponentEffect = CRDTReconciliationEffect.ComponentAdded;
                     break;
@@ -145,17 +147,12 @@ namespace CRDT.Protocol
                     overrideEffect = CRDTReconciliationEffect.ComponentDeleted;
                     newComponentEffect = CRDTReconciliationEffect.NoChanges;
                     break;
-                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
-                    // Same as PUT_COMPONENT but with authoritative behavior
-                    overrideEffect = CRDTReconciliationEffect.ComponentModified;
-                    newComponentEffect = CRDTReconciliationEffect.ComponentAdded;
-                    break;
                 default:
                     throw new ArgumentException($"Message type {message.Type} is not LWW");
             }
         }
 
-        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message, CRDTReconciliationEffect overrideEffect, CRDTReconciliationEffect newComponentEffect, bool force = false)
+        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message, CRDTReconciliationEffect overrideEffect, CRDTReconciliationEffect newComponentEffect, bool ignoreTimestamp = false)
         {
             bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
                 out bool componentExists, out EntityComponentData storedData);
@@ -163,7 +160,7 @@ namespace CRDT.Protocol
             bool componentWasDeleted = componentExists && storedData.isDeleted;
 
             // The received message is > than our current value, update our state
-            if (!componentExists || storedData.Timestamp < message.Timestamp || force)
+            if (!componentExists || storedData.Timestamp < message.Timestamp || ignoreTimestamp)
             {
                 UpdateLWWState(innerSetExists, componentExists, inner, in message, ref storedData);
 

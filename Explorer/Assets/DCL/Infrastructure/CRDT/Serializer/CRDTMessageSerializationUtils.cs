@@ -10,8 +10,9 @@ namespace CRDT.Serializer
             switch (message.Type)
             {
                 case CRDTMessageType.PUT_COMPONENT:
-                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                     return CRDTConstants.CRDT_PUT_COMPONENT_BASE_LENGTH + message.Data.Memory.Length;
+                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
+                    return CRDTConstants.CRDT_AUTHORITATIVE_PUT_COMPONENT_BASE_LENGTH + message.Data.Memory.Length;
                 case CRDTMessageType.DELETE_ENTITY:
                     return CRDTConstants.CRDT_DELETE_ENTITY_BASE_LENGTH;
                 case CRDTMessageType.DELETE_COMPONENT:
@@ -28,8 +29,9 @@ namespace CRDT.Serializer
             switch (messageType)
             {
                 case CRDTMessageType.PUT_COMPONENT:
-                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                     return CRDTConstants.CRDT_PUT_COMPONENT_BASE_LENGTH + data.Memory.Length;
+                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
+                    return CRDTConstants.CRDT_AUTHORITATIVE_PUT_COMPONENT_BASE_LENGTH + data.Memory.Length;
                 case CRDTMessageType.DELETE_ENTITY:
                     return CRDTConstants.CRDT_DELETE_ENTITY_BASE_LENGTH;
                 case CRDTMessageType.DELETE_COMPONENT:

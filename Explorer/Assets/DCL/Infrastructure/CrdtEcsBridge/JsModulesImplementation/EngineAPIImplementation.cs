@@ -12,6 +12,7 @@ using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
@@ -105,7 +106,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 CRDTMessage message = messages[i];
                 if (message.Type == CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT)
-                    UnityEngine.Debug.Log($"[UNITY CRDT] About to process AUTHORITATIVE_PUT_COMPONENT - Entity: {message.EntityId}, Component: {message.ComponentId}, Type: {message.Type}");
+                    Debug.Log($"[UNITY CRDT] About to process AUTHORITATIVE_PUT_COMPONENT - Entity: {message.EntityId}, Component: {message.ComponentId}, Type: {message.Type}");
                 CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                 crdtProcessMessagesSampler.End();
@@ -214,12 +215,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
-            // We are interested in LWW messages only,
+            // We are interested in LWW messages only, in AUTHORITATIVE_PUT_COMPONENT we are not interested as it can't be originated from the client
             switch (message.message.Type)
             {
                 case CRDTMessageType.DELETE_COMPONENT:
                 case CRDTMessageType.PUT_COMPONENT:
-                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                     // instead of processing via CRDTProtocol.ProcessMessage
                     // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
                     crdtProtocol.EnforceLWWState(message.message);
