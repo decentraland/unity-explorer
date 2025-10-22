@@ -394,6 +394,8 @@ MonoBehaviour:
       Severity: 0
     - Category: DEBUG
       Severity: 0
+    - Category: PROFILE
+      Severity: 0
     - Category: EMOTE_DEBUG
       Severity: 3
     - Category: EMOTE_DEBUG

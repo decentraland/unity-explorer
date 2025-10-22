@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace DCL.FeatureFlags
 {
-    public class HttpFeatureFlagsProvider : IFeatureFlagsProvider
+    public class HttpFeatureFlagsProvider
     {
         private readonly IWebRequestController webRequestController;
         private readonly URLBuilder urlBuilder = new ();

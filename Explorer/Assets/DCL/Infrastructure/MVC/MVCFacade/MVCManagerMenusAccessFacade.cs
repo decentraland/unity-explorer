@@ -107,7 +107,7 @@ namespace MVC
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
             Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action onShow = null, bool enableSocialEmotes = false)
         {
-            Profile profile = await profileRepository.GetAsync(walletId, ct);
+            Profile? profile = await profileRepository.GetAsync(walletId, ct);
 
             if (profile == null)
                 return;
@@ -120,7 +120,7 @@ namespace MVC
             if (string.IsNullOrEmpty(participantWalletId)) return;
 
             Web3Address walletId = new Web3Address(participantWalletId);
-            Profile profile = await profileRepository.GetAsync(walletId, ct);
+            Profile? profile = await profileRepository.GetAsync(walletId, ct);
 
             if (profile == null) return;
 

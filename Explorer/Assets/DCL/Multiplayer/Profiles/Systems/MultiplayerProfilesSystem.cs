@@ -28,9 +28,9 @@ namespace DCL.Multiplayer.Profiles.Systems
     [UpdateBefore(typeof(AvatarGroup))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
-        private readonly IRemoteAnnouncements remoteAnnouncements;
+        private readonly RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
-        private readonly IRemoteProfiles remoteProfiles;
+        private readonly RemoteProfiles.RemoteProfiles remoteProfiles;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemoteMetadata remoteMetadata;
@@ -40,9 +40,9 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         public MultiplayerProfilesSystem(
             World world,
-            IRemoteAnnouncements remoteAnnouncements,
+            RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
-            IRemoteProfiles remoteProfiles,
+            RemoteProfiles.RemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
             IRemoteEntities remoteEntities,
             IRemoteMetadata remoteMetadata,

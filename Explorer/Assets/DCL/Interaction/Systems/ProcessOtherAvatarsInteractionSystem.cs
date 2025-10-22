@@ -95,7 +95,7 @@ namespace DCL.Interaction.Systems
 
             if (!World.IsAlive(entityRef)
                 || !World!.TryGet(entityRef, out Profile? profile)
-                || World.Has<BlockedPlayerComponent>(entityRef)
+                || World.Has<HiddenPlayerComponent>(entityRef)
                 || World.Has<IgnoreInteractionComponent>(entityRef))
             {
                 if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)

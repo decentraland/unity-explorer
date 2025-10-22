@@ -18,7 +18,7 @@ namespace DCL.MapRenderer.ComponentsFactory
     {
         private Dictionary<MapLayer, IMapLayerController> writer;
         private IMapRendererSettings mapSettings;
-        private IEventsApiService eventsApiService;
+        private HttpEventsApiService eventsApiService;
 
         public async UniTask<IMapLayerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> layerWriter,
@@ -27,7 +27,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IMapRendererSettings settings,
-            IEventsApiService eventsApi,
+            HttpEventsApiService eventsApi,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkerObject prefab,
             INavmapBus navmapBus,

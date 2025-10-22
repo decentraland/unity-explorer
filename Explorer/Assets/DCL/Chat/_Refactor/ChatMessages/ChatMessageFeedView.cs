@@ -40,7 +40,7 @@ namespace DCL.Chat.ChatMessages
         private Func<bool>? isTranslationActivated;
         private Func<bool>? isAutoTranslationEnabled;
         private Func<string, bool>? isTranslationForMessageInMemory;
-        
+
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
@@ -74,7 +74,7 @@ namespace DCL.Chat.ChatMessages
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
-            
+
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
@@ -124,7 +124,7 @@ namespace DCL.Chat.ChatMessages
             int entriesCountWithPaddings = viewModels.Count + 2; // +2 for the padding at the top and bottom
 
             int newEntries = entriesCountWithPaddings - loopList.ItemTotalCount;
-            
+
             if (newEntries < 0)
                 newEntries = 0;
 
@@ -197,7 +197,7 @@ namespace DCL.Chat.ChatMessages
         }
 
         internal bool IsAtBottom() =>
-            viewModels.Count == 0 || loopList.ScrollRect.normalizedPosition.y <= 0.001f;
+            viewModels.Count == 0 || loopList.IsLastItemVisible();
 
         /// <summary>
         ///     Accounts for the padding
@@ -229,7 +229,7 @@ namespace DCL.Chat.ChatMessages
             else
             {
                 ValidateAndResetStaleTranslation(viewModel);
-                
+
                 ChatItemPrefabIndex prefabIndex = chatMessage.IsSystemMessage ? ChatItemPrefabIndex.SystemChatEntry :
                     chatMessage.IsSentByOwnUser ? ChatItemPrefabIndex.ChatEntryOwn : ChatItemPrefabIndex.ChatEntry;
 
@@ -240,12 +240,12 @@ namespace DCL.Chat.ChatMessages
                 itemScript.Reset();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
                     !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated, isAutoTranslationEnabled);
-                
+
                 itemScript.OnTranslateRequested -= HandleTranslateRequest;
                 itemScript.OnRevertRequested -= HandleRevertRequest;
                 itemScript.OnTranslateRequested += HandleTranslateRequest;
                 itemScript.OnRevertRequested += HandleRevertRequest;
-                
+
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
@@ -278,7 +278,7 @@ namespace DCL.Chat.ChatMessages
         {
             OnRevertMessageRequested?.Invoke(messageId);
         }
-        
+
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
         {
             OnChatContextMenuRequested?.Invoke(itemDataMessage, itemScript);
@@ -336,7 +336,7 @@ namespace DCL.Chat.ChatMessages
                     _fadeSequenceTween = null;
                 });
         }
-        
+
         internal void StopChatEntriesFadeout()
         {
             _fadeSequenceTween?.Kill();
@@ -386,7 +386,7 @@ namespace DCL.Chat.ChatMessages
                 }
             }
         }
-        
+
         [ContextMenu("Fake Message")]
         public void FakeMessage()
         {

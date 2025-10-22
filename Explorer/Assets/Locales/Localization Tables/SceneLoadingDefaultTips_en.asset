@@ -127,6 +127,25 @@ MonoBehaviour:
       and more."
     m_Metadata:
       m_Items: []
+  - m_Id: 232214342377889792
+    m_Localized: Join The Vibe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232214434111512576
+    m_Localized: "Join DCL Regenesis Labs first hackathon\n(Oct 13\u2013Nov 9). Vibe
+      coding, spooky vibes, and $7.5K+ in prizes await!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232572835362463744
+    m_Localized: Fright Night
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232572909886857216
+    m_Localized: "Join Decentraland October 30 - 31 for a virtual celebration of
+      all things spooky. \nExpect haunted builds, creepy quests, and surprises around
+      every corner."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

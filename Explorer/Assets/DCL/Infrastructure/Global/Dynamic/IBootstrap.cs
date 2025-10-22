@@ -57,7 +57,7 @@ namespace Global.Dynamic
         GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
             UIDocument debugUiRoot, Entity playerEntity);
 
-        UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
+        UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, BootstrapContainer bootstrapContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 

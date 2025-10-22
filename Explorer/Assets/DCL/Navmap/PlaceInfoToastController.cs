@@ -13,7 +13,7 @@ namespace DCL.Navmap
         private readonly PlaceInfoToastView view;
         private readonly PlaceInfoPanelController placePanelController;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly INavmapBus navmapBus;
 
         private CancellationTokenSource? fetchPlaceAndShowCancellationToken;
@@ -21,7 +21,7 @@ namespace DCL.Navmap
         public PlaceInfoToastController(PlaceInfoToastView view,
             PlaceInfoPanelController placePanelController,
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             INavmapBus navmapBus)
         {
             this.view = view;
