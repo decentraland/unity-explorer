@@ -94,8 +94,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                     result.Set(self.CrdtGetState()));
 
             configuration.AddMethodGetter(nameof(CrdtSendToRenderer),
-                static (T self, in V8FastArgs args, in V8FastResult _) =>
-                    self.CrdtSendToRenderer(args.Get<ITypedArray<byte>>(0)));
+                static (T self, in V8FastArgs args, in V8FastResult result) =>
+                    result.Set(self.CrdtSendToRenderer(args.Get<ITypedArray<byte>>(0))));
 
             configuration.AddMethodGetter(nameof(SendBatch),
                 static (T self, in V8FastArgs _, in V8FastResult result) =>
