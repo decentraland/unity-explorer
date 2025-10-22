@@ -316,7 +316,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             CancelLoginProcess();
 
-            if (GetTargetScreenMode() != FullScreenMode.Windowed)
+            // Checks the current screen mode because it could have been overridden with Alt+Enter
+            if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 ForceResolutionAndWindowedMode();
 
             loginCancellationToken = new CancellationTokenSource();
