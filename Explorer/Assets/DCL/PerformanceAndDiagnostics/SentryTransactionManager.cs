@@ -11,6 +11,8 @@ namespace DCL.PerformanceAndDiagnostics
     [Singleton]
     public partial class SentryTransactionManager
     {
+        private const string ERROR_COUNT = "error_count";
+
         private readonly Dictionary<string, ITransactionTracer> sentryTransactions = new();
         private readonly Dictionary<string, int> sentryTransactionErrors = new();
         private readonly Dictionary<string, Stack<ISpan>> transactionsSpans = new();
@@ -27,12 +29,22 @@ namespace DCL.PerformanceAndDiagnostics
             if (sentryTransactions.ContainsKey(transactionData.TransactionName)) return;
 
             ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
-            transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
+
+            if (transactionData.Tags != null)
+                transactionTracer.SetTags(transactionData.Tags);
+
+            IEnumerable<(string, object)>? extra = transactionData.ExtraData;
+
+            if (extra != null)
+            {
+                foreach ((string key, object value) in extra)
+                    transactionTracer.SetExtra(key, value);
+            }
 
             sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
 
             sentryTransactionErrors.Add(transactionData.TransactionName, 0);
-            transactionTracer.SetExtra("error_count", 0);
+            transactionTracer.SetTag(ERROR_COUNT, "0");
         }
 
         public void StartSpan(SpanData spanData)
@@ -79,7 +91,7 @@ namespace DCL.PerformanceAndDiagnostics
             currentSpan.Finish();
         }
 
-        public void EndTransaction(string transactionName)
+        public void EndTransaction(string transactionName, SpanStatus finishWithStatus = SpanStatus.Ok)
         {
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
             {
@@ -92,11 +104,11 @@ namespace DCL.PerformanceAndDiagnostics
                 while (spanStack.Count > 0)
                 {
                     ISpan span = spanStack.Pop();
-                    span.Finish();
+                    span.Finish(finishWithStatus);
                 }
             }
 
-            transaction.Finish();
+            transaction.Finish(finishWithStatus);
 
             sentryTransactions.Remove(transactionName);
             transactionsSpans.Remove(transactionName);
@@ -146,7 +158,7 @@ namespace DCL.PerformanceAndDiagnostics
                 sentryTransactionErrors[transactionName] = currentErrorCount + 1;
 
                 if(sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
-                    transaction.SetExtra("error_count", sentryTransactionErrors[transactionName]);
+                    transaction.SetTag(ERROR_COUNT, sentryTransactionErrors[transactionName].ToString());
             }
 
             if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
@@ -169,6 +181,7 @@ namespace DCL.PerformanceAndDiagnostics
             if (exception != null)
             {
                 currentSpan.SetTag("error.type", exception.GetType().Name);
+                currentSpan.SetTag("error.exception_message", exception.Message);
                 currentSpan.SetTag("error.stack", exception.StackTrace);
                 currentSpan.Finish(exception, SpanStatus.InternalError);
             }
@@ -186,12 +199,12 @@ namespace DCL.PerformanceAndDiagnostics
         private void FinishAllTransactions()
         {
             var transactionKeys = new List<string>(sentryTransactions.Keys);
-            
+
             foreach (string transactionKey in transactionKeys)
             {
                 try
                 {
-                    EndTransaction(transactionKey);
+                    EndTransaction(transactionKey, SpanStatus.Aborted);
                 }
                 catch (Exception ex)
                 {
@@ -205,8 +218,8 @@ namespace DCL.PerformanceAndDiagnostics
     {
         public string TransactionName;
         public string TransactionOperation;
-        public string TransactionTag;
-        public string TransactionTagValue;
+        public IEnumerable<KeyValuePair<string, string>>? Tags;
+        public IEnumerable<(string, object)>? ExtraData;
     }
 
     public struct SpanData
