@@ -8,8 +8,6 @@ namespace DCL.Backpack
 {
     public class AvatarView : MonoBehaviour
     {
-        public Material blitMaterial; 
-        
         [field: Header("Tabs")]
         [field: SerializeField]
         public AvatarPanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; }
@@ -44,8 +42,6 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Button marketplaceButton { get; private set; }
-        
-        
     }
 
     [Serializable]

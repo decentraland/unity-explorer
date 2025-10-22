@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.Profiles.Self;
 using DCL.UI.ConfirmationDialog.Opener;
 using MVC;
+using UnityEngine;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
@@ -33,14 +34,17 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly ISelfProfile selfProfile;
         private readonly OutfitsRepository outfitsRepository;
         private readonly IAvatarScreenshotService screenshotService;
+        private readonly Sprite deleteIcon;
 
         public DeleteOutfitCommand(ISelfProfile selfProfile,
             OutfitsRepository outfitsRepository,
-            IAvatarScreenshotService screenshotService)
+            IAvatarScreenshotService screenshotService,
+            Sprite deleteIcon)
         {
             this.selfProfile = selfProfile;
             this.outfitsRepository = outfitsRepository;
             this.screenshotService = screenshotService;
+            this.deleteIcon = deleteIcon;
         }
 
         public async UniTask<DeleteOutfitOutcome> ExecuteAsync(
@@ -104,7 +108,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         {
             return new ConfirmationDialogParameter(OUTFIT_POPUP_DELETE_TEXT,
                 OUTFIT_POPUP_DELETE_CANCEL_TEXT,
-                OUTFIT_POPUP_DELETE_CONFIRM_TEXT, null,
+                OUTFIT_POPUP_DELETE_CONFIRM_TEXT, deleteIcon,
                 false,
                 false);
         }

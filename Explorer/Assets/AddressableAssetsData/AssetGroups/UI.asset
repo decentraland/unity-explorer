@@ -60,6 +60,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0e0dc1c6390d85440bdf622928e144f5
+    m_Address: Assets/Textures/Common/ModalDeleteImg_Addressable.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0fce4c1a785b1495bbf861787a9a3224
     m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopup.prefab
     m_ReadOnly: 0

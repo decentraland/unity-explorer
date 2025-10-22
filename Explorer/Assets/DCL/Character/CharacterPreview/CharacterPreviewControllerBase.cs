@@ -12,6 +12,7 @@ using UnityEngine.EventSystems;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace DCL.CharacterPreview
 {
@@ -19,6 +20,11 @@ namespace DCL.CharacterPreview
     {
         private const float AVATAR_FADE_ANIMATION = 0.5f;
 
+        private readonly List<string> randomBasicEmotes = new()
+        {
+            "wave", "fistpump", "dab"
+        };
+        
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
@@ -313,14 +319,12 @@ namespace DCL.CharacterPreview
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
         }
 
-        public void PlayRandomEmote(string emoteId)
+        public void PlayRandomEmote()
         {
-            // if (previewController?.IsPlayingEmote() ?? true)
-            //     return;
-
-            previewController?.PlayEmote(emoteId);
+            previewController?.PlayEmote(randomBasicEmotes[Random.Range(0, randomBasicEmotes.Count)]);
         }
-        public void PlayEmote(string emoteId)
+
+        protected void PlayEmote(string emoteId)
         {
             previewController?.PlayEmote(emoteId);
         }

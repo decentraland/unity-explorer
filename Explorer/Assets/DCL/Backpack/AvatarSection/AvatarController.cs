@@ -57,7 +57,7 @@ namespace DCL.Backpack
                 view,
                 categoriesPresenter,
                 outfitsPresenter,
-                view.transform as RectTransform);
+                (RectTransform) view.transform);
 
             bool isOutfitsEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED);
             if (!isOutfitsEnabled)

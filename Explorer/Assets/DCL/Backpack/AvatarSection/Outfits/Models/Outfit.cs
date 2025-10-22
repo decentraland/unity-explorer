@@ -22,6 +22,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Models
 
         [JsonProperty("wearables")]
         public List<string> wearables;
+
+        [JsonProperty("forceRender")]
+        public List<string> forceRender;
     }
 
     [Serializable]

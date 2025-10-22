@@ -51,7 +51,7 @@ namespace DCL.Backpack
 
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
-
+        
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
             IOutfitApplier outfitApplier,
@@ -382,24 +382,8 @@ namespace DCL.Backpack
         {
             ResetEmotes();
 
-            var equippedEmotesList = new List<IEmote>();
-
-            for (int i = 0; i < equippedEmotes.SlotCount; i++)
-            {
-                var emoteInSlot = equippedEmotes.EmoteInSlot(i);
-
-                if (emoteInSlot != null)
-                    equippedEmotesList.Add(emoteInSlot);
-            }
-
-            if (equippedEmotesList.Count > 0)
-            {
-                int randomIndex = Random.Range(0, equippedEmotesList.Count);
-                var randomEmote = equippedEmotesList[randomIndex];
-
-                if (characterPreviewController is BackpackCharacterPreviewController backpackController)
-                    backpackController.PlayRandomEmote(randomEmote.GetUrn().Shorten());
-            }
+            if (characterPreviewController is BackpackCharacterPreviewController backpackController)
+                backpackController.PlayRandomEmote();
         }
 
         public void Dispose()

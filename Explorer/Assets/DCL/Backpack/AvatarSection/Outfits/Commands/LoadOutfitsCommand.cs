@@ -19,6 +19,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly IRealmData realmData;
         private readonly URLBuilder urlBuilder = new ();
 
+        private long migrationTimestamp = new DateTimeOffset(2025, 10, 25, 12, 0, 0, TimeSpan.Zero)
+            .ToUnixTimeMilliseconds();
+
         public LoadOutfitsCommand(IWebRequestController webRequestController,
             ISelfProfile selfProfile,
             IRealmData realmData)
@@ -47,6 +50,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                     .GetAsync(new CommonArguments(urlBuilder.Build()), ct, ReportCategory.OUTFITS)
                     .CreateFromJson<OutfitsResponse>(WRJsonParser.Newtonsoft);
 
+                if (response.Metadata == null /* || response.Timestamp < migrationTimestamp*/)
+                {
+                    ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD] Loaded old outfits data (version {response.Timestamp}). Ignoring.");
+                    return Array.Empty<OutfitItem>();
+                }
+                
                 var validOutfits = new List<OutfitItem>();
 
                 var outfitsFromServer = response?.Metadata?.outfits;

@@ -12,6 +12,7 @@ using DCL.Backpack.Outfits.Extensions;
 using DCL.Diagnostics;
 using DCL.Profiles.Self;
 using Runtime.Wearables;
+using UnityEngine;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
@@ -53,7 +54,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 slot = slotIndex, outfit = new Outfit
                 {
-                    bodyShape = bodyShapeWearable.GetUrn(), wearables = fullWearableUrns, eyes = new Eyes
+                    bodyShape = bodyShapeWearable.GetUrn(), wearables = fullWearableUrns, forceRender = new List<string>(), eyes = new Eyes
                     {
                         color = eyesColor
                     },
@@ -71,13 +72,35 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             var updatedOutfits = currentOutfits.ToList();
             int existingIndex = updatedOutfits.FindIndex(o => o.slot == slotIndex);
 
-            if (existingIndex != -1)
-                updatedOutfits[existingIndex] = newItem;
-            else
-                updatedOutfits.Add(newItem);
-
+            // NOTE: update or add existing outfit
+            if (existingIndex != -1) updatedOutfits[existingIndex] = newItem;
+            else updatedOutfits.Add(newItem);
+            
             await outfitsRepository.SetAsync(profile, updatedOutfits, ct);
             return newItem;
+        }
+
+        private OutfitItem CreateEmptyOutfitItem(int slot)
+        {
+            return new OutfitItem
+            {
+                slot = slot, outfit = new Outfit
+                {
+                    bodyShape = "", eyes = new Eyes
+                    {
+                        color = new Color(0, 0, 0, 0)
+                    },
+                    hair = new Hair
+                    {
+                        color = new Color(0, 0, 0, 0)
+                    },
+                    skin = new Skin
+                    {
+                        color = new Color(0, 0, 0, 0)
+                    },
+                    wearables = new List<string>(), forceRender = new List<string>()
+                }
+            };
         }
     }
 }

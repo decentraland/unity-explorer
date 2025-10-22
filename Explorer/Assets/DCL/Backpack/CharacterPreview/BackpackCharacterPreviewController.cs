@@ -179,27 +179,6 @@ namespace DCL.Backpack.CharacterPreview
             if (emote == null) return;
             PlayEmote(emote.GetUrn().Shorten());
         }
-
-        public void PlayRandomEmote()
-        {
-            StopEmotes();
-
-            var equippedEmotesList = new List<IEmote>();
-            for (int i = 0; i < equippedEmotes.SlotCount; i++)
-            {
-                var emoteInSlot = equippedEmotes.EmoteInSlot(i);
-                if (emoteInSlot != null)
-                    equippedEmotesList.Add(emoteInSlot);
-            }
-
-            if (equippedEmotesList.Count > 0)
-            {
-                int randomIndex = Random.Range(0, equippedEmotesList.Count);
-                var randomEmote = equippedEmotesList[randomIndex];
-
-                OnEmoteSelected(randomEmote);
-            }
-        }
         
         private void OnEmoteSelected(IEmote emote)
         {
