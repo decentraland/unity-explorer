@@ -37,7 +37,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IMapPinsEventBus mapPinsEventBus;
@@ -60,7 +60,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             IRealmNavigator realmNavigator,

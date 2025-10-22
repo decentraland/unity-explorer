@@ -11,7 +11,7 @@ namespace DCL.Navmap
         private readonly PlacesData.PlaceInfo placeInfo;
         private readonly PlaceInfoPanelController placeInfoPanelController;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly NavmapSearchBarController searchBarController;
         private IReadOnlyList<EventDTO>? events;
 
@@ -19,7 +19,7 @@ namespace DCL.Navmap
             PlacesData.PlaceInfo placeInfo,
             PlaceInfoPanelController placeInfoPanelController,
             PlacesAndEventsPanelController placesAndEventsPanelController,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             NavmapSearchBarController searchBarController)
         {
             this.placeInfo = placeInfo;

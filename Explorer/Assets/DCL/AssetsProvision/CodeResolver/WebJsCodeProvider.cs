@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.AssetsProvision.CodeResolver
 {
-    public class WebJsCodeProvider : IJsCodeProvider
+    public class WebJsCodeProvider
     {
         private readonly IWebRequestController webRequestController;
 
