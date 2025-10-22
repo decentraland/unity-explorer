@@ -16,7 +16,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         {
             public string id;
             public string communityId;
-            public CommunityThumbnails? thumbnails;
+            public string thumbnailUrl;
             public string memberAddress;
             public InviteRequestAction type;
             public string status;

@@ -87,8 +87,6 @@ namespace DCL.VoiceChat
 
             localParticipantIsSpeakerSubscription.Dispose();
             callStatusSubscription.Dispose();
-            reconnectionManager.Dispose();
-            trackManager.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }

@@ -41,16 +41,13 @@ namespace DCL.ResourcesUnloading
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
         private IGltfContainerAssetsCache? gltfContainerAssetsCache;
-        private IStreamableCache<Texture2DData, GetTextureIntention>? texturesCache;
+        private IStreamableCache<TextureData, GetTextureIntention>? texturesCache;
         private ILODCache? lodCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
-        private IStreamableCache<Texture2DData, GetNFTShapeIntention>? nftShapeCache;
-
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
         private IProfileCache? profileCache;
         private IRoadAssetPool? roadCache;
-
         private IEmoteStorage? emoteCache;
         private IMemoryCache<string, string>? jsSourcesCache;
 
@@ -78,7 +75,6 @@ namespace DCL.ResourcesUnloading
 
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
-            nftShapeCache!.Unload(budgetToUse, budgeted ? NFT_SHAPE_UNLOAD_CHUNK : int.MaxValue);
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
@@ -118,16 +114,10 @@ namespace DCL.ResourcesUnloading
         public void Register(IAttachmentsAssetsCache wearableAssetsCache) =>
             this.wearableAssetsCache = wearableAssetsCache;
 
-        public void Register(ISizedStreamableCache<Texture2DData, GetTextureIntention> texturesCache)
+        public void Register(ISizedStreamableCache<TextureData, GetTextureIntention> texturesCache)
         {
             this.texturesCache = texturesCache;
             TryAppendToDebug(texturesCache, "Textures");
-        }
-
-        public void Register(ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache)
-        {
-            this.nftShapeCache = nftShapeCache;
-            TryAppendToDebug(nftShapeCache, "NFT Shapes");
         }
 
         public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>
