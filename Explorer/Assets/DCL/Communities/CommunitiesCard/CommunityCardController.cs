@@ -67,7 +67,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -104,7 +104,7 @@ namespace DCL.Communities.CommunitiesCard
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,

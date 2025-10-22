@@ -59,8 +59,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer
-        )
+            IDebugContainerBuilder debugContainer)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
