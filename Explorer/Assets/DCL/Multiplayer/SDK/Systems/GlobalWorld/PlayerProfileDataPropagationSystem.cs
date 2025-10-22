@@ -15,9 +15,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
-        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly CharacterDataPropagationUtility characterDataPropagationUtility;
 
-        public PlayerProfileDataPropagationSystem(World world, ICharacterDataPropagationUtility characterDataPropagationUtility) : base(world)
+        public PlayerProfileDataPropagationSystem(World world, CharacterDataPropagationUtility characterDataPropagationUtility) : base(world)
         {
             this.characterDataPropagationUtility = characterDataPropagationUtility;
         }
