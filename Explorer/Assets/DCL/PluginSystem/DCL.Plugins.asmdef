@@ -131,10 +131,13 @@
         "GUID:6da682aafc9e2724594f4e4bf9cc2550",
         "GUID:c5db5ed4ea75a402dba1512abe9482ec",
         "GUID:9c1932d9907bf426d845767a97c591ac",
+        "GUID:2cb7f8d07642456eb6dbe8159b494591",
         "GUID:37a4d7b6b1ae9644b95acf1816d50355",
         "GUID:1087662aaf1c5462baa91fb9484296fd",
         "GUID:5556c2cd8a339d54ba194f39bbd30d73",
         "GUID:e4725e82149f9428aa30a172156263ce",
+        "GUID:29f99fa49221a4df7aecb5cd50457e5f",
+        "GUID:92920c790fc0443e9a7ec2f7d1e5308f",
         "GUID:b3ea857cc09201a4fb44cae9ca69de08",
         "GUID:34f55da88efb72a4cb3343301ba9e06b"
     ],
@@ -150,6 +153,11 @@
             "name": "com.dcl.gpui-assets",
             "expression": "",
             "define": "GPUI_PRO_PRESENT"
+        },
+        {
+            "name": "avprovideo",
+            "expression": "",
+            "define": "AV_PRO_PRESENT"
         }
     ],
     "noEngineReferences": false

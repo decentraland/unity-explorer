@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             if (uiBackgroundComponent.TexturePromise != null)
             {
-                AssetPromise<Texture2DData, GetTextureIntention> texturePromiseValue = uiBackgroundComponent.TexturePromise.Value;
+                AssetPromise<TextureData, GetTextureIntention> texturePromiseValue = uiBackgroundComponent.TexturePromise.Value;
                 texturePromiseValue.ForgetLoading(World);
                 texturePromiseValue.TryDereference(World);
                 uiBackgroundComponent.TexturePromise = null;

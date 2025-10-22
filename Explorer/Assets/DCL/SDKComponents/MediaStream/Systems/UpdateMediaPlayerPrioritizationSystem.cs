@@ -136,7 +136,7 @@ namespace DCL.SDKComponents.MediaStream
                 if (mediaPlayer.MediaPlayer.IsPlaying)
                 {
                     videoStateByPriority.WantsToPlay = true;
-                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup - mediaPlayer.MediaPlayer.CurrentTime;
+                    videoStateByPriority.MediaPlayStartTime = UnityEngine.Time.realtimeSinceStartup - mediaPlayer.MediaPlayer.CurrentTime;
 
 #if DEBUG_VIDEO_PRIORITIES
                     ReportHub.Log(GetReportData(),$"Video: PLAYED MANUALLY: {videoStateByPriority.MediaPlayStartTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()}");
@@ -248,7 +248,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (mustPlay && !videoStateByPriority.IsPlaying)
             {
-                double pauseDuration = Time.realtimeSinceStartup - videoStateByPriority.MediaPlayStartTime;
+                double pauseDuration = UnityEngine.Time.realtimeSinceStartup - videoStateByPriority.MediaPlayStartTime;
                 double seekTime = pauseDuration % mediaPlayer.Duration;
 
                 if (!mediaPlayer.MediaPlayer.IsPlaying)

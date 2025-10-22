@@ -27,7 +27,7 @@ namespace DCL.Settings
 {
     public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
     {
-        private enum SettingsSection
+        public enum SettingsSection
         {
             GENERAL,
             GRAPHICS,
@@ -125,6 +125,12 @@ namespace DCL.Settings
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+        }
+
+        public void Toggle(SettingsSection section)
+        {
+            var config = sections[section];
+            OpenSection(section, config.config!.SettingsGroups.Count);
         }
 
         public void Animate(int triggerId)

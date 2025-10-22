@@ -24,7 +24,6 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
             await GetImageAsync(url, ct);
 
-        // TODO memory disposing
         private async UniTask<Texture2D> GetImageAsync(string url, CancellationToken ct = default)
         {
             var texture = await webRequestController.GetTextureAsync(
@@ -32,7 +31,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
                 new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct, ReportCategory.CAMERA_REEL);
 
-            return texture.Texture;
+            return texture;
         }
 
         private async UniTask<Texture2D> GetUncompressedImageAsync(string reelUrl, CancellationToken ct)
