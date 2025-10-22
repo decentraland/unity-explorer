@@ -6,7 +6,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 using UnityEngine.Pool;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -40,9 +40,9 @@ namespace ECS.Unity.Materials.Systems
             promise = promiseValue;
         }
 
-        protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<Texture2DData> textureResult)
+        protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<TextureData> textureResult)
         {
-            textureResult = default(StreamableLoadingResult<Texture2DData>);
+            textureResult = default(StreamableLoadingResult<TextureData>);
 
             if (promise == null)
                 return true;
@@ -55,7 +55,7 @@ namespace ECS.Unity.Materials.Systems
             return result;
         }
 
-        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2DData> textureResult, int propId, in TextureComponent? textureComponent)
+        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<TextureData> textureResult, int propId, in TextureComponent? textureComponent)
         {
             if (!textureResult.Succeeded) return;
 
