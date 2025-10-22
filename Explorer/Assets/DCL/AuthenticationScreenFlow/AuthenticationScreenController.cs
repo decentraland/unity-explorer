@@ -315,7 +315,9 @@ namespace DCL.AuthenticationScreenFlow
         private void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
-            ForceResolutionAndWindowedMode();
+
+            if (GetTargetScreenMode() != FullScreenMode.Windowed)
+                ForceResolutionAndWindowedMode();
 
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
