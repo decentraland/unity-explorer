@@ -180,8 +180,7 @@ namespace DCL.PluginSystem.Global
         {
             chatStorage?.Dispose();
             pluginScope.Dispose();
-            pluginCts.Cancel();
-            pluginCts.Dispose();
+            pluginCts.SafeCancelAndDispose();
             fallbackFontsProvider.Dispose();
         }
 
