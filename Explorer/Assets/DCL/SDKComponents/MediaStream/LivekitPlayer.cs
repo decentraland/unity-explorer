@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.ThreadSafePool;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -39,9 +38,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public PlayerState State => playerState;
 
-        public LivekitPlayer(IRoomHub roomHub)
+        public LivekitPlayer(IRoom streamingRoom)
         {
-            room = roomHub.StreamingRoom();
+            room = streamingRoom;
             audioSource = OBJECT_POOL.Get();
         }
 

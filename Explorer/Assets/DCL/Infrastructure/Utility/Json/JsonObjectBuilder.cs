@@ -4,7 +4,7 @@ using UnityEngine.Pool;
 
 namespace Utility.Json
 {
-    public class JsonObjectBuilder : IJsonObjectBuilder
+    public class JsonObjectBuilder
     {
         private const int STRING_CACHE_SIZE = 100;
 
@@ -42,7 +42,7 @@ namespace Utility.Json
         }
 
         /// <summary>
-        /// <inheritdoc cref="IJsonObjectBuilder.Build"/>
+        /// <inheritdoc cref="JsonObjectBuilder.Build"/>
         /// </summary>
         public JsonObject Build()
         {

@@ -21,11 +21,11 @@ namespace DCL.PluginSystem.World
     public class TexturesLoadingPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IDiskCache<Texture2DData> diskCache;
-        private readonly IStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
+        private readonly IDiskCache<TextureData> diskCache;
+        private readonly IStreamableCache<TextureData, GetTextureIntention> texturesCache;
         private readonly ProfilePictureUrlProvider avatarTextureProvider;
 
-        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<Texture2DData> diskCache, ILaunchMode launchMode,
+        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<TextureData> diskCache, ILaunchMode launchMode,
             ObjectProxy<IProfileRepository> profileRepository)
         {
             this.webRequestController = webRequestController;
@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.World
             avatarTextureProvider = new ProfilePictureUrlProvider(profileRepository);
 
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
-                texturesCache = new NoCache<Texture2DData, GetTextureIntention>(true, true);
+                texturesCache = new NoCache<TextureData, GetTextureIntention>(true, true);
             else
             {
                 texturesCache = new TexturesCache<GetTextureIntention>();

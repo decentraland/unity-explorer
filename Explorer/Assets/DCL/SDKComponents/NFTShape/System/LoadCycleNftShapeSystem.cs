@@ -3,8 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Renderer;
+using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -12,11 +14,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
-
-using ECS.Unity.Textures.Components;
-using UnityEngine;
-
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
+using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -26,15 +25,19 @@ namespace DCL.SDKComponents.NFTShape.System
     public partial class LoadCycleNftShapeSystem : BaseUnityLoopSystem
     {
         private readonly IURNSource urnSource;
+        private readonly IMediaFactory mediaFactory;
 
-        public LoadCycleNftShapeSystem(World world, IURNSource urnSource) : base(world)
+        public LoadCycleNftShapeSystem(World world, IURNSource urnSource,
+            IMediaFactory mediaFactory) : base(world)
         {
             this.urnSource = urnSource;
+            this.mediaFactory = mediaFactory;
         }
 
         protected override void Update(float t)
         {
             StartQuery(World!);
+            ResolveTypeQuery(World!);
             FinishAndApplyQuery(World!);
         }
 
@@ -42,14 +45,59 @@ namespace DCL.SDKComponents.NFTShape.System
         [None(typeof(NFTLoadingComponent))]
         private void Start(in Entity entity, in PBNftShape nftShape, in PartitionComponent partitionComponent)
         {
-            var promise = Promise.Create(World!, new GetNFTShapeIntention(nftShape.Urn!, urnSource), partitionComponent);
-            World!.Add(entity, new NFTLoadingComponent(promise));
+            var promise = NftTypePromise.Create(World!, new GetNFTTypeIntention(urnSource.UrlOrEmpty(nftShape.Urn!)), partitionComponent);
+            World!.Add(entity, new NFTLoadingComponent(nftShape.Urn, promise));
         }
 
         [Query]
-        private void FinishAndApply(Entity entity, ref NFTLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
+        private void ResolveType(ref NFTLoadingComponent nftLoadingComponent,
+            ref NftShapeRendererComponent nftShapeRendererComponent,
+            in PartitionComponent partitionComponent)
         {
-            if (nftLoadingComponent.Promise.IsConsumed || !nftLoadingComponent.Promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
+            if (nftLoadingComponent.TypePromise.IsConsumed
+                || !nftLoadingComponent.TypePromise.TryConsume(World!, out StreamableLoadingResult<NftTypeResult> result)) return;
+
+            WebContentInfo.ContentType type = result.Asset.Type;
+            INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
+
+            if (!result.Succeeded)
+            {
+                nftRenderer.NotifyFailed();
+                return;
+            }
+
+            switch (type)
+            {
+                case WebContentInfo.ContentType.Image or WebContentInfo.ContentType.KTX2:
+                    nftLoadingComponent.ImagePromise = NftImagePromise.Create(World!, GetNFTImageIntention.Create(result.Asset.URL), partitionComponent);
+                    break;
+                case WebContentInfo.ContentType.Video:
+                    // See https://github.com/decentraland/unity-explorer/issues/5611
+                    var textureData = new TextureData(AnyTexture.FromVideoTextureData(mediaFactory.CreateVideoPlayback(result.Asset.URL)));
+                    // The system won't add reference as it uses NoCache that has an empty implementation of AddReference
+                    textureData.AddReference();
+
+                    ApplyVideo(ref nftLoadingComponent, ref nftShapeRendererComponent, textureData);
+                    break;
+                default:
+                    nftRenderer.NotifyFailed();
+                    break;
+            }
+        }
+
+        [Query]
+        private void FinishAndApply(ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
+        {
+            ApplyImage(ref nftLoadingComponent, ref nftShapeRendererComponent);
+        }
+
+        private void ApplyImage(ref NFTLoadingComponent nftLoadingComponent, ref NftShapeRendererComponent nftShapeRendererComponent)
+        {
+            if (nftLoadingComponent.ImagePromise is not { } promise) return;
+            if (promise.IsConsumed || !promise.TryConsume(World!, out StreamableLoadingResult<TextureData> result)) return;
+
+            // Need to reassign promise, otherwise it becomes outdated once it is consumed. It is a reference issue due to handling a copy of it
+            nftLoadingComponent.ImagePromise = promise;
 
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
 
@@ -60,37 +108,24 @@ namespace DCL.SDKComponents.NFTShape.System
             }
 
             nftRenderer.Apply(result.Asset!);
-            if (result.Asset.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
         }
 
-        private void InitializeNftVideo(Entity entity, Texture2DData textureData, INftShapeRenderer nftRenderer)
+        private void ApplyVideo(
+            ref NFTLoadingComponent nftLoadingComponent,
+            ref NftShapeRendererComponent nftShapeRendererComponent,
+            TextureData textureData)
         {
-            var vtc = new VideoTextureConsumer(textureData);
-            var texture2D = vtc.Texture.Asset;
-            texture2D.Reinitialize(1, 1);
-            texture2D.SetPixel(0, 0, Color.clear);
-            texture2D.Apply();
+            INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
+            AnyTexture anyTexture = textureData.Asset;
 
-            if (World.TryGet<PBVideoPlayer>(entity, out var videoPlayer))
-            {
-                videoPlayer!.Src = textureData.VideoURL;
-                videoPlayer.IsDirty = true;
+            nftRenderer.Apply(anyTexture.Texture);
 
-                World.Add(entity, vtc);
-            }
-            else
-            {
-                var pbVideo = new PBVideoPlayer
-                {
-                    Src = textureData.VideoURL,
-                    Playing = true,
-                    Loop = true,
-                };
-
-                World.Add(entity, pbVideo, vtc);
-            }
-
-            vtc.IsDirty = true;
+            // No need to check if video texture really, but there is no other way to get the VideoTextureData..
+            if (anyTexture.IsVideoTextureData(out VideoTextureData? videoTextureData))
+                nftLoadingComponent.VideoPlayerEntity = World.Create(anyTexture,
+                    new CustomMediaStream(MediaPlayerComponent.DEFAULT_VOLUME, true),
+                    videoTextureData!.Value.Consumer,
+                    videoTextureData.Value.MediaPlayer);
         }
     }
 }

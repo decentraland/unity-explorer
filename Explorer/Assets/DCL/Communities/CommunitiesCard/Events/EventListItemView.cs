@@ -68,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             eventData = data;
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(data.Event.image, eventThumbnailImage, null, ct).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(data.Event.image, eventThumbnailImage, null, ct, true).Forget();
             eventTimeText.text = EventUtilities.GetEventTimeText(data.Event);
             eventNameText.text = data.Event.name;
             UpdateInterestedCounter();

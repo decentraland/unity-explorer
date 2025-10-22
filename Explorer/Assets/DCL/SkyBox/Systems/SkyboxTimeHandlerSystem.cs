@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
+using SceneMetadataTransitionMode = DCL.Ipfs.SceneMetadata.TransitionMode;
 using TransitionMode = DCL.ECSComponents.TransitionMode;
 
 namespace DCL.SDKComponents.SkyboxTime.Systems
@@ -65,8 +66,8 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
             skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);
 
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
-                ? SkyBox.TransitionMode.FORWARD
-                : SkyBox.TransitionMode.BACKWARD;
+                ? SceneMetadataTransitionMode.FORWARD
+                : SceneMetadataTransitionMode.BACKWARD;
         }
 
         private void ResetSDKControlled()

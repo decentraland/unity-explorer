@@ -23,9 +23,8 @@ namespace DCL.Translation.Service
         private readonly ITranslationMemory translationMemory;
 
         private readonly Dictionary<string, UniTaskCompletionSource> perSenderGates = new ();
-        
-        private static readonly Regex TagRx =
-            new(@"<[^>]*>", RegexOptions.Compiled);
+
+        private static readonly Regex TAG_RX = new(@"<[^>]*>", RegexOptions.Compiled);
 
         public TranslationService(ITranslationProvider provider,
             IMessageProcessor messageProcessor,
@@ -42,7 +41,7 @@ namespace DCL.Translation.Service
             this.settings = settings;
             this.eventBus = eventBus;
             this.translationMemory = translationMemory;
-            
+
         }
 
         public void ProcessIncomingMessage(string messageId, string senderWalletId, string originalText, string conversationId)
@@ -63,7 +62,7 @@ namespace DCL.Translation.Service
         {
             var newTranslation = new MessageTranslation(originalText, settings.PreferredLanguage, TranslationState.Pending);
             translationMemory.Set(messageId, newTranslation);
-            
+
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
                 MessageId = messageId, Translation = newTranslation
@@ -186,7 +185,7 @@ namespace DCL.Translation.Service
         //     {
         //         // NOTE: Safe on main thread.
         //         // NOTE: If this might be touched off-main, wrap in `lock`.
-        //         
+        //
         //         // 1 slot
         //         sem = new SemaphoreSlim(1, 1);
         //         perSenderLocks[senderId] = sem;
@@ -214,7 +213,7 @@ namespace DCL.Translation.Service
 
             return TranslateAsync(messageId, senderWalletId, ct);
         }
-        
+
         public void RevertToOriginal(string messageId)
         {
             if (!translationMemory.TryGet(messageId, out var translation))
@@ -249,18 +248,21 @@ namespace DCL.Translation.Service
             try
             {
                 string original = translation.OriginalBody ?? string.Empty;
-                
+
                 var result = RequiresProcessing(original)
                     ? await messageProcessor.ProcessAndTranslateAsync(original, targetLang, ct)
                     : await UseRegularTranslationAsync(original, targetLang, ct);
-                
+
                 if (result.DetectedSourceLanguage == targetLang)
                 {
                     // Since TranslationResult is a struct, we create a new instance,
                     // replacing the translated text with the original body.
                     result = new TranslationResult(original, result.DetectedSourceLanguage, result.FromCache);
+
+                    ReportHub.Log(ReportCategory.TRANSLATE,
+                        $"Translation skipped: detected language is the same as target ({result.DetectedSourceLanguage}-{targetLang}) for message {original}");
                 }
-                
+
                 cache.Set(messageId, targetLang, result);
                 translationMemory.SetTranslatedResult(messageId, result);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
@@ -314,7 +316,7 @@ namespace DCL.Translation.Service
             if (IsSlashCommandMessage(text)) return false;
 
             // Any TMP-style tag? -> yes, batch
-            if (TagRx.IsMatch(text)) return true;
+            if (TAG_RX.IsMatch(text)) return true;
 
             // Any emoji in the string? -> yes, batch
             // (uses your EmojiDetector with ZWJ/VS-16 support)

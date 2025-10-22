@@ -160,7 +160,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public int GetAnimatorCurrentStateTag() =>
             AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
 
-        public void ResetTrigger(int hash)
+        public void ResetAnimatorTrigger(int hash)
         {
             AvatarAnimator.ResetTrigger(hash);
         }
@@ -287,7 +287,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         int GetAnimatorCurrentStateTag();
 
-        void ResetTrigger(int hash);
+        void ResetAnimatorTrigger(int hash);
 
         /// <summary>
         /// Replaces the name of the Armature object with the name it had originally.

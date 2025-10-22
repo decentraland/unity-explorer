@@ -2,15 +2,10 @@
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using static DCL.Ipfs.SceneMetadata;
 
 namespace DCL.SkyBox
 {
-    public enum TransitionMode
-    {
-        FORWARD,
-        BACKWARD,
-    }
-
     [CreateAssetMenu(menuName = "DCL/SO/Skybox Settings", fileName = "SkyboxSettings")]
     public class SkyboxSettingsAsset : ScriptableObject
     {
