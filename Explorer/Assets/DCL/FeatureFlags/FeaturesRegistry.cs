@@ -30,18 +30,18 @@ namespace DCL.FeatureFlags
 
             SetFeatureStates(new Dictionary<FeatureId, bool>
             {
-                //[FeatureId.CAMERA_REEL] = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor,
+                [FeatureId.CAMERA_REEL] = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor,
                 [FeatureId.FRIENDS] = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment,
                 [FeatureId.FRIENDS_USER_BLOCKING] = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)),
-                //[FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
-                //[FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
-                //[FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
+                [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
+                [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
+                [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
             //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT that depends on them.
             SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
-            SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));// && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_VOICE_CHAT))));
+            SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));
         }
 
         /// <summary>
@@ -100,6 +100,14 @@ namespace DCL.FeatureFlags
     public enum FeatureId
     {
         NONE = 0,
+        VOICE_CHAT = 1,
+        COMMUNITY_VOICE_CHAT = 2,
+        FRIENDS = 3,
+        FRIENDS_USER_BLOCKING = 4,
+        FRIENDS_ONLINE_STATUS = 5,
+        PROFILE_NAME_EDITOR = 6,
+        LOCAL_SCENE_DEVELOPMENT = 7,
+        CAMERA_REEL = 8,
         MULTIPLAYER_COMPRESSION_WIN,
         MULTIPLAYER_COMPRESSION_MAC,
         PORTABLE_EXPERIENCE,
@@ -119,13 +127,6 @@ namespace DCL.FeatureFlags
         VIDEO_PRIORITIZATION,
         ASSET_BUNDLE_FALLBACK,
         CHAT_HISTORY_LOCAL_STORAGE,
-        VOICE_CHAT,
-        COMMUNITY_VOICE_CHAT,
-        CAMERA_REEL,
-        FRIENDS,
-        FRIENDS_USER_BLOCKING,
-        FRIENDS_ONLINE_STATUS,
-        PROFILE_NAME_EDITOR,
         SCENE_MEMORY_LIMIT,
         KTX2_CONVERSION,
         MARKETPLACE_CREDITS,
@@ -133,6 +134,7 @@ namespace DCL.FeatureFlags
         COMMUNITIES,
         COMMUNITIES_MEMBERS_COUNTER,
         AUTH_CODE_VALIDATION,
-        GPUI_ENABLED, LOCAL_SCENE_DEVELOPMENT
+        GPUI_ENABLED,
+
     }
 }

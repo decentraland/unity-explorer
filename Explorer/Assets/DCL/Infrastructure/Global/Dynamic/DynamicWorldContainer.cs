@@ -13,6 +13,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -107,12 +108,8 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.InWorldCamera;
 using DCL.NotificationsBus;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
-using Global.Versioning;
-using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -216,7 +213,7 @@ namespace Global.Dynamic
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
 
-            IEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
+            HttpEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
@@ -297,7 +294,6 @@ namespace Global.Dynamic
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
-            NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
@@ -441,6 +437,7 @@ namespace Global.Dynamic
             bool includeTranslationChat = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
+            bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
@@ -547,7 +544,10 @@ namespace Global.Dynamic
                 clipboard,
                 bootstrapContainer.DecentralandUrlsSource,
                 chatMessagesBus,
-                reloadSceneChatCommand
+                reloadSceneChatCommand,
+                roomHub,
+                staticContainer.LoadingStatus,
+                includeBannedUsersFromScene
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -567,7 +567,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus
+            );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -596,7 +597,7 @@ namespace Global.Dynamic
 
             var cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
 
-            IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
+            GoogleUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
@@ -629,6 +630,7 @@ namespace Global.Dynamic
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+
             var communitiesDataService = new CommunityDataService(chatHistory,
                 mvcManager,
                 communitiesEventBus,
@@ -671,6 +673,8 @@ namespace Global.Dynamic
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
+            var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -699,7 +703,7 @@ namespace Global.Dynamic
                     voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape),
+                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
@@ -717,10 +721,11 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    userBlockingCacheProxy),
+                    userBlockingCacheProxy,
+                    includeBannedUsersFromScene),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -745,7 +750,7 @@ namespace Global.Dynamic
                     chatHistory,
                     clipboardManager,
                     entityParticipantTable,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     mainUIView,
                     staticContainer.InputBlock,
                     globalWorld,
@@ -770,11 +775,9 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    includeTranslationChat,
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    bootstrapContainer.Environment,
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,
@@ -923,6 +926,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
+                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
@@ -1017,7 +1021,7 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     globalWorld,
                     debugBuilder,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache,
@@ -1117,7 +1121,8 @@ namespace Global.Dynamic
                 profileRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
-                staticContainer.SceneLoadingLimit
+                staticContainer.SceneLoadingLimit,
+                staticContainer.LandscapeParcelData
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

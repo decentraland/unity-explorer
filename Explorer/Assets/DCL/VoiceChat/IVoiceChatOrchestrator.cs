@@ -52,9 +52,9 @@ namespace DCL.VoiceChat
     {
         IReadonlyReactiveProperty<VoiceChatStatus> CommunityCallStatus { get; }
         IReadonlyReactiveProperty<string> CurrentCommunityId { get; }
-        IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData { get; }
+        IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneSceneActiveCommunityVoiceChatData { get; }
         bool HasActiveVoiceChatCall(string communityId);
-        ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId);
+        IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId);
         bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
         bool IsEqualToCurrentStreamingCommunity(string communityId);
     }
@@ -84,6 +84,7 @@ namespace DCL.VoiceChat
         void DenySpeakerInCurrentCall(string walletId);
         void DemoteFromSpeakerInCurrentCall(string walletId);
         void KickPlayerFromCurrentCall(string walletId);
+        void NotifyMuteSpeakerInCurrentCall(string walletId, bool muted);
         void EndStreamInCurrentCall();
     }
 

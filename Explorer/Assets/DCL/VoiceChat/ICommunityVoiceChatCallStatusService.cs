@@ -14,7 +14,7 @@ namespace DCL.VoiceChat
         /// <summary>
         ///     Subscribes to updates for a specific community
         /// </summary>
-        ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId);
+        IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId);
 
         bool TryGetActiveCommunityVoiceChat(string communityId, out ActiveCommunityVoiceChat activeCommunityVoiceChat);
 
@@ -28,6 +28,7 @@ namespace DCL.VoiceChat
 
         void KickPlayerFromCurrentCall(string walletId);
         void DenySpeakerInCurrentCall(string walletId);
+        void MuteSpeakerInCurrentCall(string walletId, bool muted);
         void LowerHandInCurrentCall();
         void EndStreamInCurrentCall();
     }

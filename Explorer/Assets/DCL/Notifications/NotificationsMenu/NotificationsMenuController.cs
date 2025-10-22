@@ -10,6 +10,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Utilities;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -267,7 +268,7 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
-        private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
+        private async UniTaskVoid LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
             DefaultNotificationThumbnail defaultThumbnail, CancellationToken ct)
         {
             if (notificationData.Type == NotificationType.REFERRAL_INVITED_USERS_ACCEPTED)
@@ -288,14 +289,14 @@ namespace DCL.Notifications.NotificationsMenu
 
             try
             {
-                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                var ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                     new GetTextureArguments(TextureType.Albedo),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI);
 
-                Texture2D texture = ownedTexture.Texture;
+                Texture2D texture = ownedTexture;
 
                 thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
@@ -315,7 +316,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile? profile = await profileRepository.GetProfileAsync(user, ct);
+                Profile? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
 
                 if (profile != null)
                     return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);

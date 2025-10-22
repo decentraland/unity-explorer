@@ -3,7 +3,7 @@ using UnityEngine.Audio;
 
 namespace DCL.VoiceChat
 {
-    [CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
+    //[CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
     public class VoiceChatConfiguration : ScriptableObject
     {
         [Header("Local Audio Feedback")]
@@ -13,10 +13,6 @@ namespace DCL.VoiceChat
         [Header("Voice Detection Configurations")]
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
         public float HoldThresholdInSeconds = 0.5f;
-
-        [Tooltip("Microphone input volume multiplier (1.0 = normal volume, 2.0 = double volume)")]
-        [Range(0.1f, 100f)]
-        public float MicrophoneVolume = 50f;
 
         [Header("Microphone Initialization")]
         [Tooltip("Delay in milliseconds before reinitializing microphone after device change")]
@@ -42,6 +38,7 @@ namespace DCL.VoiceChat
 
         [Tooltip("Specify group where microphone should put its output")]
         public AudioMixerGroup AudioMixerGroup;
+
         [Tooltip("Enables playback your recording microphone back to your speakers, allows to ensure sanity of recording on your side. May produce echoes due APM filter is not applied on this step")]
         public bool microphonePlaybackToSpeakers;
 

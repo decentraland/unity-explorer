@@ -27,7 +27,7 @@ namespace DCL.Settings
 {
     public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
     {
-        private enum SettingsSection
+        public enum SettingsSection
         {
             GENERAL,
             GRAPHICS,
@@ -127,6 +127,12 @@ namespace DCL.Settings
             view.gameObject.SetActive(false);
         }
 
+        public void Toggle(SettingsSection section)
+        {
+            var config = sections[section];
+            OpenSection(section, config.config!.SettingsGroups.Count);
+        }
+
         public void Animate(int triggerId)
         {
             view.PanelAnimator.SetTrigger(triggerId);
@@ -172,6 +178,8 @@ namespace DCL.Settings
             {
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
+
+                if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
                 SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
 

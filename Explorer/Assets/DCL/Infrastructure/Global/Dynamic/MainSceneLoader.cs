@@ -9,6 +9,7 @@ using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -21,16 +22,21 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.ModuleControllers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -52,8 +58,8 @@ using DCL.Settings.ModuleControllers;
 using DCL.UI.ErrorPopup;
 using DCL.Utility;
 using DCL.Utility.Types;
-#if UNITY_EDITOR
-#endif
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -226,6 +232,8 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
+                OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -310,7 +318,7 @@ namespace Global.Dynamic
 
             async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
             {
-                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct); }
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
                 catch (RealmChangeException)
                 {
                     if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)

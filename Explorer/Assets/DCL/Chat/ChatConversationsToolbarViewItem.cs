@@ -4,6 +4,7 @@ using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DCL.Utilities;
 using DG.Tweening;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,7 +12,7 @@ using UnityEngine.UI;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarViewItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ChatConversationsToolbarViewItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate void OpenButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
@@ -19,7 +20,7 @@ namespace DCL.Chat
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
-        
+
         [SerializeField]
         protected GameObject thumbnailView;
 
@@ -78,17 +79,17 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when the button to select / open the conversation is clicked.
         /// </summary>
-        public event OpenButtonClickedDelegate OpenButtonClicked;
+        public event OpenButtonClickedDelegate? OpenButtonClicked;
 
         /// <summary>
         /// Raised when the button to remove the conversation is clicked.
         /// </summary>
-        public event RemoveButtonClickedDelegate RemoveButtonClicked;
+        public event RemoveButtonClickedDelegate? RemoveButtonClicked;
 
         /// <summary>
         /// Raised when the tooltip of the icon appears.
         /// </summary>
-        public event TooltipShownDelegate TooltipShown;
+        public event TooltipShownDelegate? TooltipShown;
 
         // Also called by the component in the tooltip
         public void OnPointerEnter(PointerEventData eventData)
@@ -143,7 +144,7 @@ namespace DCL.Chat
         /// Changes the visual aspect of the connection status indicator.
         /// </summary>
         /// <param name="connectionStatus">The current connection status.</param>
-        public void SetConnectionStatus(OnlineStatus connectionStatus)
+        public virtual void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
             connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.ONLINE);
@@ -179,10 +180,10 @@ namespace DCL.Chat
             thumbnailView.gameObject.SetActive(false);
         }
 
-        public void Configure(bool isClosable, bool hasOnlineStatus)
+        public void Configure(bool isClosable)
         {
             removeButton.gameObject.SetActive(isClosable);
-            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
+            connectionStatusIndicatorContainer.SetActive(false);
         }
 
 
@@ -269,6 +270,16 @@ namespace DCL.Chat
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
             profilePictureView.Bind(viewModel);
+        }
+
+        public void Dispose()
+        {
+            SetSelectionStatus(false);
+            openButton.onClick.RemoveAllListeners();
+            removeButton.onClick.RemoveAllListeners();
+            OpenButtonClicked = null;
+            RemoveButtonClicked = null;
+            TooltipShown = null;
         }
     }
 }

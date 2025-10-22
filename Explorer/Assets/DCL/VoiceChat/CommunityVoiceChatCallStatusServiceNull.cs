@@ -1,16 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
-using System;
 using System.Threading;
 
 namespace DCL.VoiceChat
 {
     public class CommunityVoiceChatCallStatusServiceNull : ICommunityVoiceChatCallStatusService
     {
-        public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; }
-        public IReadonlyReactiveProperty<string> CallId { get; }
-        public string ConnectionUrl { get; }
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; } = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
+        public IReadonlyReactiveProperty<string> CallId { get; } = new ReactiveProperty<string>(string.Empty);
+        public string ConnectionUrl { get; } = string.Empty;
 
         public void StartCall(string target) { }
         public void HangUp() { }
@@ -24,8 +23,8 @@ namespace DCL.VoiceChat
         public bool HasActiveVoiceChatCall(string communityId) =>
             false;
 
-        public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId) =>
-            null;
+        public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId) =>
+            new ReactiveProperty<bool>(false);
 
         public bool TryGetActiveCommunityVoiceChat(string communityId, out ActiveCommunityVoiceChat activeCommunityVoiceChat)
         {
@@ -45,6 +44,8 @@ namespace DCL.VoiceChat
         public void KickPlayerFromCurrentCall(string walletId) { }
 
         public void DenySpeakerInCurrentCall(string walletId) { }
+
+        public void MuteSpeakerInCurrentCall(string walletId, bool muted) { }
 
         public void LowerHandInCurrentCall() { }
 

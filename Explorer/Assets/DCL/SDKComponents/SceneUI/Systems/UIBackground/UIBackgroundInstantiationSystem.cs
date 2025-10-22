@@ -19,7 +19,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
@@ -109,7 +109,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // We hide the image until the texture is loaded in order to avoid to show a white image in the meanwhile
             uiBackgroundComponent.Image.IsHidden = true;
 
-            if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2DData> promiseResult))
+            if (texturePromise.TryConsume(World, out StreamableLoadingResult<TextureData> promiseResult))
             {
                 // Backgrounds with texture
                 if (promiseResult.Succeeded)

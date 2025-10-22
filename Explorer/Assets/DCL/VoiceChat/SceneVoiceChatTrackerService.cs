@@ -66,11 +66,35 @@ namespace DCL.VoiceChat
         public void SetActiveCommunityVoiceChat(string communityId, ActiveCommunityVoiceChat activeChat)
         {
             activeCommunityVoiceChats[communityId] = activeChat;
+
+            if (realmData.RealmType.Value != RealmKind.GenesisCity)
+            {
+                if (communityToWorldMap.TryGetValue(communityId, out HashSet<string>? worlds))
+                {
+                    if (worlds.Contains(realmData.RealmName)) ActiveVoiceChatDetectedInScene?.Invoke(activeChat);
+                }
+            }
+            else if (communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? parcels))
+            {
+                if (parcels.Contains(scenesCache.CurrentParcel.Value)) ActiveVoiceChatDetectedInScene?.Invoke(activeChat);
+            }
         }
 
         public void RemoveActiveCommunityVoiceChat(string communityId)
         {
             activeCommunityVoiceChats.Remove(communityId);
+
+            if (realmData.RealmType.Value != RealmKind.GenesisCity)
+            {
+                if (communityToWorldMap.TryGetValue(communityId, out HashSet<string>? worlds))
+                {
+                    if (worlds.Contains(realmData.RealmName)) OnActiveVoiceChatStoppedInScene();
+                }
+            }
+            else if (communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? parcels))
+            {
+                if (parcels.Contains(scenesCache.CurrentParcel.Value)) OnActiveVoiceChatStoppedInScene();
+            }
         }
 
         private void OnRealmNavigatorOperationExecuted(Vector2Int _)
@@ -175,10 +199,18 @@ namespace DCL.VoiceChat
                         {
                             worldToCommunityMap.Remove(worldName);
                             ListPool<string>.Release(communities);
+                            if (realmData.RealmName == worldName) { OnActiveVoiceChatStoppedInScene(); }
+                        }
+                        else
+                        {
+                            if (realmData.RealmName == worldName)
+                            {
+                                string remainingCommunityId = communities[0];
+                                if (activeCommunityVoiceChats.TryGetValue(remainingCommunityId, out ActiveCommunityVoiceChat _)) { OnActiveVoiceChatDetectedInScene(remainingCommunityId); }
+                            }
                         }
                     }
                 }
-
                 communityToWorldMap.Remove(communityId);
 
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Unregistered {sceneWorlds.Count} worlds from community {communityId}");
@@ -232,7 +264,7 @@ namespace DCL.VoiceChat
 
                 if (scenesCache.CurrentParcel.Value == parcel)
                 {
-                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) { OnActiveVoiceChatDetectedInScene(communityId); }
+                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) OnActiveVoiceChatDetectedInScene(communityId);
                 }
             }
 
@@ -263,6 +295,11 @@ namespace DCL.VoiceChat
                 }
 
                 worlds.Add(worldName);
+
+                if (realmData.RealmName == worldName)
+                {
+                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) OnActiveVoiceChatDetectedInScene(communityId);
+                }
             }
 
             if (isNewCommunity) { communityToWorldMap[communityId] = worlds; }

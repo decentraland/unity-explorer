@@ -126,7 +126,9 @@ namespace DCL.Profiles
             try
             {
                 URLAddress url = Url(id, fromCatalyst);
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+
+                // Suppress logging errors here as we have very custom errors handling below
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
@@ -150,11 +152,19 @@ namespace DCL.Profiles
 
                 return profile;
             }
-            catch (UnityWebRequestException e)
+            catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND })
             {
-                if (e.ResponseCode == WebRequestUtils.NOT_FOUND)
-                    return null;
+                // Report to console every time
+                // Report to Sentry only once per session (protect from spamming)
+                ReportHub.LogError(new ReportData(ReportCategory.PROFILE, new ReportDebounce(SentryStaticDebouncer.Instance)),
+                    $"Profile not found (Version: {version}, WalletId: {id})\nFrom Catalyst: {fromCatalyst}");
 
+                return null;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // Report other exceptions normally
+                ReportHub.LogException(e, ReportCategory.PROFILE);
                 throw;
             }
             finally

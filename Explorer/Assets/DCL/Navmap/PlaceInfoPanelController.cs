@@ -36,7 +36,7 @@ namespace DCL.Navmap
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly IWebBrowser webBrowser;
@@ -66,7 +66,7 @@ namespace DCL.Navmap
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
