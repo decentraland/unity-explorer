@@ -16,6 +16,7 @@ using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -56,6 +57,7 @@ namespace DCL.Settings
         private readonly bool isTranslationChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
+        private readonly IAppArgs appParameters;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
@@ -79,7 +81,8 @@ namespace DCL.Settings
             UpscalingController upscalingController,
             bool isTranslationChatEnabled,
             IAssetsProvisioner assetsProvisioner,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            IAppArgs appParameters)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -99,6 +102,7 @@ namespace DCL.Settings
             this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
+            this.appParameters = appParameters;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -208,7 +212,8 @@ namespace DCL.Settings
                                 assetsProvisioner,
                                 volumeBus,
                                 isTranslationChatEnabled,
-                                eventBus);
+                                eventBus,
+                                appParameters);
 
                         if (controller != null)
                             controllers.Add(controller);
