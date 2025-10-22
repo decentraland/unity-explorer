@@ -5,7 +5,7 @@ using Utility.Ownership;
 
 namespace DCL.Multiplayer.Connections.Rooms.Status
 {
-    public class RoomsStatus : IRoomsStatus
+    public class RoomsStatus
     {
         private readonly IRoomHub roomHub;
         private readonly IBox<(bool use, ConnectionQuality quality)> overrideQuality;

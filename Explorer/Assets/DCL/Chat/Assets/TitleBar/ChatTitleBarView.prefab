@@ -373,6 +373,30 @@ PrefabInstance:
       propertyPath: m_fontColor32.rgba
       value: 2164260863
       objectReference: {fileID: 0}
+    - target: {fileID: 3193919667504716325, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193919667504716325, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193919667504716325, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193919667504716325, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193919667504716325, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193919667504716325, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3202992278621298003, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -460,6 +484,18 @@ PrefabInstance:
     - target: {fileID: 4116272842481412131, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -720
+      objectReference: {fileID: 0}
+    - target: {fileID: 4276581275220366857, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4276581275220366857, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4276581275220366857, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4282083006891119323, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
       propertyPath: m_AnchorMax.y

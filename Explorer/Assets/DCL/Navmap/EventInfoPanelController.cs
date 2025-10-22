@@ -22,9 +22,9 @@ namespace DCL.Navmap
         private readonly EventInfoPanelView view;
         private readonly INavmapBus navmapBus;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
-        private readonly IUserCalendar userCalendar;
+        private readonly GoogleUserCalendar userCalendar;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly IWebBrowser webBrowser;
         private readonly ImageController thumbnailController;
@@ -39,9 +39,9 @@ namespace DCL.Navmap
             IWebRequestController webRequestController,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             ObjectPool<EventScheduleElementView> scheduleElementPool,
-            IUserCalendar userCalendar,
+            GoogleUserCalendar userCalendar,
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser)
         {

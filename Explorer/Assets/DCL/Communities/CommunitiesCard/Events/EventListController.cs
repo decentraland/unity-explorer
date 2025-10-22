@@ -35,7 +35,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private readonly EventListView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
@@ -52,7 +52,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
 
         public EventListController(EventListView view,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
             ThumbnailLoader thumbnailLoader,
             IMVCManager mvcManager,

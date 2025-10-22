@@ -64,7 +64,7 @@ namespace DCL.Translation.Processors
                     if (response.detectedLanguage != null)
                     {
                         foreach (var langDto in response.detectedLanguage)
-                            detectedLanguages.Add(ParseLanguageCode(langDto.language));
+                            detectedLanguages.Add(LanguageCodeParser.Parse(langDto.language));
                     }
                 }
                 else

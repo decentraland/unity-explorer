@@ -125,30 +125,30 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool wantsToCancelEmote = emoteComponent.StopEmote;
             emoteComponent.StopEmote = false;
 
-            bool wasPlayingEmote = emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE || emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
-
-            if (!wasPlayingEmote)
-            {
-                avatarView.ResetTrigger(AnimationHashes.EMOTE_STOP);
-                return;
-            }
-
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+            if (!emoteReference) return;
 
-            if (emoteReference == null)
-                return;
-
-            if (wantsToCancelEmote || World.Has<BlockedPlayerComponent>(entity))
+            bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
+            if (shouldCancelEmote)
             {
                 StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
                 return;
             }
 
-            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
-            bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
+            if (!emoteReference.legacy)
+            {
+                if (!emoteComponent.IsPlayingEmote)
+                {
+                    avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+                    return;
+                }
 
-            if (isOnAnotherTag)
-                StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+                int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
+                bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
+
+                if (isOnAnotherTag)
+                    StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            }
         }
 
         // when moving or jumping we detect the emote cancellation, and we take care of getting rid of the emote props and sounds
@@ -200,8 +200,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             // Create a clean slate for the animator before setting the stop trigger
-            avatarView.ResetTrigger(AnimationHashes.EMOTE);
-            avatarView.ResetTrigger(AnimationHashes.EMOTE_RESET);
+            avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
+            avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
             avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
 
             avatarView.RestoreArmatureName();

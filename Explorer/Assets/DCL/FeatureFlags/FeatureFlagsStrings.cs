@@ -44,6 +44,7 @@ namespace DCL.FeatureFlags
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
+        public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
     }
 
     public enum FeatureFlag
