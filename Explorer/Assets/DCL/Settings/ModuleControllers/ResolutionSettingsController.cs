@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
                 view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
             else
             {
-                for (var index = 0; index < possibleResolutions.Count; index++)
+                for (var index = possibleResolutions.Count - 1; index >= 0; index--)
                 {
                     Resolution resolution = possibleResolutions[index];
 
