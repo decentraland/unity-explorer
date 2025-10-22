@@ -38,7 +38,7 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsAPIService,
+            HttpEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             IRealmNavigator teleportBusController,

@@ -23,6 +23,7 @@ namespace DCL.Nametags
         private const string USS_USERNAME = USS_BLOCK + "__username";
         private const string USS_COMMUNITY_NAME_CONTAINER = USS_BLOCK + "__community-name-container";
         private const string USS_COMMUNITY_NAME = USS_BLOCK + "__community-name";
+        private const string USS_POINTER_CONTAINER = USS_BLOCK + "__pointer-container";
         private const string USS_POINTER = USS_BLOCK + "__pointer";
 
         private const string USS_BADGE_VERIFIED = USS_BLOCK + "__badge-verified";
@@ -174,10 +175,15 @@ namespace DCL.Nametags
             AddToClassList(USS_BLOCK);
             usageHints = UsageHints.DynamicTransform;
 
-            var pointer = new VisualElement { name = "pointer" };
-            Add(pointer);
-            pointer.AddToClassList(USS_POINTER);
-            pointer.usageHints = UsageHints.DynamicColor;
+            var pointerContainer = new VisualElement { name = "pointer-container" };
+            Add(pointerContainer);
+            pointerContainer.AddToClassList(USS_POINTER_CONTAINER);
+            {
+                var pointer = new VisualElement { name = "pointer" };
+                pointerContainer.Add(pointer);
+                pointer.AddToClassList(USS_POINTER);
+                pointer.usageHints = UsageHints.DynamicColor;
+            }
 
             var background = new VisualElement { name = "background" };
             Add(background);

@@ -9,11 +9,11 @@ namespace DCL.AssetsProvision.CodeResolver
 {
     public class JsCodeResolver
     {
-        private readonly IReadOnlyDictionary<AssetSource, IJsCodeProvider> providers;
+        private readonly IReadOnlyDictionary<AssetSource, WebJsCodeProvider> providers;
 
         public JsCodeResolver(IWebRequestController webRequestController)
         {
-            providers = new Dictionary<AssetSource, IJsCodeProvider>
+            providers = new Dictionary<AssetSource, WebJsCodeProvider>
             {
                 { AssetSource.WEB, new WebJsCodeProvider(webRequestController) },
             };

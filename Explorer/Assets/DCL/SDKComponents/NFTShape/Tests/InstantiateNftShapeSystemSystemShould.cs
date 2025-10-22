@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.NFTShape.Component;
@@ -9,11 +10,11 @@ using DCL.SDKComponents.NFTShape.System;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.NFTShapes;
-using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
+using NftTypePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.NFTShapes.NftTypeResult, ECS.StreamableLoading.NFTShapes.GetNFTTypeIntention>;
+using NftImagePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Tests
 {
@@ -41,7 +42,11 @@ namespace DCL.SDKComponents.NFTShape.Tests
             var shape = new PBNftShape { Urn = INITIAL_URN };
             INftShapeRenderer? renderer = Substitute.For<INftShapeRenderer>();
             var component = new NftShapeRendererComponent(renderer);
-            var loadingComponent = new NFTLoadingComponent(Promise.Create(world, new GetNFTShapeIntention(INITIAL_URN, Substitute.For<IURNSource>()), PartitionComponent.TOP_PRIORITY));
+            var loadingComponent = new NFTLoadingComponent(INITIAL_URN,
+                NftTypePromise.Create(world, new GetNFTTypeIntention(URLAddress.FromString(INITIAL_URN)), PartitionComponent.TOP_PRIORITY))
+            {
+                ImagePromise = NftImagePromise.Create(world, GetNFTImageIntention.Create(INITIAL_URN), PartitionComponent.TOP_PRIORITY),
+            };
 
             Entity entity = world.Create(shape,
                 component,
@@ -50,7 +55,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
             shape.Urn = newURN;
             shape.IsDirty = true;
 
-            system.Update(0);
+            system!.Update(0);
 
             bool urnChanged = newURN != INITIAL_URN;
 
@@ -58,7 +63,8 @@ namespace DCL.SDKComponents.NFTShape.Tests
 
             if (urnChanged)
             {
-                Assert.That(loadingComponent.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
+                Assert.That(loadingComponent.TypePromise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
+                Assert.That(loadingComponent.ImagePromise.Value.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
 
                 CollectionAssert.AreEqual(new EntityRelation<NftShapeRendererComponent>[] { new (entity, component) }, changedNftShapes!.Relations);
                 Assert.That(world.Has<NFTLoadingComponent>(entity), Is.False);

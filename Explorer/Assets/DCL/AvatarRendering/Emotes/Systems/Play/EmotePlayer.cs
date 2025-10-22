@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // Scene Emotes in Local Scene Development are loaded as legacy animations
             // (there's no other way to load them in runtime from a GLB)
-            if (emoteReferences.avatarClip is { legacy: true })
+            if (emoteReferences.legacy)
             {
                 // For consistency with processed scene assets in the AB converter (and performance), we only
                 // play legacy animations in Local Scene Dev mode (and only if they follow the naming requirements
@@ -167,7 +167,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
             EmoteReferences.EmoteOutcome[]? outcomes;
 
-            ExtractClips(ANIMATION_CLIPS, uniqueClips, emoteMetadata, out AnimationClip? avatarClip, out AnimationClip? propClip, out outcomes, out int propClipHash);
+            ExtractClips(ANIMATION_CLIPS, uniqueClips, emoteMetadata, out AnimationClip? avatarClip, out AnimationClip? propClip, out outcomes, out int propClipHash, out bool legacy);
 
             if (uniqueClips.Count == 1)
             {
@@ -198,7 +198,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
-            references.Initialize(avatarClip, propClip, outcomes, animatorComp, animationComp, propClipHash);
+            references.Initialize(avatarClip, propClip, outcomes, animatorComp, animationComp, propClipHash, legacy);
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
@@ -276,9 +276,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             // Create a clean slate for the animator before setting the play trigger
-            view.ResetTrigger(AnimationHashes.EMOTE_STOP);
-            view.ResetTrigger(AnimationHashes.EMOTE);
-            view.ResetTrigger(AnimationHashes.EMOTE_RESET);
+            view.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+            view.ResetAnimatorTrigger(AnimationHashes.EMOTE);
+            view.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
 
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
@@ -340,7 +340,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             out AnimationClip? avatarClip,
             out AnimationClip? propClip,
             out EmoteReferences.EmoteOutcome[]? outcomeClips,
-            out int propClipHash)
+            out int propClipHash,
+            out bool legacy)
         {
             avatarClip = null;
             propClip = null;
@@ -421,6 +422,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
                 }
             }
+            
+            legacy = avatarClip != null && avatarClip.legacy;
         }
     }
 }

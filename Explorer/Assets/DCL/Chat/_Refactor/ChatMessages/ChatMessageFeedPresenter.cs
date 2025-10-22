@@ -95,12 +95,12 @@ namespace DCL.Chat.ChatMessages
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
-            
+
             view.Initialize(viewModels,
                 translationSettings.IsTranslationFeatureActive,
                 IsAutoTranslationEnabled,
                 IsTranslationMemoryForMessageAvailable);
-            
+
             view.OnTranslateMessageRequested += OnTranslateMessage;
             view.OnRevertMessageRequested += OnRevertMessage;
 
@@ -165,7 +165,7 @@ namespace DCL.Chat.ChatMessages
             // No need to check state here
             revertToOriginalCommand.Execute(viewModel.Message.MessageId);
         }
-        
+
         private void OnScrollPositionChanged(Vector2 _)
         {
             if (!separatorIsVisible)
@@ -225,11 +225,11 @@ namespace DCL.Chat.ChatMessages
                 newMessageViewModel.TranslationState = translation.State;
                 newMessageViewModel.TranslatedText = translation.TranslatedBody;
             }
-            
+
             viewModels.Insert(index, newMessageViewModel);
             if (viewModelsMap != null)
                 viewModelsMap[newMessageViewModel.Message.MessageId] = newMessageViewModel;
-            
+
             // Handle separator logic (this is unrelated to the button)
             bool qualifiedForAddingSeparator = !wasAtBottom && !isSentByOwnUser;
 
@@ -354,9 +354,9 @@ namespace DCL.Chat.ChatMessages
             if (translation != null)
             {
                 viewModel.TranslationState = translation.State;
-                viewModel.TranslatedText = translation.TranslatedBody;    
+                viewModel.TranslatedText = translation.TranslatedBody;
             }
-            
+
             // Find the index of the ViewModel in the list
             int itemIndex = viewModels.IndexOf(viewModel);
             if (itemIndex == -1) return;
@@ -392,6 +392,13 @@ namespace DCL.Chat.ChatMessages
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but User State Service is NOT set. Aborting.");
                 return;
             }
+            else if (currentChannelService.UserStateService == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,
+                    $"{nameof(UpdateChannelMessages)} called, but {nameof(currentChannelService.UserStateService)} is null. Aborting.");
+
+                return;
+            }
 
             loadChannelCts = loadChannelCts.SafeRestart();
 
@@ -410,10 +417,10 @@ namespace DCL.Chat.ChatMessages
                     TryAddNewMessagesSeparatorAfterPendingMessages();
 
                     RebuildFastIndexIfNeeded();
-                    
+
                     Subscribe();
 
-                    view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
+                    view.SetUserConnectivityProvider(currentChannelService.UserStateService.OnlineParticipants);
 
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
@@ -421,7 +428,11 @@ namespace DCL.Chat.ChatMessages
                     ChatChannel currentChannel = currentChannelService.CurrentChannel!;
                     int unreadCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
-                    if (unreadCount > 0 && !view.IsAtBottom()) { view.SetScrollToBottomButtonVisibility(true, unreadCount, false); }
+                    if (unreadCount > 0)
+                        if (view.IsAtBottom())
+                            MarkCurrentChannelAsRead();
+                        else
+                            view.SetScrollToBottomButtonVisibility(true, unreadCount, false);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_HISTORY); }
@@ -443,7 +454,7 @@ namespace DCL.Chat.ChatMessages
             if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
             {
                 ClearTranslationsForCurrentChannel();
-                
+
                 view.SetScrollToBottomButtonVisibility(false, 0, false);
                 RemoveNewMessagesSeparator();
                 viewModels.ForEach(ChatMessageViewModel.RELEASE);
@@ -469,7 +480,7 @@ namespace DCL.Chat.ChatMessages
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationFailed>(OnMessageTranslationFailed));
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(OnMessageTranslationReverted));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
-            
+
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
         }
@@ -481,7 +492,7 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
-            
+
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
@@ -533,7 +544,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannelId.Id == conversationId)
                 RebuildFastIndexIfNeeded();
-            
+
             view.RefreshVisibleElements();
         }
 

@@ -274,7 +274,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "No valid cached identity found - user needs to login");
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 SwitchState(ViewState.Login);
             }
 
