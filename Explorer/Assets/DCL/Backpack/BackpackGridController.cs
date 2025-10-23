@@ -259,9 +259,6 @@ namespace DCL.Backpack
                 ReportHub.Log(ReportCategory.OUTFITS, $"[BACKPACK_GRID] Loaded page {pageNumber} with {wearables.Count} wearables.");
                 foreach (var wearable in wearables)
                 {
-                    // For IWearable, GetUrn() often gives the base URN. We need to know what we have.
-                    // Let's also check if it's an NFT to see if it *should* have a full URN.
-                    // var isNft = wearable.IsNFT();
                     ReportHub.Log(ReportCategory.OUTFITS, $"[BACKPACK_GRID]   -> Wearable: '{wearable.GetName()}', URN: '{wearable.GetUrn()}'");
                 }
                 

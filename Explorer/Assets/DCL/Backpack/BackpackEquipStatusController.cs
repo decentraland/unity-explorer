@@ -15,7 +15,12 @@ using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.Ipfs;
+using ECS;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
@@ -37,6 +42,7 @@ namespace DCL.Backpack
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly World world;
+        private readonly IRealmData realmData;
         private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
 
@@ -54,7 +60,8 @@ namespace DCL.Backpack
             Entity playerEntity,
             IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            IRealmData realmData)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -65,6 +72,7 @@ namespace DCL.Backpack
             this.forceRender = forceRender;
             this.emoteStorage = emoteStorage;
             this.wearableStorage = wearableStorage;
+            this.realmData = realmData;
 
             backpackEventBus.EquipWearableEvent += EquipWearable;
             backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
@@ -198,13 +206,15 @@ namespace DCL.Backpack
                 profileCache.Set(newProfile.UserId, newProfile);
                 UpdateAvatarInWorld(newProfile);
                 profileChangesBus.PushUpdate(newProfile);
+                LogSystemState("[ProfileUpdate [Local] - debug snapshot", newProfile.UserId, newProfile.WalletId);
+                
                 return;
             }
 
             try
             {
                 Profile? newProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
-
+                LogSystemState("[ProfileUpdate - [Published] - debug snapshot", newProfile?.UserId, newProfile?.WalletId);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (newProfile != null)
@@ -218,9 +228,37 @@ namespace DCL.Backpack
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);
-
+                LogSystemState("[ProfileUpdate - [FAILED] - debug snapshot", oldProfile.UserId, oldProfile.WalletId);
                 ShowErrorNotificationAsync(ct).Forget();
             }
+        }
+
+        private void LogSystemState(string source, string? userId, string? walletId)
+        {
+            var debugInfo = new StringBuilder();
+
+            debugInfo.AppendLine($"----------- {source} (User: {userId} | Wallet: {walletId}) -----------");
+            debugInfo.AppendLine($"Profile state {userId} wallet {walletId}");
+            debugInfo.AppendLine($"RealmData state {userId} {realmData}");
+
+            foreach ((string category, var w) in equippedWearables.Items())
+            {
+                if (w == null) continue;
+
+                var shortUrn = w.GetUrn();
+                debugInfo.Append($"  - Cat: {category,-15} | Short URN: '{shortUrn}'");
+                if (wearableStorage.TryGetOwnedNftRegistry(shortUrn, out var registry) && registry.Count > 0)
+                {
+                    var fullUrn = registry.First().Value.Urn;
+                    debugInfo.AppendLine($" -> [FOUND] Full URN: '{fullUrn}'");
+                }
+                else
+                {
+                    debugInfo.AppendLine(" -> [NOT FOUND] No full URN mapping exists in the registry yet!");
+                }
+            }
+
+            ReportHub.Log(ReportCategory.OUTFITS, debugInfo.ToString());
         }
 
         private void UpdateAvatarInWorld(Profile profile)
