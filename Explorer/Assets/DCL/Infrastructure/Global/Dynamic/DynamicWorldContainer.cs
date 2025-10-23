@@ -480,6 +480,7 @@ namespace Global.Dynamic
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
                         onlineUsersProvider,
+                        identityCache,
                         ct
                     );
 
