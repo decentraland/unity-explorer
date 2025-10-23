@@ -1,7 +1,8 @@
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using Segment.Serialization;
-using Sentry;
+using System.Collections.Generic;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -14,6 +15,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly IAnalyticsController analytics;
         private readonly SentryTransactionManager sentryTransactionManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private const string LOADING_TRANSACTION_NAME = "loading_process";
 
@@ -21,11 +23,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public ReactiveProperty<string> AssetState => core.AssetState;
         private bool isFirstLoading;
 
-        public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics)
+        public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics, IWeb3IdentityCache web3IdentityCache)
         {
             core = loadingStatus;
             isFirstLoading = true;
             this.analytics = analytics;
+            this.web3IdentityCache = web3IdentityCache;
             this.sentryTransactionManager = SentryTransactionManager.Instance;;
         }
 
@@ -47,8 +50,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 {
                     TransactionName = LOADING_TRANSACTION_NAME,
                     TransactionOperation = "loading",
-                    TransactionTag = "loading_type",
-                    TransactionTagValue = "initial_loading"
+                    Tags = web3IdentityCache.Identity == null
+                        ? new[] { new KeyValuePair<string, string>("has_identity", "false") }
+                        : new[] { new KeyValuePair<string, string>("has_identity", "true"), new KeyValuePair<string, string>("identity_expired", web3IdentityCache.Identity.IsExpired.ToString()) },
                 };
                 sentryTransactionManager.StartSentryTransaction(transactionData);
             }
@@ -71,7 +75,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 {
                     TransactionName = LOADING_TRANSACTION_NAME,
                     SpanName = stage.ToString(),
-                    SpanOperation = $"loading_completed",
+                    SpanOperation = "loading_completed",
                     Depth = 0
                 };
                 sentryTransactionManager.StartSpan(spanData);
