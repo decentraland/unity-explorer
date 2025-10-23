@@ -18,6 +18,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.MediaStream;
 using DCL.Time;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -70,6 +71,7 @@ namespace SceneRunner
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
 
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap = new (1000, CRDTEntityComparer.INSTANCE);

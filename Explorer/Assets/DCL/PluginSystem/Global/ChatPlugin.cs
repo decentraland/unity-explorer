@@ -39,7 +39,9 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Settings;
 using DCL.Translation;
 using DCL.Translation.Processors;
 using DCL.Translation.Service;
@@ -89,6 +91,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private FallbackFontsProvider fallbackFontsProvider;
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -173,14 +176,15 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             pluginCts = new CancellationTokenSource();
+            eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
         }
 
         public void Dispose()
         {
             chatStorage?.Dispose();
             pluginScope.Dispose();
-            pluginCts.Cancel();
-            pluginCts.Dispose();
+            pluginCts.SafeCancelAndDispose();
+            fallbackFontsProvider.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -188,7 +192,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
-
+            fallbackFontsProvider = new FallbackFontsProvider(assetsProvisioner, settings.FallbackFonts, linkedCts.Token);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
 
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
@@ -373,6 +377,9 @@ namespace DCL.PluginSystem.Global
 
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
+
+        private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT), PanelsSharingSpace.Chat).Forget();
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {

@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 
     public static class RemoteEntitiesExtensions
     {
-        public static void TryCreate(this IRemoteEntities remoteEntities, IRemoteProfiles remoteProfiles, World world)
+        public static void TryCreate(this IRemoteEntities remoteEntities, RemoteProfiles.RemoteProfiles remoteProfiles, World world)
         {
             if (remoteProfiles.NewBunchAvailable() == false)
                 return;

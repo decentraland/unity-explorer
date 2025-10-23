@@ -1,4 +1,5 @@
 using UnityEngine;
+using static DCL.Ipfs.SceneMetadata;
 
 namespace DCL.SkyBox
 {
