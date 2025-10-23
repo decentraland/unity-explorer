@@ -71,14 +71,14 @@
       "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "https://github.com/decentraland/client-sdk-unity.git#feat/user-video-streaming",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "0eb62e91c3fde06536cc126a57dcbf78d570ef8c"
+      "hash": "90c01e64a58dd60574dcff57efba07b28f5a1cd5"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",

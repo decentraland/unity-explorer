@@ -14,6 +14,7 @@ namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsContainer
     {
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         public IWebRequestController WebRequestController { get; }
 
         public IWebRequestController SceneWebRequestController { get; }
@@ -22,13 +23,17 @@ namespace DCL.WebRequests.Analytics
 
         public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; }
 
+        public IDecentralandUrlsSource DecentralandUrlsSource { get; }
+
         private WebRequestsContainer(
             IWebRequestController webRequestController,
             IWebRequestController sceneWebRequestController,
             IWebRequestsAnalyticsContainer analyticsContainer,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            IDecentralandUrlsSource decentralandUrlsSource
         )
         {
+            this.decentralandUrlsSource = decentralandUrlsSource;
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
             ChromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
@@ -40,6 +45,7 @@ namespace DCL.WebRequests.Analytics
             IDebugContainerBuilder debugContainerBuilder,
             IDecentralandUrlsSource urlsSource,
             ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            IDecentralandUrlsSource decentralandUrlsSource,
             int coreBudget,
             int sceneBudget
         )
@@ -81,7 +87,7 @@ namespace DCL.WebRequests.Analytics
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer, chromeDevtoolProtocolClient);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer, chromeDevtoolProtocolClient, decentralandUrlsSource);
 
             void CreateWebRequestsMetricsDebugUtility()
             {

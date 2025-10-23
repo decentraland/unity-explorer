@@ -1,22 +1,25 @@
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit;
-using LiveKit.Rooms;
 using LiveKit.Rooms.Tracks;
+using LiveKit.RtcSources.Video;
 
 namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
-    public class InteriorAudioTracks : IAudioTracks, IInterior<IAudioTracks>
+    public class InteriorLocalTracks : ILocalTracks, IInterior<ILocalTracks>
     {
-        private IAudioTracks assigned = NullAudioTracks.INSTANCE;
+        private ILocalTracks assigned = NullLocalTracks.INSTANCE;
 
         public ITrack CreateAudioTrack(string name, IRtcAudioSource source) =>
             assigned.EnsureAssigned().CreateAudioTrack(name, source);
 
-        public void Assign(IAudioTracks value, out IAudioTracks? previous)
+        public ITrack CreateVideoTrack(string name, RtcVideoSource source) =>
+            assigned.EnsureAssigned().CreateVideoTrack(name, source);
+
+        public void Assign(ILocalTracks value, out ILocalTracks? previous)
         {
             previous = assigned;
             assigned = value;
-            previous = previous is NullAudioTracks ? null : previous;
+            previous = previous is NullLocalTracks ? null : previous;
         }
     }
 }

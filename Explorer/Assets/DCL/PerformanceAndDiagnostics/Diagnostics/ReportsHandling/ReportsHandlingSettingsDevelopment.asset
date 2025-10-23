@@ -578,6 +578,12 @@ MonoBehaviour:
       Severity: 2
     - Category: TRANSLATE
       Severity: 3
+    - Category: DCL_CAST
+      Severity: 0
+    - Category: DCL_CAST
+      Severity: 4
+    - Category: DCL_CAST
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1
