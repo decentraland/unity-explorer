@@ -75,11 +75,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.UI.EphimeralNotifications::DCL.SocialEmotes.UI.EphemeralNotificationsView
   <canvas>k__BackingField: {fileID: 3083622349008168823}
   <raycaster>k__BackingField: {fileID: 0}
-  mainCanvasGroup: {fileID: 9007356566189495699}
+  mainCanvasGroup: {fileID: 0}
   notificationsContainer: {fileID: 438849710600190453}
   scrollView: {fileID: 8390723346688572533}
   loopListView: {fileID: 1208046690573542198}
   maximumVisibleNotifications: 6
+  fadeInAnimationDuration: 0.5
+  notificationDuration: 10
+  fadeOutAnimationDuration: 0.5
 --- !u!1 &3437281310040422238
 GameObject:
   m_ObjectHideFlags: 0
@@ -92,7 +95,6 @@ GameObject:
   - component: {fileID: 6075759426165429330}
   - component: {fileID: 8390723346688572533}
   - component: {fileID: 1208046690573542198}
-  - component: {fileID: 9007356566189495699}
   - component: {fileID: 2058970118631059196}
   m_Layer: 5
   m_Name: NotificationList
@@ -119,7 +121,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -10, y: 10}
-  m_SizeDelta: {x: 600, y: 200}
+  m_SizeDelta: {x: 600, y: 220}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &6075759426165429330
 CanvasRenderer:
@@ -189,18 +191,6 @@ MonoBehaviour:
   mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
   mItemSnapPivot: {x: 0, y: 0}
---- !u!225 &9007356566189495699
-CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3437281310040422238}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 0
-  m_BlocksRaycasts: 0
-  m_IgnoreParentGroups: 0
 --- !u!114 &2058970118631059196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,8 +203,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
-  m_Padding: {x: 0, y: 0, z: 0, w: 0}
-  m_Softness: {x: 0, y: 30}
+  m_Padding: {x: 0, y: -20, z: 0, w: 15}
+  m_Softness: {x: 0, y: 10}
 --- !u!1 &4907003008748352355
 GameObject:
   m_ObjectHideFlags: 0
@@ -304,14 +294,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7173270463578991983}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -334,7 +324,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7173270463578991983}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
   m_Name: 

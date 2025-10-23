@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 130825612486804406}
   - component: {fileID: 7237105844706917915}
   - component: {fileID: 4953624062579375182}
+  - component: {fileID: 7441611817455103112}
   m_Layer: 5
   m_Name: FriendOnlineEphemeralNotification
   m_TagString: Untagged
@@ -146,9 +147,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1289fcfe65724321b747a012632c875d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.UI.EphemeralNotifications::DCL.SocialEmotes.UI.FriendOnlineEphemeralNotification
+  canvasGroup: {fileID: 7441611817455103112}
   usernameElement: {fileID: 2887573880809818856}
   label: {fileID: 4656268481806291663}
   profilePictureView: {fileID: 211675081011875467}
+--- !u!225 &7441611817455103112
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2108133109288396533}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &7794804480185761836
 GameObject:
   m_ObjectHideFlags: 0

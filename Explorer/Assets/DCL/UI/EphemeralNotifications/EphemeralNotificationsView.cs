@@ -2,8 +2,6 @@ using DCL.Profiles;
 using DG.Tweening;
 using MVC;
 using SuperScrollView;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,10 +10,24 @@ namespace DCL.UI.EphemeralNotifications
 {
     public class EphemeralNotificationsView : ViewBase, IView
     {
+        /// <summary>
+        /// Stores info related to a notification which may not be immediately processed.
+        /// </summary>
         internal struct NotificationData
         {
+            /// <summary>
+            /// The type matches the name of the prefab to be used in the list.
+            /// </summary>
             public string NotificationTypeName;
+
+            /// <summary>
+            /// Text values that will be used to compose the label of the notification in the UI.
+            /// </summary>
             public string[] TextValues;
+
+            /// <summary>
+            /// Profile data of the user that sent the notification.
+            /// </summary>
             public Profile Sender;
         }
 
@@ -34,20 +46,28 @@ namespace DCL.UI.EphemeralNotifications
         [SerializeField]
         private int maximumVisibleNotifications;
 
+        [Tooltip("The amount of time the appearance animation takes, in seconds.")]
+        [SerializeField]
+        private float fadeInAnimationDuration = 0.5f;
+
+        [Tooltip("The amount of time the notification stays fully visible, in seconds.")]
+        [SerializeField]
+        private float notificationDuration = 3.0f;
+
+        [Tooltip("The amount of time the hiding animation takes, in seconds.")]
+        [SerializeField]
+        private float fadeOutAnimationDuration = 0.5f;
+
         private Queue<NotificationData> pendingNotifications = new Queue<NotificationData>();
+        private List<NotificationData> notifications;
 
-        private float lastTimeNotificationAdded;
-
-        private List<NotificationData> notifications = new List<NotificationData>(6);
+        private float[] notificationStartTimes;
 
         private void Awake()
         {
             loopListView.InitListView(0, OnGetItemByIndex);
-        }
-
-        private void Start()
-        {
-            //StartCoroutine(FadeOutAfterTime());
+            notificationStartTimes = new float[maximumVisibleNotifications];
+            notifications = new List<NotificationData>(maximumVisibleNotifications);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -59,6 +79,7 @@ namespace DCL.UI.EphemeralNotifications
             LoopListViewItem2 newItem = listView.NewListViewItem(model.NotificationTypeName);
 
             AbstractEphemeralNotification notification = newItem.GetComponent<AbstractEphemeralNotification>();
+            notification.SetOpacity(0.0f);
 
             notification.SetData(model.Sender, model.TextValues);
 
@@ -72,13 +93,14 @@ namespace DCL.UI.EphemeralNotifications
             AnimateNewNotification();
         }
 
-        private void Update()
+        private void LateUpdate()
         {
-            if (mainCanvasGroup.alpha > 0.999f && Time.time - lastTimeNotificationAdded > 5.0f)
+            for (int i = loopListView.ShownItemCount - 1; i >= 0; --i)
             {
-                lastTimeNotificationAdded = float.MinValue;
-
-                mainCanvasGroup.DOFade(0.0f, 3.0f).SetEase(Ease.InOutQuad);
+                AbstractEphemeralNotification notification = loopListView.GetShownItemByItemIndex(i).GetComponent<AbstractEphemeralNotification>();
+                float elapsedTime = Time.time - notificationStartTimes[i];
+                float opacity = elapsedTime < fadeInAnimationDuration ? elapsedTime / fadeInAnimationDuration : elapsedTime < (notificationDuration + fadeInAnimationDuration) ? 1.0f : 1.0f - (elapsedTime - notificationDuration - fadeInAnimationDuration) / fadeOutAnimationDuration;
+                notification.SetOpacity(opacity);
             }
         }
 
@@ -87,26 +109,37 @@ namespace DCL.UI.EphemeralNotifications
             if(pendingNotifications.Count == 0)
                 return;
 
-            if (mainCanvasGroup.alpha < 1.0f)
-            {
-                mainCanvasGroup.DOKill();
-                mainCanvasGroup.DOFade(1.0f, 0.5f).SetEase(Ease.InOutQuad);
-            }
-
-            lastTimeNotificationAdded = Time.time;
-
+            // Oldest notification is removed when maximum is reached
             if (notifications.Count == maximumVisibleNotifications)
                 notifications.RemoveAt(notifications.Count - 1);
 
+            // Consumes one pending notification
             notifications.Insert( 0, pendingNotifications.Dequeue());
 
+            // Displaces the start time of all notifications, used when updating opacity
+            for (int i = notificationStartTimes.Length - 1; i > 0; --i)
+                notificationStartTimes[i] = notificationStartTimes[i - 1];
+
+            notificationStartTimes[0] = Time.time;
+
+            // Removes all the notifications whose lifetime has finished
+            float totalDuration = fadeInAnimationDuration + notificationDuration + fadeOutAnimationDuration;
+
+            for (int i = notifications.Count - 1; i >= 0; --i)
+            {
+                if(Time.time - notificationStartTimes[i] > totalDuration)
+                    notifications.RemoveAt(i);
+            }
+
+            // Refreshes UI list
             loopListView.SetListItemCount(0);
             loopListView.SetListItemCount(Mathf.Min(notifications.Count, maximumVisibleNotifications));
 
+            // Fakes toast animation
             Vector3 originalPos = scrollView.viewport.localPosition;
             scrollView.viewport.localPosition -= new Vector3(0.0f, 36.0f, 0.0f);
 
-            scrollView.viewport.DOLocalMove(originalPos, 1.0f).OnComplete(AnimateNewNotification);
+            scrollView.viewport.DOLocalMove(originalPos, fadeInAnimationDuration).OnComplete(AnimateNewNotification);
         }
     }
 }
