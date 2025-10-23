@@ -180,8 +180,7 @@ namespace DCL.EmotesWheel
 
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
-            bool isSocialEmote = true; // TODO
-            view.TypeIcon.sprite = isSocialEmote ? viewInstance.SocialEmoteSlotIcon : viewInstance.EmoteSlotIcon;
+            view.TypeIcon.sprite = emote.IsSocial ? viewInstance.SocialEmoteSlotIcon : viewInstance.EmoteSlotIcon;
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
 
