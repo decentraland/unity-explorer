@@ -24,11 +24,24 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private IGltfContainerAssetsCache assetsCache;
 
         private bool AllAssetsInstantiated;
+        private bool IsSupported;
 
         public bool IsReady()
         {
+            if (!IsSupported)
+                return true;
+
+            //The asset bundle failed to load for some reason...this is an escape route. The scene load will fail,
+            //abs seems to be corrupt
             if (AssetBundleData.Exception != null)
                 return true;
+
+            //The asset bundle was destroyed at some point because of memory constrains. We got to nullify it and restart
+            if (AssetBundleData.IsInitialized && AssetBundleData.Asset!.Destroyed)
+            {
+                CreateEmptyAssetBundleData();
+                return false;
+            }
 
             if (AssetBundleData.IsInitialized && AllAssetsInstantiated)
                 return true;
@@ -37,7 +50,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}_LZ4", assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
+                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}", assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
                     PartitionComponent.TOP_PRIORITY);
             }
 
@@ -55,20 +68,22 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             InitialSceneStateDescriptor unsuportedStaticSceneAB = new InitialSceneStateDescriptor();
             unsuportedStaticSceneAB.AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {sceneID}"));
             unsuportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
+            unsuportedStaticSceneAB.IsSupported = false;
             return unsuportedStaticSceneAB;
         }
 
         public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, string sceneID)
         {
             InitialSceneStateDescriptor suportedStaticSceneAB = new InitialSceneStateDescriptor();
+            suportedStaticSceneAB.IsSupported = true;
             suportedStaticSceneAB.SceneID = sceneID;
-            suportedStaticSceneAB.AssetBundlePromise = AssetBundlePromise.NULL;
-            suportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
-            suportedStaticSceneAB.AssetBundleData = new ();
             suportedStaticSceneAB.GlobalWorld = world;
             suportedStaticSceneAB.assetsCache = assetsCache;
+            suportedStaticSceneAB.CreateEmptyAssetBundleData();
             return suportedStaticSceneAB;
         }
+
+
 
         public void RepositionStaticAssets(GameObject instantiatedLOD)
         {
@@ -109,6 +124,16 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         {
             foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
                 assetsCache.PutInBridge(gltfContainerAsset.Item2);
+        }
+
+        public bool IsValid() =>
+            IsSupported && AssetBundleData.Exception == null;
+
+        private void CreateEmptyAssetBundleData()
+        {
+            AssetBundlePromise = AssetBundlePromise.NULL;
+            AssetsInstantiated = new List<(string, GltfContainerAsset)>();
+            AssetBundleData = new StreamableLoadingResult<AssetBundleData>();
         }
 
     }

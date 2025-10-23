@@ -73,7 +73,7 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
                 return;
 
-            if (sceneDefinitionComponent.Definition.SupportInitialSceneState() && sceneLODInfo.CurrentLODLevelPromise == 0)
+            if (initialSceneStateDescriptor.IsValid() && sceneLODInfo.CurrentLODLevelPromise == 0)
                 ResolveInitialSceneStateDescriptorLOD(initialSceneStateDescriptor, sceneDefinitionComponent, ref sceneLODInfo);
             else
                 ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);

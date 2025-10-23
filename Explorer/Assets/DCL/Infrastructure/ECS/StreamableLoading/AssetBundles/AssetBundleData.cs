@@ -3,11 +3,9 @@ using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -21,6 +19,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public readonly AssetBundleData[] Dependencies;
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
+        public bool Destroyed;
+
 
         private bool unloaded;
         private Dictionary<string, AssetInfo>? assets;
@@ -37,6 +37,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             Dependencies = dependencies;
             AssetBundleName = assetBundle.name;
+
             UnloadAB();
         }
 
@@ -81,6 +82,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 assets = null;
             }
             UnloadAB();
+            Destroyed = true;
         }
 
         /// <summary>

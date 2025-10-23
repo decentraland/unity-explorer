@@ -50,6 +50,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             GltfContainerAsset asset = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash), "static");
 
+            //TODO(JUANI): Adding manual reference since this is not going through LoadSystemBase
+            assetBundleData.AddReference();
+
             gltfContainerAssetsCache.Dereference(assetIntention.Hash, asset);
             staticSceneAssetBundle.AddInstantiatedAsset(assetIntention.Hash, asset);
 

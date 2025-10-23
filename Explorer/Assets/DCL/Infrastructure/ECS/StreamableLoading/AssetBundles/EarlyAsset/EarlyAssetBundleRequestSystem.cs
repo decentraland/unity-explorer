@@ -55,7 +55,11 @@ namespace DefaultNamespace
                 //TODO (JUANI) : Maybe we should instantiate it already?
                 World.Destroy(entity);
 
-                if (Result.Succeeded) { Debug.Log("JUANI THE ASSET BUNDLE WAS LOADED IN MEMORY"); }
+                if (Result.Succeeded)
+                {
+                    Result.Asset.Dereference();
+                    Debug.Log("JUANI THE ASSET BUNDLE WAS LOADED IN MEMORY");
+                }
             }
         }
 

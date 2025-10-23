@@ -59,6 +59,8 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
                 staticSceneAssetBundle.AssetBundleData = Result;
                 if (Result.Succeeded )
                 {
+                    Result.Asset.Dereference();
+
                     foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset!.InitialSceneStateMetadata!.Value.assetHash)
                         World.Create(staticSceneAssetBundle, new GetGltfContainerAssetIntention($"static_{assetHash}", assetHash, new CancellationTokenSource()), Result);
                 }

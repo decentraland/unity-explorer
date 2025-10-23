@@ -74,7 +74,7 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                         //Do nothing. We just needed loaded in memory, we dont care the result.
                         //Whoever needs it, will grab it later
                         //Test URL
-                        World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest($"staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.x.ToString()}{PlatformUtils.GetCurrentPlatform()}_LZ4"));
+                        World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest($"staticscene_{Result.Asset.Value[0].metadata.scene.DecodedBase.x.ToString()}{PlatformUtils.GetCurrentPlatform()}"));
                     }
                 }
 
