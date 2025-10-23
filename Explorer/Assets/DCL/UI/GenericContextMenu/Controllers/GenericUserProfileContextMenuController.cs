@@ -320,7 +320,7 @@ namespace DCL.UI
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true), PanelsSharingSpace.Chat);
             onChatShown?.Invoke();
         }
 

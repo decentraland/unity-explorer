@@ -56,7 +56,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 //We will do this analysis every two minute
                 await UniTask.Delay(TimeSpan.FromMinutes(tryCleanOfflineMediaPlayersDelayInMinutes));
-                float now = Time.realtimeSinceStartup;
+                float now = UnityEngine.Time.realtimeSinceStartup;
                 keysToRemove.Clear();
 
                 foreach (KeyValuePair<string, Queue<MediaPlayerInfo>> kvp in offlineMediaPlayers)
@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
 
-            var info = new MediaPlayerInfo(mediaPlayer, Time.realtimeSinceStartup);
+            var info = new MediaPlayerInfo(mediaPlayer, UnityEngine.Time.realtimeSinceStartup);
 
             if (!offlineMediaPlayers.TryGetValue(url, out Queue<MediaPlayerInfo>? queue))
             {

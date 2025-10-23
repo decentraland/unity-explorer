@@ -62,7 +62,7 @@ namespace DCL.SocialEmotes.UI
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR))
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, 0.0f))
                 return;
 
             if(emoteComponent.IsPlayingEmote &&
@@ -96,7 +96,7 @@ namespace DCL.SocialEmotes.UI
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR) ||
+                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, 0.0f) ||
                 !emoteComponent.IsPlayingEmote ||
                 emoteComponent.IsPlayingSocialEmoteOutcome)
             {

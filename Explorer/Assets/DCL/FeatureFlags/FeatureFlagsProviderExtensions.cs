@@ -10,7 +10,7 @@ namespace DCL.FeatureFlags
     public static class FeatureFlagsProviderExtensions
     {
         public static async UniTask<FeatureFlagsConfiguration> InitializeAsync(
-            this IFeatureFlagsProvider featureFlagsProvider,
+            this HttpFeatureFlagsProvider featureFlagsProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             Web3Address? userAddress,
             IAppArgs appParameters,

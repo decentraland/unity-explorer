@@ -9,6 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
+using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -26,7 +27,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private CancellationTokenSource? linkedCts;
         private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
-        private IOwnedTexture2D? currentOwnedTexture;
+        private Texture2D? currentOwnedTexture;
 
         public SatelliteChunkController(
             SpriteRenderer prefab,
@@ -61,7 +62,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
-            currentOwnedTexture?.Dispose();
+            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
             currentOwnedTexture = null;
 
             if (atlasChunk)
@@ -85,14 +86,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             Texture2D texture;
 
-            currentOwnedTexture?.Dispose();
+            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
             currentOwnedTexture = null;
 
             try
             {
                 currentOwnedTexture = await textureTask!;
                 await UniTask.SwitchToMainThread();
-                texture = currentOwnedTexture.Texture;
+                texture = currentOwnedTexture;
             }
             catch (Exception e)
             {

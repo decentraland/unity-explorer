@@ -83,7 +83,9 @@ namespace Global.Dynamic.Landscapes
         {
             ITerrain terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
 
-            return terrain.TerrainModel == null || !terrain.TerrainModel.IsInsideBounds(parcel)
+            // If terrain is disabled, allow teleporting anywhere. We're in editor and can assume the
+            // user knows what they're doing.
+            return terrain.TerrainModel != null && !terrain.TerrainModel.IsInsideBounds(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
         }

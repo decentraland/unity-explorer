@@ -38,8 +38,11 @@ namespace Utility
                 Object.Destroy(component.gameObject);
         }
 
-        public static void SafeDestroy(Object @object)
+        public static void SafeDestroy(Object? @object)
         {
+            // Null reference check is fast in comparison to Unity's overloaded operator
+            if (ReferenceEquals(@object, null)) return;
+
             // If Application is quitting component may be already invalid
             if (IsQuitting && !@object)
                 return;

@@ -31,6 +31,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
+using Utility.UIToolkit;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly bool includeBannedUsersFromScene;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
@@ -99,7 +101,8 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            bool includeBannedUsersFromScene)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -113,6 +116,7 @@ namespace DCL.PluginSystem.Global
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.wearableStorage = wearableStorage;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
@@ -164,7 +168,7 @@ namespace DCL.PluginSystem.Global
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
@@ -197,12 +201,14 @@ namespace DCL.PluginSystem.Global
                 () =>
                 {
                     var nametagHolder = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, poolParent);
-                    nametagHolder.gameObject.SetActive(false);
                     return nametagHolder;
                 },
-                actionOnRelease: nh => nh.gameObject.SetActive(false),
+                actionOnRelease: nh =>
+                {
+                    nh.Nametag.SetDisplayed(false);
+                },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
-                actionOnGet: nh => nh.gameObject.SetActive(true));
+                actionOnGet: nh => nh.Nametag.SetDisplayed(true));
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)

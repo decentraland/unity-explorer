@@ -20,15 +20,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Serializable]
-        public class EmoteStartAnimationDTO
-        {
-            public bool loop;
-            public string animation;
-            public string? audio;
-        }
-
-        [Serializable]
-        public class EmoteOutcomeAnimationDTO
+        public class EmoteAnimationDTO
         {
             public string animation;
         }
@@ -36,17 +28,18 @@ namespace DCL.AvatarRendering.Emotes
         [Serializable]
         public class EmoteOutcomeClipsDTO
         {
-            public EmoteOutcomeAnimationDTO? Armature;
-            public EmoteOutcomeAnimationDTO? Armature_Other;
-            public EmoteOutcomeAnimationDTO? Armature_Prop;
+            public EmoteAnimationDTO? Armature;
+            public EmoteAnimationDTO? Armature_Other;
+            public EmoteAnimationDTO? Armature_Prop;
         }
 
         [Serializable]
         public class EmoteStartClipsDTO
         {
             public bool loop;
-            public EmoteStartAnimationDTO? Armature;
-            public EmoteStartAnimationDTO? Armature_Prop;
+            public EmoteAnimationDTO? Armature;
+            public EmoteAnimationDTO? Armature_Prop;
+            public string? audio;
         }
 
         [Serializable]

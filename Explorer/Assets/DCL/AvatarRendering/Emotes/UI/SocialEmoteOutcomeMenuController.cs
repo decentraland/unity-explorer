@@ -26,9 +26,6 @@ namespace DCL.SocialEmotes.UI
         {
             this.inputBlock = inputBlock;
             this.emotesBus = emotesBus;
-            DCLInput.Instance.SocialEmoteOutcomes.Outcome1.performed += (_) => OnOutcomePerformed(0);
-            DCLInput.Instance.SocialEmoteOutcomes.Outcome2.performed += (_) => OnOutcomePerformed(1);
-            DCLInput.Instance.SocialEmoteOutcomes.Outcome3.performed += (_) => OnOutcomePerformed(2);
         }
 
         private void OnOutcomePerformed(int outcomeIndex)
@@ -61,6 +58,9 @@ namespace DCL.SocialEmotes.UI
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+            DCLInput.Instance.SocialEmoteOutcomes.Outcome1.performed += (_) => OnOutcomePerformed(0);
+            DCLInput.Instance.SocialEmoteOutcomes.Outcome2.performed += (_) => OnOutcomePerformed(1);
+            DCLInput.Instance.SocialEmoteOutcomes.Outcome3.performed += (_) => OnOutcomePerformed(2);
             EnableOutcomeInputs(false);
         }
 

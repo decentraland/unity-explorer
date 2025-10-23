@@ -58,7 +58,7 @@ namespace DCL.Chat
 
             messageBubbleElement.OnPointerEnterEvent += HandlePointerEnter;
             messageBubbleElement.OnPointerExitEvent += HandlePointerExit;
-            
+
             messageBubbleElement.messageOptionsButton.onClick.AddListener(() =>
             {
                 if (currentViewModel != null)
@@ -111,7 +111,7 @@ namespace DCL.Chat
             else
                 return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
-        
+
         public void SetItemData(ChatMessageViewModel viewModel,
             Action<string, ChatEntryView> onMessageContextMenuClicked,
             ChatEntryClickedDelegate? onProfileContextMenuClicked,
@@ -217,7 +217,7 @@ namespace DCL.Chat
             if (!isPointerInside)
                 messageBubbleElement.Reset();
         }
-        
+
         private void UpdateTranslationViewVisibility()
         {
             // Handle universal conditions where the view should ALWAYS be hidden.
