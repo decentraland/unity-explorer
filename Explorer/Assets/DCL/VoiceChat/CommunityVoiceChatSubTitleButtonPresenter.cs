@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Utilities;
 using System;
@@ -19,11 +20,11 @@ namespace DCL.VoiceChat
         private readonly JoinCommunityLiveStreamChatSubTitleButtonView view;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
+        private readonly bool disabled;
 
         private CancellationTokenSource communityCts = new ();
         private IDisposable? currentCommunityCallStatusSubscription;
 
-        private bool isMemberListVisible;
         private bool canBeVisible;
 
         public CommunityVoiceChatSubTitleButtonPresenter(
@@ -42,20 +43,24 @@ namespace DCL.VoiceChat
                 currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
                 statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
                 view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
+                disabled = false;
+                canBeVisible = true;
             }
+            else
+                disabled = true;
 
-            canBeVisible = true;
             view.gameObject.SetActive(false);
         }
 
         public void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            communityCts.SafeCancelAndDispose();
+
+            if (disabled) return;
 
             statusSubscription?.Dispose();
             currentChannelSubscription?.Dispose();
             currentCommunityCallStatusSubscription?.Dispose();
-            communityCts.SafeCancelAndDispose();
             view.JoinStreamButton.onClick.RemoveListener(OnJoinStreamButtonClicked);
         }
 
@@ -75,43 +80,63 @@ namespace DCL.VoiceChat
 
         private void Reset()
         {
+            communityCts = communityCts.SafeRestart();
             view.gameObject.SetActive(false);
-            isMemberListVisible = false;
             currentCommunityCallStatusSubscription?.Dispose();
-            currentCommunityCallStatusSubscription = null;
         }
 
         private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
-            currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = communityCallOrchestrator.CommunityConnectionUpdates(communityId).Subscribe(OnCurrentCommunityCallStatusChanged);
 
-            bool isOurCurrentConversation = communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase);
-            if (isOurCurrentConversation) return;
+            //We add a small delay to avoid UI issues when switching from window to panel
+            await UniTask.Delay(1000, cancellationToken: communityCts.Token);
 
-            communityCts = communityCts.SafeRestart();
-            GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
+            //We subscribe to the call events but if the button cant be visible we don't need to check further.
+            if (!canBeVisible || communityCts.IsCancellationRequested) return;
 
-            GetCommunityResponse.VoiceChatStatus dataVoiceChatStatus = communityData.data.voiceChatStatus;
+            try
+            {
+                GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
+                GetCommunityResponse.VoiceChatStatus dataVoiceChatStatus = communityData.data.voiceChatStatus;
 
-            bool isVoiceChatActive = dataVoiceChatStatus.isActive;
-            if (!isVoiceChatActive) return;
+                if (!dataVoiceChatStatus.isActive)
+                {
+                    view.gameObject.SetActive(false);
+                    return;
+                }
 
-            view.gameObject.SetActive(true);
-            int participantsCount = dataVoiceChatStatus.participantCount;
-            view.ParticipantsAmount.SetText(participantsCount.ToString());
+                bool isOurCurrentConversation = communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(communityId);
+
+                if (!isOurCurrentConversation)
+                {
+                    view.gameObject.SetActive(dataVoiceChatStatus.isActive);
+                    view.ParticipantsAmount.SetText(dataVoiceChatStatus.participantCount.ToString());
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                view.gameObject.SetActive(false);
+            }
+            catch (Exception e)
+            {
+                view.gameObject.SetActive(false);
+                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+            }
         }
 
         private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
         {
-            if (isMemberListVisible) return;
-
-            if (communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase) || !hasActiveCall)
+            if (!hasActiveCall ||
+                communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)))
             {
                 view.gameObject.SetActive(false);
                 return;
             }
 
-            //We need to check if it can be visible.
+            //If the panel can't be visible, we don't activate it.
+            if (!canBeVisible) return;
+
             view.gameObject.SetActive(true);
             int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
@@ -119,56 +144,42 @@ namespace DCL.VoiceChat
 
         private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
-            if (isMemberListVisible) return;
-            if (!canBeVisible) return;
-
             switch (status)
             {
                 // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    OnCallEndedAsync().Forget();
+                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                    OnCurrentChannelChanged(currentChannel.Value);
                     break;
 
-                // When we join a call, if it is for THIS community, we need to hide the button. If it's another call, we keep it.
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL when
-                    communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
+                // When we join a call, if it is for THIS community, we need to hide the button. If it's another community's call, we keep it.
+                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or  VoiceChatStatus.VOICE_CHAT_IN_CALL when
+                    communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)):
                     view.gameObject.SetActive(false);
                     break;
             }
         }
 
-        private async UniTaskVoid OnCallEndedAsync()
-        {
-            // We wait for a short time before getting the updated data just because BE might take some time to update the call status.
-            Reset();
-            await UniTask.Delay(500);
-            HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)).Forget();
-        }
-
-        public void OnMemberListVisibilityChanged(bool isVisible)
-        {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
-
-            isMemberListVisible = isVisible;
-
-            if (isVisible) { view.gameObject.SetActive(false); }
-            else
-            {
-                // Re-setup subtitle bar when member list becomes hidden
-                // This will trigger the normal flow to determine if it should be shown or not
-                OnCurrentChannelChanged(currentChannel.Value);
-            }
-        }
-
         public void Hide()
         {
+            if (disabled) return;
+            if (!canBeVisible) return;
+
             canBeVisible = false;
             view.gameObject.SetActive(false);
         }
 
         public void Show()
         {
+            if (disabled) return;
+            if (canBeVisible) return;
+
             canBeVisible = true;
+            OnCurrentChannelChanged(currentChannel.Value);
+        }
+
+        public void SetFocusState(bool isFocused, bool animate, float duration)
+        {
+            view.SetFocusedState(isFocused, animate, duration);
         }
     }
 }

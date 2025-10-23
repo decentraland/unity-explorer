@@ -15,7 +15,9 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
 using DCL.SkyBox;
+using Global.AppArgs;
 
 namespace DCL.Settings.Configuration
 {
@@ -36,6 +38,7 @@ namespace DCL.Settings.Configuration
             CHAT_DMS_MODES_FEATURE,
             CHAT_BUBBLES_MODES_FEATURE,
             VOICECHAT_INPUT_DEVICE,
+            CHAT_TRANSLATE_FEATURE
 
             // add other features...
         }
@@ -55,25 +58,50 @@ namespace DCL.Settings.Configuration
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
             UpscalingController upscalingController,
-            IAssetsProvisioner  assetsProvisioner,
-            VolumeBus volumeBus)
+            IAssetsProvisioner assetsProvisioner,
+            VolumeBus volumeBus,
+            bool isTranslationChatEnabled,
+            IEventBus eventBus,
+            IAppArgs appParameters)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
             {
-                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset, skyboxSettingsAsset),
+                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance,
+                    realmPartitionSettingsAsset,
+                    landscapeData,
+                    qualitySettingsAsset,
+                    skyboxSettingsAsset),
+
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController, appParameters),
                 DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                 DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
-                DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),
-                DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer, chatSettingsAsset),
-                DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
-                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
+
+                DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,
+                    systemMemoryCap,
+                    sceneLoadingLimit),
+
+                DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance,
+                    generalAudioMixer,
+                    chatSettingsAsset),
+
+                DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance,
+                    chatSettingsAsset),
+
+                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance,
+                    chatSettingsAsset,
+                    settingsEventListener),
+
                 DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance),
+
+                DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
+                    chatSettingsAsset,
+                    isTranslationChatEnabled,
+                    eventBus),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

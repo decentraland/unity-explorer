@@ -99,13 +99,13 @@ namespace DCL.Chat.ChatInput
 
         public void OnBlur()
         {
-            cts.Cancel();
+            cts.SafeCancelAndDispose();
             fsm.ChangeState<UnfocusedChatInputState>();
         }
 
         public void OnMinimize()
         {
-            cts.Cancel();
+            cts.SafeCancelAndDispose();
             fsm.ChangeState<UnfocusedChatInputState>();
         }
 
@@ -125,8 +125,7 @@ namespace DCL.Chat.ChatInput
         public void Dispose()
         {
             scope.Dispose();
-            cts.Cancel();
-            cts.Dispose();
+            cts.SafeCancelAndDispose();
             fsm.Dispose();
         }
     }

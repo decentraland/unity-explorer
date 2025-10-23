@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3;
@@ -12,8 +11,10 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Settings.Settings;
+using DCL.Translation;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
@@ -27,7 +28,7 @@ namespace DCL.Chat
 {
     public class ChatTitlebarPresenter : IDisposable
     {
-        private readonly ChatTitlebarView2 view;
+        private readonly ChatTitlebarView view;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IEventBus eventBus;
         private readonly CommunityDataService communityDataService;
@@ -35,9 +36,11 @@ namespace DCL.Chat
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
         private readonly GetUserCallStatusCommand getUserCallStatusCommand;
         private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
+        private readonly ToggleAutoTranslateCommand toggleAutoTranslateCommand;
         private readonly CurrentChannelService currentChannelService;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatMemberListService chatMemberListService;
+        private readonly ITranslationSettings translationSettings;
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
         private readonly CallButtonPresenter callButtonPresenter;
@@ -51,21 +54,25 @@ namespace DCL.Chat
         private GenericContextMenu? contextMenuInstance;
         private readonly GenericContextMenu contextMenuConfiguration;
         private ToggleWithCheckContextMenuControlSettings[]? notificationPingToggles;
+        private ToggleWithIconAndCheckContextMenuControlSettings autoTranslateToggle;
+        private GameObject contextMenuToggleGroup;
 
         public ChatTitlebarPresenter(
-            ChatTitlebarView2 view,
+            ChatTitlebarView view,
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             CommunityDataService communityDataService,
             CurrentChannelService currentChannelService,
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
+            ITranslationSettings translationSettings,
             GetTitlebarViewModelCommand getTitlebarViewModel,
             GetCommunityThumbnailCommand getCommunityThumbnailCommand,
             DeleteChatHistoryCommand deleteChatHistoryCommand,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IChatEventBus chatEventBus,
-            GetUserCallStatusCommand getUserCallStatusCommand)
+            GetUserCallStatusCommand getUserCallStatusCommand,
+            ToggleAutoTranslateCommand toggleAutoTranslateCommand)
         {
             this.view = view;
             this.chatConfig = chatConfig;
@@ -74,9 +81,11 @@ namespace DCL.Chat
             this.chatMemberListService = chatMemberListService;
             this.currentChannelService = currentChannelService;
             this.chatContextMenuService = chatContextMenuService;
+            this.translationSettings = translationSettings;
             this.getTitlebarViewModel = getTitlebarViewModel;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.deleteChatHistoryCommand = deleteChatHistoryCommand;
+            this.toggleAutoTranslateCommand = toggleAutoTranslateCommand;
             this.getUserCallStatusCommand = getUserCallStatusCommand;
 
             view.Initialize();
@@ -95,6 +104,8 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
+            scope.Add(this.eventBus.Subscribe<TranslationEvents.ConversationAutoTranslateToggled>(OnAutoTranslateSettingChanged));
+            scope.Add(this.eventBus.Subscribe<string>(OnTranslationSettingsChanged));
 
             var contextMenuSettings = chatConfig.communityChatConversationContextMenuSettings;
             contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
@@ -109,6 +120,49 @@ namespace DCL.Chat
             InitializeChannelContextMenu();
         }
 
+        private void OnTranslationSettingsChanged(string eventId)
+        {
+            if (eventId != "TranslationSettingsChangeEvent") return;
+            UpdateAutoTranslateIndicator();
+        }
+
+        private void OnAutoTranslateSettingChanged(TranslationEvents.ConversationAutoTranslateToggled evt)
+        {
+            if (evt.ConversationId == currentChannelService.CurrentChannelId.Id)
+            {
+                UpdateAutoTranslateIndicator();
+            }
+        }
+
+        private void UpdateAutoTranslateIndicator()
+        {
+            if (!translationSettings.IsTranslationFeatureActive())
+            {
+                // If the feature is inactive for any reason
+                // ensure all indicators are off.
+                view.defaultTitlebarView.SetAutoTranslateIndicatorForNearby(false);
+                view.defaultTitlebarView.SetAutoTranslateIndicatorForUserAndCommunities(false);
+                return;
+            }
+
+            if (currentViewModel == null) return;
+
+            // 1. Get the current status for the active channel.
+            string currentChannelId = currentChannelService.CurrentChannelId.Id;
+            bool isEnabled = !string.IsNullOrEmpty(currentChannelId) &&
+                             translationSettings.GetAutoTranslateForConversation(currentChannelId);
+
+            // 2. Determine which indicator to show based on the channel type.
+            bool isNearby = currentViewModel.ViewMode == TitlebarViewMode.Nearby;
+            bool isProfileChannel = currentViewModel.ViewMode == TitlebarViewMode.DirectMessage ||
+                                    currentViewModel.ViewMode == TitlebarViewMode.Community;
+
+            // 3. Command the views to set the visibility of their respective indicators.
+            // The indicators will only be shown if auto-translate is enabled AND it's the correct channel type.
+            view.defaultTitlebarView.SetAutoTranslateIndicatorForNearby(isEnabled && isNearby);
+            view.defaultTitlebarView.SetAutoTranslateIndicatorForUserAndCommunities(isEnabled && isProfileChannel);
+        }
+
         private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
         {
             // Only care if we’re viewing a Community channel and it matches
@@ -121,8 +175,9 @@ namespace DCL.Chat
                 view.defaultTitlebarView.Setup(currentViewModel);
                 view.membersTitlebarView.SetChannelName(currentViewModel);
 
-                if (cd.thumbnails?.raw != null)
-                    RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
+                UpdateAutoTranslateIndicator();
+
+                RefreshTitlebarCommunityThumbnailAsync(cd.thumbnailUrl).Forget();
             }
         }
 
@@ -141,13 +196,20 @@ namespace DCL.Chat
             deleteChatHistoryCommand.Execute();
         }
 
+        private void OnAutoTranslateToggled()
+        {
+            string currentChannelId = currentChannelService.CurrentChannelId.Id;
+            if (string.IsNullOrEmpty(currentChannelId)) return;
+
+            toggleAutoTranslateCommand.Execute(currentChannelId);
+        }
+
         private void OpenCommunityCard()
         {
             communityDataService
                 .OpenCommunityCard(currentChannelService.CurrentChannel);
         }
 
-        private GameObject contextMenuToggleGroup;
         public void Dispose()
         {
             view.OnCloseRequested -= OnCloseRequested;
@@ -229,14 +291,20 @@ namespace DCL.Chat
 
         private void OnChatContextMenuRequested(ShowChannelContextMenuRequest request)
         {
-            if (contextMenuInstance == null)
-                InitializeChannelContextMenu();
+            InitializeChannelContextMenu();
 
             var currentSetting = ChatUserSettings
                 .GetNotificationPingValuePerChannel(currentChannelService.CurrentChannelId);
 
             for (int i = 0; i < notificationPingToggles.Length; ++i)
                 notificationPingToggles[i].SetInitialValue(i == (int)currentSetting);
+
+            string currentChannelId = currentChannelService.CurrentChannelId.Id;
+            if (!string.IsNullOrEmpty(currentChannelId))
+            {
+                bool isAutoTranslateEnabled = translationSettings.GetAutoTranslateForConversation(currentChannelId);
+                autoTranslateToggle.SetInitialValue(isAutoTranslateEnabled);
+            }
 
             request.MenuConfiguration = contextMenuInstance;
             chatContextMenuService.ShowChannelContextMenuAsync(request).Forget();
@@ -320,6 +388,8 @@ namespace DCL.Chat
                 view.defaultTitlebarView.Setup(finalViewModel);
                 view.membersTitlebarView.SetChannelName(finalViewModel);
 
+                UpdateAutoTranslateIndicator();
+
                 if (currentViewModel is not { ViewMode: TitlebarViewMode.DirectMessage }) return;
 
                 SetCallStatusForUserAsync().Forget();
@@ -381,7 +451,7 @@ namespace DCL.Chat
                         verticalLayoutPadding: chatConfig.chatContextMenuSettings.VerticalPadding,
                         elementsSpacing: chatConfig.chatContextMenuSettings.ElementsSpacing,
                         offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget,
-                        anchorPoint:ContextMenuOpenDirection.TOP_LEFT)
+                        anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                     .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] =
                         new ToggleWithCheckContextMenuControlSettings("All Messages",
                             x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
@@ -398,8 +468,21 @@ namespace DCL.Chat
                     chatConfig.chatContextMenuSettings.VerticalPadding,
                     chatConfig.chatContextMenuSettings.ElementsSpacing,
                     anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
-                .AddControl(subMenuSettings)
-                .AddControl(deleteChatHistoryButton);
+                .AddControl(subMenuSettings);
+
+
+            autoTranslateToggle = new ToggleWithIconAndCheckContextMenuControlSettings(
+                chatConfig.chatContextMenuSettings.AutoTranslateText,
+                isToggled => OnAutoTranslateToggled(),
+                icon: chatConfig.chatContextMenuSettings.AutoTranslateSprite
+            );
+
+            if (translationSettings.IsTranslationFeatureActive())
+            {
+                contextMenuInstance.AddControl(autoTranslateToggle);
+            }
+
+            contextMenuInstance .AddControl(deleteChatHistoryButton);
         }
     }
 }

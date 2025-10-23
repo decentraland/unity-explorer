@@ -16,16 +16,19 @@ using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
     public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
     {
-        private enum SettingsSection
+        public enum SettingsSection
         {
             GENERAL,
             GRAPHICS,
@@ -51,7 +54,10 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
+        private readonly bool isTranslationChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IEventBus eventBus;
+        private readonly IAppArgs appParameters;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
@@ -73,7 +79,10 @@ namespace DCL.Settings
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            IAssetsProvisioner assetsProvisioner)
+            bool isTranslationChatEnabled,
+            IAssetsProvisioner assetsProvisioner,
+            IEventBus eventBus,
+            IAppArgs appParameters)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -90,8 +99,10 @@ namespace DCL.Settings
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.upscalingController = upscalingController;
+            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
-
+            this.eventBus = eventBus;
+            this.appParameters = appParameters;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -118,6 +129,12 @@ namespace DCL.Settings
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+        }
+
+        public void Toggle(SettingsSection section)
+        {
+            var config = sections[section];
+            OpenSection(section, config.config!.SettingsGroups.Count);
         }
 
         public void Animate(int triggerId)
@@ -166,6 +183,8 @@ namespace DCL.Settings
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
+                if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
+
                 SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
@@ -180,24 +199,27 @@ namespace DCL.Settings
                             continue;
 
                         var controller =
-                        (await module.CreateModuleAsync
-                        (
-                            generalGroupView.ModulesContainer,
-                            realmPartitionSettingsAsset,
-                            videoPrioritizationSettings,
-                            landscapeData,
-                            generalAudioMixer,
-                            qualitySettingsAsset,
-                            skyboxSettingsAsset,
-                            controlsSettingsAsset,
-                            chatSettingsAsset,
-                            memoryCap,
-                            sceneLoadingLimit,
-                            userBlockingCacheProxy,
-                            this,
-                            upscalingController,
-                            assetsProvisioner,
-                            volumeBus));
+                            await module.CreateModuleAsync
+                            (
+                                generalGroupView.ModulesContainer,
+                                realmPartitionSettingsAsset,
+                                videoPrioritizationSettings,
+                                landscapeData,
+                                generalAudioMixer,
+                                qualitySettingsAsset,
+                                skyboxSettingsAsset,
+                                controlsSettingsAsset,
+                                chatSettingsAsset,
+                                memoryCap,
+                                sceneLoadingLimit,
+                                userBlockingCacheProxy,
+                                this,
+                                upscalingController,
+                                assetsProvisioner,
+                                volumeBus,
+                                isTranslationChatEnabled,
+                                eventBus,
+                                appParameters);
 
                         if (controller != null)
                             controllers.Add(controller);

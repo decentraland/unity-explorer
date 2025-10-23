@@ -1,40 +1,44 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.UI;
-using DCL.UI.Communities;
 using MVC;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Chat.ChatServices.ChatContextService
 {
     public class ChatContextMenuService : IDisposable
     {
         private readonly IMVCManagerMenusAccessFacade mvcFacade;
-        private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly ChatClickDetectionHandler chatClickDetectionHandler;
 
-        private CancellationTokenSource? activeMenuCts;
-        private UniTaskCompletionSource? activeMenuTcs;
+        private CancellationTokenSource activeMenuCts = new();
+        private UniTaskCompletionSource activeMenuTcs = new();
 
         public ChatContextMenuService(IMVCManagerMenusAccessFacade mvcFacade,
-            ChatClickDetectionService chatClickDetectionService)
+            ChatClickDetectionHandler chatClickDetectionHandler)
         {
             this.mvcFacade = mvcFacade;
-            this.chatClickDetectionService = chatClickDetectionService;
+            this.chatClickDetectionHandler = chatClickDetectionHandler;
         }
 
-        private CommunityChatConversationContextMenuSettings contextMenuSettings;
 
         public async UniTask ShowCommunityContextMenuAsync(ShowContextMenuRequest request)
         {
             RestartLifecycleControls();
-            chatClickDetectionService.Pause();
+            chatClickDetectionHandler.Pause();
 
             try
             {
                 var parameter = new GenericContextMenuParameter(
                     request.MenuConfiguration,
                     request.Position, // Cast the Vector3 to Vector2
-                    actionOnHide: () => activeMenuTcs.TrySetResult(),
+                    actionOnHide: () =>
+                    {
+                        activeMenuTcs.TrySetResult();
+                        request.OnHide?.Invoke();
+                    },
+                    actionOnShow: () => request.OnShow?.Invoke(),
                     closeTask: activeMenuTcs.Task
                 );
 
@@ -43,7 +47,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
             finally
             {
-                chatClickDetectionService.Resume();
+                chatClickDetectionHandler.Resume();
             }
         }
 
@@ -57,7 +61,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         {
             RestartLifecycleControls();
 
-            chatClickDetectionService.Pause();
+            chatClickDetectionHandler.Pause();
             try
             {
                 await mvcFacade.ShowUserProfileContextMenuFromWalletIdAsync(
@@ -66,43 +70,18 @@ namespace DCL.Chat.ChatServices.ChatContextService
                     default,
                     activeMenuCts.Token,
                     activeMenuTcs.Task,
-                    onHide: () => activeMenuTcs.TrySetResult(),
-                    request.AnchorPoint
+                    onHide: () =>
+                    {
+                        activeMenuTcs.TrySetResult();
+                        request.OnHide?.Invoke();
+                    },
+                    request.AnchorPoint,
+                    onShow: () => request.OnShow?.Invoke()
                 );
             }
             finally
             {
-                chatClickDetectionService.Resume();
-            }
-        }
-
-        /// <summary>
-        ///     Show channel options context menu.
-        ///     Pause and Resume click detection service to prevent
-        ///     clicks from being registered while the menu is open.
-        /// </summary>
-        /// <param name="request"></param>
-        public async UniTask ShowChannelOptionsAsync(ChatContextMenuRequest request)
-        {
-            RestartLifecycleControls();
-
-            chatClickDetectionService.Pause();
-
-            try
-            {
-                mvcFacade.ShowChatContextMenuAsync(
-                    request.Position,
-                    request.contextMenuData,
-                    request.OnDeleteHistory,
-                    onContextMenuHide: () => activeMenuTcs!.TrySetResult(),
-                    closeMenuTask: activeMenuTcs.Task
-                );
-
-                await activeMenuTcs.Task;
-            }
-            finally
-            {
-                chatClickDetectionService.Resume();
+                chatClickDetectionHandler.Resume();
             }
         }
 
@@ -113,7 +92,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public async UniTask ShowChannelContextMenuAsync(ShowChannelContextMenuRequest request)
         {
             RestartLifecycleControls();
-            chatClickDetectionService.Pause();
+            chatClickDetectionHandler.Pause();
 
             try
             {
@@ -130,41 +109,22 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
             finally
             {
-                chatClickDetectionService.Resume();
-            }
-        }
-
-        public async UniTask ShowChatOptionsAsync(ChatEntryMenuPopupData request)
-        {
-            RestartLifecycleControls();
-
-            chatClickDetectionService.Pause();
-
-            try
-            {
-                await mvcFacade.ShowChatEntryMenuPopupAsync(request, activeMenuCts.Token);
-            }
-            finally
-            {
-                chatClickDetectionService.Resume();
+                chatClickDetectionHandler.Resume();
             }
         }
 
         private void RestartLifecycleControls()
         {
-            activeMenuCts?.Cancel();
-            activeMenuTcs?.TrySetResult();
-            activeMenuCts?.Dispose();
+            activeMenuTcs.TrySetResult();
 
-            activeMenuCts = new CancellationTokenSource();
+            activeMenuCts = activeMenuCts.SafeRestart();
             activeMenuTcs = new UniTaskCompletionSource();
         }
 
         public void Dispose()
         {
-            activeMenuCts?.Cancel();
-            activeMenuTcs?.TrySetResult();
-            activeMenuCts?.Dispose();
+            activeMenuTcs.TrySetResult();
+            activeMenuCts.SafeCancelAndDispose();
         }
     }
 }

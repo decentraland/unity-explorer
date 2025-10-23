@@ -24,8 +24,9 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>, IBlocksChat
     {
+
         private readonly BackpackController backpackController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
@@ -171,6 +172,9 @@ namespace DCL.ExplorePanel
 
             if (inputData.BackpackSection != null)
                 backpackController.Toggle(inputData.BackpackSection.Value);
+
+            if (inputData.SettingsSection != null)
+                SettingsController.Toggle(inputData.SettingsSection.Value);
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
 
@@ -354,16 +358,18 @@ namespace DCL.ExplorePanel
     {
         public readonly ExploreSections Section;
         public readonly BackpackSections? BackpackSection;
+        public readonly SettingsController.SettingsSection? SettingsSection;
 
         /// <summary>
         /// Whether a specific section has to be opened when the explore panel is shown or not (using the default one).
         /// </summary>
         public readonly bool IsSectionProvided;
 
-        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null)
+        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null, SettingsController.SettingsSection? settingsSection = null)
         {
             Section = section;
             BackpackSection = backpackSection;
+            SettingsSection = settingsSection;
             IsSectionProvided = true;
         }
     }

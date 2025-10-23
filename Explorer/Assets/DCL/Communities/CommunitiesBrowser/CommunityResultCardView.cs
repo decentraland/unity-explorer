@@ -63,6 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button goToStreamButton = null!;
         [SerializeField] private GameObject actionLoadingSpinner = null!;
         [SerializeField] private ListenersCountView listenersCountView = null!;
+        [SerializeField] private GameObject listeningTooltip = null!;
 
         [SerializeField] private MutualFriendsConfig mutualFriends;
 
@@ -168,8 +169,15 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetDescription(string description) =>
             communityDescription.text = description;
 
+        public void ConfigureListeningTooltip()
+        {
+            listenersCountView.gameObject.SetActive(false);
+            listeningTooltip.gameObject.SetActive(true);
+        }
+
         public void ConfigureListenersCount(bool isActive, int listenersCount)
         {
+            listeningTooltip.gameObject.SetActive(false);
             listenersCountView.gameObject.SetActive(isActive);
 
             stringBuilder.Clear();
@@ -314,7 +322,7 @@ namespace DCL.Communities.CommunitiesBrowser
             var communityFromInviteRequestData = new CommunityData
             {
                 id = userInviteRequestData.communityId,
-                thumbnails = userInviteRequestData.thumbnails,
+                thumbnailUrl = userInviteRequestData.thumbnailUrl,
                 name = userInviteRequestData.name,
                 description = userInviteRequestData.description,
                 ownerAddress = userInviteRequestData.ownerAddress,

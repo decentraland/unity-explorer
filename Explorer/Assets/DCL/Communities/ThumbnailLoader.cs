@@ -1,4 +1,3 @@
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
@@ -17,7 +16,15 @@ namespace DCL.Communities
             this.Cache = spriteCache;
         }
 
-        public async UniTaskVoid LoadCommunityThumbnailAsync(string? thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
+        /// <summary>
+        /// Loads a thumbnail from a direct URL (for backwards compatibility and non-community images)
+        /// </summary>
+        public async UniTaskVoid LoadCommunityThumbnailFromUrlAsync(
+            string? thumbnailUrl,
+            ImageView thumbnailView,
+            Sprite? defaultThumbnail,
+            CancellationToken ct,
+            bool useKtx)
         {
             thumbnailView.ImageColor = Color.clear;
             thumbnailView.SetImage(defaultThumbnail!, true);
@@ -28,14 +35,11 @@ namespace DCL.Communities
             try
             {
                 if (!string.IsNullOrEmpty(thumbnailUrl))
-                    loadedSprite = await Cache!.GetSpriteAsync(thumbnailUrl, ct);
+                    loadedSprite = await Cache!.GetSpriteAsync(thumbnailUrl, useKtx, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
-            finally
-            {
-                thumbnailView.IsLoading = false;
-            }
+            finally { thumbnailView.IsLoading = false; }
 
             if (loadedSprite != null)
                 thumbnailView.SetImage(loadedSprite, true);

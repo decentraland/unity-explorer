@@ -10,7 +10,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -99,7 +98,7 @@ namespace DCL.SDKComponents.MediaStream
                     state = player.IsSeeking ? VideoState.VsSeeking : VideoState.VsBuffering;
 
                     // If the seeking/buffering never ends, update state with error so the scene can react
-                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR
+                    if ((UnityEngine.Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR
                         && mediaPlayer.LastPropagatedState != VideoState.VsPaused)
                     {
                         state = VideoState.VsError;

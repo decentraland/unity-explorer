@@ -97,6 +97,7 @@ namespace Global.Tests.PlayMode
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 new ObjectProxy<IProfileRepository>(),
+                DecentralandEnvironment.Org,
                 ct,
                 hasDebugFlag: false,
                 enableGPUInstancing: false
@@ -104,6 +105,8 @@ namespace Global.Tests.PlayMode
 
             if (!success)
                 throw new Exception("Cannot create the static container");
+
+            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
 
             await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 

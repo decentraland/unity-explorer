@@ -282,6 +282,7 @@ MonoBehaviour:
   <mainText>k__BackingField: {fileID: 5497906910841171124}
   <subText>k__BackingField: {fileID: 5239491407131305541}
   <mainImage>k__BackingField: {fileID: 1334638026328657484}
+  <mainImageLight>k__BackingField: {fileID: 8451525131253338995}
   <quitImage>k__BackingField: {fileID: 5140257922541452098}
   <rimImage>k__BackingField: {fileID: 6890867881214203102}
   <profilePictureView>k__BackingField: {fileID: 445401981428479969}
@@ -630,9 +631,9 @@ RectTransform:
   - {fileID: 3487284398428330021}
   m_Father: {fileID: 4864969669577626623}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -103, y: -0.000030517578}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 190, y: 46}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3662598853635992337
@@ -1296,9 +1297,9 @@ RectTransform:
   - {fileID: 3584919592802339218}
   m_Father: {fileID: 4864969669577626623}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 103.00001, y: -0.000030517578}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 190, y: 46}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1171931563553375943
@@ -1431,6 +1432,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4864969669577626623}
   - component: {fileID: 3910202248849160891}
+  - component: {fileID: 6149354334372691987}
   m_Layer: 0
   m_Name: ButtonsContainer
   m_TagString: Untagged
@@ -1479,6 +1481,32 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &6149354334372691987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6035005841894944033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 16
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 1
 --- !u!1 &6047096681542404666
 GameObject:
   m_ObjectHideFlags: 0

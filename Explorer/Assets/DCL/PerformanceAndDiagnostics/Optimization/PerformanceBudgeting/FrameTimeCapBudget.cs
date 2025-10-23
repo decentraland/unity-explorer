@@ -1,5 +1,3 @@
-#nullable enable
-
 using DCL.Profiling;
 using System;
 

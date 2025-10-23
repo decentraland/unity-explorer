@@ -15,6 +15,7 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using UnityEngine.TestTools;
 using Utility;
 
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
@@ -173,7 +174,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData();
-            var src = "some_emote_with_invalid_extension.txt"; // Invalid src, doesn't end with _emote.glb
+            var src = "some_emote_with_invalid_naming.glb"; // Invalid src for scene emotes
             var hash = "emote_hash_invalid_src";
             var loop = false;
 
@@ -182,6 +183,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
             globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, CancellationToken.None);
+
+            LogAssert.Expect(LogType.Error, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '_emote.glb'");
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");

@@ -1,16 +1,21 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.VoiceChat;
+using LiveKit.Audio;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Runtime.Scripts.Audio;
+using RichTypes;
 using RustAudio;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
+
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
 #endif
@@ -20,14 +25,21 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatDebugContainer : IDisposable
     {
         private CancellationTokenSource? autoUpdateCts;
+        private CancellationTokenSource? wavRemoteUpdateCts;
 
-        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager? trackManager)
+        private readonly TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
+
+        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager trackManager)
         {
+            var unityOutputSampleRate = new ElementBinding<ulong>(0);
+
             var availableMicrophones = new ElementBinding<ulong>(0);
             var currentMicrophone = new ElementBinding<string>(string.Empty);
+
 #if UNITY_STANDALONE_OSX
             var permissionsStatus = new ElementBinding<string>(string.Empty);
 #endif
+
             var isRecording = new ElementBinding<string>(string.Empty);
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
@@ -35,24 +47,149 @@ namespace DCL.PluginSystem.Global
             var remoteSpeakers = new ElementBinding<ulong>(0);
             var speakersInfo = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
 
+            var wavMicrophoneStatus = new ElementBinding<string>(string.Empty);
+            var wavRemotesStatusInfo = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
+
             List<StreamInfo<AudioStreamInfo>> infoBuffer = new ();
             List<(string name, string value)> speakersBuffer = new ();
 
-            debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
-                         ?.AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
+            List<(string name, string value)> wavRemotesBuffer = new ();
+
+            bool hasWavMicrophoneIntention = false;
+            bool hasWavRemoteIntention = false;
+
+            debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.VOICE_CHAT)
+                         ?.AddMarker("Unity Output Sample Rate", unityOutputSampleRate, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
+
 #if UNITY_STANDALONE_OSX
                           .AddCustomMarker("Permission Status", permissionsStatus)
 #endif
+
                           .AddCustomMarker("Current Microphone", currentMicrophone)
                           .AddCustomMarker("Is Recording", isRecording)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Remote Speakers", remoteSpeakers, DebugLongMarkerDef.Unit.NoFormat)
                           .AddList("Speakers Info", speakersInfo)
+                          .AddToggleField("Record WAV Microphone", v => ChangeMicrophoneRecordStatus(v.newValue), false)
+                          .AddCustomMarker("Status WAV Microphone", wavMicrophoneStatus)
+                          .AddToggleField("Record WAV Remotes", v => ChangeRemoteRecordStatus(v.newValue), false)
+                          .AddList("Status WAV Remotes", wavRemotesStatusInfo)
+                          .AddSingleButton("Open Records Directory", () => Application.OpenURL($"file://{StreamKeyUtils.RecordsDirectory}".Replace(" ", "%20")))
                           .AddToggleField("Auto Update", v => AutoUpdateTriggerAsync(v.newValue).Forget(), false)
                           .AddSingleButton("Update", UpdateWidget);
 
             return;
+
+            void ChangeMicrophoneRecordStatus(bool enable)
+            {
+                hasWavMicrophoneIntention = enable;
+                TryStartWavUpdateLoopAsync().Forget();
+            }
+
+            void ChangeRemoteRecordStatus(bool enable)
+            {
+                hasWavRemoteIntention = enable;
+                TryStartWavUpdateLoopAsync().Forget();
+            }
+
+            async UniTaskVoid TryStartWavUpdateLoopAsync()
+            {
+                if (wavRemoteUpdateCts != null && wavRemoteUpdateCts.IsCancellationRequested == false) return;
+
+                wavRemoteUpdateCts = new CancellationTokenSource();
+                CancellationToken token = wavRemoteUpdateCts.Token;
+
+                while (token.IsCancellationRequested == false)
+                    try
+                    {
+                        bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: token).SuppressCancellationThrow();
+                        if (cancelled) return;
+
+                        ProcessMicrophone();
+
+                        wavRemotesBuffer.Clear();
+
+                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in trackManager.RemoteStreams)
+                            ProcessElement(key, value.stream, value.source);
+
+                        wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
+                    }
+                    catch
+                    {
+                        wavRemoteUpdateCts?.Cancel();
+                        break;
+                    }
+
+                return;
+
+                void ProcessMicrophone()
+                {
+                    Option<MicrophoneRtcAudioSource> currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
+
+                    if (currentMicrophoneOption.Has == false)
+                    {
+                        wavMicrophoneStatus.Value = "Is Not Recording";
+                        return;
+                    }
+
+                    MicrophoneRtcAudioSource source = currentMicrophoneOption.Value;
+                    WavTeeControl wavTeeControl = source.WavTeeControl;
+                    Result result = wavTeeControl.IsWavActive != hasWavMicrophoneIntention ? wavTeeControl.Toggle() : Result.SuccessResult();
+                    string message;
+
+                    if (result.Success)
+                    {
+                        bool isActive = wavTeeControl.IsWavActive;
+                        message = isActive ? "Writing" : "Sleep";
+                    }
+                    else { message = result.ErrorMessage!; }
+
+                    wavMicrophoneStatus.Value = message;
+                }
+
+                void ProcessElement(StreamKey key, Weak<AudioStream> stream, LivekitAudioSource source)
+                {
+                    Option<AudioStream> streamOption = stream.Resource;
+
+                    if (streamOption.Has)
+                    {
+                        Result result = streamOption.Value.WavTeeControl.IsWavActive != hasWavRemoteIntention
+                            ? streamOption.Value.WavTeeControl.Toggle()
+                            : Result.SuccessResult();
+
+                        string name = $"Stream {key.identity}";
+                        string message = string.Empty;
+
+                        if (result.Success)
+                        {
+                            var isActive = streamOption.Value.WavTeeControl.IsWavActive;
+                            message = isActive ? "Writing" : "Sleep";
+                        }
+                        else
+                        {
+                            message = result.ErrorMessage!;
+                            ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot toggle wav stream: {result.ErrorMessage}");
+                        }
+
+                        wavRemotesBuffer.Add((name, message));
+                    }
+
+                    {
+                        Result toggleResult = source.IsWavActive != hasWavRemoteIntention
+                            ? source.ToggleRecordWavOutput()
+                            : Result.SuccessResult();
+
+                        if (toggleResult.Success == false)
+                            ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot toggle wav output: {toggleResult.ErrorMessage}");
+
+                        string name = $"Stream {key.identity}";
+                        string message = toggleResult.Success ? "Success" : toggleResult.ErrorMessage!;
+                        wavRemotesBuffer.Add((name, message));
+                    }
+                }
+            }
 
             async UniTaskVoid AutoUpdateTriggerAsync(bool enable)
             {
@@ -60,7 +197,6 @@ namespace DCL.PluginSystem.Global
                 {
                     autoUpdateCts = autoUpdateCts.SafeRestart();
                     CancellationToken current = autoUpdateCts.Token;
-                    TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
                     while (current.IsCancellationRequested == false)
                     {
@@ -80,7 +216,7 @@ namespace DCL.PluginSystem.Global
 
             void UpdateWidget()
             {
-                if (trackManager == null) return;
+                unityOutputSampleRate.Value = (ulong)UnityEngine.AudioSettings.outputSampleRate;
 
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
@@ -103,6 +239,7 @@ namespace DCL.PluginSystem.Global
                 remoteSpeakers.Value = (ulong)infoBuffer.Count;
 
                 speakersBuffer.Clear();
+
                 foreach (StreamInfo<AudioStreamInfo> streamInfo in infoBuffer)
                 {
                     speakersBuffer.Add((streamInfo.key.identity, $"SampleRate - {streamInfo.info.sampleRate}"));
@@ -111,7 +248,6 @@ namespace DCL.PluginSystem.Global
 
                 speakersInfo.SetAndUpdate(speakersBuffer);
             }
-
         }
 
         public void Dispose()

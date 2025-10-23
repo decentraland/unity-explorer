@@ -11,7 +11,7 @@ using Utility;
 
 namespace DCL.VoiceChat.Services
 {
-    public class RPCCommunityVoiceChatService : ICommunityVoiceService
+    public class RPCCommunityVoiceChatService : RPCSocialServiceBase, ICommunityVoiceService
     {
         /// <summary>
         ///     Timeout used for foreground operations
@@ -25,91 +25,71 @@ namespace DCL.VoiceChat.Services
         private const string REJECT_SPEAKER_COMMUNITY_VOICE_CHAT = "RejectSpeakRequestInCommunityVoiceChat";
         private const string DEMOTE_FROM_SPEAKER_COMMUNITY_VOICE_CHAT = "DemoteSpeakerInCommunityVoiceChat";
         private const string KICK_FROM_COMMUNITY_VOICE_CHAT = "KickPlayerFromCommunityVoiceChat";
+        private const string MUTE_SPEAKER_FROM_COMMUNITY_VOICE_CHAT = "MuteSpeakerFromCommunityVoiceChat";
         private const string END_COMMUNITY_VOICE_CHAT = "EndCommunityVoiceChat";
         private const string SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES = "SubscribeToCommunityVoiceChatUpdates";
 
-        private readonly IRPCSocialServices socialServiceRPC;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IWebRequestController webRequestController;
         private readonly string activeCommunityVoiceChatsUrl;
-        private CancellationTokenSource subscriptionCts = new();
-        private bool isServiceDisabled = false;
+        private CancellationTokenSource subscriptionCts = new ();
 
         public event Action<CommunityVoiceChatUpdate>? CommunityVoiceChatUpdateReceived;
         public event Action<ActiveCommunityVoiceChatsResponse>? ActiveCommunityVoiceChatsFetched;
-
-        public event Action? Reconnected;
-        public event Action? Disconnected;
 
         public RPCCommunityVoiceChatService(
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource) : base(socialServiceRPC, ReportCategory.COMMUNITY_VOICE_CHAT)
         {
-            this.socialServiceRPC = socialServiceRPC;
             this.socialServiceEventBus = socialServiceEventBus;
             this.webRequestController = webRequestController;
-            this.activeCommunityVoiceChatsUrl = urlsSource.Url(DecentralandUrl.ActiveCommunityVoiceChats);
+            activeCommunityVoiceChatsUrl = urlsSource.Url(DecentralandUrl.ActiveCommunityVoiceChats);
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
             socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
         }
 
-        private void OnTransportConnected()
-        {
-            if (!isServiceDisabled)
-            {
-                SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
-                FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
-            }
-        }
-
-        public void Dispose()
+        public override void Dispose()
         {
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
             socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
             subscriptionCts.SafeCancelAndDispose();
+            base.Dispose();
+        }
+
+        private void OnTransportConnected()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+            FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
         }
 
         private void OnTransportClosed()
         {
             subscriptionCts = subscriptionCts.SafeRestart();
-            Disconnected?.Invoke();
         }
 
         private void OnTransportReconnected()
         {
-            if (!isServiceDisabled)
-            {
-                Reconnected?.Invoke();
-                SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
-                FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
-            }
-        }
-
-        private void ThrowIfServiceDisabled()
-        {
-            if (isServiceDisabled)
-            {
-                //The caller should have proper error handling
-                throw new InvalidOperationException("Voice chat service is disabled due to connection failures.");
-            }
+            subscriptionCts = subscriptionCts.SafeRestart();
+            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+            FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
         }
 
         public async UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
             var payload = new StartCommunityVoiceChatPayload
             {
-                CommunityId = communityId
+                CommunityId = communityId,
             };
 
-            StartCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            StartCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                               .CallUnaryProcedure<StartCommunityVoiceChatResponse>(START_COMMUNITY_VOICE_CHAT, payload)
                                                                               .AttachExternalCancellation(ct)
                                                                               .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -119,63 +99,58 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new JoinCommunityVoiceChatPayload()
+
+            var payload = new JoinCommunityVoiceChatPayload
             {
-                CommunityId = communityId
+                CommunityId = communityId,
             };
 
-            JoinCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
-                                                                              .CallUnaryProcedure<JoinCommunityVoiceChatResponse>(JOIN_COMMUNITY_VOICE_CHAT, payload)
-                                                                              .AttachExternalCancellation(ct)
-                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+            JoinCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                             .CallUnaryProcedure<JoinCommunityVoiceChatResponse>(JOIN_COMMUNITY_VOICE_CHAT, payload)
+                                                                             .AttachExternalCancellation(ct)
+                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }
 
         public async UniTask<EndCommunityVoiceChatResponse> EndCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new EndCommunityVoiceChatPayload()
+
+            var payload = new EndCommunityVoiceChatPayload
             {
-                CommunityId = communityId
+                CommunityId = communityId,
             };
 
-            EndCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
-                                                                              .CallUnaryProcedure<EndCommunityVoiceChatResponse>(END_COMMUNITY_VOICE_CHAT, payload)
-                                                                              .AttachExternalCancellation(ct)
-                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+            EndCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                            .CallUnaryProcedure<EndCommunityVoiceChatResponse>(END_COMMUNITY_VOICE_CHAT, payload)
+                                                                            .AttachExternalCancellation(ct)
+                                                                            .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }
 
         public async UniTask<ActiveCommunityVoiceChatsResponse> GetActiveCommunityVoiceChatsAsync(CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
-            var result = await webRequestController
-                .SignedFetchGetAsync(activeCommunityVoiceChatsUrl, string.Empty, ct)
-                .CreateFromJson<ActiveCommunityVoiceChatsResponse>(WRJsonParser.Newtonsoft);
+            ActiveCommunityVoiceChatsResponse result = await webRequestController
+                                                            .SignedFetchGetAsync(activeCommunityVoiceChatsUrl, string.Empty, ct)
+                                                            .CreateFromJson<ActiveCommunityVoiceChatsResponse>(WRJsonParser.Newtonsoft);
 
             return result;
         }
 
         public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, bool isRequestingToSpeak, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new RequestToSpeakInCommunityVoiceChatPayload()
+
+            var payload = new RequestToSpeakInCommunityVoiceChatPayload
             {
                 CommunityId = communityId,
-                IsRaisingHand = isRequestingToSpeak
+                IsRaisingHand = isRequestingToSpeak,
             };
 
-            RequestToSpeakInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            RequestToSpeakInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                          .CallUnaryProcedure<RequestToSpeakInCommunityVoiceChatResponse>(REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT, payload)
                                                                                          .AttachExternalCancellation(ct)
                                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -185,16 +160,15 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new PromoteSpeakerInCommunityVoiceChatPayload()
+
+            var payload = new PromoteSpeakerInCommunityVoiceChatPayload
             {
                 CommunityId = communityId,
-                UserAddress = userAddress
+                UserAddress = userAddress,
             };
 
-            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                          .CallUnaryProcedure<PromoteSpeakerInCommunityVoiceChatResponse>(PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
                                                                                          .AttachExternalCancellation(ct)
                                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -204,16 +178,15 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<RejectSpeakRequestInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new RejectSpeakRequestInCommunityVoiceChatPayload()
+
+            var payload = new RejectSpeakRequestInCommunityVoiceChatPayload
             {
                 CommunityId = communityId,
-                UserAddress = userAddress
+                UserAddress = userAddress,
             };
 
-            RejectSpeakRequestInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            RejectSpeakRequestInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                              .CallUnaryProcedure<RejectSpeakRequestInCommunityVoiceChatResponse>(REJECT_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
                                                                                              .AttachExternalCancellation(ct)
                                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -223,16 +196,15 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<DemoteSpeakerInCommunityVoiceChatResponse> DemoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new DemoteSpeakerInCommunityVoiceChatPayload()
+
+            var payload = new DemoteSpeakerInCommunityVoiceChatPayload
             {
                 CommunityId = communityId,
-                UserAddress = userAddress
+                UserAddress = userAddress,
             };
 
-            DemoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            DemoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                         .CallUnaryProcedure<DemoteSpeakerInCommunityVoiceChatResponse>(DEMOTE_FROM_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
                                                                                         .AttachExternalCancellation(ct)
                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -242,19 +214,37 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<KickPlayerFromCommunityVoiceChatResponse> KickPlayerFromCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
-            ThrowIfServiceDisabled();
-
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new KickPlayerFromCommunityVoiceChatPayload()
+
+            var payload = new KickPlayerFromCommunityVoiceChatPayload
             {
                 CommunityId = communityId,
-                UserAddress = userAddress
+                UserAddress = userAddress,
             };
 
-            KickPlayerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+            KickPlayerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                                        .CallUnaryProcedure<KickPlayerFromCommunityVoiceChatResponse>(KICK_FROM_COMMUNITY_VOICE_CHAT, payload)
                                                                                        .AttachExternalCancellation(ct)
                                                                                        .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<MuteSpeakerFromCommunityVoiceChatResponse> MuteSpeakerFromCommunityVoiceChatAsync(string communityId, string userAddress, bool muted, CancellationToken ct)
+        {
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            var payload = new MuteSpeakerFromCommunityVoiceChatPayload
+            {
+                CommunityId = communityId,
+                UserAddress = userAddress,
+                Muted = muted,
+            };
+
+            MuteSpeakerFromCommunityVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                                        .CallUnaryProcedure<MuteSpeakerFromCommunityVoiceChatResponse>(MUTE_SPEAKER_FROM_COMMUNITY_VOICE_CHAT, payload)
+                                                                                        .AttachExternalCancellation(ct)
+                                                                                        .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }
@@ -266,7 +256,7 @@ namespace DCL.VoiceChat.Services
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
                 IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
-                    socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
+                    socialServiceRPC.Module().CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
 
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Attempting to open community voice chat updates stream");
 
@@ -285,11 +275,9 @@ namespace DCL.VoiceChat.Services
 
                             CommunityVoiceChatUpdateReceived?.Invoke(response);
                         }
+
                         // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                        catch (Exception e) when (e is not OperationCanceledException)
-                        {
-                            ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-                        }
+                        catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
                     }
                 }
                 catch (InvalidOperationException e) when (e.Message.Contains("undefined"))
@@ -310,35 +298,12 @@ namespace DCL.VoiceChat.Services
             try
             {
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Fetching active community voice chats");
-                var response = await GetActiveCommunityVoiceChatsAsync(ct);
+                ActiveCommunityVoiceChatsResponse response = await GetActiveCommunityVoiceChatsAsync(ct);
                 ActiveCommunityVoiceChatsFetched?.Invoke(response);
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Fetched {response.data.total} active community voice chats");
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-            }
-        }
-
-        private async UniTask KeepServerStreamOpenAsync(Func<UniTask> openStreamFunc, CancellationToken ct)
-        {
-            // We try to keep the stream open until cancellation is requested
-            // If for any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
-            while (!ct.IsCancellationRequested && !isServiceDisabled)
-            {
-                try
-                {
-                    // It's an endless [background] loop
-                    await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
-                    await openStreamFunc().AttachExternalCancellation(ct);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-                }
-            }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
         }
     }
 }

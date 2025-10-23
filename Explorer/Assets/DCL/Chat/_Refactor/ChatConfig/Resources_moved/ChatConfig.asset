@@ -18,6 +18,9 @@ MonoBehaviour:
   <DefaultProfileThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
   <DefaultCommunityThumbnail>k__BackingField: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   <ClearChatHistoryContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}
+  <TranslateChatMessageContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 7220580171224254d9af79abe883291c, type: 3}
+  <SeeOriginalChatMessageContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 7220580171224254d9af79abe883291c, type: 3}
+  <CopyChatMessageContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 72892de2c8c434ade8af95e8181962d9, type: 3}
   <ItemPrefab>k__BackingField: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
   <NearbyConversationIcon>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <NearbyConversationName>k__BackingField: Nearby
@@ -30,10 +33,27 @@ MonoBehaviour:
   OnlyFriendsMessage: The user you are trying to message only accepts DMs from friends.
   BlockedByOwnUserMessage: To message this user you must first unblock them.
   OnlyFriendsOwnUserMessage: Add this user as a friend to chat, or update your <b><u>DM
-    settings</b></u> to connect with everyone.
+    & Call settings</b></u> to connect with everyone.
   CheckingUserStatusMessage: Checking user status...
   InputUnfocusedMessages: Press Enter to chat
   InputFocusedMessages: Write a message
   ProfileFetchErrorMessage: Couldn't fetch user profile. Please try again later.
+  ForceEnableTranslations: 0
+  DefaultLanguage: 1
+  <TranslationMaxRetries>k__BackingField: 1
+  <TranslationTimeoutSeconds>k__BackingField: 12
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
+  <ContextMenuOffset>k__BackingField: {x: -220, y: 100}
+  <ContextMenuWidth>k__BackingField: 218
+  <ElementsSpacing>k__BackingField: 5
+  <VerticalPadding>k__BackingField:
+    m_Left: 10
+    m_Right: 10
+    m_Top: 8
+    m_Bottom: 16
+  ChatContextMenuCopyText: Copy
+  ChatContextMenuSeeOriginalText: See Original
+  ChatContextMenuTranslateText: Translate
+  TranslationMemoryCapacity: 300
+  TranslationCacheCapacity: 300

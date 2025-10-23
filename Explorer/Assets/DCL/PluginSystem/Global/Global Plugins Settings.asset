@@ -53,6 +53,7 @@ MonoBehaviour:
   - rid: 648265872610426982
   - rid: 657752310186246267
   - rid: 6478896861045588059
+  - rid: 6169970366055448665
   references:
     version: 2
     RefIds:
@@ -258,7 +259,6 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
-        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
         <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
@@ -431,12 +431,6 @@ MonoBehaviour:
       data:
         RemoteAvatarColliderPrefab:
           m_AssetGUID: 9c4c0e79124f01744a5f969e08ad0370
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        DebugRoomIndicator:
-          m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -671,6 +665,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GenericContextMenuToggleWithTitleIconAndCheckPrefab:
+          m_AssetGUID: de88bd0dde8feda4393664330ac8afb4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         GenericContextMenuSubMenuButtonPrefab:
           m_AssetGUID: 497073cedbc8540c2b17104cfee96158
           m_SubObjectName: 
@@ -698,12 +698,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        nametagView:
-          m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         celShadingMaterial:
           m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
           m_SubObjectName: 
@@ -719,12 +713,6 @@ MonoBehaviour:
         startFadeDistanceDithering: 2
         endFadeDistanceDithering: 0.8
         defaultMaterialCapacity: 100
-        <ChatBubbleConfiguration>k__BackingField:
-          m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
           m_SubObjectName: 
@@ -733,6 +721,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <AvatarRandomizerSettingsRef>k__BackingField:
           m_AssetGUID: e18034962a56eac40ab5df62e159c314
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NametagHolder>k__BackingField:
+          m_AssetGUID: 3df1198e2008a4f0abdf407103681813
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -783,6 +777,15 @@ MonoBehaviour:
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 495d936d8dfe78444abfd5ff3e260159, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 6169970366055448665
+      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
+      data:
+        <MediaPlayerPrefab>k__BackingField:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -938,6 +941,32 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <FallbackFonts>k__BackingField:
+        - m_AssetGUID: 404f87890895f5f4bb7f733c75373620
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 65718726e8675f3438790051aed58b6a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 1801d33e8e688a74ea5dd704a91cfac1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 4cc5b9c92b8be214dbbd4f1f502110de
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 82f86e6c95d775f4e8488447b6885323
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
         <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}

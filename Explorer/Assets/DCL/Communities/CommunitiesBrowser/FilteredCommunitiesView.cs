@@ -2,6 +2,7 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
+using DCL.VoiceChat;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -35,6 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
+        private ICommunityCallOrchestrator? communityVoiceChatOrchestrator;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
@@ -56,10 +58,11 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
+        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService, ICommunityCallOrchestrator orchestrator)
         {
             browserStateService = communitiesBrowserStateService;
             thumbnailLoader = newThumbnailLoader;
+            communityVoiceChatOrchestrator = orchestrator;
         }
 
         public void SetActiveViewSection(ActiveViewSection newActiveSection)
@@ -180,9 +183,13 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             cardView.SetActionButtonsState(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none, isStreaming, hasJoined);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token, true).Forget();
             cardView.SetActionLoadingActive(false);
-            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+
+            if (communityVoiceChatOrchestrator?.CurrentCommunityId.Value == communityData.id)
+                cardView.ConfigureListeningTooltip();
+            else
+                cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
 
             // Setup card events
             cardView.MainButtonClicked -= OnCommunityProfileOpened;

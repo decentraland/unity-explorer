@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     /// <summary>
     ///     Propagates data related to the character from the global world to the scene world
     /// </summary>
-    public class CharacterDataPropagationUtility : ICharacterDataPropagationUtility
+    public class CharacterDataPropagationUtility
     {
         private readonly IComponentPool<SDKProfile> profileSDKSubProductPool;
 

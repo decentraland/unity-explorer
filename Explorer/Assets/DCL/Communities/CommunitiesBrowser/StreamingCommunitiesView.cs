@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.VoiceChat;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private readonly List<string> streamingResultsIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
+        private ICommunityCallOrchestrator? communityCallOrchestrator;
         private ThumbnailLoader? thumbnailLoader;
 
         private void Awake()
@@ -95,8 +97,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
-            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
+
+            if (communityCallOrchestrator?.CurrentCommunityId.Value == communityData.id)
+                cardView.ConfigureListeningTooltip();
+            else
+                cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken), true).Forget();
 
             cardView.MainButtonClicked -= JoinStreamClicked;
             cardView.MainButtonClicked += JoinStreamClicked;
@@ -109,10 +116,11 @@ namespace DCL.Communities.CommunitiesBrowser
             JoinStream?.Invoke(communityId);
         }
 
-        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
+        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService, ICommunityCallOrchestrator orchestrator)
         {
             browserStateService = communitiesBrowserStateService;
             thumbnailLoader = newThumbnailLoader;
+            communityCallOrchestrator = orchestrator;
         }
     }
 }
