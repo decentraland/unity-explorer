@@ -1338,7 +1338,7 @@ PrefabInstance:
     - target: {fileID: 1050971412028866962, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: <ButtonPressedAudio>k__BackingField
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 583cf478eb03c3940b6b4c9ec76a5982, type: 2}
     - target: {fileID: 1457460172092968088, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: m_SizeDelta.x
       value: 96
