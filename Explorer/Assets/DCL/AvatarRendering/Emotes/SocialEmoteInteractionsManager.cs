@@ -1,11 +1,11 @@
-﻿
 using CodeLess.Attributes;
 using DCL.Diagnostics;
+using DCL.AvatarRendering.Emotes;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DCL.AvatarRendering.Emotes.SocialEmotes
+namespace DCL.SocialEmotes
 {
     /// <summary>
     /// Stores the state of all social emote interactions. An interaction only exists if somebody initiated it.

@@ -17,6 +17,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
+using DCL.SocialEmotes;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;

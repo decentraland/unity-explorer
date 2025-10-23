@@ -16,6 +16,7 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
+using DCL.SocialEmotes.UI;
 using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
@@ -62,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -83,7 +85,8 @@ namespace DCL.PluginSystem.Global
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -105,6 +108,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
+            this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -167,6 +171,8 @@ namespace DCL.PluginSystem.Global
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 
             mvcManager.RegisterController(emotesWheelController);
+
+            mvcManager.RegisterController(socialEmoteOutcomeMenuController);
         }
 
         [Serializable]

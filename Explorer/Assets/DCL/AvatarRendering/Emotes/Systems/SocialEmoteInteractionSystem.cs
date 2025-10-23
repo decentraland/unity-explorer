@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.SocialEmotes;
 using ECS.Abstract;
 using UnityEngine;
 

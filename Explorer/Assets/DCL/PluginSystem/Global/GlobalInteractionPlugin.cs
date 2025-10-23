@@ -11,6 +11,7 @@ using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
+using DCL.SocialEmotes.UI;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly EmotesBus emotesBus;
+        private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -46,7 +48,8 @@ namespace DCL.PluginSystem.Global
             IEventSystem eventSystem,
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade,
-            EmotesBus emotesBus)
+            EmotesBus emotesBus,
+            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
@@ -55,6 +58,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
             this.emotesBus = emotesBus;
+            this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
         }
 
         public void Dispose() { }
@@ -97,7 +101,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, emotesBus);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, emotesBus, socialEmoteOutcomeMenuController);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
