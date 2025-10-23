@@ -178,12 +178,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             const float SPEED_THRESHOLD = 0.447f;
             const float SPEED_THRESHOLD_SQ = SPEED_THRESHOLD * SPEED_THRESHOLD;
 
-            float horizontalSpeed = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
+            float horizontalSpeedSq = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
             float verticalSpeed = rigidTransform.GravityVelocity.y;
-            bool isFalling = verticalSpeed < 0 && !rigidTransform.IsGrounded;
 
-            bool shouldCancelEmote = horizontalSpeed > SPEED_THRESHOLD_SQ ||
-                                     (Mathf.Abs(verticalSpeed) > SPEED_THRESHOLD && (isFalling || verticalSpeed > 0));
+            bool shouldCancelEmote = horizontalSpeedSq > SPEED_THRESHOLD_SQ ||
+                                     // If the v speed is negative only cancel emotes when not grounded
+                                     (Mathf.Abs(verticalSpeed) > SPEED_THRESHOLD && (verticalSpeed > 0 || !rigidTransform.IsGrounded));
 
             if (shouldCancelEmote) StopEmote(ref emoteComponent, avatarView);
         }
