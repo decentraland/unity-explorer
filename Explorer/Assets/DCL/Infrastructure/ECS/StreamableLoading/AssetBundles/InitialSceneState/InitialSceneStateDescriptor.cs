@@ -9,6 +9,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
@@ -21,6 +22,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private World GlobalWorld;
         private string SceneID;
+        private AssetBundleManifestVersion AssetBundleManifestVersion;
         private IGltfContainerAssetsCache assetsCache;
 
         private bool AllAssetsInstantiated;
@@ -50,7 +52,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
                 AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}", assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
+                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}",
+                        assetBundleManifestVersion: AssetBundleManifestVersion,
+                        parentEntityID: SceneID),
                     PartitionComponent.TOP_PRIORITY);
             }
 
@@ -72,11 +76,13 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             return unsuportedStaticSceneAB;
         }
 
-        public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, string sceneID)
+        public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, EntityDefinitionBase entityDefinition)
         {
             InitialSceneStateDescriptor suportedStaticSceneAB = new InitialSceneStateDescriptor();
             suportedStaticSceneAB.IsSupported = true;
-            suportedStaticSceneAB.SceneID = sceneID;
+            suportedStaticSceneAB.SceneID = entityDefinition.id;
+            suportedStaticSceneAB.AssetBundleManifestVersion = entityDefinition.assetBundleManifestVersion;
+
             suportedStaticSceneAB.GlobalWorld = world;
             suportedStaticSceneAB.assetsCache = assetsCache;
             suportedStaticSceneAB.CreateEmptyAssetBundleData();

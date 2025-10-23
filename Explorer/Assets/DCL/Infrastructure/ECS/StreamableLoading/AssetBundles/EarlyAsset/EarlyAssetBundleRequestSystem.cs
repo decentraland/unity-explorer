@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Ipfs;
+using DCL.Utility;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -36,7 +37,9 @@ namespace DefaultNamespace
         private void StartEarlyDownload(Entity entity, ref EarlyAssetBundleFlag earlySceneFlag)
         {
             AssetBundlePromise promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash(earlySceneFlag.AsssetBundleHash, assetBundleManifestVersion: AssetBundleManifestVersion.CreateManualManifest("v1", "v1", "1")),
+                GetAssetBundleIntention.FromHash($"staticscene_{earlySceneFlag.Scene.id}{PlatformUtils.GetCurrentPlatform()}",
+                    assetBundleManifestVersion: earlySceneFlag.Scene.assetBundleManifestVersion,
+                    parentEntityID: earlySceneFlag.Scene.id),
                 PartitionComponent.TOP_PRIORITY);
 
             requestDone = true;

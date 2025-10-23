@@ -1,3 +1,4 @@
+using DCL.Ipfs;
 using System;
 
 namespace DefaultNamespace
@@ -8,12 +9,12 @@ namespace DefaultNamespace
 
     public struct EarlyAssetBundleFlag
     {
-        public string AsssetBundleHash;
+        public EntityDefinitionBase Scene;
 
-        public static EarlyAssetBundleFlag CreateAssetBundleRequest(string assetBundleHash) =>
+        public static EarlyAssetBundleFlag CreateAssetBundleRequest(EntityDefinitionBase scene) =>
             new ()
             {
-                AsssetBundleHash = assetBundleHash,
+                Scene = scene,
             };
     }
 }

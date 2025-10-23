@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
         public void InitializeStaticSceneAssetBundle(Entity entity, in SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (sceneDefinitionComponent.Definition.SupportInitialSceneState())
-                World.Add(entity, InitialSceneStateDescriptor.CreateSupported(World, assetsCache, sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x.ToString()));
+                World.Add(entity, InitialSceneStateDescriptor.CreateSupported(World, assetsCache, sceneDefinitionComponent.Definition));
             else
                 World.Add(entity, InitialSceneStateDescriptor.CreateUnsupported(sceneDefinitionComponent.Definition.id));
         }
