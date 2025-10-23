@@ -173,8 +173,9 @@ namespace DCL.VoiceChat
         {
             if (currentVoiceChatType.Value != VoiceChatType.COMMUNITY)
             {
-                SetActiveCallService(VoiceChatType.PRIVATE);
                 privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
+                if (update.Status is not (PrivateVoiceChatStatus.VoiceChatEnded or PrivateVoiceChatStatus.VoiceChatExpired or PrivateVoiceChatStatus.VoiceChatRejected))
+                    SetActiveCallService(VoiceChatType.PRIVATE);
             }
         }
 

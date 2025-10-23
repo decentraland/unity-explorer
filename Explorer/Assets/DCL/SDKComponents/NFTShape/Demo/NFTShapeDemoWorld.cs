@@ -7,17 +7,17 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
-using DCL.SDKComponents.VideoPlayer;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
@@ -44,6 +44,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
         {
             var buffer = new EntityEventBuffer<NftShapeRendererComponent>(1);
 
+            IWebRequestController webRequestController = IWebRequestController.DEFAULT;
+
             origin = new DemoWorld(
                 world,
                 w =>
@@ -58,16 +60,14 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     }
                 },
                 w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
-                w => new LoadNFTShapeSystem(
+                w => new LoadNFTTypeSystem(
                     w,
-                    new NftShapeCache(),
-                    IWebRequestController.DEFAULT,
-                    IDiskCache<Texture2DData>.Null.INSTANCE,
+                    new NoCache<NftTypeResult, GetNFTTypeIntention>(false, false),
+                    webRequestController,
                     true,
-                    VideoTextureFactory.CreateVideoTexturesPool(),
                     new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
                 ).InitializeAndReturnSelf(),
-                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),
+                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY)), new MockMediaFactory()),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
                 w => new VisibilityNftShapeSystem(w, buffer)
             );
