@@ -73,6 +73,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
+            CancelEmotesOnMovePlayerToInvokedQuery(World);
             CancelEmotesByMovementQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World);
@@ -92,14 +93,29 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
-        /// To support triggering teleport and emotes in the same frame, we have to exclude all emote related intents.
-        /// That includes intentions used to load the emote assets, which can take several frames.
+        /// Doesn't handle movePlayerTo calls.
         /// </summary>
         [Query]
         [All(typeof(PlayerTeleportIntent))]
-        [None(typeof(CharacterEmoteIntent), typeof(CharacterWaitingSceneEmoteLoading))]
+        [None(typeof(CharacterEmoteIntent), typeof(MovePlayerToInfo))]
         private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            StopEmote(ref emoteComponent, avatarView);
+        }
+
+        /// <summary>
+        /// Stops emote playback when movePlayerTo is invoked.<br/>
+        /// Will not cancel a scene emote that was triggered the same frame movePlayerTo was invoked.
+        /// </summary>
+        [Query]
+        [All(typeof(PlayerTeleportIntent))]
+        [None(typeof(CharacterEmoteIntent))]
+        private void CancelEmotesOnMovePlayerToInvoked(Entity entity, in MovePlayerToInfo movePlayerTo, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            if (World.TryGet(entity, out CharacterWaitingSceneEmoteLoading waitingEmote) &&
+                movePlayerTo.FrameCount == waitingEmote.FrameCount)
+                return;
+
             StopEmote(ref emoteComponent, avatarView);
         }
 
