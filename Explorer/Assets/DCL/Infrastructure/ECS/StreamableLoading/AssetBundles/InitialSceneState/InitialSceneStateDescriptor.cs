@@ -1,5 +1,6 @@
     using Arch.Core;
-using DCL.Diagnostics;
+    using Cysharp.Threading.Tasks;
+    using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utility;
 using ECS.Prioritization.Components;
@@ -89,8 +90,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             return suportedStaticSceneAB;
         }
 
-
-
         public void RepositionStaticAssets(GameObject instantiatedLOD)
         {
             for (var i = 0; i < AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count; i++)
@@ -119,7 +118,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 if (bridgingBetweenScene)
                     assetsCache.PutInBridge(valueTuple.Item2);
                 else
-                    assetsCache.PutInCache(valueTuple.Item2);
+                {
+                    if (assetsAreInUse)
+                        assetsCache.PutInCache(valueTuple.Item2);
+                }
 
                 if(assetsAreInUse)
                     assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);

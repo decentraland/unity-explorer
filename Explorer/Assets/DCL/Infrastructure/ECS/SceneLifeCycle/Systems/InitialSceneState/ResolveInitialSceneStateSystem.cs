@@ -59,6 +59,8 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
                 staticSceneAssetBundle.AssetBundleData = Result;
                 if (Result.Succeeded )
                 {
+                    //Dereferencing, because no one is using it yet, we just acquired it. The GLTFContainerAsset will start using it down here
+                    //They will be referened in
                     Result.Asset.Dereference();
 
                     foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset!.InitialSceneStateMetadata!.Value.assetHash)

@@ -88,9 +88,12 @@ namespace DCL.LOD.Systems
             initialSceneStateDescriptor.RepositionStaticAssets(instantiatedLOD);
             instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
 
+
             var newLod = new LODAsset(instantiatedLOD, initialSceneStateDescriptor.AssetBundleData.Asset,
                 GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
+            //Adding a manual reference since we didnt get this object through the regular AB flow
+            initialSceneStateDescriptor.AssetBundleData.Asset.AddReference();
             sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
         }
 

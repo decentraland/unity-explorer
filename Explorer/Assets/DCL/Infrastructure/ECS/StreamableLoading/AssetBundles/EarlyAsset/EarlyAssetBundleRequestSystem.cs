@@ -60,8 +60,8 @@ namespace DefaultNamespace
 
                 if (Result.Succeeded)
                 {
+                    //Dereferencing, because no one is using it yet
                     Result.Asset.Dereference();
-                    Debug.Log("JUANI THE ASSET BUNDLE WAS LOADED IN MEMORY");
                 }
             }
         }
