@@ -39,6 +39,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
 
+            if (emote.IsLoading)
+                return;
+
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
 
