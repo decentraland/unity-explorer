@@ -393,7 +393,8 @@ namespace DCL.PluginSystem.Global
                 upscalingController,
                 isTranslationChatEnabled,
                 assetsProvisioner,
-                eventBus);
+                eventBus,
+                appArgs);
 
             await settingsController.InitializeAsync();
 
