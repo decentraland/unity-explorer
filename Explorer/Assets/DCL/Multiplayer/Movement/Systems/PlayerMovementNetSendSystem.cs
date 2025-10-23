@@ -23,12 +23,12 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
 
         private readonly MultiplayerMovementMessageBus messageBus;
-        private readonly IMultiplayerMovementSettings settings;
+        private readonly MultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
 
         private float sendRate;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings,
+        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, MultiplayerMovementSettings settings,
             MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;

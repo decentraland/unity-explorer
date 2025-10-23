@@ -50,7 +50,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
+        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade), typeof(BannedSceneComponent))]
         private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
             ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent, ref InitialSceneStateDescriptor initialSceneState)
         {

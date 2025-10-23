@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
 using ECS;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
 using Unity.PerformanceTesting;
@@ -41,7 +42,6 @@ namespace DCL.ResourcesUnloading.Tests
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
-        private NftShapeCache nftShapeCache;
         private IEmoteStorage emoteStorage;
         private IProfileCache profileCache;
         private IComponentPoolsRegistry poolsRegistry;
@@ -67,7 +67,6 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new IRealmData.Fake(), new List<GameObject>());
-            nftShapeCache = new NftShapeCache();
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
 
@@ -84,7 +83,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(lodAssets);
             cacheCleaner.Register(roadAssets);
-            cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(profileCache);
             cacheCleaner.Register(jsSourcesCache);
@@ -201,7 +199,7 @@ namespace DCL.ResourcesUnloading.Tests
         private void FillCachesWithElements(string hashID)
         {
             var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            texturesCache.Add(textureIntention, new Texture2DData(new Texture2D(1, 1)));
+            texturesCache.Add(textureIntention, new TextureData(new Texture2D(1, 1)));
 
             var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
             var audioClip = new AudioClipData(AudioClip.Create(hashID, 1, 1, 2000, false));

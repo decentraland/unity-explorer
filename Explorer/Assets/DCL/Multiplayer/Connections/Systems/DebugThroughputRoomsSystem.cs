@@ -170,7 +170,7 @@ namespace DCL.Multiplayer.Connections.Systems
                 bufferBunch.Outgoing.Clear();
             }
 
-            private static void CollectAndDraw(IThroughputBuffer buffer, ElementBinding<ulong> binding)
+            private static void CollectAndDraw(ThroughputBuffer buffer, ElementBinding<ulong> binding)
             {
                 ulong incomingBytes = buffer.CurrentAmount();
                 buffer.Clear();

@@ -22,7 +22,7 @@ namespace DCL.Chat.ChatCommands
                                                .SuppressCancellationThrow()
                                                .SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
-            switch (result.Value.Result)
+            switch (result.Value.Result.ChatUserState)
             {
                 case PrivateConversationUserStateService.ChatUserState.CONNECTED:
                     return CallButtonPresenter.OtherUserCallStatus.USER_AVAILABLE;

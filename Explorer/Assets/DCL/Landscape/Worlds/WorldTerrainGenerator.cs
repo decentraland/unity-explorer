@@ -2,6 +2,7 @@
 using DCL.Landscape.Settings;
 using DCL.Utilities;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -33,6 +34,7 @@ namespace DCL.Landscape
         public int OccupancyMapSize { get; private set; }
         public int OccupancyFloor { get; private set; }
         public float MaxHeight { get; private set; }
+        public IReadOnlyList<Transform> Cliffs { get; private set; }
 
         public void Dispose()
         {
@@ -50,6 +52,9 @@ namespace DCL.Landscape
             await Trees.LoadAsync($"{Application.streamingAssetsPath}/WorldsTrees.bin");
             IsInitialized = true;
         }
+
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
 
         public void SwitchVisibility(bool isVisible)
         {
@@ -74,7 +79,7 @@ namespace DCL.Landscape
 
             factory.CreateOcean(rootGo);
 
-            boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
+            Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
 
             if (processReport != null) processReport.SetProgress(0.5f);
