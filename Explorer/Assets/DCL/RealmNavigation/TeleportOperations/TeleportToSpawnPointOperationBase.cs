@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;

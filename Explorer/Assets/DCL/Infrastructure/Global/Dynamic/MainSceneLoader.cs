@@ -319,10 +319,17 @@ namespace Global.Dynamic
             async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
             {
                 try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
+                catch (TimeoutException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadUserFlowAsync(playerEntity, ct);
+                    else
+                        throw;
+                }
                 catch (RealmChangeException)
                 {
                     if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
-                        await LoadStartingRealmAsync(ct);
+                        await LoadUserFlowAsync(playerEntity, ct);
                     else
                         throw;
                 }
