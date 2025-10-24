@@ -14,31 +14,30 @@ namespace DCL.Diagnostics
 
                 if (!File.Exists(filePath))
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_FILE_NOT_FOUND, filePath);
+                    ReportHub.LogWarning(ReportCategory.ENGINE, string.Format(LogMatrixConstants.LOG_MATRIX_FILE_NOT_FOUND, filePath));
                     return null;
                 }
 
                 var jsonContent = File.ReadAllText(filePath);
                 if (string.IsNullOrEmpty(jsonContent))
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_FILE_EMPTY, filePath);
+                    ReportHub.LogWarning(ReportCategory.ENGINE, string.Format(LogMatrixConstants.LOG_MATRIX_FILE_EMPTY, filePath));
                     return null;
                 }
 
                 var dto = JsonUtility.FromJson<CategorySeverityMatrixDto>(jsonContent);
                 if (dto == null)
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_DESERIALIZE_FAILED, filePath);
+                    ReportHub.LogWarning(ReportCategory.ENGINE, string.Format(LogMatrixConstants.LOG_MATRIX_DESERIALIZE_FAILED, filePath));
                     return null;
                 }
 
-                ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_LOAD_SUCCESS, filePath);
+                ReportHub.LogProductionInfo(string.Format(LogMatrixConstants.LOG_MATRIX_LOAD_SUCCESS, filePath));
                 return dto;
             }
             catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.ENGINE);
-                ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_LOAD_FAILED, fileName);
                 return null;
             }
         }
