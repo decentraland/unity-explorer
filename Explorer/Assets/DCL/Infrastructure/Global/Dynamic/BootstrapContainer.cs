@@ -257,14 +257,13 @@ namespace Global.Dynamic
 
             IReportsHandlingSettings finalSettings = baseSettings;
 
-            if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixPath) && logMatrixPath != null)
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixFileName) && !string.IsNullOrEmpty(logMatrixFileName))
             {
-                string resolvedPath = LogMatrixJsonLoader.ResolveFilePath(logMatrixPath);
-                var jsonOverride = LogMatrixJsonLoader.LoadFromFile(resolvedPath);
+                var jsonOverride = LogMatrixJsonLoader.LoadFromApplicationRoot(logMatrixFileName);
 
                 if (jsonOverride != null)
                 {
-                    ReportHub.LogProductionInfo($"Applying log matrix override from: {resolvedPath}");
+                    ReportHub.LogProductionInfo($"Applying log matrix override from: {logMatrixFileName}");
                     finalSettings = new ReportsHandlingSettingsWithOverride(baseSettings, jsonOverride);
                 }
                 else
