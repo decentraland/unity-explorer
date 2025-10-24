@@ -15,8 +15,8 @@ public class AssetBundleManifestVersion
         //From v41 ISS is supported for scenes
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
 
-        internal bool? HasHashInPathValue;
-        internal bool? SupportsISS;
+        private bool? HasHashInPathValue;
+        private bool? SupportsISS;
 
 
         public bool assetBundleManifestRequestFailed;
@@ -24,8 +24,6 @@ public class AssetBundleManifestVersion
         public AssetBundleManifestVersionPerPlatform assets;
 
         private HashSet<string>? convertedFiles;
-
-        private AssetBundleManifestVersion() { }
 
         public bool HasHashInPath()
         {
@@ -64,11 +62,14 @@ public class AssetBundleManifestVersion
 
         public static AssetBundleManifestVersion CreateFailed()
         {
+            //All AB requests will fail when this occurs; its a dead end
+            var failedAssets = new AssetBundleManifestVersionPerPlatform();
+            failedAssets.SetVersion("v1", "1");
             var assetBundleManifestVersion = new AssetBundleManifestVersion
             {
                 assetBundleManifestRequestFailed = true,
+                assets = failedAssets,
             };
-
             return assetBundleManifestVersion;
         }
 
