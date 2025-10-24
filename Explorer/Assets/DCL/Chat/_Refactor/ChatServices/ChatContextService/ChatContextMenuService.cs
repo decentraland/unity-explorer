@@ -3,6 +3,7 @@ using DCL.UI;
 using MVC;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Chat.ChatServices.ChatContextService
 {
@@ -114,19 +115,16 @@ namespace DCL.Chat.ChatServices.ChatContextService
 
         private void RestartLifecycleControls()
         {
-            activeMenuCts.Cancel();
             activeMenuTcs.TrySetResult();
-            activeMenuCts.Dispose();
 
-            activeMenuCts = new CancellationTokenSource();
+            activeMenuCts = activeMenuCts.SafeRestart();
             activeMenuTcs = new UniTaskCompletionSource();
         }
 
         public void Dispose()
         {
-            activeMenuCts.Cancel();
             activeMenuTcs.TrySetResult();
-            activeMenuCts.Dispose();
+            activeMenuCts.SafeCancelAndDispose();
         }
     }
 }

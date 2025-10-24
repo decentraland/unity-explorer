@@ -60,7 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly RoomsStatus roomsStatus;
         private readonly IScenesCache scenesCache;
-        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly CharacterDataPropagationUtility characterDataPropagationUtility;
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly ThroughputBufferBunch islandThroughputBufferBunch;
         private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
             IEmoteStorage emoteStorage,
-            ICharacterDataPropagationUtility characterDataPropagationUtility,
+            CharacterDataPropagationUtility characterDataPropagationUtility,
             IComponentPoolsRegistry poolsRegistry,
             ThroughputBufferBunch islandThroughputBufferBunch,
             ThroughputBufferBunch sceneThroughputBufferBunch, IActivatableConnectiveRoom voiceChatRoom)

@@ -19,12 +19,12 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICurrentSceneInfo currentSceneInfo;
-        private readonly IRoomsStatus roomsStatus;
+        private readonly RoomsStatus roomsStatus;
         private readonly IAppArgs appArgs;
         private ConnectionStatusPanelController connectionStatusPanelController;
 
         public ConnectionStatusPanelPlugin(
-            IRoomsStatus roomsStatus,
+            RoomsStatus roomsStatus,
             ICurrentSceneInfo currentSceneInfo,
             IAssetsProvisioner assetsProvisioner,
             IAppArgs appArgs)

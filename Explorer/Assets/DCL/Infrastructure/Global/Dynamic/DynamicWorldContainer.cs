@@ -213,7 +213,7 @@ namespace Global.Dynamic
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
 
-            IEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
+            HttpEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
@@ -480,6 +480,7 @@ namespace Global.Dynamic
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
                         onlineUsersProvider,
+                        identityCache,
                         ct
                     );
 
@@ -597,7 +598,7 @@ namespace Global.Dynamic
 
             var cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
 
-            IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
+            GoogleUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
@@ -703,7 +704,7 @@ namespace Global.Dynamic
                     voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape),
+                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
@@ -873,7 +874,7 @@ namespace Global.Dynamic
                     entityParticipantTable,
                     staticContainer.RealmData,
                     remoteMetadata),
-                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController),
+                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(
                     assetsProvisioner,

@@ -27,6 +27,8 @@ namespace DCL.UI
 
         public void Show(CancellationToken ct = default)
         {
+            if (!CanvasGroup) return;
+
             CanvasGroup.DOFade(1, 0.3f).ToUniTask(cancellationToken: ct);
             CanvasGroup.interactable = true;
             CanvasGroup.blocksRaycasts = true;
@@ -34,6 +36,8 @@ namespace DCL.UI
 
         public void Hide(bool instant = false, CancellationToken ct = default)
         {
+            if (!CanvasGroup) return;
+            
             if (!instant)
                 CanvasGroup.DOFade(0, 0.3f).ToUniTask(cancellationToken: ct);
             else
