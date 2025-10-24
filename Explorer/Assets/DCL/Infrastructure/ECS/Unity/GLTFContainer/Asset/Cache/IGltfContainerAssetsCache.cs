@@ -17,6 +17,5 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         void PutInBridge(GltfContainerAsset valueTupleItem2);
 
-        void PutInCache(GltfContainerAsset valueTupleItem2);
     }
 }

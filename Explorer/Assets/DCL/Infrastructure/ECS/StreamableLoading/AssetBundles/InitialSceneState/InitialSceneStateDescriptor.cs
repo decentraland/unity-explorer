@@ -120,11 +120,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 else
                 {
                     if (assetsAreInUse)
-                        assetsCache.PutInCache(valueTuple.Item2);
+                        assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
                 }
-
-                if(assetsAreInUse)
-                    assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
         }
 

@@ -63,7 +63,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 initialSceneStateDescriptor.AnalyzeCacheState(true, sceneLODInfo.HasLOD(0));
 
-                //TODO(Juani) : This `if` is required for retro-compatibility with non Single Asset Bundles scenes.
+                //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
                 //If all scenes were built with SAB scenes, we could remove it
                 if (initialSceneStateDescriptor.IsValid())
                 {
