@@ -50,6 +50,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 controller.SetPlatformVisible(false);
                 controller.ResetAvatarMovement();
                 controller.ResetZoom();
+                
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
                 var source = controller.CurrentRenderTexture;
@@ -197,13 +198,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         {
             var profile = await selfProfile.ProfileAsync(ct);
             return profile?.UserId;
-        }
-
-        private GraphicsFormat PickUNorm8()
-        {
-            if (SystemInfo.IsFormatSupported(GraphicsFormat.B8G8R8A8_UNorm, GraphicsFormatUsage.Render))
-                return GraphicsFormat.B8G8R8A8_UNorm;
-            return GraphicsFormat.R8G8B8A8_UNorm;
         }
 
         private GraphicsFormat OutFmt()
