@@ -10,6 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class ChatMessagesBusAnalyticsDecorator : IChatMessagesBus
     {
+        private static readonly JsonArray MENTION_WALLET_IDS = new ();
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IChatMessagesBus core;
@@ -41,7 +42,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin, timestamp);
 
-            bool isMentionMessage = CheckIfIsMention(message, out JsonArray mentions);
+            bool isMentionMessage = CheckIfIsMention(message);
 
             JsonObject jsonObject = new JsonObject
                 {
@@ -49,7 +50,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
                     { "is_mention", isMentionMessage},
-                    { "mentions", mentions },
+                    { "mentions", MENTION_WALLET_IDS },
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
                     // { "emoji_count", emoji_count },
                 };
@@ -66,9 +67,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
         }
 
-        private bool CheckIfIsMention(string message, out JsonArray mentions)
+        private bool CheckIfIsMention(string message)
         {
-            mentions = new JsonArray();
+            MENTION_WALLET_IDS.Clear();
             var isValidMention = false;
             var matches = USERNAME_REGEX.Matches(message);
 
@@ -82,7 +83,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
                 if (profile != null)
                 {
-                    mentions.Add(profile.UserId);
+                    MENTION_WALLET_IDS.Add(profile.UserId);
                     //returning a valid mention only if at least one of the mentions are a real user
                     isValidMention = true;
                 }
