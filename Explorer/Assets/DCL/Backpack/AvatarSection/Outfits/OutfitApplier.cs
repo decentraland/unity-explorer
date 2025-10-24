@@ -5,7 +5,7 @@ using Runtime.Wearables;
 
 namespace DCL.Backpack.AvatarSection.Outfits
 {
-    public class OutfitApplier : IOutfitApplier
+    public class OutfitApplier
     {
         private readonly BackpackCommandBus bus;
 
@@ -16,7 +16,6 @@ namespace DCL.Backpack.AvatarSection.Outfits
 
         public void Apply(Outfit outfit)
         {
-            //bus.SendCommand(new BackpackUnEquipAllCommand());
             bus.SendCommand(new BackpackUnEquipAllWearablesCommand());
 
             if (!string.IsNullOrEmpty(outfit.bodyShape))

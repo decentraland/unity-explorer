@@ -32,19 +32,19 @@ namespace DCL.Backpack.Slots
 
     public class OutfitSlotPresenter : IDisposable
     {
-        public event Action<int> OnSaveRequested;
-        public event Action<int> OnDeleteRequested;
-        public event Action<OutfitItem> OnEquipRequested;
-        public event Action<OutfitItem> OnPreviewRequested;
+        public event Action<int>? OnSaveRequested;
+        public event Action<int>? OnDeleteRequested;
+        public event Action<OutfitItem>? OnEquipRequested;
+        public event Action<OutfitItem>? OnPreviewRequested;
 
         public bool HasThumbnail()
         {
             return currentThumbnail != null;
         }
 
-        public readonly OutfitSlotView view;
         public readonly int slotIndex;
-        
+
+        private readonly OutfitSlotView view;
         private readonly HoverHandler hoverHandler;
         private readonly IAvatarScreenshotService screenshotService;
         private CancellationTokenSource cts = new ();
@@ -73,9 +73,9 @@ namespace DCL.Backpack.Slots
             hoverHandler.OnHoverExited += OnHoverExited;
         }
 
-        public OutfitItem GetOutfitData()
+        public OutfitItem? GetOutfitData()
         {
-            return currentOutfitData!;
+            return currentOutfitData;
         }
 
         private void HandleSaveClicked()
@@ -90,12 +90,14 @@ namespace DCL.Backpack.Slots
 
         private void HandlePreviewClicked()
         {
-            OnPreviewRequested?.Invoke(currentOutfitData!);
+            if (currentOutfitData != null)
+                OnPreviewRequested?.Invoke(currentOutfitData);
         }
 
         private void HandleEquipClicked()
         {
-            OnEquipRequested?.Invoke(currentOutfitData!);
+            if (currentOutfitData != null)
+                OnEquipRequested?.Invoke(currentOutfitData);
         }
 
         private void OnHoverEntered()
@@ -219,6 +221,23 @@ namespace DCL.Backpack.Slots
                 Object.Destroy(currentThumbnail);
 
             currentThumbnail = screenshot;
+            UpdateView();
+        }
+
+        public void SetThumbnailFromPngBytes(byte[]? pngBytes)
+        {
+            if (pngBytes == null || pngBytes.Length == 0)
+            {
+                SetThumbnail(null);
+                return;
+            }
+
+            if (currentThumbnail == null)
+                currentThumbnail = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
+
+            // Reuses the same Texture2D object
+            // resizes internally, frees CPU pixels
+            currentThumbnail.LoadImage(pngBytes, markNonReadable: true);
             UpdateView();
         }
 

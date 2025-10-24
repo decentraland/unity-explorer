@@ -31,13 +31,13 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             this.realmData = realmData;
         }
 
-        public async UniTask<IReadOnlyList<OutfitItem>> ExecuteAsync(CancellationToken ct)
+        public async UniTask<IReadOnlyDictionary<int, OutfitItem>> ExecuteAsync(CancellationToken ct)
         {
             var profile = await selfProfile.ProfileAsync(ct);
+            var empty = new Dictionary<int, OutfitItem>();
             if (profile == null)
             {
                 ReportHub.LogError(ReportCategory.OUTFITS, "Cannot get outfits, self profile is not loaded.");
-                return Array.Empty<OutfitItem>();
             }
 
             urlBuilder.Clear();
@@ -53,10 +53,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 if (response.Metadata == null /* || response.Timestamp < migrationTimestamp*/)
                 {
                     ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD] Loaded old outfits data (version {response.Timestamp}). Ignoring.");
-                    return Array.Empty<OutfitItem>();
+                    return empty;
                 }
-                
-                var validOutfits = new List<OutfitItem>();
+
+                var validOutfits = empty;
 
                 var outfitsFromServer = response?.Metadata?.outfits;
 
@@ -68,7 +68,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
                         if (isValid)
                         {
-                            validOutfits.Add(outfitItem);
+                            validOutfits[outfitItem.slot] = outfitItem;
                         }
                     }
                 }
@@ -77,11 +77,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
                 foreach (var outfitItem in validOutfits)
                 {
-                    if (outfitItem.outfit == null) continue;
+                    if (outfitItem.Value.outfit == null) continue;
 
-                    ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD]   -> Outfit in Slot {outfitItem.slot} contains {outfitItem.outfit.wearables.Count} wearables:");
-                    
-                    foreach (string urn in outfitItem.outfit.wearables)
+                    ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD]   -> Outfit in Slot {outfitItem.Value.slot} contains {outfitItem.Value.outfit.wearables.Count} wearables:");
+
+                    foreach (string urn in outfitItem.Value.outfit.wearables)
                     {
                         ReportHub.Log(ReportCategory.OUTFITS, $"[OUTFIT_LOAD]      -> Wearable URN: '{urn}'");
                     }
@@ -94,10 +94,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 // It's common for a user to have no outfits entity,
                 // which returns a 404. This is not an error.
                 if (e.ResponseCode == 404)
-                    return Array.Empty<OutfitItem>();
+                    return empty;
 
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
-                return Array.Empty<OutfitItem>();
+                return empty;
             }
         }
     }

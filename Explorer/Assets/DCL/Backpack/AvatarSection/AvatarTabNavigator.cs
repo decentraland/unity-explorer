@@ -17,7 +17,7 @@ namespace DCL.Backpack
         private readonly Dictionary<AvatarSubSection, TabSelectorView> tabsByKey;
         private readonly List<AvatarSubSection> tabOrder;
         private readonly RectTransform contentContainer;
-        private readonly float animationDuration = 0.4f;
+        private const float animationDuration = 0.4f;
         private readonly AvatarSubSection defaultSection;
         private readonly bool useAnimation;
 
@@ -195,7 +195,7 @@ namespace DCL.Backpack
                         isAnimating = false;
                     });
             }
-            else // Instant fallback logic
+            else
             {
                 lastSectionController.GetRectTransform().gameObject.SetActive(false);
                 lastSectionController.Deactivate();

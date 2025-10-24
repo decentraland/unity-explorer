@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -23,7 +21,6 @@ using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine;
 using Utility;
-using Random = UnityEngine.Random;
 
 namespace DCL.Backpack
 {
@@ -34,7 +31,7 @@ namespace DCL.Backpack
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWebBrowser webBrowser;
-        private readonly IOutfitApplier outfitApplier;
+        private readonly OutfitApplier outfitApplier;
         private readonly OutfitBannerPresenter outfitBannerPresenter;
         private readonly OutfitsCollection outfitsCollection;
         private readonly IAvatarScreenshotService screenshotService;
@@ -54,7 +51,7 @@ namespace DCL.Backpack
         
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
-            IOutfitApplier outfitApplier,
+            OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
             IEquippedWearables equippedWearables,
@@ -137,7 +134,7 @@ namespace DCL.Backpack
                 if (ct.IsCancellationRequested) return;
 
                 // Precache wearables in the background.
-                PrewarmWearablesCacheAsync(outfits, ct).Forget();
+                PrewarmWearablesCacheAsync(outfits.Values, ct).Forget();
 
                 // Update the UI with the primary data.
                 PopulateAllSlots(outfits);
@@ -160,15 +157,17 @@ namespace DCL.Backpack
                 p.SetLoading();
         }
 
-        private async UniTask<IReadOnlyList<OutfitItem>> LoadAndCacheOutfitsAsync(CancellationToken ct)
+        private async UniTask<IReadOnlyDictionary<int, OutfitItem>> LoadAndCacheOutfitsAsync(CancellationToken ct)
         {
             var outfits = await loadOutfitsCommand.ExecuteAsync(ct);
-            if (ct.IsCancellationRequested) return Array.Empty<OutfitItem>();
-            outfitsCollection.Update(outfits);
+            if (ct.IsCancellationRequested) return new Dictionary<int, OutfitItem>();
+
+            outfitsCollection.Update(outfits.Values);
+    
             return outfits;
         }
 
-        private async UniTaskVoid PrewarmWearablesCacheAsync(IReadOnlyList<OutfitItem> outfits, CancellationToken ct)
+        private async UniTaskVoid PrewarmWearablesCacheAsync(IEnumerable<OutfitItem> outfits, CancellationToken ct)
         {
             var uniqueUrnsToPrewarm = new HashSet<URN>();
             foreach (var outfitItem in outfits)
@@ -180,7 +179,7 @@ namespace DCL.Backpack
 
             await prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrnsToPrewarm, ct);
         }
-
+        
         private void OnSaveOutfitRequested(int slotIndex)
         {
             OnSaveOutfitRequestedAsync(slotIndex, cts.Token).Forget();
@@ -208,13 +207,18 @@ namespace DCL.Backpack
 
                 outfitsCollection.AddOrReplace(savedItem);
 
-                await TakeScreenshotAndDisplayAsync(slotIndex);
+                await TakeScreenshotAndDisplayAsync(slotIndex, ct);
 
                 if (cts.Token.IsCancellationRequested) return;
 
                 presenter.SetData(savedItem, loadThumbnail: false);
 
                 UpdateFirstEmptySlotPrompt();
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.OUTFITS, "Save outfit operation was cancelled.");
+                presenter.SetEmpty();
             }
             catch (Exception e)
             {
@@ -223,13 +227,15 @@ namespace DCL.Backpack
             }
         }
 
-        private async UniTask TakeScreenshotAndDisplayAsync(int slotIndex)
+        private async UniTask TakeScreenshotAndDisplayAsync(int slotIndex, CancellationToken ct)
         {
-            var screenshot = await screenshotService
-                .TakeAndSaveScreenshotAsync(characterPreviewController, slotIndex, CancellationToken.None);
+            byte[]? pngBytes = await screenshotService
+                .CaptureSaveAndGetPngAsync(characterPreviewController, slotIndex, ct);
+
+            if (ct.IsCancellationRequested || pngBytes == null) return;
 
             var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
-            presenter?.SetThumbnail(screenshot);
+            presenter?.SetThumbnailFromPngBytes(pngBytes);
         }
 
         private async void OnDeleteOutfitRequestedAsync(int slotIndex)
@@ -238,6 +244,13 @@ namespace DCL.Backpack
             if (presenter == null) return;
 
             var originalOutfitData = presenter.GetOutfitData();
+            if (originalOutfitData == null)
+            {
+                // This case should not happen
+                // if the delete button is only on full slots
+                ReportHub.LogWarning(ReportCategory.OUTFITS, "Attempted to delete an outfit from an empty slot.");
+                return;
+            }
             presenter.SetSaving();
 
             try
@@ -276,7 +289,7 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
 
-            GenerateThumbnailIfMissingAsync(outfitItem.slot);
+            GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
 
             previewOutfitCommand.Commit();
 
@@ -295,27 +308,31 @@ namespace DCL.Backpack
 
             previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token).Forget();
 
-            GenerateThumbnailIfMissingAsync(outfitItem.slot);
+            GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
         }
 
-        private void GenerateThumbnailIfMissingAsync(int slotIndex)
+        private async UniTaskVoid GenerateThumbnailIfMissingAsync(int slotIndex, CancellationToken ct)
         {
             var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
 
             if (presenter != null && !presenter.HasThumbnail())
             {
-                ReportHub.Log(ReportCategory.OUTFITS, $"Thumbnail for slot {slotIndex} is missing. Generating on demand.");
-                TakeScreenshotAndDisplayAsync(slotIndex).Forget();
+                try
+                {
+                    await TakeScreenshotAndDisplayAsync(slotIndex, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    ReportHub.Log(ReportCategory.OUTFITS, $"On-demand thumbnail generation for slot {slotIndex} was cancelled.");
+                }
             }
         }
 
-        private void PopulateAllSlots(IReadOnlyList<OutfitItem> outfits)
+        private void PopulateAllSlots(IReadOnlyDictionary<int, OutfitItem> outfits)
         {
-            var outfitsBySlot = outfits.ToDictionary(o => o.slot);
-
             foreach (var presenter in slotPresenters)
             {
-                if (outfitsBySlot.TryGetValue(presenter.slotIndex, out var outfitItem))
+                if (outfits.TryGetValue(presenter.slotIndex, out var outfitItem))
                 {
                     presenter.SetData(outfitItem);
                     presenter.SetAsFirstEmptyAndReadyToSave(false);

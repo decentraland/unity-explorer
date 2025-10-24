@@ -17,7 +17,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
     public class PreviewOutfitCommand
     {
-        private readonly IOutfitApplier outfitApplier;
+        private readonly OutfitApplier outfitApplier;
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
         private readonly IWearableStorage wearableStorage;
@@ -25,7 +25,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         private Outfit? originalOutfit;
 
-        public PreviewOutfitCommand(IOutfitApplier outfitApplier,
+        public PreviewOutfitCommand(OutfitApplier outfitApplier,
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             IWearableStorage wearableStorage,

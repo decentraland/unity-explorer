@@ -163,21 +163,6 @@ namespace DCL.CharacterPreview
             characterPreviewAvatarContainer.AngularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         }
 
-        // public void ResetZoom()
-        // {
-        //     // Find the default camera position (usually the 'Body' category) and apply its FOV.
-        //     // This assumes the first entry is the default, which is a safe assumption for a full-body view.
-        //     if (cameraSettings.cameraPositions.Length > 0)
-        //     {
-        //         characterPreviewAvatarContainer.TargetFOV = cameraSettings.cameraPositions[0].cameraFieldOfView;
-        //
-        //         // Also reset the vertical panning to the default position
-        //         Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
-        //         position.y = cameraSettings.cameraPositions[0].verticalPosition.y;
-        //         characterPreviewAvatarContainer.cameraTarget.localPosition = position;
-        //     }
-        // }
-
         public void ResetZoom()
         {
             if (cameraSettings.cameraPositions.Length == 0) return;
@@ -198,34 +183,6 @@ namespace DCL.CharacterPreview
             var pos = characterPreviewAvatarContainer.cameraTarget.localPosition;
             pos.y = cfg.verticalPosition.y;
             characterPreviewAvatarContainer.cameraTarget.localPosition = pos;
-        }
-
-        public async UniTask ResetZoomAndWaitAsync(
-            CancellationToken ct = default,
-            float epsilonFov = 0.05f,
-            float epsilonY = 0.001f)
-        {
-            if (cameraSettings.cameraPositions.Length == 0) return;
-
-            var cfg = cameraSettings.cameraPositions[0];
-
-            // Request reset (do NOT force lens immediately — let the smoother do its thing)
-            characterPreviewAvatarContainer.TargetFOV = cfg.cameraFieldOfView;
-
-            // Snap the vertical pan (match your current UX; change to easing if you prefer)
-            var pos = characterPreviewAvatarContainer.cameraTarget.localPosition;
-            pos.y = cfg.verticalPosition.y;
-            characterPreviewAvatarContainer.cameraTarget.localPosition = pos;
-
-            var cam = characterPreviewAvatarContainer;
-            // Wait until lens FOV matches target within tolerance and Y is where we set it
-            await UniTask.WaitUntil(() =>
-            {
-                float fovNow = cam.freeLookCamera.m_Lens.FieldOfView;
-                float yNow = cam.cameraTarget.localPosition.y;
-                return Mathf.Abs(fovNow - cfg.cameraFieldOfView) <= epsilonFov
-                       && Mathf.Abs(yNow - cfg.verticalPosition.y) <= epsilonY;
-            }, cancellationToken: ct);
         }
     }
 }

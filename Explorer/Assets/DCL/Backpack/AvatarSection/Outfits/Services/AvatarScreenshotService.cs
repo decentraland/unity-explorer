@@ -5,23 +5,32 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles.Self;
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
+using Object = UnityEngine.Object;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Services
 {
     public class AvatarScreenshotService : IAvatarScreenshotService
     {
         private readonly ISelfProfile selfProfile;
-        private readonly string baseOutfitsDirectory = Path.Combine(Application.persistentDataPath, "outfits");
+        private readonly string baseOutfitsDirectory;
 
+        private Texture2D? screenshotTexture;
+        private Material? gammaCorrectionMaterial;
+        
         public AvatarScreenshotService(ISelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
+            baseOutfitsDirectory = Path.Combine(Application.persistentDataPath, "outfits");
             if (!Directory.Exists(baseOutfitsDirectory))
                 Directory.CreateDirectory(baseOutfitsDirectory);
         }
 
-        public async UniTask<Texture2D> TakeAndSaveScreenshotAsync(CharacterPreviewControllerBase controller, int slotIndex, CancellationToken ct)
+        public async UniTask<byte[]?> CaptureSaveAndGetPngAsync(
+            CharacterPreviewControllerBase controller, int slotIndex, CancellationToken ct)
         {
             string? userId = await GetCurrentUserIdAsync(ct);
             if (string.IsNullOrEmpty(userId))
@@ -30,65 +39,72 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 return null;
             }
 
+            RenderTexture? downscaledSRGB = null;
+
             try
             {
                 await UniTask.SwitchToMainThread(ct);
 
+                // Stabilize the shot: hide platform,
+                // reset pose, give the frame pipeline a tick to settle
                 controller.SetPlatformVisible(false);
                 controller.ResetAvatarMovement();
                 controller.ResetZoom();
-                await UniTask.DelayFrame(2, PlayerLoopTiming.LastPostLateUpdate, ct);
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
                 var source = controller.CurrentRenderTexture;
                 if (source == null) return null;
 
-                ReportHub.Log(ReportCategory.OUTFITS, $"[Screenshot] Source RenderTexture sRGB: {source.sRGB}");
-                ReportHub.Log(ReportCategory.OUTFITS, $"[Screenshot] Source RenderTexture format: {source.graphicsFormat}");
-                int targetWidth = source.width / 2;
-                int targetHeight = source.height / 2;
+                // Thumbnail size (halve the preview resolution)
+                // adjust if you prefer a fixed cap (e.g., 512x512)
+                int w = source.width  / 2;
+                int h = source.height / 2;
 
-                // Get a temporary, smaller RenderTexture. This is highly optimized.
-                var tempRT = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, source.format);
-
-                // Use Graphics.Blit to perform a GPU-accelerated copy and scale operation.
-                // This is the fastest way to downscale a texture.
-                Graphics.Blit(source, tempRT);
-
-                // Create the final Texture2D with the correct small dimensions.
-                var screenshotTexture = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
-
-                // Set the temporary RT as active and read its (now small) contents.
-                RenderTexture.active = tempRT;
-                screenshotTexture.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
-
-                var pixels = screenshotTexture.GetPixels();
-                for (int p = 0; p < pixels.Length; p++)
+                // Build a UNorm8 + sRGB-capable RT so the GPU performs linear->sRGB conversion on store.
+                // Prefer BGRA8 on macOS/Metal; fallback to RGBA8 elsewhere.
+                var desc = new RenderTextureDescriptor(w, h)
                 {
-                    pixels[p] = pixels[p].gamma;
+                    graphicsFormat  = OutFmt(), sRGB = true, msaaSamples = 1, depthBufferBits = 0,
+                    mipCount = 1, useMipMap = false
+                };
+
+                downscaledSRGB = RenderTexture.GetTemporary(desc);
+
+                // GPU downscale + sRGB encode in one pass
+                Graphics.Blit(source, downscaledSRGB);
+
+                // Async readback: avoids render-thread stalls, completion occurs on a later frame
+                var req = await AsyncGPUReadback.Request(downscaledSRGB).WithCancellation(ct);
+                if (req.hasError)
+                {
+                    ReportHub.LogError(ReportCategory.OUTFITS, "GPU readback failed.");
+                    return null;
                 }
-
-                screenshotTexture.SetPixels(pixels);
-                
-                
-                screenshotTexture.Apply();
-
-                // Clean up: release the temporary RT and reset the active one.
-                RenderTexture.active = null;
-                RenderTexture.ReleaseTemporary(tempRT);
 
                 ct.ThrowIfCancellationRequested();
 
-                byte[] pngBytes = screenshotTexture.EncodeToPNG();
+                var srgbNative = req.GetData<byte>();
+
+                byte[] pngBytes;
+                // Encode PNG directly from the readback buffer
+                // (no Texture2D.Get/SetPixels, no CPU gamma conversion)
+                using (var pngNative = ImageConversion.EncodeNativeArrayToPNG(
+                           srgbNative, downscaledSRGB.graphicsFormat, (uint)w, (uint)h))
+                {
+                    pngBytes = pngNative.ToArray();
+                }
+
+                // Persist to disk on a background thread
                 string filePath = GetFilePathForSlot(userId, slotIndex);
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
-                if (filePath != null)
-                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                else return null;
-
+                await UniTask.SwitchToThreadPool();
                 await File.WriteAllBytesAsync(filePath, pngBytes, ct);
+                await UniTask.SwitchToMainThread(ct);
 
-                return screenshotTexture;
+                // Return bytes so UI can display thumbnail
+                // immediately (no disk read required)
+                return pngBytes;
             }
             catch (Exception e)
             {
@@ -97,11 +113,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             }
             finally
             {
+                if (downscaledSRGB != null) RenderTexture.ReleaseTemporary(downscaledSRGB);
                 await UniTask.SwitchToMainThread(ct);
                 controller.SetPlatformVisible(true);
             }
         }
-
+        
         public async UniTask<Texture2D> LoadScreenshotAsync(int slotIndex, CancellationToken ct)
         {
             string? userId = await GetCurrentUserIdAsync(ct);
@@ -180,6 +197,20 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         {
             var profile = await selfProfile.ProfileAsync(ct);
             return profile?.UserId;
+        }
+
+        private GraphicsFormat PickUNorm8()
+        {
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.B8G8R8A8_UNorm, GraphicsFormatUsage.Render))
+                return GraphicsFormat.B8G8R8A8_UNorm;
+            return GraphicsFormat.R8G8B8A8_UNorm;
+        }
+
+        private GraphicsFormat OutFmt()
+        {
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.B8G8R8A8_UNorm, GraphicsFormatUsage.Render))
+                return GraphicsFormat.B8G8R8A8_UNorm;
+            return GraphicsFormat.R8G8B8A8_UNorm;
         }
     }
 }
