@@ -182,7 +182,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             float verticalSpeed = rigidTransform.GravityVelocity.y;
 
             bool shouldCancelEmote = horizontalSpeedSq > SPEED_THRESHOLD_SQ ||
-                                     // If the v speed is negative only cancel emotes when not grounded
+                                     // If going up (v speed > 0), cancel the emote
+                                     // Otherwise, we only cancel the emote if not grounded
+                                     // This is because we always have some vertical velocity, even when grounded
+                                     // See ApplyGravity.Execute(), all code paths ultimately add to CharacterRigidTransform.GravityVelocity
                                      (Mathf.Abs(verticalSpeed) > SPEED_THRESHOLD && (verticalSpeed > 0 || !rigidTransform.IsGrounded));
 
             if (shouldCancelEmote) StopEmote(ref emoteComponent, avatarView);
