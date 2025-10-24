@@ -396,6 +396,16 @@ MonoBehaviour:
       Severity: 0
     - Category: PROFILE
       Severity: 0
+    - Category: UNSPECIFIED
+      Severity: 3
+    - Category: UNSPECIFIED
+      Severity: 2
+    - Category: UNSPECIFIED
+      Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 3
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
