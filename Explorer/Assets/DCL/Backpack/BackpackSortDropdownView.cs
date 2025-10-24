@@ -56,5 +56,10 @@ namespace DCL.Backpack
                 CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
         }
+
+        public void Activate (bool activate)
+        {
+            sortDropdownButton.interactable = activate;
+        }
     }
 }

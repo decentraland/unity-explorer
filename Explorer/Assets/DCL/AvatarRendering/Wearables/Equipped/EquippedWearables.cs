@@ -1,6 +1,5 @@
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,9 @@ namespace DCL.AvatarRendering.Wearables.Equipped
     public class EquippedWearables : IEquippedWearables
     {
         private readonly Dictionary<string, IWearable?> wearables = new ();
+        private readonly HashSet<string> forceRenderCategories = new ();
+        public IReadOnlyCollection<string> ForceRenderCategories => forceRenderCategories;
+        
         private Color hairColor;
         private Color eyesColor;
         private Color bodyshapeColor;
@@ -55,6 +57,12 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public void SetBodyshapeColor(Color newColor) =>
             bodyshapeColor = newColor;
+
+        public void SetForceRender(IReadOnlyCollection<string> categories)
+        {
+            forceRenderCategories.Clear();
+            foreach (string category in categories) { forceRenderCategories.Add(category); }
+        }
 
         public IReadOnlyDictionary<string, IWearable?> Items() =>
             wearables;

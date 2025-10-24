@@ -1,6 +1,7 @@
 ﻿using DCL.Ipfs;
 using DCL.Utilities;
 using System;
+using System.Text;
 
 namespace ECS
 {
@@ -99,5 +100,29 @@ namespace ECS
         }
 
         public bool IsDirty { get; set; } = true;
+
+        public override string ToString()
+        {
+            if (!Configured)
+                return "[RealmData: Not Configured]";
+
+            var sb = new StringBuilder();
+            sb.AppendLine("[RealmData Snapshot]");
+            sb.AppendLine($"  - Realm Name: {RealmName}");
+            sb.AppendLine($"  - Network ID: {NetworkId}");
+            sb.AppendLine($"  - Realm Type: {RealmType.Value}");
+            sb.AppendLine($"  - Hostname: {Hostname}");
+            sb.AppendLine($"  - Protocol: {Protocol}");
+            sb.AppendLine($"  - Comms Adapter: {CommsAdapter}");
+            sb.AppendLine("  - IPFS Endpoints:");
+            sb.AppendLine($"    - Content URL: {Ipfs.ContentBaseUrl}");
+            sb.AppendLine($"    - Lambdas URL: {Ipfs.LambdasBaseUrl}");
+            sb.AppendLine($"    - Scene URNs: {(Ipfs.SceneUrns is { Count: > 0 } ? string.Join(", ", Ipfs.SceneUrns) : "N/A")}");
+            sb.AppendLine("  - Flags:");
+            sb.AppendLine($"    - Is Local Scene Dev: {IsLocalSceneDevelopment}");
+            sb.AppendLine($"    - Scenes Are Fixed: {ScenesAreFixed}");
+            sb.AppendLine($"    - Is Dirty: {IsDirty}");
+            return sb.ToString();
+        }
     }
 }

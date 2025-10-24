@@ -8,7 +8,31 @@ public static class TextureUtilities
     public static GraphicsFormat GetColorSpaceFormat()
     {
         if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+        {
+            // Option 1: Try to use high-precision linear (like Windows).
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.R32G32B32A32_SFloat, GraphicsFormatUsage.Render))
+            {
+                // Linear, 32-bit float per channel.
+                return GraphicsFormat.R32G32B32A32_SFloat;
+            }
+
+            // Option 2: Fallback to a standard 8-bit sRGB format with good alpha.
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.B8G8R8A8_UNorm, GraphicsFormatUsage.Render))
+            {
+                // sRGB compatible, 8-bit per channel.
+                return GraphicsFormat.B8G8R8A8_UNorm;
+            }
+
+            // Option 3: Fallback to an older 16-bit float format if the above aren't supported.
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.R16G16B16A16_SFloat, GraphicsFormatUsage.Render))
+            {
+                // Linear, 16-bit float per channel.
+                return GraphicsFormat.R16G16B16A16_SFloat;
+            }
+
+            // Fallback to the original, but be aware of the 2-bit alpha limitation.
             return GraphicsFormat.A2R10G10B10_UNormPack32;
+        }
 
         return GraphicsFormat.R32G32B32A32_SFloat;
     }

@@ -16,6 +16,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Loading.Systems.Abstract
@@ -129,6 +130,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         price
                     )
                 );
+
+                ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
             }
 
             return wearable;

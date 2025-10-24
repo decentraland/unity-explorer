@@ -158,6 +158,12 @@ namespace DCL.CharacterPreview
                 globalWorld.Add(characterPreviewEntity, intent);
         }
 
+        public void ResetEmote()
+        {
+            ref var emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);
+            emoteComponent.Reset();
+        }
+
         public bool IsPlayingEmote() =>
             globalWorld.TryGet(characterPreviewEntity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
 
@@ -178,5 +184,10 @@ namespace DCL.CharacterPreview
 
         public void ResetAvatarMovement() =>
             cameraController.ResetAvatarMovement();
+
+        public void ResetZoom()
+        {
+            cameraController.ResetZoom();
+        }
     }
 }

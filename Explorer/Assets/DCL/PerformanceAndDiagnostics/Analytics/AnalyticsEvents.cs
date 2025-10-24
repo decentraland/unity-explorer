@@ -127,5 +127,12 @@
             public const string SEE_ORIGINAL_MESSAGE = "see_original_message";
             public const string SWITCH_AUTOTRANSLATE = "switch_autotranslate";
         }
+
+        public static class Outfits
+        {
+            public const string SAVE_OUTFIT = "save_outfit";
+            public const string EQUIP_OUTFIT = "equip_outfit";
+            public const string OUTFIT_CLICK_NAME = "outfit_click_name";
+        }
     }
 }

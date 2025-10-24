@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
@@ -15,7 +14,6 @@ using DCL.UI;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -194,8 +192,10 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(string itemId)
+        {
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
+        }
 
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
@@ -256,6 +256,12 @@ namespace DCL.Backpack
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
 
+                ReportHub.Log(ReportCategory.OUTFITS, $"[BACKPACK_GRID] Loaded page {pageNumber} with {wearables.Count} wearables.");
+                foreach (var wearable in wearables)
+                {
+                    ReportHub.Log(ReportCategory.OUTFITS, $"[BACKPACK_GRID]   -> Wearable: '{wearable.GetName()}', URN: '{wearable.GetUrn()}'");
+                }
+                
                 currentPageWearables = wearables;
 
                 if (currentPageWearables.Count == 0)

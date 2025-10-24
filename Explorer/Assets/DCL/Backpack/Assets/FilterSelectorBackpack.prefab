@@ -454,6 +454,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &2023346753107801526
 GameObject:
   m_ObjectHideFlags: 0
@@ -697,6 +700,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &2867952759841112629
 GameObject:
   m_ObjectHideFlags: 0
@@ -800,7 +806,7 @@ MonoBehaviour:
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
+    m_ColorMultiplier: 1.2
     m_FadeDuration: 0.1
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
@@ -833,6 +839,10 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 7958055780637685757}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
+  <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &2969449224312939305
 GameObject:
   m_ObjectHideFlags: 0
@@ -1560,6 +1570,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &3635873723333952851
 GameObject:
   m_ObjectHideFlags: 0
@@ -2197,6 +2210,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &5245102259747535115
 GameObject:
   m_ObjectHideFlags: 0
@@ -2526,6 +2542,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &5930153560094184124
 GameObject:
   m_ObjectHideFlags: 0
@@ -3071,6 +3090,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &7094371508821354211
 GameObject:
   m_ObjectHideFlags: 0
@@ -3562,6 +3584,9 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 0}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 0}
+  <interactableAlpha>k__BackingField: 0
+  <nonInteractableAlpha>k__BackingField: 0
 --- !u!1 &8941797862656969361
 GameObject:
   m_ObjectHideFlags: 0

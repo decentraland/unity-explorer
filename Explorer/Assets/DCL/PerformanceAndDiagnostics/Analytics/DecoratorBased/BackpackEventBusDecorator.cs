@@ -26,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?> FilterEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
+        public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string> ChangeColorEvent;
         public event Action UnEquipAllEvent;
         public event Action PublishProfileEvent;
@@ -52,6 +53,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.UnEquipAllEvent += OnUnEquipAll;
             core.PublishProfileEvent += OnPublishProfile;
             core.DeactivateEvent += OnDeactivate;
+            core.UnEquipAllWearablesEvent += OnUnEquipAllWearables;
         }
 
         ~BackpackEventBusAnalyticsDecorator()
@@ -72,6 +74,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.UnEquipAllEvent -= OnUnEquipAll;
             core.PublishProfileEvent -= OnPublishProfile;
             core.DeactivateEvent -= OnDeactivate;
+            core.UnEquipAllWearablesEvent -= OnUnEquipAllWearables;
         }
 
         private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
@@ -102,11 +105,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void OnChangedBackpackSection(BackpackSections section) => ChangedBackpackSectionEvent?.Invoke(section);
         private void OnChangeColor(Color color, string category) => ChangeColorEvent?.Invoke(color, category);
         private void OnUnEquipAll() => UnEquipAllEvent?.Invoke();
+
+        private void OnUnEquipAllWearables()
+        {
+            UnEquipAllWearablesEvent?.Invoke();
+        }
+
         private void OnPublishProfile() => PublishProfileEvent?.Invoke();
         private void OnDeactivate() => DeactivateEvent?.Invoke();
 
         public void SendUnEquipAll() =>
             core.SendUnEquipAll();
+
+        public void SendUnEquipAllWearables()
+        {
+            core.SendUnEquipAllWearables();
+        }
+
 
         public void SendChangeColor(Color newColor, string category) =>
             core.SendChangeColor(newColor, category);

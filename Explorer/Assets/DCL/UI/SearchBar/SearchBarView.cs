@@ -66,5 +66,11 @@ namespace DCL.UI
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(InputTextAudio);
         }
+
+        public void Activate(bool activate)
+        {
+            inputField.interactable = activate;
+            clearSearchButton.interactable = activate;
+        }
     }
 }
