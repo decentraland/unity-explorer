@@ -8,6 +8,7 @@ using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.SocialEmotes;
 using ECS.Abstract;
 using System;
 using UnityEngine;

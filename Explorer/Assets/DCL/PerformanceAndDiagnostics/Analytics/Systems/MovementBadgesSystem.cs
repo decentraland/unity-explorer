@@ -132,7 +132,7 @@ namespace DCL.Analytics.Systems
             AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
             var currentPlatform = World.Get<CharacterPlatformComponent>(playerEntity);
 
-            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || currentPlatform.IsMovingPlatform || currentPlatform.IsRotatingPlatform)
+            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || currentPlatform.PositionChanged || currentPlatform.RotationChanged)
                 return true;
 
             if (World.TryGet(playerEntity, out PlayerTeleportIntent _))

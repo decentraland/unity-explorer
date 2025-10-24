@@ -9,8 +9,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
-using UnityEngine;
-using UnityEngine.Networking;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -48,10 +46,25 @@ namespace DCL.SDKComponents.NFTShape.System
 
         private void AbortLoading(ref NFTLoadingComponent nftLoadingComponent, bool forgetPromise)
         {
-            nftLoadingComponent.Promise.TryDereference(World);
+            if (nftLoadingComponent.ImagePromise != null)
+            {
+                var imagePromise = nftLoadingComponent.ImagePromise.Value;
+                imagePromise.TryDereference(World);
+                nftLoadingComponent.ImagePromise = imagePromise;
+            }
 
             if (forgetPromise)
-                nftLoadingComponent.Promise.ForgetLoading(World);
+            {
+                nftLoadingComponent.TypePromise.ForgetLoading(World);
+
+                if (nftLoadingComponent.ImagePromise != null)
+                {
+                    var imagePromise = nftLoadingComponent.ImagePromise.Value;
+                    imagePromise.ForgetLoading(World);
+                    // Need to reassign reference, otherwise it becomes outdated due to handling a copy
+                    nftLoadingComponent.ImagePromise = imagePromise;
+                }
+            }
         }
 
         public void FinalizeComponents(in Query query)

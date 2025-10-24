@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
@@ -39,7 +40,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention), typeof(HiddenPlayerComponent))]
         private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim, ref CharacterEmoteComponent emote,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {

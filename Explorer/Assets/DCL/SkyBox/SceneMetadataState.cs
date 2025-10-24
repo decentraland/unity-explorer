@@ -2,6 +2,8 @@ using DCL.Ipfs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS.SceneLifeCycle;
+using UnityEngine;
+using static DCL.Ipfs.SceneMetadata;
 
 namespace DCL.SkyBox
 {
@@ -25,43 +27,85 @@ namespace DCL.SkyBox
 
         public bool Applies()
         {
-            SceneMetadata? metadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
-
-            if (metadata == null) return false;
-
-            return metadata.skyboxConfig != null || metadata.worldConfiguration?.SkyboxConfig != null;
+            var metadata = GetCurrentMetadata();
+            return metadata != null && GetFixedTime(metadata).HasValue;
         }
 
         public void Enter()
         {
+            sceneRestrictionController.PushSceneRestriction(
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+
+            settings.IsDayCycleEnabled = false;
+            TryApplySceneMetadata();
             transition.Enter();
-
-            SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
-
-            if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
-                ApplyFixedTime(worldTime);
-
-            if (sceneMetadata is { skyboxConfig: { fixedTime: var sceneTime } })
-                ApplyFixedTime(sceneTime);
-
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
 
         public void Exit()
         {
+            sceneRestrictionController.PushSceneRestriction(
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+
             transition.Exit();
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
         }
 
         public void Update(float dt)
         {
+            TryApplySceneMetadata();
             transition.Update(dt);
         }
 
-        private void ApplyFixedTime(float time)
+        private SceneMetadata? GetCurrentMetadata() =>
+            scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+
+        private void TryApplySceneMetadata()
         {
-            settings.TransitionMode = TransitionMode.FORWARD;
-            settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
+            var metadata = GetCurrentMetadata();
+            if (metadata == null)
+                return;
+
+            settings.TransitionMode = GetTransitionMode(metadata);
+
+            float? fixedTime = GetFixedTime(metadata);
+            if (!fixedTime.HasValue)
+                return;
+
+            float normalizedTime = SkyboxSettingsAsset.NormalizeTime(fixedTime.Value);
+
+            // Skip if target hasn't changed to avoid transitioning
+            if (Mathf.Approximately(settings.TargetTimeOfDayNormalized, normalizedTime))
+                return;
+
+            settings.TargetTimeOfDayNormalized = normalizedTime;
         }
+
+        /// <summary>
+        /// Retrieves the fixed time value for the skybox.
+        /// Prioritizes scene-level skyboxConfig over worldConfiguration.SkyboxConfig for backward compatibility.
+        /// </summary>
+        /// <param name="metadata">The scene metadata containing skybox configuration</param>
+        /// <returns>
+        /// The fixed time value if skyboxConfig exists (even if null), 
+        /// otherwise falls back to worldConfiguration.SkyboxConfig.fixedTime for legacy scenes
+        /// </returns>
+        private static float? GetFixedTime(SceneMetadata metadata) =>
+            metadata.skyboxConfig.HasValue
+                ? metadata.skyboxConfig.Value.fixedTime
+                : metadata.worldConfiguration?.SkyboxConfig?.fixedTime;
+
+        /// <summary>
+        /// Retrieves the transition mode for the skybox.
+        /// Prioritizes scene-level skyboxConfig over worldConfiguration.SkyboxConfig for backward compatibility.
+        /// </summary>
+        /// <param name="sceneMetadata">The scene metadata containing skybox configuration</param>
+        /// <returns>
+        /// The transition mode from skyboxConfig if it exists, 
+        /// otherwise falls back to worldConfiguration.SkyboxConfig.transitionMode for legacy scenes,
+        /// or TransitionMode.FORWARD as the final default
+        /// </returns>
+        private TransitionMode GetTransitionMode(SceneMetadata sceneMetadata) =>
+            sceneMetadata.skyboxConfig.HasValue
+                ? sceneMetadata.skyboxConfig.Value.transitionMode
+                : sceneMetadata.worldConfiguration?.SkyboxConfig?.transitionMode ?? TransitionMode.FORWARD;
     }
 }

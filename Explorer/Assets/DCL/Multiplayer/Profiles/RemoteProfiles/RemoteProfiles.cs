@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using System;
@@ -15,7 +14,7 @@ using Utility;
 
 namespace DCL.Multiplayer.Profiles.RemoteProfiles
 {
-    public class RemoteProfiles : IRemoteProfiles
+    public class RemoteProfiles
     {
         private readonly struct PendingRequest
         {
@@ -104,10 +103,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
                 Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token);
 
                 if (profile is null)
-                {
-                    ReportHub.LogError(ReportCategory.PROFILE, $"Profile not found {remoteAnnouncement} after {(DateTime.Now - startedAt).TotalSeconds} s.");
                     return;
-                }
 
                 // Take the room source from the dictionary as the value could be updated
                 remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId, pendingProfiles[remoteAnnouncement.WalletId].FromRoom));
@@ -115,16 +111,9 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
                 ReportHub.Log(ReportCategory.PROFILE,
                     $"{remoteAnnouncement} was downloaded for {(DateTime.Now - startedAt).TotalSeconds} s.");
             }
-            catch (OperationCanceledException)
-            {
-                // ignore cancellation
-            }
             catch (Exception)
             {
-                ReportHub.Log(ReportCategory.PROFILE,
-                    $"{remoteAnnouncement} threw an exception after {(DateTime.Now - startedAt).TotalSeconds} s.");
-
-                throw;
+                // exceptions are logged by the remote repository
             }
             finally
             {

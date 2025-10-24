@@ -12,7 +12,7 @@ using Utility.Times;
 
 namespace DCL.EventsApi
 {
-    public class HttpEventsApiService : IEventsApiService
+    public class HttpEventsApiService
     {
         private const string LIVE_PARAMETER_VALUE = "live";
         private const string LIST_PARAMETER = "list";

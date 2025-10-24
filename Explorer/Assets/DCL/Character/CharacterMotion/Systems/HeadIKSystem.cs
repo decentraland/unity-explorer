@@ -169,7 +169,7 @@ namespace DCL.CharacterMotion.Systems
                              && isFeatureAndComponentEnabled
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                              && !emoteComponent.IsPlayingEmote
-                             && !platformComponent.IsMovingPlatform;
+                             && !platformComponent.PositionChanged;
 
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 

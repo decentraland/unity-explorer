@@ -70,6 +70,7 @@ namespace DCL.Chat
         public struct ChannelSelectedEvent
         {
             public ChatChannel Channel;
+            public bool FromInitialization;
         }
 
         /// <summary>
@@ -217,6 +218,14 @@ namespace DCL.Chat
         ///     Subscribers:    ChatInputPresenter: Re-runs its permission checks for the current channel and updates the input view.
         /// </summary>
         public struct CurrentChannelStateUpdatedEvent { }
+
+        /// <summary>
+        ///     Event:          ClickableBlockedInputClickedEvent
+        ///     Triggered By:   BlockedChatInput state.
+        ///     When:           The reason of blocking the chat input is the local settings (Friends only) and the button on the mask has been clicked.
+        ///     Subscribers:    ChatInputPresenter: ChatPlugin in order to open the explore panel (chat settings).
+        /// </summary>
+        public struct ClickableBlockedInputClickedEvent { }
 #endregion
     }
 }
