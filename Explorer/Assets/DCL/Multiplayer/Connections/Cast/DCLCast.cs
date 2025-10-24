@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.AsyncInstractions;
@@ -29,7 +29,10 @@ namespace DCL.Multiplayer.Connections.Cast
         private readonly StringBuilder payloadBuilder = new ();
 
         private RtcVideoSource? currentVideoSource;
+        private MicrophoneRtcAudioSource? currentAudioSource;
+
         private ITrack? currentVideoTrack;
+        private ITrack? currentAudioTrack;
 
         public DCLCast(IWebRequestController webRequestController, IDecentralandUrlsSource urls)
         {
@@ -89,7 +92,33 @@ namespace DCL.Multiplayer.Connections.Cast
             if (result.Success == false)
                 return Result.ErrorResult($"Cannot connect to room: {result.ErrorMessage}");
 
-            //TODO publish audio
+            Result videoPublishResult = await PublishVideo(ct);
+
+            if (videoPublishResult.Success == false)
+            {
+                await StopInternalAsync(ct);
+                return Result.ErrorResult($"Cannot publish video: {videoPublishResult.ErrorMessage}");
+            }
+
+            Result audioPublishResult = await PublishAudio(ct);
+
+            if (audioPublishResult.Success == false)
+            {
+                await StopInternalAsync(ct);
+                return Result.ErrorResult($"Cannot publish audio: {audioPublishResult.ErrorMessage}");
+            }
+
+            return Result.SuccessResult();
+        }
+
+        public async UniTask StopAsync(CancellationToken ct)
+        {
+            using SlimScope _ = await semaphoreSlim.LockAsync();
+            await StopInternalAsync(ct);
+        }
+
+        private async UniTask<Result> PublishVideo(CancellationToken ct)
+        {
             Result<WebCameraVideoInput> videoInput = WebCameraVideoInput.NewDefault();
 
             if (videoInput.Success == false)
@@ -118,10 +147,34 @@ namespace DCL.Multiplayer.Connections.Cast
             return Result.SuccessResult();
         }
 
-        public async UniTask StopAsync(CancellationToken ct)
+        private async UniTask<Result> PublishAudio(CancellationToken ct)
         {
-            using SlimScope _ = await semaphoreSlim.LockAsync();
-            await StopInternalAsync(ct);
+            Result<MicrophoneRtcAudioSource> microphoneResult = MicrophoneRtcAudioSource.New();
+
+            if (microphoneResult.Success == false)
+                return Result.ErrorResult($"Cannot initialize microphone: {microphoneResult.ErrorMessage}");
+
+            currentAudioSource = microphoneResult.Value;
+            currentAudioSource.Start();
+
+            currentAudioTrack = room.LocalTracks.CreateAudioTrack("microphone", currentAudioSource);
+
+            TrackPublishOptions options = new ()
+            {
+                AudioEncoding = new AudioEncoding
+                {
+                    MaxBitrate = 124000,
+                },
+                Source = TrackSource.SourceMicrophone,
+            };
+
+            PublishTrackInstruction instruction = room.Participants.LocalParticipant().PublishTrack(currentAudioTrack, options, ct);
+            await UniTask.WaitUntil(() => instruction.IsDone, cancellationToken: ct);
+
+            if (instruction.IsError)
+                return Result.ErrorResult($"Cannot publish audio track: {instruction.ErrorMessage}");
+
+            return Result.SuccessResult();
         }
 
         private async UniTask StopInternalAsync(CancellationToken ct)
@@ -129,12 +182,22 @@ namespace DCL.Multiplayer.Connections.Cast
             currentVideoSource?.Dispose();
             currentVideoSource = null;
 
+            currentAudioSource?.Dispose();
+            currentAudioSource = null;
+
             if (currentVideoTrack != null)
             {
                 room.Participants.LocalParticipant().UnpublishTrack(currentVideoTrack, stopOnUnpublish: true);
                 currentVideoTrack = null;
-                await room.DisconnectAsync(ct);
             }
+
+            if (currentAudioTrack != null)
+            {
+                room.Participants.LocalParticipant().UnpublishTrack(currentAudioTrack, stopOnUnpublish: true);
+                currentAudioTrack = null;
+            }
+
+            await room.DisconnectAsync(ct);
         }
 
         [Serializable]
