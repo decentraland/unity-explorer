@@ -90,14 +90,7 @@ namespace DCL.Friends
             if (debounceInfo.TryGetValue(friendAddress, out var existingInfo))
                 existingInfo.CancellationTokenSource.SafeCancelAndDispose();
 
-            var cancellationTokenSource = new CancellationTokenSource();
-            var newDebounceInfo = new FriendStatusDebounceInfo
-            {
-                FriendProfile = friendProfile,
-                NewStatus = newStatus,
-                CancellationTokenSource = cancellationTokenSource,
-                LastUpdateTime = DateTime.UtcNow
-            };
+            var newDebounceInfo = new FriendStatusDebounceInfo (friendProfile, newStatus, new CancellationTokenSource(), DateTime.UtcNow);
 
             this.debounceInfo[friendAddress] = newDebounceInfo;
 
@@ -129,23 +122,31 @@ namespace DCL.Friends
             }
         }
 
-        private struct FriendStatusDebounceInfo : IEquatable<FriendStatusDebounceInfo>
+        private readonly struct FriendStatusDebounceInfo : IEquatable<FriendStatusDebounceInfo>
         {
-            public FriendProfile FriendProfile;
-            public OnlineStatus NewStatus;
-            public CancellationTokenSource CancellationTokenSource;
-            public DateTime LastUpdateTime;
+            public readonly FriendProfile FriendProfile;
+            public readonly OnlineStatus NewStatus;
+            public readonly CancellationTokenSource CancellationTokenSource;
+            private readonly DateTime lastUpdateTime;
+
+            public FriendStatusDebounceInfo(FriendProfile friendProfile, OnlineStatus newStatus, CancellationTokenSource cancellationTokenSource, DateTime lastUpdateTime)
+            {
+                FriendProfile = friendProfile;
+                NewStatus = newStatus;
+                CancellationTokenSource = cancellationTokenSource;
+                this.lastUpdateTime = lastUpdateTime;
+            }
 
             public bool Equals(FriendStatusDebounceInfo other) =>
                 FriendProfile.Address.Equals(other.FriendProfile.Address) &&
                 NewStatus == other.NewStatus &&
-                LastUpdateTime == other.LastUpdateTime;
+                lastUpdateTime == other.lastUpdateTime;
 
             public override bool Equals(object? obj) =>
                 obj is FriendStatusDebounceInfo other && Equals(other);
 
             public override int GetHashCode() =>
-                HashCode.Combine(FriendProfile.Address, NewStatus, LastUpdateTime);
+                HashCode.Combine(FriendProfile.Address, NewStatus, lastUpdateTime);
 
             public static bool operator ==(FriendStatusDebounceInfo left, FriendStatusDebounceInfo right) =>
                 left.Equals(right);
