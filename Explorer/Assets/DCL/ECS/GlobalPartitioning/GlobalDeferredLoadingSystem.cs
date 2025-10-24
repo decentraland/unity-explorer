@@ -48,7 +48,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
-                CreateQuery<GetTextureIntention, Texture2DData>(),
+                CreateQuery<GetTextureIntention, TextureData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),

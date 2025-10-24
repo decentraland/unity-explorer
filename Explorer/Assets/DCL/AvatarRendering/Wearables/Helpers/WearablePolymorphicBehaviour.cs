@@ -21,7 +21,7 @@ using UnityEngine;
 using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
@@ -294,12 +294,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         // Raw Facial Feature Wearable
-        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<Texture2DData> result, IWearable wearable)
+        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<TextureData> result, IWearable wearable)
         {
             if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
 
             // Has to be RGBA32 to work with the avatar shader TextureArrays (Unity cannot compress BC7 in runtime)
-            return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.Asset), result.Asset));
+            return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.EnsureTexture2D()), result.Asset));
         }
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)

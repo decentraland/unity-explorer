@@ -1,12 +1,28 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using System;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
     public interface IGateKeeperSceneRoom : IActivatableConnectiveRoom
     {
+        /// <summary>
+        /// This event is triggered when the current scene room is successfully connected.
+        /// </summary>
+        public event Action CurrentSceneRoomConnected;
+
+        /// <summary>
+        /// This event is triggered when the current scene room is disconnected.
+        /// </summary>
+        public event Action CurrentSceneRoomDisconnected;
+
+        /// <summary>
+        /// This event is triggered when we receive a forbidden access response from the server after trying to connect to the current scene room.
+        /// </summary>
+        public event Action CurrentSceneRoomForbiddenAccess;
+
         public MetaData? ConnectedScene { get; }
 
         /// <summary>
@@ -18,6 +34,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         class Fake : Null, IGateKeeperSceneRoom
         {
+            public event Action? CurrentSceneRoomConnected;
+            public event Action? CurrentSceneRoomDisconnected;
+            public event Action? CurrentSceneRoomForbiddenAccess;
             public MetaData? ConnectedScene { get; } = new MetaData("Fake", Vector2Int.zero, new MetaData.Input());
 
             public bool Activated => true;

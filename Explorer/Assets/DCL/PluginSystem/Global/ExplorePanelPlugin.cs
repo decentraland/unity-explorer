@@ -57,7 +57,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.SkyBox;
-using DCL.SmartWearables;
 using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
@@ -66,7 +65,6 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
-using Runtime.Wearables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -116,8 +114,8 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly VolumeBus volumeBus;
-        private readonly IEventsApiService eventsApiService;
-        private readonly IUserCalendar userCalendar;
+        private readonly HttpEventsApiService eventsApiService;
+        private readonly GoogleUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
@@ -151,7 +149,6 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
-        private readonly SmartWearableCache smartWearableCache;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -190,8 +187,8 @@ namespace DCL.PluginSystem.Global
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
             VolumeBus volumeBus,
-            IEventsApiService eventsApiService,
-            IUserCalendar userCalendar,
+            HttpEventsApiService eventsApiService,
+            GoogleUserCalendar userCalendar,
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
@@ -210,8 +207,7 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
-            IChatEventBus chatEventBus,
-            SmartWearableCache smartWearableCache)
+            IChatEventBus chatEventBus)
         {
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -271,7 +267,6 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
             this.passportBridge = passportBridge;
-            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose()
@@ -318,9 +313,7 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inWorldWarningNotificationView,
                 thumbnailProvider,
-                profileChangesBus,
-                smartWearableCache,
-                mvcManager
+                profileChangesBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -400,7 +393,8 @@ namespace DCL.PluginSystem.Global
                 upscalingController,
                 isTranslationChatEnabled,
                 assetsProvisioner,
-                eventBus);
+                eventBus,
+                appArgs);
 
             await settingsController.InitializeAsync();
 

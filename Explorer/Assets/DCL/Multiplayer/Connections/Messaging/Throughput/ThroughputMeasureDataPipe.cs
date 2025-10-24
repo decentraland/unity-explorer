@@ -9,12 +9,12 @@ namespace DCL.Multiplayer.Connections.Systems.Throughput
     public class ThroughputMeasureDataPipe : IDataPipe
     {
         private readonly IDataPipe origin;
-        private readonly IThroughputBuffer incomingThroughputBuffer;
-        private readonly IThroughputBuffer outgoingThroughputBuffer;
+        private readonly ThroughputBuffer incomingThroughputBuffer;
+        private readonly ThroughputBuffer outgoingThroughputBuffer;
 
         public event ReceivedDataDelegate? DataReceived;
 
-        public ThroughputMeasureDataPipe(IDataPipe origin, IThroughputBuffer incomingThroughputBuffer, IThroughputBuffer outgoingThroughputBuffer)
+        public ThroughputMeasureDataPipe(IDataPipe origin, ThroughputBuffer incomingThroughputBuffer, ThroughputBuffer outgoingThroughputBuffer)
         {
             this.origin = origin;
             this.incomingThroughputBuffer = incomingThroughputBuffer;

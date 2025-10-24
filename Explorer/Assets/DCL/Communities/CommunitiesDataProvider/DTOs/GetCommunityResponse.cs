@@ -19,7 +19,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public struct CommunityData
         {
             public string id;
-            public CommunityThumbnails? thumbnails;
+            public string thumbnailUrl;
             public string name;
             public string description;
             public string ownerAddress;
