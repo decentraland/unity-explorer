@@ -64,12 +64,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             
             if (!equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable) || bodyShapeWearable == null)
                 throw new InvalidOperationException("Cannot save outfit, Body Shape is not equipped!");
-
+            
             var newItem = new OutfitItem
             {
                 slot = slotIndex, outfit = new Outfit
                 {
-                    bodyShape = bodyShapeWearable.GetUrn(), wearables = fullWearableUrns, forceRender = new List<string>(), eyes = new Eyes
+                    bodyShape = bodyShapeWearable.GetUrn(), wearables = fullWearableUrns, forceRender = new List<string>(equippedWearables.ForceRenderCategories), eyes = new Eyes
                     {
                         color = eyesColor
                     },

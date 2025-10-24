@@ -109,7 +109,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
@@ -175,7 +174,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
             CharacterPreviewEventBus characterPreviewEventBus,
@@ -234,7 +232,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
-            this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
@@ -307,7 +304,6 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
-                forceRender,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,

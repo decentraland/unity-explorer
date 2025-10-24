@@ -318,14 +318,13 @@ namespace Global.Dynamic
             staticContainer.CacheCleaner.Register(emotesCache);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
-            var forceRender = new List<string>();
 
             var selfEmotes = new List<URN>();
             ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
             var selfProfile = new SelfProfile(profileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, selfEmotes, profileCache, globalWorld, playerEntity);
+                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
@@ -803,7 +802,6 @@ namespace Global.Dynamic
                     equippedEmotes,
                     webBrowser,
                     emotesCache,
-                    forceRender,
                     staticContainer.RealmData,
                     profileCache,
                     characterPreviewEventBus,

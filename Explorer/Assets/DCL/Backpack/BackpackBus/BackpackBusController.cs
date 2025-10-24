@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
@@ -19,16 +18,15 @@ namespace DCL.Backpack.BackpackBus
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
-        private readonly HashSet<string> forceRender = new (15);
-
+        private readonly IEquippedWearables equippedWearables;
+        
         private int currentEmoteSlot = -1;
-        private readonly IReadOnlyEquippedWearables equippedWearables;
-
+        
         public BackpackBusController(
             IWearableStorage wearableStorage,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
-            IReadOnlyEquippedWearables equippedWearables,
+            IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage)
         {
@@ -179,9 +177,6 @@ namespace DCL.Backpack.BackpackBus
             }
 
             backpackEventBus.SendUnEquipWearable(wearable);
-
-            forceRender.Remove(wearable.GetCategory());
-            backpackEventBus.SendForceRender(forceRender);
         }
 
         private void HandleUnEquipEmoteCommand(BackpackUnEquipEmoteCommand command)
@@ -210,11 +205,6 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleHideCommand(BackpackHideCommand command)
         {
-            forceRender.Clear();
-
-            foreach (string category in command.ForceRender)
-                forceRender.Add(category);
-
             backpackEventBus.SendForceRender(command.ForceRender);
         }
 

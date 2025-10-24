@@ -19,7 +19,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Ipfs;
 using ECS;
 using UnityEngine;
 using Utility;
@@ -35,7 +34,6 @@ namespace DCL.Backpack
         private readonly ISelfProfile selfProfile;
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly List<string> forceRender;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
@@ -52,7 +50,6 @@ namespace DCL.Backpack
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             IProfileCache profileCache,
-            List<string> forceRender,
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
@@ -69,7 +66,6 @@ namespace DCL.Backpack
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
             this.profileCache = profileCache;
-            this.forceRender = forceRender;
             this.emoteStorage = emoteStorage;
             this.wearableStorage = wearableStorage;
             this.realmData = realmData;
@@ -116,13 +112,13 @@ namespace DCL.Backpack
         {
             equippedEmotes.UnEquipAll();
             equippedWearables.UnEquipAll();
-            forceRender.Clear();
+            equippedWearables.SetForceRender(Array.Empty<string>());
         }
 
         private void UnEquipAllWearables()
         {
             equippedWearables.UnEquipAll();
-            forceRender.Clear();
+            equippedWearables.SetForceRender(Array.Empty<string>());
         }
 
         private void EquipEmote(int slot, IEmote emote, bool _)
@@ -143,14 +139,18 @@ namespace DCL.Backpack
         private void UnEquipWearable(IWearable wearable)
         {
             equippedWearables.UnEquip(wearable);
+
+            var currentForceRender = new List<string>(equippedWearables.ForceRenderCategories);
+            if (currentForceRender.Remove(wearable.GetCategory()))
+            {
+                equippedWearables.SetForceRender(currentForceRender);
+                backpackEventBus.SendForceRender(currentForceRender);
+            }
         }
 
         private void SetForceRender(IReadOnlyCollection<string> categories)
         {
-            forceRender.Clear();
-
-            foreach (string category in categories)
-                forceRender.Add(category);
+            equippedWearables.SetForceRender(categories);
         }
 
         private void ChangeColor(Color newColor, string category)
@@ -193,8 +193,10 @@ namespace DCL.Backpack
 
             if (!publishProfileChange)
             {
+                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+                
                 Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
-                    forceRender, emoteStorage, wearableStorage);
+                    forceRenderList, emoteStorage, wearableStorage);
 
                 // Skip publishing the same profile
                 if (newProfile.IsSameProfile(oldProfile))

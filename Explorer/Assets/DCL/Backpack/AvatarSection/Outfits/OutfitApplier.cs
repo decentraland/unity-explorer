@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System.Collections.Generic;
+using CommunicationData.URLHelpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.BackpackBus;
 using Runtime.Wearables;
@@ -32,6 +33,9 @@ namespace DCL.Backpack.AvatarSection.Outfits
 
             bus.SendCommand(new BackpackChangeColorCommand(outfit.skin.color,
                 WearableCategories.Categories.BODY_SHAPE));
+
+            var forceRenderList = outfit.forceRender;
+            bus.SendCommand(new BackpackHideCommand(forceRenderList));
         }
     }
 }

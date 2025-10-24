@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
-        private readonly List<string> forceRender;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -85,7 +84,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage,
             IReadOnlyCollection<URN> embeddedEmotes,
-            List<string> forceRender,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
@@ -117,7 +115,6 @@ namespace DCL.PluginSystem.Global
             this.equippedEmotes = equippedEmotes;
             this.emoteStorage = emoteStorage;
             this.embeddedEmotes = embeddedEmotes;
-            this.forceRender = forceRender;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
@@ -226,7 +223,6 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 selfProfile,
                 profileCache,
-                forceRender,
                 emoteStorage,
                 wearableStorage,
                 web3Identity,
