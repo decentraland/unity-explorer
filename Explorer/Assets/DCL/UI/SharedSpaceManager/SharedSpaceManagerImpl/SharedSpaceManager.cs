@@ -209,6 +209,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.SidebarProfile:
                     case PanelsSharingSpace.MarketplaceCredits:
                     case PanelsSharingSpace.Controls:
+                    case PanelsSharingSpace.SmartWearables:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {

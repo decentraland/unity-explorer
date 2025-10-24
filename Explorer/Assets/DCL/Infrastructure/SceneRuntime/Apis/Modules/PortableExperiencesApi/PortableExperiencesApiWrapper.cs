@@ -52,16 +52,18 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         {
             await UniTask.SwitchToMainThread();
 
-            if (!portableExperiencesController.CanKillPortableExperience(ens))
+            var portableExperienceId = ens.ToString();
+
+            if (!portableExperiencesController.CanKillPortableExperience(portableExperienceId))
                 return new IPortableExperiencesController.ExitResponse { status = false };
 
-            return portableExperiencesController.UnloadPortableExperienceByEns(ens);
+            return portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
         }
 
         private async UniTask<IPortableExperiencesController.ExitResponse> ExitAsync()
         {
             await UniTask.SwitchToMainThread();
-            return portableExperiencesController.UnloadPortableExperienceByEns(new ENS(sceneData.SceneEntityDefinition.id));
+            return portableExperiencesController.UnloadPortableExperienceById(sceneData.SceneEntityDefinition.id);
         }
 
         private List<IPortableExperiencesController.SpawnResponse> GetLoadedPortableExperiences(CancellationToken ct) =>

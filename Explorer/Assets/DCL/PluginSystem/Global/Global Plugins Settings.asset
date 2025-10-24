@@ -53,7 +53,8 @@ MonoBehaviour:
   - rid: 648265872610426982
   - rid: 657752310186246267
   - rid: 6478896861045588059
-  - rid: 6169970366055448665
+  - rid: 4301237061332762713
+  - rid: 4301237177715785831
   references:
     version: 2
     RefIds:
@@ -593,6 +594,42 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 4301237061332762713
+      type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
+      data:
+        AuthorizationPopup:
+          m_AssetGUID: 000fc6d94dca3b64594f10aae8994ed7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityBackgrounds:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        RarityColors:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        CategoryIcons:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 4301237177715785831
+      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
+      data:
+        <MediaPlayerPrefab>k__BackingField:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -777,15 +814,6 @@ MonoBehaviour:
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 495d936d8dfe78444abfd5ff3e260159, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-    - rid: 6169970366055448665
-      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
-      data:
-        <MediaPlayerPrefab>k__BackingField:
-          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

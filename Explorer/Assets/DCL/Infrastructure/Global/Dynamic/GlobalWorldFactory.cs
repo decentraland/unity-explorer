@@ -13,7 +13,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
-using DCL.Time;
 using DCL.Time.Systems;
 using DCL.WebRequests;
 using ECS;
@@ -37,7 +36,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
 using DCL.Roads.Systems;
-using DCL.SkyBox;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -77,6 +75,7 @@ namespace Global.Dynamic
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly LandscapeParcelData landscapeParcelData;
+        private readonly bool isBuilderCollectionPreview;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -95,7 +94,8 @@ namespace Global.Dynamic
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
-            LandscapeParcelData landscapeParcelData)
+            LandscapeParcelData landscapeParcelData,
+            bool isBuilderCollectionPreview)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -126,6 +126,7 @@ namespace Global.Dynamic
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.landscapeParcelData = landscapeParcelData;
+            this.isBuilderCollectionPreview = isBuilderCollectionPreview;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
         }
@@ -198,6 +199,9 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
+            LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache);
+            LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController);
+
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
@@ -219,7 +223,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
 
             return globalWorld;
         }

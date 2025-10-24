@@ -17,7 +17,9 @@ namespace SceneRunner.Scene
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
+
         ISceneContent SceneContent { get; }
+
         SceneEntityDefinition SceneEntityDefinition { get; }
 
         /// <summary>
@@ -29,6 +31,14 @@ namespace SceneRunner.Scene
         ///     Main.crdt file that should be applied first before launching the scene
         /// </summary>
         StaticSceneMessages StaticSceneMessages { get; }
+
+        /// <summary>
+        ///     Whether this scene was loaded from a wearable which is part of a collection preview.
+        /// </summary>
+        /// <remarks>
+        ///     This has been introduced to fully support the --self-preview-builder-collections command line arg.
+        /// </remarks>
+        bool IsWearableBuilderCollectionPreview => false;
 
         bool HasRequiredPermission(string permission);
 

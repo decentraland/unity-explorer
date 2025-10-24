@@ -10,13 +10,14 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.ISceneFacade, ECS.SceneLifeCycle.Components.GetSceneFacadeIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
+
     /// <summary>
     ///     Starts the scene or changes fps of its execution
     /// </summary>
@@ -46,69 +47,83 @@ namespace ECS.SceneLifeCycle.Systems
         {
             ChangeSceneFPSQuery(World);
             HandleNotCreatedScenesQuery(World);
+            HandleSmartWearableScenesQuery(World);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade), typeof(BannedSceneComponent))]
-        private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void HandleNotCreatedScenes(in Entity entity, ref ScenePromise promise, in PartitionComponent partition, in SceneDefinitionComponent definitionComponent)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed)
             {
                 // In case there is a failed promise (and it was not re-started) notify the readiness queue accordingly
                 if (promise.TryGetResult(World, out var consumedResult) && !consumedResult.Succeeded)
-                    SceneUtils.ReportException(consumedResult.Exception!, promise.LoadingIntention.DefinitionComponent.Parcels, sceneReadinessReportQueue);
+                    SceneUtils.ReportException(consumedResult.Exception!, definitionComponent.Parcels, sceneReadinessReportQueue);
 
                 return;
             }
 
-            if (promise.TryConsume(World, out var result) && result.Succeeded)
-            {
-                var scene = result.Asset!;
+            if (!promise.TryConsume(World, out var result) || !result.Succeeded) return;
 
-                var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
+            ISceneFacade scene = result.Asset!;
+            StartScene(definitionComponent, partition, scene);
 
-                async UniTaskVoid RunOnThreadPoolAsync()
-                {
-                    try
-                    {
-                        await UniTask.SwitchToThreadPool();
-                        if (destroyCancellationToken.IsCancellationRequested) return;
+            World.Add(entity, scene);
+        }
 
-                        // Provide basic Thread Pool synchronization context
-                        SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+        [Query]
+        [All(typeof(SmartWearableId))]
+        [None(typeof(DeleteEntityIntention), typeof(SmartWearableSceneStarted))]
+        private void HandleSmartWearableScenes(Entity entity, in SceneDefinitionComponent definitionComponent, in PartitionComponent partition, in ISceneFacade scene)
+        {
+            World.Add(entity, new SmartWearableSceneStarted());
 
-                        // FPS is set by another system
-                        await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
-                    }
-                    catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
-                }
-
-                RunOnThreadPoolAsync().Forget();
-                ReportHub.LogProductionInfo($"Scene '{sceneDefinitionComponent.Definition.GetLogSceneName()}' started");
-
-                if (promise.LoadingIntention.DefinitionComponent.IsPortableExperience)
-                {
-                    scenesCache.AddPortableExperienceScene(scene, promise.LoadingIntention.DefinitionComponent.IpfsPath.EntityId);
-                }
-                else
-                {
-                    // So we know the scene has started
-                    scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
-                }
-                World.Add(entity, scene);
-            }
+            StartScene(definitionComponent, partition, scene);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ChangeSceneFPS(ref ISceneFacade sceneFacade,
-            ref PartitionComponent partition)
+        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, in PartitionComponent partition)
         {
             if (!partition.IsDirty) return;
 
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
+        }
+
+        private void StartScene(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
+        {
+            int fps = realmPartitionSettings.GetSceneUpdateFrequency(partition);
+            RunOnThreadPoolAsync().Forget();
+
+            // So we know the scene has started
+            if (definitionComponent.IsPortableExperience)
+                scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
+            else
+                scenesCache.Add(scene, definitionComponent.Parcels);
+
+            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
+
+            return;
+
+            async UniTaskVoid RunOnThreadPoolAsync()
+            {
+                try
+                {
+                    await UniTask.SwitchToThreadPool();
+                    if (destroyCancellationToken.IsCancellationRequested) return;
+
+                    // Provide basic Thread Pool synchronization context
+                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+                    // FPS is set by another system
+                    await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, GetReportData());
+                }
+            }
         }
     }
 }
