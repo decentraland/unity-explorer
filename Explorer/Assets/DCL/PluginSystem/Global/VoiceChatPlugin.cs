@@ -6,6 +6,7 @@ using DCL.Audio;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
@@ -88,6 +89,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
+            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "VOICE CHAT!");
             AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
             audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
             AudioSettings.Reset(audioConfig);

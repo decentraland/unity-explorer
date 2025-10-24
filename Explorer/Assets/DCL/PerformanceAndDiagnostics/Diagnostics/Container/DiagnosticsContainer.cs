@@ -16,6 +16,7 @@ namespace DCL.Diagnostics
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
         public SentryReportHandler? Sentry { get; private set; }
+        public IReportsHandlingSettings Settings { get; private set; }
 
         public void Dispose()
         {
@@ -54,7 +55,7 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Initialize(logger);
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler };
+            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings };
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
