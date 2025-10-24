@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables
         private const string ON_CHAIN_COLLECTION_TYPE = "on-chain";
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
-        private const string IS_WEARABLE_SMART = "isWearableSmart";
+        private const string IS_SMART_WEARABLE = "isSmartWearable";
 
         private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -81,7 +81,7 @@ namespace DCL.AvatarRendering.Wearables
                 requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
 
             if (smartWearablesOnly)
-                requestParameters.Add((IS_WEARABLE_SMART, "true"));
+                requestParameters.Add((IS_SMART_WEARABLE, "true"));
 
             if (!string.IsNullOrEmpty(name))
                 requestParameters.Add((SEARCH, name));
