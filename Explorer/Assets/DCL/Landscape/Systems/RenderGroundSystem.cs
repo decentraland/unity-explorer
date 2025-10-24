@@ -19,8 +19,6 @@ using ClipVolume = DCL.Landscape.Utils.ClipVolume;
 
 namespace DCL.Landscape.Systems
 {
-    using Landscape = Global.Dynamic.Landscapes.Landscape;
-
     /// <summary>Renders ground and grass, but not trees. Trees are drawn using GPU Instancer Pro. See
     /// <see cref="TreeData"/> for more.</summary>
     [LogCategory(ReportCategory.LANDSCAPE)]
@@ -29,7 +27,7 @@ namespace DCL.Landscape.Systems
     public sealed partial class RenderGroundSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;
-        private readonly Landscape landscape;
+        private readonly global::Global.Dynamic.Landscapes.Landscape landscape;
         private readonly MaterialPropertyBlock materialProperties;
         private readonly GrassIndirectRenderer? grassIndirectRenderer;
 
@@ -39,7 +37,7 @@ namespace DCL.Landscape.Systems
         private static readonly int TERRAIN_BOUNDS_ID = Shader.PropertyToID("_TerrainBounds");
         private static readonly int DISTANCE_FIELD_SCALE_ID = Shader.PropertyToID("_DistanceFieldScale");
 
-        private RenderGroundSystem(World world, Landscape landscape, LandscapeData landscapeData)
+        private RenderGroundSystem(World world, global::Global.Dynamic.Landscapes.Landscape landscape, LandscapeData landscapeData)
             : base(world)
         {
             this.landscapeData = landscapeData;

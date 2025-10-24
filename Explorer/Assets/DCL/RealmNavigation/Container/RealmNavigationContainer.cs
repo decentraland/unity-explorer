@@ -5,19 +5,14 @@ using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.PluginSystem.World;
-using DCL.PluginSystem.World.Dependencies;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
-using ECS.LifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using Global;
 using Global.Dynamic;
 using System;
-using System.Collections.Generic;
 
 namespace DCL.RealmNavigation
 {
@@ -62,6 +57,7 @@ namespace DCL.RealmNavigation
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
+                new RemoveUnfinishedScenesTeleportOperation(globalWorld),
                 new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
                 new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
             },
@@ -74,6 +70,7 @@ namespace DCL.RealmNavigation
                 {
                     new RestartLoadingStatus(),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
+                    new RemoveUnfinishedScenesTeleportOperation(globalWorld),
                     new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
                 }, ReportCategory.SCENE_LOADING,
                 analytics,
