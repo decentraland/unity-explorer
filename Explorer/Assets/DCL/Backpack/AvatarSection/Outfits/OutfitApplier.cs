@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.BackpackBus;
 using Runtime.Wearables;

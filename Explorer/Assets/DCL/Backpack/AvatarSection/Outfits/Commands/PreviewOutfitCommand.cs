@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -80,6 +81,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 bodyShape = bodyShape, wearables = equippedWearables
                     .ToFullWearableUrns(wearableStorage, profile),
+                forceRender = new List<string>(equippedWearables.ForceRenderCategories),
                 hair = new Hair
                 {
                     color = hair
