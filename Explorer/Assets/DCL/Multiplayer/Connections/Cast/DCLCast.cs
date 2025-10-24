@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Cast
             payloadBuilder.Clear();
 
             payloadBuilder.Append("{")
-                          .Append("\"streamingKey\": ")
+                          .Append("\"token\": ")
                           .Append('"')
                           .Append(token)
                           .Append('"')
