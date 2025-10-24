@@ -10,6 +10,7 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.RtcSources.Video;
 using RichTypes;
 using System;
+using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -21,6 +22,11 @@ namespace DCL.Multiplayer.Connections.Cast
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urls;
         private readonly SemaphoreSlim semaphoreSlim = new (initialCount: 1, maxCount: 1);
+
+        /// <summary>
+        /// Is ok to be mutable and shared per instance, single execution is protected by semaphore
+        /// </summary>
+        private readonly StringBuilder payloadBuilder = new ();
 
         private ITrack? currentVideoTrack;
 
@@ -38,11 +44,16 @@ namespace DCL.Multiplayer.Connections.Cast
             URLAddress url = URLAddress.FromString(urls.Url(DecentralandUrl.GateKeeperStreamToken));
             CommonArguments arguments = new CommonArguments(url);
 
-            string payload = $@"""
-            {{
-              ""streamingKey"": ""cast2-link-{token}""
-            }}
-            """;
+            payloadBuilder.Clear();
+
+            payloadBuilder.Append("{")
+                          .Append("\"streamingKey\": ")
+                          .Append('"')
+                          .Append(token)
+                          .Append('"')
+                          .Append("}");
+
+            string payload = payloadBuilder.ToString();
 
             GenericPostArguments postArguments = GenericPostArguments.CreateJson(payload);
             TokenResponse response;
@@ -54,7 +65,7 @@ namespace DCL.Multiplayer.Connections.Cast
                          .PostAsync(arguments, postArguments, ct, ReportCategory.DCL_CAST)
                          .CreateFromJson<TokenResponse>(WRJsonParser.Unity);
             }
-            catch (Exception e) { return Result.ErrorResult(e.Message ?? "Error on request"); }
+            catch (Exception e) { return Result.ErrorResult($"Cannot complete request to: {url.Value} with payload {payload}: " + (e.Message ?? "Error on request")); }
 
             Result<(string url, string token)> credentials = response.Credentials();
 

@@ -14,7 +14,6 @@ namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsContainer
     {
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         public IWebRequestController WebRequestController { get; }
 
         public IWebRequestController SceneWebRequestController { get; }
@@ -33,11 +32,11 @@ namespace DCL.WebRequests.Analytics
             IDecentralandUrlsSource decentralandUrlsSource
         )
         {
-            this.decentralandUrlsSource = decentralandUrlsSource;
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
             ChromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
             SceneWebRequestController = sceneWebRequestController;
+            DecentralandUrlsSource = decentralandUrlsSource;
         }
 
         public static WebRequestsContainer Create(
