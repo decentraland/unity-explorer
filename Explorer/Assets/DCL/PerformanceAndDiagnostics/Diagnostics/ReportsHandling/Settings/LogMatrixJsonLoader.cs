@@ -10,8 +10,8 @@ namespace DCL.Diagnostics
         {
             try
             {
-                string filePath = Path.Combine(Application.dataPath, "..", fileName);
-                
+                string filePath = GetApplicationRootPath(fileName);
+
                 if (!File.Exists(filePath))
                 {
                     ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_FILE_NOT_FOUND, filePath);
@@ -41,6 +41,17 @@ namespace DCL.Diagnostics
                 ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_LOAD_FAILED, fileName);
                 return null;
             }
+        }
+
+        private static string GetApplicationRootPath(string fileName)
+        {
+#if UNITY_EDITOR
+            return Path.Combine(Application.dataPath, "..", fileName);
+#else
+            string executablePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string executableDirectory = Path.GetDirectoryName(executablePath) ?? "";
+            return Path.Combine(executableDirectory, fileName);
+#endif
         }
     }
 }
