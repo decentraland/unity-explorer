@@ -58,5 +58,26 @@ namespace DCL.Backpack.Outfits.Extensions
 
             return fullItemUrns;
         }
+
+        /// <summary>
+        ///     Converts the list of currently equipped wearables into a list of short "Asset URNs".
+        ///     This is ideal for analytics and aggregation, as it ignores the unique tokenId.
+        /// </summary>
+        public static List<string> ToShortWearableUrns(this IEquippedWearables equippedWearables)
+        {
+            var shortItemUrns = new List<string>();
+
+            foreach ((string category, var w) in equippedWearables.Items())
+            {
+                // Skip empty slots and the body shape
+                if (w == null || category == WearableCategories.Categories.BODY_SHAPE) continue;
+
+                // Directly get the URN from the wearable and shorten it to ensure consistency.
+                // This avoids any expensive lookups.
+                shortItemUrns.Add(w.GetUrn().Shorten());
+            }
+
+            return shortItemUrns;
+        }
     }
 }

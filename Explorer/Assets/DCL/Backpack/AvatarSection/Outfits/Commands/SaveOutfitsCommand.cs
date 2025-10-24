@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.Outfits.Extensions;
@@ -16,6 +16,8 @@ using DCL.Profiles.Self;
 using ECS;
 using Runtime.Wearables;
 using UnityEngine;
+using Utility;
+
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
@@ -25,16 +27,19 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly OutfitsRepository outfitsRepository;
         private readonly IWearableStorage wearableStorage;
         private readonly IRealmData realmData;
+        private readonly IEventBus eventBus;
 
         public SaveOutfitCommand(ISelfProfile selfProfile,
             OutfitsRepository outfitsRepository,
             IWearableStorage wearableStorage,
-            IRealmData realmData)
+            IRealmData realmData,
+            IEventBus eventBus)
         {
             this.selfProfile = selfProfile;
             this.outfitsRepository = outfitsRepository;
             this.wearableStorage = wearableStorage;
             this.realmData = realmData;
+            this.eventBus = eventBus;
         }
 
         public async UniTask<OutfitItem> ExecuteAsync(int slotIndex,
@@ -87,6 +92,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             else updatedOutfits.Add(newItem);
             
             await outfitsRepository.SetAsync(profile, updatedOutfits, ct);
+
+            var shortUrns = equippedWearables.ToShortWearableUrns();
+            eventBus.Publish(new OutfitsEvents.SaveOutfitEvent(shortUrns));
             return newItem;
         }
 

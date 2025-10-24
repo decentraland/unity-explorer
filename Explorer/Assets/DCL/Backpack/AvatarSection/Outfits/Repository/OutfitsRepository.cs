@@ -23,15 +23,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
     {
         private readonly IRealmData realm;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly IEventBus eventBus;
 
         public OutfitsRepository(IRealmData realm,
-            INftNamesProvider nftNamesProvider,
-            IEventBus eventBus)
+            INftNamesProvider nftNamesProvider)
         {
             this.realm = realm;
             this.nftNamesProvider = nftNamesProvider;
-            this.eventBus = eventBus;
         }
 
         /// <summary>
@@ -71,7 +68,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             try
             {
                 await realm.Ipfs.PublishAsync(outfitsEntity, ct, new Dictionary<string, byte[]>());
-                eventBus.Publish(new OutfitsEvents.SaveOutfitEvent());
             }
             catch (Exception e)
             {

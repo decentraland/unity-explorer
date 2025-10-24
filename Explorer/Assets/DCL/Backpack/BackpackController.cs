@@ -142,7 +142,7 @@ namespace DCL.Backpack
             var outfitsCollection = new OutfitsCollection();
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController, selfProfile, realmData);
-            var saveOutfitCommand = new SaveOutfitCommand(selfProfile, outfitsRepository, wearableStorage, realmData);
+            var saveOutfitCommand = new SaveOutfitCommand(selfProfile, outfitsRepository, wearableStorage, realmData, eventBus);
             var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
             var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider);

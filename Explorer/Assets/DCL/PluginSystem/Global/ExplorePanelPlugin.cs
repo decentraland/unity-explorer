@@ -293,7 +293,7 @@ namespace DCL.PluginSystem.Global
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
-            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider, eventBus);
+            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
             
             backpackSubPlugin = new BackpackSubPlugin(
                 featureFlags,
