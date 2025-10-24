@@ -109,6 +109,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.NotificationsBus;
+using DCL.PluginSystem.SmartWearables;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -938,7 +939,8 @@ namespace Global.Dynamic
                     staticContainer.SmartWearableCache,
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
-                    mvcManager, thumbnailProvider)
+                    mvcManager,
+                    thumbnailProvider)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

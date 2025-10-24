@@ -65,6 +65,7 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
+using Runtime.Wearables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -149,6 +150,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
+        private readonly SmartWearableCache smartWearableCache;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -207,7 +209,8 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            SmartWearableCache smartWearableCache)
         {
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -267,6 +270,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
             this.passportBridge = passportBridge;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose()
@@ -313,7 +317,9 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inWorldWarningNotificationView,
                 thumbnailProvider,
-                profileChangesBus
+                profileChangesBus,
+                smartWearableCache,
+                mvcManager
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

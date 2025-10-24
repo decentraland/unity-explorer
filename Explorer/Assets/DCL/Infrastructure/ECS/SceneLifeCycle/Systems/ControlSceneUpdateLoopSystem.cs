@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade). typeof(BannedSceneComponent))]
+        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade), typeof(BannedSceneComponent))]
         private void HandleNotCreatedScenes(in Entity entity, ref ScenePromise promise, in PartitionComponent partition, in SceneDefinitionComponent definitionComponent)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
