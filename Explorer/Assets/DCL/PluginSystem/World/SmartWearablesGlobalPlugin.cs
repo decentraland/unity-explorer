@@ -55,10 +55,10 @@ namespace DCL.PluginSystem.SmartWearables
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            await InitializeAuthorizationPopup(settings, ct);
+            await InitializeAuthorizationPopupAsync(settings, ct);
         }
 
-        private async UniTask InitializeAuthorizationPopup(Settings settings, CancellationToken ct)
+        private async UniTask InitializeAuthorizationPopupAsync(Settings settings, CancellationToken ct)
         {
             GameObject prefab = await assetsProvisioner.ProvideMainAssetValueAsync(settings.AuthorizationPopup, ct);
             var view = prefab.GetComponent<SmartWearableAuthorizationPopupView>();
