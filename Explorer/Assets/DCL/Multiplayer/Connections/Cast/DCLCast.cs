@@ -28,6 +28,7 @@ namespace DCL.Multiplayer.Connections.Cast
         /// </summary>
         private readonly StringBuilder payloadBuilder = new ();
 
+        private RtcVideoSource? currentVideoSource;
         private ITrack? currentVideoTrack;
 
         public DCLCast(IWebRequestController webRequestController, IDecentralandUrlsSource urls)
@@ -51,6 +52,11 @@ namespace DCL.Multiplayer.Connections.Cast
                           .Append('"')
                           .Append(token)
                           .Append('"')
+                          .Append(',')
+                          .Append("\"identity\": ")
+                          .Append('"')
+                          .Append("Streamer")
+                          .Append('"')
                           .Append("}");
 
             string payload = payloadBuilder.ToString();
@@ -62,8 +68,13 @@ namespace DCL.Multiplayer.Connections.Cast
             {
                 response =
                     await webRequestController
-                         .PostAsync(arguments, postArguments, ct, ReportCategory.DCL_CAST)
+                         .SignedFetchPostAsync(arguments, postArguments, "{}", ct)
                          .CreateFromJson<TokenResponse>(WRJsonParser.Unity);
+
+                // response =
+                //     await webRequestController
+                //          .PostAsync(arguments, postArguments, ct, ReportCategory.DCL_CAST)
+                //          .CreateFromJson<TokenResponse>(WRJsonParser.Unity);
             }
             catch (Exception e) { return Result.ErrorResult($"Cannot complete request to: {url.Value} with payload {payload}: " + (e.Message ?? "Error on request")); }
 
@@ -84,8 +95,10 @@ namespace DCL.Multiplayer.Connections.Cast
             if (videoInput.Success == false)
                 return Result.ErrorResult($"Cannot initialize video input: {videoInput.ErrorMessage}");
 
-            RtcVideoSource rtcVideoSource = new (videoInput.Value);
-            currentVideoTrack = room.LocalTracks.CreateVideoTrack("stream", rtcVideoSource);
+            currentVideoSource = new RtcVideoSource(videoInput.Value);
+            currentVideoSource.Start();
+
+            currentVideoTrack = room.LocalTracks.CreateVideoTrack("stream", currentVideoSource);
 
             TrackPublishOptions options = new ()
             {
@@ -113,12 +126,15 @@ namespace DCL.Multiplayer.Connections.Cast
 
         private async UniTask StopInternalAsync(CancellationToken ct)
         {
-            if (currentVideoTrack == null)
-                return;
+            currentVideoSource?.Dispose();
+            currentVideoSource = null;
 
-            room.Participants.LocalParticipant().UnpublishTrack(currentVideoTrack, stopOnUnpublish: true);
-            currentVideoTrack = null;
-            await room.DisconnectAsync(ct);
+            if (currentVideoTrack != null)
+            {
+                room.Participants.LocalParticipant().UnpublishTrack(currentVideoTrack, stopOnUnpublish: true);
+                currentVideoTrack = null;
+                await room.DisconnectAsync(ct);
+            }
         }
 
         [Serializable]
