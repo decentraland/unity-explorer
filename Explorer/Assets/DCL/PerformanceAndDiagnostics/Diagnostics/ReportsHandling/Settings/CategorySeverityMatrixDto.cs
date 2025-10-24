@@ -7,7 +7,7 @@ namespace DCL.Diagnostics
     [Serializable]
     public class CategorySeverityMatrixDto
     {
-        [SerializeField] public bool override = false;
+        [SerializeField] public bool isOverride = false;
         [SerializeField] public List<MatrixEntryDto> debugLogMatrix = new();
         [SerializeField] public List<MatrixEntryDto> sentryMatrix = new();
 

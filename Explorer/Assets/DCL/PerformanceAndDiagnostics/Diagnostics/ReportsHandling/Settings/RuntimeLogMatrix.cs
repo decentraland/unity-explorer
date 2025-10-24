@@ -27,13 +27,13 @@ namespace DCL.Diagnostics
         public void EnableCategory(string category, LogType severity)
         {
             enabledEntries[(category, severity)] = true;
-            ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_ENABLED, category, severity);
+            ReportHub.LogProductionInfo(string.Format(LogMatrixConstants.LOG_MATRIX_ENABLED, category, severity));
         }
 
         public void DisableCategory(string category, LogType severity)
         {
             enabledEntries[(category, severity)] = false;
-            ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_DISABLED, category, severity);
+            ReportHub.LogProductionInfo(string.Format(LogMatrixConstants.LOG_MATRIX_DISABLED, category, severity));
         }
 
 

@@ -26,7 +26,7 @@ namespace DCL.Diagnostics
                 }
                 catch (ArgumentException)
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_INVALID_SEVERITY, entry.severity, entry.category);
+                    ReportHub.LogWarning(ReportCategory.ENGINE, string.Format(LogMatrixConstants.LOG_MATRIX_INVALID_SEVERITY, entry.severity, entry.category));
                 }
             }
         }
