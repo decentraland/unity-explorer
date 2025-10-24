@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -94,6 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform Armature { get; private set; }
 
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
@@ -157,6 +159,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void ResetAnimatorTrigger(int hash)
         {
             AvatarAnimator.ResetTrigger(hash);
+        }
+
+        public void ResetArmatureInclination()
+        {
+            Vector3 angles = Armature.eulerAngles;
+            angles.x = 90;
+            Armature.eulerAngles = angles;
         }
 
         public bool GetAnimatorBool(int hash) =>
@@ -254,5 +263,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         int GetAnimatorCurrentStateTag();
 
         void ResetAnimatorTrigger(int hash);
+
+        void ResetArmatureInclination();
     }
 }
