@@ -30,7 +30,6 @@ namespace DCL.AvatarRendering.Loading.Assets
                 for (var i = 0; i < meshRenderers.Value.Count; i++)
                     Object.DestroyImmediate(meshRenderers.Value[i].gameObject);
 
-                instantiatedWearable.name = originalAsset.GetInstanceName();
                 cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible);
             }
 

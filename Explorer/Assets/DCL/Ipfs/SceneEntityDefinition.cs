@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace DCL.Ipfs
 {
@@ -13,5 +14,8 @@ namespace DCL.Ipfs
 
         public string GetLogSceneName() =>
             logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
+
+        public bool SupportInitialSceneState() =>
+            assetBundleManifestVersion.SupportsInitialSceneState();
     }
 }

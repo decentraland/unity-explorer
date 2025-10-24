@@ -5,8 +5,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
-using System;
 
 namespace ECS.StreamableLoading.AssetBundles
 {

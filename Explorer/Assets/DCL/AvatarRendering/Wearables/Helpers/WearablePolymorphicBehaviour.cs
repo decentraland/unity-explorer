@@ -222,8 +222,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 // An index is added to the promise to know to which slot of the WearableAssets it belongs to
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(
-                        expectedObjectType,
                         hash + PlatformUtils.GetCurrentPlatform(),
+                        expectedObjectType,
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         assetBundleManifestVersion: wearable.DTO.assetBundleManifestVersion,
@@ -277,7 +277,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             switch (wearable.Type)
             {
                 case WearableType.FacialFeature:
-                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
+                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetAsset<Texture>(), result.Asset));
                 default:
                     return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
             }
@@ -302,7 +302,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
         {
-            GameObject go = result.Asset!.GetMainAsset<GameObject>();
+            GameObject go = result.Asset!.GetAsset<GameObject>();
 
             // collect all renderers
             List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();

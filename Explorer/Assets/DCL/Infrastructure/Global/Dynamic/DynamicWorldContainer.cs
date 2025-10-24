@@ -109,6 +109,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.NotificationsBus;
+using DCL.Optimization.AdaptivePerformance.Systems;
+using DCL.PluginSystem.World;
+using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -117,6 +120,7 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
+using MultiplayerPlugin = DCL.PluginSystem.Global.MultiplayerPlugin;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -247,7 +251,6 @@ namespace Global.Dynamic
                     await LODContainer
                          .CreateAsync(
                               assetsProvisioner,
-                              bootstrapContainer.DecentralandUrlsSource,
                               staticContainer,
                               settingsContainer,
                               staticContainer.RealmData,
@@ -678,6 +681,9 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
+                new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
+                new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
+                new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
                 new MultiplayerPlugin(
                     assetsProvisioner,
                     archipelagoIslandRoom,
@@ -1123,6 +1129,7 @@ namespace Global.Dynamic
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
+                dynamicWorldParams.StartParcel,
                 staticContainer.LandscapeParcelData
             );
 

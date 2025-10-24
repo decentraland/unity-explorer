@@ -98,8 +98,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var promise = AssetBundlePromise.Create(
                 world,
                 GetAssetBundleIntention.FromHash(
-                    typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
+                    typeof(Texture2D),
                     permittedSources: AssetSource.ALL,
                     assetBundleManifestVersion: attachment.DTO.assetBundleManifestVersion,
                     parentEntityID: attachment.DTO.id,

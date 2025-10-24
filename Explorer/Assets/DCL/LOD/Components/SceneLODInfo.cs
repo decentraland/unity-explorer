@@ -5,6 +5,7 @@ using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -135,16 +136,21 @@ namespace DCL.LOD.Components
             metadata.LODChangeRelativeDistance = SceneLODInfoUtils.CalculateLODChangeRelativeHeight(metadata.CullRelativeHeightPercentage, tanValue, metadata.LodGroup.size / 2, defaultLodBias);
         }
 
-        public bool HasLOD(byte lodForAcquisition)
-        {
-            return SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
-                   SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition) ||
-                   CurrentLODLevelPromise == lodForAcquisition;
-        }
+        public bool HasLOD(byte lodForAcquisition) =>
+            IsInitialized() &&
+            (SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
+             SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition) ||
+             CurrentLODLevelPromise == lodForAcquisition);
 
-        public bool IsInitialized()
-        {
-            return !string.IsNullOrEmpty(id);
-        }
+        public bool IsInitialized() =>
+            !string.IsNullOrEmpty(id);
+
+        public bool IsLODInstantiated(byte lodForAcquisition) =>
+            IsInitialized() &&
+            (SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
+             SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition));
+
+        public bool HasActiveLODPromise() =>
+            CurrentLODLevelPromise != byte.MaxValue;
     }
 }

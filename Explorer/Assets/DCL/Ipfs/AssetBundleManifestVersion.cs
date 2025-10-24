@@ -12,15 +12,18 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        internal bool? HasHashInPathValue;
+        //From v41 ISS is supported for scenes
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
+
+        private bool? HasHashInPathValue;
+        private bool? SupportsISS;
+
 
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform assets;
 
         private HashSet<string>? convertedFiles;
-
-        private AssetBundleManifestVersion() { }
 
         public bool HasHashInPath()
         {
@@ -35,6 +38,19 @@ public class AssetBundleManifestVersion
             return HasHashInPathValue.Value;
         }
 
+        public bool SupportsInitialSceneState()
+        {
+            if (SupportsISS == null)
+            {
+                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
+                    SupportsISS = false;
+                else
+                    SupportsISS = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
+            }
+
+            return SupportsISS.Value;
+        }
+
         public string GetAssetBundleManifestVersion() =>
             IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.version : assets.mac.version;
 
@@ -46,11 +62,14 @@ public class AssetBundleManifestVersion
 
         public static AssetBundleManifestVersion CreateFailed()
         {
+            //All AB requests will fail when this occurs; its a dead end
+            var failedAssets = new AssetBundleManifestVersionPerPlatform();
+            failedAssets.SetVersion("v1", "1");
             var assetBundleManifestVersion = new AssetBundleManifestVersion
             {
                 assetBundleManifestRequestFailed = true,
+                assets = failedAssets,
             };
-
             return assetBundleManifestVersion;
         }
 

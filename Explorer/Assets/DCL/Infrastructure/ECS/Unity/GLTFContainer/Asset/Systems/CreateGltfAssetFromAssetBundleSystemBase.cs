@@ -1,76 +1,35 @@
 ﻿using Arch.Core;
-using Arch.System;
-using Arch.SystemGroups;
-using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using VisibleMeshCollider = ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset.VisibleMeshCollider;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
-    /// <summary>
-    ///     Creates <see cref="GltfContainerAsset" /> from the <see cref="StreamableLoadingResult{T}" />
-    /// </summary>
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    [LogCategory(ReportCategory.GLTF_CONTAINER)]
-    public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
+    public abstract class CreateGLTFAssetFromAssetBundleSystemBase :  BaseUnityLoopSystem
     {
+
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        protected CreateGLTFAssetFromAssetBundleSystemBase(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;
         }
 
-        protected override void Update(float t)
+        protected bool HasBudget() =>
+            instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+
+        protected GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset, string name = "")
         {
-            ConvertFromAssetBundleQuery(World);
-        }
-
-        /// <summary>
-        ///     Called on a separate entity with a promise creates a result with <see cref="GltfContainerAsset" />
-        /// </summary>
-        [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
-        private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
-        {
-            if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
-                return;
-
-            if (assetIntention.CancellationTokenSource.IsCancellationRequested)
-
-                // Don't care anymore, the entity will be deleted in the system that created this promise
-                return;
-
-            if (!assetBundleResult.Succeeded)
-            {
-                // Just propagate an exception, we can't do anything
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportCategory(), CreateException(assetBundleResult.Exception)));
-                return;
-            }
-
-            AssetBundleData assetBundleData = assetBundleResult.Asset!;
-
-            // Create a new container root. It will be cached and pooled
-            GltfContainerAsset result = CreateGltfObject(assetBundleData);
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
-        }
-
-        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)
-        {
-            var container = new GameObject(assetBundleData.GetInstanceName());
+            var container = new GameObject($"{name}_{asset.name}");
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);
@@ -78,7 +37,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             var result = GltfContainerAsset.Create(container, assetBundleData);
 
-            GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
+            GameObject? instance = Object.Instantiate(asset, containerTransform);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
@@ -147,7 +106,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static void AddVisibleMeshCollider(GltfContainerAsset result, GameObject go, Mesh mesh)
         {
-            result.VisibleColliderMeshes.Add(new VisibleMeshCollider
+            result.VisibleColliderMeshes.Add(new GltfContainerAsset.VisibleMeshCollider
             {
                 GameObject = go,
                 Mesh = mesh,

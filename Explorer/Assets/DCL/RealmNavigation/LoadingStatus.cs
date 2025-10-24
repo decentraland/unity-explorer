@@ -26,6 +26,13 @@ namespace DCL.RealmNavigation
             [LoadingStage.Completed] = 1f
         };
 
+        private static readonly HashSet<LoadingStage> NonLoadingScreenStages = new()
+        {
+            LoadingStage.Completed,
+            LoadingStage.Init,
+            LoadingStage.AuthenticationScreenShowing,
+        };
+
 
         public enum LoadingStage : byte
         {
@@ -57,5 +64,8 @@ namespace DCL.RealmNavigation
         {
             AssetState.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
         }
+
+        public bool IsLoadingScreenOn() =>
+            !NonLoadingScreenStages.Contains(CurrentStage.Value);
     }
 }
