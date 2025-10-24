@@ -1,4 +1,3 @@
-using DG.Tweening;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using TMPro;
@@ -20,8 +19,6 @@ namespace DCL.UI.EphemeralNotifications
 
         [SerializeField]
         protected TMP_Text label;
-
-        private Sequence animationSequence;
 
         /// <summary>
         /// Builds the notification UI.

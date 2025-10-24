@@ -61,6 +61,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly IWeb3IdentityCache identityCache;
         private readonly EphemeralNotificationsController ephemeralNotificationsController;
 
+        private const string DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME = "DirectedSocialEmoteEphemeralNotification";
+        private const string DIRECTED_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME = "DirectedEmoteEphemeralNotification";
+
         public CharacterEmoteSystem(
             World world,
             IEmoteStorage emoteStorage,
@@ -313,13 +316,15 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                             if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
                             {
-                                ephemeralNotificationsController.AddNotificationAsync("DirectedSocialEmoteEphemeralNotification", emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
+                                ephemeralNotificationsController.AddNotificationAsync(DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
+                                ephemeralNotificationsController.AddNotificationAsync(DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ "yeah" }).Forget();
+                                ephemeralNotificationsController.AddNotificationAsync(DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ "ooooog" }).Forget();
                             }
                         }
                     }
                     else if (!emoteComponent.Metadata.IsSocialEmote && !isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
                     {
-                        ephemeralNotificationsController.AddNotificationAsync("DirectedEmoteEphemeralNotification", emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
+                        ephemeralNotificationsController.AddNotificationAsync(DIRECTED_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
                     }
 
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PLAY USER: " + emoteIntent.WalletAddress);

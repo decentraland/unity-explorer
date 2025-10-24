@@ -2,6 +2,7 @@ using DCL.Profiles;
 using DG.Tweening;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -68,6 +69,11 @@ namespace DCL.UI.EphemeralNotifications
             loopListView.InitListView(0, OnGetItemByIndex);
             notificationStartTimes = new float[maximumVisibleNotifications];
             notifications = new List<NotificationData>(maximumVisibleNotifications);
+
+            for (int i = 0; i < notificationStartTimes.Length; ++i)
+            {
+                notificationStartTimes[i] = float.MinValue;
+            }
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -89,7 +95,10 @@ namespace DCL.UI.EphemeralNotifications
         internal void AddNotification(NotificationData notificationData)
         {
             pendingNotifications.Enqueue(notificationData);
+        }
 
+        private void Update()
+        {
             AnimateNewNotification();
         }
 
@@ -107,6 +116,10 @@ namespace DCL.UI.EphemeralNotifications
         private void AnimateNewNotification()
         {
             if(pendingNotifications.Count == 0)
+                return;
+
+            // When several notifications arrive at the same time, it adds a delay to each of them so the user can read them all
+            if(Time.time - notificationStartTimes[0] < 1.0f)
                 return;
 
             // Oldest notification is removed when maximum is reached

@@ -3,7 +3,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.EphemeralNotifications
@@ -30,11 +29,11 @@ namespace DCL.UI.EphemeralNotifications
         }
 
         /// <summary>
-        ///
+        /// Enqueues a notification that will be processed and shown when possible.
         /// </summary>
-        /// <param name="notificationTypeName"></param>
-        /// <param name="senderWalletAddress"></param>
-        /// <param name="textValues"></param>
+        /// <param name="notificationTypeName">The name of the type of notification (the name of the prefab).</param>
+        /// <param name="senderWalletAddress">The wallet address of the user that sent the notification.</param>
+        /// <param name="textValues">A list of values to be used to compose the label of the notification.</param>
         public async UniTask AddNotificationAsync(string notificationTypeName, string senderWalletAddress, string[] textValues)
         {
             Profile sender = await profileRepositoryWrapper.GetProfileAsync(senderWalletAddress, cts.Token);
