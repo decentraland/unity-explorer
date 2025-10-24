@@ -62,6 +62,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private const int ANIMATION_DELAY = 300;
         private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
+        private const int MAX_WINDOWED_WIDTH = 2560;
         private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.FullScreenWindow;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
@@ -315,7 +316,10 @@ namespace DCL.AuthenticationScreenFlow
         private void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
-            ForceResolutionAndWindowedMode();
+
+            // Checks the current screen mode because it could have been overridden with Alt+Enter
+            if (Screen.fullScreenMode != FullScreenMode.Windowed)
+                ForceResolutionAndWindowedMode();
 
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
@@ -593,7 +597,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             Resolution current = Screen.currentResolution;
 
-            int targetWidth = (int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+            // To avoid ultra-wide window on ultra-wide screens
+            int targetWidth = Mathf.Min((int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT), MAX_WINDOWED_WIDTH);
             int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
 
             Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);

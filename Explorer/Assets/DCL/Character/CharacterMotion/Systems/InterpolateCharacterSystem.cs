@@ -20,6 +20,7 @@ namespace DCL.CharacterMotion.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
+    [UpdateAfter(typeof(TeleportCharacterSystem))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
         private const float IS_STUCK_THRESHOLD = 0.00001f;
