@@ -41,12 +41,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin, timestamp);
 
+            bool isMentionMessage = CheckIfIsMention(message, out JsonArray mentions);
+
             JsonObject jsonObject = new JsonObject
                 {
                     { "is_command", message[0] == '/' },
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
-                    { "is_mention", CheckIfIsMention(message)},
+                    { "is_mention", isMentionMessage},
+                    { "mentions", mentions },
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
 
                     //TODO FRAN: Add here array of mentioned players.
@@ -65,19 +68,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
         }
 
-        private bool  CheckIfIsMention(string message)
+        private bool CheckIfIsMention(string message, out JsonArray mentions)
         {
+            mentions = new JsonArray();
             var matches = USERNAME_REGEX.Matches(message);
+
+            if (matches.Count == 0)
+                return false;
 
             foreach (Match match in matches)
             {
-                if (match.Value == selfProfile.OwnProfile?.DisplayName)
-                    return true;
+                Profile? profile = profileCache.GetByUserName(match.Value);
 
-                if (profileCache.GetByUserName(match.Value) != null)
-                    return true;
+                if (profile != null)
+                    mentions.Add(profile.UserId);
             }
-            return false;
+
+            return true;
         }
     }
 }
+
