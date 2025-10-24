@@ -3,7 +3,6 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;
