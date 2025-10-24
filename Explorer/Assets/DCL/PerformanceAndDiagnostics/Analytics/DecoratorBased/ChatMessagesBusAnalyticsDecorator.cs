@@ -51,8 +51,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "is_mention", isMentionMessage},
                     { "mentions", mentions },
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
-
-                    //TODO FRAN: Add here array of mentioned players.
                     // { "emoji_count", emoji_count },
                 };
 
@@ -71,6 +69,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private bool CheckIfIsMention(string message, out JsonArray mentions)
         {
             mentions = new JsonArray();
+            var isValidMention = false;
             var matches = USERNAME_REGEX.Matches(message);
 
             if (matches.Count == 0)
@@ -78,13 +77,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             foreach (Match match in matches)
             {
-                Profile? profile = profileCache.GetByUserName(match.Value);
+                //using group 1 to remove the @ symbol
+                Profile? profile = profileCache.GetByUserName(match.Groups[1].Value);
 
                 if (profile != null)
+                {
                     mentions.Add(profile.UserId);
+                    //returning a valid mention only if at least one of the mentions are a real user
+                    isValidMention = true;
+                }
             }
 
-            return true;
+            return isValidMention;
         }
     }
 }
