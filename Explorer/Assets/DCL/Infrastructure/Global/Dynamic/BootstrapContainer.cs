@@ -255,6 +255,9 @@ namespace Global.Dynamic
                 settings.ReportHandlingSettingsProduction;
 #endif
 
+            IReportsHandlingSettings finalSettings = baseSettings;
+
+            // Apply JSON override if provided
             if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixPath) && logMatrixPath != null)
             {
                 string resolvedPath = LogMatrixJsonLoader.ResolveFilePath(logMatrixPath);
@@ -263,7 +266,7 @@ namespace Global.Dynamic
                 if (jsonOverride != null)
                 {
                     ReportHub.LogProductionInfo($"Applying log matrix override from: {resolvedPath}");
-                    return new ReportsHandlingSettingsWithOverride(baseSettings, jsonOverride);
+                    finalSettings = new ReportsHandlingSettingsWithOverride(baseSettings, jsonOverride);
                 }
                 else
                 {
@@ -271,7 +274,7 @@ namespace Global.Dynamic
                 }
             }
 
-            return baseSettings;
+            return new RuntimeReportsHandlingSettings(finalSettings);
         }
     }
 
