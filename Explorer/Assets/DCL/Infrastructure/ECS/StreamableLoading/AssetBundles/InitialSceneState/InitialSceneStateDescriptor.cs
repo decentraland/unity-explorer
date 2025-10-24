@@ -1,6 +1,6 @@
-    using Arch.Core;
-    using Cysharp.Threading.Tasks;
-    using DCL.Diagnostics;
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utility;
 using ECS.Prioritization.Components;
@@ -120,8 +120,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 else
                 {
                     if (assetsAreInUse)
-                        assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
+                        assetsCache.PutInCache(valueTuple.Item2);
                 }
+
+                if (assetsAreInUse)
+                    assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
         }
 
