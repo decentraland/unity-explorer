@@ -8,11 +8,13 @@ namespace DCL.Diagnostics
     {
         private readonly ICategorySeverityMatrix baseMatrix;
         private readonly Dictionary<(string, LogType), bool> overrideEntries;
+        private readonly bool isOverrideMode;
         private Dictionary<(string, LogType), bool>? lookupCache;
 
-        public CategorySeverityMatrixOverride(ICategorySeverityMatrix baseMatrix, List<CategorySeverityMatrixDto.MatrixEntryDto> overrideEntries)
+        public CategorySeverityMatrixOverride(ICategorySeverityMatrix baseMatrix, List<CategorySeverityMatrixDto.MatrixEntryDto> overrideEntries, bool isOverrideMode = false)
         {
             this.baseMatrix = baseMatrix;
+            this.isOverrideMode = isOverrideMode;
             this.overrideEntries = new Dictionary<(string, LogType), bool>();
 
             foreach (var entry in overrideEntries)
@@ -41,20 +43,30 @@ namespace DCL.Diagnostics
         {
             lookupCache = new Dictionary<(string, LogType), bool>();
 
-            if (baseMatrix is CategorySeverityMatrix baseMatrixImpl)
+            if (isOverrideMode)
             {
-                if (baseMatrixImpl.entries != null)
+                foreach (var (key, value) in overrideEntries)
                 {
-                    foreach (var entry in baseMatrixImpl.entries)
-                    {
-                        lookupCache[(entry.Category, entry.Severity)] = true;
-                    }
+                    lookupCache[key] = value;
                 }
             }
-
-            foreach (var (key, value) in overrideEntries)
+            else
             {
-                lookupCache[key] = value;
+                if (baseMatrix is CategorySeverityMatrix baseMatrixImpl)
+                {
+                    if (baseMatrixImpl.entries != null)
+                    {
+                        foreach (var entry in baseMatrixImpl.entries)
+                        {
+                            lookupCache[(entry.Category, entry.Severity)] = true;
+                        }
+                    }
+                }
+
+                foreach (var (key, value) in overrideEntries)
+                {
+                    lookupCache[key] = value;
+                }
             }
         }
     }

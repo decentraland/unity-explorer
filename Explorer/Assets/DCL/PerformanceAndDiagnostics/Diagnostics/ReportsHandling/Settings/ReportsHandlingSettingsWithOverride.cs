@@ -19,14 +19,16 @@ namespace DCL.Diagnostics
                 {
                     debugLogMatrixOverride = new CategorySeverityMatrixOverride(
                         baseSettings.GetMatrix(ReportHandler.DebugLog), 
-                        jsonOverride.debugLogMatrix);
+                        jsonOverride.debugLogMatrix,
+                        jsonOverride.override);
                 }
 
                 if (jsonOverride.sentryMatrix != null && jsonOverride.sentryMatrix.Count > 0)
                 {
                     sentryMatrixOverride = new CategorySeverityMatrixOverride(
                         baseSettings.GetMatrix(ReportHandler.Sentry), 
-                        jsonOverride.sentryMatrix);
+                        jsonOverride.sentryMatrix,
+                        jsonOverride.override);
                 }
             }
         }
