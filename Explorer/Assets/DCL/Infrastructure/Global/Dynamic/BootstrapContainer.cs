@@ -36,7 +36,7 @@ namespace Global.Dynamic
 {
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
-        private ReportsHandlingSettings reportHandlingSettings;
+        private IReportsHandlingSettings reportHandlingSettings;
         private bool enableAnalytics;
 
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
@@ -108,7 +108,7 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
-                container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings);
+                container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
@@ -246,16 +246,32 @@ namespace Global.Dynamic
             return (dappWeb3Authenticator, coreWeb3Authenticator, autoLoginAuthenticator);
         }
 
-        private static ReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings)
+        private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)
         {
-            ReportsHandlingSettings reportHandlingSettings =
+            ReportsHandlingSettings baseSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
                 settings.ReportHandlingSettingsDevelopment;
 #else
                 settings.ReportHandlingSettingsProduction;
 #endif
 
-            return reportHandlingSettings;
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixPath) && logMatrixPath != null)
+            {
+                string resolvedPath = LogMatrixJsonLoader.ResolveFilePath(logMatrixPath);
+                var jsonOverride = LogMatrixJsonLoader.LoadFromFile(resolvedPath);
+
+                if (jsonOverride != null)
+                {
+                    ReportHub.LogProductionInfo($"Applying log matrix override from: {resolvedPath}");
+                    return new ReportsHandlingSettingsWithOverride(baseSettings, jsonOverride);
+                }
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to load log matrix override, falling back to base settings");
+                }
+            }
+
+            return baseSettings;
         }
     }
 
