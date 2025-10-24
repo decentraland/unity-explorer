@@ -406,6 +406,10 @@ MonoBehaviour:
       Severity: 3
     - Category: COMMUNITY_VOICE_CHAT
       Severity: 2
+    - Category: VOICE_CHAT
+      Severity: 3
+    - Category: VOICE_CHAT
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
