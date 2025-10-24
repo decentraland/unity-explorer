@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using UnityEngine;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -18,6 +17,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsReactingToSocialEmote;
         public string SocialEmoteInitiatorWalletAddress;
         public bool HasOutcomeAnimationStarted;
+        public string TargetAvatarWalletAddress;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
@@ -56,6 +56,7 @@ namespace DCL.AvatarRendering.Emotes
             IsReactingToSocialEmote = false;
             SocialEmoteInitiatorWalletAddress = string.Empty;
             HasOutcomeAnimationStarted = false;
+            TargetAvatarWalletAddress = string.Empty;
         }
     }
 }

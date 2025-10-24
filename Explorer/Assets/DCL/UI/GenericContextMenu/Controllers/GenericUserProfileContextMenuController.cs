@@ -355,13 +355,14 @@ namespace DCL.UI
 
         private void OnSocialEmoteButtonClicked(string userId)
         {
-            // FriendsPushNotifications
+            // TODO FriendsPushNotifications
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.EmotesWheel,
                                          new EmotesWheelParams()
                                          {
                                              IsDirectedEmote = true,
                                              TargetUsername = targetProfile.ValidatedName,
-                                             TargetUsernameColor = targetProfile.UserNameColor
+                                             TargetUsernameColor = targetProfile.UserNameColor,
+                                             TargetWalletAddress = targetProfile.UserId
                                          });
             closeContextMenuTask.TrySetResult();
         }

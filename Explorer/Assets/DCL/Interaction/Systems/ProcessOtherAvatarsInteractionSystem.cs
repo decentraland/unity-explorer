@@ -13,6 +13,7 @@ using DCL.Interaction.Utility;
 using DCL.Profiles;
 using DCL.SocialEmotes.UI;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using MVC;
 using System.Threading;
@@ -38,8 +39,8 @@ namespace DCL.Interaction.Systems
         private readonly IMVCManager mvcManager;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
-        private EmotesBus emotesBus;
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         private ProcessOtherAvatarsInteractionSystem(
@@ -47,15 +48,15 @@ namespace DCL.Interaction.Systems
             IEventSystem eventSystem,
             IMVCManagerMenusAccessFacade menusAccessFacade,
             IMVCManager mvcManager,
-            EmotesBus emotesBus,
-            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController) : base(world)
+            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
+            IWeb3IdentityCache identityCache) : base(world)
         {
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
             this.mvcManager = mvcManager;
-            this.emotesBus = emotesBus;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
+            this.identityCache = identityCache;
 
             dclInput.Player.Pointer!.performed += OpenContextMenu;
         }
@@ -110,7 +111,9 @@ namespace DCL.Interaction.Systems
 
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
-            if (socialEmoteInteraction is { AreInteracting: false })
+            if (socialEmoteInteraction is { AreInteracting: false } &&
+                (string.IsNullOrEmpty(socialEmoteInteraction.TargetWalletAddress) || // Is not a directed emote
+                    socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address.OriginalFormat)) // Is a directed emote and the target is the local player
             {
                 Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
                 Vector3 playerPosition = Vector3.zero;

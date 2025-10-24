@@ -12,6 +12,7 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
 using DCL.SocialEmotes.UI;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -33,8 +34,8 @@ namespace DCL.PluginSystem.Global
         private readonly IEventSystem eventSystem;
         private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
-        private readonly EmotesBus emotesBus;
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
+        private readonly IWeb3IdentityCache identityCache;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -48,8 +49,8 @@ namespace DCL.PluginSystem.Global
             IEventSystem eventSystem,
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade,
-            EmotesBus emotesBus,
-            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController)
+            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
+            IWeb3IdentityCache identityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
@@ -57,8 +58,8 @@ namespace DCL.PluginSystem.Global
             this.eventSystem = eventSystem;
             this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
-            this.emotesBus = emotesBus;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
+            this.identityCache = identityCache;
         }
 
         public void Dispose() { }
@@ -101,7 +102,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, emotesBus, socialEmoteOutcomeMenuController);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, socialEmoteOutcomeMenuController, identityCache);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

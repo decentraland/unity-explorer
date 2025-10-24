@@ -25,6 +25,7 @@ namespace DCL.SocialEmotes
             int OutcomeIndex { get; }
             Vector3 InitiatorPosition { get; }
             Quaternion InitiatorRotation { get; }
+            string TargetWalletAddress { get; }
         }
 
         /// <summary>
@@ -39,6 +40,7 @@ namespace DCL.SocialEmotes
             public int OutcomeIndex { get; set; }
             public Vector3 InitiatorPosition { get; set; }
             public Quaternion InitiatorRotation { get; set; }
+            public string TargetWalletAddress { get; set; }
 
             public void Reset()
             {
@@ -49,6 +51,7 @@ namespace DCL.SocialEmotes
                 OutcomeIndex = -1;
                 InitiatorPosition = Vector3.zero;
                 InitiatorRotation = Quaternion.identity;
+                TargetWalletAddress = string.Empty;
             }
         }
 
@@ -77,9 +80,10 @@ namespace DCL.SocialEmotes
         /// <param name="initiatorWalletAddress">The wallet address of the player that initiated the interaction.</param>
         /// <param name="emote">The social emote played by the initiator.</param>
         /// <param name="initiatorTransform">The transform component of the initiator.</param>
-        public void StartInteraction(string initiatorWalletAddress, IEmote emote, Transform initiatorTransform)
+        /// <param name="targetWalletAddress">Optional. The wallet address of the player whom the emote is directed. Only that player can be added to the interaction.</param>
+        public void StartInteraction(string initiatorWalletAddress, IEmote emote, Transform initiatorTransform, string targetWalletAddress = "")
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "START INTERACTION " + initiatorWalletAddress);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "START INTERACTION " + initiatorWalletAddress + " target: " + targetWalletAddress);
 
             if (participantInteractions.ContainsKey(initiatorWalletAddress))
                 return;
@@ -90,6 +94,7 @@ namespace DCL.SocialEmotes
             newInteraction.Emote = emote;
             newInteraction.InitiatorPosition = initiatorTransform.position;
             newInteraction.InitiatorRotation = initiatorTransform.rotation;
+            newInteraction.TargetWalletAddress = targetWalletAddress;
 
             participantInteractions.Add(initiatorWalletAddress, newInteraction);
             InteractionStarted?.Invoke(newInteraction);
