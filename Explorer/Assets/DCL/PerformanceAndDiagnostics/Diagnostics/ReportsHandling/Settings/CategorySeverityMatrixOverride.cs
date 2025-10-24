@@ -24,7 +24,7 @@ namespace DCL.Diagnostics
                 }
                 catch (ArgumentException)
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Invalid severity '{entry.severity}' for category '{entry.category}' in log matrix override");
+                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_INVALID_SEVERITY, entry.severity, entry.category);
                 }
             }
         }
@@ -41,7 +41,6 @@ namespace DCL.Diagnostics
         {
             lookupCache = new Dictionary<(string, LogType), bool>();
 
-            // First, copy all base matrix entries
             if (baseMatrix is CategorySeverityMatrix baseMatrixImpl)
             {
                 if (baseMatrixImpl.entries != null)
@@ -53,7 +52,6 @@ namespace DCL.Diagnostics
                 }
             }
 
-            // Then, add/override with JSON entries
             foreach (var (key, value) in overrideEntries)
             {
                 lookupCache[key] = value;

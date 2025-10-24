@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -12,18 +11,19 @@ namespace DCL.Chat.Commands
     public class LogMatrixChatCommand : IChatCommand
     {
         public string Command => "log-matrix";
-        public string Description => "<b>/log-matrix [enable|disable|toggle|clear|list] [category] [severity]</b>\n" +
+        public string Description => "<b>/log-matrix [enable|disable] [category] [severity]</b>\n" +
                                    "  Control log matrix settings at runtime\n" +
                                    "  Examples:\n" +
                                    "    /log-matrix enable VOICE_CHAT Error\n" +
-                                   "    /log-matrix disable SCENE_LOADING Warning\n" +
-                                   "    /log-matrix toggle ENGINE Exception\n" +
-                                   "    /log-matrix clear\n" +
-                                   "    /log-matrix list";
+                                   "    /log-matrix disable SCENE_LOADING Warning";
 
         public bool DebugOnly => false;
 
         private readonly RuntimeReportsHandlingSettings runtimeSettings;
+
+        private static readonly string[] VALID_ACTIONS = { "enable", "disable" };
+        private static readonly string[] VALID_SEVERITIES = { "log", "warning", "error", "exception", "assert" };
+        private static readonly LogType[] LOG_TYPES = { LogType.Log, LogType.Warning, LogType.Error, LogType.Exception, LogType.Assert };
 
         public LogMatrixChatCommand(RuntimeReportsHandlingSettings runtimeSettings)
         {
@@ -32,103 +32,67 @@ namespace DCL.Chat.Commands
 
         public bool ValidateParameters(string[] parameters)
         {
-            if (parameters.Length == 0) return false;
+            if (parameters.Length != 3) return false;
             
-            string action = parameters[0].ToLower();
-            return action switch
-            {
-                "enable" or "disable" or "toggle" => parameters.Length == 3,
-                "clear" or "list" => parameters.Length == 1,
-                _ => false
-            };
+            string action = parameters[0];
+            return IsValidAction(action);
         }
 
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            string action = parameters[0].ToLower();
-
+            string action = parameters[0];
+            
             return action switch
             {
                 "enable" => ExecuteEnableCommand(parameters[1], parameters[2]),
                 "disable" => ExecuteDisableCommand(parameters[1], parameters[2]),
-                "toggle" => ExecuteToggleCommand(parameters[1], parameters[2]),
-                "clear" => ExecuteClearCommand(),
-                "list" => ExecuteListCommand(),
-                _ => UniTask.FromResult("🔴 Invalid action. Use: enable, disable, toggle, clear, or list")
+                _ => UniTask.FromResult(LogMatrixConstants.LOG_MATRIX_INVALID_ACTION)
             };
         }
 
         private UniTask<string> ExecuteEnableCommand(string category, string severity)
         {
             if (!TryParseLogType(severity, out LogType logType))
-                return UniTask.FromResult($"🔴 Invalid severity: {severity}. Use: Log, Warning, Error, Exception, Assert");
+                return UniTask.FromResult(string.Format(LogMatrixConstants.LOG_MATRIX_INVALID_SEVERITY_CMD, severity));
 
             runtimeSettings.GetDebugLogMatrix().EnableCategory(category, logType);
-            return UniTask.FromResult($"🟢 Enabled {category}.{severity} logging");
+            return UniTask.FromResult(string.Format(LogMatrixConstants.LOG_MATRIX_ENABLED_CMD, category, severity));
         }
 
         private UniTask<string> ExecuteDisableCommand(string category, string severity)
         {
             if (!TryParseLogType(severity, out LogType logType))
-                return UniTask.FromResult($"🔴 Invalid severity: {severity}. Use: Log, Warning, Error, Exception, Assert");
+                return UniTask.FromResult(string.Format(LogMatrixConstants.LOG_MATRIX_INVALID_SEVERITY_CMD, severity));
 
             runtimeSettings.GetDebugLogMatrix().DisableCategory(category, logType);
-            return UniTask.FromResult($"🔴 Disabled {category}.{severity} logging");
+            return UniTask.FromResult(string.Format(LogMatrixConstants.LOG_MATRIX_DISABLED_CMD, category, severity));
         }
 
-        private UniTask<string> ExecuteToggleCommand(string category, string severity)
+
+
+        private static bool IsValidAction(string action)
         {
-            if (!TryParseLogType(severity, out LogType logType))
-                return UniTask.FromResult($"🔴 Invalid severity: {severity}. Use: Log, Warning, Error, Exception, Assert");
-
-            runtimeSettings.GetDebugLogMatrix().ToggleCategory(category, logType);
-            bool isEnabled = runtimeSettings.GetDebugLogMatrix().IsEnabled(category, logType);
-            return UniTask.FromResult($"🔄 Toggled {category}.{severity} logging to {(isEnabled ? "enabled" : "disabled")}");
-        }
-
-        private UniTask<string> ExecuteClearCommand()
-        {
-            runtimeSettings.GetDebugLogMatrix().ClearOverrides();
-            return UniTask.FromResult("🟢 Cleared all log matrix overrides");
-        }
-
-        private UniTask<string> ExecuteListCommand()
-        {
-            var overrides = runtimeSettings.GetDebugLogMatrix().GetOverrides();
-            
-            if (overrides.Count == 0)
-                return UniTask.FromResult("📋 No log matrix overrides active");
-
-            var sb = new StringBuilder();
-            sb.AppendLine("📋 Active log matrix overrides:");
-            
-            var grouped = overrides.GroupBy(kvp => kvp.Key.Item1)
-                                 .OrderBy(g => g.Key);
-
-            foreach (var group in grouped)
+            for (int i = 0; i < VALID_ACTIONS.Length; i++)
             {
-                sb.AppendLine($"  {group.Key}:");
-                foreach (var kvp in group.OrderBy(kvp => kvp.Key.Item2))
-                {
-                    string status = kvp.Value ? "✅" : "❌";
-                    sb.AppendLine($"    {status} {kvp.Key.Item2}");
-                }
+                if (string.Equals(action, VALID_ACTIONS[i], StringComparison.OrdinalIgnoreCase))
+                    return true;
             }
-
-            return UniTask.FromResult(sb.ToString());
+            return false;
         }
 
         private static bool TryParseLogType(string severity, out LogType logType)
         {
-            return (logType = severity.ToLower() switch
+            for (int i = 0; i < VALID_SEVERITIES.Length; i++)
             {
-                "log" => LogType.Log,
-                "warning" => LogType.Warning,
-                "error" => LogType.Error,
-                "exception" => LogType.Exception,
-                "assert" => LogType.Assert,
-                _ => (LogType)(-1)
-            }) != (LogType)(-1);
+                if (string.Equals(severity, VALID_SEVERITIES[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    logType = LOG_TYPES[i];
+                    return true;
+                }
+            }
+            
+            logType = (LogType)(-1);
+            return false;
         }
     }
 }

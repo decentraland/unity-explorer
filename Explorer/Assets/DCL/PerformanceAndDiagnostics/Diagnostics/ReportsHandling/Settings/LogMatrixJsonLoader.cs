@@ -12,31 +12,31 @@ namespace DCL.Diagnostics
             {
                 if (!File.Exists(filePath))
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Log matrix override file not found: {filePath}");
+                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_FILE_NOT_FOUND, filePath);
                     return null;
                 }
 
                 var jsonContent = File.ReadAllText(filePath);
                 if (string.IsNullOrEmpty(jsonContent))
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Log matrix override file is empty: {filePath}");
+                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_FILE_EMPTY, filePath);
                     return null;
                 }
 
                 var dto = JsonUtility.FromJson<CategorySeverityMatrixDto>(jsonContent);
                 if (dto == null)
                 {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to deserialize log matrix override file: {filePath}");
+                    ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_DESERIALIZE_FAILED, filePath);
                     return null;
                 }
 
-                ReportHub.LogProductionInfo($"Successfully loaded log matrix override from: {filePath}");
+                ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_LOAD_SUCCESS, filePath);
                 return dto;
             }
             catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.ENGINE);
-                ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to load log matrix override file: {filePath}");
+                ReportHub.LogWarning(ReportCategory.ENGINE, LogMatrixConstants.LOG_MATRIX_LOAD_FAILED, filePath);
                 return null;
             }
         }
@@ -47,35 +47,42 @@ namespace DCL.Diagnostics
             if (Path.IsPathRooted(filePath))
                 return filePath;
 
-            // For built applications, try relative to the application's data directory
-            // This is where the executable is located in Unity builds
-            var dataDir = Path.GetDirectoryName(Application.dataPath);
-            if (!string.IsNullOrEmpty(dataDir))
+            // Pre-allocate paths to avoid multiple string concatenations
+            string[] candidatePaths = GetCandidatePaths(filePath);
+            
+            // Check each candidate path in order of preference
+            foreach (string candidatePath in candidatePaths)
             {
-                var dataPath = Path.Combine(dataDir, filePath);
-                if (File.Exists(dataPath))
-                    return dataPath;
+                if (File.Exists(candidatePath))
+                    return candidatePath;
             }
-
-            // Try relative to current working directory
-            var currentDirPath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
-            if (File.Exists(currentDirPath))
-                return currentDirPath;
-
-            // In editor, try relative to project root (Assets/..)
-            #if UNITY_EDITOR
-            var projectRootPath = Path.Combine(Application.dataPath, "..", filePath);
-            if (File.Exists(projectRootPath))
-                return projectRootPath;
-            #endif
-
-            // Try relative to persistent data path as fallback
-            var persistentPath = Path.Combine(Application.persistentDataPath, filePath);
-            if (File.Exists(persistentPath))
-                return persistentPath;
 
             // Return original path if none found (will be handled by File.Exists check)
             return filePath;
+        }
+
+        private static string[] GetCandidatePaths(string filePath)
+        {
+            var dataDir = Path.GetDirectoryName(Application.dataPath);
+            var currentDir = Directory.GetCurrentDirectory();
+            var persistentDir = Application.persistentDataPath;
+
+            #if UNITY_EDITOR
+            return new[]
+            {
+                Path.Combine(dataDir ?? "", filePath),           // Application directory
+                Path.Combine(currentDir, filePath),              // Current working directory
+                Path.Combine(Application.dataPath, "..", filePath), // Project root
+                Path.Combine(persistentDir, filePath)            // Persistent data path
+            };
+            #else
+            return new[]
+            {
+                Path.Combine(dataDir ?? "", filePath),           // Application directory
+                Path.Combine(currentDir, filePath),              // Current working directory
+                Path.Combine(persistentDir, filePath)            // Persistent data path
+            };
+            #endif
         }
     }
 }

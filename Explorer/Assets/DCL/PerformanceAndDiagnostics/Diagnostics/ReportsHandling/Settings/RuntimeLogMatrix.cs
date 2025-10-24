@@ -27,37 +27,16 @@ namespace DCL.Diagnostics
         public void EnableCategory(string category, LogType severity)
         {
             enabledEntries[(category, severity)] = true;
-            ReportHub.LogProductionInfo($"Enabled {category}.{severity} logging");
+            ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_ENABLED, category, severity);
         }
 
         public void DisableCategory(string category, LogType severity)
         {
             enabledEntries[(category, severity)] = false;
-            ReportHub.LogProductionInfo($"Disabled {category}.{severity} logging");
+            ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_DISABLED, category, severity);
         }
 
-        public void ToggleCategory(string category, LogType severity)
-        {
-            if (enabledEntries.TryGetValue((category, severity), out bool currentValue))
-            {
-                enabledEntries[(category, severity)] = !currentValue;
-                ReportHub.LogProductionInfo($"Toggled {category}.{severity} logging to {!currentValue}");
-            }
-            else
-            {
-                // Not explicitly set, check base matrix and invert
-                bool baseValue = baseMatrix.IsEnabled(category, severity);
-                enabledEntries[(category, severity)] = !baseValue;
-                ReportHub.LogProductionInfo($"Toggled {category}.{severity} logging to {!baseValue}");
-            }
-        }
 
-        public void ClearOverrides()
-        {
-            enabledEntries.Clear();
-            ReportHub.LogProductionInfo("Cleared all log matrix overrides");
-        }
-
-        public Dictionary<(string, LogType), bool> GetOverrides() => new(enabledEntries);
+        public IReadOnlyDictionary<(string, LogType), bool> GetOverrides() => enabledEntries;
     }
 }

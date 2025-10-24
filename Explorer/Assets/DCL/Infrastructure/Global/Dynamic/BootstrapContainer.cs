@@ -257,7 +257,6 @@ namespace Global.Dynamic
 
             IReportsHandlingSettings finalSettings = baseSettings;
 
-            // Apply JSON override if provided
             if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixPath) && logMatrixPath != null)
             {
                 string resolvedPath = LogMatrixJsonLoader.ResolveFilePath(logMatrixPath);
