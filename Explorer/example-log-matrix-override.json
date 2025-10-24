@@ -1,4 +1,5 @@
 {
+  "override": true,
   "debugLogMatrix": [
     { "category": "VOICE_CHAT", "severity": "Warning" },
     { "category": "FRIENDS", "severity": "Warning" },
