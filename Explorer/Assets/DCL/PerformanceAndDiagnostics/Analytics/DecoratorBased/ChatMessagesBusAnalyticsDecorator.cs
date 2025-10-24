@@ -10,6 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class ChatMessagesBusAnalyticsDecorator : IChatMessagesBus
     {
+        private static readonly JsonArray MENTION_WALLET_IDS = new ();
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IChatMessagesBus core;
@@ -41,15 +42,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin, timestamp);
 
+            bool isMentionMessage = CheckIfIsMention(message);
+
             JsonObject jsonObject = new JsonObject
                 {
                     { "is_command", message[0] == '/' },
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
-                    { "is_mention", CheckIfIsMention(message)},
+                    { "is_mention", isMentionMessage},
+                    { "mentions", MENTION_WALLET_IDS },
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
-
-                    //TODO FRAN: Add here array of mentioned players.
                     // { "emoji_count", emoji_count },
                 };
 
@@ -65,19 +67,30 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
         }
 
-        private bool  CheckIfIsMention(string message)
+        private bool CheckIfIsMention(string message)
         {
+            MENTION_WALLET_IDS.Clear();
+            var isValidMention = false;
             var matches = USERNAME_REGEX.Matches(message);
+
+            if (matches.Count == 0)
+                return false;
 
             foreach (Match match in matches)
             {
-                if (match.Value == selfProfile.OwnProfile?.DisplayName)
-                    return true;
+                //using group 1 to remove the @ symbol
+                Profile? profile = profileCache.GetByUserName(match.Groups[1].Value);
 
-                if (profileCache.GetByUserName(match.Value) != null)
-                    return true;
+                if (profile != null)
+                {
+                    MENTION_WALLET_IDS.Add(profile.UserId);
+                    //returning a valid mention only if at least one of the mentions are a real user
+                    isValidMention = true;
+                }
             }
-            return false;
+
+            return isValidMention;
         }
     }
 }
+
