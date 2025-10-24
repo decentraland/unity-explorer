@@ -10,7 +10,6 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utility.Types;
-using DCL.VoiceChat;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -29,7 +28,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly EventSubscriptionScope scope = new ();
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
-        private readonly ICommunityCallOrchestrator orchestrator;
 
         private string currentNameFilter = string.Empty;
         private int currentPageNumberFilter = 1;
@@ -47,15 +45,13 @@ namespace DCL.Communities.CommunitiesBrowser
             ProfileRepositoryWrapper profileRepositoryWrapper,
             CommunitiesBrowserStateService browserStateService,
             CommunitiesBrowserEventBus browserEventBus,
-            CommunitiesBrowserCommandsLibrary commandsLibrary,
-            ICommunityCallOrchestrator orchestrator)
+            CommunitiesBrowserCommandsLibrary commandsLibrary)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
             this.browserEventBus = browserEventBus;
             this.commandsLibrary = commandsLibrary;
-            this.orchestrator = orchestrator;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.CommunityJoined += OnCommunityJoined;
@@ -85,9 +81,9 @@ namespace DCL.Communities.CommunitiesBrowser
             scope.Dispose();
         }
 
-        private void OnJoinStream(string communityId)
+        private void OnJoinStream(string communityId, bool isMember)
         {
-            commandsLibrary.JoinStreamCommand.Execute(communityId);
+            commandsLibrary.JoinStreamCommand.Execute(communityId, isMember);
         }
 
         private void OnRequestToJoinCommunityCanceled(string communityId, string requestId)

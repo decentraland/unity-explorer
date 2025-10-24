@@ -79,6 +79,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private Tweener? headerTween;
         private Vector2 originalFooterSizeDelta;
         private Vector2 originalHeaderSizeDelta;
+        private bool isMember;
 
         public string CommunityId { get; private set; } = null!;
 
@@ -93,29 +94,28 @@ namespace DCL.Communities.CommunitiesBrowser
             joinStreamButton.onClick.AddListener(OnJoinStreamClicked);
             goToStreamButton.onClick.AddListener(OnGoToStreamButtonClicked);
 
-            rejectInvitationButton.onClick.AddListener(() =>
-            {
-                confirmationDialogCts = confirmationDialogCts.SafeRestart();
-                ShowDeleteInvitationConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
-                return;
-
-                async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
-                {
-                    Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_INVITATION_TEXT_FORMAT, currentCommunityName),
-                                                                                         DELETE_COMMUNITY_INVITATION_CANCEL_TEXT,
-                                                                                         DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT,
-                                                                                         communityThumbnail.ImageSprite,
-                                                                                         true, false), ct)
-                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
-
-                    RejectCommunityInvitationButtonClicked?.Invoke(CommunityId, currentInviteOrRequestId, this);
-                }
-            });
+            rejectInvitationButton.onClick.AddListener(OnRejectInvitationClicked);
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
+        }
+
+        private void OnRejectInvitationClicked()
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowDeleteInvitationConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_INVITATION_TEXT_FORMAT, currentCommunityName), DELETE_COMMUNITY_INVITATION_CANCEL_TEXT, DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT, communityThumbnail.ImageSprite, true, false), ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                    return;
+
+                RejectCommunityInvitationButtonClicked?.Invoke(CommunityId, currentInviteOrRequestId, this);
+            }
         }
 
         private void OnEnable() =>
@@ -136,7 +136,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public event Action<string>? MainButtonClicked;
         public event Action<string>? ViewCommunityButtonClicked;
-        public event Action<string>? JoinStreamButtonClicked;
+        public event Action<string, bool>? JoinStreamButtonClicked;
         public event Action<string>? GoToStreamButtonClicked;
         public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
         public event Action<string, CommunityResultCardView>? RequestToJoinCommunityButtonClicked;
@@ -146,7 +146,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnJoinStreamClicked()
         {
-            JoinStreamButtonClicked?.Invoke(CommunityId);
+            JoinStreamButtonClicked?.Invoke(CommunityId, isMember);
         }
 
         private void OnGoToStreamButtonClicked()
@@ -154,20 +154,15 @@ namespace DCL.Communities.CommunitiesBrowser
             GoToStreamButtonClicked?.Invoke(CommunityId);
         }
 
-        public void SetCommunityId(string id) =>
-            CommunityId = id;
-
-        public void SetTitle(string title)
+        public void SetCommunityData(string id, string title, string owner, string description, bool isMember)
         {
+            CommunityId = id;
             communityTitle.text = title;
             currentCommunityName = title;
-        }
-
-        public void SetOwner(string owner) =>
             communityOwner.text = owner;
-
-        public void SetDescription(string description) =>
             communityDescription.text = description;
+            this.isMember = isMember;
+        }
 
         public void ConfigureListeningTooltip()
         {
