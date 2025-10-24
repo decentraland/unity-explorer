@@ -81,7 +81,7 @@ namespace DCL.LOD.Systems
 
         private void ResolveInitialSceneStateDescriptorLOD(in InitialSceneStateDescriptor initialSceneStateDescriptor, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            if (!initialSceneStateDescriptor.IsReady())
+            if (!initialSceneStateDescriptor.IsDownloadedAndReady())
                 return;
 
             var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");

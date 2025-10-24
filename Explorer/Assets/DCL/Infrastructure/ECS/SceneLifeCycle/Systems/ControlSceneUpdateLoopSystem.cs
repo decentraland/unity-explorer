@@ -64,7 +64,7 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
-            if (!initialSceneState.IsReady())
+            if (!initialSceneState.IsDownloadedAndReady())
                 return;
 
             if (promise.TryConsume(World, out var result) && result.Succeeded)

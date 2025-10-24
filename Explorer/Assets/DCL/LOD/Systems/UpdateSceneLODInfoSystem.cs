@@ -68,7 +68,7 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
-            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState())
+            if (level == 0 && initialSceneStateDescriptor.IsValid())
             {
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;

@@ -27,11 +27,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private IGltfContainerAssetsCache assetsCache;
 
         private bool AllAssetsInstantiated;
-        private bool IsSupported;
+        private bool IsSupportedByScene;
 
-        public bool IsReady()
+        public bool IsDownloadedAndReady()
         {
-            if (!IsSupported)
+            if (!IsSupportedByScene)
                 return true;
 
             //The asset bundle failed to load for some reason...this is an escape route. The scene load will fail,
@@ -73,14 +73,14 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             InitialSceneStateDescriptor unsuportedStaticSceneAB = new InitialSceneStateDescriptor();
             unsuportedStaticSceneAB.AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {sceneID}"));
             unsuportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
-            unsuportedStaticSceneAB.IsSupported = false;
+            unsuportedStaticSceneAB.IsSupportedByScene = false;
             return unsuportedStaticSceneAB;
         }
 
         public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, EntityDefinitionBase entityDefinition)
         {
             InitialSceneStateDescriptor suportedStaticSceneAB = new InitialSceneStateDescriptor();
-            suportedStaticSceneAB.IsSupported = true;
+            suportedStaticSceneAB.IsSupportedByScene = true;
             suportedStaticSceneAB.SceneID = entityDefinition.id;
             suportedStaticSceneAB.AssetBundleManifestVersion = entityDefinition.assetBundleManifestVersion;
 
@@ -135,7 +135,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         }
 
         public bool IsValid() =>
-            IsSupported && AssetBundleData.Exception == null;
+            IsSupportedByScene && AssetBundleData.Exception == null;
+
+        public bool IsSupported() =>
+            IsSupportedByScene;
 
         private void CreateEmptyAssetBundleData()
         {

@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 //TODO(Juani) : This `if` is required for retro-compatibility with non Single Asset Bundles scenes.
                 //If all scenes were built with SAB scenes, we could remove it
-                if (sceneDefinitionComponent.Definition.SupportInitialSceneState())
+                if (initialSceneStateDescriptor.IsValid())
                 {
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
                     sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
