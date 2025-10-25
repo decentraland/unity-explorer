@@ -14,11 +14,8 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using static DCL.ECSComponents.EasingFunction;
-using static DG.Tweening.Ease;
 
 namespace DCL.SDKComponents.Tween
 {
@@ -30,41 +27,6 @@ namespace DCL.SDKComponents.Tween
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
-
-        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
-        {
-            [EfLinear] = Linear,
-            [EfEaseinsine] = InSine,
-            [EfEaseoutsine] = OutSine,
-            [EfEasesine] = InOutSine,
-            [EfEaseinquad] = InQuad,
-            [EfEaseoutquad] = OutQuad,
-            [EfEasequad] = InOutQuad,
-            [EfEaseinexpo] = InExpo,
-            [EfEaseoutexpo] = OutExpo,
-            [EfEaseexpo] = InOutExpo,
-            [EfEaseinelastic] = InElastic,
-            [EfEaseoutelastic] = OutElastic,
-            [EfEaseelastic] = InOutElastic,
-            [EfEaseinbounce] = InBounce,
-            [EfEaseoutbounce] = OutBounce,
-            [EfEasebounce] = InOutBounce,
-            [EfEaseincubic] = InCubic,
-            [EfEaseoutcubic] = OutCubic,
-            [EfEasecubic] = InOutCubic,
-            [EfEaseinquart] = InQuart,
-            [EfEaseoutquart] = OutQuart,
-            [EfEasequart] = InOutQuart,
-            [EfEaseinquint] = InQuint,
-            [EfEaseoutquint] = OutQuint,
-            [EfEasequint] = InOutQuint,
-            [EfEaseincirc] = InCirc,
-            [EfEaseoutcirc] = OutCirc,
-            [EfEasecirc] = InOutCirc,
-            [EfEaseinback] = InBack,
-            [EfEaseoutback] = OutBack,
-            [EfEaseback] = InOutBack,
-        };
 
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -80,12 +42,13 @@ namespace DCL.SDKComponents.Tween
         protected override void Update(float t)
         {
             UpdatePBTweenQuery(World);
-            UpdateTweenTransformSequenceQuery(World);
-            UpdateTweenTextureSequenceQuery(World);
+            UpdateTweenTransformQuery(World);
+            UpdateTweenTextureQuery(World);
         }
 
         [Query]
-        private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase is PBTween.ModeOneofCase.TextureMove or PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
@@ -101,7 +64,8 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove && pbTween.ModeCase != PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
@@ -123,7 +87,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
         {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+            TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenComponent.CustomTweener);
 
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
@@ -174,7 +138,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+            TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenComponent.CustomTweener);
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
@@ -204,7 +168,7 @@ namespace DCL.SDKComponents.Tween
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
 
-            Ease ease = IsTweenContinuous(tweenModel) ? Linear : EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
+            Ease ease = IsTweenContinuous(tweenModel) ? Ease.Linear : TweenSDKComponentHelper.GetEase(tweenModel.EasingFunction);
 
             sdkTweenComponent.TweenMode = tweenModel.ModeCase;
             Vector2? textureStart = null;
@@ -218,15 +182,8 @@ namespace DCL.SDKComponents.Tween
             sdkTweenComponent.CustomTweener.DoTween(ease, Mathf.Clamp(tweenModel.CurrentTime, 0f, 1f) * durationInSeconds, isPlaying);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
-        {
-            if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
-            if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
-            return TweenStateStatus.TsActive;
-        }
-
         [Query]
+        [None(typeof(PBTweenSequence))]
         private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;

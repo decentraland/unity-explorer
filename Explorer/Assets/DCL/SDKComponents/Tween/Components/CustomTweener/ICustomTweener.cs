@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         void Rewind();
 
-            void Kill(bool complete);
+        void Kill(bool complete);
 
         bool IsPaused();
 
