@@ -81,7 +81,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), 1000, 1000),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), Substitute.For<IDecentralandUrlsSource>(), 1000, 1000),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -126,7 +126,8 @@ namespace Global.Tests.PlayMode
                 new IMessagePipesHub.Fake(),
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
-                DecentralandEnvironment.Org
+                DecentralandEnvironment.Org,
+                ApplicationParametersParser.TEST_INSTANCE
             );
 
             return (staticContainer, sceneSharedContainer);

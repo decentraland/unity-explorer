@@ -25,6 +25,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
@@ -231,7 +232,8 @@ namespace SceneRunner
                 IGlobalWorldActions globalWorldActions,
                 IRealmData realmData,
                 ISceneCommunicationPipe messagePipesHub,
-                IWebRequestController webRequestController)
+                IWebRequestController webRequestController,
+                IAppArgs appArgs)
                 : this(
                     engineApi,
                     new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData),
@@ -239,7 +241,7 @@ namespace SceneRunner
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations),
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo)),
-                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations),
+                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, appArgs),
                     syncDeps,
                     sceneRuntime) { }
 
@@ -255,11 +257,21 @@ namespace SceneRunner
         internal class WithRuntimeAndJsAPI : WithRuntimeAndJsAPIBase
         {
             public WithRuntimeAndJsAPI
-            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
-                IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
+            (
+                SceneInstanceDependencies syncDeps,
+                SceneRuntimeImpl sceneRuntime,
+                ISharedPoolsProvider sharedPoolsProvider,
+                ICRDTSerializer crdtSerializer,
+                IMVCManager mvcManager,
+                IGlobalWorldActions globalWorldActions,
+                IRealmData realmData,
+                ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
-                MultiThreadSync.Owner syncOwner)
-                : base(new EngineAPIImplementation(
+                MultiThreadSync.Owner syncOwner,
+                IAppArgs appArgs
+            )
+                : base(
+                    new EngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
                         syncDeps.CRDTProtocol,
@@ -270,8 +282,18 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMultiThreadSync,
-                        syncOwner),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
+                        syncOwner
+                    ),
+                    syncDeps,
+                    sceneRuntime,
+                    sceneRuntime,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData,
+                    messagePipesHub,
+                    webRequestController,
+                    appArgs
+                ) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
@@ -279,8 +301,9 @@ namespace SceneRunner
             public WithRuntimeJsAndSDKObservablesEngineAPI
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
-                IWebRequestController webRequestController, MultiThreadSync.Owner syncOwner)
-                : base(new SDKObservableEventsEngineAPIImplementation(
+                IWebRequestController webRequestController, MultiThreadSync.Owner syncOwner, IAppArgs appArgs)
+                : base(
+                    new SDKObservableEventsEngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
                         syncDeps.CRDTProtocol,
@@ -291,8 +314,18 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMultiThreadSync,
-                        syncOwner),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController) { }
+                        syncOwner
+                    ),
+                    syncDeps,
+                    sceneRuntime,
+                    sceneRuntime,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData,
+                    messagePipesHub,
+                    webRequestController,
+                    appArgs
+                ) { }
         }
     }
 }
