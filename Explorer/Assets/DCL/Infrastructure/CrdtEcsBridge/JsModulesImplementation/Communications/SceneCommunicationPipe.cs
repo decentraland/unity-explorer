@@ -8,7 +8,6 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {

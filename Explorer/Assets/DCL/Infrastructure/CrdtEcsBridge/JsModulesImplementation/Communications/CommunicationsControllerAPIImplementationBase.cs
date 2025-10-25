@@ -25,11 +25,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         protected readonly List<ITypedArray<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
-        private readonly string sceneId;
         protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
         private readonly ScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
+        private readonly ISceneData sceneData;
 
         internal IReadOnlyList<ITypedArray<byte>> EventsToProcess => eventsToProcess;
 
@@ -39,7 +39,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             IJsOperations jsOperations,
             ISceneCommunicationPipe.MsgType typeToHandle)
         {
-            sceneId = sceneData.SceneEntityDefinition.id!;
+            this.sceneData = sceneData;
             this.sceneCommunicationPipe = sceneCommunicationPipe;
             this.jsOperations = jsOperations;
             this.typeToHandle = typeToHandle;
@@ -49,6 +49,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.sceneCommunicationPipe.AddSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
         }
 
+        private string sceneId => sceneData.SceneEntityDefinition.id!;
+
         public void Dispose()
         {
             sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
@@ -57,6 +59,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null)
         {
+            // Authoritative multiplayer enforces sending messages to the special peer
+            if (sceneData.SceneEntityDefinition.metadata.authoritativeMultiplayer)
+                recipient = "authoritative-server";
+
             foreach (PoolableByteArray poolable in broadcastData)
                 if (poolable.Length > 0)
                 {

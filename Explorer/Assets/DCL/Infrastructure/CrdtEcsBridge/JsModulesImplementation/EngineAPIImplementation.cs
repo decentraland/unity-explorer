@@ -12,6 +12,7 @@ using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
@@ -212,7 +213,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
-            // We are interested in LWW messages only,
+            // We are interested in LWW messages only, in AUTHORITATIVE_PUT_COMPONENT we are not interested as it can't be originated from the client
             switch (message.message.Type)
             {
                 case CRDTMessageType.DELETE_COMPONENT:
