@@ -27,6 +27,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
         private readonly IGlobalRealmController realmController;
+        private readonly bool forceOnboarding;
 
         private Profile? ownProfile;
         private bool isProfilePendingToBeUpdated;
@@ -36,13 +37,15 @@ namespace DCL.UserInAppInitializationFlow
             ISelfProfile selfProfile,
             IDecentralandUrlsSource decentralandUrlsSource,
             IAppArgs appParameters,
-            IGlobalRealmController realmController)
+            IGlobalRealmController realmController,
+            bool forceOnboarding)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.appParameters = appParameters;
             this.realmController = realmController;
+            this.forceOnboarding = forceOnboarding;
         }
 
         public async UniTask MarkOnboardingAsDoneAsync(World world, Entity playerEntity, CancellationToken ct)
@@ -76,6 +79,9 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
+            // Check if force onboarding is enabled from app args or entry point configuration
+            bool shouldForceOnboarding = forceOnboarding || appParameters.HasFlag(AppArgsFlags.FORCE_ONBOARDING);
+
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
                 return;
@@ -84,7 +90,7 @@ namespace DCL.UserInAppInitializationFlow
             ownProfile = await selfProfile.ProfileAsync(ct);
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
-            if (ownProfile is { TutorialStep: > 0 })
+            if (!shouldForceOnboarding && ownProfile is { TutorialStep: > 0 })
                 return;
 
             // TODO: Remove the greeting-onboarding ff when it is finally moved to production. Keep onboarding only.

@@ -403,6 +403,7 @@ MonoBehaviour:
     enableLandscape: 0
     enableLOD: 0
     enableVersionUpdateGuard: 0
+    forceOnboarding: 0
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0
     portableExperiencesEnsToLoad: []
