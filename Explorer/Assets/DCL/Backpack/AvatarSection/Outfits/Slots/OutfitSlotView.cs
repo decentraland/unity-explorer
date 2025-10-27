@@ -77,13 +77,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         private void Awake()
         {
-            saveButton?.onClick.AddListener(() =>
-            {
-                OnSaveClicked?.Invoke();
-
-                if (SaveOutfitAudio != null)
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(SaveOutfitAudio);
-            });
+            saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
             
             equipButton?.onClick.AddListener(() =>
             {
@@ -93,13 +87,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
             });
 
-            deleteButton?.onClick.AddListener(() =>
-            {
-                OnDeleteClicked?.Invoke();
-
-                if (DeleteOutfitAudio != null)
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(DeleteOutfitAudio);
-            });
+            deleteButton?.onClick.AddListener(() => OnDeleteClicked?.Invoke());
 
             previewButton?.onClick.AddListener(() =>
             {
@@ -207,6 +195,18 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public void SetEquipped(bool equipped)
         {
             outfitEquippedOutline.gameObject.SetActive(equipped);
+        }
+
+        public void PlayDeleteOutfitSound()
+        {
+            if (DeleteOutfitAudio != null)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(DeleteOutfitAudio);
+        }
+
+        public void PlaySaveOutfitSound()
+        {
+            if (SaveOutfitAudio != null)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(SaveOutfitAudio);
         }
     }
 }

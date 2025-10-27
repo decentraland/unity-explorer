@@ -258,5 +258,15 @@ namespace DCL.Backpack.Slots
                 currentThumbnail = null;
             }
         }
+
+        public void PlayDeleteOutfitSound()
+        {
+            view.PlayDeleteOutfitSound();
+        }
+
+        public void PlaySaveOutfitSound()
+        {
+            view.PlaySaveOutfitSound();
+        }
     }
 }

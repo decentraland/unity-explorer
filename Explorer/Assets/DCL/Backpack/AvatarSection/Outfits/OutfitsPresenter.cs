@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -208,6 +209,7 @@ namespace DCL.Backpack
                 if (cts.Token.IsCancellationRequested) return;
 
                 presenter.SetData(savedItem, loadThumbnail: false);
+                presenter.PlaySaveOutfitSound();
 
                 UpdateFirstEmptySlotPrompt();
             }
@@ -272,7 +274,7 @@ namespace DCL.Backpack
                     outfitsCollection.Remove(slotIndex);
 
                     presenter.SetEmpty();
-
+                    presenter.PlayDeleteOutfitSound();
                     UpdateFirstEmptySlotPrompt();
                 }
                 else
