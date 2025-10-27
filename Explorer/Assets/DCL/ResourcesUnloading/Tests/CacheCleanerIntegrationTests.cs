@@ -18,13 +18,12 @@ using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
 using ECS;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
-using ECS.StreamableLoading.NFTShapes;
 using Unity.PerformanceTesting;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static Utility.Tests.TestsCategories;
+using Object = UnityEngine.Object;
 
 namespace DCL.ResourcesUnloading.Tests
 {
@@ -154,7 +153,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, typeof(GameObject), null);
+            var assetBundleData = new AssetBundleData(null, null, Array.Empty<Object>(), typeof(GameObject), null);
 
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
