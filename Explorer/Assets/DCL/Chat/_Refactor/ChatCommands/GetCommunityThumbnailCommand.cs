@@ -38,7 +38,7 @@ namespace DCL.Chat.ChatCommands
                         $"Community thumbnail download failed for {thumbnailUrl}");
                 }
 
-                return chatConfig.DefaultProfileThumbnail;
+                return chatConfig.DefaultCommunityThumbnail;
             }
         }
     }

@@ -91,9 +91,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!legacyAnimationsEnabled)
                     return false;
 
-                // Animator gets re-enabled later when its properties get manipulated in AvatarBase
-                view.AvatarAnimator.enabled = false;
-
                 PlayLegacyEmote(view.AvatarAnimator.gameObject, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
             }
             else
