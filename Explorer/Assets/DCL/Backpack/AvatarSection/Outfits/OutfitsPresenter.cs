@@ -304,8 +304,6 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
 
-            ReportHub.Log(ReportCategory.OUTFITS, $"Previewing outfit in slot {outfitItem.slot}");
-
             previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token).Forget();
 
             GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();

@@ -142,21 +142,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition)
         {
-            ReportHub.Log(ReportCategory.OUTFITS, $"[AVATAR_LOAD] Creating WearablePromise for Profile: {profile.Name} ({profile.UserId})");
-            ReportHub.Log(ReportCategory.OUTFITS, $"[AVATAR_LOAD]   -> Body Shape: '{profile.Avatar.BodyShape}'");
-
-            if (profile.Avatar.Wearables != null)
-            {
-                foreach (var urn in profile.Avatar.Wearables)
-                {
-                    ReportHub.Log(ReportCategory.OUTFITS, $"[AVATAR_LOAD]   -> Wearable URN: '{urn}'");
-                }
-            }
-            else
-            {
-                ReportHub.Log(ReportCategory.OUTFITS, $"[AVATAR_LOAD] Profile.Avatar.Wearables is null for {profile.Name}");
-            }
-            
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
             // there is not need to convert
             return WearablePromise.Create(World,

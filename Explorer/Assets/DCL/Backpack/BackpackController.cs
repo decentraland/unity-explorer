@@ -21,6 +21,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
@@ -138,11 +139,16 @@ namespace DCL.Backpack
                 inputBlock);
 
             var screenshotService = new AvatarScreenshotService(selfProfile);
+            var outfitsLogger = new OutfitsStateLogger(wearableStorage, realmData);
             var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
             var outfitsCollection = new OutfitsCollection();
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController, selfProfile, realmData);
-            var saveOutfitCommand = new SaveOutfitCommand(selfProfile, outfitsRepository, wearableStorage, realmData, eventBus);
+            var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
+                outfitsRepository,
+                wearableStorage,
+                eventBus,
+                outfitsLogger);
             var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
             var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider, wearableStorage);
@@ -150,7 +156,8 @@ namespace DCL.Backpack
                 equippedWearables,
                 selfProfile,
                 wearableStorage,
-                realmData);
+                realmData,
+                outfitsLogger);
 
             var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,

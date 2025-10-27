@@ -208,7 +208,6 @@ namespace DCL.Backpack
                 profileCache.Set(newProfile.UserId, newProfile);
                 UpdateAvatarInWorld(newProfile);
                 profileChangesBus.PushUpdate(newProfile);
-                LogSystemState("[ProfileUpdate [Local] - debug snapshot", newProfile.UserId, newProfile.WalletId);
                 
                 return;
             }
@@ -216,7 +215,6 @@ namespace DCL.Backpack
             try
             {
                 Profile? newProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
-                LogSystemState("[ProfileUpdate - [Published] - debug snapshot", newProfile?.UserId, newProfile?.WalletId);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (newProfile != null)
@@ -230,37 +228,8 @@ namespace DCL.Backpack
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);
-                LogSystemState("[ProfileUpdate - [FAILED] - debug snapshot", oldProfile.UserId, oldProfile.WalletId);
                 ShowErrorNotificationAsync(ct).Forget();
             }
-        }
-
-        private void LogSystemState(string source, string? userId, string? walletId)
-        {
-            var debugInfo = new StringBuilder();
-
-            debugInfo.AppendLine($"----------- {source} (User: {userId} | Wallet: {walletId}) -----------");
-            debugInfo.AppendLine($"Profile state {userId} wallet {walletId}");
-            debugInfo.AppendLine($"RealmData state {userId} {realmData}");
-
-            foreach ((string category, var w) in equippedWearables.Items())
-            {
-                if (w == null) continue;
-
-                var shortUrn = w.GetUrn();
-                debugInfo.Append($"  - Cat: {category,-15} | Short URN: '{shortUrn}'");
-                if (wearableStorage.TryGetOwnedNftRegistry(shortUrn, out var registry) && registry.Count > 0)
-                {
-                    var fullUrn = registry.First().Value.Urn;
-                    debugInfo.AppendLine($" -> [FOUND] Full URN: '{fullUrn}'");
-                }
-                else
-                {
-                    debugInfo.AppendLine(" -> [NOT FOUND] No full URN mapping exists in the registry yet!");
-                }
-            }
-
-            ReportHub.Log(ReportCategory.OUTFITS, debugInfo.ToString());
         }
 
         private void UpdateAvatarInWorld(Profile profile)
