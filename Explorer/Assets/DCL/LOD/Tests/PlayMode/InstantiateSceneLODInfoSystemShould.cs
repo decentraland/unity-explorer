@@ -96,6 +96,7 @@ namespace DCL.LOD.Tests
             var promiseGenerated = GenerateSuccessfullPromise();
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevelPromise = 0;
+            sceneLODInfo.id = "scene";
             Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("Unsupported"));
 
             //Act
@@ -119,6 +120,7 @@ namespace DCL.LOD.Tests
             //Arrange
             sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
             sceneLODInfo.CurrentLODLevelPromise = 0;
+            sceneLODInfo.id = "scene";
             Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("Unsupported"));
 
             //Act
