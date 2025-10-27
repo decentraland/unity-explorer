@@ -69,30 +69,43 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
 
+        [field: SerializeField]
+        public AudioClipConfig SaveOutfitAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig DeleteOutfitAudio { get; private set; }
+
         private void Awake()
         {
             saveButton?.onClick.AddListener(() =>
             {
                 OnSaveClicked?.Invoke();
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+
+                if (SaveOutfitAudio != null)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(SaveOutfitAudio);
             });
             
             equipButton?.onClick.AddListener(() =>
             {
                 OnEquipClicked?.Invoke();
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
+
+                if (EquipWearableAudio != null)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
             });
 
             deleteButton?.onClick.AddListener(() =>
             {
                 OnDeleteClicked?.Invoke();
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+
+                if (DeleteOutfitAudio != null)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(DeleteOutfitAudio);
             });
 
             previewButton?.onClick.AddListener(() =>
             {
                 OnPreviewClicked?.Invoke();
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+                if (ClickAudio != null)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
             });
 
             if (outfitThumbnailEmpty != null && emptyStateSilhouette != null)

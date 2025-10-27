@@ -27,13 +27,13 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly OutfitsRepository outfitsRepository;
         private readonly IWearableStorage wearableStorage;
         private readonly IEventBus eventBus;
-        private readonly OutfitsStateLogger outfitsLogger;
+        private readonly OutfitsLogger outfitsLogger;
 
         public SaveOutfitCommand(ISelfProfile selfProfile,
             OutfitsRepository outfitsRepository,
             IWearableStorage wearableStorage,
             IEventBus eventBus,
-            OutfitsStateLogger outfitsLogger)
+            OutfitsLogger outfitsLogger)
         {
             this.selfProfile = selfProfile;
             this.outfitsRepository = outfitsRepository;
@@ -51,7 +51,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             if (profile == null)
                 throw new InvalidOperationException("Cannot save outfit, self profile is not loaded.");
 
-            outfitsLogger.Log("[SaveOutfitCommand - outfit state]", profile.UserId, equippedWearables);
+            outfitsLogger.LogEquippedState("[SaveOutfitCommand - outfit state]", profile.UserId, equippedWearables);
             
             var fullWearableUrns = equippedWearables.ToFullWearableUrns(wearableStorage, profile);
             

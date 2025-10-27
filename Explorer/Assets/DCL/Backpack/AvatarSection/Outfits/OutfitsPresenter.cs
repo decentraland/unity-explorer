@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -29,7 +28,6 @@ namespace DCL.Backpack
         private readonly OutfitsView view;
         private readonly IEventBus eventBus;
         private readonly IEquippedWearables equippedWearables;
-        private readonly IEquippedEmotes equippedEmotes;
         private readonly IWebBrowser webBrowser;
         private readonly OutfitApplier outfitApplier;
         private readonly OutfitBannerPresenter outfitBannerPresenter;
@@ -55,7 +53,6 @@ namespace DCL.Backpack
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
             IEquippedWearables equippedWearables,
-            IEquippedEmotes equippedEmotes,
             LoadOutfitsCommand loadOutfitsCommand,
             SaveOutfitCommand saveOutfitCommand,
             DeleteOutfitCommand deleteOutfitCommand,
@@ -71,7 +68,6 @@ namespace DCL.Backpack
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
-            this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
             this.loadOutfitsCommand = loadOutfitsCommand;
             this.saveOutfitCommand = saveOutfitCommand;
@@ -97,7 +93,7 @@ namespace DCL.Backpack
                 var slotPresenter = slotFactory.Create(slotView, slotIndex);
 
                 slotPresenter.OnSaveRequested += OnSaveOutfitRequested;
-                slotPresenter.OnDeleteRequested += OnDeleteOutfitRequestedAsync;
+                slotPresenter.OnDeleteRequested += OnDeleteOutfitRequested;
                 slotPresenter.OnEquipRequested += OnEquipOutfitRequested;
                 slotPresenter.OnPreviewRequested += OnPreviewOutfitRequested;
 
@@ -238,7 +234,12 @@ namespace DCL.Backpack
             presenter?.SetThumbnailFromPngBytes(pngBytes);
         }
 
-        private async void OnDeleteOutfitRequestedAsync(int slotIndex)
+        private void OnDeleteOutfitRequested(int slotIndex)
+        {
+            OnDeleteOutfitRequestedAsync(slotIndex).Forget();
+        }
+
+        private async UniTaskVoid OnDeleteOutfitRequestedAsync(int slotIndex)
         {
             var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
             if (presenter == null) return;
@@ -251,6 +252,7 @@ namespace DCL.Backpack
                 ReportHub.LogWarning(ReportCategory.OUTFITS, "Attempted to delete an outfit from an empty slot.");
                 return;
             }
+            
             presenter.SetSaving();
 
             try
@@ -302,11 +304,22 @@ namespace DCL.Backpack
 
         private void OnPreviewOutfitRequested(OutfitItem outfitItem)
         {
+            OnPreviewOutfitRequestedAsync(outfitItem).Forget();
+        }
+
+        private async UniTaskVoid OnPreviewOutfitRequestedAsync(OutfitItem outfitItem)
+        {
             if (outfitItem?.outfit == null) return;
 
-            previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token).Forget();
-
-            GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
+            try
+            {
+                await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token);
+                GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, ReportCategory.OUTFITS);
+            }
         }
 
         private async UniTaskVoid GenerateThumbnailIfMissingAsync(int slotIndex, CancellationToken ct)
@@ -407,7 +420,7 @@ namespace DCL.Backpack
             foreach (var presenter in slotPresenters)
             {
                 presenter.OnSaveRequested -= OnSaveOutfitRequested;
-                presenter.OnDeleteRequested -= OnDeleteOutfitRequestedAsync;
+                presenter.OnDeleteRequested -= OnDeleteOutfitRequested;
                 presenter.OnEquipRequested -= OnEquipOutfitRequested;
                 presenter.OnPreviewRequested -= OnPreviewOutfitRequested;
                 presenter.Dispose();

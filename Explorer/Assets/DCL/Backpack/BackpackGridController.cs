@@ -256,12 +256,6 @@ namespace DCL.Backpack
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
 
-                ReportHub.Log(ReportCategory.OUTFITS, $"[BACKPACK_GRID] Loaded page {pageNumber} with {wearables.Count} wearables.");
-                foreach (var wearable in wearables)
-                {
-                    ReportHub.Log(ReportCategory.OUTFITS, $"[BACKPACK_GRID]   -> Wearable: '{wearable.GetName()}', URN: '{wearable.GetUrn()}'");
-                }
-                
                 currentPageWearables = wearables;
 
                 if (currentPageWearables.Count == 0)

@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
@@ -8,10 +6,8 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Models;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using ECS;
 using Runtime.Wearables;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
@@ -22,8 +18,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
         private readonly IWearableStorage wearableStorage;
-        private readonly IRealmData realmData;
-        private readonly OutfitsStateLogger outfitsLogger;
+        private readonly OutfitsLogger outfitsLogger;
 
         private Outfit? originalOutfit;
 
@@ -31,14 +26,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             IWearableStorage wearableStorage,
-            IRealmData realmData,
-            OutfitsStateLogger outfitsLogger)
+            OutfitsLogger outfitsLogger)
         {
             this.outfitApplier = outfitApplier;
             this.equippedWearables = equippedWearables;
             this.selfProfile = selfProfile;
             this.wearableStorage = wearableStorage;
-            this.realmData = realmData;
             this.outfitsLogger = outfitsLogger;
         }
 
@@ -79,7 +72,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             var bodyShape = bodyShapeWearable?.GetUrn() ?? "";
 
-            outfitsLogger.Log("[PreviewOutfitCommand - outfit state]", profile?.UserId, equippedWearables);
+            outfitsLogger.LogEquippedState("[PreviewOutfitCommand - outfit state]", profile?.UserId, equippedWearables);
             
             return new Outfit
             {

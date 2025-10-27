@@ -137,13 +137,16 @@ namespace DCL.Backpack
                 backpackCommandBus,
                 backpackEventBus,
                 inputBlock);
-
+            
             var screenshotService = new AvatarScreenshotService(selfProfile);
-            var outfitsLogger = new OutfitsStateLogger(wearableStorage, realmData);
+            var outfitsLogger = new OutfitsLogger(wearableStorage, realmData);
             var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
             var outfitsCollection = new OutfitsCollection();
             var outfitApplier = new OutfitApplier(backpackCommandBus);
-            var loadOutfitsCommand = new LoadOutfitsCommand(webController, selfProfile, realmData);
+            var loadOutfitsCommand = new LoadOutfitsCommand(webController,
+                selfProfile,
+                realmData,
+                outfitsLogger);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,
                 wearableStorage,
@@ -156,7 +159,6 @@ namespace DCL.Backpack
                 equippedWearables,
                 selfProfile,
                 wearableStorage,
-                realmData,
                 outfitsLogger);
 
             var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
@@ -165,7 +167,6 @@ namespace DCL.Backpack
                 outfitsCollection,
                 webBrowser,
                 equippedWearables,
-                equippedEmotes,
                 loadOutfitsCommand,
                 saveOutfitCommand,
                 deleteOutfitCommand,

@@ -1,25 +1,27 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Diagnostics;
 using ECS;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Logger
 {
-    public class OutfitsStateLogger
+    public class OutfitsLogger
     {
         private readonly IWearableStorage wearableStorage;
         private readonly IRealmData realmData;
 
-        public OutfitsStateLogger(IWearableStorage wearableStorage, IRealmData realmData)
+        public OutfitsLogger(IWearableStorage wearableStorage, IRealmData realmData)
         {
             this.wearableStorage = wearableStorage;
             this.realmData = realmData;
         }
 
-        public void Log(string source, string? userId, IEquippedWearables equippedWearables, string? walletId = null)
+        public void LogEquippedState(string source, string? userId, IEquippedWearables equippedWearables, string? walletId = null)
         {
             var debugInfo = new StringBuilder();
 
@@ -46,6 +48,40 @@ namespace DCL.Backpack.AvatarSection.Outfits.Logger
             }
 
             ReportHub.Log(ReportCategory.OUTFITS, debugInfo.ToString());
+        }
+
+        public void LogLoadResult(IReadOnlyDictionary<int, OutfitItem> loadedOutfits)
+        {
+            if (loadedOutfits.Count == 0)
+            {
+                ReportHub.Log(ReportCategory.OUTFITS, "[OUTFIT_LOAD] No outfits loaded from server or data was empty.");
+                return;
+            }
+
+            var debugInfo = new StringBuilder();
+            debugInfo.AppendLine($"[OUTFIT_LOAD] Loaded {loadedOutfits.Count} valid outfits from server.");
+
+            foreach (var kvp in loadedOutfits)
+            {
+                var outfitItem = kvp.Value;
+                if (outfitItem.outfit == null) continue;
+
+                debugInfo.AppendLine($"  -> Slot {outfitItem.slot}: {outfitItem.outfit.wearables.Count} wearables");
+                foreach (string urn in outfitItem.outfit.wearables)
+                    debugInfo.AppendLine($"     -> URN: '{urn}'");
+            }
+
+            ReportHub.Log(ReportCategory.OUTFITS, debugInfo.ToString());
+        }
+
+        public void LogInfo(string message)
+        {
+            ReportHub.Log(ReportCategory.OUTFITS, message);
+        }
+
+        public void LogError(string message)
+        {
+            ReportHub.LogError(ReportCategory.OUTFITS, message);
         }
     }
 }
