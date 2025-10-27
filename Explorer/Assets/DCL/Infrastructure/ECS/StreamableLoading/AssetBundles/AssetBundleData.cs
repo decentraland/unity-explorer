@@ -17,26 +17,27 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly string AssetBundleName;
 
-        public readonly AssetBundleData[] Dependencies;
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-        public bool Destroyed;
+        public bool AssetsDestroyed;
 
-
-        private bool unloaded;
-        private Dictionary<string, AssetInfo>? assets;
+        private bool AssetBundleUnloaded;
+        private Dictionary<string, AssetInfo>? Assets;
+        private readonly AssetBundleData[] Dependencies;
 
         public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             InitialSceneStateMetadata = initialSceneState;
 
-            assets = new Dictionary<string, AssetInfo>();
+            Assets = new Dictionary<string, AssetInfo>();
 
             for (var i = 0; i < loadedAssets.Length; i++)
-                assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
+                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
 
             Dependencies = dependencies;
-            AssetBundleName = assetBundle.name;
+
+            //Debugging purposes. Test cases may bring a null AB, therefore we need this check
+            AssetBundleName = Asset?.name;
 
             UnloadAB();
         }
@@ -63,11 +64,11 @@ namespace ECS.StreamableLoading.AssetBundles
             //Very hacky, because the asset will remain in cache as AssetBundle == null
             //When DestroyObject is invoked, it will do nothing.
             //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
-            if (!unloaded)
-            {
-                unloaded = true;
-                Asset.UnloadAsync(false);
-            }
+            if (AssetBundleUnloaded)
+                return;
+
+            AssetBundleUnloaded = true;
+            Asset?.UnloadAsync(false);
         }
 
         protected override void DestroyObject()
@@ -75,14 +76,15 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
-            if (assets != null)
+            if (Assets != null)
             {
-                foreach (AssetInfo assetsValue in assets.Values)
+                foreach (AssetInfo assetsValue in Assets.Values)
                     Object.DestroyImmediate(assetsValue.Asset, true);
-                assets = null;
+
+                Assets = null;
             }
             UnloadAB();
-            Destroyed = true;
+            AssetsDestroyed = true;
         }
 
         /// <summary>
@@ -96,22 +98,22 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             AssetInfo assetInfo;
 
-            if(assets == null)
+            if (Assets == null)
                 throw new ArgumentException($"No assets were loaded for {AssetBundleName}");
 
             if (string.IsNullOrEmpty(assetName))
             {
-                if (assets.Count > 1)
+                if (Assets.Count > 1)
                     throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
 
-                if (assets.Count == 0)
+                if (Assets.Count == 0)
                     throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");
 
-                assetInfo = assets.FirstValueOrDefaultNonAlloc();
+                assetInfo = Assets.FirstValueOrDefaultNonAlloc();
             }
             else
             {
-                if (!assets.TryGetValue(assetName, out assetInfo))
+                if (!Assets.TryGetValue(assetName, out assetInfo))
                     throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}");
             }
 
