@@ -342,7 +342,7 @@ namespace DCL.MarketplaceCredits
 
                 SetSidebarButtonState(creditsProgramProgressResponse);
 
-                if (!creditsProgramProgressResponse.HasUserStartedProgram() || PanelNotShownThisSeasonsWeek(creditsProgramProgressResponse))
+                if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
                     await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
@@ -360,7 +360,7 @@ namespace DCL.MarketplaceCredits
             }
         }
 
-        private static bool PanelNotShownThisSeasonsWeek(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        private static bool TrySetAsShownThisWeek(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             if (string.IsNullOrEmpty(creditsProgramProgressResponse.currentSeason.startDate))
                 return false;
