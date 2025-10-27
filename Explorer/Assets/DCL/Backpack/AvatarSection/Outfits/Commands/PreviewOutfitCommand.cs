@@ -7,8 +7,8 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;
-using DCL.Backpack.Outfits.Extensions;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using ECS;
 using Runtime.Wearables;
@@ -80,7 +80,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             return new Outfit
             {
                 bodyShape = bodyShape, wearables = equippedWearables
-                    .ToFullWearableUrns(wearableStorage, profile),
+                    .ToFullWearableUrns(wearableStorage, profile).Select(urn => urn.ToString()).ToList(),
                 forceRender = new List<string>(equippedWearables.ForceRenderCategories),
                 hair = new Hair
                 {

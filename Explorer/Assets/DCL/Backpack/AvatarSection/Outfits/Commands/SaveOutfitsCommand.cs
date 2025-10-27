@@ -10,12 +10,11 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
-using DCL.Backpack.Outfits.Extensions;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using ECS;
 using Runtime.Wearables;
-using UnityEngine;
 using Utility;
 
 
@@ -96,29 +95,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             var shortUrns = equippedWearables.ToShortWearableUrns();
             eventBus.Publish(new OutfitsEvents.SaveOutfitEvent(shortUrns));
             return newItem;
-        }
-
-        private OutfitItem CreateEmptyOutfitItem(int slot)
-        {
-            return new OutfitItem
-            {
-                slot = slot, outfit = new Outfit
-                {
-                    bodyShape = "", eyes = new Eyes
-                    {
-                        color = new Color(0, 0, 0, 0)
-                    },
-                    hair = new Hair
-                    {
-                        color = new Color(0, 0, 0, 0)
-                    },
-                    skin = new Skin
-                    {
-                        color = new Color(0, 0, 0, 0)
-                    },
-                    wearables = new List<string>(), forceRender = new List<string>()
-                }
-            };
         }
 
         private void LogSystemState(string source, string? userId, IEquippedWearables equippedWearables)

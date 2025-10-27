@@ -26,10 +26,10 @@ namespace DCL.Profiles
             IWearableStorage wearableStorage,
             bool incrementVersion = true)
         {
-            using PooledObject<HashSet<URN>> _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
-
+            using PooledObject<HashSet<URN>> pooledHashSet = HashSetPool<URN>.Get(out var uniqueWearables);
             uniqueWearables = uniqueWearables.EnsureNotNull();
-            ConvertEquippedWearablesIntoUniqueUrns();
+            uniqueWearables.Clear();
+            equippedWearables.ToFullWearableUrns(wearableStorage, profile, uniqueWearables);
 
             var uniqueEmotes = new URN[profile.Avatar.Emotes.Count];
             ConvertEquippedEmotesIntoUniqueUrns();
@@ -37,11 +37,11 @@ namespace DCL.Profiles
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
 
             ProfileBuilder builder = PROFILE_BUILDER.From(profile)
-                                                           .WithBodyShape(bodyShape)
-                                                           .WithWearables(uniqueWearables)
-                                                           .WithColors(equippedWearables.GetColors())
-                                                           .WithEmotes(uniqueEmotes)
-                                                           .WithForceRender(forceRender);
+                .WithBodyShape(bodyShape)
+                .WithWearables(uniqueWearables)
+                .WithColors(equippedWearables.GetColors())
+                .WithEmotes(uniqueEmotes)
+                .WithForceRender(forceRender);
 
             if (incrementVersion)
                 builder = builder.WithVersion(profile.Version + 1);
@@ -49,28 +49,6 @@ namespace DCL.Profiles
             Profile newProfile = builder.Build();
 
             return newProfile;
-
-            void ConvertEquippedWearablesIntoUniqueUrns()
-            {
-                foreach ((string category, IWearable? w) in equippedWearables.Items())
-                {
-                    if (w == null) continue;
-                    if (category == WearableCategories.Categories.BODY_SHAPE) continue;
-
-                    URN uniqueUrn = w.GetUrn();
-
-                    if (wearableStorage.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
-                            if (profileWearable.Shorten() == uniqueUrn)
-                                uniqueUrn = profileWearable;
-                    }
-
-                    uniqueWearables.Add(uniqueUrn);
-                }
-            }
 
             void ConvertEquippedEmotesIntoUniqueUrns()
             {
@@ -94,6 +72,74 @@ namespace DCL.Profiles
                     uniqueEmotes[i] = uniqueUrn;
                 }
             }
+        }
+
+        public static void ToFullWearableUrns(this IEquippedWearables equippedWearables, IWearableStorage wearableStorage, Profile profile, ICollection<URN> collection)
+        {
+            foreach ((string category, var w) in equippedWearables.Items())
+            {
+                if (w == null || category == WearableCategories.Categories.BODY_SHAPE) continue;
+
+                var potentialItemUrn = w.GetUrn();
+
+                if (wearableStorage.TryGetOwnedNftRegistry(potentialItemUrn, out var registry) && registry.Count > 0)
+                    potentialItemUrn = registry.Values.First().Urn;
+                else if (profile?.Avatar?.Wearables != null)
+                {
+                    foreach (var profileWearable in profile.Avatar.Wearables)
+                    {
+                        if (profileWearable.Shorten() == potentialItemUrn)
+                        {
+                            potentialItemUrn = profileWearable;
+                            break;
+                        }
+                    }
+                }
+
+                collection.Add(potentialItemUrn);
+            }
+        }
+
+        /// <summary>
+        ///     Populates a given collection with the short "Asset URNs" (as strings) for all equipped wearables.
+        /// </summary>
+        public static void ToShortWearableUrns(this IEquippedWearables equippedWearables, ICollection<string> collection)
+        {
+            foreach ((string category, var w) in equippedWearables.Items())
+            {
+                if (w == null || category == WearableCategories.Categories.BODY_SHAPE) continue;
+                collection.Add(w.GetUrn().Shorten().ToString());
+            }
+        }
+
+        /// <summary>
+        ///     Returns a new list of full "Item URNs" (as strings) for all equipped wearables.
+        ///     This is a convenience method that allocates a new list.
+        /// </summary>
+        public static List<string> ToFullWearableUrns(this IEquippedWearables equippedWearables, IWearableStorage wearableStorage, Profile profile)
+        {
+            // Use a temporary pooled list internally for efficiency
+            using PooledObject<List<URN>> pooledUrns = ListPool<URN>.Get(out var urnList);
+            urnList.Clear();
+            equippedWearables.ToFullWearableUrns(wearableStorage, profile, urnList);
+
+            // Create the final list for the caller
+            var result = new List<string>(urnList.Count);
+            foreach (var urn in urnList)
+                result.Add(urn.ToString());
+
+            return result;
+        }
+
+        /// <summary>
+        ///     Returns a new list of short "Asset URNs" (as strings) for all equipped wearables.
+        ///     This is a convenience method that allocates a new list.
+        /// </summary>
+        public static List<string> ToShortWearableUrns(this IEquippedWearables equippedWearables)
+        {
+            var result = new List<string>();
+            equippedWearables.ToShortWearableUrns(result); // Calls the performant method
+            return result;
         }
     }
 }
