@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void UnloadBundle()
         {
             // Unload the bundle so we load it again, otherwise it throws an exception
-            if (promise.Result is { Succeeded: true })
+            if (promise.Result is { Succeeded: true } && !promise.Result.Value.Asset.AssetsDestroyed)
                 ((AssetBundle)promise.Result.Value.Asset).Unload(true);
         }
 

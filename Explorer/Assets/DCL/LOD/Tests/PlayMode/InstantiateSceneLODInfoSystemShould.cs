@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Arch.Core;
+using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
@@ -95,7 +96,7 @@ namespace DCL.LOD.Tests
             var promiseGenerated = GenerateSuccessfullPromise();
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevelPromise = 0;
-            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("Unsupported"));
 
             //Act
             system.Update(0);
@@ -118,7 +119,7 @@ namespace DCL.LOD.Tests
             //Arrange
             sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
             sceneLODInfo.CurrentLODLevelPromise = 0;
-            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("Unsupported"));
 
             //Act
             system.Update(0);
