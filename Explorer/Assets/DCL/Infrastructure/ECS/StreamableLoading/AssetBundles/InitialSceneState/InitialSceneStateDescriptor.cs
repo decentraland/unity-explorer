@@ -40,7 +40,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 return true;
 
             //The asset bundle was destroyed at some point because of memory constrains. We got to nullify it and restart
-            if (AssetBundleData.IsInitialized && AssetBundleData.Asset!.Destroyed)
+            if (AssetBundleData.IsInitialized && AssetBundleData.Asset!.AssetsDestroyed)
             {
                 CreateEmptyAssetBundleData();
                 return false;
