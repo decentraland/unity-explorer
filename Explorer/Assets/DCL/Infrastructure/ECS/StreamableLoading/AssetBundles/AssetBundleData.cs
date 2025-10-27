@@ -48,11 +48,6 @@ namespace ECS.StreamableLoading.AssetBundles
             Dependencies = dependencies;
         }
 
-        public AssetBundleData(AssetBundle assetBundle, Object[] loadedAssets, AssetBundleData[] dependencies)
-        : this(assetBundle, new InitialSceneStateMetadata(), loadedAssets, typeof(GameObject), dependencies)
-        {
-        }
-
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
 
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
