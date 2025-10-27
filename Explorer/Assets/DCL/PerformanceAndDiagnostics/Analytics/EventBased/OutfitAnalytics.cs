@@ -1,6 +1,7 @@
 ﻿using System;
 using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using Segment.Serialization;
 using Utility;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Analytics
@@ -27,7 +28,19 @@ namespace DCL.Backpack.AvatarSection.Outfits.Analytics
 
         private void OnSaveOutfit(OutfitsEvents.SaveOutfitEvent evt)
         {
-            analytics.Track(AnalyticsEvents.Outfits.SAVE_OUTFIT);
+            var wearablesArray = new JsonArray();
+
+            foreach (string? urn in evt.WearablesUrns)
+                wearablesArray.Add(urn);
+
+            var payload = new JsonObject
+            {
+                {
+                    "wearables_urn", wearablesArray
+                }
+            };
+
+            analytics.Track(AnalyticsEvents.Outfits.SAVE_OUTFIT, payload);
         }
 
         private void OnEquipOutfit(OutfitsEvents.EquipOutfitEvent evt)
