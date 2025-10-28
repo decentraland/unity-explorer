@@ -55,16 +55,33 @@ namespace DCL.SkyBox
         public float TimeOfDayNormalized
         {
             get => timeOfDayNormalized;
-
             set
             {
                 if (Mathf.Approximately(timeOfDayNormalized, value)) return;
                 timeOfDayNormalized = value;
+                TimeOfDayInSeconds = (uint)(value * SECONDS_IN_DAY);
                 TimeOfDayChanged?.Invoke(timeOfDayNormalized);
             }
         }
 
+        public uint TimeOfDayInSeconds { get; private set; }
+
         public float TargetTimeOfDayNormalized { get; set; }
+
+        public static float NormalizeTime(float time)
+        {
+            if (time < 0)
+                return 0;
+
+            time %= SECONDS_IN_DAY;
+            return time / SECONDS_IN_DAY;
+        }
+
+        // Mapping: 0 - Low, 1 - Medium, 2 - High, 3 - Custom
+        public void SetRefreshInterval(int qualityPresetId)
+        {
+            refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
+        }
 
         public void Reset()
         {
@@ -74,21 +91,6 @@ namespace DCL.SkyBox
             TransitionMode = TransitionMode.FORWARD;
             IsUIControlled = false;
             CurrentSDKControlledScene = null;
-        }
-
-        // Mapping: 0 - Low, 1 - Medium, 2 - High, 3 - Custom
-        public void SetRefreshInterval(int qualityPresetId)
-        {
-            refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
-        }
-
-        public static float NormalizeTime(float time)
-        {
-            if (time < 0)
-                return 0;
-
-            time %= SECONDS_IN_DAY;
-            return time / SECONDS_IN_DAY;
         }
 
         [Serializable]

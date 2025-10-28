@@ -22,7 +22,6 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
-using DCL.Time;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -56,6 +55,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using DCL.SkyBox;
 using UnityEngine;
 using Utility.Multithreading;
 
@@ -107,6 +107,7 @@ namespace SceneRunner.Tests
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
+                Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org);
@@ -349,7 +350,6 @@ namespace SceneRunner.Tests
 
                 sceneFacade.deps.SyncDeps.systemGroupThrottler.Dispose();
                 sceneFacade.deps.SyncDeps.EntityCollidersCache.Dispose();
-                sceneFacade.deps.SyncDeps.worldTimeProvider.Dispose();
                 sceneFacade.deps.SyncDeps.ExceptionsHandler.Dispose();
             });
         }
@@ -382,7 +382,6 @@ namespace SceneRunner.Tests
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
-                    Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
                 Substitute.For<ISceneRuntime>()) { }
         }

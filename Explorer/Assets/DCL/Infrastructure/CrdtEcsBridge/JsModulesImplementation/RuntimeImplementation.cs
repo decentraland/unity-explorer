@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Time;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -13,6 +12,7 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.Runtime;
 using System.Threading;
+using DCL.SkyBox;
 using Unity.Collections;
 using UnityEngine.Networking;
 using Utility;
@@ -27,17 +27,17 @@ namespace CrdtEcsBridge.JsModulesImplementation
     {
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
-        private readonly IWorldTimeProvider timeProvider;
         private readonly IRealmData realmData;
         private readonly IWebRequestController webRequestController;
+        private readonly SkyboxSettingsAsset skyboxSettings;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, IRealmData realmData, IWebRequestController webRequestController)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
-            this.timeProvider = timeProvider;
             this.realmData = realmData;
             this.webRequestController = webRequestController;
+            this.skyboxSettings = skyboxSettings;
         }
 
         public void Dispose() { }
@@ -77,14 +77,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct) =>
             UniTask.FromResult(new IRuntime.GetRealmResponse(realmData));
 
-        public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
+        public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync()
         {
             await using var _ = await ExecuteOnMainThreadScope.NewScopeWithReturnOnThreadPoolAsync();
-            float seconds = await timeProvider.GetWorldTimeAsync(ct);
 
             return new IRuntime.GetWorldTimeResponse
             {
-                seconds = seconds,
+                seconds = skyboxSettings.TimeOfDayInSeconds,
             };
         }
 

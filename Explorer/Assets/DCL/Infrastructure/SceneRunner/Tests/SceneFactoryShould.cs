@@ -28,6 +28,7 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System.Threading;
 using System.Threading.Tasks;
+using DCL.SkyBox;
 using UnityEngine;
 
 namespace SceneRunner.Tests
@@ -70,6 +71,7 @@ namespace SceneRunner.Tests
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
+                Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org);
