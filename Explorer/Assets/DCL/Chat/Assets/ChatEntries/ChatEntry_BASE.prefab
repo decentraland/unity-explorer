@@ -179,7 +179,7 @@ MonoBehaviour:
   <dateDividerElement>k__BackingField: {fileID: 7661931412525762715}
   <dateDividerText>k__BackingField: {fileID: 506471873351748565}
   <ProfilePictureView>k__BackingField: {fileID: 6332478220486376778}
-  <profileButton>k__BackingField: {fileID: 8047739455508307062}
+  <profileButton>k__BackingField: {fileID: 1432468088314619655}
   usernameElementCanvas: {fileID: 8250733646857004067}
 --- !u!225 &3886723384659671108
 CanvasGroup:

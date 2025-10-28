@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -5,9 +6,12 @@ using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
 using DCL.Translation;
+using DCL.UI;
 using DCL.Utilities;
+using MVC;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat
@@ -40,7 +44,7 @@ namespace DCL.Chat
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
-        [field: SerializeField] internal Button profileButton { get; private set; }
+        [field: SerializeField] internal ButtonView profileButton { get; private set; }
 
         [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
@@ -53,7 +57,7 @@ namespace DCL.Chat
 
         private void Awake()
         {
-            profileButton.onClick.AddListener(OnProfileButtonClicked);
+            profileButton.OnMouseClickEvent += OnMouseProfileButtonClicked;
             usernameElement.UserNameClicked += OnUsernameClicked;
 
             messageBubbleElement.OnPointerEnterEvent += HandlePointerEnter;
@@ -148,7 +152,7 @@ namespace DCL.Chat
             profileDataSubscription?.Dispose();
             profileDataSubscription = viewModel.ProfileOptionalBasicInfo.UseCurrentValueAndSubscribeToUpdate(this, (profileInfo, view) =>
             {
-                view.profileButton.interactable = profileInfo.DataIsPresent;
+                view.profileButton.Button.interactable = profileInfo.DataIsPresent;
 
                 if (profileInfo.DataIsPresent)
                 {
@@ -160,15 +164,20 @@ namespace DCL.Chat
             }, viewModel.cancellationToken);
         }
 
-        private void OnProfileButtonClicked()
+        private void OnMouseProfileButtonClicked(PointerEventData eventData)
         {
-            RectTransform buttonRect = profileButton.GetComponent<RectTransform>();
-            buttonRect.GetWorldCorners(cornersCache);
+            if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                RectTransform buttonRect = profileButton.GetComponent<RectTransform>();
+                buttonRect.GetWorldCorners(cornersCache);
 
-            float posX = cornersCache[3].x;
-            float posY = cornersCache[3].y + PROFILE_BUTTON_Y_OFFSET;
+                float posX = cornersCache[3].x;
+                float posY = cornersCache[3].y + PROFILE_BUTTON_Y_OFFSET;
 
-            OpenContextMenu(posX, posY);
+                OpenContextMenu(posX, posY);
+            }
+            else if (eventData.button == PointerEventData.InputButton.Left && !chatMessage.IsSystemMessage && !chatMessage.SenderWalletAddress.Equals(ViewDependencies.CurrentIdentity?.Address.ToString()))
+                ViewDependencies.GlobalUIViews.OpenPassportAsync(chatMessage.SenderWalletAddress).Forget();
         }
 
         private void OnUsernameClicked()

@@ -1,4 +1,5 @@
 using DCL.Audio;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -6,7 +7,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [field: SerializeField]
         public Button Button { get; private set;}
@@ -26,6 +27,8 @@ namespace DCL.UI
         private Color interactableColor = new Color(1f, 1f, 1f, 1f);
         [field: SerializeField]
         private Color hoverColor = new Color(0.54f, 0.54f, 0.54f);
+
+        public event Action<PointerEventData>? OnMouseClickEvent;
 
         private void OnEnable()
         {
@@ -63,5 +66,8 @@ namespace DCL.UI
         }
 
         public void OnPointerExit(PointerEventData eventData) { }
+
+        public void OnPointerClick(PointerEventData eventData) =>
+            OnMouseClickEvent?.Invoke(eventData);
     }
 }
