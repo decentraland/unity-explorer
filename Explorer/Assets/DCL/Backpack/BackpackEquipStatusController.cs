@@ -15,7 +15,11 @@ using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
+using DCL.AvatarRendering.Loading.Components;
+using ECS;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
@@ -30,13 +34,13 @@ namespace DCL.Backpack
         private readonly ISelfProfile selfProfile;
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly List<string> forceRender;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly World world;
+        private readonly IRealmData realmData;
         private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
 
@@ -46,7 +50,6 @@ namespace DCL.Backpack
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             IProfileCache profileCache,
-            List<string> forceRender,
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
@@ -54,7 +57,8 @@ namespace DCL.Backpack
             Entity playerEntity,
             IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            IRealmData realmData)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -62,9 +66,9 @@ namespace DCL.Backpack
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
             this.profileCache = profileCache;
-            this.forceRender = forceRender;
             this.emoteStorage = emoteStorage;
             this.wearableStorage = wearableStorage;
+            this.realmData = realmData;
 
             backpackEventBus.EquipWearableEvent += EquipWearable;
             backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
@@ -74,6 +78,7 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent += UnEquipAllWearables;
             // Avoid publishing an invalid profile
             // For example: logout while the update operation is being processed
             // See: https://github.com/decentraland/unity-explorer/issues/4413
@@ -97,6 +102,7 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent -= ChangeColor;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAllWearables;
             web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
             publishProfileCts?.SafeCancelAndDispose();
@@ -106,7 +112,13 @@ namespace DCL.Backpack
         {
             equippedEmotes.UnEquipAll();
             equippedWearables.UnEquipAll();
-            forceRender.Clear();
+            equippedWearables.SetForceRender(Array.Empty<string>());
+        }
+
+        private void UnEquipAllWearables()
+        {
+            equippedWearables.UnEquipAll();
+            equippedWearables.SetForceRender(Array.Empty<string>());
         }
 
         private void EquipEmote(int slot, IEmote emote, bool _)
@@ -127,14 +139,18 @@ namespace DCL.Backpack
         private void UnEquipWearable(IWearable wearable)
         {
             equippedWearables.UnEquip(wearable);
+
+            var currentForceRender = new List<string>(equippedWearables.ForceRenderCategories);
+            if (currentForceRender.Remove(wearable.GetCategory()))
+            {
+                equippedWearables.SetForceRender(currentForceRender);
+                backpackEventBus.SendForceRender(currentForceRender);
+            }
         }
 
         private void SetForceRender(IReadOnlyCollection<string> categories)
         {
-            forceRender.Clear();
-
-            foreach (string category in categories)
-                forceRender.Add(category);
+            equippedWearables.SetForceRender(categories);
         }
 
         private void ChangeColor(Color newColor, string category)
@@ -177,8 +193,10 @@ namespace DCL.Backpack
 
             if (!publishProfileChange)
             {
+                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+                
                 Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
-                    forceRender, emoteStorage, wearableStorage);
+                    forceRenderList, emoteStorage, wearableStorage);
 
                 // Skip publishing the same profile
                 if (newProfile.IsSameProfile(oldProfile))
@@ -190,13 +208,13 @@ namespace DCL.Backpack
                 profileCache.Set(newProfile.UserId, newProfile);
                 UpdateAvatarInWorld(newProfile);
                 profileChangesBus.PushUpdate(newProfile);
+                
                 return;
             }
 
             try
             {
                 Profile? newProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
-
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
                 if (newProfile != null)
@@ -210,7 +228,6 @@ namespace DCL.Backpack
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);
-
                 ShowErrorNotificationAsync(ct).Forget();
             }
         }

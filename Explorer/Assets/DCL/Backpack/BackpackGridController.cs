@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
@@ -15,7 +14,6 @@ using DCL.UI;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -194,8 +192,10 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(string itemId)
+        {
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
+        }
 
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
