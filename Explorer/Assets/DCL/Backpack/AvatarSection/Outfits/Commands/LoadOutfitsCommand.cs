@@ -47,9 +47,15 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             try
             {
                 var response = await webRequestController
-                    .GetAsync(new CommonArguments(urlBuilder.Build()), ct, ReportCategory.OUTFITS)
+                    .GetAsync(new CommonArguments(urlBuilder.Build()), ct, ReportCategory.OUTFITS, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND)
                     .CreateFromJson<OutfitsResponse>(WRJsonParser.Newtonsoft);
 
+                if (response == null)
+                {
+                    outfitsLogger.LogInfo($"[OUTFIT_LOAD] No outfits found for user {profile?.UserId} (404). This is a normal case for new users.");
+                    return empty;
+                }
+                
                 if (response.Metadata == null)
                 {
                     outfitsLogger.LogInfo($"[OUTFIT_LOAD] Loaded old outfits data (version {response.Timestamp}). Ignoring.");
@@ -77,14 +83,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             }
             catch (UnityWebRequestException e)
             {
-                // It's common for a user to have no outfits entity,
-                // which returns a 404. This is not an error.
-                if (e.ResponseCode == 404)
-                {
-                    outfitsLogger.LogInfo($"[OUTFIT_LOAD] No outfits found for user {profile.UserId} (404). This is a normal case for new users.");
-                    return empty;
-                }
-
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
                 return empty;
             }
