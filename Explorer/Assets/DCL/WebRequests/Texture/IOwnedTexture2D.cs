@@ -4,7 +4,6 @@ using Object = UnityEngine.Object;
 
 namespace DCL.WebRequests
 {
-    [Obsolete]
     public interface IOwnedTexture2D : IDisposable
     {
         public Texture2D Texture { get; }

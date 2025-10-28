@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms;
 using REnum;
 using System;
 

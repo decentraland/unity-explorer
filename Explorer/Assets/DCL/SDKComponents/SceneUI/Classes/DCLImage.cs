@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Classes
@@ -11,7 +10,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private VisualElement canvas;
         private DCLImageScaleMode scaleMode;
-        private Texture? texture;
+        private Texture2D? texture2D;
         private Vector4 slices;
         private Color color;
         private DCLUVs uvs;
@@ -24,9 +23,9 @@ namespace DCL.SDKComponents.SceneUI.Classes
             set => SetScaleMode(value);
         }
 
-        public Texture Texture
+        public Texture2D Texture
         {
-            get => texture;
+            get => texture2D;
             set => SetTexture(value);
         }
 
@@ -58,7 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public void Initialize(VisualElement canvasToApply)
         {
-            texture = null;
+            this.texture2D = null;
             this.scaleMode = default(DCLImageScaleMode);
             this.slices = Vector4.zero;
             this.color = new Color(1, 1, 1, 0);
@@ -71,7 +70,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public void Dispose()
         {
-            texture = null;
+            texture2D = null;
             canvas.generateVisualContent -= OnGenerateVisualContent;
 
             // Reset overriden styles
@@ -88,12 +87,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
             ResolveGenerationWay();
         }
 
-        private void SetTexture(Texture texture)
+        private void SetTexture(Texture2D texture)
         {
-            if (this.texture == texture)
+            if (this.texture2D == texture)
                 return;
 
-            this.texture = texture;
+            this.texture2D = texture;
             ResolveGenerationWay();
         }
 
@@ -126,7 +125,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void ResolveGenerationWay()
         {
-            if (texture != null)
+            if (texture2D != null)
             {
                 switch (scaleMode)
                 {
@@ -173,19 +172,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private void SetSliced()
         {
             // Instead of generating a sliced mesh manually pass it to the existing logic of background
-
-            style.backgroundImage = texture switch
-                                    {
-                                        RenderTexture renderTexture => Background.FromRenderTexture(renderTexture),
-                                        Texture2D texture2D => Background.FromTexture2D(texture2D),
-                                        _ => throw new Exception($"DCLImage.SetSliced() doesn't support texture of type {texture?.GetType()}"),
-                                    };
-
+            style.backgroundImage = Background.FromTexture2D(texture2D);
             style.unityBackgroundImageTintColor = new StyleColor(color);
             style.backgroundColor = new StyleColor(StyleKeyword.None);
 
-            int texWidth = texture.width;
-            int texHeight = texture.height;
+            int texWidth = texture2D.width;
+            int texHeight = texture2D.height;
 
             // convert slices to absolute values
             style.unitySliceLeft = new StyleInt((int)(slices[0] * texWidth));
@@ -247,7 +239,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
             VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
 
-            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
+            var mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture2D);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
             var uvRegion = mwd.uvRegion;
@@ -269,8 +261,8 @@ namespace DCL.SDKComponents.SceneUI.Classes
             var r = canvas.contentRect;
 
             var panelScale = canvas.worldTransform.lossyScale;
-            float targetTextureWidth = texture.width * panelScale[0];
-            float targetTextureHeight = texture.height * panelScale[1];
+            float targetTextureWidth = texture2D.width * panelScale[0];
+            float targetTextureHeight = texture2D.height * panelScale[1];
 
             // Remain the original center
             var center = r.center;
@@ -288,7 +280,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
             VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
 
-            MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
+            var mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture2D);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
             var uvRegion = mwd.uvRegion;
