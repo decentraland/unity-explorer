@@ -93,8 +93,8 @@ namespace DCL.CharacterCamera.Systems
             if (!checkIsDirty || exposedCameraData.CameraType.IsDirty)
                 ecsToCrdtWriter.PutMessage<PBCameraMode, IExposedCameraData>(static (mode, data) => mode.Mode = data.CameraType, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
 
-            if (!checkIsDirty || exposedCameraData.PointerIsLocked.IsDirty)
-                ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(static (pointerLock, data) => pointerLock.IsPointerLocked = data.PointerIsLocked, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
+            // if (!checkIsDirty || exposedCameraData.PointerIsLocked.IsDirty)
+            //     ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(static (pointerLock, data) => pointerLock.IsPointerLocked = data.PointerIsLocked, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
         }
     }
 }
