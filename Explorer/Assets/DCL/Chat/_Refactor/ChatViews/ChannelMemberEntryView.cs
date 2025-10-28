@@ -1,5 +1,8 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatViewModels;
+using DCL.UI;
 using DCL.UI.ProfileElements;
+using MVC;
 using System;
 using TMPro;
 using UnityEngine;
@@ -17,7 +20,6 @@ namespace DCL.Chat.ChatViews
     public class ChannelMemberEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<MemberEntryContextMenuRequest> OnContextMenuRequested;
-        public event Action<MemberEntryContextMenuRequest> OnItemSelectRequested;
 
         [Header("UI References")]
         [SerializeField] private TMP_Text userNameText;
@@ -25,14 +27,14 @@ namespace DCL.Chat.ChatViews
         [SerializeField] private ChatUsernameView usernameView;
         [SerializeField] private GameObject onlineIndicator;
         [SerializeField] private Button contextMenuButton;
-        [SerializeField] private Button itemButton;
+        [SerializeField] private ButtonView itemButton;
 
         private ChatMemberListViewModel model;
 
         private void Awake()
         {
             contextMenuButton.onClick.AddListener(HandleContextMenuRequest);
-            itemButton.onClick.AddListener(HandleItemContextMenuRequest);
+            itemButton.OnMouseClickEvent += HandleItemClickRequest;
         }
 
         private void HandleContextMenuRequest()
@@ -44,13 +46,12 @@ namespace DCL.Chat.ChatViews
             OnContextMenuRequested?.Invoke(request);
         }
 
-        private void HandleItemContextMenuRequest()
+        private void HandleItemClickRequest(PointerEventData eventData)
         {
-            var request = new MemberEntryContextMenuRequest
-            {
-                UserId = model.UserId, Position = itemButton.transform.position
-            };
-            OnItemSelectRequested?.Invoke(request);
+            if (eventData.button == PointerEventData.InputButton.Right)
+                HandleContextMenuRequest();
+            else if (eventData.button == PointerEventData.InputButton.Left)
+                ViewDependencies.GlobalUIViews.OpenPassportAsync(model.UserId).Forget();
         }
 
         public void Setup(ChatMemberListViewModel model)

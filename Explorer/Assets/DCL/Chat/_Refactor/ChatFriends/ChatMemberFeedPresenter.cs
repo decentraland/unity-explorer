@@ -17,7 +17,6 @@ namespace DCL.Chat.ChatFriends
     {
         private readonly ChannelMemberFeedView view;
         private readonly IEventBus eventBus;
-        private readonly IChatEventBus chatEventBus;
         private readonly GetChannelMembersCommand getChannelMembersCommand;
         private readonly ChatMemberListService memberListService;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -30,20 +29,17 @@ namespace DCL.Chat.ChatFriends
         public ChatMemberFeedPresenter(
             ChannelMemberFeedView view,
             IEventBus eventBus,
-            IChatEventBus chatEventBus,
             ChatMemberListService memberListService,
             ChatContextMenuService chatContextMenuService,
             GetChannelMembersCommand getChannelMembersCommand)
         {
             this.view = view;
             this.eventBus = eventBus;
-            this.chatEventBus = chatEventBus;
             this.memberListService = memberListService;
             this.getChannelMembersCommand = getChannelMembersCommand;
             this.chatContextMenuService = chatContextMenuService;
 
             this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
-            this.view.OnMemberItemRequested += OnMemberSelectionRequested;
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
         }
 
@@ -88,14 +84,6 @@ namespace DCL.Chat.ChatFriends
             chatContextMenuService
                .ShowUserProfileMenuAsync(data)
                .Forget();
-        }
-
-        private void OnMemberSelectionRequested(string userId)
-        {
-            if (string.IsNullOrEmpty(userId))
-                return;
-
-            chatEventBus.OpenPrivateConversationUsingUserId(userId);
         }
 
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)

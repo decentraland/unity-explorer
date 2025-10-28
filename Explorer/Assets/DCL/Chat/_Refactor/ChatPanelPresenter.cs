@@ -139,7 +139,6 @@ namespace DCL.Chat
             var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
                 eventBus,
-                chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);

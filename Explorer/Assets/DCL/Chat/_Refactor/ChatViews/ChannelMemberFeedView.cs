@@ -26,7 +26,6 @@ namespace DCL.Chat.ChatViews
         }
 
         public event Action<UserProfileMenuRequest>? OnMemberContextMenuRequested;
-        public event Action<string> OnMemberItemRequested;
 
         public void SetLoading(bool isLoading)
         {
@@ -67,11 +66,6 @@ namespace DCL.Chat.ChatViews
             itemComponent.OnContextMenuRequested -= HandleItemContextMenuRequest;
             itemComponent.OnContextMenuRequested += HandleItemContextMenuRequest;
 
-            itemComponent.OnItemSelectRequested -= HandleItemSelectedRequest;
-            itemComponent.OnItemSelectRequested += HandleItemSelectedRequest;
-
-
-
             return newItem;
         }
 
@@ -83,11 +77,6 @@ namespace DCL.Chat.ChatViews
             };
 
             OnMemberContextMenuRequested?.Invoke(data);
-        }
-
-        private void HandleItemSelectedRequest(MemberEntryContextMenuRequest request)
-        {
-            OnMemberItemRequested?.Invoke(request.UserId);
         }
 
         public void Show() =>
