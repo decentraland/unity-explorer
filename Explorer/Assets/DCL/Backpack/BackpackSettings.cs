@@ -35,5 +35,8 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public AssetReferenceGameObject ColorToggle { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceSprite DeleteOutfitIcon { get; private set; }
     }
 }
