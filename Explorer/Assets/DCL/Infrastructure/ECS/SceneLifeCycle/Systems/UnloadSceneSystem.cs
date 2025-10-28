@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -51,11 +52,13 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref InitialSceneStateDescriptor initialSceneStateDescriptor, ref PartitionComponent partitionComponent)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                initialSceneStateDescriptor.MarkAssetToMoveToBridge();
+                //Assets need to go to bridge since they are visible by the camera. There will be a visual hiccup otherwise
+                if (!partitionComponent.IsBehind)
+                    initialSceneStateDescriptor.MarkAssetToMoveToBridge();
 
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,

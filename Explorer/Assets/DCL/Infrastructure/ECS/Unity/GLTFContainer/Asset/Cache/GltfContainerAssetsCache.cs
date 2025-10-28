@@ -93,19 +93,17 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
             //If the parent is the bridge, it means that the asset is waiting on the scene-lod state
             Transform parent = asset.Root.transform.parent;
+
             if (!parent || parent != sceneLODBridge)
-                PutInCache(asset);
+            {
+                asset.Root.SetActive(false);
+                asset.Root.transform.SetParent(parentContainer, true);
+            }
         }
 
         public void PutInBridge(GltfContainerAsset gltfContainerAsset)
         {
             gltfContainerAsset.Root.transform.SetParent(sceneLODBridge, true);
-        }
-
-        public void PutInCache(GltfContainerAsset gltfContainerAsset)
-        {
-            gltfContainerAsset.Root.SetActive(false);
-            gltfContainerAsset.Root.transform.SetParent(parentContainer, true);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
