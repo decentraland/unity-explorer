@@ -25,6 +25,8 @@ using MVC;
 using Segment.Serialization;
 using System;
 using System.Threading;
+using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Views;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -353,5 +355,17 @@ namespace DCL.UI
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
             });
+
+        private void OnGiftUserClicked(string userId)
+        {
+            closeContextMenuTask.TrySetResult(); // Close the context menu
+            ShowGiftingPopupAsync(userId).Forget();
+        }
+
+        private async UniTaskVoid ShowGiftingPopupAsync(string userId)
+        {
+            // This will be the entry point to our new feature
+            await mvcManager.ShowAsync(GiftingController.IssueCommand(new GiftingParams(userId)));
+        }
     }
 }

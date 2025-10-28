@@ -385,11 +385,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 67c43eeeaf9c34744807086742498bf8
-    m_Address: Assets/Textures/BackpackPanel/BackpackAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 688aa1f59829ea64fb0887ed7bb87d26
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithTextAndIcon_StringDelegateVariant.prefab
     m_ReadOnly: 0
