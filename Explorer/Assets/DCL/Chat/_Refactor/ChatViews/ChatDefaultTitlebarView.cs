@@ -1,4 +1,5 @@
 using DCL.Chat.ChatViewModels;
+using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.VoiceChat;
 using System;
@@ -37,6 +38,7 @@ namespace DCL.Chat.ChatViews
         [SerializeField] private ChatProfileView chatProfileView;
         [SerializeField] private GameObject nearbyElementsContainer;
         [SerializeField] private GameObject nearbyAutoTranslateIndicator;
+        [SerializeField] private SkeletonLoadingView loadingView;
 
         [Space(10)]
         [SerializeField] private float communityGraphicsPixelMultiplier = 3.0f;
@@ -63,6 +65,12 @@ namespace DCL.Chat.ChatViews
             profileCtxMenuButtonOpenColors.normalColor = profileCtxMenuButtonOpenColors.highlightedColor;
             profileCtxMenuButtonImage = (Image) buttonOpenProfileContextMenu.targetGraphic;
         }
+
+        public void StartLoading() =>
+            loadingView.ShowLoading();
+
+        public void StopLoading() =>
+            loadingView.HideLoading();
 
         public void SetContextMenuButtonSelectedAppearance() =>
             buttonOpenProfileContextMenu.colors = profileCtxMenuButtonOpenColors;
