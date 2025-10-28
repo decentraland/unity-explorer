@@ -24,6 +24,7 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -511,7 +512,8 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
-                new AppArgsCommand(appArgs)
+                new AppArgsCommand(appArgs),
+                new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
