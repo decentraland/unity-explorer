@@ -67,7 +67,9 @@ namespace ECS.SceneLifeCycle.Systems
                 //If all scenes were built with SAB scenes, we could remove it
                 if (initialSceneStateDescriptor.IsValid())
                 {
-                    sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                    if (sceneLODInfo.IsInitialized())
+                        sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+
                     sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                     World.Remove<SceneLODInfo>(entity);
                     return;
