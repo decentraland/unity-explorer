@@ -4,17 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Ipfs;
 using DCL.RealmNavigation;
-using DCL.Utility;
-using DefaultNamespace;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.AssetBundles.EarlyAsset;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine;
 using Utility;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.Ipfs.SceneDefinitions, ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinitionList>;
 
@@ -25,9 +21,8 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
     [UpdateBefore(typeof(EarlyAssetBundleRequestSystem))]
     public partial class EarlySceneRequestSystem : BaseUnityLoopSystem
     {
-
-        private StartParcel startParcel;
-        private IRealmData realmData;
+        private readonly StartParcel startParcel;
+        private readonly IRealmData realmData;
 
         private bool sceneRequestInitialized;
 

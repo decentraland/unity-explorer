@@ -2,17 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Ipfs;
 using DCL.Utility;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using System;
-using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
-namespace DefaultNamespace
+namespace ECS.StreamableLoading.AssetBundles.EarlyAsset
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]

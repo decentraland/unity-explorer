@@ -15,7 +15,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         void Dereference(in string key, GltfContainerAsset asset);
 
-        void PutInBridge(GltfContainerAsset valueTupleItem2);
+        void PutInBridge(GltfContainerAsset assetToBridge);
 
     }
 }

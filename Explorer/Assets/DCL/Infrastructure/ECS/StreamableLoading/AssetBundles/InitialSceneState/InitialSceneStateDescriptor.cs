@@ -19,8 +19,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
-        public List<(string, GltfContainerAsset)> AssetsInstantiated;
 
+        private List<(string, GltfContainerAsset)> AssetsInstantiated;
         private World GlobalWorld;
         private string SceneID;
         private AssetBundleManifestVersion AssetBundleManifestVersion;

@@ -1,7 +1,6 @@
 using DCL.Ipfs;
-using System;
 
-namespace DefaultNamespace
+namespace ECS.StreamableLoading.AssetBundles.EarlyAsset
 {
     public struct EarlySceneFlag
     {
