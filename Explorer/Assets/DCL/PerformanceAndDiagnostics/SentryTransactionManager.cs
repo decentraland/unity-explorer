@@ -27,6 +27,7 @@ namespace DCL.PerformanceAndDiagnostics
             if (sentryTransactions.ContainsKey(transactionData.TransactionName)) return;
 
             ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
+
             transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
 
             sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
@@ -186,7 +187,7 @@ namespace DCL.PerformanceAndDiagnostics
         private void FinishAllTransactions()
         {
             var transactionKeys = new List<string>(sentryTransactions.Keys);
-            
+
             foreach (string transactionKey in transactionKeys)
             {
                 try

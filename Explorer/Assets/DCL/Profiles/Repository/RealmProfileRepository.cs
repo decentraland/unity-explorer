@@ -6,6 +6,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS;
+using ECS.Prioritization.Components;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,12 @@ using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfi
 
 namespace DCL.Profiles
 {
+    public readonly struct ProfilesBatch
+    {
+        public readonly URLDomain LambdasUrl;
+        public readonly Dictionary<string, (UniTaskCompletionSource cs, int version, IPartitionComponent partitionComponent)> PendingRequests;
+    }
+
     /// <summary>
     ///     TODO: this class requires refactoring:
     ///     <list type="bullet">
@@ -31,13 +38,17 @@ namespace DCL.Profiles
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
 
+        private readonly int batchMaxSize;
+
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
 
-        private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
+        private readonly List<ProfilesBatch> batches = new (10);
+
+        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
 
         // Catalyst servers requires a face thumbnail texture of 256x256
         // Otherwise it will fail when the profile is published

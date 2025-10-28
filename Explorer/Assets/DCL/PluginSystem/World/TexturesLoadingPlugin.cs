@@ -23,14 +23,12 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IDiskCache<TextureData> diskCache;
         private readonly IStreamableCache<TextureData, GetTextureIntention> texturesCache;
-        private readonly ProfilePictureUrlProvider avatarTextureProvider;
 
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<TextureData> diskCache, ILaunchMode launchMode,
-            ObjectProxy<IProfileRepository> profileRepository)
+            IProfileRepository profileRepository)
         {
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
-            avatarTextureProvider = new ProfilePictureUrlProvider(profileRepository);
 
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 texturesCache = new NoCache<TextureData, GetTextureIntention>(true, true);
@@ -55,22 +53,5 @@ namespace DCL.PluginSystem.World
             UniTask.CompletedTask;
 
         void IDisposable.Dispose() { }
-
-        private class ProfilePictureUrlProvider : IAvatarTextureUrlProvider
-        {
-            private readonly ObjectProxy<IProfileRepository> profileRepository;
-
-            public ProfilePictureUrlProvider(ObjectProxy<IProfileRepository> profileRepository)
-            {
-                this.profileRepository = profileRepository;
-            }
-
-            public async UniTask<URLAddress?> GetAsync(string userId, CancellationToken ct)
-            {
-                if (!profileRepository.Configured) return null;
-                Profile? profile = await profileRepository.Object!.GetAsync(userId, ct);
-                return profile?.Avatar.FaceSnapshotUrl;
-            }
-        }
     }
 }

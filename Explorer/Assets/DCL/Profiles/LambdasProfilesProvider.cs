@@ -10,6 +10,7 @@ using UnityEngine.Pool;
 
 namespace DCL.Profiles
 {
+    [Obsolete]
     public class LambdasProfilesProvider
     {
         private readonly IWebRequestController webRequestController;
