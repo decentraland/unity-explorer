@@ -692,6 +692,10 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 8806731477310246440}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &4228524009895207432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1228,7 +1232,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4565755306284330403, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 100
+      value: 99.55
       objectReference: {fileID: 0}
     - target: {fileID: 4565755306284330403, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_SizeDelta.y
@@ -1563,6 +1567,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6477153367344263325, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477153367344263325, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477153367344263325, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477153367344263325, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477153367344263325, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7488976440834982030, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
       propertyPath: m_Name
       value: UserNameContainer
@@ -1633,7 +1657,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8995375913226894970, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 342.58002
+      value: 368.65
       objectReference: {fileID: 0}
     - target: {fileID: 8995375913226894970, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
       propertyPath: m_SizeDelta.y

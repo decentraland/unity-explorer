@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatViewModels;
+using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using System;
 using TMPro;
@@ -58,7 +59,8 @@ namespace DCL.Chat.ChatViews
             this.model = model;
             onlineIndicator.SetActive(model.IsOnline);
             profilePictureView.Bind(model.ProfileThumbnail, model.ProfileColor);
-            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.ProfileColor);
+            bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(model.UserId);
+            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, isOfficial, model.ProfileColor);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

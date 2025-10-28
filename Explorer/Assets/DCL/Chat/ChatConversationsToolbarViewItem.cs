@@ -62,6 +62,9 @@ namespace DCL.Chat
         private RectTransform claimedNameIcon;
 
         [SerializeField]
+        private RectTransform officialIcon;
+
+        [SerializeField]
         private RectTransform tooltipPosition;
 
         [Range(0.0f, 1.0f)]
@@ -194,6 +197,15 @@ namespace DCL.Chat
         public void SetClaimedNameIconVisibility(bool isVisible)
         {
             claimedNameIcon.gameObject.SetActive(isVisible);
+        }
+
+        /// <summary>
+        /// Shows or hides the "official" icon.
+        /// </summary>
+        /// <param name="isOfficial"></param>
+        public void SetOfficialIconVisibility(bool isOfficial)
+        {
+            officialIcon.gameObject.SetActive(isOfficial);
         }
 
         /// <summary>
