@@ -19,7 +19,7 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: c5f0f436601ac144a91a6d6d2e2a2677, type: 3}
     Text: Jump to Location
   <GiftInButtonConfig>k__BackingField:
-    Sprite: {fileID: 21300000, guid: c5f0f436601ac144a91a6d6d2e2a2677, type: 3}
+    Sprite: {fileID: 21300000, guid: 0b1219d1d39734c7595c33df85e70230, type: 3}
     Text: Gift...
   <MentionButtonConfig>k__BackingField:
     Sprite: {fileID: 21300000, guid: f2d19b4801b89445ab90e2f33049b326, type: 3}

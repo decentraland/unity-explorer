@@ -54,6 +54,7 @@ MonoBehaviour:
   - rid: 657752310186246267
   - rid: 6478896861045588059
   - rid: 6169970366055448665
+  - rid: 745469515127586908
   references:
     version: 2
     RefIds:
@@ -71,6 +72,15 @@ MonoBehaviour:
       data:
         UiDocumentPrefab:
           m_AssetGUID: 8521b529ac852454480e3f6596bca3ba
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 745469515127586908
+      type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        GiftingPrefab:
+          m_AssetGUID: 91f584d6c05272842b8630c9c1bd041b
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
