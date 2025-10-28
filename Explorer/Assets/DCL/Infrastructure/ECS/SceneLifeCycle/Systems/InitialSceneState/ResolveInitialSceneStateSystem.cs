@@ -57,14 +57,19 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
             if (staticSceneAssetBundle.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 staticSceneAssetBundle.AssetBundleData = Result;
-                if (Result.Succeeded )
+
+                if (Result.Succeeded)
                 {
                     //Dereferencing, because no one is using it yet, we just acquired it. The GLTFContainerAsset will start using it down here
                     //They will be referened in
                     Result.Asset.Dereference();
 
                     foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset!.InitialSceneStateMetadata!.Value.assetHash)
+                    {
+                        //TODO(JUANI): Adding manual reference since this is not going through LoadSystemBase
+                        Result.Asset.AddReference();
                         World.Create(staticSceneAssetBundle, new GetGltfContainerAssetIntention($"static_{assetHash}", assetHash, new CancellationTokenSource()), Result);
+                    }
                 }
             }
         }

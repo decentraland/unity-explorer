@@ -132,9 +132,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         public bool IsValid() =>
             IsSupportedByScene && AssetBundleData.Exception == null;
 
-        public bool IsSupported() =>
-            IsSupportedByScene;
-
         private void CreateEmptyAssetBundleData()
         {
             AssetBundlePromise = AssetBundlePromise.NULL;
