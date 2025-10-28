@@ -180,7 +180,7 @@ namespace Global
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController, web3IdentityProvider) : new LoadingStatus();
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
@@ -246,7 +246,6 @@ namespace Global
             }
             else
                 ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
-
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
