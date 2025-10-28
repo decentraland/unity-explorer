@@ -190,6 +190,11 @@ namespace DCL.Backpack
                                                              || gridWearables[i].GetCategory() == WearableCategories.Categories.BODY_SHAPE;
 
                 backpackItemView.SetEquipButtonsState();
+                backpackItemView.IsUnequippable =
+                    gridWearables[i].GetCategory() != WearableCategories.Categories.BODY_SHAPE
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYES
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYEBROWS
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.MOUTH;
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, pageFetchCancellationToken!.Token).Forget();
             }
         }
