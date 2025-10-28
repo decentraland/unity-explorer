@@ -1,5 +1,6 @@
 ﻿using CRDT;
 using CrdtEcsBridge.PoolsProviders;
+using Global.AppArgs;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -30,6 +31,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
         private readonly ScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
+        private readonly bool useCrdtFilter;
 
         internal IReadOnlyList<ITypedArray<byte>> EventsToProcess => eventsToProcess;
 
@@ -37,7 +39,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             ISceneData sceneData,
             ISceneCommunicationPipe sceneCommunicationPipe,
             IJsOperations jsOperations,
-            ISceneCommunicationPipe.MsgType typeToHandle)
+            ISceneCommunicationPipe.MsgType typeToHandle,
+            IAppArgs appArgs)
         {
             sceneId = sceneData.SceneEntityDefinition.id!;
             this.sceneCommunicationPipe = sceneCommunicationPipe;
@@ -45,6 +48,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.typeToHandle = typeToHandle;
             eventArray = jsOperations.NewArray();
             onMessageReceivedCached = OnMessageReceived;
+
+            useCrdtFilter = appArgs.HasFlag(AppArgsFlags.NO_CRDT_FILTER) == false;
 
             this.sceneCommunicationPipe.AddSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
         }
@@ -67,7 +72,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                         : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
 
                     // Filter CRDT messages before sending
-                    if (firstByte == (int)CommsMessageType.CRDT)
+                    if (useCrdtFilter && firstByte == (int)CommsMessageType.CRDT)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
                         int filteredLength = FilterCRDTMessage(poolable.Memory.Span, filtered);
@@ -76,7 +81,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     }
 
                     // Filter RES_CRDT_STATE messages before sending
-                    if (firstByte == (int)CommsMessageType.RES_CRDT_STATE)
+                    if (useCrdtFilter && firstByte == (int)CommsMessageType.RES_CRDT_STATE)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
                         int filteredLength = FilterCRDTStateMessage(poolable.Memory.Span, filtered);

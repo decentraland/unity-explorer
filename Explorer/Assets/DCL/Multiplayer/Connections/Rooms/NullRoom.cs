@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
-        public IAudioTracks AudioTracks  => NullAudioTracks.INSTANCE;
+        public ILocalTracks LocalTracks => NullLocalTracks.INSTANCE;
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;

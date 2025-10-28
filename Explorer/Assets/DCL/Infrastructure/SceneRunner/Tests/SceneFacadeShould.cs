@@ -31,6 +31,7 @@ using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using Global.AppArgs;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -109,7 +110,9 @@ namespace SceneRunner.Tests
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
-                DecentralandEnvironment.Org);
+                DecentralandEnvironment.Org,
+                ApplicationParametersParser.TEST_INSTANCE
+            );
         }
 
         [OneTimeTearDown]

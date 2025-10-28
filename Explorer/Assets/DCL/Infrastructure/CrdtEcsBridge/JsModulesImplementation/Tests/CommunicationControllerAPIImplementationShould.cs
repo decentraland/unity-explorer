@@ -5,6 +5,7 @@ using CrdtEcsBridge.PoolsProviders;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using ECS;
+using Global.AppArgs;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using NSubstitute;
@@ -51,8 +52,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
-            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
-                jsOperations);
+            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe, jsOperations, ApplicationParametersParser.TEST_INSTANCE);
         }
 
         [Test]

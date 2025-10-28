@@ -340,5 +340,7 @@ namespace DCL.Diagnostics
         public const string TRANSLATE = nameof(TRANSLATE);
 
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
+
+        public const string DCL_CAST = nameof(DCL_CAST);
     }
 }
