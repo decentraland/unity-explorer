@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
         public void SetFocusedState(bool isFocused, bool animate, float duration)
         {
             canvasGroup.DOKill();
-            float targetAlpha = isFocused ? 0.9f : 0.0f;
+            float targetAlpha = isFocused ? 1f : 0.0f;
             canvasGroup.DOFade(targetAlpha, animate ? duration : 0f);
         }
     }

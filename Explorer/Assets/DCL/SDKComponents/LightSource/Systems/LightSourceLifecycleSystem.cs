@@ -10,6 +10,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.LightSource.Systems
 {
@@ -49,8 +50,8 @@ namespace DCL.SDKComponents.LightSource.Systems
             }
 
             Light lightSourceInstance = poolRegistry.Get();
-            lightSourceInstance.transform.localScale = Vector3.one;
             lightSourceInstance.transform.SetParent(transform.Transform, false);
+            lightSourceInstance.transform.ResetLocalTRS();
 
             var lightSourceComponent = new LightSourceComponent(lightSourceInstance);
             World.Add(entity, lightSourceComponent);

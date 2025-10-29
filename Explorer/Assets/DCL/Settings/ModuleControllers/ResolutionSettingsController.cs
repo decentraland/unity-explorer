@@ -2,6 +2,7 @@
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using DCL.Utilities;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +16,9 @@ namespace DCL.Settings.ModuleControllers
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
         private readonly UpscalingController upscalingController;
+        private readonly IAppArgs appParameters;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController, IAppArgs appParameters)
         {
             this.view = view;
             this.upscalingController = upscalingController;
@@ -27,7 +29,13 @@ namespace DCL.Settings.ModuleControllers
                 view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
             else
             {
-                for (var index = 0; index < possibleResolutions.Count; index++)
+                //When running multiple instances from local scene, the last one opened will set the resolution to the lowest available
+                bool isLocalScene = appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE);
+                int startIndex = isLocalScene ? possibleResolutions.Count - 1 : 0;
+                int endIndex = isLocalScene ? -1 : possibleResolutions.Count;
+                int step = isLocalScene ? -1 : 1;
+
+                for (int index = startIndex; index != endIndex; index += step)
                 {
                     Resolution resolution = possibleResolutions[index];
 

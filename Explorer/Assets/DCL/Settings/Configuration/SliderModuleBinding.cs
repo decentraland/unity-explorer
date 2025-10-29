@@ -14,6 +14,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using DCL.Audio;
 using DCL.SkyBox;
+using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -58,7 +59,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus,
             bool isTranslationChatEnabled,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            IAppArgs appParameters)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);

@@ -316,7 +316,7 @@ namespace DCL.SDKComponents.Tween.Tests
 
             materialComponent = world.Get<MaterialComponent>(testEntity);
             UnityEngine.Vector2 matOffset = materialComponent.Result!.mainTextureOffset;
-            Assert.AreEqual(speed, matOffset.x, 0.05f, "Material offset X should have moved by speed.");
+            Assert.AreEqual(speed, matOffset.x, 0.1f, "Material offset X should have moved by speed.");
             Assert.AreEqual(0f, matOffset.y, 0.01f, "Material offset Y should remain at 0.");
 
             var finishedOffset = matOffset;

@@ -24,6 +24,7 @@ using Unity.PerformanceTesting;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static Utility.Tests.TestsCategories;
+using Object = UnityEngine.Object;
 
 namespace DCL.ResourcesUnloading.Tests
 {
@@ -156,7 +157,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, typeof(GameObject), null);
+            var assetBundleData = new AssetBundleData(null, null, Array.Empty<Object>(), typeof(GameObject), null);
 
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
@@ -209,7 +210,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
             audioClip.Dereference();
 
-            var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
+            var assetBundleData = new AssetBundleData(null, null, new []{new GameObject()}, typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
