@@ -52,6 +52,10 @@ namespace DCL.SkyBox
 
         public float TransitionSpeed => transitionSpeed;
 
+        /// <summary>
+        /// Normalized time of day (0-1).
+        /// Setting this property also updates TimeOfDayInSeconds.
+        /// </summary>
         public float TimeOfDayNormalized
         {
             get => timeOfDayNormalized;
@@ -85,7 +89,7 @@ namespace DCL.SkyBox
 
         public void Reset()
         {
-            timeOfDayNormalized = INITIAL_TIME_OF_DAY;
+            TimeOfDayNormalized = INITIAL_TIME_OF_DAY;
             TargetTimeOfDayNormalized = INITIAL_TIME_OF_DAY;
             IsDayCycleEnabled = true;
             TransitionMode = TransitionMode.FORWARD;
