@@ -20,14 +20,15 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.Common.Components;
 using MVC;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
+
 
 namespace DCL.SmartWearables
 {
@@ -46,13 +47,6 @@ namespace DCL.SmartWearables
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly IThumbnailProvider thumbnailProvider;
-
-        /// <summary>
-        ///     Promises waiting on the loading flow of a smart wearable scene.
-        /// </summary>
-        private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
-
-        private bool currentSceneDirty;
 
         public SmartWearableSystem(World world,
             WearableStorage wearableStorage,
@@ -97,8 +91,8 @@ namespace DCL.SmartWearables
             if (!isSmart || !smartWearableCache.CurrentSceneAllowsSmartWearables) return;
 
             string id = SmartWearableCache.GetCacheId(wearable);
-            if (pendingScenes.ContainsKey(id) ||
-                smartWearableCache.RunningSmartWearables.Contains(id) ||
+
+            if (smartWearableCache.RunningSmartWearables.Contains(id) ||
                 // Do not load scenes that were manually killed
                 // To re-enable a wearable, the user must unequip it and then equip it again
                 // NOTICE reloading can be triggered whenever moving between scenes too, that's why we need this
@@ -112,10 +106,15 @@ namespace DCL.SmartWearables
 
             await UniTask.SwitchToMainThread();
 
-            var promise = ScenePromise.Create(World, intention, partition);
-            World.Add(promise.Entity, promise, new SmartWearableId { Value = id });
+            var smartWearableId =
+                new SmartWearableId
+                {
+                    Value = id,
+                    ScenePromise = ScenePromise.Create(World, intention, partition),
+                };
 
-            pendingScenes.Add(SmartWearableCache.GetCacheId(wearable), promise);
+            World.Create(smartWearableId);
+
         }
 
         private void OnUnEquipWearable(IWearable wearable) =>
@@ -131,11 +130,7 @@ namespace DCL.SmartWearables
             // If the user removes the wearable, we can allow reloading its scene the next time it is equipped
             smartWearableCache.KilledPortableExperiences.Remove(id);
 
-            if (pendingScenes.Remove(id, out var promise))
-            {
-                promise.ForgetLoading(World);
-                return;
-            }
+            CancelLoadingSceneQuery(World, id);
 
             if (!smartWearableCache.RunningSmartWearables.Remove(id)) return;
 
@@ -145,23 +140,16 @@ namespace DCL.SmartWearables
             portableExperiencesController.UnloadPortableExperienceById(id);
         }
 
+
         protected override void Update(float t)
         {
-            smartWearableCache.CurrentSceneAllowsSmartWearables = CurrentSceneAllowsSmartWearables();
+            if (smartWearableCache.CurrentSceneAllowsSmartWearables)
+                ResolveScenePromiseQuery(World);
 
-            if (smartWearableCache.CurrentSceneAllowsSmartWearables) ResolveScenePromiseQuery(World);
-
-            if (currentSceneDirty)
-            {
-                HandleSceneChange();
-                currentSceneDirty = false;
-            }
         }
 
-        private bool CurrentSceneAllowsSmartWearables()
+        private bool CurrentSceneAllowsSmartWearables(ISceneFacade scene)
         {
-            var scene = scenesCache.CurrentScene.Value;
-
             // If we aren't in a scene we just allow Smart Wearables.
             if (scene == null) return true;
 
@@ -171,9 +159,9 @@ namespace DCL.SmartWearables
         }
 
         [Query]
-        private void ResolveScenePromise(ref ScenePromise promise, in SmartWearableId smartWearableId)
+        private void ResolveScenePromise(in SmartWearableId smartWearableId)
         {
-            if (!promise.TryConsume(World, out var result)) return;
+            if (!smartWearableId.ScenePromise.TryConsume(World, out StreamableLoadingResult<GetSmartWearableSceneIntention.Result> result)) return;
 
             if (!result.Succeeded)
             {
@@ -183,12 +171,12 @@ namespace DCL.SmartWearables
 
             Entity scene = World.Create(
                 smartWearableId,
-                promise.LoadingIntention.Partition,
+                PartitionComponent.TOP_PRIORITY,
                 result.Asset.SceneDefinition,
                 result.Asset.SceneFacade,
                 SceneLoadingState.CreateBuiltScene());
 
-            AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
+            AddPortableExperience(smartWearableId.ScenePromise.LoadingIntention.SmartWearable, scene);
 
             smartWearableCache.RunningSmartWearables.Add(smartWearableId.Value);
         }
@@ -210,36 +198,37 @@ namespace DCL.SmartWearables
             portableExperiencesController.AddPortableExperience(id, scene);
         }
 
-        private void CancelLoadingAllScenes()
-        {
-            CancelLoadingSceneQuery(World);
-            pendingScenes.Clear();
-        }
+        [Query]
+        private void CancelAllLoadingScene(ref SmartWearableId smartWearableID) =>
+            smartWearableID.ScenePromise.ForgetLoading(World);
 
         [Query]
-        [All(typeof(SmartWearableId))]
-        private void CancelLoadingScene(ref ScenePromise promise) =>
-            promise.ForgetLoading(World);
+        private void CancelLoadingScene([Data] string idToCancel, ref SmartWearableId smartWearableID)
+        {
+            if (smartWearableID.Value.Equals(idToCancel))
+                smartWearableID.ScenePromise.ForgetLoading(World);
+        }
 
         private void OnPortableExperienceUnloaded(string id) =>
             smartWearableCache.RunningSmartWearables.Remove(id);
 
-        private void OnCurrentSceneChanged(ISceneFacade scene) =>
-            currentSceneDirty = true;
+        private void OnCurrentSceneChanged(ISceneFacade scene)
+        {
+            smartWearableCache.CurrentSceneAllowsSmartWearables = CurrentSceneAllowsSmartWearables(scene);
+            HandleSceneChange();
+        }
 
         private void HandleSceneChange()
         {
-            bool smartWearablesAllowed = smartWearableCache.CurrentSceneAllowsSmartWearables;
+            ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + smartWearableCache.CurrentSceneAllowsSmartWearables);
 
-            ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + smartWearablesAllowed);
-
-            if (smartWearablesAllowed)
+            if (smartWearableCache.CurrentSceneAllowsSmartWearables)
                 // Notice scenes that are already running won't run again, so we can call this safely
                 // TODO consider cancelling a previous running task
                 RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
             else
             {
-                CancelLoadingAllScenes();
+                CancelAllLoadingSceneQuery(World);
 
                 if (smartWearableCache.RunningSmartWearables.Count > 0)
                 {
