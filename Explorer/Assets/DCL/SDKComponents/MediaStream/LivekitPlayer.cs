@@ -33,7 +33,15 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
-        public bool MediaOpened => currentStream != null;
+        public bool MediaOpened
+        {
+            get
+            {
+                if (currentStream == null) return false;
+                return currentStream.Value.video.Resource.Has || currentStream.Value.audio.Resource.Has;
+            }
+        }
+
         public float Volume { get; private set; }
 
         public PlayerState State => playerState;
@@ -46,8 +54,13 @@ namespace DCL.SDKComponents.MediaStream
 
         public void EnsurePlaying()
         {
-            if (this is { MediaOpened: false, State: PlayerState.PLAYING, playingAddress: { } address })
-                OpenMedia(address);
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (MediaOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -127,10 +140,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (playerState is not PlayerState.PLAYING)
                 return null;
-
-            // retry to fetch the stream if it's not presented yet
-            if (playingAddress != null && currentStream?.video == null)
-                OpenMedia(playingAddress.Value);
 
             return currentStream?.video.Resource.Has ?? false
                 ? currentStream?.video.Resource.Value.DecodeLastFrame()
