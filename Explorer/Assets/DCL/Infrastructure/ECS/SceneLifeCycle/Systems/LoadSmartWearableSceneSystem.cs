@@ -50,7 +50,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
             AssetBundleManifestVersion manifestVersion = wearable.DTO.assetBundleManifestVersion!;
-            SceneEntityDefinition sceneDefinition = new SceneEntityDefinition(wearable.DTO.id!, sceneMetadata) { assetBundleManifestVersion = manifestVersion };
+            SceneEntityDefinition sceneDefinition = new SceneEntityDefinition(wearable.DTO.id!, sceneMetadata, manifestVersion);
 
             ReadOnlyMemory<byte> crdt = await GetCrdtAsync(sceneContent, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
