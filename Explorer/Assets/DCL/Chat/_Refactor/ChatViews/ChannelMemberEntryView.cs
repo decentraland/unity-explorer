@@ -68,6 +68,8 @@ namespace DCL.Chat.ChatViews
             onlineIndicator.SetActive(model.IsOnline);
             profilePictureView.Bind(model.ProfileThumbnail, model.ProfileColor);
             usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.ProfileColor);
+
+            profilePictureView.ConfigureThumbnailClickData(HandleContextMenuRequest, model.UserId);
         }
 
         private void Hover() =>

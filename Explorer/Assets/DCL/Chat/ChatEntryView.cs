@@ -6,6 +6,7 @@ using System.Globalization;
 using DCL.Chat.ChatViewModels;
 using DCL.Translation;
 using DCL.Utilities;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -138,7 +139,12 @@ namespace DCL.Chat
 
             // Binding is done for non-system messages only
             if (!viewModel.Message.IsSystemMessage)
+            {
                 ProfilePictureView.Bind(viewModel.ProfileData);
+
+                if (!chatMessage.SenderWalletAddress.Equals(ViewDependencies.CurrentIdentity?.Address.ToString()))
+                    ProfilePictureView.ConfigureThumbnailClickData(OnUsernameClicked, chatMessage.SenderWalletAddress);
+            }
             else
                 ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!);
 

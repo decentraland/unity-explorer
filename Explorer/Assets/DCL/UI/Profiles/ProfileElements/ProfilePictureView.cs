@@ -236,6 +236,14 @@ namespace DCL.UI.ProfileElements
             originalColorsInitialized = true;
         }
 
+        /// <summary>
+        ///    Configure the data needed to handle clicks on the profile picture thumbnail.
+        ///    Left click will open the passport of the user with the provided address.
+        ///    Right click will invoke the provided context menu action.
+        ///
+        ///    IMPORTANT: enable raycast target on all ProfilePictureView prefab Image chain (from root to loaded thumbnail) to receive the click events.
+        ///               It is disabled by default to prevent the click event consumption where ProfilePictureView is used as a non-interactive element.
+        /// </summary>
         public void ConfigureThumbnailClickData(Action? contextMenuAction = null,
             string? userAddress = null)
         {
