@@ -123,5 +123,32 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Assert
             mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("ethereum", "0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
         }
+
+        [Test]
+        public void CopyToClipboard()
+        {
+            // Arrange
+            const string TEST_TEXT = "Ia Ia! Cthulhu Ftaghn!";
+
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard(TEST_TEXT);
+
+            // Assert
+            systemClipboard.Received(1).Set(TEST_TEXT);
+        }
+
+        [Test]
+        public void CopyToClipboard_DoesNotCopy_WhenSceneIsNotCurrent()
+        {
+            // Arrange
+            const string TEST_TEXT = "This should not be copied";
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard(TEST_TEXT);
+
+            // Assert
+            systemClipboard.DidNotReceive().Set(Arg.Any<string>());
+        }
     }
 }
