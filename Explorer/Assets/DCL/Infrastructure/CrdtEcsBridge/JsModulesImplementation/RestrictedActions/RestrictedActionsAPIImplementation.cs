@@ -125,6 +125,14 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
+        public void TryCopyToClipboard(string text)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
+            // TODO: clipboardManager.Copy(this, text);
+        }
+
         private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Vector3? newAbsoluteAvatarTarget)
         {
             await UniTask.SwitchToMainThread();
