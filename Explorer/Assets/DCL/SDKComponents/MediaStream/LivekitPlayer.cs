@@ -129,7 +129,7 @@ namespace DCL.SDKComponents.MediaStream
                 return null;
 
             // retry to fetch the stream if it's not presented yet
-            if (playingAddress != null && currentStream?.video == null)
+            if (playingAddress != null && (currentStream?.video == null || !currentStream.Value.video.Resource.Has))
                 OpenMedia(playingAddress.Value);
 
             return currentStream?.video.Resource.Has ?? false
