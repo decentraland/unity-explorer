@@ -105,7 +105,7 @@ namespace DCL.Chat
 
                 case UserChannelViewModel user:
                     newItem.SetConversationName(user.DisplayName);
-                    newItem.SetClaimedNameIconVisibility(user.HasClaimedName && !user.IsOfficial);
+                    newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
                     newItem.SetOfficialIconVisibility(user.IsOfficial);
                     newItem.Configure(isClosable: true);
                     newItem.BindProfileThumbnail(user.ProfilePicture);
@@ -144,7 +144,7 @@ namespace DCL.Chat
             {
                 case UserChannelViewModel user:
                     itemToUpdate.SetConversationName(user.DisplayName);
-                    itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName && !user.IsOfficial);
+                    itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName);
                     itemToUpdate.SetOfficialIconVisibility(user.IsOfficial);
                     itemToUpdate.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
                     break;

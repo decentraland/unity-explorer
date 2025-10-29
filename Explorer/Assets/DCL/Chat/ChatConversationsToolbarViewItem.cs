@@ -197,6 +197,7 @@ namespace DCL.Chat
         public void SetClaimedNameIconVisibility(bool isVisible)
         {
             claimedNameIcon.gameObject.SetActive(isVisible);
+
         }
 
         /// <summary>

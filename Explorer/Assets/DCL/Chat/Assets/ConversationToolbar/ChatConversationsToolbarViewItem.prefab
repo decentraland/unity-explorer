@@ -880,6 +880,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5928428356310462855, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 6402151021740081186, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
       propertyPath: PointerExited.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -960,6 +964,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 7458229342949879022, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
+      propertyPath: m_text
+      value: Mojito
+      objectReference: {fileID: 0}
     - target: {fileID: 7882017573767311470, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -983,6 +991,10 @@ PrefabInstance:
     - target: {fileID: 8056488240786678872, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8087011684616897883, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8750680256192041179, guid: eb2be82d68dc6e246a62df7d82192ab8, type: 3}
       propertyPath: m_Pivot.x
