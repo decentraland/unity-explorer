@@ -11,7 +11,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (wearable.Type != WearableType.FacialFeature) return;
 
-            FinalizeAssetLoading<Texture2DData, GetTextureIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading<TextureData, GetTextureIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
     }
 }
