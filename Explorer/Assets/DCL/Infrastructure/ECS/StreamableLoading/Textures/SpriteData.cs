@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.Textures
 {
     /// <summary>
-    ///     Sprite data is a surrogate usually created from <see cref="TextureData" />
+    ///     Sprite data is a surrogate usually created from <see cref="Texture2DData" />
     ///     but also can be created from the <see cref="AssetBundleData" />
     /// </summary>
     public readonly struct SpriteData

@@ -1,8 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.MediaStream;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -18,6 +18,7 @@ using ECS.Unity.Textures.Components.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility.Primitives;
 using Entity = Arch.Core.Entity;
@@ -47,7 +48,8 @@ namespace ECS.Unity.Materials.Tests
 
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, new MockMediaFactory());
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>()
+                , new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1)));
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
@@ -219,7 +221,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            var texPromise = AssetPromise<TextureData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
+            var texPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -233,10 +235,10 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
         }
 
-        private void AssertTexturePromise(in AssetPromise<TextureData, GetTextureIntention>? promise, string src)
+        private void AssertTexturePromise(in AssetPromise<Texture2DData, GetTextureIntention>? promise, string src)
         {
             Assert.That(promise.HasValue, Is.True);
-            AssetPromise<TextureData, GetTextureIntention> promiseValue = promise.Value;
+            AssetPromise<Texture2DData, GetTextureIntention> promiseValue = promise.Value;
 
             Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));

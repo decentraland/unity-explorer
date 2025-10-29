@@ -2,6 +2,7 @@ using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using NSubstitute;
 using NUnit.Framework;

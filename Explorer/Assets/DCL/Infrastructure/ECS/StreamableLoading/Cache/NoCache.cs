@@ -12,7 +12,7 @@ namespace ECS.StreamableLoading.Cache
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
     /// <typeparam name="TLoadingIntention"></typeparam>
-    public class NoCache<TAsset, TLoadingIntention> : IStreamableCache<TAsset, TLoadingIntention>
+    public class NoCache<TAsset, TLoadingIntention> : IStreamableCache<TAsset, TLoadingIntention> 
         where TLoadingIntention: struct, ILoadingIntention, IEquatable<TLoadingIntention>
     {
         public static readonly NoCache<TAsset, TLoadingIntention> INSTANCE = new (false, false);
@@ -47,12 +47,14 @@ namespace ECS.StreamableLoading.Cache
                 return;
 
             if (useOngoingRequestCache)
-                DictionaryPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>
-                   .Release(OngoingRequests as Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>);
+                DictionaryPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, 
+                    UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(
+                    OngoingRequests as Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>);
 
             if (useIrrecoverableFailureCache)
-                DictionaryPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>?>
-                   .Release(IrrecoverableFailures as Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>?>);
+                DictionaryPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>>
+                    .Release(IrrecoverableFailures as Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, 
+                        StreamableLoadingResult<TAsset>>);
 
             disposed = true;
         }

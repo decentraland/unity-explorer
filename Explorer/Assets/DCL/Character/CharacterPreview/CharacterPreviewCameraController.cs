@@ -162,5 +162,27 @@ namespace DCL.CharacterPreview
 
             characterPreviewAvatarContainer.AngularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         }
+
+        public void ResetZoom()
+        {
+            if (cameraSettings.cameraPositions.Length == 0) return;
+
+            var cfg = cameraSettings.cameraPositions[0];
+
+            // Kill any rotational carry-over; optional but avoids “slip”.
+            characterPreviewAvatarContainer.AngularVelocity = 0f;
+            characterPreviewAvatarContainer.RotationInertia = 0f;
+
+            // Force both the target and the current lens FOV
+            characterPreviewAvatarContainer.TargetFOV = cfg.cameraFieldOfView;
+            var lens = characterPreviewAvatarContainer.freeLookCamera.m_Lens;
+            lens.FieldOfView = cfg.cameraFieldOfView;
+            characterPreviewAvatarContainer.freeLookCamera.m_Lens = lens;
+
+            // Recenter vertical pan to default
+            var pos = characterPreviewAvatarContainer.cameraTarget.localPosition;
+            pos.y = cfg.verticalPosition.y;
+            characterPreviewAvatarContainer.cameraTarget.localPosition = pos;
+        }
     }
 }
