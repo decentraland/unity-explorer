@@ -1,4 +1,5 @@
 ﻿using DCL.ChangeRealmPrompt;
+using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
@@ -18,6 +19,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private ISceneStateProvider sceneStateProvider;
         private IGlobalWorldActions globalWorldActions;
         private ISceneData sceneData;
+        private ISystemClipboard systemClipboard;
 
         [SetUp]
         public void SetUp()
@@ -34,11 +36,13 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new Vector2Int(0, 1),
                 new Vector2Int(0, 2),
             });
+            systemClipboard = Substitute.For<ISystemClipboard>();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
                 mvcManager,
                 sceneStateProvider,
                 globalWorldActions,
-                sceneData);
+                sceneData,
+                systemClipboard);
         }
 
         [Test]

@@ -43,7 +43,8 @@ namespace Global
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            DCL.Clipboard.ISystemClipboard systemClipboard)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -73,7 +74,8 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata, dclEnvironment),
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata, dclEnvironment,
+                    systemClipboard),
             };
         }
     }

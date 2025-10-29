@@ -151,6 +151,8 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; }
 
+        public ISystemClipboard SystemClipboard { get; }
+
         private DynamicWorldContainer(
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
@@ -164,7 +166,8 @@ namespace Global.Dynamic
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            ISystemClipboard systemClipboard)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -175,6 +178,7 @@ namespace Global.Dynamic
             MessagePipesHub = messagePipesHub;
             RemoteMetadata = remoteMetadata;
             RoomHub = roomHub;
+            SystemClipboard = systemClipboard;
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
@@ -1149,7 +1153,8 @@ namespace Global.Dynamic
                 profileBroadcast,
                 roomHub,
                 socialServiceContainer,
-                selfProfile
+                selfProfile,
+                clipboard
             );
 
             // Init itself
