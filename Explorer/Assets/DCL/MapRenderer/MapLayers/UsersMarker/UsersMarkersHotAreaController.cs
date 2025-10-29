@@ -12,9 +12,11 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using DCL.Multiplayer.Connectivity;
+using DCL.Web3.Identities;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -29,6 +31,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         private readonly IObjectPool<IHotUserMarker> wrapsPool;
         private readonly IRealmNavigator realmNavigator;
         private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private TrackPlayersPositionSystem trackSystem;
         private RemovedTrackedPlayersPositionSystem untrackSystem;
 
@@ -45,13 +48,15 @@ namespace DCL.MapRenderer.MapLayers.Users
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IRealmNavigator realmNavigator,
-            IOnlineUsersProvider onlineUsersProvider)
+            IOnlineUsersProvider onlineUsersProvider,
+            IWeb3IdentityCache web3IdentityCache)
             : base(parent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.wrapsPool = wrapsPool;
             this.realmNavigator = realmNavigator;
             this.onlineUsersProvider = onlineUsersProvider;
+            this.web3IdentityCache = web3IdentityCache;
             this.realmNavigator.NavigationExecuted += OnTeleport;
             cancellationToken = new CancellationTokenSource();
         }
@@ -138,7 +143,7 @@ namespace DCL.MapRenderer.MapLayers.Users
 
             foreach (OnlineUserData remotePlayerData in remotePlayersData)
             {
-                if (closebyUsers.Contains(remotePlayerData.avatarId))
+                if (closebyUsers.Contains(remotePlayerData.avatarId) || IsLocalUser(remotePlayerData.avatarId))
                     continue;
 
                 remoteUsers.Add(remotePlayerData.avatarId);
@@ -151,6 +156,9 @@ namespace DCL.MapRenderer.MapLayers.Users
                 mapCullingController.StartTracking(wrap, wrap);
             }
         }
+
+        private bool IsLocalUser(string userId) =>
+            userId.Equals(web3IdentityCache.Identity?.Address.ToString(), StringComparison.InvariantCultureIgnoreCase);
 
         public async UniTask EnableAsync(CancellationToken cancellationToken)
         {

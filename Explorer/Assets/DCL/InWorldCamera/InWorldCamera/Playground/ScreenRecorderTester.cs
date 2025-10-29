@@ -94,7 +94,6 @@ namespace DCL.InWorldCamera.Playground
                 new WearableStorage(),
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
-                new List<string>(),
                 null,
                 new DefaultProfileCache(),
                 world,

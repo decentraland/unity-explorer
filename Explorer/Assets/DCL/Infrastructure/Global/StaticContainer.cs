@@ -53,6 +53,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using Global.Dynamic.LaunchModes;
 using PortableExperiences.Controller;
 using System.Buffers;
@@ -177,13 +178,15 @@ namespace Global
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController, web3IdentityProvider) : new LoadingStatus();
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 reportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
+                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider, container.LoadingStatus.IsLoadingScreenOn),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneMapping()
             );
@@ -207,14 +210,16 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
-
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
-
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
+
+            IGltfContainerAssetsCache gltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+            var gltfPlugin = new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, gltfContainerAssetsCache);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), gltfContainerAssetsCache);
+
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)));
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
@@ -240,12 +245,11 @@ namespace Global
             else
                 ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
 
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
-
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
+                gltfPlugin,
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.MediaContainer.mediaFactoryBuilder),
@@ -259,7 +263,6 @@ namespace Global
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
@@ -287,11 +290,9 @@ namespace Global
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneLoadingLimit),
-                new AdaptivePerformancePlugin(container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,
-                new LightSourceDebugPlugin(container.DebugContainerBuilder, globalWorld)
+                gltfPlugin
             };
 
             container.LandscapeParcelController = new LandscapeParcelController(
