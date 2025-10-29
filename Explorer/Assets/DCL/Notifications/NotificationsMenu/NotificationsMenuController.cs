@@ -289,14 +289,14 @@ namespace DCL.Notifications.NotificationsMenu
 
             try
             {
-                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                var ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                     new GetTextureArguments(TextureType.Albedo),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI);
 
-                Texture2D texture = ownedTexture.Texture;
+                Texture2D texture = ownedTexture;
 
                 thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);

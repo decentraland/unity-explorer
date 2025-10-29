@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
 using DCL.WebRequests;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace DCL.Translation.Service
         private readonly ITranslationSettings settings;
 
         private string translateUrl => urlsSource.Url(DecentralandUrl.ChatTranslate);
-
+        
         public DclTranslationProvider(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
@@ -36,7 +37,7 @@ namespace DCL.Translation.Service
 
             return new TranslationResult(
                 response.translatedText,
-                ParseLanguageCode(response.detectedLanguage.language),
+                LanguageCodeParser.Parse(response.detectedLanguage.language),
                 false
             );
         }
@@ -103,22 +104,6 @@ namespace DCL.Translation.Service
             ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
 
             return response;
-        }
-
-        private LanguageCode ParseLanguageCode(string code)
-        {
-            if (Enum.TryParse<LanguageCode>(code, true, out var languageCode))
-                return languageCode;
-
-            return LanguageCode.EN;
-        }
-
-        private LanguageCode ParseLanguageCodeSafe(string code, LanguageCode fallback)
-        {
-            if (Enum.TryParse<LanguageCode>(code, true, out var languageCode))
-                return languageCode;
-
-            return fallback;
         }
     }
 }

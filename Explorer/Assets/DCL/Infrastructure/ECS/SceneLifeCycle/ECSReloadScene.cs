@@ -13,7 +13,7 @@ using Utility;
 
 namespace ECS.SceneLifeCycle
 {
-    public class ECSReloadScene : IReloadScene
+    public class ECSReloadScene
     {
         private readonly IScenesCache scenesCache;
 

@@ -25,7 +25,7 @@ namespace DCL.Communities.EventInfo
 
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -38,7 +38,7 @@ namespace DCL.Communities.EventInfo
             IWebRequestController webRequestController,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator)
             : base(viewFactory)
         {

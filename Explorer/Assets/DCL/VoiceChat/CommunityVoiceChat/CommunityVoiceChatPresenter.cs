@@ -55,6 +55,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             communityVoiceChatSearchPresenter = new CommunityVoiceChatSearchPresenter(view.CommunityVoiceChatSearchView);
             inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
 
+            inCallPresenter.OpenListenersSectionRequested += OpenListenersSection;
+
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
@@ -107,6 +109,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
             voiceChatOrchestrator.CommunityCallStatus.OnUpdate -= OnCommunityCallStatusUpdate;
 
+            inCallPresenter.OpenListenersSectionRequested -= OpenListenersSection;
+            inCallPresenter.Dispose();
+
             subscriptionsScope.Dispose();
             communityVoiceChatSearchPresenter.Dispose();
 
@@ -149,6 +154,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OpenListenersSection()
         {
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+            
             view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
             view.CommunityVoiceChatInCallView.gameObject.SetActive(false);
         }

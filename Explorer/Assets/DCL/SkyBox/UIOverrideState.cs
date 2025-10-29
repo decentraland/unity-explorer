@@ -1,3 +1,5 @@
+using static DCL.Ipfs.SceneMetadata;
+
 namespace DCL.SkyBox
 {
     public class UIOverrideState : ISkyboxState
@@ -18,6 +20,7 @@ namespace DCL.SkyBox
 
         public void Enter()
         {
+            skyboxSettings.IsDayCycleEnabled = false;
             skyboxSettings.TransitionMode = TransitionMode.FORWARD;
             skyboxSettings.TargetTimeOfDayNormalized = skyboxSettings.UIOverrideTimeOfDayNormalized;
         }

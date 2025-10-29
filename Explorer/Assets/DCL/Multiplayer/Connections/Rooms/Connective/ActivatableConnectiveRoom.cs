@@ -108,7 +108,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IRoom Room() =>
             proxy;
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             origin.Dispose();
         }

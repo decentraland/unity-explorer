@@ -46,12 +46,17 @@ namespace DCL.Chat.ChatInput
             else
                 blockedReason = currentChannelService.InputState.ErrorMessage!;
 
+            context.ChatInputView.maskButton.onClick.RemoveListener(BlockedInputClicked);
+            if (currentChannelService.InputState is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER })
+                context.ChatInputView.maskButton.onClick.AddListener(BlockedInputClicked);
+
             context.ChatInputView.SetBlocked(blockedReason);
         }
 
         public override void End()
         {
             context.ChatInputView.maskButton.onClick.RemoveListener(RequestFocusedState);
+            context.ChatInputView.maskButton.onClick.RemoveListener(BlockedInputClicked);
         }
 
         protected override void OnInputBlocked()
@@ -63,6 +68,9 @@ namespace DCL.Chat.ChatInput
         {
             ChangeState<TypingEnabledChatInputState>();
         }
+
+        private void BlockedInputClicked() =>
+            context.ChatEventBus.Publish(new ChatEvents.ClickableBlockedInputClickedEvent());
 
         private void RequestFocusedState()
         {

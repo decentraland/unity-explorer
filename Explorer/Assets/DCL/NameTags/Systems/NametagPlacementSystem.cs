@@ -40,8 +40,6 @@ namespace DCL.Nametags
         private readonly NametagsData nametagsData;
 
         private SingleInstanceEntity playerCamera;
-        private CameraComponent cameraComponent;
-        private bool cameraInitialized;
 
         public NametagPlacementSystem(
             World world,
@@ -63,11 +61,7 @@ namespace DCL.Nametags
             if (!nametagsData.showNameTags)
                 return;
 
-            if (!cameraInitialized)
-            {
-                cameraComponent = playerCamera.GetCameraComponent(World);
-                cameraInitialized = true;
-            }
+            CameraComponent cameraComponent = playerCamera.GetCameraComponent(World);
 
             float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(cameraComponent.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
@@ -155,11 +149,11 @@ namespace DCL.Nametags
             NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
-            if (avatarShape.HiddenByModifierArea ||
-                partitionComponent.IsBehind
+            if (avatarShape.HiddenByModifierArea 
+                || partitionComponent.IsBehind
                 || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
-                || World.Has<BlockedPlayerComponent>(e))
+                || World.Has<HiddenPlayerComponent>(e))
             {
                 nametagHolderPool.Release(nametagHolder);
                 World.Remove<NametagHolder>(e);

@@ -16,6 +16,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -60,20 +61,54 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, in InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
-
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
                 return;
 
+            if (!sceneLODInfo.HasActiveLODPromise())
+                return;
+
+            //Means it has already been resolved
+            if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
+                return;
+
+            if (initialSceneStateDescriptor.IsValid() && sceneLODInfo.CurrentLODLevelPromise == 0)
+                ResolveInitialSceneStateDescriptorLOD(initialSceneStateDescriptor, sceneDefinitionComponent, ref sceneLODInfo);
+            else
+                ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
+        }
+
+        private void ResolveInitialSceneStateDescriptorLOD(in InitialSceneStateDescriptor initialSceneStateDescriptor, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
+            if (!initialSceneStateDescriptor.IsDownloadedAndReady())
+                return;
+
+            var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
+            initialSceneStateDescriptor.RepositionStaticAssets(instantiatedLOD);
+            instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
+
+
+            var newLod = new LODAsset(instantiatedLOD, initialSceneStateDescriptor.AssetBundleData.Asset,
+                GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
+
+            //Adding a manual reference since we didnt get this object through the regular AB flow
+            initialSceneStateDescriptor.AssetBundleData.Asset.AddReference();
+            sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+        }
+
+        private void ResolveSceneLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
-                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
+                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetAsset<GameObject>(),
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
+
+                    //TODO (JUANI) : Remove before merge. Jsut leaving it here for showing the LOD_1 of new GP
+                    instantiatedLOD.gameObject.SetActive(true);
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
@@ -89,6 +124,8 @@ namespace DCL.LOD.Systems
                     scenesCache);
             }
         }
+
+
 
         private TextureArraySlot?[] GetTextureSlot(byte lodLevel, SceneEntityDefinition sceneDefinitionComponent, GameObject instantiatedLOD)
         {
