@@ -1,8 +1,10 @@
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
+using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 
 namespace DCL.PluginSystem.World
@@ -29,6 +31,8 @@ namespace DCL.PluginSystem.World
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
+            ResetDirtyFlagSystem<PBPointerLock>.InjectToWorld(ref builder);
+
             UpdatePointerLockSystem.InjectToWorld(ref builder, globalWorld, cameraData);
         }
     }
