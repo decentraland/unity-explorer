@@ -151,6 +151,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
+            thumbnailContextMenuActions[elementView.UserProfile] = () => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView);
 
             FriendRequest request = section == FriendPanelStatus.RECEIVED ? receivedRequests[collectionIndex] : sentRequests[collectionIndex];
             elementView.RequestDate = request.Timestamp;

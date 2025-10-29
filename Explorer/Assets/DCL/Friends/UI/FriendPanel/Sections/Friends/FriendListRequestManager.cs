@@ -120,6 +120,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
+            thumbnailContextMenuActions[elementView.UserProfile] = () => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView);
 
             elementView.JumpInButton.onClick.RemoveAllListeners();
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));

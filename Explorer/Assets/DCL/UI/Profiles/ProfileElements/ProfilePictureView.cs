@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,7 +12,7 @@ using Utility;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfilePictureView : MonoBehaviour, IDisposable, IPointerEnterHandler, IPointerExitHandler
+    public class ProfilePictureView : MonoBehaviour, IDisposable, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
@@ -29,6 +30,8 @@ namespace DCL.UI.ProfileElements
         private Color originalThumbnailFrameColor;
 
         private Color originalThumbnailImageColor;
+        private Action? contextMenuAction;
+        private string? userAddress;
 
         [Obsolete]
         private ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -231,6 +234,21 @@ namespace DCL.UI.ProfileElements
                 originalThumbnailFrameColor = thumbnailFrame.color;
 
             originalColorsInitialized = true;
+        }
+
+        public void ConfigureThumbnailClickData(Action? contextMenuAction = null,
+            string? userAddress = null)
+        {
+            this.contextMenuAction = contextMenuAction;
+            this.userAddress = userAddress;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left && userAddress != null)
+                ViewDependencies.GlobalUIViews.OpenPassportAsync(userAddress!).Forget();
+            else if (eventData.button == PointerEventData.InputButton.Right)
+                contextMenuAction?.Invoke();
         }
     }
 }

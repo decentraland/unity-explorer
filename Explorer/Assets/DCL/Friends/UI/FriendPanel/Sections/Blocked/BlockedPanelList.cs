@@ -82,6 +82,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element, elementView.ContextMenuButton.transform.position, elementView));
+            thumbnailContextMenuActions[element] = () => ContextMenuClicked?.Invoke(element, elementView.transform.position,  elementView);
 
             elementView.BlockedDate = element.Timestamp;
         }

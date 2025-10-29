@@ -103,8 +103,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
                     int collectionIndex = index - 1;
-                    friendListUserView.Configure(GetFirstCollectionElement(collectionIndex), profileRepositoryWrapper);
+                    FriendProfile friendProfile = GetFirstCollectionElement(collectionIndex);
+                    friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
+                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile]);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
@@ -125,8 +127,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
                     int collectionIndex = index - onlineFriendMarker - 2;
-                    friendListUserView.Configure(GetSecondCollectionElement(collectionIndex), profileRepositoryWrapper);
+                    FriendProfile friendProfile = GetSecondCollectionElement(collectionIndex);
+                    friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
+                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile]);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
