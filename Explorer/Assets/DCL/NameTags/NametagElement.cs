@@ -287,7 +287,7 @@ namespace DCL.Nametags
             Username = BuildName(username, walletId, verified);
             usernameLabel.style.color = usernameColor;
 
-            Verified = verified && !official;
+            Verified = verified;
             Official = official;
         }
 
