@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -8,52 +9,43 @@ using System.Linq;
 
 namespace DCL.SmartWearables
 {
+    /// <summary>
+    /// Provides content for Smart Wearable scenes.
+    /// </summary>
+    /// <remarks>
+    /// Smart Wearable scenes contain assets for both MALE and FEMALE shapes, in the format 'male/my-asset.xyz' or 'female/my-asset.xyz'.
+    /// Scenes normally request assets by their name without prefixing them, so this class automatically adds male/ or female/ prefixes (depending on the
+    /// body shape of the player avatar).
+    ///
+    /// For example, if the avatar's body shape is MALE:
+    /// If a scene requests 'my-obj.glb', this class will first try to resolve 'my-obj.glb', if that fails, it will try 'male/my-obj.glb'.
+    /// </remarks>
     public class SmartWearableSceneContent : ISceneContent
     {
-        private readonly Dictionary<string, (bool, URLAddress)> cachedUrls = new(StringComparer.OrdinalIgnoreCase);
-
-        private Dictionary<string, string> content = new (StringComparer.OrdinalIgnoreCase);
+        private ISceneContent content;
 
         private string contentPrefix;
 
-        private SmartWearableSceneContent(URLDomain contentBaseUrl)
+        private SmartWearableSceneContent(URLDomain contentBaseUrl, IWearable wearable, string contentPrefix)
         {
             ContentBaseUrl = contentBaseUrl;
+            this.content = new SceneHashedContent(wearable.DTO.content, contentBaseUrl);
+            this.contentPrefix = contentPrefix;
         }
 
         public URLDomain ContentBaseUrl { get;}
 
         public bool TryGetContentUrl(string contentPath, out URLAddress result)
         {
-            if (cachedUrls.TryGetValue(contentPath, out (bool success, URLAddress url) cachedResult))
-            {
-                result = cachedResult.url;
-                return cachedResult.success;
-            }
-
-            if (TryGetHash(contentPath, out string hash))
-            {
-                result = ContentBaseUrl.Append(URLPath.FromString(hash));
-                cachedUrls[contentPath] = (true, result);
-                return true;
-            }
-
-            result = URLAddress.EMPTY;
-            cachedUrls[contentPath] = (false, result);
-            return false;
+            if (!content.TryGetHash(contentPath, out _)) contentPath = contentPrefix + contentPath;
+            return content.TryGetContentUrl(contentPath, out result);
         }
 
         public bool TryGetHash(string name, out string hash) =>
-            content.TryGetValue(name, out hash) || content.TryGetValue(contentPrefix + name, out hash);
+            content.TryGetHash(name, out hash);
 
-        public static SmartWearableSceneContent Create(URLDomain contentBaseUrl, IWearable wearable, BodyShape bodyShape)
-        {
-            return new SmartWearableSceneContent(contentBaseUrl)
-            {
-                contentPrefix = GetContentPrefix(bodyShape),
-                content = wearable.DTO.content.ToDictionary(x => x.file, x => x.hash),
-            };
-        }
+        public static SmartWearableSceneContent Create(URLDomain contentBaseUrl, IWearable wearable, BodyShape bodyShape) =>
+            new (contentBaseUrl, wearable, GetContentPrefix(bodyShape));
 
         private static string GetContentPrefix(BodyShape bodyShape)
         {
