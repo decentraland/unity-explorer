@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -20,14 +20,11 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
-using ECS.StreamableLoading;
 using MVC;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using UnityEngine.Pool;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
@@ -84,8 +81,6 @@ namespace DCL.SmartWearables
             backpackEventBus.EquipWearableEvent += OnEquipWearable;
             backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
-            scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
-
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
         }
 
@@ -109,22 +104,22 @@ namespace DCL.SmartWearables
                 // NOTICE reloading can be triggered whenever moving between scenes too, that's why we need this
                 smartWearableCache.KilledPortableExperiences.Contains(id)) return;
 
-            AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
-            ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{metadata.name}'. Loading scene...");
+            string wearableName = wearable.DTO.Metadata.name;
+            ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{wearableName}'. Loading scene...");
 
             var partition = PartitionComponent.TOP_PRIORITY;
             var intention = GetSmartWearableSceneIntention.Create(wearable, partition);
 
             await UniTask.SwitchToMainThread();
+
             var promise = ScenePromise.Create(World, intention, partition);
+            World.Add(promise.Entity, promise, new SmartWearableId { Value = id });
 
-            pendingScenes.Add(metadata.id, promise);
+            pendingScenes.Add(SmartWearableCache.GetCacheId(wearable), promise);
         }
 
-        private void OnUnEquipWearable(IWearable wearable)
-        {
+        private void OnUnEquipWearable(IWearable wearable) =>
             StopSmartWearableSceneAsync(wearable).Forget();
-        }
 
         private async UniTask StopSmartWearableSceneAsync(IWearable wearable)
         {
@@ -144,8 +139,8 @@ namespace DCL.SmartWearables
 
             if (!smartWearableCache.RunningSmartWearables.Remove(id)) return;
 
-            AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
-            ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{metadata.name}'. Unloading scene...");
+            string wearableName = wearable.DTO.Metadata.name;
+            ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{wearableName}'. Unloading scene...");
 
             portableExperiencesController.UnloadPortableExperienceById(id);
         }
@@ -154,7 +149,7 @@ namespace DCL.SmartWearables
         {
             smartWearableCache.CurrentSceneAllowsSmartWearables = CurrentSceneAllowsSmartWearables();
 
-            ResolveScenePromises();
+            if (smartWearableCache.CurrentSceneAllowsSmartWearables) ResolveScenePromiseQuery(World);
 
             if (currentSceneDirty)
             {
@@ -175,42 +170,27 @@ namespace DCL.SmartWearables
             return featureToggles.PortableExperiencesEnabled;
         }
 
-        private void ResolveScenePromises()
+        [Query]
+        private void ResolveScenePromise(ref ScenePromise promise, in SmartWearableId smartWearableId)
         {
-            if (!smartWearableCache.CurrentSceneAllowsSmartWearables)
+            if (!promise.TryConsume(World, out var result)) return;
+
+            if (!result.Succeeded)
             {
-                foreach ((string _, ScenePromise promise) in pendingScenes) promise.ForgetLoading(World);
-                pendingScenes.Clear();
+                if (result.Exception != null) ReportHub.LogError(GetReportCategory(), result.Exception);
                 return;
             }
 
-            using var resolvedScope = HashSetPool<string>.Get(out var resolved);
+            Entity scene = World.Create(
+                smartWearableId,
+                promise.LoadingIntention.Partition,
+                result.Asset.SceneDefinition,
+                result.Asset.SceneFacade,
+                SceneLoadingState.CreateBuiltScene());
 
-            foreach ((string id, ScenePromise promise) in pendingScenes)
-            {
-                if (!promise.TryConsume(World, out var result)) continue;
+            AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
 
-                resolved.Add(id);
-
-                if (!result.Succeeded)
-                {
-                    if (result.Exception != null) ReportHub.LogError(GetReportCategory(), result.Exception);
-                    continue;
-                }
-
-                Entity scene = World.Create(
-                    new SmartWearableId { Value = id },
-                    promise.LoadingIntention.Partition,
-                    result.Asset.SceneDefinition,
-                    result.Asset.SceneFacade,
-                    SceneLoadingState.CreateBuiltScene());
-
-                AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
-
-                smartWearableCache.RunningSmartWearables.Add(id);
-            }
-
-            foreach (string id in resolved) pendingScenes.Remove(id);
+            smartWearableCache.RunningSmartWearables.Add(smartWearableId.Value);
         }
 
         private void AddPortableExperience(IWearable smartWearable, Entity scene)
@@ -230,16 +210,22 @@ namespace DCL.SmartWearables
             portableExperiencesController.AddPortableExperience(id, scene);
         }
 
-
-        private void OnPortableExperienceUnloaded(string id)
+        private void CancelLoadingAllScenes()
         {
+            CancelLoadingSceneQuery(World);
+            pendingScenes.Clear();
+        }
+
+        [Query]
+        [All(typeof(SmartWearableId))]
+        private void CancelLoadingScene(ref ScenePromise promise) =>
+            promise.ForgetLoading(World);
+
+        private void OnPortableExperienceUnloaded(string id) =>
             smartWearableCache.RunningSmartWearables.Remove(id);
-        }
 
-        private void OnCurrentSceneChanged(ISceneFacade scene)
-        {
+        private void OnCurrentSceneChanged(ISceneFacade scene) =>
             currentSceneDirty = true;
-        }
 
         private void HandleSceneChange()
         {
@@ -253,8 +239,7 @@ namespace DCL.SmartWearables
                 RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
             else
             {
-                foreach ((string _, ScenePromise promise) in pendingScenes) promise.ForgetLoading(World);
-                pendingScenes.Clear();
+                CancelLoadingAllScenes();
 
                 if (smartWearableCache.RunningSmartWearables.Count > 0)
                 {
@@ -270,20 +255,17 @@ namespace DCL.SmartWearables
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
+            // Do once, then listen to scene changes
+            loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
+            scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
+
             RunScenesForEquippedWearablesAsync(AuthorizationAction.RequestAuthorization, CancellationToken.None).Forget();
         }
 
         private async UniTask RunScenesForEquippedWearablesAsync(AuthorizationAction authorization, CancellationToken ct)
         {
-            Entity player = Entity.Null;
-            while (player == Entity.Null)
-            {
-                player = World.CachePlayer();
-                await UniTask.Yield();
-            }
-
-            Profile profile;
-            while (!World.TryGet(player, out profile)) await UniTask.Yield();
+            Entity player = World.CachePlayer();
+            Profile profile = World.Get<Profile>(player);
 
             foreach (var urn in profile.Avatar.Wearables)
             {
