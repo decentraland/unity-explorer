@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Emotes
     public partial class FinalizeEmoteLoadingSystem : FinalizeElementsLoadingSystem<GetEmotesByPointersFromRealmIntention, IEmote, EmoteDTO, EmotesDTOList>
     {
         public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world, emoteStorage, new ListObjectPool<URN>()) { }
-
+ 
         protected override void Update(float t)
         {
             FinalizeEmoteDTOQuery(World);

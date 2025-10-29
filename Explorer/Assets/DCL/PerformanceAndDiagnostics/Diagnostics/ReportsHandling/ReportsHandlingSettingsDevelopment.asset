@@ -236,8 +236,6 @@ MonoBehaviour:
       Severity: 4
     - Category: BADGES
       Severity: 4
-    - Category: CAMERA_REEL
-      Severity: 4
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 4
     - Category: COMMS_SCENE_HANDLER
@@ -381,8 +379,6 @@ MonoBehaviour:
     - Category: BACKPACK
       Severity: 1
     - Category: BADGES
-      Severity: 1
-    - Category: CAMERA_REEL
       Severity: 1
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 1

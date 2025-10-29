@@ -45,6 +45,7 @@ namespace DCL.FeatureFlags
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
+        public const string GIFTING_ENABLED = "alfa-gifting";
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
     }
 
@@ -84,7 +85,8 @@ namespace DCL.FeatureFlags
         AuthCodeValidation,
         GpuiEnabled,
         ChatTranslation,
-        OutfitsEnabled
+        OutfitsEnabled,
+        GiftingEnabled
     }
 
     public static class FeatureFlagExtensions
@@ -127,6 +129,7 @@ namespace DCL.FeatureFlags
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
+                FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,
                 _ => string.Empty
             };
         }

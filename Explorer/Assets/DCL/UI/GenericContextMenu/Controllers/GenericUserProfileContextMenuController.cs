@@ -122,15 +122,17 @@ namespace DCL.UI
             contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
-                         .AddControl(userProfileControlSettings)
-                         .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(mentionUserButtonControlSettings)
-                         .AddControl(openUserProfileButtonControlSettings)
-                         .AddControl(openConversationControlSettings)
-                         .AddControl(contextMenuCallButton)
-                         .AddControl(contextMenuJumpInButton)
-                .AddControl(contextMenuBlockUserButton)
-                .AddControl(contextGiftButton);
+                .AddControl(userProfileControlSettings)
+                .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
+                .AddControl(mentionUserButtonControlSettings)
+                .AddControl(openUserProfileButtonControlSettings)
+                .AddControl(openConversationControlSettings)
+                .AddControl(contextMenuCallButton)
+                .AddControl(contextMenuJumpInButton)
+                .AddControl(contextMenuBlockUserButton);
+
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+                contextMenu.AddControl(contextGiftButton);
 
             if (includeCommunities)
             {
@@ -167,6 +169,7 @@ namespace DCL.UI
 
                     blockButtonControlSettings.SetData(profile.UserId);
                     jumpInButtonControlSettings.SetData(profile.UserId);
+                    giftButtonControlSettings.SetData(profile.UserId);
 
                     contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
