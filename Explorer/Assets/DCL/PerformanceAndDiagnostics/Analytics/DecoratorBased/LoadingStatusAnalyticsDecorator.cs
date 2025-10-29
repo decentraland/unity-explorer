@@ -2,6 +2,8 @@ using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using Segment.Serialization;
+using Sentry;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -98,5 +100,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             }
             return core.SetCurrentStage(stage);
         }
+
+        public bool IsLoadingScreenOn() =>
+            core.IsLoadingScreenOn();
     }
 }

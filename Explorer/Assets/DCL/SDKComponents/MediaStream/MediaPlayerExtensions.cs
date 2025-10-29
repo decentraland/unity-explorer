@@ -64,14 +64,13 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.Stop();
         }
 
-        internal static UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer) =>
-            SetPlaybackPropertiesAsync(control,
-                sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION,
-                sdkVideoPlayer is { HasLoop: true, Loop: true },
-                sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE,
-                sdkVideoPlayer is { HasPlaying: true, Playing: true });
+        public static void SetPlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
+        {
+            if (!mediaPlayer.MediaOpened) return;
+            SetPlaybackPropertiesAsync(mediaPlayer.Control, sdkVideoPlayer).Forget();
+        }
 
-        internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, float position, bool loop, float rate, bool isPlaying)
+        internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer)
         {
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
             await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
@@ -79,11 +78,11 @@ namespace DCL.SDKComponents.MediaStream
             // The only way found to make the video initialization consistent and reliable even after a scene reload
             await UniTask.Delay(TimeSpan.FromSeconds(1f));
 
-            control.SetLooping(loop);
-            control.SetPlaybackRate(rate);
-            control.Seek(position);
+            control.SetLooping(sdkVideoPlayer is { HasLoop: true, Loop: true }); // default: false
+            control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
+            control.Seek(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
 
-            if (isPlaying)
+            if (sdkVideoPlayer is { HasPlaying: true, Playing: true })
                 control.Play();
         }
 

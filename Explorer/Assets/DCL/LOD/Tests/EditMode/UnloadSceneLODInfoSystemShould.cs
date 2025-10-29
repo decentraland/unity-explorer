@@ -1,20 +1,17 @@
 ﻿using Arch.Core;
-using Arch.System;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.TestSuite;
 using NSubstitute;
-using NSubstitute.Exceptions;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Localization.SmartFormat.Utilities;
 using Assert = UnityEngine.Assertions.Assert;
 
 namespace DCL.LOD.Tests
@@ -69,7 +66,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
             sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
-            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
             //One empty update to allow creation
             system.Update(0);
 
@@ -92,7 +89,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.id = CachedSceneID;
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
 
-            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
             //One empty update to allow creation
             system.Update(0);
 

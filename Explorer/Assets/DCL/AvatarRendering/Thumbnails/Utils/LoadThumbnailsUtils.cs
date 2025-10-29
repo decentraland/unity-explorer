@@ -15,14 +15,14 @@ using ECS.StreamableLoading.Textures;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Utils
 {
     public static class LoadThumbnailsUtils
     {
-        public static readonly SpriteData DEFAULT_THUMBNAIL = new (new TextureData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
+        public static readonly SpriteData DEFAULT_THUMBNAIL = new (new Texture2DData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
 
         public static async UniTask<Sprite> WaitForThumbnailAsync(this IAvatarAttachment avatarAttachment, int checkInterval, CancellationToken ct)
@@ -98,8 +98,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var promise = AssetBundlePromise.Create(
                 world,
                 GetAssetBundleIntention.FromHash(
-                    typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
+                    typeof(Texture2D),
                     permittedSources: AssetSource.ALL,
                     assetBundleManifestVersion: attachment.DTO.assetBundleManifestVersion,
                     parentEntityID: attachment.DTO.id,

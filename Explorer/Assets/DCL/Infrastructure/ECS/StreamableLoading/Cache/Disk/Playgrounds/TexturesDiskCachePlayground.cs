@@ -5,7 +5,6 @@ using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.IO;
-using Unity.Collections;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
@@ -21,20 +20,20 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             StartAsync().Forget();
         }
 
-        private IDiskCache<TextureData> NewDiskCache()
+        private IDiskCache<Texture2DData> NewDiskCache()
         {
             var diskCache = new DiskCache(CacheDirectory.New(cacheDirectory), new FilesLock(), IDiskCleanUp.None.INSTANCE);
-            return new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
+            return new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
         }
 
         private async UniTaskVoid StartAsync()
         {
             string testExtension = "png";
 
-            IDiskCache<TextureData> diskCache = NewDiskCache();
+            IDiskCache<Texture2DData> diskCache = NewDiskCache();
             using HashKey hashKey = HashKey.FromString(TEST_FILE);
 
-            var data = new TextureData(texture);
+            var data = new Texture2DData(texture);
 
             var result = await diskCache.PutAsync(hashKey, testExtension, data, destroyCancellationToken);
             print($"Put result: success {result.Success} and error {result.Error?.Message}");
@@ -43,7 +42,7 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             print($"Content result: success {contentResult.Success} and error {contentResult.Error?.Message}");
 
             var originData = texture.GetRawTextureData<byte>();
-            NativeArray<byte> gottenData = contentResult.Value.Value.EnsureTexture2D().GetRawTextureData<byte>();
+            var gottenData = contentResult.Value.Value.Asset.GetRawTextureData<byte>();
 
             print($"Content equals: {originData.AsSpan().SequenceEqual(gottenData.AsSpan())}");
         }
@@ -51,7 +50,7 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
         [ContextMenu(nameof(RemoveAsync))]
         public async UniTaskVoid RemoveAsync()
         {
-            IDiskCache<TextureData> diskCache = NewDiskCache();
+            IDiskCache<Texture2DData> diskCache = NewDiskCache();
             using HashKey hashKey = HashKey.FromString(TEST_FILE);
             var result = await diskCache.RemoveAsync(hashKey, Path.GetExtension(TEST_FILE), destroyCancellationToken);
             print($"Remove result: success {result.Success} and error {result.Error?.Message}");

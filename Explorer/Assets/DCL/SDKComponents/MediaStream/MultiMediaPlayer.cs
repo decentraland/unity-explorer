@@ -131,7 +131,7 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx));
         }
 
-        public readonly void CrossfadeVolume(float volume, float volumeDelta = 1)
+        public void CrossfadeVolume(float volume, float volumeDelta = 1)
         {
             Match(
                 (volume, volumeDelta),
@@ -160,13 +160,7 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public readonly void SetLooping(bool isLooping) =>
-            Match(
-                isLooping,
-                static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
-                static (_, _) => { });
-
-        public readonly void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
+        public void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
@@ -176,16 +170,6 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             // Livekit streaming doesn't need to adjust playback properties
-        }
-
-        public readonly void SetPlaybackProperties(CustomMediaStream customMediaStream)
-        {
-            if (IsAvProPlayer(out AvProPlayer? mediaPlayer))
-            {
-                MediaPlayer avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
-                if (!avProPlayer.MediaOpened) return;
-                MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
-            }
         }
 
         public bool OpenMedia(MediaAddress mediaAddress, bool isFromContentServer, bool autoPlay)

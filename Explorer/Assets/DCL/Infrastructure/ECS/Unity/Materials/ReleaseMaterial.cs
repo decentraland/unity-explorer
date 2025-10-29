@@ -6,7 +6,7 @@ using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 using Utility.Primitives;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials
 {
@@ -62,7 +62,6 @@ namespace ECS.Unity.Materials
 
             if (promiseValue.LoadingIntention.IsVideoTexture)
             {
-                // TODO wrong entity
                 ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(entity, out bool hasConsumer);
 
                 if (hasConsumer)
