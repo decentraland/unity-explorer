@@ -106,7 +106,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     FriendProfile friendProfile = GetFirstCollectionElement(collectionIndex);
                     friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
-                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile]);
+                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
@@ -130,7 +130,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     FriendProfile friendProfile = GetSecondCollectionElement(collectionIndex);
                     friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
-                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile]);
+                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 

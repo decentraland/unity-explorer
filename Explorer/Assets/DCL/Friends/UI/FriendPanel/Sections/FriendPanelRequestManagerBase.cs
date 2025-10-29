@@ -19,7 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
-        protected readonly Dictionary<FriendProfile, Action> thumbnailContextMenuActions = new (20);
+        protected readonly Dictionary<string, Action> thumbnailContextMenuActions = new (20, StringComparer.InvariantCultureIgnoreCase);
 
         protected int totalToFetch { get; private set; }
         protected int totalFetched { get; private set; }

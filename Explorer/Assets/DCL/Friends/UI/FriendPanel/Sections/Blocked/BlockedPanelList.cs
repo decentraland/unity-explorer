@@ -58,6 +58,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         private void UnblockProfile(BlockedProfile profile)
         {
+            thumbnailContextMenuActions.Remove(profile.Address.ToString());
             if (blockedProfiles.Remove(profile))
                 RefreshLoopList();
             else
@@ -82,7 +83,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element, elementView.ContextMenuButton.transform.position, elementView));
-            thumbnailContextMenuActions[element] = () => ContextMenuClicked?.Invoke(element, elementView.transform.position,  elementView);
+            thumbnailContextMenuActions[element.Address.ToString()] = () => ContextMenuClicked?.Invoke(element, elementView.transform.position,  elementView);
 
             elementView.BlockedDate = element.Timestamp;
         }

@@ -38,7 +38,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
             CustomiseElement(view, index);
-            view.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile]);
+            view.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
 
             if (index >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
                 FetchNewDataAsync(loopListView).Forget();
