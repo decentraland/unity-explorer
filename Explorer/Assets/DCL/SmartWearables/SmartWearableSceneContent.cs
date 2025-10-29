@@ -1,11 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DCL.SmartWearables
 {
