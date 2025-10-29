@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.SDKComponents.MediaStream;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
@@ -11,15 +10,15 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.Unity.Textures.Utils;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.TEXTURES)]
-    public partial class LoadTextureSystem : LoadSystemBase<TextureData, GetTextureIntention>
+    public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 3;
         private const int AVATAR_TEXTURE_REQUEST_DELAY_MS = 5000;
@@ -27,23 +26,23 @@ namespace ECS.StreamableLoading.Textures
         private readonly IWebRequestController webRequestController;
         private readonly IAvatarTextureUrlProvider avatarTextureUrlProvider;
 
-        internal LoadTextureSystem(World world, IStreamableCache<TextureData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<TextureData> diskCache,
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache,
             // A replacement of IProfileRepository to avoid cyclic dependencies
             IAvatarTextureUrlProvider avatarTextureUrlProvider)
             : base(
                 world, cache,
-                new DiskCacheOptions<TextureData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
+                new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
             this.webRequestController = webRequestController;
             this.avatarTextureUrlProvider = avatarTextureUrlProvider;
         }
 
-        protected override async UniTask<StreamableLoadingResult<TextureData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(MediaFactory)} synchronously");
+            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
 
-            Texture2D? result;
+            IOwnedTexture2D? result;
 
             if (intention.IsAvatarTexture)
             {
@@ -64,17 +63,19 @@ namespace ECS.StreamableLoading.Textures
                     GetReportData()
                 );
 
-            return new StreamableLoadingResult<TextureData>(new TextureData(AnyTexture.FromTexture2D(result.EnsureNotNull())));
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
         }
 
-        private async UniTask<Texture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
+        private async UniTask<IOwnedTexture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
         {
             var newCommonArgs = new CommonArguments(url, RetryPolicy.WithRetries(AVATAR_TEXTURE_MAX_ATTEMPTS, AVATAR_TEXTURE_REQUEST_DELAY_MS));
 
             GetTextureWebRequest.CreateTextureOp textureOp = GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode);
             GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType);
 
-            var result = await webRequestController.GetTextureAsync(
+            IOwnedTexture2D? result = null;
+
+            result = await webRequestController.GetTextureAsync(
                 newCommonArgs,
                 textureArguments,
                 textureOp,
@@ -82,7 +83,7 @@ namespace ECS.StreamableLoading.Textures
                 GetReportData(),
                 suppressErrors: true,
                 ignoreIrrecoverableErrors: true
-            )!.SuppressAnyExceptionWithFallback(null);
+            ).SuppressAnyExceptionWithFallback(null);
 
             if (result != null) return result;
 

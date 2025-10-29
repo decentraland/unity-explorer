@@ -9,7 +9,6 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
@@ -21,12 +20,13 @@ using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
-using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -38,7 +38,9 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
-        private readonly MediaFactoryBuilder mediaFactory;
+        private readonly IDiskCache<Texture2DData> diskCache;
+        private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
+        private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
         {
@@ -52,16 +54,68 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            MediaFactoryBuilder mediaFactoryBuilder)
+            IDiskCache<Texture2DData> diskCache,
+            ExtendedObjectPool<Texture2D> videoTexturePool
+        ) : this(
+            decentralandUrlsSource,
+            instantiationFrameTimeBudgetProvider,
+            componentPoolsRegistry,
+            new FramesPool(NewFramePrefabs(assetsProvisioner, out var framePrefabs), componentPoolsRegistry),
+            framePrefabs,
+            webRequestController,
+            cacheCleaner,
+            diskCache,
+            videoTexturePool
+        ) { }
+
+        public NFTShapePlugin(
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IPerformanceBudget instantiationFrameTimeBudgetProvider,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IFramesPool framesPool,
+            IFramePrefabs framePrefabs,
+            IWebRequestController webRequestController,
+            CacheCleaner cacheCleaner,
+            IDiskCache<Texture2DData> diskCache,
+            ExtendedObjectPool<Texture2D> videoTexturePool
+        ) : this(
+            decentralandUrlsSource,
+            new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
+            instantiationFrameTimeBudgetProvider,
+            componentPoolsRegistry,
+            webRequestController,
+            cacheCleaner,
+            framePrefabs,
+            diskCache,
+            videoTexturePool
+        ) { }
+
+        public NFTShapePlugin(
+            IDecentralandUrlsSource decentralandUrlsSource,
+            INFTShapeRendererFactory nftShapeRendererFactory,
+            IPerformanceBudget instantiationFrameTimeBudgetProvider,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IWebRequestController webRequestController,
+            CacheCleaner cacheCleaner,
+            IFramePrefabs framePrefabs,
+            IDiskCache<Texture2DData> diskCache,
+            ExtendedObjectPool<Texture2D> videoTexturePool
+        )
         {
-            this.framePrefabs = new AssetProvisionerFramePrefabs(assetsProvisioner);
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.nftShapeRendererFactory = new PoolNFTShapeRendererFactory(componentPoolsRegistry,
-                new FramesPool(framePrefabs, componentPoolsRegistry));
+            this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
-            this.mediaFactory = mediaFactoryBuilder;
+            this.framePrefabs = framePrefabs;
+            this.diskCache = diskCache;
+            this.videoTexturePool = videoTexturePool;
+            cacheCleaner.Register(cache);
+        }
+
+        public void Dispose()
+        {
+            cache.Dispose();
         }
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
@@ -79,16 +133,20 @@ namespace DCL.PluginSystem.World
 
             bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
-            LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
-            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource), mediaFactory.CreateForScene(builder.World, sharedDependencies));
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, videoTexturePool, decentralandUrlsSource);
+            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
+
             ResetDirtyFlagSystem<PBNftShape>.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(CleanUpNftShapeSystem.InjectToWorld(ref builder));
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 
-        public void Dispose() { }
+        private static IFramePrefabs NewFramePrefabs(IAssetsProvisioner assetsProvisioner, out IFramePrefabs framePrefabs)
+        {
+            return framePrefabs = new AssetProvisionerFramePrefabs(assetsProvisioner);
+        }
     }
 }

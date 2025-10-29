@@ -2,10 +2,10 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.MediaStream;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -17,10 +17,12 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
+using ECS.Unity.Textures.Utils;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -36,16 +38,18 @@ namespace ECS.Unity.Materials.Systems
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
-        private readonly IMediaFactory mediaFactory;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
 
         public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
-            IMediaFactory mediaFactory) : base(world)
+            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
-            this.mediaFactory = mediaFactory;
+            this.entitiesMap = entitiesMap;
+            this.videoTexturesPool = videoTexturesPool;
         }
 
         protected override void Update(float t)
@@ -212,14 +216,15 @@ namespace ECS.Unity.Materials.Systems
             // If component is being reused forget the previous promise
             ReleaseMaterial.ReleaseIntention(entity, World, ref promise, true);
 
+            // TODO this code must be unified to be able to load video textures in a common way
             if (textureComponentValue.IsVideoTexture)
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-                if (!mediaFactory.TryAddConsumer(entity, textureComponentValue.VideoPlayerEntity, out TextureData? textureData))
-                    return false;
+                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var texture);
+                if (!foundConsumeEntity) return false;
 
-                var result = new StreamableLoadingResult<TextureData>(textureData);
+                var result = new StreamableLoadingResult<Texture2DData>(texture);
 
                 promise = Promise.CreateFinalized(intention, result);
             }

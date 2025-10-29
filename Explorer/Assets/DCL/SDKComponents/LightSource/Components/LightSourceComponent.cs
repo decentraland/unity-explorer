@@ -52,9 +52,9 @@ namespace DCL.SDKComponents.LightSource
         {
             public GetTextureIntention LoadingIntention;
 
-            public AssetPromise<TextureData, GetTextureIntention>? LoadingPromise;
+            public AssetPromise<Texture2DData, GetTextureIntention>? LoadingPromise;
 
-            public TextureData SourceTextureData;
+            public Texture2DData SourceTextureData;
 
             public Cubemap PointLightCubemap;
 

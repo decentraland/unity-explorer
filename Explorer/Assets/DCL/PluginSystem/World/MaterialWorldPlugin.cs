@@ -3,12 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.SDKComponents.MediaStream;
 using ECS.LifeCycle;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,7 +20,8 @@ namespace DCL.PluginSystem.World
     {
         private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly MemoryBudget memoryBudgetProvider;
-        private readonly MediaFactoryBuilder mediaFactory;
+
+        private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
 
         private IObjectPool<Material> basicMatPool = null!;
         private IObjectPool<Material> pbrMatPool = null!;
@@ -31,11 +30,11 @@ namespace DCL.PluginSystem.World
 
         private int loadingAttemptsCount;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, MediaFactoryBuilder mediaFactory)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IExtendedObjectPool<Texture2D> videoTexturePool)
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-            this.mediaFactory = mediaFactory;
+            this.videoTexturePool = videoTexturePool;
         }
 
         public void Dispose() { }
@@ -65,7 +64,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, mediaFactory.CreateForScene(builder.World, sharedDependencies));
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, sharedDependencies.EntitiesMap, videoTexturePool);
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear. Consider revising it when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
@@ -73,7 +72,7 @@ namespace DCL.PluginSystem.World
             CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudget, memoryBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
-            finalizeWorldSystems.Add(CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial));
+            finalizeWorldSystems.Add(CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial, videoTexturePool));
         }
 
         [Serializable]
