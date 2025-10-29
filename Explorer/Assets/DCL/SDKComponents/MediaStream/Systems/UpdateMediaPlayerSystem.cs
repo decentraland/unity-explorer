@@ -83,7 +83,8 @@ namespace DCL.SDKComponents.MediaStream
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
 
                 if (component.IsPlaying)
-                    component.MediaPlayer.EnsurePlaying();
+                    if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                        livekitPlayer?.EnsureAudioIsPlaying();
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -109,7 +110,10 @@ namespace DCL.SDKComponents.MediaStream
                 }
 
                 if (component.IsPlaying)
-                    component.MediaPlayer.EnsurePlaying();
+                    // Covers cases like leaving and re-entering the scene
+                    // or the stream not being available for some time, like OBS not started while the stream is active
+                    if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                        livekitPlayer?.EnsureVideoIsPlaying();
             }
 
             if (ConsumePromise(ref component, false))
@@ -135,10 +139,12 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
             if (!playerComponent.IsPlaying
-                || playerComponent.State == VideoState.VsError
-                || !playerComponent.MediaPlayer.MediaOpened
-               )
+                || playerComponent.State == VideoState.VsError)
                 return;
+
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                if (!livekitPlayer?.IsVideoOpened ?? false)
+                    return;
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX

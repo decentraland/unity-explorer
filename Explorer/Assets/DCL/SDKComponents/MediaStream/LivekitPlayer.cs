@@ -33,18 +33,17 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
-        public bool MediaOpened
-        {
-            get
-            {
-                if (currentStream == null) return false;
-                return currentStream.Value.video.Resource.Has || currentStream.Value.audio.Resource.Has;
-            }
-        }
+        public bool MediaOpened =>
+            // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
+            IsVideoOpened || isAudioOpened;
 
         public float Volume { get; private set; }
 
         public PlayerState State => playerState;
+
+        public bool IsVideoOpened => currentStream != null && currentStream.Value.video.Resource.Has;
+
+        private bool isAudioOpened => currentStream != null && currentStream.Value.audio.Resource.Has;
 
         public LivekitPlayer(IRoom streamingRoom)
         {
@@ -52,11 +51,22 @@ namespace DCL.SDKComponents.MediaStream
             audioSource = OBJECT_POOL.Get();
         }
 
-        public void EnsurePlaying()
+        public void EnsureVideoIsPlaying()
         {
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
-            if (MediaOpened) return;
+            if (IsVideoOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
+        }
+
+        public void EnsureAudioIsPlaying()
+        {
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (isAudioOpened) return;
 
             var address = playingAddress.Value;
 
