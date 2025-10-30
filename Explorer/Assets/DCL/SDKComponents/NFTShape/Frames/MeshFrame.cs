@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.NFTShape.Frames
                 renderer.SetPropertyBlock(backplateMaterialPropertyBlock, backplateIndex);
         }
 
-        public override void Place(Texture picture)
+        public override void Place(Texture2D picture)
         {
             viewNftMaterialPropertyBlock.SetTexture(albedoColorPropertyId, picture);
             renderer.SetPropertyBlock(viewNftMaterialPropertyBlock, placeIndex);

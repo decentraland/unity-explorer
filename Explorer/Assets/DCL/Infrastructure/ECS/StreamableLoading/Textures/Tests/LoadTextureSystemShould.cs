@@ -10,7 +10,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.Textures.Tests
 {
     [TestFixture]
-    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, TextureData, GetTextureIntention>
+    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
@@ -25,13 +25,15 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override GetTextureIntention CreateWrongTypeIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
-        protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE, IDiskCache<TextureData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
-
-        protected override void AssertSuccess(TextureData data)
+        protected override LoadTextureSystem CreateSystem()
         {
-            Texture2D asset = data.EnsureTexture2D();
+            return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE,
+                Substitute.For<IAvatarTextureUrlProvider>());
+        }
+
+        protected override void AssertSuccess(Texture2DData data)
+        {
+            Texture2D asset = data.Asset;
 
             Assert.AreEqual(TextureWrapMode.MirrorOnce, asset.wrapMode);
             Assert.AreEqual(FilterMode.Trilinear, asset.filterMode);

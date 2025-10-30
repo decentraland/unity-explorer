@@ -8,7 +8,7 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Systems
@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
+            if (promise.TryConsume(World, out StreamableLoadingResult<Texture2DData> result))
             {
                 wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
                 World.Destroy(entity);

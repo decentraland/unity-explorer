@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.NFTShape.Frames
 
         public abstract void Paint(Color color);
 
-        public abstract void Place(Texture picture);
+        public abstract void Place(Texture2D picture);
 
         public abstract void UpdateStatus(Status status);
 

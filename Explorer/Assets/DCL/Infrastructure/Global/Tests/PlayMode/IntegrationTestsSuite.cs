@@ -107,8 +107,6 @@ namespace Global.Tests.PlayMode
             if (!success)
                 throw new Exception("Cannot create the static container");
 
-            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
-
             await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(

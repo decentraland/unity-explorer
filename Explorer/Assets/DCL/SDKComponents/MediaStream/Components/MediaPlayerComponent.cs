@@ -10,11 +10,10 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
 
-        public readonly MultiMediaPlayer MediaPlayer;
-        public readonly bool IsFromContentServer;
+        public MultiMediaPlayer MediaPlayer;
 
         public MediaAddress MediaAddress;
-
+        public bool IsFromContentServer;
         public VideoState State { get; private set; }
         public VideoState LastPropagatedState;
         public float LastPropagatedVideoTime;
@@ -23,12 +22,6 @@ namespace DCL.SDKComponents.MediaStream
 
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
-
-        public MediaPlayerComponent(MultiMediaPlayer mediaPlayer, bool isFromContentServer) : this()
-        {
-            MediaPlayer = mediaPlayer;
-            IsFromContentServer = isFromContentServer;
-        }
 
         public readonly bool IsPlaying => MediaPlayer.IsPlaying;
         public readonly float CurrentTime => MediaPlayer.CurrentTime;
@@ -44,6 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Dispose()
         {
             MediaPlayer.Dispose(MediaAddress);
+            MediaPlayer = default(MultiMediaPlayer);
             Cts.SafeCancelAndDispose();
         }
     }
