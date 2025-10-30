@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript.V8.FastProxy;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
@@ -33,11 +34,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         }
 
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api,
+            ISceneData sceneData,
             ISDKMessageBusCommsControllerAPI commsApi,
             IInstancePoolsProvider instancePoolsProvider,
             ISceneExceptionsHandler exceptionsHandler,
             CancellationTokenSource disposeCts)
-            : base(api, instancePoolsProvider, exceptionsHandler, disposeCts)
+            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, disposeCts)
         {
             engineApi = api;
             this.commsApi = commsApi;
@@ -50,7 +52,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             if (engineApi.IsAnySubscription() == false)
             {
                 engineApi.ClearSDKObservableEvents();
-                commsApi.ClearMessages();
+
+                lock (commsApi.SceneCommsMessages) { commsApi.ClearMessages(); }
                 return null;
             }
 
@@ -76,12 +79,15 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             if (!engineApi.HasSubscription(SDKObservableEventIds.Comms))
                 return;
 
-            if (commsApi.SceneCommsMessages.Count == 0) return;
+            lock (commsApi.SceneCommsMessages)
+            {
+                if (commsApi.SceneCommsMessages.Count == 0) return;
 
-            foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
-                engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
+                foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
+                    engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
 
-            commsApi.ClearMessages();
+                commsApi.ClearMessages();
+            }
         }
 
         private void SubscribeToSDKObservableEvent(string eventId)

@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.EventsApi
 {
-    public class GoogleUserCalendar : IUserCalendar
+    public class GoogleUserCalendar
     {
         private const string GOOGLE_CALENDAR_DOMAIN = "https://www.google.com/calendar/event";
         private const string ACTION_PARAM = "action";

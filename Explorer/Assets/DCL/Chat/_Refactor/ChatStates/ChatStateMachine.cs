@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatStates
     public class ChatStateMachine : IDisposable
     {
         private readonly ChatInputBlockingService inputBlocker;
-        private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly ChatClickDetectionHandler chatClickDetectionHandler;
         private readonly IEventBus eventBus;
         private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
@@ -22,11 +22,11 @@ namespace DCL.Chat.ChatStates
             IEventBus eventBus,
             ChatUIMediator mediator,
             ChatInputBlockingService inputBlocker,
-            ChatClickDetectionService chatClickDetectionService,
+            ChatClickDetectionHandler chatClickDetectionHandler,
             ChatPanelPresenter chatPanelPresenter)
         {
             this.inputBlocker = inputBlocker;
-            this.chatClickDetectionService = chatClickDetectionService;
+            this.chatClickDetectionHandler = chatClickDetectionHandler;
             this.eventBus = eventBus;
 
             this.chatPanelPresenter = chatPanelPresenter;
@@ -45,8 +45,8 @@ namespace DCL.Chat.ChatStates
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(HandleToggleMembersEvent));
 
-            chatClickDetectionService.OnClickInside += HandleClickInside;
-            chatClickDetectionService.OnClickOutside += HandleClickOutside;
+            chatClickDetectionHandler.OnClickInside += HandleClickInside;
+            chatClickDetectionHandler.OnClickOutside += HandleClickOutside;
 
             this.chatPanelPresenter.PointerEntered += HandlePointerEntered;
             this.chatPanelPresenter.PointerExited += HandlePointerExited;
@@ -54,8 +54,8 @@ namespace DCL.Chat.ChatStates
 
         public void Dispose()
         {
-            chatClickDetectionService.OnClickInside -= HandleClickInside;
-            chatClickDetectionService.OnClickOutside -= HandleClickOutside;
+            chatClickDetectionHandler.OnClickInside -= HandleClickInside;
+            chatClickDetectionHandler.OnClickOutside -= HandleClickOutside;
 
             chatPanelPresenter.PointerEntered -= HandlePointerEntered;
             chatPanelPresenter.PointerExited -= HandlePointerExited;

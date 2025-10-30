@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 
 namespace MVC
 {
@@ -16,6 +17,8 @@ namespace MVC
         FullscreenPushInfo PushFullscreen(IController controller);
 
         void PopFullscreen(IController controller);
+
+        UniTaskCompletionSource? GetControllerClosure(IController controller);
 
         PersistentPushInfo PushPersistent(IController controller);
 

@@ -36,7 +36,7 @@ namespace Global.Dynamic
 {
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
-        private ReportsHandlingSettings reportHandlingSettings;
+        private IReportsHandlingSettings reportHandlingSettings;
         private bool enableAnalytics;
 
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
@@ -48,6 +48,7 @@ namespace Global.Dynamic
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
+        public IWeb3Authenticator? AutoLoginAuthenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -107,10 +108,10 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
-                container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings);
+                container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
+                (container.VerifiedEthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
 
                 if (container.enableAnalytics)
                 {
@@ -202,7 +203,7 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator)
+        private static (IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
@@ -211,10 +212,9 @@ namespace Global.Dynamic
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource,
                 DecentralandEnvironment dclEnvironment,
-                IAppArgs appArgs)
+                IAppArgs appArgs,
+                WebRequestsContainer webRequestsContainer)
         {
-
-
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
@@ -231,22 +231,48 @@ namespace Global.Dynamic
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
 
-            if (container.enableAnalytics)
-                coreWeb3Authenticator = new IdentityAnalyticsDecorator(coreWeb3Authenticator, container.Analytics!);
+            IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                webRequestsContainer.WebRequestController, web3AccountFactory);
 
-            return (dappWeb3Authenticator, coreWeb3Authenticator);
+            autoLoginAuthenticator = new ProxyWeb3Authenticator(autoLoginAuthenticator, identityCache);
+
+            if (container.enableAnalytics)
+            {
+                coreWeb3Authenticator = new AnalyticsDecoratorVerifiedAuthenticator(coreWeb3Authenticator, container.Analytics!);
+                autoLoginAuthenticator = new AnalyticsDecoratorAuthenticator(autoLoginAuthenticator, container.Analytics!);
+            }
+
+            return (dappWeb3Authenticator, coreWeb3Authenticator, autoLoginAuthenticator);
         }
 
-        private static ReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings)
+        private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)
         {
-            ReportsHandlingSettings reportHandlingSettings =
+            ReportsHandlingSettings baseSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
                 settings.ReportHandlingSettingsDevelopment;
 #else
                 settings.ReportHandlingSettingsProduction;
 #endif
 
-            return reportHandlingSettings;
+            IReportsHandlingSettings finalSettings = baseSettings;
+
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixFileName) && !string.IsNullOrEmpty(logMatrixFileName))
+            {
+                var jsonOverride = LogMatrixJsonLoader.LoadFromApplicationRoot(logMatrixFileName);
+
+                if (jsonOverride != null)
+                {
+                    ReportHub.LogProductionInfo($"Applying log matrix override from: {logMatrixFileName}");
+                    finalSettings = new ReportsHandlingSettingsWithOverride(baseSettings, jsonOverride);
+                }
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to load log matrix override, falling back to base settings");
+                }
+            }
+
+            return new RuntimeReportsHandlingSettings(finalSettings);
         }
     }
 

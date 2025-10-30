@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -26,6 +27,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private int speakersCount;
 
+        public event Action? OpenListenersSectionRequested;
+
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct = new();
 
@@ -43,6 +46,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
 
             view.EndStreamButtonCLicked += OnEndStreamButtonClicked;
+            view.RaiseHandTooltipButtonCLicked += OnRaiseHandTooltipButtonClicked;
             view.CommunityButton.onClick.AddListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
 
@@ -84,12 +88,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.EndStreamInCurrentCall();
         }
 
+        private void OnRaiseHandTooltipButtonClicked()
+        {
+            OpenListenersSectionRequested?.Invoke();
+        }
+
         public void SetEndStreamButtonStatus(bool isActive) =>
             view.EndStreamButton.gameObject.SetActive(isActive);
 
         public void Dispose()
         {
             view.EndStreamButtonCLicked -= OnEndStreamButtonClicked;
+            view.RaiseHandTooltipButtonCLicked -= OnRaiseHandTooltipButtonClicked;
 
             expandedPanelButtonsPresenter.Dispose();
             collapsedPanelButtonsPresenter.Dispose();
@@ -118,10 +128,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void SetCommunityData(GetCommunityResponse communityData)
         {
             view.SetCommunityName(communityData.data.name);
-            if (communityData.data.thumbnails != null)
-                thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw, defaultSprite: view.DefaultCommunitySprite);
-            else
-                view.CommunityThumbnail.SetImage(view.DefaultCommunitySprite);
+            thumbnailController.RequestImage(communityData.data.thumbnailUrl, useKtx: true, defaultSprite: view.DefaultCommunitySprite);
         }
 
         public void SetTalkingStatus(int speakingCount, string username)

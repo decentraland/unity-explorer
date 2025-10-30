@@ -10,6 +10,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Utilities;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -267,7 +268,7 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
-        private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
+        private async UniTaskVoid LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
             DefaultNotificationThumbnail defaultThumbnail, CancellationToken ct)
         {
             if (notificationData.Type == NotificationType.REFERRAL_INVITED_USERS_ACCEPTED)
@@ -315,7 +316,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile? profile = await profileRepository.GetProfileAsync(user, ct);
+                Profile? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
 
                 if (profile != null)
                     return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);

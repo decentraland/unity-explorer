@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.SDK.Tests
         private Entity playerEntity;
         private World sceneWorld;
         private PlayerCRDTEntity playerCRDTEntity;
-        private ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private CharacterDataPropagationUtility characterDataPropagationUtility;
 
         [SetUp]
         public void Setup()

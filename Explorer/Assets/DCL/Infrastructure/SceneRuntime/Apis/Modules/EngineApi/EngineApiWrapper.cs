@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8.FastProxy;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
@@ -15,6 +16,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         protected readonly ISceneExceptionsHandler exceptionsHandler;
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
+        private readonly string threadName;
 
         private static readonly V8FastHostObjectOperations<EngineApiWrapper> OPERATIONS = new();
         protected virtual IV8FastHostObjectOperations operations => OPERATIONS;
@@ -25,11 +27,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             OPERATIONS.Configure(static configuration => Configure(configuration));
         }
 
-        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
+        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
+            threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
         }
 
         protected override void DisposeInternal()
@@ -45,7 +48,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
             try
             {
-                Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
+                Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
                 instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 

@@ -25,16 +25,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
         public void Send(string data)
         {
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null, false);
+            EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null);
         }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            messages.Add(new CommsPayload
+            lock (SceneCommsMessages)
             {
-                sender = message.FromWalletId,
-                message = Encoding.UTF8.GetString(message.Data),
-            });
+                messages.Add(new CommsPayload
+                {
+                    sender = message.FromWalletId,
+                    message = Encoding.UTF8.GetString(message.Data),
+                });
+            }
         }
     }
 }

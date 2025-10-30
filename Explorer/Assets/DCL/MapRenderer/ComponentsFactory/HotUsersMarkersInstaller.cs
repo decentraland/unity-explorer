@@ -6,6 +6,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using DCL.Multiplayer.Connectivity;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
@@ -28,6 +29,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            IWeb3IdentityCache web3IdentityCache,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -44,7 +46,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose());
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, onlineUsersProvider);
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, onlineUsersProvider, web3IdentityCache);
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }

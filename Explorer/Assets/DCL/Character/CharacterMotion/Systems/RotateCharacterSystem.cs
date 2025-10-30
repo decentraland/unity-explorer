@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -23,7 +24,12 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
-        private RotateCharacterSystem(World world) : base(world) { }
+        private readonly IScenesCache scenesCache;
+
+        private RotateCharacterSystem(World world, IScenesCache scenesCache) : base(world)
+        {
+            this.scenesCache = scenesCache;
+        }
 
         protected override void Update(float t)
         {
@@ -51,7 +57,7 @@ namespace DCL.CharacterMotion.Systems
                 characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
             // If we are on a platform we save our local rotation
-            PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
+            PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward, scenesCache.CurrentScene);
         }
 
         [Query]

@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -53,6 +54,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             communityVoiceChatSearchPresenter = new CommunityVoiceChatSearchPresenter(view.CommunityVoiceChatSearchView);
             inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
+
+            inCallPresenter.OpenListenersSectionRequested += OpenListenersSection;
 
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
@@ -106,6 +109,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
             voiceChatOrchestrator.CommunityCallStatus.OnUpdate -= OnCommunityCallStatusUpdate;
 
+            inCallPresenter.OpenListenersSectionRequested -= OpenListenersSection;
+            inCallPresenter.Dispose();
+
             subscriptionsScope.Dispose();
             communityVoiceChatSearchPresenter.Dispose();
 
@@ -148,6 +154,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OpenListenersSection()
         {
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+            
             view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
             view.CommunityVoiceChatInCallView.gameObject.SetActive(false);
         }
@@ -273,7 +281,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnParticipantIsSpeaking(bool isSpeaking, VoiceChatParticipantState participantState)
         {
             if (isSpeaking)
-                currentlySpeakingUsers.Add(participantState.WalletId, participantState.Name.Value);
+                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name.Value);
             else
                 currentlySpeakingUsers.Remove(participantState.WalletId);
 

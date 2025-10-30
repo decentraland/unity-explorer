@@ -11,9 +11,25 @@ namespace DCL.Diagnostics
     {
         private readonly HashSet<ReportMessageFingerprint> fingerprints = new ();
 
-        public ReportHandler AppliedTo => ReportHandler.All;
+        public StaticDebouncer() : this(ReportHandler.All) { }
+
+        internal StaticDebouncer(ReportHandler appliedTo)
+        {
+            AppliedTo = appliedTo;
+        }
+
+        public ReportHandler AppliedTo { get; }
 
         public bool Debounce(ReportMessageFingerprint fingerprint) =>
             !fingerprints.Add(fingerprint);
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="StaticDebouncer" />. Applies only to Sentry reports.
+    /// </summary>
+    [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
+    public partial class SentryStaticDebouncer : StaticDebouncer
+    {
+        public SentryStaticDebouncer() : base(ReportHandler.Sentry) { }
     }
 }

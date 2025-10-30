@@ -394,6 +394,14 @@ MonoBehaviour:
       Severity: 0
     - Category: DEBUG
       Severity: 0
+    - Category: PROFILE
+      Severity: 0
+    - Category: OUTFITS
+      Severity: 0
+    - Category: OUTFITS
+      Severity: 4
+    - Category: OUTFITS
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

@@ -32,7 +32,7 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.COLLAPSED);
         private readonly ReactiveProperty<VoiceChatPanelState> currentVoiceChatPanelState = new (VoiceChatPanelState.NONE);
-        private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
+        private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentSceneActiveCommunityData = new (null);
 
         private IVoiceChatCallStatusServiceBase? activeCallStatusService;
         private IVoiceChatOrchestrator? voiceChatOrchestratorImplementation;
@@ -42,7 +42,7 @@ namespace DCL.VoiceChat
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
         public IReadonlyReactiveProperty<VoiceChatPanelState> CurrentVoiceChatPanelState => currentVoiceChatPanelState;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
-        public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData => currentActiveCommunityData;
+        public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneSceneActiveCommunityVoiceChatData => currentSceneActiveCommunityData;
         public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
         public string CurrentConnectionUrl => activeCallStatusService?.ConnectionUrl ?? string.Empty;
         public VoiceChatParticipantsStateService ParticipantsStateService { get; }
@@ -90,7 +90,7 @@ namespace DCL.VoiceChat
             currentVoiceChatType.ClearSubscriptionsList();
             currentCallStatus.ClearSubscriptionsList();
             currentVoiceChatPanelSize.ClearSubscriptionsList();
-            currentActiveCommunityData.ClearSubscriptionsList();
+            currentSceneActiveCommunityData.ClearSubscriptionsList();
             currentVoiceChatPanelState.ClearSubscriptionsList();
 
             ParticipantsStateService.Dispose();
@@ -117,10 +117,29 @@ namespace DCL.VoiceChat
 
         public void StartCall(string callId, VoiceChatType callType)
         {
+            joinCallCts = joinCallCts.SafeRestart();
+
             if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
             {
                 SetActiveCallService(callType);
                 activeCallStatusService?.StartCall(callId);
+            }
+            else if (callType == VoiceChatType.COMMUNITY)
+            {
+                HangUpAndStartCallAsync().Forget();
+            }
+            return;
+
+            async UniTaskVoid HangUpAndStartCallAsync()
+            {
+                HangUp();
+                await UniTask.Delay(1000, cancellationToken: joinCallCts.Token);
+
+                if (!joinCallCts.IsCancellationRequested)
+                {
+                    SetActiveCallService(callType);
+                    communityVoiceChatCallStatusService.StartCall(callId);
+                }
             }
         }
 
@@ -154,8 +173,9 @@ namespace DCL.VoiceChat
         {
             if (currentVoiceChatType.Value != VoiceChatType.COMMUNITY)
             {
-                SetActiveCallService(VoiceChatType.PRIVATE);
                 privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
+                if (update.Status is not (PrivateVoiceChatStatus.VoiceChatEnded or PrivateVoiceChatStatus.VoiceChatExpired or PrivateVoiceChatStatus.VoiceChatRejected))
+                    SetActiveCallService(VoiceChatType.PRIVATE);
             }
         }
 
@@ -184,12 +204,12 @@ namespace DCL.VoiceChat
         private void OnActiveVoiceChatDetectedInScene(ActiveCommunityVoiceChat activeCommunityData)
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {activeCommunityData.communityName} ({activeCommunityData.communityId})");
-            currentActiveCommunityData.Value = activeCommunityData;
+            currentSceneActiveCommunityData.Value = activeCommunityData;
         }
 
         private void OnActiveVoiceChatStoppedInScene()
         {
-            currentActiveCommunityData.Value = null;
+            currentSceneActiveCommunityData.Value = null;
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
@@ -253,14 +273,14 @@ namespace DCL.VoiceChat
             if (!VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
                 communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
             else if (force)
-                HangUpAndStartCallAsync().Forget();
+                HangUpAndJoinCallAsync().Forget();
 
             return;
 
-            async UniTaskVoid HangUpAndStartCallAsync()
+            async UniTaskVoid HangUpAndJoinCallAsync()
             {
                 HangUp();
-                await UniTask.Delay(100, cancellationToken: joinCallCts.Token);
+                await UniTask.Delay(1000, cancellationToken: joinCallCts.Token);
 
                 if (!joinCallCts.IsCancellationRequested)
                     communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
@@ -321,11 +341,11 @@ namespace DCL.VoiceChat
         public bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData) =>
             communityVoiceChatCallStatusService.TryGetActiveCommunityVoiceChat(communityId, out activeCommunityData);
 
+        public IReadonlyReactiveProperty<bool> CommunityConnectionUpdates(string communityId) =>
+            communityVoiceChatCallStatusService.CommunityConnectionUpdates(communityId);
+
         public bool IsEqualToCurrentStreamingCommunity(string communityId) =>
             CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
             string.Equals(communityVoiceChatCallStatusService.CallId.Value, communityId, StringComparison.InvariantCultureIgnoreCase);
-
-        public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId) =>
-            communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);
     }
 }

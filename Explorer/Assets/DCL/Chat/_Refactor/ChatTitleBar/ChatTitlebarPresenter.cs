@@ -177,8 +177,7 @@ namespace DCL.Chat
 
                 UpdateAutoTranslateIndicator();
 
-                if (cd.thumbnails?.raw != null)
-                    RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
+                RefreshTitlebarCommunityThumbnailAsync(cd.thumbnailUrl).Forget();
             }
         }
 
@@ -371,13 +370,15 @@ namespace DCL.Chat
 
             try
             {
+                view.defaultTitlebarView.StartLoading();
+
                 var loadingViewModel = ChatTitlebarViewModel.CreateLoading(channel.ChannelType switch
-                {
-                    ChatChannel.ChatChannelType.NEARBY => TitlebarViewMode.Nearby,
-                    ChatChannel.ChatChannelType.USER => TitlebarViewMode.DirectMessage,
-                    ChatChannel.ChatChannelType.COMMUNITY => TitlebarViewMode.Community,
-                    _ => TitlebarViewMode.Nearby
-                });
+                                                                           {
+                                                                               ChatChannel.ChatChannelType.NEARBY => TitlebarViewMode.Nearby,
+                                                                               ChatChannel.ChatChannelType.USER => TitlebarViewMode.DirectMessage,
+                                                                               ChatChannel.ChatChannelType.COMMUNITY => TitlebarViewMode.Community,
+                                                                               _ => TitlebarViewMode.Nearby
+                                                                           });
 
                 view.defaultTitlebarView.Setup(loadingViewModel);
 
@@ -404,6 +405,10 @@ namespace DCL.Chat
                 });
 
                 ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
+            }
+            finally
+            {
+                view.defaultTitlebarView.StopLoading();
             }
         }
 
