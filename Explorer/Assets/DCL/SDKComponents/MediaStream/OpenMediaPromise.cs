@@ -24,8 +24,6 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsResolved => status == Status.Resolved;
 
-        public bool IsConsumed => status == Status.Consumed;
-
         public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct)
         {
             status = Status.Pending;

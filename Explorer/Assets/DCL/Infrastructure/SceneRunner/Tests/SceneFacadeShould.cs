@@ -110,7 +110,8 @@ namespace SceneRunner.Tests
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
-                DecentralandEnvironment.Org);
+                DecentralandEnvironment.Org,
+                Substitute.For<DCL.Clipboard.ISystemClipboard>());
         }
 
         [OneTimeTearDown]

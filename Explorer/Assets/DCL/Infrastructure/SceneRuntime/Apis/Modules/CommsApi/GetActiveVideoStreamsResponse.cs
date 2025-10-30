@@ -1,5 +1,4 @@
 using DCL.Multiplayer.Connections.Rooms;
-using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
 using Newtonsoft.Json;
@@ -42,8 +41,10 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             WriteTo(writer, identity, address, publication);
         }
 
-        public static void WriteAsCurrentTo(JsonWriter writer, string identity, TrackPublication publication) =>
-            WriteTo(writer, identity, LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM, publication);
+        public static void WriteAsCurrentTo(JsonWriter writer, string identity, TrackPublication publication)
+        {
+            WriteTo(writer, identity, ParticipantExtensions.LIVEKIT_CURRENT_STREAM, publication);
+        }
 
         public enum VideoTrackSourceType
         {

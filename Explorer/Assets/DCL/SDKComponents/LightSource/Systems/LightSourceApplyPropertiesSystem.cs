@@ -18,7 +18,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.LightSource.Systems
 {
@@ -172,7 +172,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             var promise = lightSourceComponent.Cookie.LoadingPromise;
 
-            if (promise is null || promise.Value.IsConsumed || !promise.Value.TryConsume(World, out StreamableLoadingResult<TextureData> texture)) return;
+            if (promise is null || promise.Value.IsConsumed || !promise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture)) return;
 
             // Clear the promise but keep the intention so we can compare it later on when updating the light source properties
             // Especially important when no-cache is used for textures (scene dev mode)
@@ -197,9 +197,9 @@ namespace DCL.SDKComponents.LightSource.Systems
             }
         }
 
-        private Cubemap MakeCookieCubemap(TextureData source)
+        private Cubemap MakeCookieCubemap(Texture2DData source)
         {
-            Texture2D texture2d = source.EnsureTexture2D();
+            var texture2d = source.Asset;
 
             int faceSize = texture2d.width / 4;
             if (texture2d.height != faceSize * 3)

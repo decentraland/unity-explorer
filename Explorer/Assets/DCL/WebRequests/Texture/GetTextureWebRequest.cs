@@ -44,7 +44,7 @@ namespace DCL.WebRequests
             return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
         }
 
-        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
+        public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, IOwnedTexture2D>
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
@@ -55,16 +55,16 @@ namespace DCL.WebRequests
                 this.filterMode = filterMode;
             }
 
-            public UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            public UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 string? contentType = webRequest.UnityWebRequest.GetResponseHeader("Content-Type");
 
                 return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
             }
 
-            private UniTask<Texture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<IOwnedTexture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                Texture2D texture;
+                Texture2D? texture;
 
                 if (webRequest.UnityWebRequest.downloadHandler is DownloadHandlerTexture) { texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest); }
                 else
@@ -85,10 +85,10 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult(texture);
+                return UniTask.FromResult<IOwnedTexture2D?>(new IOwnedTexture2D.Const(texture));
             }
 
-            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<IOwnedTexture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 var ktxTexture = new KtxTexture();
 
@@ -113,7 +113,7 @@ namespace DCL.WebRequests
                 finalTex.filterMode = filterMode;
                 finalTex.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return finalTex;
+                return new IOwnedTexture2D.Const(finalTex);
             }
         }
     }

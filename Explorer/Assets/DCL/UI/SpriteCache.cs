@@ -121,7 +121,7 @@ namespace DCL.UI
 
             try
             {
-                var ownedTexture = await webRequestController.GetTextureAsync(
+                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(imageUrl)),
                     new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
@@ -130,7 +130,7 @@ namespace DCL.UI
                     suppressErrors: true
                 );
 
-                Texture2D texture = ownedTexture;
+                Texture2D texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
 
                 var result = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
