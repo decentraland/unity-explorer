@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Clipboard;
 using MVC;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -43,7 +44,8 @@ namespace Global
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            ISystemClipboard systemClipboard)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -73,7 +75,8 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata, dclEnvironment),
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata, dclEnvironment,
+                    systemClipboard),
             };
         }
     }
