@@ -34,8 +34,11 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private readonly GltfContainerTestResources resources = new ();
 
-        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
+        private CreateGltfAssetFromAssetBundleSystemWorld createGltfAssetFromAssetBundleSystem;
         private EntityEventBuffer<GltfContainerComponent> eventBuffer;
+
+        //Required since all tests invoke TearDown, but not all used resources; therefore it could trigger a negative ref count
+        private bool usedResources;
 
         [SetUp]
         public void SetUp()
@@ -53,7 +56,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystemWorld(world, budget, budget);
         }
 
         [TearDown]
@@ -61,7 +64,11 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             //temp try catch to circumvent false positive error due to the partial flow removal
             try {
-                resources.UnloadBundle();}
+                if (usedResources)
+                    resources.UnloadBundle();
+
+                usedResources = false;
+            }
             catch (Exception e)
             {
             }
@@ -70,7 +77,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         private async Task InstantiateAssetBundle(string hash, Entity promiseEntity)
         {
             StreamableLoadingResult<AssetBundleData> assetBundleData = await resources.LoadAssetBundle(hash);
-
+            usedResources = true;
             // Just pass it through another system for simplicity, otherwise there is too much logic to replicate
             world.Add(promiseEntity, assetBundleData);
             createGltfAssetFromAssetBundleSystem.Update(0);

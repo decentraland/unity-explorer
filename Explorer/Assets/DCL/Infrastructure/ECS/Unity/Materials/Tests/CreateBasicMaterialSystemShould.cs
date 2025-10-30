@@ -61,7 +61,7 @@ namespace ECS.Unity.Materials.Tests
 
             component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
-            component.AlbedoTexPromise = AssetPromise<TextureData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
+            component.AlbedoTexPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
 
             Entity e = world.Create(component);
 
@@ -73,10 +73,10 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Result, Is.Null);
         }
 
-        private void CreateAndFinalizeTexturePromise(ref AssetPromise<TextureData, GetTextureIntention>? promise)
+        private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2DData, GetTextureIntention>? promise)
         {
-            promise = AssetPromise<TextureData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
-            world.Add(promise.Value.Entity, new StreamableLoadingResult<TextureData>(new TextureData(Texture2D.grayTexture)));
+            promise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2DData>(new Texture2DData(Texture2D.grayTexture)));
         }
 
         internal static MaterialComponent CreateMaterialComponent() =>

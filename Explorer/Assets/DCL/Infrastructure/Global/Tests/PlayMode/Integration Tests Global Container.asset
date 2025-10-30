@@ -20,7 +20,6 @@ MonoBehaviour:
   - rid: 1841402216112979968
   - rid: 2174542042650378246
   - rid: 5734404089553354752
-  - rid: 9078877983710380130
   references:
     version: 2
     RefIds:
@@ -155,12 +154,3 @@ MonoBehaviour:
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
-    - rid: 9078877983710380130
-      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
-      data:
-        <MediaPlayerPrefab>k__BackingField:
-          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0

@@ -30,17 +30,30 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         internal AssetBundle assetBundle;
         private StreamableLoadingResult<AssetBundleData> assetBundleData;
+        private StreamableLoadingResult<AssetBundleData> shaderAssetBundleData;
 
         public async UniTask<StreamableLoadingResult<AssetBundleData>> LoadAssetBundle(string hash)
         {
+            using UnityWebRequest wrShader = UnityWebRequestAssetBundle.GetAssetBundle($"{TEST_FOLDER}lit_ignore");
+            await wrShader.SendWebRequest();
+            AssetBundle shaderAssetBundle = DownloadHandlerAssetBundle.GetContent(wrShader);
+
+
             using UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{TEST_FOLDER}{hash}");
             await wr.SendWebRequest();
             assetBundle = DownloadHandlerAssetBundle.GetContent(wr);
 
+            var mutex = new AssetBundleLoadingMutex();
+
             try
             {
-                assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "", new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
-                    ReportCategory.ASSET_BUNDLES, "", "", false, CancellationToken.None);
+                shaderAssetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(shaderAssetBundle, null, null, "", mutex, Array.Empty<AssetBundleData>(),
+                    ReportCategory.ASSET_BUNDLES, "", "", true, false, CancellationToken.None);
+
+                shaderAssetBundleData.Asset.AddReference();
+
+                assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "", mutex, new[] { shaderAssetBundleData.Asset },
+                    ReportCategory.ASSET_BUNDLES, "", "", false, false, CancellationToken.None);
                 return assetBundleData;
             }
             catch (Exception e) { return new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, e); }
@@ -49,6 +62,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         public void UnloadBundle()
         {
             assetBundleData.Asset?.Dispose();
+            shaderAssetBundleData.Asset?.Dispose();
         }
     }
 }
