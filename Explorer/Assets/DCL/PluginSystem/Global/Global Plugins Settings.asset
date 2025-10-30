@@ -257,6 +257,10 @@ MonoBehaviour:
         - tektonik
         - tik
         - confettipopper
+        <RandomEmbeddedEmotes>k__BackingField:
+        - dab
+        - wave
+        - fistpump
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
@@ -265,6 +269,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
         <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
