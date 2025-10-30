@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.GlobalPartitioning;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.DeferredLoading;
 using System;
 using System.Threading;
 using UnityEngine.Assertions;
@@ -14,8 +14,8 @@ using Utility;
 namespace DCL.Profiles
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(DeferredLoadingSystem))]
-    public class PrepareProfilesBatchSystem : BaseUnityLoopSystem
+    [UpdateBefore(typeof(GlobalDeferredLoadingSystem))]
+    public partial class PrepareProfilesBatchSystem : BaseUnityLoopSystem
     {
         private readonly TimeSpan batchHeartbeat;
         private readonly RealmProfileRepository profileRepository;

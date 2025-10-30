@@ -698,6 +698,7 @@ namespace Global.Dynamic
                     sceneThroughputBunch,
                     voiceChatRoom
                 ),
+                staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),

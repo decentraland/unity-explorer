@@ -31,17 +31,17 @@ namespace DCL.Profiles
             );
         }
 
-        public Plugin CreatePlugin() =>
+        public ProfilesPlugin CreatePlugin() =>
             new (repository, webRequestController);
 
-        public class Plugin : IDCLGlobalPlugin<Plugin.Settings>
+        public class ProfilesPlugin : IDCLGlobalPlugin<ProfilesPlugin.Settings>
         {
             private readonly RealmProfileRepository repository;
             private readonly IWebRequestController webRequestController;
 
             private TimeSpan heartbeat;
 
-            public Plugin(RealmProfileRepository repository, IWebRequestController webRequestController)
+            public ProfilesPlugin(RealmProfileRepository repository, IWebRequestController webRequestController)
             {
                 this.repository = repository;
                 this.webRequestController = webRequestController;

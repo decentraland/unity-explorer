@@ -28,7 +28,7 @@ namespace DCL.Profiles
     ///     </list>
     /// </summary>
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
-    public class LoadProfilesBatchSystem : LoadSystemBase<ProfilesBatchResult, GetProfilesBatchIntent>
+    public partial class LoadProfilesBatchSystem : LoadSystemBase<ProfilesBatchResult, GetProfilesBatchIntent>
     {
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
 
