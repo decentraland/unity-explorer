@@ -53,9 +53,9 @@ namespace ECS.Unity.Materials.Systems
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
 
-            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<TextureData> albedoResult)
-                && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<TextureData> emissiveResult)
-                && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<TextureData> bumpResult))
+            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2DData> albedoResult)
+                && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2DData> emissiveResult)
+                && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2DData> bumpResult))
             {
                 materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 

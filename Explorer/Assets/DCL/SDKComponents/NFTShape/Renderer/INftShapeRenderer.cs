@@ -10,7 +10,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
 
         void Apply(PBNftShape nftShape, bool sourceChanged);
 
-        public void Apply(Texture tex);
+        void Apply(Texture2D tex);
 
         void NotifyFailed();
 

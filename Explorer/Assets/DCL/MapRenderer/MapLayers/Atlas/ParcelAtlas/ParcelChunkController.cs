@@ -23,7 +23,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private Texture2D? currentOwnedTexture;
+        private IOwnedTexture2D? currentOwnedTexture;
         private readonly AtlasChunk atlasChunk;
 
         private string CHUNKS_API => decentralandUrlsSource.Url(DecentralandUrl.ApiChunks);
@@ -73,14 +73,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
             Texture2D texture;
 
-            UnityObjectUtils.SafeDestroy(currentOwnedTexture);
+            currentOwnedTexture?.Dispose();
             currentOwnedTexture = null;
 
             try
             {
                 currentOwnedTexture = await textureTask!;
                 await UniTask.SwitchToMainThread();
-                texture = currentOwnedTexture;
+                texture = currentOwnedTexture.Texture;
             }
             catch (Exception e)
             {
