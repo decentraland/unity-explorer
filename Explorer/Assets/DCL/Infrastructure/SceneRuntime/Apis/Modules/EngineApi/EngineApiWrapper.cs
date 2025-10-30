@@ -19,8 +19,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         private readonly InvokeHostObject crdtSendToRenderer;
         private readonly InvokeHostObject crdtGetState;
         private readonly InvokeHostObject sendBatch;
+        private readonly string threadName;
 
-        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
+        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
@@ -29,6 +30,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             crdtSendToRenderer = CrdtSendToRenderer;
             crdtGetState = CrdtGetState;
             sendBatch = SendBatch;
+            threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
         }
 
         protected override void DisposeInternal()
@@ -50,7 +52,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
             try
             {
-                Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
+                Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
                 instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 

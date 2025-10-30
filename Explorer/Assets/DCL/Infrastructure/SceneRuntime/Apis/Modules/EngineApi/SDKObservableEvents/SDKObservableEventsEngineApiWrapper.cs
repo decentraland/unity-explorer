@@ -18,11 +18,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly InvokeHostObject unsubscribeFromSDKObservableEvent;
 
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api,
+            ISceneData sceneData,
             ISDKMessageBusCommsControllerAPI commsApi,
             IInstancePoolsProvider instancePoolsProvider,
             ISceneExceptionsHandler exceptionsHandler,
             CancellationTokenSource disposeCts)
-            : base(api, instancePoolsProvider, exceptionsHandler, disposeCts)
+            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, disposeCts)
         {
             engineApi = api;
             this.commsApi = commsApi;
