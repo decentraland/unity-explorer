@@ -8,7 +8,11 @@ namespace DCL.Multiplayer.Connectivity
     [Preserve]
     public class OnlinePlayerInWorldJsonDtoConverter : JsonConverter<OnlineUserData?>
     {
-        private const string SCENE_ROOM_PREFIX = "world-prd-scene-room-";
+        // These prefixes were already fixed on backend side, but it might still popup for outdated catalysts.
+        private readonly string[] sceneRoomPrefixes = {
+            "world-prd-",
+            "scene-room-"
+        };
 
         public override void WriteJson(JsonWriter writer, OnlineUserData? value, JsonSerializer serializer)
         {
@@ -30,11 +34,19 @@ namespace DCL.Multiplayer.Connectivity
 
             existingValue = new OnlineUserData
             {
-                worldName = dataObject.world.Replace(SCENE_ROOM_PREFIX, string.Empty),
+                worldName = RemovePrefixes(dataObject.world),
                 avatarId = dataObject.wallet
             };
 
             return existingValue;
+
+            string RemovePrefixes(string s)
+            {
+                foreach (string prefix in sceneRoomPrefixes)
+                    s = s.Replace(prefix, string.Empty);
+                
+                return s;
+            }
         }
 
         private class DataObject
