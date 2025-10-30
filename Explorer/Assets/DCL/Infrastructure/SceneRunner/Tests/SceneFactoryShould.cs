@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.SkyBox;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -28,7 +29,6 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System.Threading;
 using System.Threading.Tasks;
-using DCL.SkyBox;
 using UnityEngine;
 
 namespace SceneRunner.Tests

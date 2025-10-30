@@ -22,6 +22,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.SkyBox;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -55,7 +56,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using DCL.SkyBox;
 using UnityEngine;
 using Utility.Multithreading;
 

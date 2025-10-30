@@ -17,6 +17,7 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SkyBox;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS;
@@ -36,7 +37,6 @@ using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using System;
 using System.Collections.Generic;
-using DCL.SkyBox;
 using Utility.Multithreading;
 
 namespace SceneRunner

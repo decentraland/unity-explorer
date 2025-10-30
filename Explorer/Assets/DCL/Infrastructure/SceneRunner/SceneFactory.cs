@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.SkyBox;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -30,7 +31,6 @@ using SceneRuntime.Factory;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DCL.SkyBox;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -66,7 +66,8 @@ namespace SceneRunner
 
         private IGlobalWorldActions globalWorldActions = null!;
 
-        public SceneFactory(IECSWorldFactory ecsWorldFactory,
+        public SceneFactory(
+            IECSWorldFactory ecsWorldFactory,
             SceneRuntimeFactory sceneRuntimeFactory,
             ISharedPoolsProvider sharedPoolsProvider,
             ICRDTSerializer crdtSerializer,
