@@ -22,6 +22,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWebRequestController webRequestController;
         private readonly IDiskCache<TextureData> diskCache;
+        private readonly IProfileRepository profileRepository;
         private readonly IStreamableCache<TextureData, GetTextureIntention> texturesCache;
 
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<TextureData> diskCache, ILaunchMode launchMode,
@@ -29,6 +30,7 @@ namespace DCL.PluginSystem.World
         {
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
+            this.profileRepository = profileRepository;
 
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 texturesCache = new NoCache<TextureData, GetTextureIntention>(true, true);
@@ -39,15 +41,11 @@ namespace DCL.PluginSystem.World
             }
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
-        {
-            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, avatarTextureProvider);
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
+            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileRepository);
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, avatarTextureProvider);
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileRepository);
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;

@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly Dictionary<string, string> userNames = new (StringComparer.OrdinalIgnoreCase);
 
         private string[] communityPlaceIds;
@@ -78,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            LambdasProfilesProvider lambdasProfilesProvider) : base (view, PAGE_SIZE)
+            IProfileRepository profileRepository) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -88,7 +88,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -320,19 +320,14 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             if (userIds.Value.Count > 0)
             {
-                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
-                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
 
-                if (!getAvatarsDetailsResult.Success)
+                if (getAvatarsDetailsResult.Count == 0)
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 else
-                    foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                    foreach (Profile? profile in getAvatarsDetailsResult)
                     {
-                        if (avatarDetails.avatars.Count == 0)
-                            continue;
-
-                        ProfileJsonDto avatar = avatarDetails.avatars[0];
-                        userNames.Add(avatar.userId, avatar.name);
+                        userNames.Add(profile.UserId, profile.Name);
                         break;
                     }
             }

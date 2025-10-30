@@ -84,6 +84,7 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
         public MediaPlayerContainer MediaContainer { get; private set; }
+        public ProfilesContainer ProfilesContainer { get; private set; }
         public QualityContainer QualityContainer { get; private set; }
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
         public WebRequestsContainer WebRequestsContainer { get; private set; }
@@ -150,7 +151,6 @@ namespace Global
             IAnalyticsController analyticsController,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
-            ObjectProxy<IProfileRepository> profileRepository,
             DecentralandEnvironment environment,
             CancellationToken ct,
             bool hasDebugFlag,
@@ -195,12 +195,12 @@ namespace Global
 
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
+            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
                 return (null, false);
-
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.ComponentsContainer = componentsContainer;
@@ -217,7 +217,7 @@ namespace Global
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)));
-            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {

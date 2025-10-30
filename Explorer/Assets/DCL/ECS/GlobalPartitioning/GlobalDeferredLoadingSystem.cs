@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles;
 using ECS.Groups;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
