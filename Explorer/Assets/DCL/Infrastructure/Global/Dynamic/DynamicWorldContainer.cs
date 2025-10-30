@@ -841,7 +841,7 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus
                 ),
-                new GiftingPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper, profileRepository),
+                new GiftingPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper, profileRepository, staticContainer.InputBlock),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld),

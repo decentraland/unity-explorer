@@ -1,4 +1,5 @@
-﻿using DCL.UI.ProfileElements;
+﻿using DCL.UI;
+using DCL.UI.ProfileElements;
 using TMPro;
 using UnityEngine;
 
@@ -14,5 +15,8 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: SerializeField]
         public UserWalletAddressElement UserProfileWallet { get; private set; }
+
+        [field: SerializeField]
+        public SearchBarView SearchBar { get; private set; }
     }
 }

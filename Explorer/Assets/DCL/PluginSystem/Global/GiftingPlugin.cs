@@ -5,6 +5,7 @@ using DCL.Backpack.Gifting.Views;
 using MVC;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
+using DCL.Input;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
@@ -18,18 +19,19 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
-
+        private readonly IInputBlock inputBlock;
         private GiftingController? giftingController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository, IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -45,7 +47,8 @@ namespace DCL.PluginSystem.Global
             giftingController = new GiftingController(
                 GiftingController.CreateLazily(giftingViewPrefab, null),
                 profileRepositoryWrapper,
-                profileRepository
+                profileRepository,
+                inputBlock
             );
 
             mvcManager.RegisterController(giftingController);
