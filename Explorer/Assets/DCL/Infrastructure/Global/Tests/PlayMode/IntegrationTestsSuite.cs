@@ -18,6 +18,7 @@ using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.Clipboard;
 using ECS;
 using MVC;
 using MVC.PopupsController.PopupCloser;
@@ -127,7 +128,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
                 DecentralandEnvironment.Org,
-                Substitute.For<DCL.Clipboard.ISystemClipboard>()
+                Substitute.For<ISystemClipboard>()
             );
 
             return (staticContainer, sceneSharedContainer);

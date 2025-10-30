@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Clipboard;
 using MVC;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -44,7 +45,7 @@ namespace Global
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
-            DCL.Clipboard.ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
