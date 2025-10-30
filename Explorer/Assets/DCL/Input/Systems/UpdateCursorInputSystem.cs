@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
+using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
@@ -81,6 +82,7 @@ namespace DCL.Input.Systems
             GetSDKInteractionStateQuery(World);
             CheckExternalCameraLockQuery(World);
             UpdateCursorQuery(World);
+            UpdateCursorLockStateFromIntentionQuery(World);
         }
 
         [Query]
@@ -154,6 +156,21 @@ namespace DCL.Input.Systems
 
             cursor.SetStyle(cursorStyle);
             crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SDKCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
+        }
+
+        [Query]
+        private void UpdateCursorLockStateFromIntention(in Entity entity,
+            ref CursorComponent cursorComponent,
+            ref PointerLockIntention intention)
+        {
+            cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
+
+            if (intention.Locked)
+                UpdateState(ref cursorComponent, CursorState.Locked);
+            else
+                UpdateState(ref cursorComponent, CursorState.Free);
+
+            World.Remove<PointerLockIntention>(entity);
         }
 
         // We check if the gameObject is interactable or not, at least once.

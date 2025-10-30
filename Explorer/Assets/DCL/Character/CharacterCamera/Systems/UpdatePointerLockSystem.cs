@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.CharacterCamera.Components;
 using DCL.ECSComponents;
+using DCL.Input.Component;
 using ECS.Abstract;
 using ECS.Groups;
 
@@ -33,11 +34,13 @@ namespace DCL.CharacterCamera.Systems
         {
             if (!sdkPointerLock.IsDirty) return;
 
-            ref CursorComponent cursorComponent = ref globalWorld.TryGetRef<CursorComponent>(cameraData.CameraEntityProxy.Object, out bool exists);
+            globalWorld.AddOrGet(cameraData.CameraEntityProxy.Object, new PointerLockIntention(sdkPointerLock.IsPointerLocked));
 
-            if (!exists) return;
-
-            cursorComponent.CursorState = sdkPointerLock.IsPointerLocked ? CursorState.Locked : CursorState.Free;
+            // ref CursorComponent cursorComponent = ref globalWorld.TryGetRef<CursorComponent>(cameraData.CameraEntityProxy.Object, out bool exists);
+            //
+            // if (!exists) return;
+            //
+            // cursorComponent.CursorState = sdkPointerLock.IsPointerLocked ? CursorState.Locked : CursorState.Free;
 
             sdkPointerLock.IsDirty = false;
         }
