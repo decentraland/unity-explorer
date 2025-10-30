@@ -80,9 +80,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync()
         {
             await using var _ = await ExecuteOnMainThreadScope.NewScopeWithReturnOnThreadPoolAsync();
-            await UniTask.SwitchToMainThread();
             uint timeInSeconds = skyboxSettings.TimeOfDayInSeconds;
-            await UniTask.SwitchToThreadPool();
 
             return new IRuntime.GetWorldTimeResponse
             {
