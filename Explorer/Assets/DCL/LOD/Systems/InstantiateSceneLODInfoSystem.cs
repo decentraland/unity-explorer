@@ -73,7 +73,7 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
                 return;
 
-            if (initialSceneStateDescriptor.IsValid() && sceneLODInfo.CurrentLODLevelPromise == 0)
+            if (sceneLODInfo.EvaluatingISS)
                 ResolveInitialSceneStateDescriptorLOD(initialSceneStateDescriptor, sceneDefinitionComponent, ref sceneLODInfo);
             else
                 ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
@@ -81,8 +81,16 @@ namespace DCL.LOD.Systems
 
         private void ResolveInitialSceneStateDescriptorLOD(in InitialSceneStateDescriptor initialSceneStateDescriptor, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            if (!initialSceneStateDescriptor.IsDownloadedAndReady())
+            if (!initialSceneStateDescriptor.IsReady())
                 return;
+
+            if (initialSceneStateDescriptor.AssetBundleFailed())
+            {
+                //AB failed, required revaluation to get the old LOD
+                sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
+                sceneLODInfo.EvaluatingISS = false;
+                return;
+            }
 
             var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
             initialSceneStateDescriptor.RepositionStaticAssets(instantiatedLOD);

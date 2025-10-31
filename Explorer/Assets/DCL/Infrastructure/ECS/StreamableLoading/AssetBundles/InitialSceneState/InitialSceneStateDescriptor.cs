@@ -19,6 +19,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
+        public bool HasProperABManifestVersion { get; private set; }
 
         private List<(string, GltfContainerAsset)> AssetsInstantiated;
         private World GlobalWorld;
@@ -27,11 +28,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private IGltfContainerAssetsCache assetsCache;
 
         private bool AllAssetsInstantiated;
-        private bool IsSupportedByScene;
 
-        public bool IsDownloadedAndReady()
+        public bool IsReady()
         {
-            if (!IsSupportedByScene)
+            if (!HasProperABManifestVersion)
                 return true;
 
             //The asset bundle failed to load for some reason...this is an escape route. The scene load will fail,
@@ -73,14 +73,14 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             InitialSceneStateDescriptor unsuportedStaticSceneAB = new InitialSceneStateDescriptor();
             unsuportedStaticSceneAB.AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {sceneID}"));
             unsuportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
-            unsuportedStaticSceneAB.IsSupportedByScene = false;
+            unsuportedStaticSceneAB.HasProperABManifestVersion = false;
             return unsuportedStaticSceneAB;
         }
 
         public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, EntityDefinitionBase entityDefinition)
         {
             InitialSceneStateDescriptor suportedStaticSceneAB = new InitialSceneStateDescriptor();
-            suportedStaticSceneAB.IsSupportedByScene = true;
+            suportedStaticSceneAB.HasProperABManifestVersion = true;
             suportedStaticSceneAB.SceneID = entityDefinition.id;
             suportedStaticSceneAB.AssetBundleManifestVersion = entityDefinition.assetBundleManifestVersion;
 
@@ -129,8 +129,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 assetsCache.PutInBridge(gltfContainerAsset.Item2);
         }
 
-        public bool IsValid() =>
-            IsSupportedByScene && AssetBundleData.Exception == null;
 
         private void CreateEmptyAssetBundleData()
         {
@@ -139,5 +137,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             AssetBundleData = new StreamableLoadingResult<AssetBundleData>();
         }
 
+        public bool AssetBundleFailed()
+        {
+            return AssetBundleData.Exception != null;
+        }
     }
 }

@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
                 //If all scenes were built with SAB scenes, we could remove it
-                if (initialSceneStateDescriptor.IsValid())
+                if (initialSceneStateDescriptor.HasProperABManifestVersion && !initialSceneStateDescriptor.AssetBundleFailed())
                 {
                     if (sceneLODInfo.IsInitialized())
                         sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);

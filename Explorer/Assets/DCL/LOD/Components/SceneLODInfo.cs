@@ -1,11 +1,8 @@
-﻿using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Arch.Core;
 using DCL.LOD.Systems;
-using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using System;
 using UnityEngine;
 using Utility;
 
@@ -21,7 +18,7 @@ namespace DCL.LOD.Components
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
-
+        public bool EvaluatingISS;
 
         public void Dispose(World world)
         {

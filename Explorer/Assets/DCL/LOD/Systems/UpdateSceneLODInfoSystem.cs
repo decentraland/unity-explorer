@@ -68,9 +68,10 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
-            if (level == 0 && initialSceneStateDescriptor.IsValid())
+            if (level == 0 && initialSceneStateDescriptor.HasProperABManifestVersion && !initialSceneStateDescriptor.AssetBundleFailed())
             {
                 sceneLODInfo.CurrentLODLevelPromise = level;
+                sceneLODInfo.EvaluatingISS = true;
                 return;
             }
 
