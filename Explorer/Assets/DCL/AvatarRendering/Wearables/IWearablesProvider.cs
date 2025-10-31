@@ -11,11 +11,11 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
-            List<IWearable>? results = null,
+            List<ITrimmedWearable>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false);
 

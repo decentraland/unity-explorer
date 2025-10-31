@@ -40,9 +40,6 @@ namespace DCL.Backpack
     public class BackpackController : ISection, IDisposable
     {
         private readonly BackpackView view;
-        private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
@@ -58,18 +55,9 @@ namespace DCL.Backpack
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
-        private readonly OutfitsRepository outfitsRepository;
         private readonly IRealmData realmData;
-        private readonly IWebRequestController webController;
-        private readonly IEquippedWearables equippedWearables;
-        private readonly IEquippedEmotes equippedEmotes;
-        private readonly IWearableStorage wearableStorage;
-        private readonly IWearablesProvider wearablesProvider;
-        private readonly INftNamesProvider nftNamesProvider;
-        private readonly IEventBus eventBus;
-        private readonly FeatureFlagsConfiguration featureFlags;
         private BackpackSections lastShownSection;
-        
+
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
@@ -81,7 +69,6 @@ namespace DCL.Backpack
             FeatureFlagsConfiguration featureFlags,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWeb3IdentityCache identityCache,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,
@@ -101,7 +88,6 @@ namespace DCL.Backpack
             IRealmData realmData,
             IWebRequestController webController,
             IEquippedWearables equippedWearables,
-            IEquippedEmotes equippedEmotes,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             INftNamesProvider nftNamesProvider,
@@ -109,10 +95,6 @@ namespace DCL.Backpack
             Sprite deleteIcon)
         {
             this.view = view;
-            this.featureFlags = featureFlags;
-            this.selfProfile = selfProfile;
-            this.webBrowser = webBrowser;
-            this.identityCache = identityCache;
             this.backpackCommandBus = backpackCommandBus;
             this.emoteInfoPanelController = emoteInfoPanelController;
             this.world = world;
@@ -121,14 +103,6 @@ namespace DCL.Backpack
             this.backpackGridController = backpackGridController;
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
-            this.outfitsRepository = outfitsRepository;
-            this.webController = webController;
-            this.equippedWearables = equippedWearables;
-            this.equippedEmotes = equippedEmotes;
-            this.wearableStorage = wearableStorage;
-            this.wearablesProvider = wearablesProvider;
-            this.nftNamesProvider = nftNamesProvider;
-            this.eventBus = eventBus;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -137,7 +111,7 @@ namespace DCL.Backpack
                 backpackCommandBus,
                 backpackEventBus,
                 inputBlock);
-            
+
             var screenshotService = new AvatarScreenshotService(selfProfile);
             var outfitsLogger = new OutfitsLogger(wearableStorage, realmData);
             var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
@@ -176,7 +150,7 @@ namespace DCL.Backpack
                 screenshotService,
                 backpackCharacterPreviewController,
                 outfitSlotFactory);
-            
+
             avatarController = new AvatarController(
                 avatarView,
                 featureFlags,
@@ -219,7 +193,7 @@ namespace DCL.Backpack
                 );
             }
 
-            
+
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
@@ -250,9 +224,7 @@ namespace DCL.Backpack
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
-            backpackEmoteGridController.Dispose();
             emoteInfoPanelController.Dispose();
-            
         }
 
         private void ToggleTipsContent()

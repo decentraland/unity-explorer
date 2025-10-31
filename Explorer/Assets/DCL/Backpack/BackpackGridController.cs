@@ -37,7 +37,7 @@ namespace DCL.Backpack
         private readonly BackpackSortController backpackSortController;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
-        private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
+        private readonly List<ITrimmedWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -50,7 +50,7 @@ namespace DCL.Backpack
         private string currentSearch = "";
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
         private IWearable? currentBodyShape;
-        private IReadOnlyList<IWearable>? currentPageWearables;
+        private IReadOnlyList<ITrimmedWearable>? currentPageWearables;
 
         private BackpackBreadCrumbController breadcrumbController;
 
@@ -150,7 +150,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void SetGridElements(IReadOnlyList<IWearable> gridWearables)
+        private void SetGridElements(IReadOnlyList<ITrimmedWearable> gridWearables)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = gridWearables.Count; j < CURRENT_PAGE_SIZE; j++)
@@ -253,7 +253,7 @@ namespace DCL.Backpack
 
             try
             {
-                (IReadOnlyList<IWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
+                (IReadOnlyList<ITrimmedWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
                     currentSort.OrderByOperation.ToSortingField(),
                     currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                     currentCategory, collectionType, currentSearch, results);

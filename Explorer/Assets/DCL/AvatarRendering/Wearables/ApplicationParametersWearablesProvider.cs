@@ -2,7 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -17,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables
     {
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
-        private readonly List<IWearable> resultWearablesBuffer = new ();
+        private readonly List<ITrimmedWearable> resultWearablesBuffer = new ();
         private readonly string builderDTOsUrl;
 
         public ApplicationParametersWearablesProvider(IAppArgs appArgs, IWearablesProvider source, string builderDTOsUrl)
@@ -27,13 +29,19 @@ namespace DCL.AvatarRendering.Wearables
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        private void ConvertAndAdd(List<ITrimmedWearable> destination, IReadOnlyCollection<IWearable> sourceCollection)
+        {
+            foreach (var wearable in sourceCollection)
+                destination.Add(wearable.Convert());
+        }
+
+        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             string? name = null,
-            List<IWearable>? results = null,
+            List<ITrimmedWearable>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
@@ -47,17 +55,17 @@ namespace DCL.AvatarRendering.Wearables
                     await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
                         RequestPointersAsync(pointers, BodyShape.FEMALE, ct));
 
-                results ??= new List<IWearable>();
+                results ??= new List<ITrimmedWearable>();
 
                 lock (resultWearablesBuffer)
                 {
                     resultWearablesBuffer.Clear();
 
                     if (maleWearables != null)
-                        resultWearablesBuffer.AddRange(maleWearables);
+                        ConvertAndAdd(resultWearablesBuffer, maleWearables);
 
                     if (femaleWearables != null)
-                        resultWearablesBuffer.AddRange(femaleWearables);
+                        ConvertAndAdd(resultWearablesBuffer, femaleWearables);
 
                     int pageIndex = pageNumber - 1;
                     results.AddRange(resultWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize));
@@ -69,8 +77,8 @@ namespace DCL.AvatarRendering.Wearables
             {
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries).ToArray();
 
-                results ??= new List<IWearable>();
-                var localBuffer = ListPool<IWearable>.Get();
+                results ??= new List<ITrimmedWearable>();
+                var localBuffer = ListPool<ITrimmedWearable>.Get();
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded wearables
@@ -87,12 +95,12 @@ namespace DCL.AvatarRendering.Wearables
                 const int OWNED_PAGE_SIZE = 200;
                 int ownedPage = 1;
                 int ownedTotal = int.MaxValue;
-                using var ownedPageBufferScope = ListPool<IWearable>.Get(out var ownedPageBuffer);
+                using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
 
                 while (localBuffer.Count < ownedTotal)
                 {
                     ownedPageBuffer.Clear();
-                    (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
+                    (IReadOnlyList<ITrimmedWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
                         OWNED_PAGE_SIZE,
                         ownedPage,
                         ct,
@@ -124,7 +132,7 @@ namespace DCL.AvatarRendering.Wearables
 
                 int count = unified.Count;
 
-                ListPool<IWearable>.Release(localBuffer);
+                ListPool<ITrimmedWearable>.Release(localBuffer);
 
                 return (results, count);
             }
@@ -136,5 +144,65 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape, CancellationToken ct)
             => await source.RequestPointersAsync(pointers, bodyShape, ct);
+    }
+
+    public static class WearableExtensions
+    {
+        public static ITrimmedWearable Convert(this IWearable wearable)
+        {
+            var result = new TrimmedWearable
+                {
+                    ThumbnailAssetResult = wearable.ThumbnailAssetResult,
+                    Model = wearable.Model.Convert()
+                };
+
+            return result;
+        }
+
+        public static StreamableLoadingResult<TrimmedWearableDTO> Convert(this StreamableLoadingResult<WearableDTO> wearableModel)
+        {
+            if (!wearableModel.Succeeded)
+                return new StreamableLoadingResult<TrimmedWearableDTO>(wearableModel.ReportData, wearableModel.Exception!);
+
+            var dto = wearableModel.Asset!;
+
+            return new StreamableLoadingResult<TrimmedWearableDTO>(dto.Convert());
+        }
+
+        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO)
+        {
+            var trimmedDTO = new TrimmedWearableDTO
+            {
+                id = wearableDTO.id,
+                thumbnail = wearableDTO.metadata.thumbnail, //???
+                metadata = new TrimmedWearableDTO.WearableMetadataDto
+                {
+                    id = wearableDTO.metadata.id,
+                    rarity = wearableDTO.metadata.rarity,
+                    data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
+                    {
+                        category = wearableDTO.metadata.data.category,
+                        representations = wearableDTO.metadata.data.representations.Convert()
+                    }
+                }
+            };
+
+            return trimmedDTO;
+        }
+
+        private static TrimmedAvatarAttachmentDTO.Representation[] Convert(this AvatarAttachmentDTO.Representation[] representations)
+        {
+            var result = new TrimmedAvatarAttachmentDTO.Representation[representations.Length];
+            for (int i = 0; i < representations.Length; i++)
+                result[i] = representations[i].Convert();
+
+            return result;
+        }
+
+        public static TrimmedAvatarAttachmentDTO.Representation Convert(this AvatarAttachmentDTO.Representation representation) =>
+            new()
+            {
+                bodyShapes = representation.bodyShapes
+            };
     }
 }
