@@ -22,7 +22,7 @@ namespace DCL.Communities.CommunityCreation
         private const string PLACES_DROPDOWN_TITLE = "Select LAND or World";
         private const string PUBLIC_MEMBERSHIP_OPTION = "<b>Public</b> <size=11>Anyone can become a member, view Community details, and join your Voice Streams</size>";
         private const string PRIVATE_MEMBERSHIP_OPTION = "<b>Private</b> <size=11>Membership by request/invite; only Community description visible to non-members</size>";
-        private const string ALL_VISIBILITY_OPTION = "<b>All</b> <size=11>Anyone can see this community</size>";
+        private const string ALL_VISIBILITY_OPTION = "<b>Publicly Listed</b> <size=11>Anyone can see this community</size>";
         private const string UNLISTED_VISIBILITY_OPTION = "<b>Unlisted</b> <size=11>Only members can see this community</size>";
 
         public Action? CancelButtonClicked;
