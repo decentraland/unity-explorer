@@ -4019,7 +4019,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: VISIBILITY
+  m_text: DISCOVERABILITY
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -7626,7 +7626,7 @@ PrefabInstance:
       objectReference: {fileID: 3343914997614938543}
     - target: {fileID: 3944232852724743156, guid: 88d41137eeb023244b6d3150a2a81174, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4529298168230838044, guid: 88d41137eeb023244b6d3150a2a81174, type: 3}
       propertyPath: m_SizeDelta.y
