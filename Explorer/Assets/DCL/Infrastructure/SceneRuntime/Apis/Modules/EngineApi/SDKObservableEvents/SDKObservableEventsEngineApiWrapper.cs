@@ -1,5 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using Microsoft.ClearScript.V8.SplitProxy;
+using Microsoft.ClearScript.V8.FastProxy;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -9,13 +9,29 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
-    public class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
+    public sealed class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
     {
         private readonly ISDKObservableEventsEngineApi engineApi;
         private readonly ISDKMessageBusCommsControllerAPI commsApi;
 
-        private readonly InvokeHostObject subscribeToSDKObservableEvent;
-        private readonly InvokeHostObject unsubscribeFromSDKObservableEvent;
+        private static readonly V8FastHostObjectOperations<SDKObservableEventsEngineApiWrapper> OPERATIONS = new ();
+        protected override IV8FastHostObjectOperations operations => OPERATIONS;
+
+        static SDKObservableEventsEngineApiWrapper()
+        {
+            OPERATIONS.Configure(static configuration =>
+            {
+                EngineApiWrapper.Configure(configuration);
+
+                configuration.AddMethodGetter(nameof(SubscribeToSDKObservableEvent),
+                    static (SDKObservableEventsEngineApiWrapper self, in V8FastArgs args, in V8FastResult _) =>
+                        self.SubscribeToSDKObservableEvent(args.GetString(0)));
+
+                configuration.AddMethodGetter(nameof(UnsubscribeFromSDKObservableEvent),
+                    static (SDKObservableEventsEngineApiWrapper self, in V8FastArgs args, in V8FastResult _) =>
+                        self.UnsubscribeFromSDKObservableEvent(args.GetString(0)));
+            });
+        }
 
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api,
             ISceneData sceneData,
@@ -27,9 +43,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         {
             engineApi = api;
             this.commsApi = commsApi;
-
-            subscribeToSDKObservableEvent = SubscribeToSDKObservableEvent;
-            unsubscribeFromSDKObservableEvent = UnsubscribeFromSDKObservableEvent;
         }
 
         // Used for SDK Observables + SDK Comms MessageBus
@@ -77,39 +90,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             }
         }
 
-        private void SubscribeToSDKObservableEvent(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
-        {
-            string eventId = args[0].GetString();
-            SubscribeToSDKObservableEvent(eventId);
-        }
-
         private void SubscribeToSDKObservableEvent(string eventId)
         {
             engineApi.TryAddSubscription(eventId);
         }
 
-        private void UnsubscribeFromSDKObservableEvent(ReadOnlySpan<V8Value.Decoded> args,
-            V8Value result)
-        {
-            string eventId = args[0].GetString();
-            UnsubscribeFromSDKObservableEvent(eventId);
-        }
-
         private void UnsubscribeFromSDKObservableEvent(string eventId)
         {
             engineApi.RemoveSubscriptionIfExists(eventId);
-        }
-
-        protected override void GetNamedProperty(StdString name, V8Value value, out bool isConst)
-        {
-            isConst = true;
-
-            if (name.Equals(nameof(SubscribeToSDKObservableEvent)))
-                value.SetHostObject(subscribeToSDKObservableEvent);
-            else if (name.Equals(nameof(UnsubscribeFromSDKObservableEvent)))
-                value.SetHostObject(unsubscribeFromSDKObservableEvent);
-            else
-                base.GetNamedProperty(name, value, out isConst);
         }
     }
 }
