@@ -161,14 +161,56 @@ namespace DCL.Input.Systems
         [Query]
         private void UpdateCursorLockStateFromIntention(in Entity entity,
             ref CursorComponent cursorComponent,
+            in ExposedCameraData exposedCameraData,
             ref PointerLockIntention intention)
         {
-            cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
-
             if (intention.Locked)
+            {
+                if (cursorComponent.CursorState == CursorState.Locked)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
+                Vector2 mousePos = mouseDevice.position.value;
+                IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
+
+                // Dont lock cursor when is over any UI
+                if (raycastResults.Count > 0 || cursorComponent.IsOverUI)
+                    return;
+
                 UpdateState(ref cursorComponent, CursorState.Locked);
+            }
             else
+            {
+                if (cursorComponent.CursorState == CursorState.Free)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
                 UpdateState(ref cursorComponent, CursorState.Free);
+            }
+
+            if (cursorComponent.CursorState != CursorState.Panning)
+                cursorComponent.PositionIsDirty = false;
+
+            CursorStyle cursorStyle = CursorStyle.Normal;
+
+            switch (cursorComponent.CursorState)
+            {
+                case CursorState.Free:
+                    if (isHoveringAnInteractable)
+                        cursorStyle = CursorStyle.Interaction;
+                    break;
+                case CursorState.Panning:
+                    cursorStyle = CursorStyle.CameraPan;
+                    break;
+            }
+
+            cursor.SetStyle(cursorStyle);
+            crosshairCanvas.SetCursorStyle(cursorStyle,
+                exposedCameraData.CameraMode is CameraMode.SDKCamera or CameraMode.InWorld);
 
             World.Remove<PointerLockIntention>(entity);
         }

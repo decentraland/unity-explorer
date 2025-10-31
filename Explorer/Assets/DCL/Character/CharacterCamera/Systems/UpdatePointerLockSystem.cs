@@ -36,12 +36,6 @@ namespace DCL.CharacterCamera.Systems
 
             globalWorld.AddOrGet(cameraData.CameraEntityProxy.Object, new PointerLockIntention(sdkPointerLock.IsPointerLocked));
 
-            // ref CursorComponent cursorComponent = ref globalWorld.TryGetRef<CursorComponent>(cameraData.CameraEntityProxy.Object, out bool exists);
-            //
-            // if (!exists) return;
-            //
-            // cursorComponent.CursorState = sdkPointerLock.IsPointerLocked ? CursorState.Locked : CursorState.Free;
-
             sdkPointerLock.IsDirty = false;
         }
     }
