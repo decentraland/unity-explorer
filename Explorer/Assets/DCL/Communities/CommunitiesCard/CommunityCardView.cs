@@ -43,6 +43,7 @@ namespace DCL.Communities.CommunitiesCard
             PHOTOS,
             MEMBERS,
             PLACES,
+            ANNOUNCEMENTS,
         }
 
         [Serializable]
@@ -101,6 +102,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button membersButton { get; set; } = null!;
         [field: SerializeField] private Button placesButton { get; set; } = null!;
         [field: SerializeField] private Button placesWithSignButton { get; set; } = null!;
+        [field: SerializeField] private Button announcementsButton { get; set; } = null!;
         [field: SerializeField] private Button placesShortcutButton { get; set; } = null!;
         [field: SerializeField] private Button membersTextButton { get; set; } = null!;
 
@@ -109,6 +111,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject membersSectionSelection { get; set; } = null!;
         [field: SerializeField] private GameObject placesSectionSelection { get; set; } = null!;
         [field: SerializeField] private GameObject placesWithSignSectionSelection { get; set; } = null!;
+        [field: SerializeField] private GameObject announcementsSelection { get; set; } = null!;
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
@@ -164,6 +167,7 @@ namespace DCL.Communities.CommunitiesCard
             membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            announcementsButton.onClick.AddListener(() => ToggleSection(Sections.ANNOUNCEMENTS));
             placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
@@ -258,7 +262,7 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ResetToggle(bool invokeEvent) =>
-            ToggleSection(Sections.MEMBERS, invokeEvent);
+            ToggleSection(Sections.ANNOUNCEMENTS, invokeEvent);
 
         public void SetLoadingState(bool isLoading)
         {
@@ -279,6 +283,7 @@ namespace DCL.Communities.CommunitiesCard
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
             placesSectionSelection.SetActive(section == Sections.PLACES);
             placesWithSignSectionSelection.SetActive(section == Sections.PLACES);
+            announcementsSelection.SetActive(section == Sections.ANNOUNCEMENTS);
 
             CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
