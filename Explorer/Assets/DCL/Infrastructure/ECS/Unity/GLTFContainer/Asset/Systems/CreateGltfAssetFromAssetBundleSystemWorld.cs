@@ -1,3 +1,4 @@
+using System.Linq;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -52,7 +53,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             GltfContainerAsset result;
 
             // Create a new container root. It will be cached and pooled
-            result = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>());
+            result = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash));
 
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }

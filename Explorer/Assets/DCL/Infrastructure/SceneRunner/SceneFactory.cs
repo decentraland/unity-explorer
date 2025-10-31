@@ -28,8 +28,12 @@ using SceneRuntime;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Factory;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
+using DCL.Clipboard;
+using DCL.Utility;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -60,7 +64,7 @@ namespace SceneRunner
         private readonly ISceneCommunicationPipe messagePipesHub;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly DecentralandEnvironment dclEnvironment;
-        private readonly DCL.Clipboard.ISystemClipboard systemClipboard;
+        private readonly ISystemClipboard systemClipboard;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -84,7 +88,7 @@ namespace SceneRunner
             ISceneCommunicationPipe messagePipesHub,
             IRemoteMetadata remoteMetadata,
             DecentralandEnvironment dclEnvironment,
-            DCL.Clipboard.ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -124,7 +128,7 @@ namespace SceneRunner
             );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
-                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ReadOnlyHashSet<string>(new HashSet<string>()));
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
@@ -145,7 +149,7 @@ namespace SceneRunner
             var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
-                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ReadOnlyHashSet<string>(new HashSet<string>()));
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }

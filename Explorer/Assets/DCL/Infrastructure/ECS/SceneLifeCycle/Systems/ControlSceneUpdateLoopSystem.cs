@@ -64,9 +64,6 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
-            if (!initialSceneState.IsReady())
-                return;
-
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
                 var scene = result.Asset!;

@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
+using DCL.Utility;
 using UnityEngine;
 using Utility;
 
@@ -26,6 +27,7 @@ namespace SceneRunner.Scene
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
+        public ReadOnlyHashSet<string> ISSContainedAssets { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
@@ -37,7 +39,8 @@ namespace SceneRunner.Scene
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
-            StaticSceneMessages staticSceneMessages)
+            StaticSceneMessages staticSceneMessages,
+            ReadOnlyHashSet<string> containedISS)
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
@@ -45,6 +48,7 @@ namespace SceneRunner.Scene
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;
+            ISSContainedAssets = containedISS;
         }
 
         public bool HasRequiredPermission(string permission)

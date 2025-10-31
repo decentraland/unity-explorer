@@ -48,7 +48,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
-            GltfContainerAsset asset = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash), "static");
+            var asset = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash));
 
             gltfContainerAssetsCache.Dereference(assetIntention.Hash, asset);
             staticSceneAssetBundle.AddInstantiatedAsset(assetIntention.Hash, asset);

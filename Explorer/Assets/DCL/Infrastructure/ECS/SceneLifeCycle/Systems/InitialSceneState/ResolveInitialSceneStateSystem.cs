@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
         protected override void Update(float t)
         {
             InitializeStaticSceneAssetBundleQuery(World);
-            ResolveStaticSceneAssetBundlePromiseQuery(World);
+            //ResolveStaticSceneAssetBundlePromiseQuery(World);
         }
 
         [Query]

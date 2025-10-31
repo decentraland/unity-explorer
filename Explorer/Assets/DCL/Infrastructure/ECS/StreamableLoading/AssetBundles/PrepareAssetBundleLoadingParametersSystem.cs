@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Utility;
 using ECS.Groups;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -35,6 +36,10 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
+
+            if (sceneData.ISSContainedAssets.Contains(assetBundleIntention.Hash))
+                assetBundleIntention.Hash = $"staticscene_{assetBundleIntention.ParentEntityID}{PlatformUtils.GetCurrentPlatform()}";
+            
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

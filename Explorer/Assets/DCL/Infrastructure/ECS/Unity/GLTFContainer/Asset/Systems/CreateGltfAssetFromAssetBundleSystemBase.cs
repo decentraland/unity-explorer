@@ -27,9 +27,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         protected bool HasBudget() =>
             instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
 
-        protected GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset, string name = "")
+        protected GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset)
         {
-            var container = new GameObject($"{name}_{asset.name}");
+            var container = new GameObject($"{asset.name}");
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);

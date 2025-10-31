@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles
             Assets = new Dictionary<string, AssetInfo>();
 
             for (var i = 0; i < loadedAssets.Length; i++)
-                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
+                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source, InitialSceneStateMetadata.HasValue);
 
             Dependencies = dependencies;
 
@@ -98,11 +98,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (string.IsNullOrEmpty(assetName))
             {
-                if (Assets.Count > 1)
-                    throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
-
                 if (Assets.Count == 0)
                     throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");
+
+                if (Assets.Count > 1)
+                    throw new ArgumentException($"Requested an asset by type when there is more than one in the AB {AssetBundleName}");
 
                 assetInfo = Assets.FirstValueOrDefaultNonAlloc();
             }
@@ -129,11 +129,11 @@ public struct AssetInfo
     public Object Asset { get; }
     public Type AssetType { get; }
 
-    public AssetInfo(Object asset, Type assetType, string version, string source)
+    public AssetInfo(Object asset, Type assetType, string version, string source, bool isISS)
     {
         Asset = asset;
         AssetType = assetType;
-        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
+        Asset.name = isISS ? $"AB:{Asset?.name}_{version}_{source}_ISS" : $"AB:{Asset?.name}_{version}_{source}_NoISS";
     }
 }
 
