@@ -82,7 +82,8 @@ namespace DCL.RealmNavigation
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool isWorld = false
         )
         {
             if (ct.IsCancellationRequested)
@@ -96,6 +97,9 @@ namespace DCL.RealmNavigation
 
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
+
+            if (isWorld && !await realmController.IsUserAuthorisedToAccessWorld(realm, ct))
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
 
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
