@@ -26,7 +26,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-
         private readonly float audioFadeSpeed;
 
         public UpdateMediaPlayerSystem(
@@ -51,7 +50,6 @@ namespace DCL.SDKComponents.MediaStream
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
             UpdateCustomStreamQuery(World, t);
-
             UpdateVideoTextureQuery(World);
         }
 
@@ -140,11 +138,19 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!playerComponent.IsPlaying
                 || playerComponent.State == VideoState.VsError)
+            {
+                RenderBlackTexture(ref assignedTexture);
                 return;
+            }
 
             if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+            {
                 if (!livekitPlayer?.IsVideoOpened ?? false)
+                {
+                    RenderBlackTexture(ref assignedTexture);
                     return;
+                }
+            }
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
@@ -159,6 +165,11 @@ namespace DCL.SDKComponents.MediaStream
                 Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
             else
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
+
+            return;
+
+            void RenderBlackTexture(ref VideoTextureConsumer assignedTexture) =>
+                Graphics.Blit(Texture2D.blackTexture, assignedTexture.Texture);
         }
 
         [Query]
