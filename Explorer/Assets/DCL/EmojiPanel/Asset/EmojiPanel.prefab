@@ -268,7 +268,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0007649229}
+  m_AnchoredPosition: {x: 0, y: 0.0001008493}
   m_SizeDelta: {x: -1.4689941, y: 18}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5364139152029377674
@@ -1033,7 +1033,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 8287295318826585892}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999953
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1384,7 +1384,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.332
+      value: 0.3217
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1521,7 +1521,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.824
+      value: 0.754567
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1658,7 +1658,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.518
+      value: 0.40746
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1928,7 +1928,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.706
+      value: 0.5998
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2395,7 +2395,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.425
+      value: 0.504
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2675,7 +2675,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0
+      value: 0.1334173
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
