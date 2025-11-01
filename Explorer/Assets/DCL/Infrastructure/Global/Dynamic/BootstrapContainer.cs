@@ -20,17 +20,16 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
+using Plugins.RustSegment.SegmentServerWrap;
 using Segment.Analytics;
 using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace Global.Dynamic
 {
@@ -229,7 +228,10 @@ namespace Global.Dynamic
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
+            // Use Thirdweb InApp Wallet for login/auth chain; keep DappWeb3Authenticator for verified Ethereum API
+            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(
+                new ThirdwebInAppWalletAuthenticator(web3AccountFactory, dclEnvironment, "vitaly.popuzin@decentraland.com"),
+                identityCache);
 
             IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),

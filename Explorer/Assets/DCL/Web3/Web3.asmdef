@@ -15,7 +15,8 @@
     "precompiledReferences": [
         "Newtonsoft.Json.dll",
         "Nethereum.Signer.dll",
-        "System.Text.Json.dll"
+      "System.Text.Json.dll",
+      "Thirdweb.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

@@ -17,6 +17,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -24,16 +25,11 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Prefs;
-using DCL.Utility;
-using Sentry;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
-
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
 
 namespace DCL.AuthenticationScreenFlow
@@ -461,7 +457,19 @@ namespace DCL.AuthenticationScreenFlow
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
             if (profile == null)
-                throw new ProfileNotFoundException();
+            {
+                if (storedIdentityProvider.Identity == null)
+                    throw new ProfileNotFoundException();
+
+                Debug.Log($"VVV AuthFlow: No profile found. Auto-creating default for {storedIdentityProvider.Identity.Address}");
+                var newProfile = Profile.NewRandomProfile(storedIdentityProvider.Identity.Address);
+                newProfile.HasConnectedWeb3 = true;
+
+                Profile? saved = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                profile = saved ?? newProfile;
+                Debug.Log($"VVV AuthFlow: Profile auto-created and published. Version={profile.Version}");
+            }
+            else { Debug.Log($"VVV AuthFlow: Profile found. UserId={profile.UserId}, Version={profile.Version}"); }
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
@@ -471,6 +479,7 @@ namespace DCL.AuthenticationScreenFlow
 
             profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            Debug.Log("VVV AuthFlow: Preview initialized with avatar from profile");
 
             return;
 
