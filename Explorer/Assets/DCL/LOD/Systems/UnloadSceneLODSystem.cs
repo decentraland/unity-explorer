@@ -8,10 +8,10 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using DCL.Diagnostics;
 using ECS.LifeCycle;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 
@@ -45,30 +45,27 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(DeleteEntityIntention))]
         [None(typeof(ISceneFacade))]
-        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            //Assets are being used, they need to be moved to cache
-            //initialSceneStateDescriptor.AnalyzeCacheState(false, sceneLODInfo.HasLOD(0));
-
             sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
         }
 
         [Query]
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState,
-            ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref PartitionComponent partitionComponent)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                //initialSceneStateDescriptor.AnalyzeCacheState(true, sceneLODInfo.HasLOD(0));
-
                 //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
                 //If all scenes were built with SAB scenes, we could remove it
                 if (sceneLODInfo.InitialSceneStateLOD.Resolved)
                 {
                     if (sceneLODInfo.IsInitialized())
                         sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+
+                    if (!partitionComponent.IsBehind)
+                        sceneLODInfo.InitialSceneStateLOD.MoveAssetsToBridge();
 
                     sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                     World.Remove<SceneLODInfo>(entity);
@@ -83,6 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
         }
 
+        //TODO (JUANI): ANALYZE
         [Query]
         private void AbortSucceededLODPromises(ref SceneLODInfo sceneLODInfo)
         {

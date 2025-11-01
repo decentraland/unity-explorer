@@ -21,12 +21,11 @@ using ECS.StreamableLoading.GLTF;
 using Global.Dynamic.LaunchModes;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;
-using System;
 using System.Threading;
 
 namespace DCL.PluginSystem.World
 {
-    public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
+    public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings
     {
         static GltfContainerPlugin()
         {
@@ -59,11 +58,6 @@ namespace DCL.PluginSystem.World
         public void Dispose()
         {
             assetsCache.Dispose();
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            //CreateGLTFAssetFromAssetBundleSystemGlobal.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget, assetsCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,

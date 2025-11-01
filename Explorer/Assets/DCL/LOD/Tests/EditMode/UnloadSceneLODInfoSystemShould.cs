@@ -7,7 +7,6 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -66,7 +65,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
             sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
-            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
             //One empty update to allow creation
             system.Update(0);
 
@@ -89,7 +88,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.id = CachedSceneID;
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
 
-            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
             //One empty update to allow creation
             system.Update(0);
 

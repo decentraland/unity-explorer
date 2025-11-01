@@ -6,7 +6,6 @@ using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;

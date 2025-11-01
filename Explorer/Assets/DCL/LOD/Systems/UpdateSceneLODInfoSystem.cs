@@ -13,7 +13,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -44,7 +43,7 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {

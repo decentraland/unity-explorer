@@ -1,6 +1,5 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
@@ -122,6 +121,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
     }
+
 }
 
 public struct AssetInfo
@@ -146,4 +146,12 @@ public static class DictionaryExtensions
 
         return default;
     }
+}
+
+public struct InitialSceneStateMetadata
+{
+    public List<string> assetHash;
+    public List<Vector3> positions;
+    public List<Quaternion> rotations;
+    public List<Vector3> scales;
 }

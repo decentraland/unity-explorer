@@ -12,7 +12,6 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 
@@ -52,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref InitialSceneStateDescriptor initialSceneStateDescriptor, ref PartitionComponent partitionComponent)
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {

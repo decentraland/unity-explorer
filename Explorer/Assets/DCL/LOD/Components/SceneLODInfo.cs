@@ -13,13 +13,14 @@ using Utility;
 
 namespace DCL.LOD.Components
 {
+    //TODO (JUANI) : Tighten the scope
     public class InitialSceneStateLOD : IDisposable
     {
         public bool Failed;
         public bool Processing;
         public bool Resolved;
         public GameObject Result;
-        public List<(string, GltfContainerAsset)> Assets;
+        public List<(string, GltfContainerAsset)> Assets = new List<(string, GltfContainerAsset)>();
         public IGltfContainerAssetsCache gltfCache;
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> AssetBundlePromise;
@@ -34,13 +35,10 @@ namespace DCL.LOD.Components
 
         public void Dereference()
         {
-            if (Assets != null)
-            {
-                foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
-                    gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
+            foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
+                gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
 
-                Assets.Clear();
-            }
+            Assets.Clear();
         }
 
         public void Dispose()
@@ -48,6 +46,14 @@ namespace DCL.LOD.Components
             AssetBundleData?.Dispose();
             AssetBundleData = null;
             UnityObjectUtils.SafeDestroy(Result);
+        }
+
+        public void MoveAssetsToBridge()
+        {
+            foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
+                gltfCache.PutInBridge(gltfContainerAsset.Item2);
+
+            Assets.Clear();
         }
     }
 
