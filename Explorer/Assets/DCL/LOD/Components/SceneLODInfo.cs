@@ -19,6 +19,7 @@ namespace DCL.LOD.Components
         public bool Failed;
         public bool Processing;
         public bool Resolved;
+        public bool AssetsInTheBridge;
         public GameObject Result;
         public List<(string, GltfContainerAsset)> Assets = new List<(string, GltfContainerAsset)>();
         public IGltfContainerAssetsCache gltfCache;
@@ -39,6 +40,9 @@ namespace DCL.LOD.Components
                 gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
 
             Assets.Clear();
+            Resolved = false;
+            AssetsInTheBridge = false;
+
         }
 
         public void Dispose()
@@ -53,7 +57,7 @@ namespace DCL.LOD.Components
             foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
                 gltfCache.PutInBridge(gltfContainerAsset.Item2);
 
-            Assets.Clear();
+            //Assets.Clear();
         }
     }
 
