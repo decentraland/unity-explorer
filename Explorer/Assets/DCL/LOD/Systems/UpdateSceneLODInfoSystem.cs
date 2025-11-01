@@ -5,7 +5,6 @@ using AssetManagement;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -25,6 +24,8 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateBefore(typeof(ResolveISSLODSystem))]
+    [UpdateBefore(typeof(InstantiateSceneLODInfoSystem))]
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
@@ -60,18 +61,27 @@ namespace DCL.LOD.Systems
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
-                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition, initialSceneStateDescriptor);
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
         }
 
-        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level, InitialSceneStateDescriptor initialSceneStateDescriptor)
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
-            if (level == 0 && initialSceneStateDescriptor.HasProperABManifestVersion && !initialSceneStateDescriptor.AssetBundleFailed())
+            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState() && !sceneLODInfo.InitialSceneStateLOD.Failed)
             {
+                string initialSceneStateKey = $"staticscene_{sceneDefinitionComponent.Definition.id}{PlatformUtils.GetCurrentPlatform()}";
+                var initialSceneState = GetAssetBundleIntention.FromHash(
+                    initialSceneStateKey,
+                    typeof(GameObject),
+                    permittedSources: AssetSource.WEB,
+                    assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate"),
+                    lookForDependencies: true
+                );
+                sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
+                sceneLODInfo.InitialSceneStateLOD.Processing = true;
                 sceneLODInfo.CurrentLODLevelPromise = level;
-                sceneLODInfo.EvaluatingISS = true;
                 return;
             }
 

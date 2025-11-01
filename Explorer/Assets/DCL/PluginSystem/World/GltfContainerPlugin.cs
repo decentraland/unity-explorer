@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            CreateGLTFAssetFromAssetBundleSystemGlobal.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget, assetsCache);
+            //CreateGLTFAssetFromAssetBundleSystemGlobal.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget, assetsCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,

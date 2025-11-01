@@ -1,20 +1,30 @@
-using Arch.Core;
-using DCL.Profiling;
+
+//TODO (JUANI) : Remove
+#nullable enable
+
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using ECS.StreamableLoading.Common;
+using DCL.LOD.Components;
+using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.LOD
 {
+    //TODO (Juani) : Interface?
     public class LODAsset : IDisposable
     {
         public GameObject Root;
         public  TextureArraySlot?[] Slots;
         internal AssetBundleData AssetBundleReference;
+
+        internal InitialSceneStateLOD? InitialSceneStateLOD;
+
+        public LODAsset(InitialSceneStateLOD initialSceneStateLOD)
+        {
+            this.InitialSceneStateLOD = initialSceneStateLOD;
+        }
 
         public LODAsset(GameObject root, AssetBundleData assetBundleData, TextureArraySlot?[] slots)
         {
@@ -25,13 +35,20 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            UnityObjectUtils.SafeDestroy(Root);
-            
-            AssetBundleReference.Dereference();
-            AssetBundleReference = null;
+            if (InitialSceneStateLOD != null)
+            {
+                InitialSceneStateLOD.Dispose();
+            }
+            else
+            {
+                UnityObjectUtils.SafeDestroy(Root);
 
-            for (int i = 0; i < Slots.Length; i++)
-                Slots[i]?.FreeSlot();
+                AssetBundleReference.Dereference();
+                AssetBundleReference = null;
+
+                for (int i = 0; i < Slots.Length; i++)
+                    Slots[i]?.FreeSlot();
+            }
         }
 
     }

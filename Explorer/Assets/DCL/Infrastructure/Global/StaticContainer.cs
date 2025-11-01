@@ -119,6 +119,8 @@ namespace Global
         public ILaunchMode LaunchMode { get; private set; }
         public LandscapeParcelController LandscapeParcelController { get; private set; }
 
+        public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
+
         public void Dispose()
         {
             QualityContainer.Dispose();
@@ -213,12 +215,13 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
+            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
-            IGltfContainerAssetsCache gltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
-            var gltfPlugin = new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, gltfContainerAssetsCache);
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), gltfContainerAssetsCache);
+            var gltfPlugin = new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.GltfContainerAssetsCache);
 
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);

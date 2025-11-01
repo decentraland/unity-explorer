@@ -1,13 +1,56 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
 using Arch.Core;
 using DCL.LOD.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using System;
 using UnityEngine;
 using Utility;
 
 namespace DCL.LOD.Components
 {
+    public class InitialSceneStateLOD : IDisposable
+    {
+        public bool Failed;
+        public bool Processing;
+        public bool Resolved;
+        public GameObject Result;
+        public List<(string, GltfContainerAsset)> Assets;
+        public IGltfContainerAssetsCache gltfCache;
+
+        public AssetPromise<AssetBundleData, GetAssetBundleIntention> AssetBundlePromise;
+        public AssetBundleData? AssetBundleData;
+
+
+        //TODO (JUANI)
+        public void Forget()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dereference()
+        {
+            if (Assets != null)
+            {
+                foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
+                    gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
+
+                Assets.Clear();
+            }
+        }
+
+        public void Dispose()
+        {
+            AssetBundleData?.Dispose();
+            AssetBundleData = null;
+            UnityObjectUtils.SafeDestroy(Result);
+        }
+    }
+
     public struct SceneLODInfo
     {
         //This is a sync method, so we can use a shared list
@@ -18,10 +61,13 @@ namespace DCL.LOD.Components
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
-        public bool EvaluatingISS;
+
+        public InitialSceneStateLOD InitialSceneStateLOD;
+
 
         public void Dispose(World world)
         {
+            InitialSceneStateLOD.Dereference();
             CurrentLODPromise.ForgetLoading(world);
         }
 
@@ -29,7 +75,8 @@ namespace DCL.LOD.Components
         {
             return new SceneLODInfo
             {
-                CurrentLODLevelPromise = byte.MaxValue
+                CurrentLODLevelPromise = byte.MaxValue,
+                InitialSceneStateLOD =  new InitialSceneStateLOD(),
             };
         }
 

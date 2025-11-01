@@ -8,9 +8,10 @@ namespace DCL.LOD.Components
         public readonly LODGroup LodGroup;
         public LODAsset[] LODAssets { get; private set; }
 
+
         public float CullRelativeHeightPercentage;
         public float LODChangeRelativeDistance;
-        
+
         //We can represent 8 LODS loaded state with a byte
         public byte SuccessfullLODs;
         public byte FailedLODs;
@@ -24,7 +25,7 @@ namespace DCL.LOD.Components
             SuccessfullLODs = 0;
             FailedLODs = 0;
         }
-        
+
         public void Dispose()
         {
             foreach (var lodAsset in LODAssets)
@@ -37,6 +38,6 @@ namespace DCL.LOD.Components
         {
             return SceneLODInfoUtils.LODCount(SuccessfullLODs) + SceneLODInfoUtils.LODCount(FailedLODs);
         }
-        
+
     }
 }

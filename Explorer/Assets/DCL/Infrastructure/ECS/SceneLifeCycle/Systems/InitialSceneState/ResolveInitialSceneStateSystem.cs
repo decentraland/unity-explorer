@@ -48,6 +48,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
                 World.Add(entity, InitialSceneStateDescriptor.CreateUnsupported(sceneDefinitionComponent.Definition.id));
         }
 
+        /*
         [Query]
         public void ResolveStaticSceneAssetBundlePromise(ref InitialSceneStateDescriptor staticSceneAssetBundle)
         {
@@ -73,6 +74,7 @@ namespace ECS.SceneLifeCycle.Systems.InitialSceneState
                 }
             }
         }
+        */
 
     }
 }

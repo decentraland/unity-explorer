@@ -48,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
         {
             //Assets are being used, they need to be moved to cache
-            initialSceneStateDescriptor.AnalyzeCacheState(false, sceneLODInfo.HasLOD(0));
+            //initialSceneStateDescriptor.AnalyzeCacheState(false, sceneLODInfo.HasLOD(0));
 
             sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
@@ -61,11 +61,11 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                initialSceneStateDescriptor.AnalyzeCacheState(true, sceneLODInfo.HasLOD(0));
+                //initialSceneStateDescriptor.AnalyzeCacheState(true, sceneLODInfo.HasLOD(0));
 
                 //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
                 //If all scenes were built with SAB scenes, we could remove it
-                if (initialSceneStateDescriptor.HasProperABManifestVersion)
+                if (sceneLODInfo.InitialSceneStateLOD.Resolved)
                 {
                     if (sceneLODInfo.IsInitialized())
                         sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);

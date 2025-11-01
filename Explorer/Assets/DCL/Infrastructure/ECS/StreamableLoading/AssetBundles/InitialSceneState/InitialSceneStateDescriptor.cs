@@ -15,104 +15,17 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     public class InitialSceneStateDescriptor
     {
-        public StreamableLoadingResult<AssetBundleData> AssetBundleData;
-        public AssetBundlePromise AssetBundlePromise;
-        public bool HasProperABManifestVersion { get; private set; }
-
-        private List<(string, GltfContainerAsset)> AssetsInstantiated;
-        private World GlobalWorld;
-        private string SceneID;
-        private AssetBundleManifestVersion AssetBundleManifestVersion;
-        private IGltfContainerAssetsCache assetsCache;
-
-        public void Request()
-        {
-            if (!AssetBundleData.IsInitialized && AssetBundlePromise == AssetBundlePromise.NULL)
-            {
-                //TOO (JUANI): Here we will use the sceneID to create the promise
-                AssetBundlePromise = AssetBundlePromise.Create(GlobalWorld,
-                    GetAssetBundleIntention.FromHash($"staticscene_{SceneID}{PlatformUtils.GetCurrentPlatform()}",
-                        assetBundleManifestVersion: AssetBundleManifestVersion,
-                        parentEntityID: SceneID),
-                    PartitionComponent.TOP_PRIORITY);
-            }
-        }
-
-        public bool IsReady()
-        {
-            return AssetsInstantiated.Count == AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count;
-        }
-
-        public void AddInstantiatedAsset(string hash, GltfContainerAsset asset)
-        {
-            AssetsInstantiated.Add((hash, asset));
-        }
-
         public static InitialSceneStateDescriptor CreateUnsupported(string sceneID)
         {
             InitialSceneStateDescriptor unsuportedStaticSceneAB = new InitialSceneStateDescriptor();
-            unsuportedStaticSceneAB.AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {sceneID}"));
-            unsuportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
-            unsuportedStaticSceneAB.HasProperABManifestVersion = false;
             return unsuportedStaticSceneAB;
         }
 
         public static InitialSceneStateDescriptor CreateSupported(World world, IGltfContainerAssetsCache assetsCache, EntityDefinitionBase entityDefinition)
         {
             InitialSceneStateDescriptor suportedStaticSceneAB = new InitialSceneStateDescriptor();
-            suportedStaticSceneAB.HasProperABManifestVersion = true;
-            suportedStaticSceneAB.SceneID = entityDefinition.id;
-            suportedStaticSceneAB.AssetBundleManifestVersion = entityDefinition.assetBundleManifestVersion;
-
-            suportedStaticSceneAB.GlobalWorld = world;
-            suportedStaticSceneAB.assetsCache = assetsCache;
-            suportedStaticSceneAB.CreateEmptyAssetBundleData();
             return suportedStaticSceneAB;
         }
 
-        public void RepositionStaticAssets(GameObject instantiatedLOD)
-        {
-            for (var i = 0; i < AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count; i++)
-            {
-                string assetHash = AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash[i];
-                if (assetsCache.TryGet(assetHash, out var asset))
-                {
-                    asset.Root.SetActive(true);
-                    asset.Root.transform.SetParent(instantiatedLOD.transform);
-                    asset.Root.transform.position = AssetBundleData.Asset.InitialSceneStateMetadata.Value.positions[i];
-                    asset.Root.transform.rotation = AssetBundleData.Asset.InitialSceneStateMetadata.Value.rotations[i];
-                    asset.Root.transform.localScale = AssetBundleData.Asset.InitialSceneStateMetadata.Value.scales[i];
-                }
-            }
-        }
-
-        /// <summary>
-        /// Returns if the assets could be moves to the GLTFAssetCache
-        /// </summary>
-        /// <param name="bridgingBetweenScene"></param>
-        /// <returns></returns>
-        public void AnalyzeCacheState(bool bridgingBetweenScene, bool assetsAreInUse)
-        {
-            foreach (var valueTuple in AssetsInstantiated)
-            {
-                if (bridgingBetweenScene)
-                    assetsCache.PutInBridge(valueTuple.Item2);
-
-                if (assetsAreInUse)
-                    assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
-            }
-        }
-
-        private void CreateEmptyAssetBundleData()
-        {
-            AssetBundlePromise = AssetBundlePromise.NULL;
-            AssetsInstantiated = new List<(string, GltfContainerAsset)>();
-            AssetBundleData = new StreamableLoadingResult<AssetBundleData>();
-        }
-
-        public bool AssetBundleFailed()
-        {
-            return AssetBundleData.Exception != null;
-        }
     }
 }

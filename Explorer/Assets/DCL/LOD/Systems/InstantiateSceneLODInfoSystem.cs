@@ -23,7 +23,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.LOD.Systems
 {
-    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
+    [UpdateInGroup(typeof(RealmGroup))]
     [LogCategory(ReportCategory.LOD)]
     public partial class InstantiateSceneLODInfoSystem : BaseUnityLoopSystem
     {
@@ -73,36 +73,31 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
                 return;
 
-            if (sceneLODInfo.EvaluatingISS)
-                ResolveInitialSceneStateDescriptorLOD(initialSceneStateDescriptor, sceneDefinitionComponent, ref sceneLODInfo);
+            if (sceneLODInfo.CurrentLODLevelPromise == 0 && sceneLODInfo.InitialSceneStateLOD.Processing)
+                ResolveInitialSceneStateDescriptorLOD(sceneDefinitionComponent, ref sceneLODInfo);
             else
                 ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
         }
 
-        private void ResolveInitialSceneStateDescriptorLOD(in InitialSceneStateDescriptor initialSceneStateDescriptor, in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        private void ResolveInitialSceneStateDescriptorLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            if (!initialSceneStateDescriptor.IsReady())
+            if (!sceneLODInfo.InitialSceneStateLOD.Resolved)
                 return;
 
-            if (initialSceneStateDescriptor.AssetBundleFailed())
+            if (sceneLODInfo.InitialSceneStateLOD.Failed)
             {
                 //AB failed, required revaluation to get the old LOD
                 sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
-                sceneLODInfo.EvaluatingISS = false;
+                sceneLODInfo.InitialSceneStateLOD.Processing = false;
                 return;
             }
 
-            var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
-            initialSceneStateDescriptor.RepositionStaticAssets(instantiatedLOD);
-            instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
+            sceneLODInfo.InitialSceneStateLOD.Result.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
 
-
-            var newLod = new LODAsset(instantiatedLOD, initialSceneStateDescriptor.AssetBundleData.Asset,
-                GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
-
-            //Adding a manual reference since we didnt get this object through the regular AB flow
-            initialSceneStateDescriptor.AssetBundleData.Asset.AddReference();
-            sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+            //TODO (JUANI): Seems so redudant
+            var newLod = new LODAsset(sceneLODInfo.InitialSceneStateLOD);
+            sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.Result, newLod, defaultFOV, defaultLodBias,
+                realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
         }
 
         private void ResolveSceneLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
