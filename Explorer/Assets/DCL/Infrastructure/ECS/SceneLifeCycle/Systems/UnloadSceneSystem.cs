@@ -56,10 +56,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                //Assets need to go to bridge since they are visible by the camera. There will be a visual hiccup otherwise
-                if (!partitionComponent.IsBehind)
-                    initialSceneStateDescriptor.MarkAssetToMoveToBridge();
-
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);

@@ -25,28 +25,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private AssetBundleManifestVersion AssetBundleManifestVersion;
         private IGltfContainerAssetsCache assetsCache;
 
-        private bool AllAssetsInstantiated;
-
-        public bool IsReady()
+        public void Request()
         {
-            if (!HasProperABManifestVersion)
-                return true;
-
-            //The asset bundle failed to load for some reason...this is an escape route. The scene load will fail,
-            //abs seems to be corrupt
-            if (AssetBundleData.Exception != null)
-                return true;
-
-            //The asset bundle was destroyed at some point because of memory constrains. We got to nullify it and restart
-            if (AssetBundleData.IsInitialized && AssetBundleData.Asset!.AssetsDestroyed)
-            {
-                CreateEmptyAssetBundleData();
-                return false;
-            }
-
-            if (AssetBundleData.IsInitialized && AllAssetsInstantiated)
-                return true;
-
             if (!AssetBundleData.IsInitialized && AssetBundlePromise == AssetBundlePromise.NULL)
             {
                 //TOO (JUANI): Here we will use the sceneID to create the promise
@@ -56,14 +36,16 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                         parentEntityID: SceneID),
                     PartitionComponent.TOP_PRIORITY);
             }
+        }
 
-            return false;
+        public bool IsReady()
+        {
+            return AssetsInstantiated.Count == AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count;
         }
 
         public void AddInstantiatedAsset(string hash, GltfContainerAsset asset)
         {
             AssetsInstantiated.Add((hash, asset));
-            AllAssetsInstantiated = AssetsInstantiated.Count == AssetBundleData.Asset.InitialSceneStateMetadata.Value.assetHash.Count;
         }
 
         public static InitialSceneStateDescriptor CreateUnsupported(string sceneID)
@@ -120,13 +102,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                     assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
             }
         }
-
-        public void MarkAssetToMoveToBridge()
-        {
-            foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
-                assetsCache.PutInBridge(gltfContainerAsset.Item2);
-        }
-
 
         private void CreateEmptyAssetBundleData()
         {

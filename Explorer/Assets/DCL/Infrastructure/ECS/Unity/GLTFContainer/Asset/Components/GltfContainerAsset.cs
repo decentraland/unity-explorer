@@ -62,6 +62,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public IStreamableRefCountData AssetData { get; private set; }
 
+        //TODO (JUANI) : But if we instance more, they will be on the bridge forever
+        public bool IsISS;
+
         private GltfContainerAsset(GameObject root, IStreamableRefCountData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
             List<Animator> animators, IReadOnlyList<string>? hierarchyPaths = null)
@@ -76,6 +79,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             Animators = animators;
             HierarchyPaths = hierarchyPaths;
 
+            IsISS = root.gameObject.name.Contains("_ISS");
+                
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
 

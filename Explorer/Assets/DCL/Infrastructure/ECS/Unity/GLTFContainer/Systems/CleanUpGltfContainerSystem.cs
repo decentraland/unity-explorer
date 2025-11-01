@@ -58,6 +58,13 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
+                    //TODO (JUANI): And with this?
+                    //Assets need to go to bridge since they are visible by the camera. There will be a visual hiccup otherwise
+                    //if (!partitionComponent.IsBehind)
+
+                    if (result.Asset.IsISS)
+                        cache.PutInBridge(result.Asset);
+                    
                     cache.Dereference(component.Hash, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
 
