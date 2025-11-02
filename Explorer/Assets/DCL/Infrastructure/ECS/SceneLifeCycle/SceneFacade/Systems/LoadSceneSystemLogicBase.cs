@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
@@ -13,6 +14,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -70,7 +72,7 @@ namespace ECS.SceneLifeCycle.Systems
             return sceneFacade;
         }
 
-        private async UniTask<ReadOnlyHashSet<string>> LoadISS(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
+        private async UniTask<IInitialSceneState> LoadISS(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
         {
             if (sceneDefinitionComponent.SupportInitialSceneState())
             {
@@ -82,20 +84,18 @@ namespace ECS.SceneLifeCycle.Systems
 
                 promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-                var result = new HashSet<string>();
                 if (promise.Result.Value.Succeeded)
                 {
+                    var result = new HashSet<string>();
+
                     foreach (string s in promise.Result.Value.Asset.InitialSceneStateMetadata.Value.assetHash)
                         result.Add($"{s}{PlatformUtils.GetCurrentPlatform()}");
-                }
 
-                //Dereferencing, because no one is using it yet, we just acquired it. The GLTFContainerAsset will start using it down here
-                //They will be referened in
-                promise.Result.Value.Asset.Dereference();
-                return new ReadOnlyHashSet<string>(result);
+                    return InitialSceneStateInfo.CreateISS(promise.Result.Value.Asset, result);
+                }
             }
 
-            return new ReadOnlyHashSet<string>(new HashSet<string>());
+            return InitialSceneStateInfo.CreateEmpty();
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

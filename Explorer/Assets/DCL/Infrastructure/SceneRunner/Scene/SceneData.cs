@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using DCL.Utility;
 using UnityEngine;
 using Utility;
 
@@ -27,11 +27,11 @@ namespace SceneRunner.Scene
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
-        public ReadOnlyHashSet<string> ISSContainedAssets { get; }
+        public IInitialSceneState InitialSceneStateInfo { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
+
 
         public SceneData(
             ISceneContent sceneContent,
@@ -40,7 +40,7 @@ namespace SceneRunner.Scene
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
             StaticSceneMessages staticSceneMessages,
-            ReadOnlyHashSet<string> containedISS)
+            IInitialSceneState initialSceneStateInfo)
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
@@ -48,7 +48,7 @@ namespace SceneRunner.Scene
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;
-            ISSContainedAssets = containedISS;
+            InitialSceneStateInfo = initialSceneStateInfo;
         }
 
         public bool HasRequiredPermission(string permission)
@@ -136,5 +136,6 @@ namespace SceneRunner.Scene
 
         public bool IsSdk7() =>
             SceneEntityDefinition.metadata.runtimeVersion == "7";
+
     }
 }

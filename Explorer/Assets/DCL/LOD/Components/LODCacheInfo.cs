@@ -34,10 +34,7 @@ namespace DCL.LOD.Components
             LODAssets = null;
         }
 
-        public int LODLoadedCount()
-        {
-            return SceneLODInfoUtils.LODCount(SuccessfullLODs) + SceneLODInfoUtils.LODCount(FailedLODs);
-        }
-
+        public int LODLoadedCount() =>
+            SceneLODInfoUtils.LODCount(SuccessfullLODs) + SceneLODInfoUtils.LODCount(FailedLODs);
     }
 }

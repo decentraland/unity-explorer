@@ -40,6 +40,7 @@ namespace DCL.LOD.Components
                 gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
 
             Assets.Clear();
+            AssetBundleData?.Dereference();
             Resolved = false;
             AssetsInTheBridge = false;
 
@@ -47,7 +48,6 @@ namespace DCL.LOD.Components
 
         public void Dispose()
         {
-            AssetBundleData?.Dispose();
             AssetBundleData = null;
             UnityObjectUtils.SafeDestroy(Result);
         }

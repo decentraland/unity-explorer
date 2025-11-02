@@ -1,10 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using System.Collections.Generic;
-using DCL.Utility;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using Utility;
 
 namespace SceneRunner.Scene
@@ -15,8 +14,7 @@ namespace SceneRunner.Scene
         ///     SceneLoadingConcluded is TRUE when the scene has been repositioned to its rightful place away from MORDOR
         /// </summary>
         bool SceneLoadingConcluded { get; set; }
-
-        ReadOnlyHashSet<string> ISSContainedAssets { get; }
+        IInitialSceneState InitialSceneStateInfo { get; }
 
         SceneShortInfo SceneShortInfo { get; }
 
@@ -77,7 +75,7 @@ namespace SceneRunner.Scene
                 set { }
             }
 
-            public ReadOnlyHashSet<string> ISSContainedAssets { get; } = new (new HashSet<string>());
+            public IInitialSceneState InitialSceneStateInfo { get; } = new FakeInitialSceneState();
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 
@@ -128,5 +126,16 @@ namespace SceneRunner.Scene
             public bool IsPortableExperience() =>
                 false;
         }
+
+        //TODO (JUANI) : How to avoid this leaf interface?
+        public class FakeInitialSceneState : IInitialSceneState
+        {
+            public void Dispose()
+            {
+            }
+
+            public HashSet<string> ISSAssets { get; } = new HashSet<string>();
+        }
     }
+
 }

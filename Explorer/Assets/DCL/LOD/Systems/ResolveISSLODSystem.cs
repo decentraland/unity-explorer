@@ -69,6 +69,8 @@ namespace DCL.LOD.Systems
                                 {
                                     asset = Utils.CreateGltfObject(Result.Asset,
                                         initialSceneStateLOD.AssetBundleData.GetAsset<GameObject>(assetHash));
+                                    //TODO (JUANI) : Manually adding reference since we are not going trough the AB system
+                                    Result.Asset!.AddReference();
                                 }
 
                                 asset.Root.transform.SetParent(lodParent.transform);
@@ -76,8 +78,7 @@ namespace DCL.LOD.Systems
                                 asset.Root.transform.rotation = initialSceneStateMetadata.rotations[i];
                                 asset.Root.transform.localScale = initialSceneStateMetadata.scales[i];
 
-                                //TODO (JUANI) : Manually adding reference since we are not going trough the AB system
-                                Result.Asset!.AddReference();
+
                                 containiningAssets.Add((assetHash, asset));
                             }
 

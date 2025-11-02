@@ -16,7 +16,9 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.SceneRunner.Scene;
 using DCL.Utility;
+using ECS.StreamableLoading.InitialSceneState;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -247,7 +249,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private class MockSceneData : ISceneData
         {
             public bool SceneLoadingConcluded { get; set; } = true;
-            public ReadOnlyHashSet<string> ISSContainedAssets { get; }  = new (new HashSet<string>());
+
+            public IInitialSceneState InitialSceneStateInfo { get; } = new ISceneData.FakeInitialSceneState();
             public SceneShortInfo SceneShortInfo { get; set; } = new (Vector2Int.zero, "mockScene");
             public IReadOnlyList<Vector2Int> Parcels { get; set; } = new List<Vector2Int>();
             public ISceneContent SceneContent => new SceneNonHashedContent(URLDomain.FromString("file://mock/"));
@@ -284,6 +287,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public bool IsUrlDomainAllowed(string url) => true;
             public bool IsSdk7() => true;
             public bool IsPortableExperience() => false;
+
+            public void Dispose() { }
         }
     }
 }

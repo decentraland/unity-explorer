@@ -1,4 +1,5 @@
-﻿using DCL.Diagnostics;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiling;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly string AssetBundleName;
 
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-        public bool AssetsDestroyed;
 
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
@@ -78,7 +78,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 Assets = null;
             }
             UnloadAB();
-            AssetsDestroyed = true;
+
+            if (!string.IsNullOrEmpty(AssetBundleName) && AssetBundleName.Contains("staticscene"))
+                UnityEngine.Debug.Log($"JUANI I WAS DESTROYED");
         }
 
         /// <summary>

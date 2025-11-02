@@ -53,6 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles.EarlyAsset
                 //Whoever needs it, will grab it later
                 //TODO (JUANI) : Maybe we should instantiate it already?
                 World.Destroy(entity);
+                UnityEngine.Debug.Log("JUANI B");
 
                 if (Result.Succeeded)
                 {
