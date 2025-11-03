@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Utilities;
 using DCL.VoiceChat;
@@ -13,7 +14,7 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class StreamingCommunitiesView : MonoBehaviour
     {
-        public event Action<string>? JoinStream;
+        public event Action<string, bool>? JoinStream;
         public event Action? ViewAllStreamingCommunitiesButtonClicked;
 
         [Header("Streaming Section")]
@@ -95,8 +96,8 @@ namespace DCL.Communities.CommunitiesBrowser
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             StreamingCommunityResultCardView cardView = gridItem.GetComponent<StreamingCommunityResultCardView>();
 
-            cardView.SetCommunityId(communityData.id);
-            cardView.SetTitle(communityData.name);
+            bool isMember = communityData.role != CommunityMemberRole.none;
+            cardView.SetCommunityData(communityData.id, communityData.name, isMember);
 
             if (communityCallOrchestrator?.CurrentCommunityId.Value == communityData.id)
                 cardView.ConfigureListeningTooltip();
@@ -111,9 +112,9 @@ namespace DCL.Communities.CommunitiesBrowser
             return gridItem;
         }
 
-        private void JoinStreamClicked(string communityId)
+        private void JoinStreamClicked(string communityId, bool isMember)
         {
-            JoinStream?.Invoke(communityId);
+            JoinStream?.Invoke(communityId, isMember);
         }
 
         public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService, ICommunityCallOrchestrator orchestrator)

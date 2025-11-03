@@ -26,7 +26,6 @@ namespace DCL.Profiles.Self
         private readonly ProfileBuilder profileBuilder = new ();
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IReadOnlyList<string> forceRender;
         private Profile? copyOfOwnProfile;
 
         public Profile? OwnProfile { get; private set; }
@@ -38,7 +37,6 @@ namespace DCL.Profiles.Self
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
             IEquippedEmotes equippedEmotes,
-            IReadOnlyList<string> forceRender,
             IReadOnlyList<URN>? forcedEmotes,
             IProfileCache profileCache,
             World world,
@@ -50,7 +48,6 @@ namespace DCL.Profiles.Self
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
             this.equippedEmotes = equippedEmotes;
-            this.forceRender = forceRender;
             this.forcedEmotes = forcedEmotes;
             this.profileCache = profileCache;
             this.world = world;
@@ -113,7 +110,9 @@ namespace DCL.Profiles.Self
             if (profile == null)
                 throw new Exception("Self profile not found");
 
-            Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRender, emoteStorage, wearableStorage,
+            var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+
+            Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRenderList, emoteStorage, wearableStorage,
                 // Don't update the version as it will be incremented at UpdateProfileAsync function
                 incrementVersion: false);
 

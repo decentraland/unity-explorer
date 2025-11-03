@@ -2,12 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -28,7 +26,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-
         private readonly float audioFadeSpeed;
 
         public UpdateMediaPlayerSystem(
@@ -53,7 +50,6 @@ namespace DCL.SDKComponents.MediaStream
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
             UpdateCustomStreamQuery(World, t);
-
             UpdateVideoTextureQuery(World);
         }
 
@@ -83,6 +79,10 @@ namespace DCL.SDKComponents.MediaStream
             {
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+
+                if (component.IsPlaying)
+                    if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                        livekitPlayer?.EnsureAudioIsPlaying();
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -106,6 +106,12 @@ namespace DCL.SDKComponents.MediaStream
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
                     component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
                 }
+
+                if (component.IsPlaying)
+                    // Covers cases like leaving and re-entering the scene
+                    // or the stream not being available for some time, like OBS not started while the stream is active
+                    if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                        livekitPlayer?.EnsureVideoIsPlaying();
             }
 
             if (ConsumePromise(ref component, false))
@@ -130,13 +136,21 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
-            playerComponent.MediaPlayer.EnsurePlaying();
-
             if (!playerComponent.IsPlaying
-                || playerComponent.State == VideoState.VsError
-                || !playerComponent.MediaPlayer.MediaOpened
-               )
+                || playerComponent.State == VideoState.VsError)
+            {
+                RenderBlackTexture(ref assignedTexture);
                 return;
+            }
+
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+            {
+                if (!livekitPlayer?.IsVideoOpened ?? false)
+                {
+                    RenderBlackTexture(ref assignedTexture);
+                    return;
+                }
+            }
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
@@ -151,6 +165,11 @@ namespace DCL.SDKComponents.MediaStream
                 Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
             else
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
+
+            return;
+
+            void RenderBlackTexture(ref VideoTextureConsumer assignedTexture) =>
+                Graphics.Blit(Texture2D.blackTexture, assignedTexture.Texture);
         }
 
         [Query]

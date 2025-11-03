@@ -76,6 +76,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             ProfilePicture.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 
+        public void ConfigureThumbnailClickData(Action thumbnailContextMenuAction) =>
+            ProfilePicture.ConfigureThumbnailClickData(thumbnailContextMenuAction, UserProfile.Address.ToString());
+
         protected virtual void ToggleButtonView(bool isActive)
         {
             for (int i = 0; i < buttons.Count; i++)
