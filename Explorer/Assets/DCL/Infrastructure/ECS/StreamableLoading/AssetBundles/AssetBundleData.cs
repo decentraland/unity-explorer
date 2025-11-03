@@ -62,7 +62,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 return;
 
             AssetBundleUnloaded = true;
-            Asset?.UnloadAsync(false);
+
+            //Needed for quitting, since Unity destroy the Asset out of our control
+            if (Asset != null && Asset)
+                Asset?.UnloadAsync(false);
         }
 
         protected override void DestroyObject()
