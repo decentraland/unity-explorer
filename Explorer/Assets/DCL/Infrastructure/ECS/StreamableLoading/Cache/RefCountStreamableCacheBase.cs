@@ -8,7 +8,7 @@ using Unity.Profiling;
 namespace ECS.StreamableLoading.Cache
 {
     public abstract class RefCountStreamableCacheBase<TAssetData, TAsset, TLoadingIntention> : IStreamableCache<TAssetData, TLoadingIntention>
-        where TAssetData: StreamableRefCountData<TAsset> where TAsset: class where TLoadingIntention: IEquatable<TLoadingIntention>
+        where TAssetData: StreamableRefCountData<TAsset> where TLoadingIntention: IEquatable<TLoadingIntention>
     {
         private static readonly Comparison<(TLoadingIntention intention, TAssetData asset)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
             (d1, d2) => d2.asset.LastUsedFrame.CompareTo(d1.asset.LastUsedFrame);

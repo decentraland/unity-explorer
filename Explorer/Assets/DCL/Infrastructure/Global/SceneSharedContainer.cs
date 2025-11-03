@@ -75,6 +75,7 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
+                    staticContainer.StaticSettings.SkyboxSettings,
                     new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata, dclEnvironment,
                     systemClipboard),
             };
