@@ -60,7 +60,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
                     //TODO (JUANI) : Newly instantiated asset will remain in the bridge
-                    if (!partitionComponent.IsBehind && result.Asset.IsISS)
+                    //Assets are repartition in `PartitionAssetEntitiesSystem` before the scene is disposed. Therefore we can use the parition to determine where
+                    //the assets should go
+                    //TODO (JUANI) : Use the LOD bucket threshold
+                    if (!partitionComponent.IsBehind && partitionComponent.Bucket <= 2 && result.Asset.IsISS)
                         cache.PutInBridge(result.Asset);
 
                     cache.Dereference(component.Hash, result.Asset);
