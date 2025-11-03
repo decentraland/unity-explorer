@@ -7,7 +7,6 @@ using Utility;
 
 namespace DCL.LOD
 {
-    //TODO (Juani) : Interface?
     public class LODAsset : IDisposable
     {
         public GameObject Root;

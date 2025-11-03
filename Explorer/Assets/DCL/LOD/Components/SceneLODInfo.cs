@@ -22,11 +22,13 @@ namespace DCL.LOD.Components
 
         //TODO (JUANI) : Ideally, this would be a LODAsset that gets cached, so we dont have to make the asset bundle request again and neither we have to
         // recreate the RootGameobject
+        // Same problem related to UNloadSceneLODSystem.UnloadSceneLOFForISS. We need to clear the result because this gets re-initiated every time
         public InitialSceneStateLOD InitialSceneStateLOD;
 
         public void Dispose(World world)
         {
-            InitialSceneStateLOD.Dispose();
+            InitialSceneStateLOD.Dispose(world);
+            InitialSceneStateLOD = null;
             CurrentLODPromise.ForgetLoading(world);
         }
 

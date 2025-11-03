@@ -46,7 +46,6 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
 
-        //TODO (JUANI): Think of cancellation of scene loading
         [Query]
         [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void UnloadSceneLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
@@ -58,11 +57,8 @@ namespace ECS.SceneLifeCycle.Systems
                     return;
 
                 if (sceneLODInfo.IsInitialized())
-                {
-                    //TODO (JUANI) :
-                    //I need to do it because there is no cache operation for the InitialSceneStateLOD. Once again, ideally, it would be a LODAsset
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
-                }
+
 
                 if (!partitionComponent.IsBehind)
                     sceneLODInfo.InitialSceneStateLOD.MoveAssetsToBridge();

@@ -55,8 +55,9 @@ namespace DCL.LOD.Components
             UnityObjectUtils.SafeDestroy(ParentContainer);
         }
 
-        public void Dispose()
+        public void Dispose(World world)
         {
+            AssetBundlePromise.ForgetLoading(world);
             Clear();
         }
 

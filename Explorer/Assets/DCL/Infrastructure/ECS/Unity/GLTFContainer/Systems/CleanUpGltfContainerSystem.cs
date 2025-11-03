@@ -54,16 +54,12 @@ namespace ECS.Unity.GLTFContainer.Systems
                 this.entityCollidersSceneCache = entityCollidersSceneCache;
             }
 
-            public void Update(ref GltfContainerComponent component)
+            public void Update(ref GltfContainerComponent component, ref PartitionComponent partitionComponent)
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
-                    //TODO (JUANI): And with this?
-                    //Assets need to go to bridge since they are visible by the camera. There will be a visual hiccup otherwise
-                    //if (!partitionComponent.IsBehind)
-
-                    //TODO (JUANI): Not all need to go to the bridge; it dependes on the aprtition
-                    if (result.Asset.IsISS)
+                    //TODO (JUANI) : Newly instantiated asset will remain in the bridge
+                    if (!partitionComponent.IsBehind && result.Asset.IsISS)
                         cache.PutInBridge(result.Asset);
 
                     cache.Dereference(component.Hash, result.Asset);

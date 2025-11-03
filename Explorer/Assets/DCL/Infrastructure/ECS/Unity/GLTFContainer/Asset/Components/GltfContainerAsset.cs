@@ -61,8 +61,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public List<SDKCollider>? DecodedVisibleSDKColliders;
 
         public IStreamableRefCountData AssetData { get; private set; }
-
-        //TODO (JUANI) : But if we instance more, they will be on the bridge forever
         public bool IsISS;
 
         private GltfContainerAsset(GameObject root, IStreamableRefCountData assetData, List<SDKCollider> invisibleColliders,
