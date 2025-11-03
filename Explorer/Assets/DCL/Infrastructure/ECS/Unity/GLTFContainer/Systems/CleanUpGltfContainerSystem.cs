@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -22,7 +23,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     public partial class CleanUpGltfContainerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private static readonly QueryDescription ENTITY_DESTROY_QUERY = new QueryDescription()
-           .WithAll<DeleteEntityIntention, GltfContainerComponent>();
+           .WithAll<DeleteEntityIntention, GltfContainerComponent, PartitionComponent>();
 
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
@@ -33,15 +34,15 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
+            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent, PartitionComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in new QueryDescription().WithAll<GltfContainerComponent>(), ref releaseOnEntityDestroy);
+            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent, PartitionComponent>(in new QueryDescription().WithAll<GltfContainerComponent, PartitionComponent>(), ref releaseOnEntityDestroy);
         }
 
-        private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent>
+        private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent, PartitionComponent>
         {
             private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
             private readonly IGltfContainerAssetsCache cache;
