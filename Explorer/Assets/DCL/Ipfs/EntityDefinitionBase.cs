@@ -8,9 +8,8 @@ namespace DCL.Ipfs
     /// Base class for entity definitions that provides common properties and asset bundle manifest functionality
     /// </summary>
     [Serializable]
-    public abstract class EntityDefinitionBase
+    public abstract class EntityDefinitionBase : TrimmedEntityDefinitionBase
     {
-        public string? id;
         public string type;
         public long timestamp;
         public string version;
@@ -32,5 +31,12 @@ namespace DCL.Ipfs
         }
 
         public override string ToString() => id ?? string.Empty;
+    }
+
+    [Serializable]
+    public class TrimmedEntityDefinitionBase
+    {
+        public string? id;
+        public string thumbnail;
     }
 }

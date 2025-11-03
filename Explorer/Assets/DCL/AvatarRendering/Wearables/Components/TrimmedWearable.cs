@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
@@ -30,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
-            foreach (TrimmedAvatarAttachmentDTO.Representation dataRepresentation in DTO.Metadata.AbstractData.representations)
+            foreach (AvatarAttachmentDTO.Representation dataRepresentation in DTO.Metadata.AbstractData.representations)
                 if (dataRepresentation.bodyShapes.Contains(bodyShape))
                     return true;
 

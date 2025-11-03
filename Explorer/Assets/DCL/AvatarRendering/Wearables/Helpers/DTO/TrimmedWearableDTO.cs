@@ -10,7 +10,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public class TrimmedWearableDTO : TrimmedAvatarAttachmentDTO<TrimmedWearableDTO.WearableMetadataDto>
     {
         [Serializable]
-        public class WearableMetadataDto : TrimmedMetadataBase
+        public class WearableMetadataDto : TrimmedMetadataBase<TrimmedDataBase>
         {
             public DataDto data = new ();
             public override TrimmedDataBase AbstractData => data;

@@ -3,36 +3,23 @@ using System;
 
 namespace DCL.AvatarRendering.Loading.DTO
 {
-    public abstract class TrimmedAvatarAttachmentDTO<TMetadata> : TrimmedAvatarAttachmentDTO where TMetadata : TrimmedAvatarAttachmentDTO.TrimmedMetadataBase
+    public abstract class TrimmedAvatarAttachmentDTO<TMetadata> : TrimmedAvatarAttachmentDTO where TMetadata : TrimmedAvatarAttachmentDTO.TrimmedMetadataBase<TrimmedAvatarAttachmentDTO.TrimmedDataBase>
     {
         public TMetadata metadata;
 
-        public override TrimmedMetadataBase Metadata => metadata;
+        public override TrimmedMetadataBase<TrimmedDataBase> Metadata => metadata;
     }
 
     public abstract class TrimmedAvatarAttachmentDTO : TrimmedEntityDefinitionBase
     {
-        public string? ContentDownloadUrl { get; protected set; }
-
-        public abstract TrimmedMetadataBase Metadata { get; }
+        public abstract TrimmedMetadataBase<TrimmedDataBase> Metadata { get; }
 
         [Serializable]
-        public struct Representation
+        public abstract class TrimmedMetadataBase<TDataBase> where TDataBase : TrimmedDataBase
         {
-            public string[] bodyShapes;
+            public abstract TDataBase AbstractData { get; }
 
-            public static Representation NewFakeRepresentation() =>
-                new()
-                {
-                    bodyShapes = Array.Empty<string>(),
-                };
-        }
-
-        [Serializable]
-        public abstract class TrimmedMetadataBase
-        {
-            public abstract TrimmedDataBase AbstractData { get; }
-
+            //urn
             public string id;
             public string rarity;
         }
@@ -40,7 +27,7 @@ namespace DCL.AvatarRendering.Loading.DTO
         [Serializable]
         public abstract class TrimmedDataBase
         {
-            public Representation[] representations;
+            public AvatarAttachmentDTO.Representation[] representations;
             public string category;
         }
     }

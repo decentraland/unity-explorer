@@ -182,27 +182,12 @@ namespace DCL.AvatarRendering.Wearables
                     data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
                     {
                         category = wearableDTO.metadata.data.category,
-                        representations = wearableDTO.metadata.data.representations.Convert()
+                        representations = wearableDTO.metadata.data.representations
                     }
                 }
             };
 
             return trimmedDTO;
         }
-
-        private static TrimmedAvatarAttachmentDTO.Representation[] Convert(this AvatarAttachmentDTO.Representation[] representations)
-        {
-            var result = new TrimmedAvatarAttachmentDTO.Representation[representations.Length];
-            for (int i = 0; i < representations.Length; i++)
-                result[i] = representations[i].Convert();
-
-            return result;
-        }
-
-        public static TrimmedAvatarAttachmentDTO.Representation Convert(this AvatarAttachmentDTO.Representation representation) =>
-            new()
-            {
-                bodyShapes = representation.bodyShapes
-            };
     }
 }
