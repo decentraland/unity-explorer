@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using DCL.Multiplayer.Connections.DecentralandUrls;
+﻿using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;

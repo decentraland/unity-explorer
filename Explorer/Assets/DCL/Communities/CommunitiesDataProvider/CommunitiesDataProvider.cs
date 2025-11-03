@@ -84,23 +84,24 @@ namespace DCL.Communities.CommunitiesDataProvider
             }
 
             return response;
+        }
 
-            async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken cancellationToken)
+        public async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken cancellationToken)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/requests";
+
+            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, cancellationToken)
+                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            int totalRequests = 0;
+
+            foreach (GetCommunityInviteRequestResponse.CommunityInviteRequestData request in response.data.results)
             {
-                var url = $"{communitiesBaseUrl}/{communityId}/requests";
-
-                GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, cancellationToken)
-                                                                                       .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
-
-                int totalRequests = 0;
-                foreach (var request in response.data.results)
-                {
-                    if (request.type == InviteRequestAction.request_to_join)
-                        totalRequests++;
-                }
-
-                return totalRequests;
+                if (request.type == InviteRequestAction.request_to_join)
+                    totalRequests++;
             }
+
+            return totalRequests;
         }
 
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
