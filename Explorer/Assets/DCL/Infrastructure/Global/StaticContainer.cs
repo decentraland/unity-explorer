@@ -31,7 +31,6 @@ using DCL.Profiling;
 using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.SDKComponents.VideoPlayer;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -48,6 +47,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
+using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.SkyboxTime;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
@@ -78,13 +78,12 @@ namespace Global
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
         public readonly LandscapeParcelData LandscapeParcelData = new ();
 
-        private ProvidedInstance<CharacterObject> characterObject;
-
         private IAssetsProvisioner assetsProvisioner;
         public Entity PlayerEntity { get; set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
+        public MediaPlayerContainer MediaContainer { get; private set; }
         public QualityContainer QualityContainer { get; private set; }
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
         public WebRequestsContainer WebRequestsContainer { get; private set; }
@@ -178,13 +177,6 @@ namespace Global
 
             var exposedPlayerTransform = new ExposedTransform();
 
-            container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-
-            bool result = await InitializeContainersAsync(container, settingsContainer, ct);
-
-            if (!result)
-                return (null, false);
-
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController, web3IdentityProvider) : new LoadingStatus();
@@ -201,9 +193,18 @@ namespace Global
             );
 
             DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
+
+            container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
+
+            bool result = await InitializeContainersAsync(container, settingsContainer, ct);
+
+            if (!result)
+                return (null, false);
+
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
-            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
             container.Profiler = profilingProvider;
@@ -219,10 +220,8 @@ namespace Global
             var gltfPlugin = new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, gltfContainerAssetsCache);
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), gltfContainerAssetsCache);
 
-            var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
+            var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);
-
-            ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
@@ -254,9 +253,9 @@ namespace Global
                 gltfPlugin,
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, videoTexturePool),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.MediaContainer.mediaFactoryBuilder),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
-                new MaterialsPlugin(sharedDependencies, videoTexturePool),
+                new MaterialsPlugin(sharedDependencies, container.MediaContainer.mediaFactoryBuilder),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
@@ -270,7 +269,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, volumeBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy),
+                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
@@ -309,12 +308,13 @@ namespace Global
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
         {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success)) results = await UniTask.WhenAll(
                 settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer, ct)
+                settings.InitializePluginAsync(target.CharacterContainer, ct),
+                settings.InitializePluginAsync(target.MediaContainer, ct)
             );
 
-            return results.Item1.success && results.Item2.success;
+            return results.Item1.success && results.Item2.success && results.Item3.success;
         }
     }
 }

@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.ThreadSafePool;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -34,21 +33,44 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
-        public bool MediaOpened => currentStream != null;
+        public bool MediaOpened =>
+            // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
+            IsVideoOpened || isAudioOpened;
+
         public float Volume { get; private set; }
 
         public PlayerState State => playerState;
 
-        public LivekitPlayer(IRoomHub roomHub)
+        public bool IsVideoOpened => currentStream != null && currentStream.Value.video.Resource.Has;
+
+        private bool isAudioOpened => currentStream != null && currentStream.Value.audio.Resource.Has;
+
+        public LivekitPlayer(IRoom streamingRoom)
         {
-            room = roomHub.StreamingRoom();
+            room = streamingRoom;
             audioSource = OBJECT_POOL.Get();
         }
 
-        public void EnsurePlaying()
+        public void EnsureVideoIsPlaying()
         {
-            if (this is { MediaOpened: false, State: PlayerState.PLAYING, playingAddress: { } address })
-                OpenMedia(address);
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (IsVideoOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
+        }
+
+        public void EnsureAudioIsPlaying()
+        {
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (isAudioOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -128,10 +150,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (playerState is not PlayerState.PLAYING)
                 return null;
-
-            // retry to fetch the stream if it's not presented yet
-            if (playingAddress != null && currentStream?.video == null)
-                OpenMedia(playingAddress.Value);
 
             return currentStream?.video.Resource.Has ?? false
                 ? currentStream?.video.Resource.Value.DecodeLastFrame()
