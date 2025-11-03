@@ -68,7 +68,7 @@ namespace DCL.LOD.Systems
 
         private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
         {
-            sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+            sceneLODInfo.ForgetAllLoadings(World);
 
             if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
                            && !sceneLODInfo.InitialSceneStateLOD.CurrentState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.FAILED))

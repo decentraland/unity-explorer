@@ -14,13 +14,6 @@ namespace DCL.LOD
         public  TextureArraySlot?[] Slots;
         internal AssetBundleData AssetBundleReference;
 
-        internal InitialSceneStateLOD? InitialSceneStateLOD;
-
-        public LODAsset(InitialSceneStateLOD initialSceneStateLOD)
-        {
-            this.InitialSceneStateLOD = initialSceneStateLOD;
-        }
-
         public LODAsset(GameObject root, AssetBundleData assetBundleData, TextureArraySlot?[] slots)
         {
             Root = root;
@@ -30,20 +23,13 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            if (InitialSceneStateLOD != null)
-            {
-                InitialSceneStateLOD.Dispose();
-            }
-            else
-            {
-                UnityObjectUtils.SafeDestroy(Root);
+            UnityObjectUtils.SafeDestroy(Root);
 
-                AssetBundleReference.Dereference();
-                AssetBundleReference = null;
+            AssetBundleReference.Dereference();
+            AssetBundleReference = null;
 
-                for (int i = 0; i < Slots.Length; i++)
-                    Slots[i]?.FreeSlot();
-            }
+            for (int i = 0; i < Slots.Length; i++)
+                Slots[i]?.FreeSlot();
         }
 
     }

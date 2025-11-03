@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -24,9 +25,7 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class ResolveISSLODSystem : BaseUnityLoopSystem
     {
-
         private IGltfContainerAssetsCache gltfCache;
-
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
 
@@ -68,13 +67,8 @@ namespace DCL.LOD.Systems
                         if (Result.Asset!.InitialSceneStateMetadata.HasValue)
                         {
                             InitialSceneStateMetadata initialSceneStateMetadata = Result.Asset!.InitialSceneStateMetadata.Value;
-
-                            initialSceneStateLOD.ParentContainer = new GameObject($"{sceneLODInfo.id}_ISS_LOD");
-                            sceneLODInfo.InitialSceneStateLOD.ParentContainer.transform.position = sceneDefinition.SceneGeometry.BaseParcelPosition;
-
-                            initialSceneStateLOD.AssetBundleData = Result.Asset;
-                            initialSceneStateLOD.gltfCache = gltfCache;
-                            initialSceneStateLOD.TotalAssetsToInstantiate = initialSceneStateMetadata.assetHash.Count;
+                            initialSceneStateLOD.Initialize(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition, Result.Asset,
+                                gltfCache, initialSceneStateMetadata.assetHash.Count);
 
                             for (var i = 0; i < initialSceneStateMetadata.assetHash.Count; i++)
                             {

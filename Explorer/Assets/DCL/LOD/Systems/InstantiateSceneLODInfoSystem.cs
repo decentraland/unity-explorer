@@ -71,8 +71,7 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
                 return;
 
-            if (sceneLODInfo.CurrentLODLevelPromise == 0
-                && sceneLODInfo.InitialSceneStateLOD.CurrentState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING))
+            if (sceneLODInfo.CurrentLODLevelPromise == 0 && sceneLODInfo.InitialSceneStateLOD.IsProcessing())
                 ResolveInitialSceneStateDescriptorLOD(sceneDefinitionComponent, ref sceneLODInfo);
             else
                 ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
@@ -82,11 +81,8 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.InitialSceneStateLOD.AllAssetsInstantiated())
             {
-                //TODO (JUANI): Seems so redudant
-                var newLod = new LODAsset(sceneLODInfo.InitialSceneStateLOD);
-                sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, newLod, defaultFOV, defaultLodBias,
+                sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, null, defaultFOV, defaultLodBias,
                     realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
-
                 sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED;
             }
         }
@@ -101,8 +97,6 @@ namespace DCL.LOD.Systems
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
 
-                    //TODO (JUANI) : Remove before merge. Jsut leaving it here for showing the LOD_1 of new GP
-                    instantiatedLOD.gameObject.SetActive(true);
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 

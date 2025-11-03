@@ -3,75 +3,12 @@ using Arch.Core;
 using DCL.LOD.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using ECS.Unity.GLTFContainer.Asset.Cache;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using UnityEngine;
 using Utility;
 
 namespace DCL.LOD.Components
 {
-    //TODO (JUANI) : Interface it with LODAsset so its more transparent
-    public class InitialSceneStateLOD : IDisposable
-    {
-
-        public enum InitialSceneStateLODState
-        {
-            UNINITIALIZED,
-            PROCESSING,
-            FAILED,
-            RESOLVED
-        }
-
-        public InitialSceneStateLODState CurrentState;
-        public GameObject ParentContainer;
-        public IGltfContainerAssetsCache gltfCache;
-        public int TotalAssetsToInstantiate;
-        public AssetPromise<AssetBundleData, GetAssetBundleIntention> AssetBundlePromise;
-        public AssetBundleData? AssetBundleData;
-
-
-        private List<(string, GltfContainerAsset)> Assets = new ();
-
-
-        //TODO (JUANI) : Cancel promise, move things to asset. Merge with enum state
-        public void Forget()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Dereference()
-        {
-            foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
-                gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
-
-            Assets.Clear();
-            AssetBundleData?.Dereference();
-            CurrentState = InitialSceneStateLODState.UNINITIALIZED;
-        }
-
-        public void Dispose()
-        {
-            AssetBundleData = null;
-            UnityObjectUtils.SafeDestroy(ParentContainer);
-        }
-
-        public void MoveAssetsToBridge()
-        {
-            foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
-                gltfCache.PutInBridge(gltfContainerAsset.Item2);
-
-            //Assets.Clear();
-        }
-
-        public void AddResolvedAsset(string assetHash, GltfContainerAsset asset) =>
-            Assets.Add((assetHash, asset));
-
-        //TODO (JUANI) : What if we have no assets?
-        public bool AllAssetsInstantiated() =>
-            Assets.Count > 0 && Assets.Count == TotalAssetsToInstantiate;
-    }
-
     public struct SceneLODInfo
     {
         //This is a sync method, so we can use a shared list
@@ -83,11 +20,13 @@ namespace DCL.LOD.Components
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
 
+        //TODO (JUANI) : Ideally, this would be a LODAsset that gets cached, so we dont have to make the asset bundle request again and neither we have to
+        // recreate the RootGameobject
         public InitialSceneStateLOD InitialSceneStateLOD;
 
         public void Dispose(World world)
         {
-            InitialSceneStateLOD.Dereference();
+            InitialSceneStateLOD.Dispose();
             CurrentLODPromise.ForgetLoading(world);
         }
 
@@ -216,5 +155,11 @@ namespace DCL.LOD.Components
 
         public bool HasActiveLODPromise() =>
             CurrentLODLevelPromise != byte.MaxValue;
+
+        public void ForgetAllLoadings(World world)
+        {
+            CurrentLODPromise.ForgetLoading(world);
+            InitialSceneStateLOD.ForgetLoading(world);
+        }
     }
 }

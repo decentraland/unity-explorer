@@ -6,7 +6,7 @@ namespace DCL.LOD.Components
     public class LODCacheInfo : IDisposable
     {
         public readonly LODGroup LodGroup;
-        public LODAsset[] LODAssets { get; private set; }
+        public LODAsset?[] LODAssets { get; private set; }
 
 
         public float CullRelativeHeightPercentage;
