@@ -52,6 +52,7 @@ namespace DCL.LOD.Systems
                 return;
 
             string sceneID = sceneDefinitionComponent.Definition.id!;
+            sceneLODInfo.id = sceneID;
 
             if (lodCache.TryGet(sceneID, out var cacheInfo))
             {
@@ -61,7 +62,6 @@ namespace DCL.LOD.Systems
             }
             else
                 sceneLODInfo.metadata = new LODCacheInfo(InitializeLODGroup(sceneID), lodLevels);
-            sceneLODInfo.id = sceneID;
         }
 
         private LODGroup InitializeLODGroup(string sceneID)
