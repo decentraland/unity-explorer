@@ -183,7 +183,7 @@ namespace Global.Dynamic
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
 
-        public async UniTask<bool> IsUserAuthorisedToAccessWorld(URLDomain realm, CancellationToken ct)
+        public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
         {
             const string SIGN_METADATA = "{\"intent\": \"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false}";
             ServerAbout about = await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM).CreateFromJson<ServerAbout>(WRJsonParser.Unity);

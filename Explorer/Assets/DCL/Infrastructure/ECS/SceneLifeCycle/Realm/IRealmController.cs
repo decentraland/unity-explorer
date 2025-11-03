@@ -17,7 +17,7 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
 
-        UniTask<bool> IsUserAuthorisedToAccessWorld(URLDomain realm, CancellationToken ct);
+        UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct);
 
         /// <summary>
         ///     Dispose everything on application quit
@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Realm
             public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
                 false;
 
-            public async UniTask<bool> IsUserAuthorisedToAccessWorld(URLDomain realm, CancellationToken ct) =>
+            public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct) =>
                 false;
 
             public void DisposeGlobalWorld()

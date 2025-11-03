@@ -98,7 +98,7 @@ namespace DCL.RealmNavigation
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
-            if (isWorld && !await realmController.IsUserAuthorisedToAccessWorld(realm, ct))
+            if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
 
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
