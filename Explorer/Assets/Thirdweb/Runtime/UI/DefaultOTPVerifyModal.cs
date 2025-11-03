@@ -34,7 +34,8 @@ namespace Thirdweb.Unity
                 {
                     string otp = OTPInputField.text;
 
-                    if (string.IsNullOrEmpty(otp)) { return; }
+                    if (string.IsNullOrEmpty(otp))
+                        return;
 
                     OTPInputField.interactable = false;
                     OTPSubmitButton.interactable = false;

@@ -22,7 +22,8 @@ namespace DCL.Web3.Authenticators
     {
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly DecentralandEnvironment environment;
-        private readonly string loginEmail = "popuzin@gmail.com";
+        private readonly string loginEmail1 = "popuzin@gmail.com";
+        private readonly string loginEmail2 = "vitaly.popuzin@decentraland.org";
         private readonly string phoneNumber = "+436605212763";
         private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
 
@@ -42,12 +43,12 @@ namespace DCL.Web3.Authenticators
             await UniTask.SwitchToMainThread(ct);
 
             BigInteger chainId = GetChainId(environment);
-            Debug.Log($"VVV ThirdwebAuth: Start login. Email={loginEmail}, Env={environment}, ChainId={chainId}");
+            Debug.Log($"VVV ThirdwebAuth: Start login. Email={loginEmail2}, Env={environment}, ChainId={chainId}");
 
             var walletOptions = new WalletOptions(
                 WalletProvider.InAppWallet,
                 chainId,
-                new InAppWalletOptions("loginEmail")
+                new InAppWalletOptions(loginEmail2)
             );
 
             Debug.Log("VVV ThirdwebAuth: ConnectWallet()");
