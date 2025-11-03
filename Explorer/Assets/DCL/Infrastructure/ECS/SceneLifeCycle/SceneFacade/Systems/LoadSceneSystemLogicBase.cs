@@ -50,7 +50,7 @@ namespace ECS.SceneLifeCycle.Systems
             var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
-            var ISSContainedAssetsPromise = LoadISS(world, definition, ct);
+            var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
             (_, var mainCrdt, var ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
 
@@ -72,7 +72,7 @@ namespace ECS.SceneLifeCycle.Systems
             return sceneFacade;
         }
 
-        private async UniTask<IInitialSceneState> LoadISS(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
+        private async UniTask<IInitialSceneState> LoadISSAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
         {
             if (sceneDefinitionComponent.SupportInitialSceneState())
             {

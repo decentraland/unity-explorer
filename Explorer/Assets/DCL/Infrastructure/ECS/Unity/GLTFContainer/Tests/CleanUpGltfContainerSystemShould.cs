@@ -43,7 +43,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State = LoadingState.Finished;
 
-            Entity e = world.Create(c, new DeleteEntityIntention());
+
+            //TODO (JUANI): A GLTFContainerComponent will always have a partition. correct?
+            Entity e = world.Create(c, new DeleteEntityIntention(), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
