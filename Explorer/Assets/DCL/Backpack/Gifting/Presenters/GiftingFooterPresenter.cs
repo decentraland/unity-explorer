@@ -10,6 +10,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private readonly GiftingFooterView view;
 
+        private const string DEFAULT_INFO_MESSAGE = "Select an item from your inventory to give it as a gift.";
+        
         public GiftingFooterPresenter(GiftingFooterView view)
         {
             this.view = view;
@@ -26,8 +28,15 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public void SetInfoMessage(string message)
         {
-            view.InfoMessageLabel.text = message;
-            view.InfoMessageContainer.SetActive(true);
+            view.SendGiftButton.interactable = false;
+
+            view.InfoMessageLabel.text = DEFAULT_INFO_MESSAGE;
+            view.InfoMessageContainer.SetActive(true); 
+        }
+
+        public void SetSendEnabled(bool enabled)
+        {
+            view.SendGiftButton.interactable = enabled;
         }
 
         public void SetSendButtonInteractable(bool isInteractable)

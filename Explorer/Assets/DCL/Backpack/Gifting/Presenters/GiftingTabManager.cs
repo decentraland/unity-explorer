@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Views;
 using DCL.UI;
 using DG.Tweening;
@@ -21,6 +23,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private CancellationTokenSource? animationCts;
         private bool isAnimating;
         private GiftingSection lastShownSection;
+
+        public IGiftingGridPresenter? ActivePresenter => presenters[lastShownSection];
 
         public GiftingTabsManager(
             GiftingView view,
@@ -52,6 +56,11 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public void Initialize()
         {
+            ActivateDefault();
+        }
+
+        public void ActivateDefault()
+        {
             // Deactivate all presenters and hide their GameObjects
             foreach (var presenter in presenters.Values)
             {
@@ -72,13 +81,46 @@ namespace DCL.Backpack.Gifting.Presenters
 
             // Set tab states
             foreach (var (section, tab) in tabs)
+            {
                 tab.TabSelectorToggle.SetIsOnWithoutNotify(section == lastShownSection);
+
+                if (section != lastShownSection)
+                    SetTabAnimationState(tab, false);
+            }
+
+            UniTask.Void(async () =>
+            {
+                await UniTask.Yield();
+                if (tabs.TryGetValue(lastShownSection, out var defaultTabView))
+                    SetTabAnimationState(defaultTabView, true);
+            });
         }
 
+        private void SetTabAnimationState(TabSelectorView tabView, bool isActive)
+        {
+            if (tabView.tabAnimator == null || !tabView.gameObject.activeInHierarchy) return;
+
+            if (isActive)
+            {
+                tabView.tabAnimator.SetTrigger(UIAnimationHashes.ACTIVE);
+            }
+            else
+            {
+                tabView.tabAnimator.Rebind();
+                tabView.tabAnimator.Update(0);
+            }
+        }
+        
         private void ToggleSection(GiftingSection newSection)
         {
             if (isAnimating || newSection == lastShownSection) return;
 
+            if (tabs.TryGetValue(lastShownSection, out var lastTabView))
+                SetTabAnimationState(lastTabView, false);
+
+            if (tabs.TryGetValue(newSection, out var newTabView))
+                SetTabAnimationState(newTabView, true);
+            
             var lastPresenter = presenters[lastShownSection];
             var newPresenter = presenters[newSection];
 
@@ -134,8 +176,17 @@ namespace DCL.Backpack.Gifting.Presenters
         void Activate();
         void Deactivate();
         void SetSearchText(string text);
-
         RectTransform GetRectTransform();
         CanvasGroup GetCanvasGroup();
+        event Action<string?> OnSelectionChanged;
+        string? SelectedUrn { get; }
+    }
+
+    // Generic interface for the Adapter, inheriting the base
+    public interface IGiftingGridPresenter<TViewModel> : IGiftingGridPresenter where TViewModel : IGiftableItemViewModel
+    {
+        int ItemCount { get; }
+        TViewModel GetViewModel(int itemIndex);
+        void RequestThumbnailLoad(int itemIndex);
     }
 }

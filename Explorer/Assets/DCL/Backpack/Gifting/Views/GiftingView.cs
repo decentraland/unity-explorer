@@ -33,10 +33,10 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: Header("Content Grids")]
         [field: SerializeField]
-        public BackpackGridView? WearablesGrid { get; private set; }
+        public GiftingGridView? WearablesGrid { get; private set; }
 
         [field: SerializeField]
-        public BackpackGridView? EmotesGrid { get; private set; }
+        public GiftingGridView? EmotesGrid { get; private set; }
 
         [field: Header("Popup Controls")]
         [field: SerializeField]

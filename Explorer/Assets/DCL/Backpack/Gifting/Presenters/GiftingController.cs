@@ -1,40 +1,55 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Commands;
+using DCL.Backpack.Gifting.Factory;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using MVC;
-using UnityEngine.Assertions;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters
 {
     public class GiftingController : ControllerBase<GiftingView, GiftingParams>
     {
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
+        private readonly IGiftingGridPresenterFactory gridFactory;
+        private readonly SendGiftCommand sendGiftCommand;
         
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
         private GiftingHeaderPresenter? headerPresenter;
         private GiftingFooterPresenter? footerPresenter;
+
+        private GiftingTabsManager tabsManager;
+        
         private IGiftingGridPresenter? wearablesGridPresenter;
         private IGiftingGridPresenter? emotesGridPresenter;
-        private GiftingTabsManager tabsManager;
         private GiftingErrorsController? giftingErrorsController;
+        
         private CancellationTokenSource? lifeCts;
+
+        // TODO: erase this one
+        private UniTask<IGiftingGridPresenter>? wearablesGridBuildTask;
 
         public GiftingController(ViewFactoryMethod viewFactory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IProfileRepository profileRepository,
-            IInputBlock inputBlock) : base(viewFactory)
+            IInputBlock inputBlock,
+            IGiftingGridPresenterFactory gridFactory,
+            SendGiftCommand sendGiftCommand) : base(viewFactory)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.inputBlock  = inputBlock;
+            this.gridFactory = gridFactory;
+            this.sendGiftCommand = sendGiftCommand;
         }
         
         private void OnPublishError()
@@ -44,16 +59,14 @@ namespace DCL.Backpack.Gifting.Presenters
         
         #region MVC
 
+        
         protected override void OnViewInstantiated()
         {
-            Assert.IsNotNull(viewInstance, "GiftingView prefab is null!");
-            Assert.IsNotNull(viewInstance!.HeaderView, "HeaderView is not assigned in the GiftingView prefab!");
-            Assert.IsNotNull(viewInstance!.FooterView, "FooterView is not assigned in the GiftingView prefab!");
-            Assert.IsNotNull(viewInstance!.WearablesGrid, "WearablesGrid is not assigned in the GiftingView prefab!");
-            Assert.IsNotNull(viewInstance!.EmotesGrid, "EmotesGrid is not assigned in the GiftingView prefab!");
-            
             if (viewInstance != null)
             {
+                var wearablesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.WearablesGrid?.Grid);
+                var emotesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.EmotesGrid?.Grid);
+                
                 headerPresenter = new GiftingHeaderPresenter(viewInstance.HeaderView,
                     profileRepository,
                     profileRepositoryWrapper,
@@ -61,11 +74,10 @@ namespace DCL.Backpack.Gifting.Presenters
 
                 footerPresenter = new GiftingFooterPresenter(viewInstance!.FooterView);
 
-                wearablesGridPresenter = new PlaceholderGiftingGridPresenter(viewInstance!.WearablesGrid?.gameObject);
-                emotesGridPresenter = new PlaceholderGiftingGridPresenter(viewInstance!.EmotesGrid?.gameObject);
-
+                wearablesGridPresenter = gridFactory.CreateWearablesPresenter(viewInstance?.WearablesGrid, wearablesAdapter);
+                emotesGridPresenter = gridFactory.CreateEmotesPresenter(viewInstance?.EmotesGrid, emotesAdapter);
                 giftingErrorsController = new GiftingErrorsController(viewInstance!.ErrorNotification);
-
+                
                 tabsManager = new GiftingTabsManager(viewInstance,
                     wearablesGridPresenter,
                     emotesGridPresenter);
@@ -77,50 +89,46 @@ namespace DCL.Backpack.Gifting.Presenters
             lifeCts = new CancellationTokenSource();
             viewInstance!.ErrorNotification.Hide(true);
 
-            tabsManager?.Initialize();
-
-            headerPresenter?.SetupAsync(inputData.userId, lifeCts.Token).Forget();
+            headerPresenter?.SetupAsync(inputData.userId,
+                inputData.userName,
+                lifeCts.Token).Forget();
+            
             footerPresenter?.SetInitialState();
 
-            if (headerPresenter != null)
-                headerPresenter.OnSearchChanged += HandleSearchChanged;
+            if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
+            if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
+            if (wearablesGridPresenter != null) wearablesGridPresenter.OnSelectionChanged += OnSelectionChanged;
+            if (emotesGridPresenter != null) emotesGridPresenter.OnSelectionChanged += OnSelectionChanged;
 
-            if (footerPresenter != null)
-                footerPresenter.OnSendGift += HandleSendGift;
+            tabsManager.Initialize();
         }
 
         protected override void OnViewClose()
         {
-            if (headerPresenter != null)
-                headerPresenter.OnSearchChanged -= HandleSearchChanged;
-
-            if (footerPresenter != null)
-                footerPresenter.OnSendGift -= HandleSendGift;
+            if (headerPresenter != null) headerPresenter.OnSearchChanged -= HandleSearchChanged;
+            if (footerPresenter != null) footerPresenter.OnSendGift -= HandleSendGift;
+            if (wearablesGridPresenter != null) wearablesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
+            if (emotesGridPresenter != null) emotesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
 
             giftingErrorsController!.Hide(true);
 
             lifeCts.SafeCancelAndDispose();
         }
 
+        private void OnSelectionChanged(string? selectedUrn)
+        {
+            footerPresenter?.SetSendEnabled(!string.IsNullOrEmpty(selectedUrn));
+        }
+
         private void HandleSendGift()
         {
-            // This method will be called when the Send Gift button is clicked.
-            // IMPORTANT: Since this button does NOT close the view itself, its logic is handled here.
-            // The view will only close when a button in WaitForCloseIntentAsync is clicked.
-
-            // 1. Instantiate and run the SendGiftCommand
-            //    var sendGiftCommand = new SendGiftCommand(...);
-            //    sendGiftCommand.ExecuteAsync(...).Forget();
-
-            // 2. Here, you would likely HIDE the current view and show the "Preparing Gift" view.
-            //    The MVCManager handles this by showing the new popup, which will obscure the old one.
-            //    mvcManager.ShowAsync(TransferProgressController.IssueCommand(...)).Forget();
+            string? selectedUrn = tabsManager.ActivePresenter?.SelectedUrn;
+            sendGiftCommand.ExecuteAsync(inputData.userId, selectedUrn).Forget();
         }
 
         private void HandleSearchChanged(string searchText)
         {
-            wearablesGridPresenter?.SetSearchText(searchText);
-            emotesGridPresenter?.SetSearchText(searchText);
+            tabsManager.ActivePresenter?.SetSearchText(searchText);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

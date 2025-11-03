@@ -765,6 +765,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa48af71118ac4146b9ba336aa48c151
+    m_Address: Assets/DCL/Backpack/Assets/GiftingItem.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fb7327249a7554d50afaf729d15aa697
     m_Address: Assets/DCL/Input/Crosshair/CrosshairUIDocument.prefab
     m_ReadOnly: 0

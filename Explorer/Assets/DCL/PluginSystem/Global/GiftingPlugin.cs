@@ -4,12 +4,17 @@ using DCL.AssetsProvision;
 using DCL.Backpack.Gifting.Views;
 using MVC;
 using System.Threading;
+using DCL.AvatarRendering.Wearables;
+using DCL.Backpack.Gifting.Commands;
+using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Services;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -20,18 +25,28 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IEventBus eventBus;
         private GiftingController? giftingController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            IProfileRepository profileRepository, IInputBlock inputBlock)
+            IProfileRepository profileRepository,
+            IInputBlock inputBlock,
+            IWearablesProvider wearablesProvider,
+            IThumbnailProvider thumbnailProvider,
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
+            this.wearablesProvider = wearablesProvider;
+            this.thumbnailProvider = thumbnailProvider;
+            this.eventBus =  eventBus;
         }
 
         public void Dispose()
@@ -44,11 +59,21 @@ namespace DCL.PluginSystem.Global
             var giftingViewPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftingPrefab, ct))
                 .Value.GetComponent<GiftingView>();
 
+            var giftingService = new GiftingService();
+            var sendGiftCommand = new SendGiftCommand(giftingService);
+            var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider, eventBus);
+
+            var gridFactory = new GiftingGridPresenterFactory(wearablesProvider,
+                eventBus,
+                loadThumbnailCommand);
+            
             giftingController = new GiftingController(
                 GiftingController.CreateLazily(giftingViewPrefab, null),
                 profileRepositoryWrapper,
                 profileRepository,
-                inputBlock
+                inputBlock,
+                gridFactory,
+                sendGiftCommand
             );
 
             mvcManager.RegisterController(giftingController);

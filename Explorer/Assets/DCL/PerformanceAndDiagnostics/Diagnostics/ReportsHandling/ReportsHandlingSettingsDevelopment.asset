@@ -586,6 +586,10 @@ MonoBehaviour:
       Severity: 2
     - Category: ANALYTICS
       Severity: 3
+    - Category: GENERIC_WEB_REQUEST
+      Severity: 3
+    - Category: GENERIC_WEB_REQUEST
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

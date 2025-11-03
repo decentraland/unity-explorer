@@ -45,7 +45,7 @@ namespace DCL.Backpack.Gifting.Presenters
             view.SearchBar.inputField.onDeselect.AddListener(_ => this.inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS));
         }
 
-        public async UniTask SetupAsync(string userId, CancellationToken ct)
+        public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
         {
             // Fetch the full profile of the person we are gifting to
             var profile = await profileRepository.GetAsync(userId, 0, ct: ct);
