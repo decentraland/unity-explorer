@@ -3,7 +3,6 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.UpdateGate;
 using DCL.Interaction.Utility;
-using DCL.Time;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
@@ -27,8 +26,6 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
 
-        public readonly IWorldTimeProvider WorldTimeProvider;
-
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
             IPartitionComponent scenePartition,
@@ -37,7 +34,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
-            MultiThreadSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
+            MultiThreadSync multiThreadSync,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;
@@ -49,7 +46,6 @@ namespace DCL.PluginSystem.World.Dependencies
             SceneExceptionsHandler = sceneExceptionsHandler;
             EntityCollidersSceneCache = entityCollidersSceneCache;
             SceneStateProvider = sceneStateProvider;
-            WorldTimeProvider = worldTimeProvider;
             EcsGroupThrottler = ecsGroupThrottler;
             EcsSystemsGate = ecsSystemsGate;
             EntityEventsBuilder = entityEventsBuilder;
