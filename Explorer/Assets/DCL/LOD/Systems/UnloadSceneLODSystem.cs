@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            MoveAssetsToBridgeQuery(World);
+            UnloadSceneLODForISSQuery(World);
             UnloadLODQuery(World);
             UnloadLODWhenSceneReadyQuery(World);
         }
@@ -49,22 +49,24 @@ namespace ECS.SceneLifeCycle.Systems
         //TODO (JUANI): Think of cancellation of scene loading
         [Query]
         [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
-        private void MoveAssetsToBridge(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void UnloadSceneLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
+            ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
         {
-            if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
-                return;
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
+            {
+                if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+                    return;
 
-            if (sceneLODInfo.InitialSceneStateLOD.AssetsInTheBridge)
-                return;
+                if (sceneLODInfo.IsInitialized())
+                    sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
-            if (sceneLODInfo.IsInitialized())
-                sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                if (!partitionComponent.IsBehind)
+                    sceneLODInfo.InitialSceneStateLOD.MoveAssetsToBridge();
 
-            if (!partitionComponent.IsBehind)
-                sceneLODInfo.InitialSceneStateLOD.MoveAssetsToBridge();
+                sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                World.Remove<SceneLODInfo>(entity);
+            }
 
-            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
-            sceneLODInfo.InitialSceneStateLOD.AssetsInTheBridge = true;
         }
 
         [Query]
@@ -82,14 +84,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
-                //If all scenes were built with SAB scenes, we could remove it
-                if (sceneLODInfo.InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
-                {
-                    World.Remove<SceneLODInfo>(entity);
-                    return;
-                }
-
                 if (!sceneFacade.IsSceneReady())
                     return;
 

@@ -26,7 +26,6 @@ namespace DCL.LOD.Components
         }
 
         public InitialSceneStateLODState CurrentState;
-        public bool AssetsInTheBridge;
         public GameObject ParentContainer;
         public IGltfContainerAssetsCache gltfCache;
         public int TotalAssetsToInstantiate;
@@ -34,7 +33,7 @@ namespace DCL.LOD.Components
         public AssetBundleData? AssetBundleData;
 
 
-        private List<(string, GltfContainerAsset)> Assets = new List<(string, GltfContainerAsset)>();
+        private List<(string, GltfContainerAsset)> Assets = new ();
 
 
         //TODO (JUANI) : Cancel promise, move things to asset. Merge with enum state
@@ -51,8 +50,6 @@ namespace DCL.LOD.Components
             Assets.Clear();
             AssetBundleData?.Dereference();
             CurrentState = InitialSceneStateLODState.UNINITIALIZED;
-            AssetsInTheBridge = false;
-
         }
 
         public void Dispose()

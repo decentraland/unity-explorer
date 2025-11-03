@@ -83,7 +83,6 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.InitialSceneStateLOD.AllAssetsInstantiated())
             {
-                UnityEngine.Debug.Log("JUANI DO WE GET HERE");
                 //TODO (JUANI): Seems so redudant
                 var newLod = new LODAsset(sceneLODInfo.InitialSceneStateLOD);
                 sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, newLod, defaultFOV, defaultLodBias,
