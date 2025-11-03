@@ -79,8 +79,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             Animators = animators;
             HierarchyPaths = hierarchyPaths;
 
+            //TODO (JUANI) : Make it part of the asset bundle creation
             IsISS = root.gameObject.name.Contains("_ISS");
-                
+
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
 

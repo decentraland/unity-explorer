@@ -73,7 +73,6 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
                         //Do nothing. We just needed loaded in memory, we dont care the result.
                         //Whoever needs it, will grab it later
                         //Test URL
-                        UnityEngine.Debug.Log("JUANI A");
                         World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest(Result.Asset.Value[0]));
                     }
                 }

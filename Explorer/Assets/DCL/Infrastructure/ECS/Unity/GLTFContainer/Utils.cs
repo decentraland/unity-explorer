@@ -11,8 +11,10 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
-        public static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset)
+        public static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, string assetHash)
         {
+            GameObject asset = assetBundleData.GetAsset<GameObject>(assetHash);
+
             var container = new GameObject($"{asset.name}");
 
             // Let the upper layer decide what to do with the root

@@ -67,8 +67,7 @@ namespace DCL.LOD.Systems
                                     asset.Root.SetActive(true);
                                 else
                                 {
-                                    asset = Utils.CreateGltfObject(Result.Asset,
-                                        initialSceneStateLOD.AssetBundleData.GetAsset<GameObject>(assetHash));
+                                    asset = Utils.CreateGltfObject(Result.Asset, assetHash);
                                     //TODO (JUANI) : Manually adding reference since we are not going trough the AB system
                                     Result.Asset!.AddReference();
                                 }

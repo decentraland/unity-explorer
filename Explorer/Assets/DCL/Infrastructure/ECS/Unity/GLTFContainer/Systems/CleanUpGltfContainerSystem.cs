@@ -62,9 +62,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                     //Assets need to go to bridge since they are visible by the camera. There will be a visual hiccup otherwise
                     //if (!partitionComponent.IsBehind)
 
+                    //TODO (JUANI): Not all need to go to the bridge; it dependes on the aprtition
                     if (result.Asset.IsISS)
                         cache.PutInBridge(result.Asset);
-                    
+
                     cache.Dereference(component.Hash, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
 

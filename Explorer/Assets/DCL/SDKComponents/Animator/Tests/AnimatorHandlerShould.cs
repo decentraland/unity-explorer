@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.Animator.Tests
     {
         private Entity entity;
         private PBAnimator pbAnimator;
-        private CreateGltfAssetFromAssetBundleSystemWorld createGltfAssetFromAssetBundleSystem;
+        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
         private FinalizeGltfContainerLoadingSystem finalizeGltfContainerLoadingSystem;
         private readonly GltfContainerTestResources resources = new ();
 
@@ -53,7 +53,7 @@ namespace DCL.SDKComponents.Animator.Tests
                 NullEntityCollidersSceneCache.INSTANCE, sceneData, new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystemWorld(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
 
             system = new LegacyAnimationPlayerSystem(world);
 

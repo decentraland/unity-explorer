@@ -78,9 +78,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 Assets = null;
             }
             UnloadAB();
-
-            if (!string.IsNullOrEmpty(AssetBundleName) && AssetBundleName.Contains("staticscene"))
-                UnityEngine.Debug.Log($"JUANI I WAS DESTROYED");
         }
 
         /// <summary>

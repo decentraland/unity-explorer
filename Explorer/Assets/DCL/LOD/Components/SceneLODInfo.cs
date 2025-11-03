@@ -14,8 +14,11 @@ using Utility;
 namespace DCL.LOD.Components
 {
     //TODO (JUANI) : Tighten the scope
+    //TODO (JUANI) : Interface it with LODAsset so its more transparent
     public class InitialSceneStateLOD : IDisposable
     {
+
+        //TODO (JUANI): Merge into a single Enum state
         public bool Failed;
         public bool Processing;
         public bool Resolved;
@@ -28,7 +31,7 @@ namespace DCL.LOD.Components
         public AssetBundleData? AssetBundleData;
 
 
-        //TODO (JUANI)
+        //TODO (JUANI) : Cancel promise, move things to asset. Merge with enum state
         public void Forget()
         {
             throw new NotImplementedException();
