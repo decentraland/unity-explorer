@@ -19,25 +19,33 @@ namespace DCL.SDKComponents.Tween
     {
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly bool tweenSequenceSupport;
 
-        public TweenCleanUpSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
+        public TweenCleanUpSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, bool tweenSequenceSupport) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.tweenerPool = tweenerPool;
+            this.tweenSequenceSupport = tweenSequenceSupport;
         }
 
         protected override void Update(float t)
         {
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
-            HandleSequenceEntityDestructionQuery(World);
-            HandleSequenceComponentRemovalQuery(World);
+
+            if (tweenSequenceSupport)
+            {
+                HandleSequenceEntityDestructionQuery(World);
+                HandleSequenceComponentRemovalQuery(World);
+            }
         }
 
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
-            FinalizeSequenceComponentsQuery(World);
+
+            if (tweenSequenceSupport)
+                FinalizeSequenceComponentsQuery(World);
         }
 
         [Query]

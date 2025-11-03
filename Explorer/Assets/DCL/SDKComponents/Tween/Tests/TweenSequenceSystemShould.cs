@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.Tween.Tests
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
             tweenerPool = new TweenerPool();
             system = new TweenSequenceUpdaterSystem(world, ecsToCRDTWriter, tweenerPool, sceneStateProvider);
-            loaderSystem = new TweenLoaderSystem(world);
+            loaderSystem = new TweenLoaderSystem(world, true);
         }
 
         [TearDown]

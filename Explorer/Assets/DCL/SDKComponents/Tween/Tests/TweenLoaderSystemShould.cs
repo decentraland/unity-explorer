@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new TweenLoaderSystem(world);
+            system = new TweenLoaderSystem(world, false);
 
             var startVector = new Vector3
                 { X = 0, Y = 0, Z = 0 };

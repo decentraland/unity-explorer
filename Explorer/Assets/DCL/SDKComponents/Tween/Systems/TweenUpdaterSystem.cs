@@ -31,23 +31,38 @@ namespace DCL.SDKComponents.Tween
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly bool tweenSequenceSupport;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneStateProvider sceneStateProvider) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneStateProvider sceneStateProvider, bool tweenSequenceSupport) : base(world)
         {
             this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
+            this.tweenSequenceSupport = tweenSequenceSupport;
         }
 
         protected override void Update(float t)
         {
-            UpdatePBTweenQuery(World);
-            UpdateTweenTransformQuery(World);
-            UpdateTweenTextureQuery(World);
+            if (tweenSequenceSupport)
+            {
+                UpdatePBTween_WithTweenSequenceSupportQuery(World);
+                UpdateTweenTransform_WithTweenSequenceSupportQuery(World);
+                UpdateTweenTexture_WithTweenSequenceSupportQuery(World);
+            }
+            else
+            {
+                UpdatePBTweenQuery(World);
+                UpdateTweenTransformQuery(World);
+                UpdateTweenTextureQuery(World);
+            }
         }
 
         [Query]
         [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTransform_WithTweenSequenceSupport(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+            => UpdateTweenTransform(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, transformComponent);
+
+        [Query]
         private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase is PBTween.ModeOneofCase.TextureMove or PBTween.ModeOneofCase.TextureMoveContinuous) return;
@@ -65,6 +80,10 @@ namespace DCL.SDKComponents.Tween
 
         [Query]
         [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTexture_WithTweenSequenceSupport(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent) =>
+            UpdateTweenTexture(sdkEntity, in pbTween, ref sdkTweenComponent, ref materialComponent);
+
+        [Query]
         private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove && pbTween.ModeCase != PBTween.ModeOneofCase.TextureMoveContinuous) return;
@@ -184,6 +203,10 @@ namespace DCL.SDKComponents.Tween
 
         [Query]
         [None(typeof(PBTweenSequence))]
+        private static void UpdatePBTween_WithTweenSequenceSupport(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent) =>
+            UpdatePBTween(ref pbTween, ref sdkTweenComponent);
+
+        [Query]
         private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;

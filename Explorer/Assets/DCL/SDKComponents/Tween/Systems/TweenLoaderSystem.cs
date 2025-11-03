@@ -15,16 +15,33 @@ namespace DCL.SDKComponents.Tween
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        public TweenLoaderSystem(World world) : base(world) { }
+        private readonly bool tweenSequenceSupport;
+
+        public TweenLoaderSystem(World world, bool tweenSequenceSupport) : base(world)
+        {
+            this.tweenSequenceSupport = tweenSequenceSupport;
+        }
 
         protected override void Update(float t)
         {
-            LoadTweenQuery(World);
-            LoadTweenSequenceQuery(World);
+            if (tweenSequenceSupport)
+            {
+                LoadTween_WithTweenSequenceSupportQuery(World);
+                LoadTweenSequenceQuery(World);
+            }
+            else
+            {
+                LoadTweenQuery(World);
+            }
         }
 
         [Query]
         [None(typeof(SDKTweenComponent), typeof(PBTweenSequence))]
+        private void LoadTween_WithTweenSequenceSupport(Entity entity, ref PBTween pbTween)
+            => LoadTween(entity, ref pbTween);
+
+        [Query]
+        [None(typeof(SDKTweenComponent))]
         private void LoadTween(Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
