@@ -13,22 +13,28 @@ using Utility;
 
 namespace DCL.LOD.Components
 {
-    //TODO (JUANI) : Tighten the scope
     //TODO (JUANI) : Interface it with LODAsset so its more transparent
     public class InitialSceneStateLOD : IDisposable
     {
 
-        //TODO (JUANI): Merge into a single Enum state
-        public bool Failed;
-        public bool Processing;
-        public bool Resolved;
-        public bool AssetsInTheBridge;
-        public GameObject Result;
-        public List<(string, GltfContainerAsset)> Assets = new List<(string, GltfContainerAsset)>();
-        public IGltfContainerAssetsCache gltfCache;
+        public enum InitialSceneStateLODState
+        {
+            UNINITIALIZED,
+            PROCESSING,
+            FAILED,
+            RESOLVED
+        }
 
+        public InitialSceneStateLODState CurrentState;
+        public bool AssetsInTheBridge;
+        public GameObject ParentContainer;
+        public IGltfContainerAssetsCache gltfCache;
+        public int TotalAssetsToInstantiate;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> AssetBundlePromise;
         public AssetBundleData? AssetBundleData;
+
+
+        private List<(string, GltfContainerAsset)> Assets = new List<(string, GltfContainerAsset)>();
 
 
         //TODO (JUANI) : Cancel promise, move things to asset. Merge with enum state
@@ -44,7 +50,7 @@ namespace DCL.LOD.Components
 
             Assets.Clear();
             AssetBundleData?.Dereference();
-            Resolved = false;
+            CurrentState = InitialSceneStateLODState.UNINITIALIZED;
             AssetsInTheBridge = false;
 
         }
@@ -52,7 +58,7 @@ namespace DCL.LOD.Components
         public void Dispose()
         {
             AssetBundleData = null;
-            UnityObjectUtils.SafeDestroy(Result);
+            UnityObjectUtils.SafeDestroy(ParentContainer);
         }
 
         public void MoveAssetsToBridge()
@@ -62,6 +68,13 @@ namespace DCL.LOD.Components
 
             //Assets.Clear();
         }
+
+        public void AddResolvedAsset(string assetHash, GltfContainerAsset asset) =>
+            Assets.Add((assetHash, asset));
+
+        //TODO (JUANI) : What if we have no assets?
+        public bool AllAssetsInstantiated() =>
+            Assets.Count > 0 && Assets.Count == TotalAssetsToInstantiate;
     }
 
     public struct SceneLODInfo

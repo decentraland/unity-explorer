@@ -77,10 +77,10 @@ namespace ECS.SceneLifeCycle.Systems
             if (sceneDefinitionComponent.SupportInitialSceneState())
             {
                 var promise = AssetBundlePromise.Create(world,
-                    GetAssetBundleIntention.FromHash($"staticscene_{sceneDefinitionComponent.id}{PlatformUtils.GetCurrentPlatform()}",
+                    GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),
                         assetBundleManifestVersion: sceneDefinitionComponent.assetBundleManifestVersion,
                         parentEntityID: sceneDefinitionComponent.id),
-                    PartitionComponent.TOP_PRIORITY);
+                        PartitionComponent.TOP_PRIORITY);
 
                 promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 

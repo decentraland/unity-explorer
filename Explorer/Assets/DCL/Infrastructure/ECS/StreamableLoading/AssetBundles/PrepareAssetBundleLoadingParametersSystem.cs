@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
 
             if (sceneData.InitialSceneStateInfo.ISSAssets.Contains(assetBundleIntention.Hash))
-                assetBundleIntention.Hash = $"staticscene_{assetBundleIntention.ParentEntityID}{PlatformUtils.GetCurrentPlatform()}";
+                assetBundleIntention.Hash = GetAssetBundleIntention.BuildInitialSceneStateURL(assetBundleIntention.ParentEntityID);
 
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }

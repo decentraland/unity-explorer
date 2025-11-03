@@ -70,18 +70,17 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
-            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState() && !sceneLODInfo.InitialSceneStateLOD.Failed)
+            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
+                           && !sceneLODInfo.InitialSceneStateLOD.CurrentState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.FAILED))
             {
-                string initialSceneStateKey = $"staticscene_{sceneDefinitionComponent.Definition.id}{PlatformUtils.GetCurrentPlatform()}";
                 var initialSceneState = GetAssetBundleIntention.FromHash(
-                    initialSceneStateKey,
+                    GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
                     typeof(GameObject),
                     permittedSources: AssetSource.WEB,
-                    assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate"),
-                    lookForDependencies: true
+                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion
                 );
                 sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
-                sceneLODInfo.InitialSceneStateLOD.Processing = true;
+                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING;
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;
             }

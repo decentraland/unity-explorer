@@ -72,7 +72,8 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
                 return;
 
-            if (sceneLODInfo.CurrentLODLevelPromise == 0 && sceneLODInfo.InitialSceneStateLOD.Processing)
+            if (sceneLODInfo.CurrentLODLevelPromise == 0
+                && sceneLODInfo.InitialSceneStateLOD.CurrentState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING))
                 ResolveInitialSceneStateDescriptorLOD(sceneDefinitionComponent, ref sceneLODInfo);
             else
                 ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
@@ -80,23 +81,16 @@ namespace DCL.LOD.Systems
 
         private void ResolveInitialSceneStateDescriptorLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            if (!sceneLODInfo.InitialSceneStateLOD.Resolved)
-                return;
-
-            if (sceneLODInfo.InitialSceneStateLOD.Failed)
+            if (sceneLODInfo.InitialSceneStateLOD.AllAssetsInstantiated())
             {
-                //AB failed, required revaluation to get the old LOD
-                sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
-                sceneLODInfo.InitialSceneStateLOD.Processing = false;
-                return;
+                UnityEngine.Debug.Log("JUANI DO WE GET HERE");
+                //TODO (JUANI): Seems so redudant
+                var newLod = new LODAsset(sceneLODInfo.InitialSceneStateLOD);
+                sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, newLod, defaultFOV, defaultLodBias,
+                    realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+
+                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED;
             }
-
-            sceneLODInfo.InitialSceneStateLOD.Result.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
-
-            //TODO (JUANI): Seems so redudant
-            var newLod = new LODAsset(sceneLODInfo.InitialSceneStateLOD);
-            sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.Result, newLod, defaultFOV, defaultLodBias,
-                realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
         }
 
         private void ResolveSceneLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)

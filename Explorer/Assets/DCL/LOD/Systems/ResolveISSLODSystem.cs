@@ -3,8 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
@@ -23,27 +26,37 @@ namespace DCL.LOD.Systems
     {
 
         private IGltfContainerAssetsCache gltfCache;
-        private InitialSceneStateLOD initialSceneStateLOD;
 
-        public ResolveISSLODSystem(World world, IGltfContainerAssetsCache gltfCache) : base(world)
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget memoryBudget;
+
+        public ResolveISSLODSystem(World world, IGltfContainerAssetsCache gltfCache, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.gltfCache = gltfCache;
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
+            this.memoryBudget = memoryBudget;
         }
 
         protected override void Update(float t)
         {
             ResolveInitialSceneStateLODQuery(World);
+            ConvertFromAssetBundleQuery(World);
         }
 
         [Query]
-        private void ResolveInitialSceneStateLOD(ref SceneLODInfo sceneLODInfo)
+        private void ResolveInitialSceneStateLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinition)
         {
-            initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
+            InitialSceneStateLOD initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
+            InitialSceneStateLOD.InitialSceneStateLODState InitialSceneStateLODState = initialSceneStateLOD.CurrentState;
 
-            if (initialSceneStateLOD.Failed)
+            if (InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.FAILED))
                 return;
 
-            if (initialSceneStateLOD.Processing)
+            if (InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+                || InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.UNINITIALIZED))
+                return;
+
+            if (InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING))
             {
                 // Skip if promise hasn't been created yet or is already consumed
                 if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
@@ -54,38 +67,36 @@ namespace DCL.LOD.Systems
                     {
                         if (Result.Asset!.InitialSceneStateMetadata.HasValue)
                         {
-                            GameObject lodParent = new GameObject($"{sceneLODInfo.id}_ISS_LOD");
                             InitialSceneStateMetadata initialSceneStateMetadata = Result.Asset!.InitialSceneStateMetadata.Value;
-                            //TODO (JUANI) : Pool?
-                            List<(string, GltfContainerAsset)> containiningAssets = new List<(string, GltfContainerAsset)>();
 
-                            //TODO (JUANI) : Budgeting
+                            initialSceneStateLOD.ParentContainer = new GameObject($"{sceneLODInfo.id}_ISS_LOD");
+                            sceneLODInfo.InitialSceneStateLOD.ParentContainer.transform.position = sceneDefinition.SceneGeometry.BaseParcelPosition;
+
+                            initialSceneStateLOD.AssetBundleData = Result.Asset;
+                            initialSceneStateLOD.gltfCache = gltfCache;
+                            initialSceneStateLOD.TotalAssetsToInstantiate = initialSceneStateMetadata.assetHash.Count;
+
                             for (var i = 0; i < initialSceneStateMetadata.assetHash.Count; i++)
                             {
                                 string assetHash = initialSceneStateMetadata.assetHash[i];
+
                                 if (gltfCache.TryGet(assetHash, out var asset))
-                                    asset.Root.SetActive(true);
+                                    PositionAsset(initialSceneStateLOD, assetHash, asset, initialSceneStateLOD.ParentContainer.transform, initialSceneStateMetadata, i);
                                 else
                                 {
-                                    asset = Utils.CreateGltfObject(Result.Asset, assetHash);
-                                    //TODO (JUANI) : Manually adding reference since we are not going trough the AB system
-                                    Result.Asset!.AddReference();
+                                    //Little but redundant, but needed for correct ref counting
+                                    AssetBundlePromise promise = AssetBundlePromise.Create(World,
+                                        GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id),
+                                            assetBundleManifestVersion: sceneDefinition.Definition.assetBundleManifestVersion,
+                                            parentEntityID: sceneDefinition.Definition.id),
+                                        PartitionComponent.TOP_PRIORITY);
+
+                                    ISSAssetCreationHelper assetCreationHelper
+                                        = new ISSAssetCreationHelper(initialSceneStateLOD, assetHash, i);
+
+                                    World.Create(promise, assetCreationHelper);
                                 }
-
-                                asset.Root.transform.SetParent(lodParent.transform);
-                                asset.Root.transform.position = initialSceneStateMetadata.positions[i];
-                                asset.Root.transform.rotation = initialSceneStateMetadata.rotations[i];
-                                asset.Root.transform.localScale = initialSceneStateMetadata.scales[i];
-
-
-                                containiningAssets.Add((assetHash, asset));
                             }
-
-                            initialSceneStateLOD.Result = lodParent;
-                            initialSceneStateLOD.Resolved = true;
-                            initialSceneStateLOD.AssetBundleData = Result.Asset;
-                            initialSceneStateLOD.Assets = containiningAssets;
-                            initialSceneStateLOD.gltfCache = gltfCache;
                         }
                         else
                         {
@@ -103,12 +114,57 @@ namespace DCL.LOD.Systems
             }
         }
 
+
+        [Query]
+        private void ConvertFromAssetBundle(in Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
+        {
+            if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
+                return;
+
+            if (assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
+            {
+                if (Result.Succeeded)
+                {
+                    GltfContainerAsset asset = Utils.CreateGltfObject(Result.Asset, creationHelper.AssetHash);
+                    PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                }
+                World.Destroy(entity);
+            }
+        }
+
+
+        private void PositionAsset(InitialSceneStateLOD initialSceneStateLOD, string assetHash, GltfContainerAsset asset, Transform parent, InitialSceneStateMetadata initialSceneStateMetadata, int indexToPosition)
+        {
+            asset.Root.SetActive(true);
+            asset.Root.transform.SetParent(parent);
+            asset.Root.transform.localPosition = initialSceneStateMetadata.positions[indexToPosition];
+            asset.Root.transform.localRotation = initialSceneStateMetadata.rotations[indexToPosition];
+            asset.Root.transform.localScale = initialSceneStateMetadata.scales[indexToPosition];
+
+            initialSceneStateLOD.AddResolvedAsset(assetHash, asset);
+        }
+
         private static void MarkAssetBundleAsFailed(ref SceneLODInfo sceneLODInfo, string message)
         {
             ReportHub.Log(ReportCategory.LOD, message);
-            sceneLODInfo.InitialSceneStateLOD.Failed = true;
-            sceneLODInfo.InitialSceneStateLOD.Resolved = true;
+            sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.FAILED;
+            //We need to re-evaluate the LOD to see if we can get the old method
+            sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
         }
 
+    }
+
+    public struct ISSAssetCreationHelper
+    {
+        public ISSAssetCreationHelper(InitialSceneStateLOD initialSceneStateLOD, string assetHash, int indexToCreate)
+        {
+            InitialSceneStateLOD = initialSceneStateLOD;
+            AssetHash = assetHash;
+            IndexToCreate = indexToCreate;
+        }
+
+        public InitialSceneStateLOD InitialSceneStateLOD { get;  }
+        public string AssetHash { get;  }
+        public int IndexToCreate { get; }
     }
 }

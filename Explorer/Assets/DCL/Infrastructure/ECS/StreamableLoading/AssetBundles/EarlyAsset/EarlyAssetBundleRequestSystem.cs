@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles.EarlyAsset
         private void StartEarlyDownload(Entity entity, ref EarlyAssetBundleFlag earlySceneFlag)
         {
             AssetBundlePromise promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash($"staticscene_{earlySceneFlag.Scene.id}{PlatformUtils.GetCurrentPlatform()}",
+                GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(earlySceneFlag.Scene.id),
                     assetBundleManifestVersion: earlySceneFlag.Scene.assetBundleManifestVersion,
                     parentEntityID: earlySceneFlag.Scene.id),
                 PartitionComponent.TOP_PRIORITY);

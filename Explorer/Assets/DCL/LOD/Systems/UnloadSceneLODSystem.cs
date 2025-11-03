@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void MoveAssetsToBridge(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!sceneLODInfo.InitialSceneStateLOD.Resolved)
+            if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
                 return;
 
             if (sceneLODInfo.InitialSceneStateLOD.AssetsInTheBridge)
@@ -78,13 +78,13 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref PartitionComponent partitionComponent)
+            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
                 //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
                 //If all scenes were built with SAB scenes, we could remove it
-                if (sceneLODInfo.InitialSceneStateLOD.Resolved)
+                if (sceneLODInfo.InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
                 {
                     World.Remove<SceneLODInfo>(entity);
                     return;
