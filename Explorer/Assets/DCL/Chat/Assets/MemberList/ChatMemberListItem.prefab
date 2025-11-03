@@ -1475,6 +1475,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_AnchorMax.y
+    - target: {fileID: 1550108083613389261, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_RaycastTarget
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3566865946185505719, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
@@ -1485,9 +1487,17 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6257318993778719913, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7319283368522151503, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_Name
       value: ProfilePictureView
+      objectReference: {fileID: 0}
+    - target: {fileID: 7581145104870650479, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

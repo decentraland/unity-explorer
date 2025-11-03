@@ -6,7 +6,8 @@ namespace Utility
 {
     public static class ClearScriptUtils
     {
-        public static int Write<T>(this ITypedArray<T> clearScriptArray, NativeArray<byte>.ReadOnly source, ulong length, ulong index)
+        public static int Write<T>(this ITypedArray<T> clearScriptArray,
+            NativeArray<byte>.ReadOnly source, ulong length, ulong index) where T : unmanaged
         {
             ulong totalLength = clearScriptArray.Length;
 
@@ -15,7 +16,8 @@ namespace Utility
             return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.AsReadOnlySpan(), (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
         }
 
-        public static int Write<T>(this ITypedArray<T> clearScriptArray, ReadOnlyMemory<byte> source, ulong length, ulong index)
+        public static int Write<T>(this ITypedArray<T> clearScriptArray, ReadOnlyMemory<byte> source,
+            ulong length, ulong index) where T : unmanaged
         {
             ulong totalLength = clearScriptArray.Length;
 
@@ -24,7 +26,8 @@ namespace Utility
             return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.Span, (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
         }
 
-        private static IntPtr GetPtrWithIndex<T>(this ITypedArray<T> clearScriptArray, IntPtr pData, ulong index)
+        private static IntPtr GetPtrWithIndex<T>(this ITypedArray<T> clearScriptArray, IntPtr pData,
+            ulong index) where T : unmanaged
         {
             var baseAddr = unchecked((ulong)pData.ToInt64());
             return new IntPtr(unchecked((long)checked(baseAddr + (index * (clearScriptArray.Size / clearScriptArray.Length)))));

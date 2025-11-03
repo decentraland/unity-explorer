@@ -69,7 +69,7 @@ namespace DCL.UI
                 if (webRequestController != null)
                 {
                     //TODO potential memory leak, due no CacheCleaner
-                    IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                    var ownedTexture = await webRequestController.GetTextureAsync(
                         new CommonArguments(URLAddress.FromString(uri)),
                         new GetTextureArguments(TextureType.Albedo, useKtx),
                         GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
@@ -77,7 +77,7 @@ namespace DCL.UI
                         ReportCategory.UI
                     );
 
-                    var texture = ownedTexture.Texture;
+                    Texture2D? texture = ownedTexture;
                     texture.filterMode = FilterMode.Bilinear;
                     sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
                 }

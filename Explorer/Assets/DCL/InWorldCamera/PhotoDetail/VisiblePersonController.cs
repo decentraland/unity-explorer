@@ -71,6 +71,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListContainer.gameObject.SetActive(false);
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
+            view.verifiedMark.SetActive(false);
+            view.officialMark.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
             Color userColor = NameColorHelper.GetNameColor(visiblePerson.userName);
 

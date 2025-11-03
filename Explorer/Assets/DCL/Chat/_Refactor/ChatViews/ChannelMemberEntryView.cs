@@ -13,6 +13,7 @@ namespace DCL.Chat.ChatViews
     {
         public string UserId;
         public Vector3 Position;
+        public Action OnHide;
     }
 
     public class ChannelMemberEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
@@ -29,6 +30,7 @@ namespace DCL.Chat.ChatViews
         [SerializeField] private Button itemButton;
 
         private ChatMemberListViewModel model;
+        private bool canUnhover = true;
 
         private void Awake()
         {
@@ -38,9 +40,16 @@ namespace DCL.Chat.ChatViews
 
         private void HandleContextMenuRequest()
         {
+            canUnhover = false;
+
             var request = new MemberEntryContextMenuRequest
             {
-                UserId = model.UserId, Position = contextMenuButton.transform.position
+                UserId = model.UserId, Position = contextMenuButton.transform.position,
+                OnHide = () =>
+                {
+                    canUnhover = true;
+                    Unhover();
+                }
             };
             OnContextMenuRequested?.Invoke(request);
         }
@@ -61,16 +70,23 @@ namespace DCL.Chat.ChatViews
             profilePictureView.Bind(model.ProfileThumbnail, model.ProfileColor);
             bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(model.UserId);
             usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, isOfficial, model.ProfileColor);
+
+            profilePictureView.ConfigureThumbnailClickData(HandleContextMenuRequest, model.UserId);
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
+        private void Hover() =>
             contextMenuButton.gameObject.SetActive(true);
-        }
+
+        private void Unhover() =>
+            contextMenuButton.gameObject.SetActive(false);
+
+        public void OnPointerEnter(PointerEventData eventData) =>
+            Hover();
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            contextMenuButton.gameObject.SetActive(false);
+            if (canUnhover)
+                Unhover();
         }
     }
 }
