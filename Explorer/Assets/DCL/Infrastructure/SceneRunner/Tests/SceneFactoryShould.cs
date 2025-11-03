@@ -72,7 +72,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
-                DecentralandEnvironment.Org);
+                DecentralandEnvironment.Org,
+                Substitute.For<DCL.Clipboard.ISystemClipboard>());
         }
 
         [TearDown]
