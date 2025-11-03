@@ -27,7 +27,6 @@ using Plugins.RustSegment.SegmentServerWrap;
 using Segment.Analytics;
 using Sentry;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -214,24 +213,23 @@ namespace Global.Dynamic
                 IAppArgs appArgs,
                 WebRequestsContainer webRequestsContainer)
         {
-            var dappWeb3Authenticator = new DappWeb3Authenticator(
-                webBrowser,
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
-                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
-                identityCache,
-                web3AccountFactory,
-                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                dclEnvironment,
-                new AuthCodeVerificationFeatureFlag(),
-                appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
-            );
+            // var dappWeb3Authenticator = new DappWeb3Authenticator(
+            //     webBrowser,
+            //     URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+            //     URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+            //     URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
+            //     identityCache,
+            //     web3AccountFactory,
+            //     new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+            //     new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+            //     dclEnvironment,
+            //     new AuthCodeVerificationFeatureFlag(),
+            //     appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
+            // );
 
-            // Use Thirdweb InApp Wallet for login/auth chain; keep DappWeb3Authenticator for verified Ethereum API
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(
-                new ThirdwebInAppWalletAuthenticator(web3AccountFactory, dclEnvironment, "vitaly.popuzin@decentraland.com"),
-                identityCache);
+            // Use Thirdweb InApp Wallet for BOTH: login/auth chain and verified Ethereum API
+            var thirdwebAllInOne = new ThirdwebInAppWalletAuthenticator(web3AccountFactory, dclEnvironment);
+            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(thirdwebAllInOne, identityCache);
 
             IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
@@ -245,7 +243,8 @@ namespace Global.Dynamic
                 autoLoginAuthenticator = new AnalyticsDecoratorAuthenticator(autoLoginAuthenticator, container.Analytics!);
             }
 
-            return (dappWeb3Authenticator, coreWeb3Authenticator, autoLoginAuthenticator);
+            // Return Thirdweb provider as VerifiedEthereumApi as well
+            return (thirdwebAllInOne, coreWeb3Authenticator, autoLoginAuthenticator);
         }
 
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)
