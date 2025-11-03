@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
+using DCL.SkyBox;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Profiling;
@@ -20,6 +21,8 @@ namespace DCL.PluginSystem.Global
 
         [field: SerializeField]
         public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
+        [field: SerializeField]
+        public SkyboxSettingsAsset SkyboxSettings { get; private set; }
 
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]

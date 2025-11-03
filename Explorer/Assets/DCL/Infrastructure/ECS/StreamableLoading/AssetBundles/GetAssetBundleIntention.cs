@@ -35,6 +35,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal Hash128? cacheHash;
 
         public bool IsDependency;
+        public bool LookForDependencies;
 
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
@@ -42,6 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleManifestVersion? assetBundleVersion = null,
             string parentEntityID = "",
             bool isDependency = false,
+            bool lookForDependencies = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -56,6 +58,7 @@ namespace ECS.StreamableLoading.AssetBundles
             ParentEntityID = parentEntityID;
             AssetBundleManifestVersion = assetBundleVersion;
             IsDependency = isDependency;
+            LookForDependencies = lookForDependencies;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -78,8 +81,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default, CancellationTokenSource cancellationTokenSource = null,
-            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false) =>
-            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, cancellationTokenSource: cancellationTokenSource);
+            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false, bool lookForDependencies = false) =>
+            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, lookForDependencies: lookForDependencies, cancellationTokenSource: cancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

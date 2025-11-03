@@ -1,7 +1,5 @@
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

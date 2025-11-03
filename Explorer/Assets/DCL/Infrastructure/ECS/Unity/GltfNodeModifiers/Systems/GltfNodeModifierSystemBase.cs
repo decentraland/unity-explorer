@@ -80,9 +80,15 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void ResetShadowCasting(Entity gltfNodeEntity)
         {
+            if (gltfNodeEntity == Entity.Null) return;
+
             GltfNode gltfNode = World.Get<GltfNode>(gltfNodeEntity);
 
-            foreach (Renderer renderer in gltfNode.Renderers) { renderer.shadowCastingMode = ShadowCastingMode.On; }
+            foreach (Renderer renderer in gltfNode.Renderers)
+            {
+                if (!renderer) continue;
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+            }
         }
 
         /// <summary>
