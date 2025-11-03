@@ -45,5 +45,15 @@ namespace DCL.AvatarRendering.Loading.Components
     {
         public static URN GetUrn(this ITrimmedAvatarAttachment avatarAttachment) =>
             avatarAttachment.DTO.Metadata.id;
+
+        public static string GetRarity(this ITrimmedAvatarAttachment avatarAttachment)
+        {
+            const string DEFAULT_RARITY = "base";
+            string result = avatarAttachment.DTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
+        }
+
+        public static string GetCategory(this ITrimmedAvatarAttachment avatarAttachment) =>
+            avatarAttachment.DTO.Metadata.AbstractData.category;
     }
 }

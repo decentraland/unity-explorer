@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         private readonly Dictionary<string, IWearable?> wearables = new ();
         private readonly HashSet<string> forceRenderCategories = new ();
         public IReadOnlyCollection<string> ForceRenderCategories => forceRenderCategories;
-        
+
         private Color hairColor;
         private Color eyesColor;
         private Color bodyshapeColor;
@@ -31,6 +31,9 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public bool IsEquipped(IWearable wearable) =>
             wearables[wearable.GetCategory()] == wearable;
+
+        public bool IsEquipped(ITrimmedWearable wearable) =>
+            wearables[wearable.GetCategory()]?.DTO.id == wearable.DTO.id;
 
         public void Equip(IWearable wearable) =>
             wearables[wearable.GetCategory()] = wearable;

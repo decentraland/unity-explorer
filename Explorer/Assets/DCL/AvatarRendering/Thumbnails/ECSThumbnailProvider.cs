@@ -1,18 +1,13 @@
 using Arch.Core;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using ECS;
 using ECS.Prioritization.Components;
 using System.Threading;
-using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
-using DCL.WebRequests;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
+using System;
 using UnityEngine;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -44,5 +39,8 @@ namespace DCL.AvatarRendering.Wearables
             // The promise's result will eventually get replicated into the avatar attachment
             return await avatarAttachment.WaitForThumbnailAsync(0, ct);
         }
+
+        public UniTask<Sprite> GetAsync(ITrimmedAvatarAttachment avatarAttachment, CancellationToken ct) =>
+            throw new NotImplementedException();
     }
 }

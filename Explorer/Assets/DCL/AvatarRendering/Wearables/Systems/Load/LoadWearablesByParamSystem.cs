@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class LoadWearablesByParamSystem : LoadElementsByIntentionSystem<WearablesResponse, GetWearableByParamIntention, IWearable, WearableDTO>
+    public partial class LoadWearablesByParamSystem : LoadElementsByIntentionSystem<WearablesResponse, GetWearableByParamIntention, ITrimmedWearable, TrimmedWearableDTO>
     {
         private readonly URLSubdirectory lambdaSubdirectory;
         private readonly URLSubdirectory wearablesSubdirectory;
@@ -65,8 +65,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected override WearablesResponse AssetFromPreparedIntention(in GetWearableByParamIntention intention) =>
             new (intention.Results, intention.TotalAmount);
 
-        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+            await adapter.CreateFromJson<TrimmedWearableDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
 
         protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);

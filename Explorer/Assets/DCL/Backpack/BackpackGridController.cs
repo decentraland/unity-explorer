@@ -282,7 +282,7 @@ namespace DCL.Backpack
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
             Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
 
@@ -343,11 +343,11 @@ namespace DCL.Backpack
             }
         }
 
-        private void UpdateBodyShapeCompatibility(IReadOnlyList<IWearable> wearables, IAvatarAttachment bodyShape)
+        private void UpdateBodyShapeCompatibility(IReadOnlyList<ITrimmedWearable> wearables, IAvatarAttachment bodyShape)
         {
             for (int i = Math.Min(wearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
-                IWearable wearable = wearables[i];
+                ITrimmedWearable wearable = wearables[i];
                 BackpackItemView? itemView = loadingResults[i];
 
                 if (itemView == null) continue;

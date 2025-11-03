@@ -19,9 +19,9 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
-        
+
         private int currentEmoteSlot = -1;
-        
+
         public BackpackBusController(
             IWearableStorage wearableStorage,
             IBackpackEventBus backpackEventBus,
@@ -90,6 +90,10 @@ namespace DCL.Backpack.BackpackBus
         {
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
                 backpackEventBus.SendWearableSelect(wearable);
+            else
+            {
+                //TODO: request wearable by pointer
+            }
         }
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
