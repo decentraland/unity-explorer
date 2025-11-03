@@ -32,8 +32,8 @@ namespace DCL.PluginSystem.World
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBPointerLock>.InjectToWorld(ref builder);
-
             UpdatePointerLockSystem.InjectToWorld(ref builder, globalWorld, cameraData);
+            WritePointerLockStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, cameraData, sharedDependencies.ScenePartition, 3);
         }
     }
 }
