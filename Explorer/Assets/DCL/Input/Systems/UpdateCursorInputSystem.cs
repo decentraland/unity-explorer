@@ -117,6 +117,45 @@ namespace DCL.Input.Systems
             UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
         }
 
+        [Query]
+        private void UpdateCursorLockStateFromIntention(in Entity entity,
+            ref CursorComponent cursorComponent,
+            in ExposedCameraData exposedCameraData,
+            ref PointerLockIntention intention)
+        {
+            Vector2 mousePos = mouseDevice.position.value;
+            IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
+
+            if (intention.Locked)
+            {
+                if (cursorComponent.CursorState == CursorState.Locked)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
+                // Keep the intention as pending if the cursor is over any UI
+                if (raycastResults.Count > 0 || cursorComponent.IsOverUI)
+                    return;
+
+                UpdateState(ref cursorComponent, CursorState.Locked);
+            }
+            else
+            {
+                if (cursorComponent.CursorState == CursorState.Free)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
+                UpdateState(ref cursorComponent, CursorState.Free);
+            }
+
+            UpdateCursorVisualState(ref cursorComponent, raycastResults, in exposedCameraData);
+
+            World.Remove<PointerLockIntention>(entity);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorVisualState(ref CursorComponent cursorComponent, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
@@ -156,63 +195,6 @@ namespace DCL.Input.Systems
 
             cursor.SetStyle(cursorStyle);
             crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SDKCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
-        }
-
-        [Query]
-        private void UpdateCursorLockStateFromIntention(in Entity entity,
-            ref CursorComponent cursorComponent,
-            in ExposedCameraData exposedCameraData,
-            ref PointerLockIntention intention)
-        {
-            if (intention.Locked)
-            {
-                if (cursorComponent.CursorState == CursorState.Locked)
-                {
-                    World.Remove<PointerLockIntention>(entity);
-                    return;
-                }
-
-                Vector2 mousePos = mouseDevice.position.value;
-                IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
-
-                // Dont lock cursor when is over any UI
-                if (raycastResults.Count > 0 || cursorComponent.IsOverUI)
-                    return;
-
-                UpdateState(ref cursorComponent, CursorState.Locked);
-            }
-            else
-            {
-                if (cursorComponent.CursorState == CursorState.Free)
-                {
-                    World.Remove<PointerLockIntention>(entity);
-                    return;
-                }
-
-                UpdateState(ref cursorComponent, CursorState.Free);
-            }
-
-            if (cursorComponent.CursorState != CursorState.Panning)
-                cursorComponent.PositionIsDirty = false;
-
-            CursorStyle cursorStyle = CursorStyle.Normal;
-
-            switch (cursorComponent.CursorState)
-            {
-                case CursorState.Free:
-                    if (isHoveringAnInteractable)
-                        cursorStyle = CursorStyle.Interaction;
-                    break;
-                case CursorState.Panning:
-                    cursorStyle = CursorStyle.CameraPan;
-                    break;
-            }
-
-            cursor.SetStyle(cursorStyle);
-            crosshairCanvas.SetCursorStyle(cursorStyle,
-                exposedCameraData.CameraMode is CameraMode.SDKCamera or CameraMode.InWorld);
-
-            World.Remove<PointerLockIntention>(entity);
         }
 
         // We check if the gameObject is interactable or not, at least once.
