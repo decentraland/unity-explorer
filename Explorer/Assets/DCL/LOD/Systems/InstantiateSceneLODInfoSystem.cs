@@ -2,7 +2,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;

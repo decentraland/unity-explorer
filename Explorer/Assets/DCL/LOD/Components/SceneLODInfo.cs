@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Arch.Core;
 using DCL.LOD.Systems;
 using ECS.StreamableLoading.AssetBundles;
@@ -86,7 +84,6 @@ namespace DCL.LOD.Components
         public byte CurrentLODLevelPromise;
 
         public InitialSceneStateLOD InitialSceneStateLOD;
-
 
         public void Dispose(World world)
         {

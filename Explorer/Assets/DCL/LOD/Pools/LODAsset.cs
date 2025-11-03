@@ -1,12 +1,7 @@
-
-//TODO (JUANI) : Remove
-#nullable enable
-
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.LOD.Components;
-using JetBrains.Annotations;
 using UnityEngine;
 using Utility;
 
