@@ -138,6 +138,9 @@ namespace DCL.Input.Systems
                 if (raycastResults.Count > 0 || cursorComponent.IsOverUI)
                     return;
 
+                // In editor sometimes the pointer is still visible even if its locked.
+                // This is because how the editor window focusing works (it needs a click on the game window).
+                // In the build it works 100%
                 UpdateState(ref cursorComponent, CursorState.Locked);
             }
             else
