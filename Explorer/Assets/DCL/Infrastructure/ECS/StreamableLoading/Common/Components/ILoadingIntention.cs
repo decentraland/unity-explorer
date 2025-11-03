@@ -17,7 +17,6 @@ namespace ECS.StreamableLoading.Common.Components
 
     public interface ILoadingIntention : IAssetIntention
     {
-        bool DisableDiskCache => false;
         CommonLoadingArguments CommonArguments { get; set; }
     }
 
@@ -71,7 +70,7 @@ namespace ECS.StreamableLoading.Common.Components
         ///     Only assets downloaded from web can be cached on disk, otherwise the asset is already stored locally on disk
         /// </summary>
         public static bool IsQualifiedForDiskCache<T>(this ref T loadingIntention) where T: struct, ILoadingIntention =>
-            loadingIntention.CommonArguments.CurrentSource == AssetSource.WEB && !loadingIntention.DisableDiskCache;
+            loadingIntention.CommonArguments.CurrentSource == AssetSource.WEB;
 
         public static bool AreUrlEquals<TIntention>(this TIntention intention, TIntention other) where TIntention: struct, ILoadingIntention =>
             intention.CommonArguments.URL == other.CommonArguments.URL;
