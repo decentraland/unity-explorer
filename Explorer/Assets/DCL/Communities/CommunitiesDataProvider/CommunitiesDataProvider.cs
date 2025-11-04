@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -398,12 +399,50 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetCommunityPostsResponse> GetCommunityPostsAsync(string communityId, CancellationToken ct)
+        public async UniTask<GetCommunityPostsResponse> GetCommunityPostsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/posts";
+            string url = $"{communitiesBaseUrl}/{communityId}/posts?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetCommunityPostsResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
+
+            // TODO (Santi): This is temporal... REMOVE IT!
+            List<CommunityPost> mockedPosts = new ();
+
+            int initialIndex = 0;
+            int finalIndex = 10;
+            if (pageNumber == 2)
+            {
+                initialIndex = 10;
+                finalIndex = 20;
+            }
+            else if (pageNumber == 3)
+            {
+                initialIndex = 20;
+                finalIndex = 25;
+            }
+
+            for (int i = initialIndex; i < finalIndex; i++)
+            {
+                string postId = (i+1).ToString();
+
+                mockedPosts.Add(new CommunityPost
+                {
+                    id = postId,
+                    communityId = communityId,
+                    authorAddress = "0x1b8ba74cc34c2927aac0a8af9c3b1ba2e61352f2",
+                    authorName = "SantiHisteria",
+                    authorProfilePictureUrl = "https://picsum.photos/100/100",
+                    authorHasClaimedName = true,
+                    content = postId.Contains("2") ? $"Test post {i+1}\nExtra line 1...\nExtra line 2...\nExtra line 3..." : $"Test post {i+1}",
+                    createdAt = "",
+                    likesCount = 0,
+                    isLikedByUser = false,
+                });
+            }
+            response.data.total = 25;
+            response.data.posts = mockedPosts.ToArray();
+            await UniTask.Delay(2000, cancellationToken: ct);
 
             return response;
         }

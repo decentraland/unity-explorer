@@ -3,22 +3,20 @@
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
-    public struct GetCommunityPostsResponse
+    public class GetCommunityPostsResponse
     {
         public CommunityPostsData data;
     }
 
     [Serializable]
-    public struct CommunityPostsData
+    public class CommunityPostsData
     {
         public CommunityPost[] posts;
         public int total;
-        public int limit;
-        public int offset;
     }
 
     [Serializable]
-    public struct CommunityPost
+    public class CommunityPost
     {
         public string id;
         public string communityId;

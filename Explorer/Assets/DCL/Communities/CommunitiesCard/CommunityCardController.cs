@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunityCreation;
@@ -81,6 +82,7 @@ namespace DCL.Communities.CommunitiesCard
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
         private EventListController? eventListController;
+        private AnnouncementsSectionController? announcementsSectionController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
@@ -184,6 +186,7 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController?.Dispose();
             eventListController?.Dispose();
             communityCardVoiceChatController?.Dispose();
+            announcementsSectionController?.Dispose();
         }
 
         private void OnOpenCommunityCardFromNotification(object[] parameters)
@@ -359,6 +362,9 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
+            announcementsSectionController = new AnnouncementsSectionController(viewInstance.AnnouncementsSectionView,
+                communitiesDataProvider);
+
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
@@ -490,6 +496,7 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController?.Reset();
             eventListController?.Reset();
             communityCardVoiceChatController?.Reset();
+            announcementsSectionController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
@@ -512,6 +519,9 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
+                    break;
+                case CommunityCardView.Sections.ANNOUNCEMENTS:
+                    announcementsSectionController!.ShowAnnouncements(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
         }

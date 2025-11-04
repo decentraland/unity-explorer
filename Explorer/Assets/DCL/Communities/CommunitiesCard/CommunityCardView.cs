@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
@@ -118,6 +119,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public MembersListView MembersListView { get; private set; } = null!;
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
+        [field: SerializeField] public AnnouncementsSectionView AnnouncementsSectionView { get; private set; } = null!;
 
         [field: Header("Restricted Access")]
         [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsAllowed { get; private set; }
@@ -288,6 +290,7 @@ namespace DCL.Communities.CommunitiesCard
             CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
             PlacesSectionView.SetActive(section == Sections.PLACES);
+            AnnouncementsSectionView.SetActive(section == Sections.ANNOUNCEMENTS);
 
             if (invokeEvent)
                 SectionChanged?.Invoke(section);
