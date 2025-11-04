@@ -76,6 +76,7 @@ namespace DCL.LOD.Components
         private void SetupLODRelativeHeights(UnityEngine.LOD[] lods, float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
             int loadedLODAmount = SceneLODInfoUtils.LODCount(metadata.SuccessfullLODs);
+            Debug.Log($"JUANI LOAD LOADED AMOUNT {loadedLODAmount}");
             CalculateCullRelativeHeight(defaultFOV, defaultLodBias, loadingDistance);
 
             if (loadedLODAmount == 1)
@@ -162,6 +163,29 @@ namespace DCL.LOD.Components
         {
             CurrentLODPromise.ForgetLoading(world);
             InitialSceneStateLOD.ForgetLoading(world);
+        }
+
+        public void ClearISS(float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
+        {
+            if (InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+            {
+                metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(metadata.SuccessfullLODs, 0);
+                UnityEngine.LOD[] currentLODs = metadata.LodGroup.GetLODs();
+
+                // Remove LOD_0 (index 0) from the array, keeping LOD_1
+                // LODs are always created with size 2, and SetupLODRelativeHeights expects size 2, so we maintain size 2
+                // Move LOD_1 (what was at index 1) to index 0, and add an empty LOD at index 1
+                UnityEngine.LOD[] lodsWithoutLOD0 = new UnityEngine.LOD[2]
+                {
+                    new (0f, Array.Empty<Renderer>()),
+                    currentLODs[1],
+                };
+                SetupLODRelativeHeights(lodsWithoutLOD0, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
+                metadata.LodGroup.SetLODs(lodsWithoutLOD0);
+
+                RecalculateLODDistances(defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
+            }
+
         }
     }
 }
