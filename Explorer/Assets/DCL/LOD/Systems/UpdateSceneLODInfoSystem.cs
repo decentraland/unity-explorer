@@ -5,16 +5,16 @@ using AssetManagement;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,6 +25,8 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateBefore(typeof(ResolveISSLODSystem))]
+    [UpdateBefore(typeof(InstantiateSceneLODInfoSystem))]
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
@@ -42,8 +44,8 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {
@@ -60,16 +62,25 @@ namespace DCL.LOD.Systems
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
-                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition, initialSceneStateDescriptor);
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
         }
 
-        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level, InitialSceneStateDescriptor initialSceneStateDescriptor)
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
         {
-            sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+            sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0 && initialSceneStateDescriptor.IsValid())
+            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
+                           && !sceneLODInfo.InitialSceneStateLOD.CurrentState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.FAILED))
             {
+                var initialSceneState = GetAssetBundleIntention.FromHash(
+                    GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
+                    typeof(GameObject),
+                    permittedSources: AssetSource.WEB,
+                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion
+                );
+                sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
+                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING;
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;
             }
