@@ -12,13 +12,20 @@ namespace DCL.LOD
                                                                 IScenesCache scenesCache,
                                                                 IReadOnlyList<Vector2Int> parcels,
                                                                 ILODCache lodCache,
-                                                                World world)
+                                                                World world,
+                                                                float defaultFOV,
+                                                                float defaultLodBias,
+                                                                int loadingDistance,
+                                                                int sceneParcels)
         {
             //Only try to release SceneLODInfo that has been initialized
             if (sceneLODInfo.IsInitialized())
             {
-                if(sceneLODInfo.InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+                if (sceneLODInfo.InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+                {
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                    sceneLODInfo.RecalculateLODDistances(defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
+                }
                 lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
                 sceneLODInfo.Dispose(world);
                 scenesCache.RemoveNonRealScene(parcels);

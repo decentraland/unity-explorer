@@ -4,6 +4,7 @@ using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -53,7 +54,7 @@ namespace DCL.LOD.Tests
             };
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
-            system = new UnloadSceneLODSystem(world, scenesCache, lodCache);
+            system = new UnloadSceneLODSystem(world, scenesCache, lodCache, Substitute.For<IRealmPartitionSettings>());
         }
 
         [Test]
