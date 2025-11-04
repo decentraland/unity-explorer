@@ -127,7 +127,6 @@ namespace SceneRunner.Scene
                 false;
         }
 
-        //TODO (JUANI) : How to avoid this leaf interface?
         public class FakeInitialSceneState : IInitialSceneState
         {
             public void Dispose()

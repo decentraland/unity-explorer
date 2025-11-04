@@ -71,13 +71,13 @@ namespace SceneRunner.ECSWorld
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
 
-            // Prioritization
-            finalizeWorldSystems.Add(PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot));
-            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
-            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
-
             foreach (IDCLWorldPlugin worldPlugin in plugins)
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
+
+            // Prioritization
+            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
+            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
+            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
             ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);

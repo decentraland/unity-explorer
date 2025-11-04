@@ -78,7 +78,7 @@ namespace DCL.LOD.Systems
                                     PositionAsset(initialSceneStateLOD, assetHash, asset, initialSceneStateLOD.ParentContainer.transform, initialSceneStateMetadata, i);
                                 else
                                 {
-                                    //Little but redundant, but needed for correct ref counting
+                                    //Little bit redundant, but needed for correct ref counting
                                     AssetBundlePromise promise = AssetBundlePromise.Create(World,
                                         GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id),
                                             assetBundleManifestVersion: sceneDefinition.Definition.assetBundleManifestVersion,

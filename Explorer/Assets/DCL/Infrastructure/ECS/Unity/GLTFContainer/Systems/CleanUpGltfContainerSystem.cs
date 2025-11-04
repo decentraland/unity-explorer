@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -22,61 +24,57 @@ namespace ECS.Unity.GLTFContainer.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CleanUpGltfContainerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly QueryDescription ENTITY_DESTROY_QUERY = new QueryDescription()
-           .WithAll<DeleteEntityIntention, GltfContainerComponent, PartitionComponent>();
+        private IPartitionComponent scenePartition;
+        private IGltfContainerAssetsCache cache;
+        private IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        private ReleaseOnEntityDestroy releaseOnEntityDestroy;
-
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition) : base(world)
         {
-            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, entityCollidersSceneCache, World);
+            this.scenePartition = scenePartition;
+            this.cache = cache;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
         }
 
         protected override void Update(float t)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent, PartitionComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
+            FinalizeGLTFContainerQuery(World);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void FinalizeGLTFContainer(ref GltfContainerComponent component)
+        {
+            DestroyGLTFContainer(ref component, false);
+        }
+
+        [Query]
+        [All(typeof(GltfContainerComponent))]
+        private void DestroyWithScenePartition(ref GltfContainerComponent component)
+        {
+            DestroyGLTFContainer(ref component, LODUtils.ShouldGoToTheBridge(scenePartition));
         }
 
         public void FinalizeComponents(in Query query)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent, PartitionComponent>(in new QueryDescription().WithAll<GltfContainerComponent, PartitionComponent>(), ref releaseOnEntityDestroy);
+            DestroyWithScenePartitionQuery(World);
         }
 
-        private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent, PartitionComponent>
+        private void DestroyGLTFContainer(ref GltfContainerComponent component, bool putInBridge)
         {
-            private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-            private readonly IGltfContainerAssetsCache cache;
-            private readonly World world;
-
-            public ReleaseOnEntityDestroy(IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, World world)
+            if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                this.cache = cache;
-                this.world = world;
-                this.entityCollidersSceneCache = entityCollidersSceneCache;
+                //TODO (JUANI) : Newly instantiated asset will remain in the bridge
+                cache.Dereference(component.Hash, result.Asset, putInBridge && result.Asset.IsISS);
+                entityCollidersSceneCache.Remove(result.Asset);
+
+                // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
+                if (result.Asset.AssetData is GLTFData)
+                    result.Asset.Dispose();
             }
 
-            public void Update(ref GltfContainerComponent component, ref PartitionComponent partitionComponent)
-            {
-                if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
-                {
-                    //TODO (JUANI) : Newly instantiated asset will remain in the bridge
-                    //Assets are repartition in `PartitionAssetEntitiesSystem` before the scene is disposed. Therefore we can use the parition to determine where
-                    //the assets should go
-                    //TODO (JUANI) : Use the LOD bucket threshold
-                    if (!partitionComponent.IsBehind && partitionComponent.Bucket <= 2 && result.Asset.IsISS)
-                        cache.PutInBridge(result.Asset);
-
-                    cache.Dereference(component.Hash, result.Asset);
-                    entityCollidersSceneCache.Remove(result.Asset);
-
-                    // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
-                    if (result.Asset.AssetData is GLTFData)
-                        result.Asset.Dispose();
-                }
-
-                component.RootGameObject = null;
-                component.Promise.ForgetLoading(world);
-            }
+            component.RootGameObject = null;
+            component.Promise.ForgetLoading(World);
         }
+
     }
 }

@@ -18,6 +18,8 @@ namespace DCL.LOD.Components
         public int TotalAssetsToInstantiate { get; private set; }
         public AssetBundleData? AssetBundleData { get; private set; }
 
+        public bool AssetsShouldGoToTheBridge;
+
         public enum InitialSceneStateLODState
         {
             UNINITIALIZED,
@@ -49,7 +51,7 @@ namespace DCL.LOD.Components
             AssetBundleData = null;
 
             foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
-                gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2);
+                gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2, AssetsShouldGoToTheBridge);
 
             Assets.Clear();
             UnityObjectUtils.SafeDestroy(ParentContainer);
@@ -59,12 +61,6 @@ namespace DCL.LOD.Components
         {
             AssetBundlePromise.ForgetLoading(world);
             Clear();
-        }
-
-        public void MoveAssetsToBridge()
-        {
-            foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
-                gltfCache.PutInBridge(gltfContainerAsset.Item2);
         }
 
         public void AddResolvedAsset(string assetHash, GltfContainerAsset asset) =>

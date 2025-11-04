@@ -27,7 +27,7 @@ namespace ECS.Unity.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.PRIORITIZATION)]
-    public partial class PartitionAssetEntitiesSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class PartitionAssetEntitiesSystem : BaseUnityLoopSystem
     {
         private readonly IReadOnlyCameraSamplingData samplingData;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
@@ -167,15 +167,5 @@ namespace ECS.Unity.Systems
             partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
         }
 
-        public void FinalizeComponents(in Query query)
-        {
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-            Vector3 cameraPosition = samplingData.Position;
-            Vector3 cameraForward = samplingData.Forward;
-
-            // Repartition everything
-            RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, false);
-            RepartitionExistingEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
-        }
     }
 }

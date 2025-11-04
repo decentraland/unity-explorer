@@ -29,7 +29,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
-            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
+            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY);
         }
 
         [Test]
@@ -44,8 +44,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             c.State = LoadingState.Finished;
 
 
-            //TODO (JUANI): A GLTFContainerComponent will always have a partition. correct?
-            Entity e = world.Create(c, new DeleteEntityIntention(), PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(c, new DeleteEntityIntention());
 
             system.Update(0);
 

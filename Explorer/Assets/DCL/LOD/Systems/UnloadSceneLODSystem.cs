@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using DCL.Diagnostics;
+using DCL.LOD.Systems;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -59,9 +60,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (sceneLODInfo.IsInitialized())
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
-
-                if (!partitionComponent.IsBehind)
-                    sceneLODInfo.InitialSceneStateLOD.MoveAssetsToBridge();
+                sceneLODInfo.InitialSceneStateLOD.AssetsShouldGoToTheBridge = LODUtils.ShouldGoToTheBridge(partitionComponent);
 
                 sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                 World.Remove<SceneLODInfo>(entity);

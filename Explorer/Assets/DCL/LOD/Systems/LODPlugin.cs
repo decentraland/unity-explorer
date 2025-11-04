@@ -70,6 +70,9 @@ namespace DCL.PluginSystem.Global
             lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
 
+
+            LODUtils.LODZeroBucketThreshold = (byte)lodSettingsAsset.SDK7LodThreshold;
+
             if (lodEnabled)
             {
                 CalculateLODBiasSystem.InjectToWorld(ref builder);
