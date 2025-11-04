@@ -57,11 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
                     return;
 
-                if (sceneLODInfo.IsInitialized())
-                    sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
-
                 sceneLODInfo.InitialSceneStateLOD.AssetsShouldGoToTheBridge = LODUtils.ShouldGoToTheBridge(partitionComponent);
-
                 sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                 World.Remove<SceneLODInfo>(entity);
             }
