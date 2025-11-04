@@ -12,7 +12,6 @@ namespace DCL.Multiplayer.Connectivity
     public class WorldInfoOnlineUsersProviderDecorator : IOnlineUsersProvider
     {
         private const string USER_ID_FIELD = "[USER-ID]";
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new() { Converters = new JsonConverter[] { new OnlinePlayerInWorldJsonDtoConverter() } };
 
         private readonly IOnlineUsersProvider baseProvider;
         private readonly IWebRequestController webRequestController;
@@ -53,7 +52,7 @@ namespace DCL.Multiplayer.Connectivity
                 urlBuilder.AppendDomain(URLDomain.FromString(baseUrlWorlds.Value.Replace(USER_ID_FIELD, userId)));
 
                 OnlineUserData worldUserData = await webRequestController.GetAsync(urlBuilder.Build(), ct, ReportCategory.MULTIPLAYER, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND)
-                                                  .CreateFromNewtonsoftJsonAsync<OnlineUserData>(serializerSettings: SERIALIZER_SETTINGS);
+                                                  .CreateFromNewtonsoftJsonAsync<OnlineUserData>();
 
                 if (!string.IsNullOrEmpty(worldUserData.worldName))
                     onlineUsers.Add(worldUserData);
