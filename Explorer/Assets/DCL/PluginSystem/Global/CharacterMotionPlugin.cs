@@ -73,8 +73,7 @@ namespace DCL.PluginSystem.Global
                 new StunComponent(),
                 new FeetIKComponent(),
                 new HandsIKComponent(),
-                new HeadIKComponent { IsEnabled = true },
-                new AvatarLocomotionSettings());
+                new HeadIKComponent { IsEnabled = true });
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);

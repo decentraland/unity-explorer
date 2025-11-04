@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
@@ -8,11 +9,11 @@ using System.Collections.Generic;
 
 namespace DCL.SDKComponents.AvatarLocomotion
 {
-    public class AvatarLocomotionSettingsPlugin : IDCLWorldPluginWithoutSettings
+    public class AvatarLocomotionOverridesWorldPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly World globalWorld;
 
-        public AvatarLocomotionSettingsPlugin(World globalWorld)
+        public AvatarLocomotionOverridesWorldPlugin(World globalWorld)
         {
             this.globalWorld = globalWorld;
         }
@@ -22,6 +23,6 @@ namespace DCL.SDKComponents.AvatarLocomotion
             in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
-            PropagateAvatarLocomotionSettingsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld);
+            PropagateAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld);
     }
 }

@@ -282,7 +282,7 @@ namespace Global
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
                 new SkyboxTimePlugin(),
-                new AvatarLocomotionSettingsPlugin(globalWorld),
+                new AvatarLocomotionOverridesWorldPlugin(globalWorld),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

@@ -113,6 +113,7 @@ using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
+using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -939,6 +940,7 @@ namespace Global.Dynamic
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new AvatarLocomotionOverridesGlobalPlugin(staticContainer.ScenesCache),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
