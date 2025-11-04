@@ -76,7 +76,6 @@ namespace DCL.LOD.Components
         private void SetupLODRelativeHeights(UnityEngine.LOD[] lods, float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
             int loadedLODAmount = SceneLODInfoUtils.LODCount(metadata.SuccessfullLODs);
-            Debug.Log($"JUANI LOAD LOADED AMOUNT {loadedLODAmount}");
             CalculateCullRelativeHeight(defaultFOV, defaultLodBias, loadingDistance);
 
             if (loadedLODAmount == 1)
