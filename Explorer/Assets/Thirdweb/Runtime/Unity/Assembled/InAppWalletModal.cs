@@ -17,5 +17,18 @@ namespace Thirdweb.Unity
 
             return await modal.LoginWithOtp(wallet) as InAppWallet;
         }
+
+        public static async Task<string> EmailLogin()
+        {
+#if UNITY_6000_0_OR_NEWER
+            AbstractEmailModal modal = Object.FindAnyObjectByType<AbstractEmailModal>();
+#else
+            var modal = Object.FindObjectOfType<AbstractEmailModal>();
+#endif
+            if (modal == null)
+                throw new Exception("No EmailModal found in the scene.");
+
+            return await modal.GetEmailAsync();
+        }
     }
 }

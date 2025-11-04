@@ -22,9 +22,9 @@ namespace DCL.Web3.Authenticators
     {
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly DecentralandEnvironment environment;
-        private readonly string loginEmail1 = "popuzin@gmail.com";
-        private readonly string loginEmail2 = "vitaly.popuzin@decentraland.org";
-        private readonly string phoneNumber = "+436605212763";
+
+        // private readonly string loginEmail1 = "popuzin@gmail.com";
+        // private readonly string loginEmail2 = "vitaly.popuzin@decentraland.org";
         private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
 
         public ThirdwebInAppWalletAuthenticator(IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
@@ -43,12 +43,15 @@ namespace DCL.Web3.Authenticators
             await UniTask.SwitchToMainThread(ct);
 
             BigInteger chainId = GetChainId(environment);
-            Debug.Log($"VVV ThirdwebAuth: Start login. Email={loginEmail2}, Env={environment}, ChainId={chainId}");
+
+            // Получаем email из модального окна на сцене
+            string loginEmail = await ThirdwebManager.Instance.RequestEmailThroughModalAsync();
+            Debug.Log($"VVV ThirdwebAuth: Start login. Email={loginEmail}, Env={environment}, ChainId={chainId}");
 
             var walletOptions = new WalletOptions(
                 WalletProvider.InAppWallet,
                 chainId,
-                new InAppWalletOptions(loginEmail2)
+                new InAppWalletOptions(loginEmail)
             );
 
             Debug.Log("VVV ThirdwebAuth: ConnectWallet()");
@@ -167,6 +170,8 @@ namespace DCL.Web3.Authenticators
             if (@params[0] is string s) return s;
             throw new Web3Exception("Cannot resolve personal_sign message");
         }
+
+
 
         private ThirdwebTransactionInput ResolveSendTransactionInput(object[]? @params)
         {

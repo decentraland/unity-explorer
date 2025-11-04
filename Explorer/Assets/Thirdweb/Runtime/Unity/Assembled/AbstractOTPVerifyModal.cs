@@ -7,4 +7,9 @@ namespace Thirdweb.Unity
     {
         public abstract Task<IThirdwebWallet> LoginWithOtp(IThirdwebWallet wallet);
     }
+
+    public abstract class AbstractEmailModal : MonoBehaviour
+    {
+        public abstract Task<string> GetEmailAsync();
+    }
 }

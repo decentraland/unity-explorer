@@ -379,6 +379,8 @@ namespace Thirdweb.Unity
         // ------------------------------------------------------
         // Connection Methods
         // ------------------------------------------------------
+        public async Task<string> RequestEmailThroughModalAsync() =>
+            await InAppWalletModal.EmailLogin();
 
         public virtual async Task<IThirdwebWallet> ConnectWallet(WalletOptions walletOptions)
         {

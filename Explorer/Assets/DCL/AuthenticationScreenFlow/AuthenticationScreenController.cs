@@ -175,7 +175,8 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
-            BlockUnwantedInputs();
+
+            // BlockUnwantedInputs();
         }
 
         protected override void OnViewShow()
