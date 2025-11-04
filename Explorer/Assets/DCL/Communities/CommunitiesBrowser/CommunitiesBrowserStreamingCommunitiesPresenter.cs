@@ -55,12 +55,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.ViewAllStreamingCommunitiesButtonClicked -= ViewAllStreamingCommunitiesButtonClicked;
         }
 
-        private void JoinStreamClicked(string communityId)
+        private void JoinStreamClicked(string communityId, bool isMember)
         {
             if (browserStateService.CurrentCommunityId.Value == communityId)
                 commandsLibrary.GoToStreamCommand.Execute(communityId);
 
-            commandsLibrary.JoinStreamCommand.Execute(communityId);
+            commandsLibrary.JoinStreamCommand.Execute(communityId, isMember);
         }
 
         private void ViewAllStreamingCommunitiesButtonClicked()

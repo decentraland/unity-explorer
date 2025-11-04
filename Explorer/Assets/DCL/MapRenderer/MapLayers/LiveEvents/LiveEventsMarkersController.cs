@@ -29,7 +29,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ClusterController clusterController;
         private readonly INavmapBus navmapBus;
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
@@ -47,7 +47,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private bool arePlacesLoaded;
 
         public LiveEventsMarkersController(
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             IObjectPool<CategoryMarkerObject> objectsPool,
             CategoryMarkerBuilder builder,
             Transform instantiationParent,

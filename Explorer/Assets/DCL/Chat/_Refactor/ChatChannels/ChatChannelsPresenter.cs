@@ -175,9 +175,7 @@ namespace DCL.Chat
         {
             if (isInitialized) return;
 
-            lifeCts.Cancel();
-            lifeCts.Dispose();
-            lifeCts = new CancellationTokenSource();
+            lifeCts = lifeCts.SafeRestart();
 
             view.Clear();
             viewModels.Clear();

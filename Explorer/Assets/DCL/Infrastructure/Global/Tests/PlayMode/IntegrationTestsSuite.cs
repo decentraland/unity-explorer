@@ -18,6 +18,7 @@ using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.Clipboard;
 using ECS;
 using MVC;
 using MVC.PopupsController.PopupCloser;
@@ -106,6 +107,8 @@ namespace Global.Tests.PlayMode
             if (!success)
                 throw new Exception("Cannot create the static container");
 
+            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
+
             await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(
@@ -124,7 +127,8 @@ namespace Global.Tests.PlayMode
                 new IMessagePipesHub.Fake(),
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
-                DecentralandEnvironment.Org
+                DecentralandEnvironment.Org,
+                Substitute.For<ISystemClipboard>()
             );
 
             return (staticContainer, sceneSharedContainer);

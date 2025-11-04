@@ -63,6 +63,10 @@ MonoBehaviour:
     m_Key: IMAGE-11
     m_Metadata:
       m_Items: []
+  - m_Id: 231489455464079360
+    m_Key: IMAGE-12
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items:
     - rid: 4107643858754469895
@@ -133,6 +137,9 @@ MonoBehaviour:
           m_TableCodes:
           - en
         - m_KeyId: 231133291010285568
+          m_TableCodes:
+          - en
+        - m_KeyId: 231489455464079360
           m_TableCodes:
           - en
         m_TypeString: UnityEngine.Texture2D, UnityEngine.CoreModule, Version=0.0.0.0,

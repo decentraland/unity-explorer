@@ -2,15 +2,10 @@
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using static DCL.Ipfs.SceneMetadata;
 
 namespace DCL.SkyBox
 {
-    public enum TransitionMode
-    {
-        FORWARD,
-        BACKWARD,
-    }
-
     [CreateAssetMenu(menuName = "DCL/SO/Skybox Settings", fileName = "SkyboxSettings")]
     public class SkyboxSettingsAsset : ScriptableObject
     {
@@ -57,35 +52,25 @@ namespace DCL.SkyBox
 
         public float TransitionSpeed => transitionSpeed;
 
+        /// <summary>
+        /// Normalized time of day (0-1).
+        /// Setting this property also updates TimeOfDayInSeconds.
+        /// </summary>
         public float TimeOfDayNormalized
         {
             get => timeOfDayNormalized;
-
             set
             {
                 if (Mathf.Approximately(timeOfDayNormalized, value)) return;
                 timeOfDayNormalized = value;
+                TimeOfDayInSeconds = (uint)(value * SECONDS_IN_DAY);
                 TimeOfDayChanged?.Invoke(timeOfDayNormalized);
             }
         }
 
+        public uint TimeOfDayInSeconds { get; private set; }
+
         public float TargetTimeOfDayNormalized { get; set; }
-
-        public void Reset()
-        {
-            timeOfDayNormalized = INITIAL_TIME_OF_DAY;
-            TargetTimeOfDayNormalized = INITIAL_TIME_OF_DAY;
-            IsDayCycleEnabled = true;
-            TransitionMode = TransitionMode.FORWARD;
-            IsUIControlled = false;
-            CurrentSDKControlledScene = null;
-        }
-
-        // Mapping: 0 - Low, 1 - Medium, 2 - High, 3 - Custom
-        public void SetRefreshInterval(int qualityPresetId)
-        {
-            refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
-        }
 
         public static float NormalizeTime(float time)
         {
@@ -94,6 +79,22 @@ namespace DCL.SkyBox
 
             time %= SECONDS_IN_DAY;
             return time / SECONDS_IN_DAY;
+        }
+
+        // Mapping: 0 - Low, 1 - Medium, 2 - High, 3 - Custom
+        public void SetRefreshInterval(int qualityPresetId)
+        {
+            refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
+        }
+
+        public void Reset()
+        {
+            TimeOfDayNormalized = INITIAL_TIME_OF_DAY;
+            TargetTimeOfDayNormalized = INITIAL_TIME_OF_DAY;
+            IsDayCycleEnabled = true;
+            TransitionMode = TransitionMode.FORWARD;
+            IsUIControlled = false;
+            CurrentSDKControlledScene = null;
         }
 
         [Serializable]

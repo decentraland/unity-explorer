@@ -16,13 +16,13 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
     {
         private const double RELOAD_SCENE_TIMEOUT_SECS = 5;
 
-        private readonly IReloadScene reloadScene;
+        private readonly ECSReloadScene reloadScene;
         private readonly Entity playerEntity;
         private readonly Entity skyboxEntity;
         private readonly World globalWorld;
         private ClientWebSocket? webSocket;
 
-        public LocalSceneDevelopmentController(IReloadScene reloadScene,
+        public LocalSceneDevelopmentController(ECSReloadScene reloadScene,
             Entity playerEntity,
             Entity skyboxEntity,
             World globalWorld)

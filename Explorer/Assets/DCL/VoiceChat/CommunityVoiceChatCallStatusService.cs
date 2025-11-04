@@ -3,9 +3,10 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -15,7 +16,6 @@ namespace DCL.VoiceChat
     public class CommunityVoiceChatCallStatusService : ICommunityVoiceChatCallStatusService
     {
         private const string TAG = nameof(CommunityVoiceChatCallStatusService);
-        private static readonly ReactiveProperty<bool> DEFAULT_BOOL_REACTIVE_PROPERTY = new (false);
 
         private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<string> callId = new (string.Empty);
@@ -61,33 +61,36 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid StartCallAsync(string communityId, CancellationToken ct)
         {
-            try
+            Result<StartCommunityVoiceChatResponse> result = await voiceChatService.StartCommunityVoiceChatAsync(communityId, ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success)
+                return;
+
+            //We switch to main thread to avoid reactive properties updates causing issues with UI.
+            await UniTask.SwitchToMainThread();
+
+            switch (result.Value.ResponseCase)
             {
-                StartCommunityVoiceChatResponse response = await voiceChatService.StartCommunityVoiceChatAsync(communityId, ct);
-
-                //We switch to main thread to avoid reactive properties updates causing issues with UI.
-                await UniTask.SwitchToMainThread();
-
-                switch (response.ResponseCase)
-                {
-                    //When the call can be started
-                    case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        connectionUrl = response.Ok.Credentials.ConnectionUrl;
-                        SetCallId(communityId);
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
-                        break;
-                    case StartCommunityVoiceChatResponse.ResponseOneofCase.InvalidRequest:
-                    case StartCommunityVoiceChatResponse.ResponseOneofCase.ConflictingError:
-                        ResetVoiceChatData();
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_BUSY);
-                        break;
-                    default:
-                        ResetVoiceChatData();
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
-                        break;
-                }
+                //When the call can be started
+                case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                    connectionUrl = result.Value.Ok.Credentials.ConnectionUrl;
+                    SetCallId(communityId);
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                    break;
+                case StartCommunityVoiceChatResponse.ResponseOneofCase.InvalidRequest:
+                case StartCommunityVoiceChatResponse.ResponseOneofCase.ConflictingError:
+                    ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_BUSY);
+                    break;
+                default:
+                    ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                    break;
             }
-            catch (Exception e) { }
         }
 
         public void HangUp()
@@ -98,32 +101,37 @@ namespace DCL.VoiceChat
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
-            try
+            if (!status.Value.IsNotConnected())
+                return;
+
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
+
+            Result<JoinCommunityVoiceChatResponse> result = await voiceChatService.JoinCommunityVoiceChatAsync(communityId, ct)
+                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success)
             {
-                if (!status.Value.IsNotConnected())
-
-                    //we should throw here and let the catch handle it?
-                    return;
-
-                UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
-
-                JoinCommunityVoiceChatResponse response = await voiceChatService.JoinCommunityVoiceChatAsync(communityId, ct);
-
-                switch (response.ResponseCase)
-                {
-                    case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        connectionUrl = response.Ok.Credentials.ConnectionUrl;
-                        SetCallId(communityId);
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
-                        break;
-                    default:
-                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Error when connecting to call {response}");
-                        ResetVoiceChatData();
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
-                        break;
-                }
+                ResetVoiceChatData();
+                UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                return;
             }
-            catch (Exception e) { }
+
+            switch (result.Value.ResponseCase)
+            {
+                case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                    connectionUrl = result.Value.Ok.Credentials.ConnectionUrl;
+                    SetCallId(communityId);
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                    break;
+                default:
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Error when connecting to call {result.Value}");
+                    ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                    break;
+            }
         }
 
         public void RequestToSpeakInCurrentCall()
@@ -136,13 +144,14 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, true, ct);
+                Result<RequestToSpeakInCommunityVoiceChatResponse> result = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, true, ct)
+                                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {response.ResponseCase} for community {communityId}");
-                }
-                catch (Exception e) { }
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {result.Value.ResponseCase} for community {communityId}");
             }
         }
 
@@ -156,13 +165,14 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid LowerHandAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, false, ct);
+                Result<RequestToSpeakInCommunityVoiceChatResponse> result = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, false, ct)
+                                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {response.ResponseCase} for community {communityId}");
-                }
-                catch (Exception e) { }
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {result.Value.ResponseCase} for community {communityId}");
             }
         }
 
@@ -177,13 +187,14 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid PromoteToSpeakerAsync(string communityId)
             {
-                try
-                {
-                    PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, cts.Token);
+                Result<PromoteSpeakerInCommunityVoiceChatResponse> result = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, cts.Token)
+                                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} PromoteToSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
-                }
-                catch (Exception e) { }
+                if (cts.Token.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} PromoteToSpeaker response: {result.Value.ResponseCase} for community {communityId}, wallet {walletId}");
             }
         }
 
@@ -193,23 +204,26 @@ namespace DCL.VoiceChat
             if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DenySpeakerAsync(callId.Value, walletId, cts.Token).Forget();
+            DenySpeakerAsync(callId.Value, cts.Token).Forget();
 
             return;
 
-            async UniTaskVoid DenySpeakerAsync(string communityId, string walletId, CancellationToken ct)
+            async UniTaskVoid DenySpeakerAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    RejectSpeakRequestInCommunityVoiceChatResponse response = await voiceChatService.DenySpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+                Result<RejectSpeakRequestInCommunityVoiceChatResponse> result = await voiceChatService.DenySpeakerInCommunityVoiceChatAsync(communityId, walletId, ct)
+                                                                                                        .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    switch (response.ResponseCase)
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                {
+                    switch (result.Value.ResponseCase)
                     {
                         case RejectSpeakRequestInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
                             break;
                     }
                 }
-                catch (Exception e) { }
             }
         }
 
@@ -224,13 +238,14 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid DemoteFromSpeakerAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    DemoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.DemoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+                Result<DemoteSpeakerInCommunityVoiceChatResponse> result = await voiceChatService.DemoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct)
+                                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} DemoteFromSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
-                }
-                catch (Exception e) { }
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} DemoteFromSpeaker response: {result.Value.ResponseCase} for community {communityId}, wallet {walletId}");
             }
         }
 
@@ -240,18 +255,19 @@ namespace DCL.VoiceChat
             if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            KickPlayerAsync(callId.Value, walletId, cts.Token).Forget();
+            KickPlayerAsync(callId.Value, cts.Token).Forget();
             return;
 
-            async UniTaskVoid KickPlayerAsync(string communityId, string walletId, CancellationToken ct)
+            async UniTaskVoid KickPlayerAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    KickPlayerFromCommunityVoiceChatResponse response = await voiceChatService.KickPlayerFromCommunityVoiceChatAsync(communityId, walletId, ct);
+                Result<KickPlayerFromCommunityVoiceChatResponse> result = await voiceChatService.KickPlayerFromCommunityVoiceChatAsync(communityId, walletId, ct)
+                                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} KickPlayer response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
-                }
-                catch (Exception e) { }
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} KickPlayer response: {result.Value.ResponseCase} for community {communityId}, wallet {walletId}");
             }
         }
 
@@ -261,19 +277,22 @@ namespace DCL.VoiceChat
             if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            MuteSpeakerAsync(callId.Value, walletId, muted, cts.Token).Forget();
+            MuteSpeakerAsync(callId.Value, cts.Token).Forget();
             return;
 
-            async UniTaskVoid MuteSpeakerAsync(string communityId, string walletId, bool muted, CancellationToken ct)
+            async UniTaskVoid MuteSpeakerAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    MuteSpeakerFromCommunityVoiceChatResponse response = await voiceChatService.MuteSpeakerFromCommunityVoiceChatAsync(communityId, walletId, muted, ct);
+                Result<MuteSpeakerFromCommunityVoiceChatResponse> result = await voiceChatService.MuteSpeakerFromCommunityVoiceChatAsync(communityId, walletId, muted, ct)
+                                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                {
                     string action = muted ? "mute" : "unmute";
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} MuteSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}, action: {action}");
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} MuteSpeaker response: {result.Value.ResponseCase} for community {communityId}, wallet {walletId}, action: {action}");
                 }
-                catch (Exception e) { }
             }
         }
 
@@ -288,13 +307,14 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid EndStreamAsync(string communityId, CancellationToken ct)
             {
-                try
-                {
-                    EndCommunityVoiceChatResponse response = await voiceChatService.EndCommunityVoiceChatAsync(communityId, ct);
+                Result<EndCommunityVoiceChatResponse> result = await voiceChatService.EndCommunityVoiceChatAsync(communityId, ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} End stream response: {response.ResponseCase} for community {communityId}");
-                }
-                catch (Exception e) { }
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (result.Success)
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} End stream response: {result.Value.ResponseCase} for community {communityId}");
             }
         }
 

@@ -15,6 +15,7 @@ using Vector3 = UnityEngine.Vector3;
 using DCL.Audio.Jobs;
 using DCL.Landscape;
 using DCL.Landscape.Systems;
+using ECS;
 using Random = UnityEngine.Random;
 
 namespace DCL.Audio.Systems
@@ -29,8 +30,10 @@ namespace DCL.Audio.Systems
     public partial class LandscapeAudioCullingSystem : BaseUnityLoopSystem
     {
         private readonly TerrainGenerator terrainGenerator;
+        private readonly WorldTerrainGenerator worldTerrainGenerator;
         private readonly ILandscapeAudioSystemSettings landscapeAudioSystemSettings;
         private readonly WorldAudioPlaybackController worldAudioPlaybackController;
+        private readonly IRealmData realmData;
         private bool isTerrainViewInitialized;
 
         private NativeArray<LandscapeAudioState> landscapeAudioStates;
@@ -41,17 +44,22 @@ namespace DCL.Audio.Systems
         private float audioListeningDistanceThreshold;
         private float audioMutingDistanceThreshold;
         private float oceanListeningDistanceThreshold;
+        private ITerrain terrain;
 
         private int updateFramesCounter;
 
         private LandscapeAudioCullingSystem(World world,
             TerrainGenerator terrainGenerator,
+            WorldTerrainGenerator worldTerrainGenerator,
             ILandscapeAudioSystemSettings landscapeAudioSystemSettings,
-            WorldAudioPlaybackController worldAudioPlaybackController) : base(world)
+            WorldAudioPlaybackController worldAudioPlaybackController,
+            IRealmData realmData) : base(world)
         {
             this.terrainGenerator = terrainGenerator;
+            this.worldTerrainGenerator = worldTerrainGenerator;
             this.landscapeAudioSystemSettings = landscapeAudioSystemSettings;
             this.worldAudioPlaybackController = worldAudioPlaybackController;
+            this.realmData = realmData;
         }
 
         public override void Initialize()
@@ -79,7 +87,18 @@ namespace DCL.Audio.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainShown) return;
+            ITerrain currentTerrain = realmData.IsGenesis() ? terrainGenerator : worldTerrainGenerator;
+            if (currentTerrain != terrain)
+            {
+                if (isTerrainViewInitialized)
+                    FlushPreviousAudioStates();
+
+                terrain = currentTerrain;
+                isTerrainViewInitialized = false;
+                updateFramesCounter = 0;
+            }
+
+            if (!terrain.IsTerrainShown) return;
 
             if (updateFramesCounter <= 0)
             {
@@ -101,13 +120,21 @@ namespace DCL.Audio.Systems
             else { updateFramesCounter--; }
         }
 
+        private void FlushPreviousAudioStates()
+        {
+            for (int i = 0; i < landscapeAudioStates.Length; i++)
+                worldAudioPlaybackController.ReleaseAudioSourcesFromTerrain(i, WorldAudioClipType.Landscape);
+            for (int i = 0; i < oceanAudioStates.Length; i++)
+                worldAudioPlaybackController.ReleaseAudioSourcesFromTerrain(i, WorldAudioClipType.Ocean);
+        }
+
         private void InitializeTerrainAudioStates()
         {
-            int parcelSize = terrainGenerator.ParcelSize;
-            ChunkModel[] terrainChunks = terrainGenerator.TerrainModel.ChunkModels;
+            int parcelSize = terrain.ParcelSize;
+            ChunkModel[] terrainChunks = terrain.TerrainModel.ChunkModels;
             landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrainChunks.Length, Allocator.Persistent);
             landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrainChunks.Length, Allocator.Persistent);
-            int chunkSize = terrainGenerator.GetChunkSize();
+            int chunkSize = terrain.GetChunkSize();
             int halfTerrainChunkSize = chunkSize / 2;
             audioListeningDistanceThreshold = math.pow(halfTerrainChunkSize + landscapeAudioSystemSettings.ListeningDistanceThreshold, 2);
             audioMutingDistanceThreshold = math.pow(halfTerrainChunkSize + landscapeAudioSystemSettings.MutingDistanceThreshold, 2);
@@ -129,7 +156,7 @@ namespace DCL.Audio.Systems
         private void InitializeOceanAudioStates()
         {
             //To calculate the ocean audio, we will use the cliffs positions as the ocean grid does not match correctly with the world grid.
-            IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
+            IReadOnlyList<Transform> cliffs = terrain.Cliffs;
 
             oceanAudioStates = new NativeArray<LandscapeAudioState>(cliffs.Count, Allocator.Persistent);
 

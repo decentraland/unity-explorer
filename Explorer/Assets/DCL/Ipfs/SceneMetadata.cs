@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.ComponentModel;
 
 namespace DCL.Ipfs
 {
@@ -49,7 +50,17 @@ namespace DCL.Ipfs
         [Serializable]
         public struct SkyboxConfigData
         {
-            public float fixedTime;
+            public float? fixedTime;
+
+            [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+            [DefaultValue(TransitionMode.FORWARD)]
+            public TransitionMode transitionMode;
+        }
+
+        public enum TransitionMode
+        {
+            FORWARD,
+            BACKWARD,
         }
 
         [JsonIgnore]
