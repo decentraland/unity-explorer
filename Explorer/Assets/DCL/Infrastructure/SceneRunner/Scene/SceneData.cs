@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -26,10 +27,11 @@ namespace SceneRunner.Scene
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
+        public IInitialSceneState InitialSceneStateInfo { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
+
 
         public SceneData(
             ISceneContent sceneContent,
@@ -37,7 +39,8 @@ namespace SceneRunner.Scene
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
-            StaticSceneMessages staticSceneMessages)
+            StaticSceneMessages staticSceneMessages,
+            IInitialSceneState initialSceneStateInfo)
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
@@ -45,6 +48,7 @@ namespace SceneRunner.Scene
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;
+            InitialSceneStateInfo = initialSceneStateInfo;
         }
 
         public bool HasRequiredPermission(string permission)
@@ -132,5 +136,6 @@ namespace SceneRunner.Scene
 
         public bool IsSdk7() =>
             SceneEntityDefinition.metadata.runtimeVersion == "7";
+
     }
 }
