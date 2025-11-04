@@ -147,8 +147,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
             // Create and run the animation sequence
             var sequence = DOTween.Sequence();
-            sequence.Append(lastSectionRT.DOAnchorPosX(-containerWidth * slideDirection, ANIMATION_DURATION).SetEase(Ease.OutCubic))
-                .Join(newSectionRT.DOAnchorPosX(0, ANIMATION_DURATION).SetEase(Ease.OutCubic));
+            sequence.Append(lastSectionRT.DOAnchorPosX(-containerWidth * slideDirection, ANIMATION_DURATION).SetEase(Ease.OutBack))
+                .Join(newSectionRT.DOAnchorPosX(0, ANIMATION_DURATION).SetEase(Ease.OutBack));
 
             sequence.Join(lastSectionCG.DOFade(0f, ANIMATION_DURATION * 0.5f));
             sequence.Join(newSectionCG.DOFade(1f, ANIMATION_DURATION * 0.7f));
@@ -188,5 +188,6 @@ namespace DCL.Backpack.Gifting.Presenters
         int ItemCount { get; }
         TViewModel GetViewModel(int itemIndex);
         void RequestThumbnailLoad(int itemIndex);
+        string? GetItemNameByUrn(string urn);
     }
 }

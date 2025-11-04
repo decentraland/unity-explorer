@@ -5,6 +5,7 @@ using DCL.Backpack.Gifting.Views;
 using MVC;
 using System.Threading;
 using DCL.AvatarRendering.Wearables;
+using DCL.Backpack;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Presenters;
@@ -59,13 +60,22 @@ namespace DCL.PluginSystem.Global
             var giftingViewPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftingPrefab, ct))
                 .Value.GetComponent<GiftingView>();
 
+            var (rarityColorMappings, categoryIconsMapping, rarityBackgroundsMapping, rarityInfoPanelBackgroundsMapping) = await UniTask
+                .WhenAll( assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
+                    assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
+                    assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
+                    assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
+
             var giftingService = new GiftingService();
             var sendGiftCommand = new SendGiftCommand(giftingService);
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider, eventBus);
 
-            var gridFactory = new GiftingGridPresenterFactory(wearablesProvider,
-                eventBus,
-                loadThumbnailCommand);
+            var gridFactory = new GiftingGridPresenterFactory(eventBus,
+                wearablesProvider,
+                loadThumbnailCommand,
+                rarityColorMappings,
+                categoryIconsMapping,
+                rarityBackgroundsMapping);
             
             giftingController = new GiftingController(
                 GiftingController.CreateLazily(giftingViewPrefab, null),
@@ -87,6 +97,9 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject GiftingPrefab;
+
+            [field: SerializeField]
+            public BackpackSettings BackpackSettings { get; private set; }
         }
     }
 }

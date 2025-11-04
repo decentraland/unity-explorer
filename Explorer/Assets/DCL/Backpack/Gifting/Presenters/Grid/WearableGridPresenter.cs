@@ -10,6 +10,7 @@ using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 
@@ -29,6 +30,9 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
+        private readonly NFTColorsSO rarityColorMappings;
+        private readonly NftTypeIconSO categoryIconsMapping;
+        private readonly NftTypeIconSO rarityBackgroundsMapping;
 
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly Dictionary<string, WearableViewModel> viewModelsByUrn = new();
@@ -37,6 +41,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly CanvasGroup canvasGroup;
 
         private CancellationTokenSource? lifeCts;
+        private CancellationTokenSource? fetchCts;
         private CancellationTokenSource? searchCts;
         private IDisposable? thumbnailLoadedSubscription;
 
@@ -52,13 +57,19 @@ namespace DCL.Backpack.Gifting.Presenters
             SuperScrollGridAdapter<WearableViewModel> adapter,
             IWearablesProvider wearablesProvider,
             IEventBus eventBus,
-            LoadGiftableItemThumbnailCommand loadThumbnailCommand)
+            LoadGiftableItemThumbnailCommand loadThumbnailCommand,
+            NFTColorsSO rarityColorMappings,
+            NftTypeIconSO categoryIconsMapping,
+            NftTypeIconSO rarityBackgroundsMapping)
         {
             this.view = view;
             this.adapter = adapter;
             this.wearablesProvider = wearablesProvider;
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
+            this.rarityColorMappings = rarityColorMappings;
+            this.categoryIconsMapping = categoryIconsMapping;
+            this.rarityBackgroundsMapping = rarityBackgroundsMapping;
 
             rectTransform = view.GetComponent<RectTransform>();
             canvasGroup = view.GetComponent<CanvasGroup>();
@@ -86,21 +97,36 @@ namespace DCL.Backpack.Gifting.Presenters
             thumbnailLoadedSubscription?.Dispose();
             adapter.OnNearEndOfScroll -= OnNearEndOfScroll;
             adapter.OnItemSelected -= OnItemSelected;
+
+            searchCts.SafeCancelAndDispose();
+            fetchCts.SafeCancelAndDispose();
             lifeCts.SafeCancelAndDispose();
+
+            HardClear();
+        }
+
+        private void HardClear()
+        {
+            ClearData();
+            results.Clear();
+
+            adapter.RefreshData();
+            adapter.RefreshAllShownItem();
         }
 
         private void OnAllLoadsFinished()
         {
+            if (lifeCts?.IsCancellationRequested == true) return;
+            
             canLoadNextPage = true;
             if (adapter.IsNearEnd && !isLoading && ItemCount < totalCount)
-            {
                 RequestNextPage().Forget();
-            }
         }
 
         public void SetSearchText(string searchText)
         {
             searchText ??= string.Empty;
+            ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] SetSearchText received: '{searchText}'");
             if (currentSearch == searchText) return;
             currentSearch = searchText;
 
@@ -113,8 +139,16 @@ namespace DCL.Backpack.Gifting.Presenters
             await UniTask.Delay(SEARCH_DEBOUNCE_MS, cancellationToken: ct);
             if (ct.IsCancellationRequested) return;
 
+            fetchCts
+                .SafeCancelAndDispose();
+
             ClearData();
-            RequestNextPage().Forget();
+
+            adapter
+                .RefreshData();
+
+            RequestNextPage()
+                .Forget();
         }
 
         private void OnNearEndOfScroll()
@@ -138,43 +172,66 @@ namespace DCL.Backpack.Gifting.Presenters
             canLoadNextPage = false;
             currentPage++;
 
-            (var wearables, int total) = await wearablesProvider.GetAsync(
-                CURRENT_PAGE_SIZE, currentPage, lifeCts.Token,
-                currentSort.OrderByOperation.ToSortingField(),
-                currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
-                category: string.Empty,
-                IWearablesProvider.CollectionType.All, currentSearch, results);
+            fetchCts = fetchCts.SafeRestartLinked(lifeCts!.Token);
+            var ct = fetchCts.Token;
 
-            if (lifeCts.IsCancellationRequested)
+            ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] Requesting Page {currentPage} with search term: '{currentSearch}'");
+
+            try
+            {
+                results.Clear();
+                (var wearables, int total) = await wearablesProvider.GetAsync(
+                    pageSize: CURRENT_PAGE_SIZE,
+                    pageNumber: currentPage,
+                    ct: ct,
+                    sortingField: currentSort.OrderByOperation.ToSortingField(),
+                    orderBy: currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
+                    category: string.Empty,
+                    collectionType: IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty,
+                    name: currentSearch,
+                    results: results
+                );
+
+                ct.ThrowIfCancellationRequested();
+
+                ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] Response: wearables: {wearables.Count} result {results.Count} - {total}");
+
+                totalCount = total;
+
+                if (currentPage == 1)
+                {
+                    bool hasResults = total > 0;
+                    view.RegularResultsContainer.SetActive(hasResults);
+                    view.NoResultsContainer.SetActive(!hasResults);
+                }
+
+                foreach (var wearable in wearables)
+                {
+                    var urn = wearable.GetUrn();
+                    if (viewModelsByUrn.ContainsKey(urn)) continue;
+
+                    viewModelUrnOrder.Add(urn);
+                    viewModelsByUrn[urn] = new WearableViewModel(wearable);
+                }
+
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                adapter.RefreshData();
+            }
+            catch (OperationCanceledException)
+            {
+                /* swallow */
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+            }
+            finally
             {
                 isLoading = false;
-                return;
+
+                if (!ct.IsCancellationRequested && results.Count == 0 && pendingThumbnailLoads == 0)
+                    OnAllLoadsFinished();
             }
-
-            totalCount = total;
-
-            foreach (var wearable in wearables)
-            {
-                var urn = wearable.GetUrn();
-                if (viewModelsByUrn.ContainsKey(urn)) continue;
-
-                viewModelUrnOrder.Add(urn);
-                viewModelsByUrn[urn] = new WearableViewModel(wearable);
-            }
-
-            await UniTask.Yield(PlayerLoopTiming.Update, lifeCts.Token);
-
-            if (lifeCts.IsCancellationRequested)
-            {
-                isLoading = false;
-                return;
-            }
-
-            if (wearables.Count == 0)
-                OnAllLoadsFinished();
-
-            adapter.RefreshData();
-            isLoading = false;
         }
 
         public void RequestThumbnailLoad(int itemIndex)
@@ -184,6 +241,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
+            ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Thumbs] Requesting thumbnail for index {itemIndex}, URN: {urn}");
+            
             // 1. Increment the counter as we are about to request a load
             pendingThumbnailLoads++;
 
@@ -196,6 +255,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void OnThumbnailLoaded(GiftingEvents.ThumbnailLoadedEvent evt)
         {
+            ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Thumbs] Thumbnail loaded for URN: {evt.Urn}, Success: {evt.Success}. Pending loads: {pendingThumbnailLoads - 1}");
+            
             if (viewModelsByUrn.TryGetValue(evt.Urn, out var vm))
             {
                 var finalState = evt.Success ? ThumbnailState.Loaded : ThumbnailState.Error;
@@ -215,6 +276,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void ClearData()
         {
+            view.NoResultsContainer.SetActive(false);
+            view.RegularResultsContainer.SetActive(true);
+            
             currentPage = 0;
             totalCount = int.MaxValue;
             SelectedUrn = null;
@@ -225,6 +289,14 @@ namespace DCL.Backpack.Gifting.Presenters
 
             pendingThumbnailLoads = 0;
             canLoadNextPage = true;
+        }
+
+        public string? GetItemNameByUrn(string urn)
+        {
+            if (viewModelsByUrn.TryGetValue(urn, out var vm))
+                return vm.Source.GetName();
+
+            return null;
         }
 
         public WearableViewModel GetViewModel(int itemIndex)

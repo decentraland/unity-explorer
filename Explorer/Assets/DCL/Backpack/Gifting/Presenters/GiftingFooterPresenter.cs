@@ -22,8 +22,25 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public void SetInitialState()
         {
-            view.SendGiftButton.interactable = false;
-            view.InfoMessageContainer.SetActive(false);
+            UpdateState(null);
+        }
+
+        /// <summary>
+        ///     Updates the entire footer state based on the selected item.
+        /// </summary>
+        /// <param name="selectedItemName">The name of the item, or null if nothing is selected.</param>
+        public void UpdateState(string? selectedItemName)
+        {
+            bool isItemSelected = !string.IsNullOrEmpty(selectedItemName);
+
+            // Enable/disable the send button
+            view.SendGiftButton.interactable = isItemSelected;
+
+            // Show/hide and set the info message text
+            view.InfoMessageContainer.SetActive(true); // Let's always show it
+            view.InfoMessageLabel.text = isItemSelected
+                ? $"You are going to send {selectedItemName}"
+                : DEFAULT_INFO_MESSAGE;
         }
 
         public void SetInfoMessage(string message)

@@ -131,7 +131,7 @@ namespace DCL.UI
                 .AddControl(contextMenuJumpInButton)
                 .AddControl(contextMenuBlockUserButton);
 
-            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);
 
             if (includeCommunities)

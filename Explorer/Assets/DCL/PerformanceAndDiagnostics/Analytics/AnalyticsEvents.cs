@@ -134,5 +134,11 @@
             public const string EQUIP_OUTFIT = "equip_outfit";
             public const string OUTFIT_CLICK_NAME = "outfit_click_name";
         }
+
+        public static class Gifts
+        {
+            public const string SUCCESSFULL_GIFT = "successful_gift";
+            public const string FAILED_GIFT = "failed_gift";
+        }
     }
 }

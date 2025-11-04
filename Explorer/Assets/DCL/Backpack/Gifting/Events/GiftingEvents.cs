@@ -22,5 +22,33 @@ namespace DCL.Backpack.Gifting.Events
                 Success = success;
             }
         }
+
+        public readonly struct OnSuccessfullGift
+        {
+            public readonly string Urn;
+            public readonly Sprite Sprite;
+            public readonly bool Success;
+
+            public OnSuccessfullGift(string urn, Sprite sprite, bool success)
+            {
+                Urn = urn;
+                Sprite = sprite;
+                Success = success;
+            }
+        }
+
+        public readonly struct OnFailedGift
+        {
+            public readonly string Urn;
+            public readonly Sprite Sprite;
+            public readonly bool Success;
+
+            public OnFailedGift(string urn, Sprite sprite, bool success)
+            {
+                Urn = urn;
+                Sprite = sprite;
+                Success = success;
+            }
+        }
     }
 }

@@ -88,5 +88,10 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         public void RequestThumbnailLoad(int itemIndex)
         {
         }
+
+        public string? GetItemNameByUrn(string urn)
+        {
+            return null;
+        }
     }
 }

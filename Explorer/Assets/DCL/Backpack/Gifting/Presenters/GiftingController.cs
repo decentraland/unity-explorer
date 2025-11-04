@@ -89,6 +89,10 @@ namespace DCL.Backpack.Gifting.Presenters
             lifeCts = new CancellationTokenSource();
             viewInstance!.ErrorNotification.Hide(true);
 
+            headerPresenter?.ClearSearchImmediate();
+            wearablesGridPresenter?.Deactivate();
+            emotesGridPresenter?.Deactivate();
+            
             headerPresenter?.SetupAsync(inputData.userId,
                 inputData.userName,
                 lifeCts.Token).Forget();
@@ -110,14 +114,31 @@ namespace DCL.Backpack.Gifting.Presenters
             if (wearablesGridPresenter != null) wearablesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
             if (emotesGridPresenter != null) emotesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
 
+            wearablesGridPresenter?.Deactivate();
+            emotesGridPresenter?.Deactivate();
+            
             giftingErrorsController!.Hide(true);
-
             lifeCts.SafeCancelAndDispose();
         }
 
         private void OnSelectionChanged(string? selectedUrn)
         {
-            footerPresenter?.SetSendEnabled(!string.IsNullOrEmpty(selectedUrn));
+            if (string.IsNullOrEmpty(selectedUrn))
+            {
+                // Nothing is selected, update footer to its default state.
+                footerPresenter?.UpdateState(null);
+            }
+            else
+            {
+                // Something is selected. Get the item name from the active presenter and update the footer.
+                // Note: This requires adding a method to IGiftingGridPresenter
+                var activePresenter = tabsManager.ActivePresenter;
+                if (activePresenter is WearableGridPresenter wearablePresenter) // Example for wearables
+                {
+                    string? itemName = wearablePresenter.GetItemNameByUrn(selectedUrn);
+                    footerPresenter?.UpdateState(itemName);
+                }
+            }
         }
 
         private void HandleSendGift()

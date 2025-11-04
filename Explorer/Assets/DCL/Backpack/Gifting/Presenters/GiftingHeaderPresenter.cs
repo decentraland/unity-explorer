@@ -39,10 +39,24 @@ namespace DCL.Backpack.Gifting.Presenters
 
             walletAddressController = new UserWalletAddressElementController(view.UserProfileWallet);
 
+            view.SearchBar.inputField.onSelect.AddListener(OnSearchSelected);
+            view.SearchBar.inputField.onDeselect.AddListener(OnSearchDeselected);
             view.SearchBar.inputField.onValueChanged.AddListener(DebounceSearch);
             view.SearchBar.clearSearchButton.onClick.AddListener(ClearSearch);
-            view.SearchBar.inputField.onSelect.AddListener(_ => this.inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS));
-            view.SearchBar.inputField.onDeselect.AddListener(_ => this.inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS));
+        }
+
+        private void OnSearchSelected(string text)
+        {
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS,
+                InputMapComponent.Kind.IN_WORLD_CAMERA,
+                InputMapComponent.Kind.PLAYER);
+        }
+
+        private void OnSearchDeselected(string text)
+        {
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS,
+                InputMapComponent.Kind.IN_WORLD_CAMERA,
+                InputMapComponent.Kind.PLAYER);
         }
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
@@ -89,6 +103,12 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             walletAddressController.Dispose();
             searchCts.SafeCancelAndDispose();
+        }
+
+        public void ClearSearchImmediate()
+        {
+            view.SearchBar.inputField.SetTextWithoutNotify("");
+            OnSearchChanged?.Invoke(string.Empty);
         }
     }
 }

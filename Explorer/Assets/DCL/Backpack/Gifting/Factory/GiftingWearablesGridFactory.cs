@@ -21,21 +21,37 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
+        private readonly NFTColorsSO rarityColorMappings;
+        private readonly NftTypeIconSO categoryIconsMapping;
+        private readonly NftTypeIconSO rarityBackgroundsMapping;
 
         public GiftingGridPresenterFactory(
-            IWearablesProvider wearablesProvider,
             IEventBus eventBus,
-            LoadGiftableItemThumbnailCommand loadThumbnailCommand)
+            IWearablesProvider wearablesProvider,
+            LoadGiftableItemThumbnailCommand loadThumbnailCommand,
+            NFTColorsSO rarityColorMappings,
+            NftTypeIconSO categoryIconsMapping,
+            NftTypeIconSO rarityBackgroundsMapping)
         {
             this.wearablesProvider = wearablesProvider;
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
+            this.rarityColorMappings = rarityColorMappings;
+            this.categoryIconsMapping = categoryIconsMapping;
+            this.rarityBackgroundsMapping = rarityBackgroundsMapping;
         }
 
 
         public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
         {
-            return new WearableGridPresenter(view, adapter, wearablesProvider, eventBus, loadThumbnailCommand);
+            return new WearableGridPresenter(view,
+                adapter,
+                wearablesProvider,
+                eventBus,
+                loadThumbnailCommand,
+                rarityColorMappings,
+                categoryIconsMapping,
+                rarityBackgroundsMapping);
         }
 
         public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)

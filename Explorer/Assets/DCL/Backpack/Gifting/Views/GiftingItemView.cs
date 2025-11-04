@@ -34,6 +34,7 @@ namespace DCL.Backpack.Gifting.Views
 
         private void OnDisable()
         {
+            transform.DOKill();
             transform.localScale = Vector3.one;
             animationCts.SafeCancelAndDispose();
         }
@@ -43,6 +44,8 @@ namespace DCL.Backpack.Gifting.Views
         /// </summary>
         public void Bind(IGiftableItemViewModel viewModel, bool isSelected)
         {
+            transform.localScale = Vector3.one;
+            
             currentUrn = viewModel.Urn;
 
             // Set selection state
