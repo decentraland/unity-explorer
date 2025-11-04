@@ -22,6 +22,6 @@ module.exports.exit = async function() {
 module.exports.getPortableExperiencesLoaded = async function(message) {
     console.log('JSMODULE: getPortableExperiencesLoaded');
     return {
-        loaded: UnityPortableExperiencesApi.GetLoadedPortableExperiences() 
+        loaded: JSON.parse(UnityPortableExperiencesApi.GetLoadedPortableExperiences())
     };
 }
