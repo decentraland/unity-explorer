@@ -71,7 +71,8 @@ namespace DCL.PluginSystem.Global
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
 
 
-            LODUtils.LODZeroBucketThreshold = (byte)lodSettingsAsset.SDK7LodThreshold;
+            //We set the LODZero bucket threshold
+            LODUtils.LODZeroBucketThreshold = (byte)lodSettingsAsset.LodPartitionBucketThresholds[0];
 
             if (lodEnabled)
             {
