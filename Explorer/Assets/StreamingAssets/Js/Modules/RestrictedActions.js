@@ -68,3 +68,8 @@ module.exports.triggerSceneEmote = async function(message) {
         success: isSuccess
     };
 }
+
+module.exports.copyToClipboard = async function(message) {
+    UnityRestrictedActionsApi.CopyToClipboard(message.text)
+    return {};
+}

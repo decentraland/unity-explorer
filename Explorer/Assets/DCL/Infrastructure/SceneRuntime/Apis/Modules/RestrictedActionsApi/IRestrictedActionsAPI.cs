@@ -19,5 +19,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct);
 
         bool TryOpenNftDialog(string urn);
+
+        void TryCopyToClipboard(string text);
     }
 }

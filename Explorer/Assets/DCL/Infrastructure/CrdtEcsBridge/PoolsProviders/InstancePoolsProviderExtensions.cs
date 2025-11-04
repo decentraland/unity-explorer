@@ -1,5 +1,4 @@
 ﻿using Microsoft.ClearScript.JavaScript;
-using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
@@ -14,14 +13,6 @@ namespace CrdtEcsBridge.PoolsProviders
             // V8ScriptItem does not support zero length
             if (scriptArray.Length > 0)
                 scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
-        }
-
-        public static void RenewCrdtRawDataPoolFromScriptArray(
-            this IInstancePoolsProvider instancePoolsProvider, Uint8Array scriptArray,
-            ref PoolableByteArray lastInput)
-        {
-            EnsureArrayLength(instancePoolsProvider, scriptArray.Length, ref lastInput);
-            scriptArray.CopyTo(lastInput.Array);
         }
 
         private static void EnsureArrayLength(IInstancePoolsProvider instancePoolsProvider,

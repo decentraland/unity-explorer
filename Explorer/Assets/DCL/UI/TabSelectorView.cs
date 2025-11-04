@@ -1,5 +1,4 @@
 using DCL.Audio;
-using DCL.Character.CharacterMotion.Components;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
