@@ -11,6 +11,7 @@ namespace DCL.Diagnostics
         public readonly Vector2Int BaseParcel;
         public readonly string Name;
 
+
         public SceneShortInfo(Vector2Int baseParcel, string name)
         {
             BaseParcel = baseParcel;

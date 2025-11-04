@@ -1,19 +1,25 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.CharacterCamera;
 using DCL.LOD;
 using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using DCL.Diagnostics;
+using DCL.LOD.Systems;
 using ECS.LifeCycle;
+using ECS.Prioritization;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -24,14 +30,27 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
 
-        public UnloadSceneLODSystem(World world, IScenesCache scenesCache, ILODCache lodCache) : base(world)
+        private float defaultFOV;
+        private float defaultLodBias;
+        public IRealmPartitionSettings realmPartitionSettingsAsset;
+
+
+        public UnloadSceneLODSystem(World world, IScenesCache scenesCache, ILODCache lodCache, IRealmPartitionSettings realmPartitionSettingsAsset) : base(world)
         {
             this.scenesCache = scenesCache;
             this.lodCache = lodCache;
+            this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
+        }
+
+        public override void Initialize()
+        {
+            defaultFOV = World.CacheCamera().GetCameraComponent(World).Camera.fieldOfView;
+            defaultLodBias = QualitySettings.lodBias;
         }
 
         protected override void Update(float t)
         {
+            UnloadSceneLODForISSQuery(World);
             UnloadLODQuery(World);
             UnloadLODWhenSceneReadyQuery(World);
         }
@@ -42,43 +61,46 @@ namespace ECS.SceneLifeCycle.Systems
             DestroySceneLODQuery(World);
         }
 
+
+        [Query]
+        [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        private void UnloadSceneLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
+            ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
+        {
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
+            {
+                if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+                    return;
+
+                sceneLODInfo.InitialSceneStateLOD.AssetsShouldGoToTheBridge = LODUtils.ShouldGoToTheBridge(partitionComponent);
+                sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World,
+                    defaultFOV, defaultLodBias,  realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+                World.Remove<SceneLODInfo>(entity);
+            }
+
+        }
+
         [Query]
         [All(typeof(DeleteEntityIntention))]
         [None(typeof(ISceneFacade))]
-        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            //Assets are being used, they need to be moved to cache
-            initialSceneStateDescriptor.AnalyzeCacheState(false, sceneLODInfo.HasLOD(0));
-
-            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World,
+                defaultFOV, defaultLodBias,  realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
         }
 
         [Query]
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState,
-            ref InitialSceneStateDescriptor initialSceneStateDescriptor)
+            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                initialSceneStateDescriptor.AnalyzeCacheState(true, sceneLODInfo.HasLOD(0));
-
-                //TODO(Juani) : This `if` is required for retro-compatibility with non Initial Scene State scenes.
-                //If all scenes were built with SAB scenes, we could remove it
-                if (initialSceneStateDescriptor.IsValid())
-                {
-                    if (sceneLODInfo.IsInitialized())
-                        sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
-
-                    sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
-                    World.Remove<SceneLODInfo>(entity);
-                    return;
-                }
-
                 if (!sceneFacade.IsSceneReady())
                     return;
 
-                sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World,
+                    defaultFOV, defaultLodBias,  realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
                 World.Remove<SceneLODInfo>(entity);
             }
         }
@@ -95,7 +117,8 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         private void DestroySceneLOD(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World,
+                defaultFOV, defaultLodBias,  realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
         }
     }
 }
