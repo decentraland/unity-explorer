@@ -9,6 +9,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
@@ -72,7 +73,8 @@ namespace DCL.PluginSystem.Global
                 new StunComponent(),
                 new FeetIKComponent(),
                 new HandsIKComponent(),
-                new HeadIKComponent { IsEnabled = true });
+                new HeadIKComponent { IsEnabled = true },
+                new AvatarLocomotionSettings());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);

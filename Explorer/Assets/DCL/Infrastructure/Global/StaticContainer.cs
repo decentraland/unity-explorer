@@ -48,6 +48,7 @@ using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream;
+using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SDKComponents.SkyboxTime;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
@@ -281,6 +282,7 @@ namespace Global
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
                 new SkyboxTimePlugin(),
+                new AvatarLocomotionSettingsPlugin(globalWorld),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
