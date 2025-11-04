@@ -5,6 +5,7 @@ using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.Grid;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
+using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
 using Utility;
 
@@ -21,27 +22,20 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
-        private readonly NFTColorsSO rarityColorMappings;
-        private readonly NftTypeIconSO categoryIconsMapping;
-        private readonly NftTypeIconSO rarityBackgroundsMapping;
+        private readonly IWearableStylingCatalog wearableStylingCatalog;
 
         public GiftingGridPresenterFactory(
             IEventBus eventBus,
             IWearablesProvider wearablesProvider,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
-            NFTColorsSO rarityColorMappings,
-            NftTypeIconSO categoryIconsMapping,
-            NftTypeIconSO rarityBackgroundsMapping)
+            IWearableStylingCatalog wearableStylingCatalog)
         {
             this.wearablesProvider = wearablesProvider;
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
-            this.rarityColorMappings = rarityColorMappings;
-            this.categoryIconsMapping = categoryIconsMapping;
-            this.rarityBackgroundsMapping = rarityBackgroundsMapping;
+            this.wearableStylingCatalog  = wearableStylingCatalog;
         }
-
-
+        
         public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
         {
             return new WearableGridPresenter(view,
@@ -49,9 +43,7 @@ namespace DCL.Backpack.Gifting.Factory
                 wearablesProvider,
                 eventBus,
                 loadThumbnailCommand,
-                rarityColorMappings,
-                categoryIconsMapping,
-                rarityBackgroundsMapping);
+                wearableStylingCatalog);
         }
 
         public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)

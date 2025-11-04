@@ -1,0 +1,11 @@
+﻿using UnityEngine;
+
+namespace DCL.Backpack.Gifting.Styling
+{
+    public interface IWearableStylingCatalog
+    {
+        Sprite GetRarityBackground(string? rarity);
+        Color GetRarityFlapColor(string? rarity);
+        Sprite GetCategoryIcon(string? category);
+    }
+}

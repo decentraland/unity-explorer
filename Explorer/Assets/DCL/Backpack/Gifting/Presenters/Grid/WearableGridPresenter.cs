@@ -9,6 +9,7 @@ using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
+using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
 using UnityEngine;
@@ -30,9 +31,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
-        private readonly NFTColorsSO rarityColorMappings;
-        private readonly NftTypeIconSO categoryIconsMapping;
-        private readonly NftTypeIconSO rarityBackgroundsMapping;
+        private readonly IWearableStylingCatalog wearableStylingCatalog;
 
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly Dictionary<string, WearableViewModel> viewModelsByUrn = new();
@@ -58,23 +57,19 @@ namespace DCL.Backpack.Gifting.Presenters
             IWearablesProvider wearablesProvider,
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
-            NFTColorsSO rarityColorMappings,
-            NftTypeIconSO categoryIconsMapping,
-            NftTypeIconSO rarityBackgroundsMapping)
+            IWearableStylingCatalog wearableStylingCatalog)
         {
             this.view = view;
             this.adapter = adapter;
             this.wearablesProvider = wearablesProvider;
+            this.wearableStylingCatalog  = wearableStylingCatalog;
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
-            this.rarityColorMappings = rarityColorMappings;
-            this.categoryIconsMapping = categoryIconsMapping;
-            this.rarityBackgroundsMapping = rarityBackgroundsMapping;
-
+            
             rectTransform = view.GetComponent<RectTransform>();
             canvasGroup = view.GetComponent<CanvasGroup>();
 
-
+            adapter.UseWearableStyling(wearableStylingCatalog);
             adapter.SetDataProvider(this);
         }
 
@@ -188,6 +183,7 @@ namespace DCL.Backpack.Gifting.Presenters
                     orderBy: currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                     category: string.Empty,
                     collectionType: IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty,
+                    // collectionType: IWearablesProvider.CollectionType.All,
                     name: currentSearch,
                     results: results
                 );

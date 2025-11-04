@@ -1,6 +1,7 @@
 ﻿using DCL.Backpack.Gifting.Models;
 using SuperScrollView;
 using System;
+using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,6 +10,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 {
     public class SuperScrollGridAdapter<TViewModel> where TViewModel : IGiftableItemViewModel
     {
+        private IWearableStylingCatalog? wearableCatalog;
+        
         private const float LOAD_MORE_THRESHOLD = 0.2f;
 
         public event Action OnNearEndOfScroll;
@@ -57,6 +60,11 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
                 OnNearEndOfScroll?.Invoke();
         }
 
+        public void UseWearableStyling(IWearableStylingCatalog catalog)
+        {
+            wearableCatalog = catalog;
+        }
+
         private LoopGridViewItem? OnGetItemByRowColumn(LoopGridView grid, int itemIndex, int row, int col)
         {
             if (dataProvider == null || itemIndex < 0 || itemIndex >= dataProvider?.ItemCount)
@@ -70,6 +78,18 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 
             if (viewModel.ThumbnailState == ThumbnailState.NotLoaded)
                 dataProvider.RequestThumbnailLoad(itemIndex);
+
+            if (wearableCatalog != null)
+            {
+                cellView.RarityBackground.sprite = wearableCatalog
+                    .GetRarityBackground(viewModel.source.DTO.Metadata.AbstractData.category);
+
+                cellView.FlapBackground.color = wearableCatalog
+                    .GetRarityFlapColor(viewModel.source.DTO.Metadata.rarity);
+
+                cellView.CategoryImage.sprite = wearableCatalog
+                    .GetCategoryIcon(viewModel.source.DTO.Metadata.AbstractData.category);
+            }
 
             cellView.OnItemSelected -= OnItemSelected;
             cellView.OnItemSelected += OnItemSelected;

@@ -2000,7 +2000,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 4383237184820923096}
   m_HandleRect: {fileID: 616119937947168997}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2962,11 +2962,11 @@ RectTransform:
   - {fileID: 175962690607473891}
   m_Father: {fileID: 9030154126796059298}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000030517578}
-  m_SizeDelta: {x: 666.5, y: 0}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5847976042241095103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3549,10 +3549,10 @@ RectTransform:
   - {fileID: 3643623683592024831}
   m_Father: {fileID: 181602883578318655}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 744, y: 370}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5588936455232130985
 CanvasRenderer:
@@ -4490,10 +4490,10 @@ RectTransform:
   - {fileID: 6408916375902493779}
   m_Father: {fileID: 3470851363001925844}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.000030517578, y: 0}
-  m_SizeDelta: {x: 704, y: 370}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6328791209580422593
 CanvasRenderer:
@@ -4605,8 +4605,8 @@ MonoBehaviour:
   mArrangeType: 0
   mFixedRowOrColumnCount: 5
   mPadding:
-    m_Left: 37
-    m_Right: 37
+    m_Left: 7
+    m_Right: 7
     m_Top: 17
     m_Bottom: 0
   mItemPadding: {x: 20, y: 20}
@@ -4698,7 +4698,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: You do not have any wearable that meets this category or search criteria.
+  m_text: You do not have any wearable that meets this search criteria.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -4921,7 +4921,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -25.000023, y: 0}
+  m_AnchoredPosition: {x: -25, y: 0}
   m_SizeDelta: {x: -49.999954, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1796359518248824618

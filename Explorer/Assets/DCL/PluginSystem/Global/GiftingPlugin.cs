@@ -10,6 +10,7 @@ using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Styling;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -60,22 +61,25 @@ namespace DCL.PluginSystem.Global
             var giftingViewPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftingPrefab, ct))
                 .Value.GetComponent<GiftingView>();
 
-            var (rarityColorMappings, categoryIconsMapping, rarityBackgroundsMapping, rarityInfoPanelBackgroundsMapping) = await UniTask
+            var (rarityColors, categoryIcons, rarityBackgrounds, rarityInfoPanelBackgroundsMapping) = await UniTask
                 .WhenAll( assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             var giftingService = new GiftingService();
+
+            var wearableCatalog = new WearableStylingCatalog(rarityColors,
+                rarityBackgrounds,
+                categoryIcons);
+            
             var sendGiftCommand = new SendGiftCommand(giftingService);
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider, eventBus);
 
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
                 loadThumbnailCommand,
-                rarityColorMappings,
-                categoryIconsMapping,
-                rarityBackgroundsMapping);
+                wearableCatalog);
             
             giftingController = new GiftingController(
                 GiftingController.CreateLazily(giftingViewPrefab, null),

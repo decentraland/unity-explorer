@@ -28,6 +28,11 @@ namespace DCL.Backpack.Gifting.Views
         [Header("UI Elements")]
         [SerializeField] private Image thumbnailImage;
 
+        [SerializeField] public Image RarityBackground;
+        [SerializeField] public Image FlapBackground;
+        [SerializeField] public Image CategoryImage;
+        
+
         [SerializeField] private GameObject selectionOutline;
 
         private string currentUrn;
