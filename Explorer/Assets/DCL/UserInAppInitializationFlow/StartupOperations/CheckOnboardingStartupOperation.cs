@@ -76,6 +76,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
+            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
                 return;

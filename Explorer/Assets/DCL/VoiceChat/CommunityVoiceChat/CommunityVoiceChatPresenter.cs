@@ -155,7 +155,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OpenListenersSection()
         {
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
-            
+
             view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
             view.CommunityVoiceChatInCallView.gameObject.SetActive(false);
         }
@@ -208,8 +208,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void RemoveParticipant(string removedParticipantId)
         {
             if (usedPlayerEntriesPresenters.Remove(removedParticipantId, out VoiceChatParticipantEntryPresenter entryPresenter))
-            {
                 entryPresenter.Dispose();
+
+            if (currentlySpeakingUsers.ContainsKey(removedParticipantId))
+            {
+                currentlySpeakingUsers.Remove(removedParticipantId);
+                inCallPresenter.SetTalkingStatus(currentlySpeakingUsers.Count, currentlySpeakingUsers.Count == 1 ? currentlySpeakingUsers.First().Value : string.Empty);
             }
 
             UpdateCounters();

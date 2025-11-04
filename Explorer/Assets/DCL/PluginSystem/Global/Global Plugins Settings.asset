@@ -308,27 +308,27 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
         <EmbeddedEmotes>k__BackingField:
-        - wave
-        - fistpump
-        - dance
-        - raiseHand
-        - clap
-        - money
-        - kiss
-        - shrug
-        - headexplode
-        - cry
-        - dab
-        - disco
-        - dontsee
-        - hammer
-        - handsair
-        - hohoho
-        - robot
-        - snowfall
-        - tektonik
-        - tik
-        - confettipopper
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
@@ -788,8 +788,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        startFadeDistanceDithering: 2
-        endFadeDistanceDithering: 0.8
+        startFadeDistanceDithering: 0.42
+        endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
@@ -909,6 +909,7 @@ MonoBehaviour:
       data:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <SkyboxSettings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100

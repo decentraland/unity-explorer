@@ -36,8 +36,10 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.Roads.Systems;
 using DCL.SkyBox;
+using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -76,6 +78,7 @@ namespace Global.Dynamic
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly StartParcel startParcel;
         private readonly LandscapeParcelData landscapeParcelData;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
@@ -95,6 +98,7 @@ namespace Global.Dynamic
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
+            StartParcel startParcel,
             LandscapeParcelData landscapeParcelData)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -125,6 +129,7 @@ namespace Global.Dynamic
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.startParcel = startParcel;
             this.landscapeParcelData = landscapeParcelData;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -198,6 +203,8 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
+            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData);
+
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
@@ -206,7 +213,7 @@ namespace Global.Dynamic
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
-                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),

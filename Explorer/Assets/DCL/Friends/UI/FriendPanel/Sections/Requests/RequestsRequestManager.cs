@@ -96,6 +96,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void SentRemoved(string friendId)
         {
+            thumbnailContextMenuActions.Remove(friendId);
             if (sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId)) <= 0) return;
 
             RefreshLoopList();
@@ -107,6 +108,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void ReceivedRemoved(string friendId)
         {
+            thumbnailContextMenuActions.Remove(friendId);
             if (receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId)) <= 0) return;
 
             RefreshLoopList();
@@ -151,6 +153,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
+            thumbnailContextMenuActions[elementView.UserProfile.Address.ToString()] = () => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView);
 
             FriendRequest request = section == FriendPanelStatus.RECEIVED ? receivedRequests[collectionIndex] : sentRequests[collectionIndex];
             elementView.RequestDate = request.Timestamp;
