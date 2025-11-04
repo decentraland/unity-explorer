@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
+            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, realmData,
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableStorage);
         }
 
@@ -74,13 +74,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             system.urlBuilder = urlBuilder;
 
-            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>(), totalAmount);
+            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<ITrimmedWearable>(), totalAmount);
         }
 
         protected override GetWearableByParamIntention CreateNotFoundIntention() =>
-            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>(), totalAmount);
+            new (Array.Empty<(string, string)>(), failPath, new List<ITrimmedWearable>(), totalAmount);
 
         protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
-            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>(), totalAmount);
+            new (Array.Empty<(string, string)>(), wrongTypePath, new List<ITrimmedWearable>(), totalAmount);
     }
 }

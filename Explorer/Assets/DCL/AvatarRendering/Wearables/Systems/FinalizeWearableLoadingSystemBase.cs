@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                                 ReportHub.LogError(GetReportData(), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
                             failedDTOList.Remove(assetEntity.Metadata.id);
-                            component.UpdateLoadingStatus(false);
+                            ((IAvatarAttachment)component).UpdateLoadingStatus(false);
                         }
 
                     //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
@@ -124,7 +124,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         /// </summary>
         private static void ResetWearableResultOnCancellation(IWearable wearable, in BodyShape bodyShape, int index)
         {
-            wearable.UpdateLoadingStatus(false);
+            ((IAvatarAttachment)wearable).UpdateLoadingStatus(false);
 
             void ResetBodyShape(BodyShape bs)
             {
@@ -207,7 +207,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 else
                     SetAsFailed(wearable, in bodyShape);
 
-                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
+                ((IAvatarAttachment)wearable).UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
                 World.Destroy(entity);
             }
         }

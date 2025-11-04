@@ -29,12 +29,6 @@ namespace DCL.AvatarRendering.Wearables
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        private void ConvertAndAdd(List<ITrimmedWearable> destination, IReadOnlyCollection<IWearable> sourceCollection)
-        {
-            foreach (var wearable in sourceCollection)
-                destination.Add(wearable.Convert());
-        }
-
         public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
@@ -62,10 +56,10 @@ namespace DCL.AvatarRendering.Wearables
                     resultWearablesBuffer.Clear();
 
                     if (maleWearables != null)
-                        ConvertAndAdd(resultWearablesBuffer, maleWearables);
+                        resultWearablesBuffer.AddRange(maleWearables);
 
                     if (femaleWearables != null)
-                        ConvertAndAdd(resultWearablesBuffer, femaleWearables);
+                        resultWearablesBuffer.AddRange(femaleWearables);
 
                     int pageIndex = pageNumber - 1;
                     results.AddRange(resultWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize));
@@ -144,50 +138,5 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape, CancellationToken ct)
             => await source.RequestPointersAsync(pointers, bodyShape, ct);
-    }
-
-    public static class WearableExtensions
-    {
-        public static ITrimmedWearable Convert(this IWearable wearable)
-        {
-            var result = new TrimmedWearable
-                {
-                    ThumbnailAssetResult = wearable.ThumbnailAssetResult,
-                    Model = wearable.Model.Convert()
-                };
-
-            return result;
-        }
-
-        public static StreamableLoadingResult<TrimmedWearableDTO> Convert(this StreamableLoadingResult<WearableDTO> wearableModel)
-        {
-            if (!wearableModel.Succeeded)
-                return new StreamableLoadingResult<TrimmedWearableDTO>(wearableModel.ReportData, wearableModel.Exception!);
-
-            var dto = wearableModel.Asset!;
-
-            return new StreamableLoadingResult<TrimmedWearableDTO>(dto.Convert());
-        }
-
-        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO)
-        {
-            var trimmedDTO = new TrimmedWearableDTO
-            {
-                id = wearableDTO.id,
-                thumbnail = wearableDTO.metadata.thumbnail, //???
-                metadata = new TrimmedWearableDTO.WearableMetadataDto
-                {
-                    id = wearableDTO.metadata.id,
-                    rarity = wearableDTO.metadata.rarity,
-                    data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
-                    {
-                        category = wearableDTO.metadata.data.category,
-                        representations = wearableDTO.metadata.data.representations
-                    }
-                }
-            };
-
-            return trimmedDTO;
-        }
     }
 }

@@ -88,7 +88,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             ComposeHiddenCategoriesOrdered(bodyShapeId, hideWearablesResolution.ForceRender, wearables, combinedHidingList);
 
             foreach (IWearable wearable in wearables)
-                if (!combinedHidingList.Contains(wearable.GetCategory()))
+                if (!combinedHidingList.Contains(((IAvatarAttachment)wearable).GetCategory()))
                     visibleWearables.Add(wearable);
 
             hideWearablesResolution.VisibleWearables = visibleWearables;
@@ -109,7 +109,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 HashSet<string> hidingList = HashSetPool<string>.Get();
                 wearables[i].GetHidingList(bodyShapeId, hidingList);
-                hiddenCategoriesByCategory[wearables[i].GetCategory()] = hidingList;
+                hiddenCategoriesByCategory[((IAvatarAttachment)wearables[i]).GetCategory()] = hidingList;
             }
 
             WearableUtils.ResolveHidingConflicts(hiddenCategoriesByCategory, forceRender, combinedHidingList);
@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             using var scope = DictionaryPool<string, IWearable>.Get(out var wearablesByCategory);
 
             for (var i = 0; i < equippedWearables.Count; i++)
-                wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
+                wearablesByCategory[((IAvatarAttachment)equippedWearables[i]).GetCategory()] = equippedWearables[i];
 
             var hiddenSoFar = HashSetPool<string>.Get();
 
@@ -143,7 +143,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 if (HIDE_CATEGORIES.Contains(hiddenCategory))
                 {
                     ReleaseHiddenSoFar();
-                    return wearable.GetCategory();
+                    return ((IAvatarAttachment)wearable).GetCategory();
                 }
             }
 

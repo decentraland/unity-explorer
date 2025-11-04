@@ -16,27 +16,27 @@ namespace DCL.AvatarRendering.Loading.Components
         /// </summary>
         StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
-        TrimmedAvatarAttachmentDTO DTO { get; }
+        TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
 
         public string ToString() =>
-            $"TrimmedAvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
+            $"TrimmedAvatarAttachment({TrimmedDTO.GetHash()} | {this.GetUrn()})";
     }
 
     public interface ITrimmedAvatarAttachment<TModelDTO> : ITrimmedAvatarAttachment
     {
-        StreamableLoadingResult<TModelDTO> Model { get; set; }
+        StreamableLoadingResult<TModelDTO> TrimmedModel { get; set; }
 
         bool IsOnChain();
 
         public void ResolvedFailedDTO(StreamableLoadingResult<TModelDTO> result)
         {
-            Model = result;
+            TrimmedModel = result;
             UpdateLoadingStatus(false);
         }
 
         public void ApplyAndMarkAsLoaded(TModelDTO modelDTO)
         {
-            Model = new StreamableLoadingResult<TModelDTO>(modelDTO);
+            TrimmedModel = new StreamableLoadingResult<TModelDTO>(modelDTO);
             UpdateLoadingStatus(false);
         }
     }
@@ -44,16 +44,16 @@ namespace DCL.AvatarRendering.Loading.Components
     public static class TrimmedAvatarAttachmentExtensions
     {
         public static URN GetUrn(this ITrimmedAvatarAttachment avatarAttachment) =>
-            avatarAttachment.DTO.Metadata.id;
+            avatarAttachment.TrimmedDTO.Metadata.id;
 
         public static string GetRarity(this ITrimmedAvatarAttachment avatarAttachment)
         {
             const string DEFAULT_RARITY = "base";
-            string result = avatarAttachment.DTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            string result = avatarAttachment.TrimmedDTO.Metadata?.rarity ?? DEFAULT_RARITY;
             return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
         }
 
         public static string GetCategory(this ITrimmedAvatarAttachment avatarAttachment) =>
-            avatarAttachment.DTO.Metadata.AbstractData.category;
+            avatarAttachment.TrimmedDTO.Metadata.AbstractData.category;
     }
 }

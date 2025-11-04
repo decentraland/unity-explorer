@@ -16,13 +16,6 @@ namespace DCL.Ipfs
         public ContentDefinition[] content;
         public string[] pointers;
 
-        // Asset bundle manifest properties
-        [JsonProperty("versions")]
-        public AssetBundleManifestVersion? assetBundleManifestVersion;
-
-        [JsonProperty("status")]
-        public AssetBundleRegistryEnum assetBundleRegistryEnum;
-
         protected EntityDefinitionBase() { }
 
         protected EntityDefinitionBase(string id)
@@ -38,5 +31,12 @@ namespace DCL.Ipfs
     {
         public string? id;
         public string thumbnail;
+
+        // Asset bundle manifest properties
+        [JsonProperty("versions")]
+        public AssetBundleManifestVersion? assetBundleManifestVersion;
+
+        [JsonProperty("status")]
+        public AssetBundleRegistryEnum assetBundleRegistryEnum;
     }
 }

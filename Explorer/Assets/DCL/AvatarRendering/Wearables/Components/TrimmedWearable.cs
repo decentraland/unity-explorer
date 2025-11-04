@@ -12,6 +12,12 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class TrimmedWearable : ITrimmedWearable
     {
+        public TrimmedWearable(TrimmedWearableDTO model)
+        {
+            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(model);
+            IsLoading = false;
+        }
+
         public TrimmedWearable() { }
 
         public bool IsLoading { get; private set; }
@@ -20,8 +26,8 @@ namespace DCL.AvatarRendering.Wearables.Components
             IsLoading = isLoading;
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-        public TrimmedAvatarAttachmentDTO DTO => Model.Asset!;
-        public StreamableLoadingResult<TrimmedWearableDTO> Model { get; set; }
+        public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
+        public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public bool IsOnChain() =>
             !this.GetUrn().ToString().StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
@@ -31,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
-            foreach (AvatarAttachmentDTO.Representation dataRepresentation in DTO.Metadata.AbstractData.representations)
+            foreach (AvatarAttachmentDTO.Representation dataRepresentation in TrimmedDTO.Metadata.AbstractData.representations)
                 if (dataRepresentation.bodyShapes.Contains(bodyShape))
                     return true;
 

@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal void AddToInternalCache(IWearable wearable)
         {
-            wearablesCache.Add(wearable.GetUrn(), wearable);
+            wearablesCache.Add(((IAvatarAttachment)wearable).GetUrn(), wearable);
         }
 
         public void Set(URN urn, IWearable element)
@@ -164,8 +164,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static void DisposeThumbnail(IWearable wearable)
         {
-            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
-                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
+            IAvatarAttachment attachment = wearable;
+            if (attachment.ThumbnailAssetResult is { IsInitialized: true })
+                attachment.ThumbnailAssetResult.Value.Asset.RemoveReference();
         }
 
         private void UpdateListedCachePriority(URN @for)

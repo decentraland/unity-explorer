@@ -47,4 +47,24 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
         }
     }
+
+    public static class TrimmedWearableDTOExtensions
+    {
+        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO) =>
+            new ()
+            {
+                id = wearableDTO.id,
+                thumbnail = wearableDTO.thumbnail,
+                metadata = new TrimmedWearableDTO.WearableMetadataDto
+                {
+                    id = wearableDTO.metadata.id,
+                    rarity = wearableDTO.metadata.rarity,
+                    data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
+                    {
+                        category = wearableDTO.metadata.data.category,
+                        representations = wearableDTO.metadata.data.representations
+                    }
+                }
+            };
+    }
 }

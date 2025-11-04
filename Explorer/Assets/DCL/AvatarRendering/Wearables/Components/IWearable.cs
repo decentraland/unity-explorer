@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IWearable : IAvatarAttachment<WearableDTO>
+    public interface IWearable : IAvatarAttachment<WearableDTO>, ITrimmedWearable
     {
         WearableType Type { get; }
 
@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
 
-        bool IsCompatibleWithBodyShape(string bodyShape);
+        new bool IsCompatibleWithBodyShape(string bodyShape);
 
         bool HasSameModelsForAllGenders();
 

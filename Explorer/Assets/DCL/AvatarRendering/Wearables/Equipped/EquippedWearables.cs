@@ -30,20 +30,21 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             (hairColor, eyesColor, bodyshapeColor);
 
         public bool IsEquipped(IWearable wearable) =>
-            wearables[wearable.GetCategory()] == wearable;
+            wearables[((IAvatarAttachment)wearable).GetCategory()] == wearable;
 
         public bool IsEquipped(ITrimmedWearable wearable) =>
-            wearables[wearable.GetCategory()]?.DTO.id == wearable.DTO.id;
+            wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
 
         public void Equip(IWearable wearable) =>
-            wearables[wearable.GetCategory()] = wearable;
+            wearables[((IAvatarAttachment)wearable).GetCategory()] = wearable;
 
         public void UnEquip(IWearable wearable)
         {
+            IAvatarAttachment attachment = wearable;
             if (IsEquipped(wearable) == false)
-                throw new InvalidOperationException($"Trying to unequip a wearable that is not equipped. {wearable.GetCategory()}");
+                throw new InvalidOperationException($"Trying to unequip a wearable that is not equipped. {attachment.GetCategory()}");
 
-            wearables[wearable.GetCategory()] = null;
+            wearables[attachment.GetCategory()] = null;
         }
 
         public void UnEquipAll()

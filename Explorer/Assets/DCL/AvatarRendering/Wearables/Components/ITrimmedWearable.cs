@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// <summary>
         ///     Per <see cref="BodyShape" /> [MALE, FEMALE]
         /// </summary>
-        WearableAssets[] WearableAssetResults { get; }
+        // WearableAssets[] WearableAssetResults { get; }
 
         bool IsCompatibleWithBodyShape(string bodyShape);
 

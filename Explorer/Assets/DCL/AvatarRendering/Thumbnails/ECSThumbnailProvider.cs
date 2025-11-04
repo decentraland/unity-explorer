@@ -28,16 +28,17 @@ namespace DCL.AvatarRendering.Wearables
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
             LoadThumbnailsUtils.CreateWearableThumbnailABPromiseAsync(
-                    realmData,
-                    avatarAttachment,
-                    world,
-                    PartitionComponent.TOP_PRIORITY,
-                    CancellationTokenSource.CreateLinkedTokenSource(ct))
+                                    realmData,
+                                    avatarAttachment,
+                                    world,
+                                    PartitionComponent.TOP_PRIORITY,
+                                    CancellationTokenSource.CreateLinkedTokenSource(ct))
                                .Forget();
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment
             return await avatarAttachment.WaitForThumbnailAsync(0, ct);
+
         }
 
         public UniTask<Sprite> GetAsync(ITrimmedAvatarAttachment avatarAttachment, CancellationToken ct) =>
