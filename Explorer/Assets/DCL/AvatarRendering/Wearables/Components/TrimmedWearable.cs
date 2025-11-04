@@ -30,10 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public bool IsOnChain() =>
-            !this.GetUrn().ToString().StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
-
-        public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
-
+            !((ITrimmedAvatarAttachment)this).GetUrn().ToString().StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {

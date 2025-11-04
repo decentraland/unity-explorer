@@ -20,6 +20,19 @@ namespace DCL.AvatarRendering.Loading.Components
 
         public string ToString() =>
             $"TrimmedAvatarAttachment({TrimmedDTO.GetHash()} | {this.GetUrn()})";
+
+        URN GetUrn() =>
+            this.TrimmedDTO.Metadata.id;
+
+        string GetRarity()
+        {
+            const string DEFAULT_RARITY = "base";
+            string result = this.TrimmedDTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
+        }
+
+        string GetCategory() =>
+            this.TrimmedDTO.Metadata.AbstractData.category;
     }
 
     public interface ITrimmedAvatarAttachment<TModelDTO> : ITrimmedAvatarAttachment
@@ -39,21 +52,5 @@ namespace DCL.AvatarRendering.Loading.Components
             TrimmedModel = new StreamableLoadingResult<TModelDTO>(modelDTO);
             UpdateLoadingStatus(false);
         }
-    }
-
-    public static class TrimmedAvatarAttachmentExtensions
-    {
-        public static URN GetUrn(this ITrimmedAvatarAttachment avatarAttachment) =>
-            avatarAttachment.TrimmedDTO.Metadata.id;
-
-        public static string GetRarity(this ITrimmedAvatarAttachment avatarAttachment)
-        {
-            const string DEFAULT_RARITY = "base";
-            string result = avatarAttachment.TrimmedDTO.Metadata?.rarity ?? DEFAULT_RARITY;
-            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
-        }
-
-        public static string GetCategory(this ITrimmedAvatarAttachment avatarAttachment) =>
-            avatarAttachment.TrimmedDTO.Metadata.AbstractData.category;
     }
 }
