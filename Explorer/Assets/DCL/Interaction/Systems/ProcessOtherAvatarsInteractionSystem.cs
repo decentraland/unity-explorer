@@ -17,6 +17,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using InputAction = DCL.ECSComponents.InputAction;
+using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
 
 namespace DCL.Interaction.Systems
 {
@@ -88,6 +89,18 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
+
+            if (World.Has<AvatarShapeComponent>(entityRef))
+            {
+                AvatarShapeComponent avatarShapeComponent = World.GetEntityData(entityRef).Get<AvatarShapeComponent>();
+                foreach( var rend in avatarShapeComponent.OutlineCompatibleRenderers)
+                {
+                    if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                    {
+                        RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(rend!, Color.white, 1.0f);
+                    }
+                }
+            }
         }
 
         private void OpenContextMenu(UnityEngine.InputSystem.InputAction.CallbackContext context)
