@@ -18,36 +18,27 @@ namespace DCL.CharacterMotion.Settings
         public void ApplyOverrides(in AvatarLocomotionOverrides locomotionOverrides) =>
             currentOverrides = locomotionOverrides;
 
+        private float GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID id, float value)
+        {
+            AvatarLocomotionOverridesHelper.TryOverride(in currentOverrides, id, ref value);
+            return value;
+        }
+
         public float WalkSpeed
         {
-            get
-            {
-                float value = impl.WalkSpeed;
-                AvatarLocomotionOverridesHelper.TryOverride(in currentOverrides, AvatarLocomotionOverrides.OverrideID.WALK_SPEED, ref value);
-                return value;
-            }
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.WALK_SPEED, impl.WalkSpeed);
             set => impl.WalkSpeed = value;
         }
 
         public float JogSpeed
         {
-            get
-            {
-                float value = impl.JogSpeed;
-                AvatarLocomotionOverridesHelper.TryOverride(in currentOverrides, AvatarLocomotionOverrides.OverrideID.JOG_SPEED, ref value);
-                return value;
-            }
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.JOG_SPEED, impl.JogJumpHeight);
             set => impl.JogSpeed = value;
         }
 
         public float RunSpeed
         {
-            get
-            {
-                float value = impl.RunSpeed;
-                AvatarLocomotionOverridesHelper.TryOverride(in currentOverrides, AvatarLocomotionOverrides.OverrideID.RUN_SPEED, ref value);
-                return value;
-            }
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.RUN_SPEED, impl.RunSpeed);
             set => impl.RunSpeed = value;
         }
 
@@ -71,13 +62,13 @@ namespace DCL.CharacterMotion.Settings
 
         public float JogJumpHeight
         {
-            get => impl.JogJumpHeight;
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT, impl.JogJumpHeight);
             set => impl.JogJumpHeight = value;
         }
 
         public float RunJumpHeight
         {
-            get => impl.RunJumpHeight;
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT, impl.JogJumpHeight);
             set => impl.RunJumpHeight = value;
         }
 
