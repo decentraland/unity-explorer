@@ -18,5 +18,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal float expandAnimationDuration { get; private set; } = 0.3f;
         [field: SerializeField] internal GameObject wearableListLoadingSpinner { get; private set; }
         [field: SerializeField] internal GameObject wearableListEmptyMessage { get; private set; }
+        [field: SerializeField] internal GameObject verifiedMark { get; private set; }
+        [field: SerializeField] internal GameObject officialMark { get; private set; }
+
     }
 }

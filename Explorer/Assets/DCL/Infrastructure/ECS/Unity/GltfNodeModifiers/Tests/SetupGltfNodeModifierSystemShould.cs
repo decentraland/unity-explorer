@@ -593,7 +593,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 PartitionComponent.TOP_PRIORITY);
 
             var hierarchyPaths = new[] { "Child", "Root" }; // Simulate captured hierarchy paths
-            var asset = GltfContainerAsset.Create(rootContainerGameObject, null, hierarchyPaths);
+            var asset = GltfContainerAsset.Create(rootContainerGameObject, null, hierarchyPaths: hierarchyPaths);
             asset.Renderers.Add(rootRenderer);
             asset.Renderers.Add(childRenderer);
 

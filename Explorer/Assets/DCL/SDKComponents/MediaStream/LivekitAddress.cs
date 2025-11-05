@@ -1,4 +1,3 @@
-using DCL.Multiplayer.Connections.Rooms;
 using REnum;
 using System;
 
@@ -31,7 +30,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsEmpty => Match(
             static stream => string.IsNullOrEmpty(stream.Identity) || string.IsNullOrEmpty(stream.Sid),
-            onCurrentStream: static () => string.IsNullOrEmpty(ParticipantExtensions.LIVEKIT_CURRENT_STREAM)
+            onCurrentStream: static () => string.IsNullOrEmpty(LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM)
         );
 
         public static LivekitAddress New(string rawAddress)
@@ -39,7 +38,7 @@ namespace DCL.SDKComponents.MediaStream
             if (rawAddress.IsLivekitAddress() == false)
                 throw new InvalidOperationException();
 
-            return rawAddress == ParticipantExtensions.LIVEKIT_CURRENT_STREAM
+            return rawAddress == LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM
                 ? CurrentStream()
                 : FromUserStream(new UserStream(rawAddress));
         }
