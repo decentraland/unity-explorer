@@ -3,8 +3,10 @@ using SuperScrollView;
 using System;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 {
@@ -79,6 +81,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
             if (viewModel.ThumbnailState == ThumbnailState.NotLoaded)
                 dataProvider.RequestThumbnailLoad(itemIndex);
 
+            cellView.NftCount.text = $"x{Random.Range(1, 200)}";
+            
             if (wearableCatalog != null)
             {
                 cellView.RarityBackground.sprite = wearableCatalog
@@ -94,6 +98,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
             cellView.OnItemSelected -= OnItemSelected;
             cellView.OnItemSelected += OnItemSelected;
 
+            ReportHub.Log(ReportCategory.GIFTING, $"GiftingItem {itemIndex} - {viewModel.Urn} has been refreshed/loaded");
             return item;
         }
     }

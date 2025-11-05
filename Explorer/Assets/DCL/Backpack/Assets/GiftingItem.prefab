@@ -680,6 +680,7 @@ MonoBehaviour:
   loadingStateContainer: {fileID: 6286998595196087094}
   loadedStateContainer: {fileID: 7763465529816279513}
   thumbnailImage: {fileID: 3738078155287286338}
+  NftCount: {fileID: 2734564836472412647}
   RarityBackground: {fileID: 4650344333737655355}
   FlapBackground: {fileID: 2248039299495904326}
   CategoryImage: {fileID: 541057936104771926}

@@ -3,7 +3,9 @@ using DG.Tweening;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -29,6 +31,7 @@ namespace DCL.Backpack.Gifting.Views
         [Header("UI Elements")]
         [SerializeField] private Image thumbnailImage;
 
+        [SerializeField] public TextMeshProUGUI NftCount;
         [SerializeField] public Image RarityBackground;
         [SerializeField] public Image FlapBackground;
         [SerializeField] public Image CategoryImage;
@@ -41,8 +44,12 @@ namespace DCL.Backpack.Gifting.Views
 
         private void OnDisable()
         {
-            transform.DOKill();
-            transform.localScale = Vector3.one;
+            if (container != null)
+            {
+                container.transform.DOKill();
+                container.transform.localScale = Vector3.one;
+            }
+            
             animationCts.SafeCancelAndDispose();
         }
 
@@ -51,6 +58,15 @@ namespace DCL.Backpack.Gifting.Views
         /// </summary>
         public void Bind(IGiftableItemViewModel viewModel, bool isSelected)
         {
+            if (container != null)
+            {
+                container.transform.DOKill();
+                container.transform.localScale = Vector3.one;
+            }
+
+            animationCts.SafeCancelAndDispose();
+            animationCts = null;
+
             transform.localScale = Vector3.one;
             
             currentUrn = viewModel.Urn;
@@ -79,6 +95,7 @@ namespace DCL.Backpack.Gifting.Views
                     // For simplicity, we can treat error as a perpetual loading state for now
                     loadingStateContainer.SetActive(true);
                     loadedStateContainer.SetActive(false);
+                    loadingView.ShowLoading();
                     break;
             }
         }
