@@ -1,0 +1,32 @@
+using System;
+using System.Collections.Generic;
+
+namespace ECS.StreamableLoading
+{
+    public struct AssetBundlesVersions
+    {
+        public readonly Dictionary<string, PlatformVersionInfo> versions;
+
+        public static AssetBundlesVersions Create() =>
+            new (true);
+
+        private AssetBundlesVersions(bool paramLess)
+        {
+            versions = new Dictionary<string, PlatformVersionInfo>();
+        }
+
+        public struct PlatformVersionInfo
+        {
+            public VersionInfo mac;
+            public VersionInfo webgl;
+            public VersionInfo windows;
+        }
+
+        public struct VersionInfo
+        {
+            public string version;
+            public DateTime buildDate;
+            public string originalBuildDate;
+        }
+    }
+}
