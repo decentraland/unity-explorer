@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
+using UnityEngine.Networking;
 
 namespace DCL.SocialService.PerformanceTests
 {
@@ -25,7 +26,7 @@ namespace DCL.SocialService.PerformanceTests
         internal readonly SampleGroup sendRequest = new (SEND_REQUEST_MARKER, SampleUnit.Microsecond);
         internal readonly SampleGroup processData = new (PROCESS_DATA_MARKER, SampleUnit.Microsecond);
 
-        private readonly Dictionary<ITypedWebRequest, RequestState> requests = new ();
+        private readonly Dictionary<UnityWebRequest, RequestState> requests = new ();
 
         public bool WarmingUp { private get; set; }
 
@@ -42,30 +43,30 @@ namespace DCL.SocialService.PerformanceTests
         {
             if (WarmingUp) return;
 
-            requests[request] = new RequestState(Stopwatch.GetTimestamp());
+            requests[request.UnityWebRequest] = new RequestState(Stopwatch.GetTimestamp());
         }
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
         {
             if (WarmingUp) return;
 
-            Measure.Custom(sendRequest, ToMs(requests[request].started, Stopwatch.GetTimestamp()));
-            requests.Remove(request);
+            Measure.Custom(sendRequest, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp()));
+            requests.Remove(request.UnityWebRequest);
         }
 
         void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request)
         {
             if (WarmingUp) return;
 
-            requests[request] = new RequestState(Stopwatch.GetTimestamp());
+            requests[request.UnityWebRequest] = new RequestState(Stopwatch.GetTimestamp());
         }
 
         void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
         {
             if (WarmingUp) return;
 
-            Measure.Custom(processData, ToMs(requests[request].started, Stopwatch.GetTimestamp()));
-            requests.Remove(request);
+            Measure.Custom(processData, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp()));
+            requests.Remove(request.UnityWebRequest);
         }
     }
 }

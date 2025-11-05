@@ -1,46 +1,35 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
-using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Accounts.Factory;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.ChromeDevtool;
-using DCL.WebRequests.RequestsHub;
 using Global.Dynamic.LaunchModes;
 using NUnit.Framework;
 using System;
-using System.Collections;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.PerformanceTesting;
-using UnityEngine.TestTools;
 
 namespace DCL.SocialService.PerformanceTests
 {
     [TestFixture(DecentralandEnvironment.Org)]
     [TestFixture(DecentralandEnvironment.Zone)]
-    public class SocialServicePerformanceTests
+    public class SocialServicePerformanceTests : PerformanceBenchmark
     {
-        private const int ITERATIONS_COUNT = 30;
-
         private readonly DecentralandEnvironment env;
         private readonly DecentralandUrlsSource urlsSource;
-
-        private IWebRequestController? webRequestController;
-        private CommunitiesDataProvider? communitiesDataProvider;
-
-        private PerformanceTestWebRequestsAnalytics? analytics;
 
         private MockedReportScope? reportScope;
 
         // We need an identity for Signed Fetch, assume here it is taken from Player Prefabs as we can't authenticate in Tests
-        private readonly IWeb3IdentityCache identityCache = new ProxyIdentityCache(
-            new MemoryWeb3IdentityCache(),
-            new PlayerPrefsIdentityProvider(
-                new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(new Web3AccountFactory()))
-        );
+        // private readonly IWeb3IdentityCache identityCache = new ProxyIdentityCache(
+        //     new MemoryWeb3IdentityCache(),
+        //     new PlayerPrefsIdentityProvider(
+        //         new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(new Web3AccountFactory()))
+        // );
 
         public SocialServicePerformanceTests(DecentralandEnvironment env)
         {
@@ -48,53 +37,99 @@ namespace DCL.SocialService.PerformanceTests
             urlsSource = new DecentralandUrlsSource(env, ILaunchMode.PLAY);
         }
 
-        [SetUp]
-        public void SetUp()
-        {
-            webRequestController = new WebRequestController(analytics = new PerformanceTestWebRequestsAnalytics(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest());
-            communitiesDataProvider = new CommunitiesDataProvider(webRequestController, urlsSource, identityCache);
+        private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
-            reportScope = new MockedReportScope();
+        private static readonly object[] TEST_CASES_SOURCE =
+        {
+            new object[] { 1, 100, 0.25d, 1 },
+            new object[] { 10, 50, 0.25d, 100 },
+            new object[] { 50, 50, 0.25d, 100 },
+            new object[] { 100, 50, 0.25d, 100 },
+            new object[] { 20, 10, 6, 25 },
+            new object[] { 20, 5, 20, 25 },
+        };
+
+        /// <summary>
+        ///     Bypass Signed Fetch
+        /// </summary>
+        private WebRequestHeadersInfo AuthorizeRequest() =>
+            new WebRequestHeadersInfo().Add("Authorization", $"Bearer {Environment.GetEnvironmentVariable("DCLAuthSecret", EnvironmentVariableTarget.User)}");
+
+        [TestCase(10, 100, 0.25d, 1)] // Concurrency doesn't matter - it's always one request at a time (from the design perspective)
+        [TestCase(50, 20, 0.25d, 100)] // Artificial simulation of load
+        [TestCase(100, 20, 0.25d, 100)] // Artificial simulation of load
+        [TestCase(10, 20, 6d, 1)]
+        [Performance]
+        public async Task GetCommunitiesAsync(int concurrency, int iterations, double delayBetweenIterations, int totalRequests)
+        {
+            var delay = TimeSpan.FromSeconds(delayBetweenIterations);
+
+            string url = $"{communitiesBaseUrl}?limit=25";
+
+            CreateController(concurrency);
+
+            await BenchmarkAsync(concurrency, _ => controller!.GetAsync(url, CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                              .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft),
+                new[] { "" }, 2, totalRequests, iterations, delay);
         }
 
-        [TearDown]
-        public void TearDown() =>
-            reportScope?.Dispose();
-
-        [Test]
-        [TestCase(25)]
-        [TestCase(50)]
-        [TestCase(100)]
-        [Performance]
-        public async Task GetUserCommunitiesAsync_KeepAlive(int pageSize) =>
-            await BenchmarkAsync(() => communitiesDataProvider.GetUserCommunitiesAsync("", false, 0, pageSize, CancellationToken.None),
-                2, ITERATIONS_COUNT, TimeSpan.FromMilliseconds(100));
-
-        [Test]
-        [TestCase(25)]
-        [TestCase(50)]
-        [TestCase(100)]
-        [Performance]
-        public async Task GetUserCommunitiesAsync_ExpireKeepAlive(int pageSize) =>
-            await BenchmarkAsync(() => communitiesDataProvider.GetUserCommunitiesAsync("", false, 0, pageSize, CancellationToken.None),
-                0, 10, TimeSpan.FromSeconds(10));
-
-        private async UniTask BenchmarkAsync(Func<UniTask> createTask, int warmupCount, int iterationsCount, TimeSpan delayBetweenIterations)
+        protected async UniTask<string[]> GetCommunitiesIdsAsync()
         {
-            analytics!.WarmingUp = true;
+            analytics.WarmingUp = true;
 
-            // Warmup a few times (DNS/TLS/JIT)
-            for (int i = 0; i < warmupCount; i++)
-                await createTask();
+            string url = $"{communitiesBaseUrl}?limit=25";
+
+            GetUserCommunitiesResponse? resp = await controller!.GetAsync(url, CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                                .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
 
             analytics.WarmingUp = false;
 
-            for (int i = 0; i < iterationsCount; i++)
-            {
-                await createTask();
+            return resp.data.results.Select(r => r.id).ToArray();
+        }
 
-                await UniTask.Delay(delayBetweenIterations);
-            }
+        [TestCaseSource(nameof(TEST_CASES_SOURCE))]
+        [Timeout(10 * 60 * 1000)]
+        [Performance]
+        public async Task GetCommunityByIdAsync(int concurrency, int iterations, double delayBetweenIterations, int totalRequests)
+        {
+            var delay = TimeSpan.FromSeconds(delayBetweenIterations);
+
+            CreateController(concurrency);
+
+            await BenchmarkAsync(concurrency,
+                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+                await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
+        }
+
+        [TestCaseSource(nameof(TEST_CASES_SOURCE))]
+        [Timeout(10 * 60 * 1000)]
+        [Performance]
+        public async Task GetCommunityPlacesAsync(int concurrency, int iterations, double delayBetweenIterations, int totalRequests)
+        {
+            var delay = TimeSpan.FromSeconds(delayBetweenIterations);
+
+            CreateController(concurrency);
+
+            await BenchmarkAsync(concurrency,
+                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/places", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+                await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
+        }
+
+        [TestCaseSource(nameof(TEST_CASES_SOURCE))]
+        [Timeout(10 * 60 * 1000)]
+        [Performance]
+        public async Task GetCommunityMembersAsync(int concurrency, int iterations, double delayBetweenIterations, int totalRequests)
+        {
+            var delay = TimeSpan.FromSeconds(delayBetweenIterations);
+
+            CreateController(concurrency);
+
+            await BenchmarkAsync(concurrency,
+                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/members", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+                await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
     }
 }
