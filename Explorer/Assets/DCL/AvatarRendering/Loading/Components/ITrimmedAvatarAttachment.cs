@@ -18,6 +18,9 @@ namespace DCL.AvatarRendering.Loading.Components
 
         TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
 
+        public URLPath GetThumbnail() =>
+            new (TrimmedDTO.thumbnail);
+
         public string ToString() =>
             $"TrimmedAvatarAttachment({TrimmedDTO.GetHash()} | {this.GetUrn()})";
 

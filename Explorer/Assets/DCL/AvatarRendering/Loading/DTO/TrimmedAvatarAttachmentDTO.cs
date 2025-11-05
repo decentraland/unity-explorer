@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.Loading.DTO
 
     public abstract class TrimmedAvatarAttachmentDTO : TrimmedEntityDefinitionBase
     {
+        public string? ContentDownloadUrl { get; protected set; }
+
         public abstract TrimmedMetadataBase<TrimmedDataBase> Metadata { get; }
 
         [Serializable]
