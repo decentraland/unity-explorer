@@ -71,10 +71,11 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetResolutionSettings(int index)
         {
-            Resolution selectedResolution = possibleResolutions[index];
-            Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
+            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
+            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE));
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
-            upscalingController.ResolutionChanged(selectedResolution);
+            upscalingController.ResolutionChanged(targetResolution);
         }
 
         public override void Dispose()
