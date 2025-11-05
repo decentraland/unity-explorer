@@ -51,9 +51,11 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
             else
             {
-                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                          .AppendSubDirectory(wearablesSubdirectory);
+                urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+                          .AppendPath(URLPath.FromString($"/users/{userID}/wearables"))
+                          .AppendParameter(new URLParameter("includeEntities", "true"));
+
+                ;
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
