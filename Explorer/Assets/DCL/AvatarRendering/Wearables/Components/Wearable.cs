@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Model = result;
-            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert());
+            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(this.GetThumbnail().Value));
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;

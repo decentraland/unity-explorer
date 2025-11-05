@@ -50,11 +50,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
     public static class TrimmedWearableDTOExtensions
     {
-        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO) =>
+        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO, string thumbnailHash) =>
             new ()
             {
                 id = wearableDTO.id,
-                thumbnail = wearableDTO.thumbnail,
+                thumbnail = thumbnailHash,
                 metadata = new TrimmedWearableDTO.WearableMetadataDto
                 {
                     id = wearableDTO.metadata.id,
