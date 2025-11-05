@@ -410,8 +410,8 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                                            .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
 
             // TODO (Santi): This is temporal... REMOVE IT!
+            // ============================================
             List<CommunityPost> mockedPosts = new ();
-
             int initialIndex = 0;
             int finalIndex = 10;
             if (pageNumber == 2)
@@ -424,7 +424,6 @@ namespace DCL.Communities.CommunitiesDataProvider
                 initialIndex = 20;
                 finalIndex = 25;
             }
-
             for (int i = initialIndex; i < finalIndex; i++)
             {
                 string postId = (i+1).ToString();
@@ -446,6 +445,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             response.data.total = 25;
             response.data.posts = mockedPosts.ToArray();
             await UniTask.Delay(2000, cancellationToken: ct);
+            // ============================================
 
             return response;
         }
