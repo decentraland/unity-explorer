@@ -45,11 +45,6 @@ namespace DCL.SDKComponents.MediaStream
             static _ => 0f
         );
 
-        public bool MediaOpened => Match(
-            static avPro => avPro.AvProMediaPlayer.MediaOpened,
-            static livekitPlayer => livekitPlayer.MediaOpened
-        );
-
         public bool IsFinished => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
             static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
@@ -256,14 +251,6 @@ namespace DCL.SDKComponents.MediaStream
                 static avPro => avPro.AvProMediaPlayer.Control.GetLastError(),
                 static _ => ErrorCode.None
             );
-        }
-
-        public void EnsurePlaying()
-        {
-            if (IsLivekitPlayer(out var livekitPlayer))
-                livekitPlayer!.EnsurePlaying();
-
-            // AvPro doesn't require ensure
         }
     }
 }

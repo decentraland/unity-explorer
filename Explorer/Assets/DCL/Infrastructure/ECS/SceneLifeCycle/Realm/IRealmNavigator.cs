@@ -14,6 +14,7 @@ namespace ECS.SceneLifeCycle.Realm
         SameRealm,
         NotReachable,
         LocalSceneDevelopmentBlocked,
+        UnauthorizedWorldAccess,
         Timeout
     }
 
@@ -61,7 +62,8 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool isWorld = false
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);

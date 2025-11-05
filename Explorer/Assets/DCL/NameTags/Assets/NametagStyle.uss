@@ -170,9 +170,9 @@
 
 .nametag__badge-official {
     display: none;
-    width: 117px;
-    height: 19px;
-    background-image: var(--sprite-common__label-dcl-official);
+    width: 14px;
+    height: 14px;
+    background-image: var(--sprite-common__icon-dcl-official);
 }
 
 .nametag--official .nametag__badge-official {

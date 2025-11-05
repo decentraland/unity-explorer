@@ -68,8 +68,7 @@ namespace DCL.Chat.MessageBus
 
         public void Dispose()
         {
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
         }
 

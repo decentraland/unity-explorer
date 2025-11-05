@@ -32,7 +32,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
 
         [UsedImplicitly]
         public object GetWorldTime() =>
-            api.GetWorldTimeAsync(disposeCts.Token).ToDisconnectedPromise(this);
+            api.GetWorldTimeAsync().ToDisconnectedPromise(this);
 
         [UsedImplicitly]
         public object GetSceneInformation() =>

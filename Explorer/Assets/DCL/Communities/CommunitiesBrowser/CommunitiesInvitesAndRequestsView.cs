@@ -46,15 +46,14 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
 
-        private int currentInvitesCounter = 0;
-
-        private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
-        private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
         private readonly List<CommunityResultCardView> currentInvites = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
+        private readonly CancellationTokenSource thumbnailsCts = new ();
+        private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
+        private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
+
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
-        private CancellationTokenSource thumbnailsCts = new ();
 
         private void Awake()
         {
@@ -129,7 +128,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             invitesCounterContainer.SetActive(count > 0);
             invitesCounterText.text = count.ToString();
-            currentInvitesCounter = count;
         }
 
         public void ClearRequestsItems()
@@ -237,11 +235,10 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             CommunityResultCardView invitedCommunityCardView = invitedCommunityCardsPool.Get();
 
+            bool isMember = community.role != CommunityMemberRole.none;
+
             // Setup card data
-            invitedCommunityCardView.SetCommunityId(community.communityId);
-            invitedCommunityCardView.SetTitle(community.name);
-            invitedCommunityCardView.SetOwner(community.ownerName);
-            invitedCommunityCardView.SetDescription(community.description);
+            invitedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
@@ -277,11 +274,10 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             CommunityResultCardView requestedCommunityCardView = requestedToJoinCommunityCardsPool.Get();
 
+            bool isMember = community.role != CommunityMemberRole.none;
+
             // Setup card data
-            requestedCommunityCardView.SetCommunityId(community.communityId);
-            requestedCommunityCardView.SetTitle(community.name);
-            requestedCommunityCardView.SetOwner(community.ownerName);
-            requestedCommunityCardView.SetDescription(community.description);
+            requestedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetInviteOrRequestId(community.id);

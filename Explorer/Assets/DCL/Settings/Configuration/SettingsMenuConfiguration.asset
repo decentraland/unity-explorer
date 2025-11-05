@@ -279,7 +279,7 @@ MonoBehaviour:
           - Max
           - 32
           - 16
-          defaultOptionIndex: 1
+          defaultOptionIndex: 2
         <Feature>k__BackingField: 6
     - rid: 5015494041161695532
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -499,5 +499,5 @@ MonoBehaviour:
           - 60
           - 120
           - 144
-          defaultOptionIndex: 0
+          defaultOptionIndex: 1
         <Feature>k__BackingField: 5

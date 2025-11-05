@@ -2,7 +2,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
@@ -22,7 +21,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.LOD.Systems
 {
-    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
+    [UpdateInGroup(typeof(RealmGroup))]
     [LogCategory(ReportCategory.LOD)]
     public partial class InstantiateSceneLODInfoSystem : BaseUnityLoopSystem
     {
@@ -62,18 +61,42 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
-
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
                 return;
 
+            if (!sceneLODInfo.HasActiveLODPromise())
+                return;
+
+            //Means it has already been resolved
+            if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
+                return;
+
+            if (sceneLODInfo.CurrentLODLevelPromise == 0 && sceneLODInfo.InitialSceneStateLOD.IsProcessing())
+                ResolveInitialSceneStateDescriptorLOD(sceneDefinitionComponent, ref sceneLODInfo);
+            else
+                ResolveSceneLOD(sceneDefinitionComponent, ref sceneLODInfo);
+        }
+
+        private void ResolveInitialSceneStateDescriptorLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
+            if (sceneLODInfo.InitialSceneStateLOD.AllAssetsInstantiated())
+            {
+                sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, null, defaultFOV, defaultLodBias,
+                    realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED;
+            }
+        }
+
+        private void ResolveSceneLOD(in SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
-                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
+                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetAsset<GameObject>(),
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
+
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
@@ -89,6 +112,8 @@ namespace DCL.LOD.Systems
                     scenesCache);
             }
         }
+
+
 
         private TextureArraySlot?[] GetTextureSlot(byte lodLevel, SceneEntityDefinition sceneDefinitionComponent, GameObject instantiatedLOD)
         {

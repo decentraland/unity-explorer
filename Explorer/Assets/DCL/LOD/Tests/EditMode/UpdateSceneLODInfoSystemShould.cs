@@ -1,16 +1,14 @@
 using Arch.Core;
-using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
-using Global.Dynamic.LaunchModes;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -60,11 +58,10 @@ namespace DCL.LOD.Tests
 
             sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
-            system = new UpdateSceneLODInfoSystem(world, lodSettings, new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY));
+            system = new UpdateSceneLODInfoSystem(world, lodSettings);
         }
 
         [Test]
-
         //Note: Test modified due to LOD level always defaulting to 3 while we rebuild all of them
         [TestCase(0, 0)]
         [TestCase(1, 0)]
@@ -72,7 +69,7 @@ namespace DCL.LOD.Tests
         [TestCase(3, 1)]
         [TestCase(4, 1)]
         [TestCase(10, 1)]
-        public void ResolveLODLevel(byte bucket, int expectedLODLevel)
+        public void ResolveLODLevelWithUnsupportedISS(byte bucket, int expectedLODLevel)
         {
             //Arrange
             partitionComponent.IsDirty = true;

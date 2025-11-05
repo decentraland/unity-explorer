@@ -11,6 +11,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace DCL.CharacterPreview
 {
@@ -18,6 +20,11 @@ namespace DCL.CharacterPreview
     {
         private const float AVATAR_FADE_ANIMATION = 0.5f;
 
+        private readonly List<string> randomBasicEmotes = new()
+        {
+            "wave", "fistpump", "dab"
+        };
+        
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
@@ -34,6 +41,7 @@ namespace DCL.CharacterPreview
         private Vector3 avatarPosition;
 
         private RenderTexture? currentRenderTexture;
+        public RenderTexture CurrentRenderTexture => currentRenderTexture;
 
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
@@ -130,7 +138,7 @@ namespace DCL.CharacterPreview
         {
             if (!currentRenderTexture) return;
             currentRenderTexture.Release();
-            UnityEngine.Object.Destroy(currentRenderTexture);
+            Object.Destroy(currentRenderTexture);
             currentRenderTexture = null;
         }
 
@@ -294,8 +302,10 @@ namespace DCL.CharacterPreview
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>
             await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask);
 
-        protected void StopEmotes() =>
+        public void StopEmotes()
+        {
             previewController?.StopEmotes();
+        }
 
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
@@ -309,10 +319,34 @@ namespace DCL.CharacterPreview
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
         }
 
-        protected void PlayEmote(string emoteId) =>
-            previewController?.PlayEmote(emoteId);
+        public void PlayRandomEmote()
+        {
+            previewController?.PlayEmote(randomBasicEmotes[Random.Range(0, randomBasicEmotes.Count)]);
+        }
 
-        private void ResetAvatarMovement() =>
+        protected void PlayEmote(string emoteId)
+        {
+            previewController?.PlayEmote(emoteId);
+        }
+
+        public void ResetEmote()
+        {
+            previewController?.ResetEmote();
+        }
+
+        public void ResetAvatarMovement()
+        {
             previewController?.ResetAvatarMovement();
+        }
+
+        public void ResetZoom()
+        {
+            previewController?.ResetZoom();
+        }
+
+        public void SetPlatformVisible(bool isVisible)
+        {
+            previewController?.SetPreviewPlatformActive(isVisible);
+        }
     }
 }

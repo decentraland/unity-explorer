@@ -24,6 +24,7 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -109,6 +110,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.NotificationsBus;
+using DCL.Optimization.AdaptivePerformance.Systems;
+using DCL.PluginSystem.World;
+using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -117,6 +121,7 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
+using MultiplayerPlugin = DCL.PluginSystem.Global.MultiplayerPlugin;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -146,6 +151,8 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; }
 
+        public ISystemClipboard SystemClipboard { get; }
+
         private DynamicWorldContainer(
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
@@ -159,7 +166,8 @@ namespace Global.Dynamic
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            ISystemClipboard systemClipboard)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -170,6 +178,7 @@ namespace Global.Dynamic
             MessagePipesHub = messagePipesHub;
             RemoteMetadata = remoteMetadata;
             RoomHub = roomHub;
+            SystemClipboard = systemClipboard;
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
@@ -247,7 +256,6 @@ namespace Global.Dynamic
                     await LODContainer
                          .CreateAsync(
                               assetsProvisioner,
-                              bootstrapContainer.DecentralandUrlsSource,
                               staticContainer,
                               settingsContainer,
                               staticContainer.RealmData,
@@ -318,14 +326,13 @@ namespace Global.Dynamic
             staticContainer.CacheCleaner.Register(emotesCache);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
-            var forceRender = new List<string>();
 
             var selfEmotes = new List<URN>();
             ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
             var selfProfile = new SelfProfile(profileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, selfEmotes, profileCache, globalWorld, playerEntity);
+                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
@@ -480,6 +487,7 @@ namespace Global.Dynamic
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
                         onlineUsersProvider,
+                        identityCache,
                         ct
                     );
 
@@ -511,7 +519,8 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
-                new AppArgsCommand(appArgs)
+                new AppArgsCommand(appArgs),
+                new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -677,6 +686,9 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
+                new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
+                new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
+                new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
                 new MultiplayerPlugin(
                     assetsProvisioner,
                     archipelagoIslandRoom,
@@ -781,6 +793,7 @@ namespace Global.Dynamic
                     chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     eventBus,
+                    featureFlags,
                     assetsProvisioner,
                     mvcManager,
                     mapRendererContainer,
@@ -801,7 +814,6 @@ namespace Global.Dynamic
                     equippedEmotes,
                     webBrowser,
                     emotesCache,
-                    forceRender,
                     staticContainer.RealmData,
                     profileCache,
                     characterPreviewEventBus,
@@ -873,7 +885,7 @@ namespace Global.Dynamic
                     entityParticipantTable,
                     staticContainer.RealmData,
                     remoteMetadata),
-                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController),
+                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(
                     assetsProvisioner,
@@ -1122,6 +1134,7 @@ namespace Global.Dynamic
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
+                dynamicWorldParams.StartParcel,
                 staticContainer.LandscapeParcelData
             );
 
@@ -1140,7 +1153,8 @@ namespace Global.Dynamic
                 profileBroadcast,
                 roomHub,
                 socialServiceContainer,
-                selfProfile
+                selfProfile,
+                clipboard
             );
 
             // Init itself

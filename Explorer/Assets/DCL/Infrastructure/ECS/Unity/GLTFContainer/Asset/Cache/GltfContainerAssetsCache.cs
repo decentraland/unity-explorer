@@ -22,6 +22,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     {
         internal readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly Transform parentContainer;
+        private readonly Transform sceneLODBridge;
+
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
@@ -35,6 +37,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}").transform;
             parentContainer.transform.parent = poolParent;
             parentContainer.gameObject.SetActive(false);
+
+            sceneLODBridge = new GameObject($"SCENE_LOD_BRIDGE").transform;
 
             cache = new Dictionary<string, List<GltfContainerAsset>>(this);
             OngoingRequests = new FakeDictionaryCache<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
@@ -70,7 +74,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// <summary>
         ///     Return to the pool
         /// </summary>
-        public void Dereference(in string key, GltfContainerAsset asset)
+        public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false)
         {
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
@@ -87,8 +91,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            asset.Root.SetActive(false);
-            asset.Root.transform.SetParent(parentContainer, false);
+            if (putInBridge)
+                asset.Root.transform.SetParent(sceneLODBridge, true);
+            else
+            {
+                asset.Root.SetActive(false);
+                asset.Root.transform.SetParent(parentContainer, true);
+            }
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)

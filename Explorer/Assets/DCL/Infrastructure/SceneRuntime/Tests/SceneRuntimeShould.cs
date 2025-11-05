@@ -8,6 +8,7 @@ using ECS;
 using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
@@ -57,7 +58,7 @@ namespace SceneRuntime.Tests
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineAPI(engineApi, Substitute.For<IInstancePoolsProvider>(), sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, Substitute.For<IInstancePoolsProvider>(), sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
 
@@ -83,7 +84,7 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.RegisterEngineAPI(engineApi, poolsProvider, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, poolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 var testOk = new TestUtilCheckOk();
@@ -149,7 +150,7 @@ namespace SceneRuntime.Tests
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineAPI(engineApi, poolsProvider, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, poolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 await sceneRuntime.StartScene();

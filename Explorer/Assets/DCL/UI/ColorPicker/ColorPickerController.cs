@@ -103,20 +103,24 @@ namespace DCL.UI
             view.gameObject.SetActive(WearableCategories.COLOR_PICKER_CATEGORIES.Contains(category));
             view.Container.SetActive(false);
             ClearPool();
-            currentCategory = category;
             switch (category)
             {
                 case WearableCategories.Categories.EYES:
                     SetColors(eyesColors);
                     UpdateSliderValues(eyesColor);
+                    currentCategory = WearableCategories.Categories.EYES;
                     break;
                 case WearableCategories.Categories.HAIR:
+                case WearableCategories.Categories.EYEBROWS:
+                case WearableCategories.Categories.FACIAL_HAIR:
                     SetColors(hairColors);
                     UpdateSliderValues(hairsColor);
+                    currentCategory = WearableCategories.Categories.HAIR;
                     break;
                 case WearableCategories.Categories.BODY_SHAPE:
                     SetColors(bodyshapeColors);
                     UpdateSliderValues(bodyshapeColor);
+                    currentCategory = WearableCategories.Categories.BODY_SHAPE;
                     break;
             }
         }
