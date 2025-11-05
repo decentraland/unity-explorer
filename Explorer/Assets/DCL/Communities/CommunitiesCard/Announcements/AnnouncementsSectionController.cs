@@ -92,7 +92,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             if (communityData == null)
                 return;
 
-            CreateAnnouncementAsync($"Test post {currentAnnouncementsFetchData.Items.Count + 1}", CancellationToken.None).Forget();
+            CreateAnnouncementAsync($"Test post {UnityEngine.Random.Range(0, 10000)}", CancellationToken.None).Forget();
             return;
 
             async UniTaskVoid CreateAnnouncementAsync(string content, CancellationToken ct)
@@ -106,8 +106,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 if (!response.Success)
                     return;
 
-                currentAnnouncementsFetchData.Items.Insert(0, response.Value.data);
-                currentAnnouncementsFetchData.TotalFetched++;
+                currentAnnouncementsFetchData.Reset();
+                FetchNewDataAsync(ct).Forget();
                 RefreshGrid(true);
             }
         }
@@ -128,16 +128,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 if (!response.Success || !response.Value)
                     return;
 
-                foreach (CommunityPost communityPost in currentAnnouncementsFetchData.Items)
-                {
-                    if (communityPost.communityId == commId && communityPost.id == postId)
-                    {
-                        currentAnnouncementsFetchData.Items.Remove(communityPost);
-                        currentAnnouncementsFetchData.TotalFetched--;
-                        break;
-                    }
-                }
-
+                currentAnnouncementsFetchData.Reset();
+                FetchNewDataAsync(ct).Forget();
                 RefreshGrid(true);
             }
         }
