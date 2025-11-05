@@ -83,12 +83,12 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
-        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin, string buildDate)
+        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string buildDateMac, string assetBundleManifestVersionWin, string buildDateWin)
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);
-            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);
+            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDateMac);
+            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDateWin);
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 
