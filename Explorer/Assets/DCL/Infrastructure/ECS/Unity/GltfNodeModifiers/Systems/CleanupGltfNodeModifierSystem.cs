@@ -12,7 +12,6 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.Rendering;
 using Utility;
 using Utility.Arch;
 
@@ -100,7 +99,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             foreach (var rendererMaterialKeyValuePair in nodeModifiers.OriginalMaterials)
             {
                 rendererMaterialKeyValuePair.Key.sharedMaterial = rendererMaterialKeyValuePair.Value;
-                rendererMaterialKeyValuePair.Key.shadowCastingMode = ShadowCastingMode.On;
+                rendererMaterialKeyValuePair.Key.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
             }
 
             nodeModifiers.OriginalMaterials.Clear();
