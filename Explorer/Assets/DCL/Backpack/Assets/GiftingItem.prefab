@@ -185,7 +185,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.6502391, g: 0.4738341, b: 0.8301887, a: 1}
+  m_Color: {r: 0.6502391, g: 0.4738341, b: 0.8301887, a: 0.14901961}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -684,6 +684,7 @@ MonoBehaviour:
   FlapBackground: {fileID: 2248039299495904326}
   CategoryImage: {fileID: 541057936104771926}
   selectionOutline: {fileID: 2738595906990294357}
+  loadingView: {fileID: 163310702031795836}
 --- !u!114 &-7810560202445122399
 MonoBehaviour:
   m_ObjectHideFlags: 0

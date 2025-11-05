@@ -182,8 +182,8 @@ namespace DCL.Backpack.Gifting.Presenters
                     sortingField: currentSort.OrderByOperation.ToSortingField(),
                     orderBy: currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                     category: string.Empty,
-                    collectionType: IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty,
-                    // collectionType: IWearablesProvider.CollectionType.All,
+                    // collectionType: IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty,
+                    collectionType: IWearablesProvider.CollectionType.All,
                     name: currentSearch,
                     results: results
                 );

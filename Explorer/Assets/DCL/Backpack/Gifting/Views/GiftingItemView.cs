@@ -3,6 +3,7 @@ using DG.Tweening;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -34,6 +35,7 @@ namespace DCL.Backpack.Gifting.Views
         
 
         [SerializeField] private GameObject selectionOutline;
+        [SerializeField] private SkeletonLoadingView loadingView;
 
         private string currentUrn;
 
@@ -63,12 +65,14 @@ namespace DCL.Backpack.Gifting.Views
                 case ThumbnailState.Loading:
                     loadingStateContainer.SetActive(true);
                     loadedStateContainer.SetActive(false);
+                    loadingView.ShowLoading();
                     break;
 
                 case ThumbnailState.Loaded:
                     loadingStateContainer.SetActive(false);
                     loadedStateContainer.SetActive(true);
                     thumbnailImage.sprite = viewModel.Thumbnail;
+                    loadingView.HideLoading();
                     break;
 
                 case ThumbnailState.Error:
