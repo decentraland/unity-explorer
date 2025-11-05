@@ -14,14 +14,18 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading;
+using AssetBundleRegistryVersionsPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundlesVersions, ECS.StreamableLoading.AssetBundles.GetAssetBundleRegistryVersionsIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
@@ -29,6 +33,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadWearablesByParamSystem : LoadSystemBase<WearablesResponse, GetWearableByParamIntention>
     {
+        private static readonly ArrayPool<URN> ARRAY_POOL = ArrayPool<URN>.Create(25, 2);
+
         private readonly URLSubdirectory lambdaSubdirectory;
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly IWebRequestController webRequestController;
@@ -107,9 +113,10 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                         )
                     );
 
+                var assetBundlesVersions = await GetABVersions(lambdaResponse, partition, ct);
+
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                 {
-                    //TODO (JUANI): This complexity can go away once the fallback helper is no longer needed; returning to the LOAD method that was here before
                     intention.SetTotal(lambdaResponse.TotalAmount);
 
                     // Process elements in parallel for better performance
@@ -119,7 +126,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     for (var i = 0; i < pageElements.Count; i++)
                     {
                         ILambdaResponseElement<TrimmedWearableDTO>? element = pageElements[i];
-                        elementTasks[i] = ProcessElementAsync(element, partition, ct);
+                        elementTasks[i] = ProcessElementAsync(element, partition, assetBundlesVersions, ct);
                     }
 
                     // Wait for all elements to be processed and add results to intention
@@ -132,13 +139,35 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             return new StreamableLoadingResult<WearablesResponse>(AssetFromPreparedIntention(in intention));
         }
 
-        private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<AssetBundlesVersions>> GetABVersions(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, IPartitionComponent partition, CancellationToken ct)
+        {
+            URN[] urns = ARRAY_POOL.Rent(lambdaResponse.TotalAmount);
+
+            for (int i = 0; i < lambdaResponse.TotalAmount; i++)
+                urns[i] = new URN(lambdaResponse.Page[i].Entity.Metadata.id);
+
+            var promise = AssetBundleRegistryVersionsPromise.Create(World,
+                GetAssetBundleRegistryVersionsIntention.Create(urns, new CommonLoadingArguments()),
+                partition);
+
+            ARRAY_POOL.Return(urns);
+
+            return (await promise.ToUniTaskAsync(World, cancellationToken: ct)).Result.Value;
+        }
+
+        private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, StreamableLoadingResult<AssetBundlesVersions> assetBundlesVersions, CancellationToken ct)
         {
             TrimmedWearableDTO elementDTO = element.Entity;
             ITrimmedWearable wearable = new TrimmedWearable(elementDTO);
 
             // Run the asset bundle fallback check in parallel
-            // await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.DTO, partition, ct);
+            if (!assetBundlesVersions.Succeeded)
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
+            else if (assetBundlesVersions.Asset.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
+                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.windows.version,
+                    DateTime.Compare(wearableVersions.mac.buildDate, wearableVersions.windows.buildDate) > 0 ? wearableVersions.mac.originalBuildDate : wearableVersions.windows.originalBuildDate);
+            else
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 
             // Process individual data (this part needs to remain sequential per element for thread safety)
             foreach (ElementIndividualDataDto individualData in element.IndividualData)
