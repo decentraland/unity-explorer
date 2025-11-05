@@ -61,8 +61,6 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private const int ANIMATION_DELAY = 300;
-        private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
-        private const int MAX_WINDOWED_WIDTH = 2560;
         private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.FullScreenWindow;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
@@ -595,13 +593,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ForceResolutionAndWindowedMode()
         {
-            Resolution current = Screen.currentResolution;
-
-            // To avoid ultra-wide window on ultra-wide screens
-            int targetWidth = Mathf.Min((int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT), MAX_WINDOWED_WIDTH);
-            int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
-
-            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);
+            WindowModeUtils.ApplyWindowedMode();
         }
 
         private void RestoreResolutionAndScreenMode()
