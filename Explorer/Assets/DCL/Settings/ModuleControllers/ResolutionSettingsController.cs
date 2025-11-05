@@ -22,6 +22,7 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
             this.upscalingController = upscalingController;
+            this.appParameters = appParameters;
 
             LoadResolutionOptions();
 
