@@ -409,44 +409,6 @@ namespace DCL.Communities.CommunitiesDataProvider
             GetCommunityPostsResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
 
-            // TODO (Santi): This is temporal... REMOVE IT!
-            // ============================================
-            List<CommunityPost> mockedPosts = new ();
-            int initialIndex = 0;
-            int finalIndex = 10;
-            if (pageNumber == 2)
-            {
-                initialIndex = 10;
-                finalIndex = 20;
-            }
-            else if (pageNumber == 3)
-            {
-                initialIndex = 20;
-                finalIndex = 25;
-            }
-            for (int i = initialIndex; i < finalIndex; i++)
-            {
-                string postId = (i+1).ToString();
-
-                mockedPosts.Add(new CommunityPost
-                {
-                    id = postId,
-                    communityId = communityId,
-                    authorAddress = "0x1b8ba74cc34c2927aac0a8af9c3b1ba2e61352f2",
-                    authorName = "SantiHisteria",
-                    authorProfilePictureUrl = "https://picsum.photos/100/100",
-                    authorHasClaimedName = true,
-                    content = postId.Contains("2") ? $"Test post {i+1}\nExtra line 1...\nExtra line 2...\nExtra line 3..." : $"Test post {i+1}",
-                    createdAt = "",
-                    likesCount = 0,
-                    isLikedByUser = false,
-                });
-            }
-            response.data.total = 25;
-            response.data.posts = mockedPosts.ToArray();
-            await UniTask.Delay(2000, cancellationToken: ct);
-            // ============================================
-
             return response;
         }
 
@@ -461,7 +423,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        private async UniTask<bool> DeleteCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        public async UniTask<bool> DeleteCommunityPostAsync(string communityId, string postId, CancellationToken ct)
         {
             string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}";
 

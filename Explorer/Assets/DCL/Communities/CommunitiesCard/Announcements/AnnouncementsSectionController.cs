@@ -17,12 +17,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private readonly AnnouncementsSectionView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
-        private readonly SectionFetchData<CommunityPost> communityPostsFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<CommunityPost> currentAnnouncementsFetchData = new (PAGE_SIZE);
 
-        protected override SectionFetchData<CommunityPost> currentSectionFetchData => communityPostsFetchData;
+        protected override SectionFetchData<CommunityPost> currentSectionFetchData => currentAnnouncementsFetchData;
 
         private CommunityData? communityData;
-        private bool userCanModify;
 
         public AnnouncementsSectionController(
             AnnouncementsSectionView view,
@@ -32,13 +31,24 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             this.communitiesDataProvider = communitiesDataProvider;
 
             view.InitList(cancellationToken);
+
+            view.CreateAnnouncementButtonClicked += CreateAnnouncement;
+            view.DeleteAnnouncementButtonClicked += DeleteAnnouncement;
+        }
+
+        public override void Dispose()
+        {
+            view.CreateAnnouncementButtonClicked -= CreateAnnouncement;
+            view.DeleteAnnouncementButtonClicked -= DeleteAnnouncement;
+
+            base.Dispose();
         }
 
         public override void Reset()
         {
             communityData = null;
-            communityPostsFetchData.Reset();
-            view.SetCanModify(false);
+            currentAnnouncementsFetchData.Reset();
+
             base.Reset();
         }
 
@@ -47,9 +57,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             if (communityData == null)
                 return 0;
 
-            SectionFetchData<CommunityPost> announcementsData = currentSectionFetchData;
-
-            Result<GetCommunityPostsResponse> response = await communitiesDataProvider.GetCommunityPostsAsync(communityData.Value.id, announcementsData.PageNumber, PAGE_SIZE, ct)
+            Result<GetCommunityPostsResponse> response = await communitiesDataProvider.GetCommunityPostsAsync(communityData.Value.id, currentAnnouncementsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -57,14 +65,13 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             if (!response.Success)
             {
-                announcementsData.PageNumber--;
+                currentAnnouncementsFetchData.PageNumber--;
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_ANNOUNCEMENTS_FETCH_ERROR_MESSAGE));
-                return announcementsData.TotalToFetch;
+                return currentAnnouncementsFetchData.TotalToFetch;
             }
 
             foreach (var announcement in response.Value.data.posts)
-                if (!announcementsData.Items.Contains(announcement))
-                    announcementsData.Items.Add(announcement);
+                currentAnnouncementsFetchData.Items.Add(announcement);
 
             return response.Value.data.total;
         }
@@ -77,11 +84,62 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 return;
 
             communityData = community;
-            userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
-            view.SetCanModify(userCanModify);
-            view.SetCommunityData(community);
-
             FetchNewDataAsync(token).Forget();
+        }
+
+        private void CreateAnnouncement()
+        {
+            if (communityData == null)
+                return;
+
+            CreateAnnouncementAsync($"Test post {currentAnnouncementsFetchData.Items.Count + 1}", CancellationToken.None).Forget();
+            return;
+
+            async UniTaskVoid CreateAnnouncementAsync(string content, CancellationToken ct)
+            {
+                Result<CreateCommunityPostResponse> response = await communitiesDataProvider.CreateCommunityPostAsync(communityData.Value.id, content, CancellationToken.None)
+                                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success)
+                    return;
+
+                currentAnnouncementsFetchData.Items.Insert(0, response.Value.data);
+                currentAnnouncementsFetchData.TotalFetched++;
+                RefreshGrid(true);
+            }
+        }
+
+        private void DeleteAnnouncement(string communityId, string announcementId)
+        {
+            DeleteAnnouncementAsync(communityId, announcementId, CancellationToken.None).Forget();
+            return;
+
+            async UniTaskVoid DeleteAnnouncementAsync(string commId, string postId, CancellationToken ct)
+            {
+                Result<bool> response = await communitiesDataProvider.DeleteCommunityPostAsync(commId, postId, CancellationToken.None)
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success || !response.Value)
+                    return;
+
+                foreach (CommunityPost communityPost in currentAnnouncementsFetchData.Items)
+                {
+                    if (communityPost.communityId == commId && communityPost.id == postId)
+                    {
+                        currentAnnouncementsFetchData.Items.Remove(communityPost);
+                        currentAnnouncementsFetchData.TotalFetched--;
+                        break;
+                    }
+                }
+
+                RefreshGrid(true);
+            }
         }
     }
 }

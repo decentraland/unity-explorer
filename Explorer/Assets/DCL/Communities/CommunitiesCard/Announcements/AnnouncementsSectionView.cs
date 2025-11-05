@@ -6,32 +6,37 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 
 namespace DCL.Communities.CommunitiesCard.Announcements
 {
     public class AnnouncementsSectionView : MonoBehaviour, ICommunityFetchingView<CommunityPost>
     {
-        [field: SerializeField] private LoopListView2 loopList { get; set; } = null!;
-        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
-        [field: SerializeField] private GameObject emptyState { get; set; } = null!;
-        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
+        [SerializeField] private LoopListView2 loopList = null!;
+        [SerializeField] private ScrollRect loopListScrollRect = null!;
+        [SerializeField] private GameObject emptyState = null!;
+        [SerializeField] private SkeletonLoadingView loadingObject = null!;
+        [SerializeField] private Button createAnnouncementButton = null!;
 
         public event Action? NewDataRequested;
+        public event Action? CreateAnnouncementButtonClicked;
+        public event Action<string, string>? DeleteAnnouncementButtonClicked;
 
-        private SectionFetchData<CommunityPost> announcementsInfo = null!;
-        private bool canModify;
-        private CommunityData communityData;
-        private CancellationToken cancellationToken;
+        private SectionFetchData<CommunityPost> currentAnnouncementsFetchData = null!;
 
-        private void Awake() =>
+        private void Awake()
+        {
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
+            createAnnouncementButton.onClick.AddListener(OnCreateAnnouncementButtonClicked);
+        }
+
+        private void OnDestroy() =>
+            createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButtonClicked);
 
         public void SetActive(bool active) =>
             gameObject.SetActive(active);
 
         public void SetEmptyStateActive(bool active) =>
-            emptyState.SetActive(active && !canModify);
+            emptyState.SetActive(active);
 
         public void SetLoadingStateActive(bool active)
         {
@@ -41,16 +46,16 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 loadingObject.HideLoading();
         }
 
-        public void SetCanModify(bool canModify) =>
-            this.canModify = canModify;
-
-        public void SetCommunityData(CommunityData community) =>
-            communityData = community;
-
-        public void InitList(CancellationToken panelCancellationToken)
-        {
+        public void InitList(CancellationToken panelCancellationToken) =>
             loopList.InitListView(0, GetLoopListItemByIndex);
-            cancellationToken = panelCancellationToken;
+
+        public void RefreshGrid(SectionFetchData<CommunityPost> announcementsFetchData, bool redraw)
+        {
+            this.currentAnnouncementsFetchData = announcementsFetchData;
+            loopList.SetListItemCount(currentAnnouncementsFetchData.Items.Count, false);
+
+            if (redraw)
+                loopList.RefreshAllShownItem();
         }
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
@@ -58,10 +63,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             LoopListViewItem2 listItem = loopList.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             AnnouncementCardView elementView = listItem.GetComponent<AnnouncementCardView>();
 
-            SectionFetchData<CommunityPost> announcementsData = announcementsInfo;
+            SectionFetchData<CommunityPost> announcementsData = currentAnnouncementsFetchData;
 
             CommunityPost announcementInfo = announcementsData.Items[index];
             elementView.Configure(announcementInfo);
+            elementView.DeleteAnnouncementButtonClicked -= OnDeleteAnnouncementButtonClicked;
+            elementView.DeleteAnnouncementButtonClicked += OnDeleteAnnouncementButtonClicked;
 
             if (index >= announcementsData.TotalFetched - 1 && announcementsData.TotalFetched < announcementsData.TotalToFetch)
                 NewDataRequested?.Invoke();
@@ -69,15 +76,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             return listItem;
         }
 
-        public void RefreshGrid(SectionFetchData<CommunityPost> announcementsInfo, bool redraw)
-        {
-            this.announcementsInfo = announcementsInfo;
-            int count = announcementsInfo.Items.Count;
+        private void OnCreateAnnouncementButtonClicked() =>
+            CreateAnnouncementButtonClicked?.Invoke();
 
-            loopList.SetListItemCount(count, false);
-
-            if (redraw)
-                loopList.RefreshAllShownItem();
-        }
+        private void OnDeleteAnnouncementButtonClicked(string communityId, string announcementId) =>
+            DeleteAnnouncementButtonClicked?.Invoke(communityId, announcementId);
     }
 }
