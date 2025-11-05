@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -153,18 +152,6 @@ namespace DCL.Diagnostics
         /// <param name="reportHandler">Handlers to report to, All by default</param>
         [HideInCallstack]
         public static void LogException(Exception exception, ReportData reportData, ReportHandler reportHandler = ReportHandler.All)
-        {
-            Instance.LogException(exception, reportData, reportHandler);
-        }
-
-        /// <summary>
-        ///     Logs a common exception
-        /// </summary>
-        /// <param name="exception">Exception</param>
-        /// <param name="reportData">Report Data, try to provide as specific data as possible</param>
-        /// <param name="reportHandler">Handlers to report to, All by default</param>
-        [HideInCallstack]
-        public static void LogWebSocketException(Exception exception, ReportData reportData, ReportHandler reportHandler = ReportHandler.All)
         {
             Instance.LogException(exception, reportData, reportHandler);
         }
