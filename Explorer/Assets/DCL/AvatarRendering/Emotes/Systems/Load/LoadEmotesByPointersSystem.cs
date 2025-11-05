@@ -220,8 +220,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
-                        typeof(GameObject),
                         hash! + PlatformUtils.GetCurrentPlatform(),
+                        typeof(GameObject),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         cancellationTokenSource: intention.CancellationTokenSource,

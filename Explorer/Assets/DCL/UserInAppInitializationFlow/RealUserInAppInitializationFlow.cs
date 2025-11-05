@@ -9,6 +9,7 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -104,6 +105,15 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
+                // Clear cached identity for non-first instances in local scene development
+                // This ensures each instance (except the first one) shows the authentication screen
+                if (!appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
+                    appArgs.HasFlagWithValueTrue(AppArgsFlags.LOCAL_SCENE) &&
+                    FileDCLPlayerPrefs.PrefsInstanceNumber > 0)
+                {
+                    identityCache.Clear();
+                }
+
                 bool shouldShowAuthentication = parameters.ShowAuthentication &&
                                                 !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
 

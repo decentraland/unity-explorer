@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatViewModels;
+using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,6 +30,7 @@ namespace DCL.Chat.ChatViews
                     model.Username,
                     model.WalletId,
                     model.HasClaimedName,
+                    model.IsOfficial,
                     model.ProfileColor
                 );
             }
@@ -43,6 +45,7 @@ namespace DCL.Chat.ChatViews
                     model.Username,
                     null,
                     false,
+                    false,
                     Color.white
                 );
             }
@@ -53,7 +56,7 @@ namespace DCL.Chat.ChatViews
             if (autoTranslateIndicator != null)
                 autoTranslateIndicator.gameObject.SetActive(isVisible);
         }
-        
+
         public void SetConnectionStatus(bool isOnline, float greyOutOpacity)
         {
             if (userOnlineStatusIndicator != null)

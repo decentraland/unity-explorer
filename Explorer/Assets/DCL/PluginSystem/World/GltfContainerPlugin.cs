@@ -1,5 +1,7 @@
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
@@ -20,6 +22,7 @@ using Global.Dynamic.LaunchModes;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using Global.AppArgs;
+using System.Threading;
 
 namespace DCL.PluginSystem.World
 {
@@ -39,8 +42,16 @@ namespace DCL.PluginSystem.World
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, ILaunchMode launchMode,
-            bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus, IAppArgs appArgs)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps,
+            CacheCleaner cacheCleaner,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            IComponentPoolsRegistry poolsRegistry,
+            ILaunchMode launchMode,
+            bool useRemoteAssetBundles,
+            IWebRequestController webRequestController,
+            ILoadingStatus loadingStatus,
+            IAppArgs appArgs,
+            IGltfContainerAssetsCache assetsCache)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -49,7 +60,7 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.appArgs = appArgs;
-            assetsCache = new GltfContainerAssetsCache(poolsRegistry);
+            this.assetsCache = (GltfContainerAssetsCache)assetsCache;
 
             cacheCleaner.Register(assetsCache);
         }
@@ -101,11 +112,14 @@ namespace DCL.PluginSystem.World
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
-            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache));
+            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.ScenePartition));
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
                 persistentEntities.SceneContainer);
         }
+
+        public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
     }
 }

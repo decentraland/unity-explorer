@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.SkyBox;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -31,6 +32,7 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DCL.Clipboard;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -58,9 +60,11 @@ namespace SceneRunner
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
         private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneCommunicationPipe messagePipesHub;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly DecentralandEnvironment dclEnvironment;
+        private readonly ISystemClipboard systemClipboard;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -81,9 +85,11 @@ namespace SceneRunner
             IRoomHub roomHub,
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
+            SkyboxSettingsAsset skyboxSettings,
             ISceneCommunicationPipe messagePipesHub,
             IRemoteMetadata remoteMetadata,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            ISystemClipboard systemClipboard)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -99,10 +105,12 @@ namespace SceneRunner
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webRequestController = webRequestController;
             this.roomHub = roomHub;
+            this.systemClipboard = systemClipboard;
             this.realmData = realmData;
+            this.portableExperiencesController = portableExperiencesController;
+            this.skyboxSettings = skyboxSettings;
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
-            this.portableExperiencesController = portableExperiencesController;
             this.dclEnvironment = dclEnvironment;
         }
 
@@ -122,7 +130,7 @@ namespace SceneRunner
             );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
-                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
 
             return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
@@ -143,7 +151,7 @@ namespace SceneRunner
             var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
-                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
 
             return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
@@ -158,7 +166,7 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory, webRequestController);
+            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
 
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;
@@ -190,7 +198,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, engineAPIMutexOwner);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, systemClipboard);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -219,7 +227,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    engineAPIMutexOwner);
+                    skyboxSettings, engineAPIMutexOwner, systemClipboard);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

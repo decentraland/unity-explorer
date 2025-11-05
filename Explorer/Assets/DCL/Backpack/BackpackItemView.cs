@@ -61,6 +61,8 @@ namespace DCL.Backpack
         [field: SerializeField]
         public bool IsEquipped { get; set; }
 
+        public bool IsUnequippable { get; set; }
+
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
@@ -70,10 +72,13 @@ namespace DCL.Backpack
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig EquipWearableAudio { get; private set; }
+
         [field: SerializeField]
         public AudioClipConfig UnEquipWearableAudio { get; private set; }
+
         [field: SerializeField]
         public AudioClipConfig HoverAudio { get; private set; }
+
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
 
@@ -109,7 +114,7 @@ namespace DCL.Backpack
         public void SetEquipButtonsState()
         {
             EquipButton.gameObject.SetActive(!IsEquipped && IsCompatibleWithBodyShape);
-            UnEquipButton.gameObject.SetActive(IsEquipped);
+            UnEquipButton.gameObject.SetActive(IsEquipped && IsUnequippable);
         }
 
         private void OnDisable()

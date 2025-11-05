@@ -18,6 +18,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility.Arch;
+using Utility.Multithreading;
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -50,6 +51,7 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
+            world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)
@@ -85,6 +87,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
+            world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
+
             bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
                                       (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
 
@@ -104,6 +108,8 @@ namespace CrdtEcsBridge.RestrictedActions
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
                     hash, loop, ct);
             }
+
+            world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
         }
 
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)

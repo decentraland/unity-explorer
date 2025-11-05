@@ -6,6 +6,7 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
@@ -131,10 +132,13 @@ namespace DCL.Chat.ChatCommands
 
             if (ct.IsCancellationRequested) return;
 
+            string userId = viewModel.Id.Id;
+
             if (profile != null)
             {
                 viewModel.DisplayName = profile.ValidatedName;
                 viewModel.HasClaimedName = profile.HasClaimedName;
+                viewModel.IsOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(userId);
 
                 viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.UserNameColor));
 
@@ -142,7 +146,6 @@ namespace DCL.Chat.ChatCommands
             }
             else
             {
-                string userId = viewModel.Id.Id;
                 viewModel.DisplayName = $"{userId.Substring(0, 6)}...{userId.Substring(userId.Length - 4)}";
                 viewModel.HasClaimedName = false;
 

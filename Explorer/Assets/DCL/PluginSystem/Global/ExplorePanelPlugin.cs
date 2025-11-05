@@ -38,11 +38,13 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -78,6 +80,7 @@ namespace DCL.PluginSystem.Global
     public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IEventBus eventBus;
+        private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
@@ -107,7 +110,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
@@ -153,6 +155,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
 
         public ExplorePanelPlugin(IEventBus eventBus,
+            FeatureFlagsConfiguration featureFlags,
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
@@ -173,7 +176,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
             CharacterPreviewEventBus characterPreviewEventBus,
@@ -213,6 +215,7 @@ namespace DCL.PluginSystem.Global
             SmartWearableCache smartWearableCache)
         {
             this.eventBus = eventBus;
+            this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -232,7 +235,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
-            this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
@@ -292,7 +294,10 @@ namespace DCL.PluginSystem.Global
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
+            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
+            
             backpackSubPlugin = new BackpackSubPlugin(
+                featureFlags,
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,
@@ -303,7 +308,6 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
-                forceRender,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -318,6 +322,11 @@ namespace DCL.PluginSystem.Global
                 inWorldWarningNotificationView,
                 thumbnailProvider,
                 profileChangesBus,
+                outfitsRepository,
+                realmData,
+                webRequestController,
+                nftNamesProvider,
+                eventBus,
                 smartWearableCache,
                 mvcManager
             );

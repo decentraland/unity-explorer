@@ -23,6 +23,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackSections>? ChangedBackpackSectionEvent;
         public event Action? DeactivateEvent;
         public event Action? UnEquipAllEvent;
+        public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string>? ChangeColorEvent;
         public event Action? PublishProfileEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
@@ -38,6 +39,11 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendUnEquipAll() =>
             UnEquipAllEvent?.Invoke();
+
+        public void SendUnEquipAllWearables()
+        {
+            UnEquipAllWearablesEvent?.Invoke();
+        }
 
         public void SendChangeColor(Color newColor, string category) =>
             ChangeColorEvent?.Invoke(newColor, category);

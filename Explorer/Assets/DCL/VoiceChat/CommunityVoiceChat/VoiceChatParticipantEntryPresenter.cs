@@ -109,7 +109,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
-            view.CleanupEntry();
             playerEntriesPool.Release(view);
             subscriptionsScope.Dispose();
             view.OpenContextMenu -= OnOpenOpenContextMenu;

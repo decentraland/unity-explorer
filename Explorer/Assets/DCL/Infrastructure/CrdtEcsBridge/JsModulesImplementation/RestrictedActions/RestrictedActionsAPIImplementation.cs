@@ -5,6 +5,7 @@ using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
 using DCL.Utilities;
+using DCL.Clipboard;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -23,19 +24,22 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
+        private readonly ISystemClipboard systemClipboard;
 
         public RestrictedActionsAPIImplementation(
             IMVCManager mvcManager,
             ISceneStateProvider sceneStateProvider,
             IGlobalWorldActions globalWorldActions,
             ISceneData sceneData,
-            IJsApiPermissionsProvider permissionsProvider)
+            IJsApiPermissionsProvider permissionsProvider,
+            ISystemClipboard systemClipboard)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorldActions = globalWorldActions;
             this.sceneData = sceneData;
             this.permissionsProvider = permissionsProvider;
+            this.systemClipboard = systemClipboard;
         }
 
         public bool TryOpenExternalUrl(string url)
@@ -132,6 +136,14 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
+        public void TryCopyToClipboard(string text)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
+            CopyToClipboardAsync(text).Forget();
+        }
+
         private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Vector3? newAbsoluteAvatarTarget)
         {
             await UniTask.SwitchToMainThread();
@@ -175,6 +187,12 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(chain, contractAddress, tokenId)));
+        }
+
+        private async UniTask CopyToClipboardAsync(string text)
+        {
+            await UniTask.SwitchToMainThread();
+            systemClipboard.Set(text);
         }
     }
 }

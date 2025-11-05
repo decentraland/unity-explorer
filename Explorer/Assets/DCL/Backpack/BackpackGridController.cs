@@ -15,7 +15,6 @@ using MVC;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -199,7 +198,11 @@ namespace DCL.Backpack
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && wearable.IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))
                                                              || wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE;
-
+                backpackItemView.IsUnequippable =
+                    gridWearables[i].GetCategory() != WearableCategories.Categories.BODY_SHAPE
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYES
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYEBROWS
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.MOUTH;
                 backpackItemView.SetEquipButtonsState();
 
                 backpackItemView.SmartWearableBadgeContainer.SetActive(false);

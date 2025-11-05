@@ -24,6 +24,7 @@ using System.Threading;
  using DCL.RealmNavigation;
  using Global.AppArgs;
  using Unity.Mathematics;
+ using UnityEngine.Networking;
 
 namespace Global.Dynamic
 {
@@ -185,6 +186,32 @@ namespace Global.Dynamic
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
 
+        public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
+        {
+            const string SIGN_METADATA = "{\"intent\": \"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false}";
+            ServerAbout about = await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM).CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+
+            string commsAdapterUrl = ExtractCommsAdapterUrl(about.comms?.adapter ?? string.Empty);
+
+            if(string.IsNullOrEmpty(commsAdapterUrl))
+                return true;
+
+            long statusCode;
+            try
+            {
+                statusCode = await webRequestController.SignedFetchPostAsync(
+                    commsAdapterUrl,
+                    SIGN_METADATA,
+                    ct).StatusCodeAsync();
+            }
+            catch (UnityWebRequestException e)
+            {
+                statusCode = e.ResponseCode;
+            }
+
+            return statusCode != 401;
+        }
+
         public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
             FixedScenePointers fixedScenePointers = default;
@@ -311,6 +338,13 @@ namespace Global.Dynamic
 
             //"offline property like in previous implementation"
             return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
+        }
+
+        private static string ExtractCommsAdapterUrl(string input)
+        {
+            const string MARKER = "https";
+            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
+            return index >= 0 ? input.Substring(index) : string.Empty;
         }
     }
 }

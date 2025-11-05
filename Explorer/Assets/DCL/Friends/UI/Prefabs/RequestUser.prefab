@@ -138,6 +138,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &1104277341837610071
@@ -278,6 +279,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &1671170444579859960
@@ -828,6 +830,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &7508043306453600687
@@ -1193,6 +1196,26 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 40
       objectReference: {fileID: 0}
+    - target: {fileID: 4902067579281281501, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4902067579281281501, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4902067579281281501, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4902067579281281501, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4902067579281281501, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5321243243872904382, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1252,6 +1275,26 @@ PrefabInstance:
     - target: {fileID: 9177864993776066132, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
       propertyPath: m_Name
       value: RequestUser
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207546219795607279, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207546219795607279, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207546219795607279, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207546219795607279, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207546219795607279, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1330,6 +1373,7 @@ MonoBehaviour:
   <UserName>k__BackingField: {fileID: 8642155449442485091}
   <UserNameTag>k__BackingField: {fileID: 3736898434265359180}
   <VerifiedIcon>k__BackingField: {fileID: 8956048073426062440}
+  <OfficialIcon>k__BackingField: {fileID: 7836174719701384239}
   <ProfilePicture>k__BackingField: {fileID: 4540062364792409}
   <ContextMenuButton>k__BackingField: {fileID: 5637797142498573802}
   <DeleteButton>k__BackingField: {fileID: 4259715656478843361}
@@ -1362,6 +1406,11 @@ MonoBehaviour:
 --- !u!224 &6512027689777179457 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 713193711783360510, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 6033305386341014719}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7836174719701384239 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4541093161580945552, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
   m_PrefabInstance: {fileID: 6033305386341014719}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &8642155449442485091 stripped

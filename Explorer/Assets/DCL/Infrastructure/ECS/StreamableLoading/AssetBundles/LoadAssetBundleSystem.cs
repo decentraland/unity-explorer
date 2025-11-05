@@ -11,7 +11,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 using AssetManagement;
@@ -19,7 +18,6 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
-using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -30,7 +28,7 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
         private const string METADATA_FILENAME = "metadata.json";
-        private const string METRICS_FILENAME = "metrics.json";
+        private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -80,13 +78,14 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 // get metrics
 
-                string? metricsJSON;
                 string? metadataJSON;
+                string? sceneDescriptoJSON;
+
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
-                    metricsJSON = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
                     metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                    sceneDescriptoJSON = assetBundle.LoadAsset<TextAsset>(STATIC_SCENE_DESCRIPTOR_FILENAME)?.text;
                 }
 
                 // Switch to thread pool to parse JSONs
@@ -94,9 +93,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToThreadPool();
                 ct.ThrowIfCancellationRequested();
 
-                AssetBundleMetrics? metrics = !string.IsNullOrEmpty(metricsJSON) ? JsonUtility.FromJson<AssetBundleMetrics>(metricsJSON) : null;
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
+                InitialSceneStateMetadata? initialSceneState = null;
+
+                if (!string.IsNullOrEmpty(sceneDescriptoJSON))
+                    initialSceneState = JsonUtility.FromJson<InitialSceneStateMetadata>(sceneDescriptoJSON);
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -115,9 +117,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, ct);
+                    source, intention.IsDependency, intention.LookForDependencies, ct);
             }
             catch (Exception e)
             {
@@ -134,20 +136,20 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
+            AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             ReportData reportCategory,
             string version,
             string source,
-            bool lookForShaderAssets,
+            bool isDependency,
+            bool lookForDependencies,
             CancellationToken ct)
         {
-            // if the type was not specified don't load any assets
-            if (expectedObjType == null)
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+            if (isDependency)
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, dependencies));
 
-            if (lookForShaderAssets && expectedObjType == typeof(GameObject))
+            if (expectedObjType == typeof(GameObject) && lookForDependencies)
             {
                 //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.
                 //All gameobject asset bundles ahould at least have the dependency on the shader.
@@ -156,36 +158,31 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new StreamableLoadingException(LogType.Warning, nameof(LoadAssetBundleSystem), new AssetBundleContainsShaderException(assetBundle.name));
             }
 
-            Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
+            Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, initialSceneState, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
 
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
-            CancellationToken ct)
+        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type? objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory, CancellationToken ct)
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
-            AssetBundleRequest? asyncOp = !string.IsNullOrEmpty(mainAsset)
-                ? assetBundle.LoadAssetAsync(mainAsset)
-                : assetBundle.LoadAllAssetsAsync(objectType);
+            AssetBundleRequest? asyncOp;
+
+            if(!string.IsNullOrEmpty(mainAsset))
+                asyncOp = assetBundle.LoadAssetAsync(mainAsset);
+            else if(objectType != null)
+                asyncOp = assetBundle.LoadAllAssetsAsync(objectType);
+            else
+            //If no asset type or name was specified, we need to load all
+                asyncOp = assetBundle.LoadAllAssetsAsync();
 
             await asyncOp.WithCancellation(ct);
-
             Object[]? assets = asyncOp.allAssets;
 
-            switch (assets.Length)
-            {
-                case 0:
-                    throw new StreamableLoadingException(LogType.Warning, nameof(LoadAssetBundleSystem), new AssetBundleMissingMainAssetException(assetBundle.name, objectType));
-                case > 1:
-                    ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
-                    break;
-            }
-
-            return assets[0];
+            return assets;
         }
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
@@ -197,7 +194,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             // Inherit partition from the parent promise
             // we don't know the type of the dependency
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
 
             try
             {
