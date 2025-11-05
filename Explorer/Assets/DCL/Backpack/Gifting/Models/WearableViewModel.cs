@@ -1,47 +1,46 @@
-﻿using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.Backpack.Gifting.Models
 {
-    public struct WearableViewModel : IGiftableItemViewModel
+    public readonly struct WearableViewModel : IGiftableItemViewModel
     {
-        public IWearable source { get; set; }
-        public string Urn { get; }
-        public ThumbnailState ThumbnailState { get; set; }
+        public IGiftable Giftable { get; }
+        public string Urn => Giftable.Urn;
+        public string DisplayName { get; }
+        public string? CategoryId { get; }
+        public string? RarityId { get; }
+        public ThumbnailState ThumbnailState { get; }
         public Sprite? Thumbnail { get; }
 
-        public IWearable Source => source;
-
-        /// <summary>
-        ///     Public constructor for creating the initial view model from the data model.
-        ///     It always starts in the 'NotLoaded' state.
-        /// </summary>
-        public WearableViewModel(IWearable source)
+        public WearableViewModel(WearableGiftable giftable)
         {
-            this.source = source;
-            Urn = source.GetUrn();
+            Giftable = giftable;
+            DisplayName = giftable.Name;
+            CategoryId = giftable.Wearable.DTO.Metadata.AbstractData.category;
+            RarityId = giftable.Wearable.DTO.Metadata.rarity;
             ThumbnailState = ThumbnailState.NotLoaded;
             Thumbnail = null;
         }
 
-        /// <summary>
-        ///     Private constructor used internally by WithState to create modified copies.
-        /// </summary>
-        private WearableViewModel(IWearable source, ThumbnailState state, Sprite? thumbnail)
+        private WearableViewModel(
+            IGiftable giftable,
+            string displayName,
+            string? categoryId,
+            string? rarityId,
+            ThumbnailState state,
+            Sprite? thumbnail)
         {
-            this.source = source;
-            Urn = source.GetUrn();
+            Giftable = giftable;
+            DisplayName = displayName;
+            CategoryId = categoryId;
+            RarityId = rarityId;
             ThumbnailState = state;
             Thumbnail = thumbnail;
         }
 
-        /// <summary>
-        ///     Returns a new instance of the ViewModel with an updated state and optional sprite.
-        /// </summary>
         public WearableViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
         {
-            return new WearableViewModel(source, newState, newSprite ?? Thumbnail);
+            return new WearableViewModel(Giftable, DisplayName, CategoryId, RarityId, newState, newSprite ?? Thumbnail);
         }
     }
 }

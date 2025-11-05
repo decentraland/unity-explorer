@@ -62,7 +62,6 @@ namespace DCL.Backpack.Gifting.Presenters
             this.view = view;
             this.adapter = adapter;
             this.wearablesProvider = wearablesProvider;
-            this.wearableStylingCatalog  = wearableStylingCatalog;
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
             
@@ -207,7 +206,8 @@ namespace DCL.Backpack.Gifting.Presenters
                     if (viewModelsByUrn.ContainsKey(urn)) continue;
 
                     viewModelUrnOrder.Add(urn);
-                    viewModelsByUrn[urn] = new WearableViewModel(wearable);
+                    var giftable = new WearableGiftable(wearable);
+                    viewModelsByUrn[urn] = new WearableViewModel(giftable);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
@@ -246,7 +246,7 @@ namespace DCL.Backpack.Gifting.Presenters
             viewModelsByUrn[urn] = vm.WithState(ThumbnailState.Loading);
 
             // 3. Fire and forget the command
-            loadThumbnailCommand.ExecuteAsync(vm.Source, lifeCts.Token).Forget();
+            loadThumbnailCommand.ExecuteAsync(vm.Giftable, urn, lifeCts.Token).Forget();
         }
 
         private void OnThumbnailLoaded(GiftingEvents.ThumbnailLoadedEvent evt)
@@ -290,7 +290,7 @@ namespace DCL.Backpack.Gifting.Presenters
         public string? GetItemNameByUrn(string urn)
         {
             if (viewModelsByUrn.TryGetValue(urn, out var vm))
-                return vm.Source.GetName();
+                return vm.DisplayName;
 
             return null;
         }

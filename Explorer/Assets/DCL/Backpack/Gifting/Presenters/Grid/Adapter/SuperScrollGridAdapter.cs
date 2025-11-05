@@ -86,13 +86,13 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
             if (wearableCatalog != null)
             {
                 cellView.RarityBackground.sprite = wearableCatalog
-                    .GetRarityBackground(viewModel.source.DTO.Metadata.AbstractData.category);
+                    .GetRarityBackground(viewModel.CategoryId);
 
                 cellView.FlapBackground.color = wearableCatalog
-                    .GetRarityFlapColor(viewModel.source.DTO.Metadata.rarity);
+                    .GetRarityFlapColor(viewModel.RarityId);
 
                 cellView.CategoryImage.sprite = wearableCatalog
-                    .GetCategoryIcon(viewModel.source.DTO.Metadata.AbstractData.category);
+                    .GetCategoryIcon(viewModel.CategoryId);
             }
 
             cellView.OnItemSelected -= OnItemSelected;

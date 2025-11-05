@@ -48,8 +48,11 @@ namespace DCL.Backpack.Gifting.Factory
 
         public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
         {
-            // throw new  NotImplementedException();
-            return new EmoteGridPresenter(view, adapter, wearablesProvider, eventBus, loadThumbnailCommand);
+            return new EmoteGridPresenter(view,
+                adapter,
+                wearablesProvider,
+                eventBus,
+                loadThumbnailCommand);
         }
     }
 }
