@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using System;
@@ -22,6 +23,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
+        [field: SerializeField] public GameObject OfficialIcon { get; private set; }
         [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; }
 
         private bool canUnHover = true;
@@ -73,8 +75,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
+            OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.Address));
             ProfilePicture.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
+
+        public void ConfigureThumbnailClickData(Action thumbnailContextMenuAction) =>
+            ProfilePicture.ConfigureThumbnailClickData(thumbnailContextMenuAction, UserProfile.Address.ToString());
 
         protected virtual void ToggleButtonView(bool isActive)
         {

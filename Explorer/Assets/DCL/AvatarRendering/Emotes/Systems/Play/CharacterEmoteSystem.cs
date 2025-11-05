@@ -154,7 +154,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
                 bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
-                if (isOnAnotherTag) StopEmote(ref emoteComponent, avatarView);
+
+                if (isOnAnotherTag)
+                    StopEmote(ref emoteComponent, avatarView);
             }
         }
 
@@ -202,6 +204,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
             avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+            // See https://github.com/decentraland/unity-explorer/issues/4198
+            // Some emotes changes the armature rotation, we need to restore it
+            avatarView.ResetArmatureInclination();
 
             emoteComponent.Reset();
         }

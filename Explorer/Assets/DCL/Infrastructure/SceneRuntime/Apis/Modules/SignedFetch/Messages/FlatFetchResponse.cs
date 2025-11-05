@@ -15,7 +15,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         public string error;
         public string code;
     }
-    
+
     [Serializable]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public struct FlatFetchResponse
@@ -37,6 +37,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
             foreach (var header in headers)
                 this.headers.Add(header.Key, header.Value);
         }
+
+        public static FlatFetchResponse Cancelled = new (true, 0, "Cancelled", "Request was canceled.", new Dictionary<string, string>());
     }
 
     public struct FlatFetchResponse<TRequest> : IWebRequestOp<TRequest, FlatFetchResponse> where TRequest : struct, ITypedWebRequest
