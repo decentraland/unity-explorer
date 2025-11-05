@@ -21,7 +21,7 @@ public class AssetBundleManifestVersion
 
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
-        public AssetBundleManifestVersionPerPlatform assets;
+        public AssetBundleManifestVersionPerPlatform? assets;
 
         private HashSet<string>? convertedFiles;
 
@@ -51,14 +51,14 @@ public class AssetBundleManifestVersion
             return SupportsISS.Value;
         }
 
-        public string GetAssetBundleManifestVersion() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.version : assets.mac.version;
+        public string? GetAssetBundleManifestVersion() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version : assets?.mac!.version;
 
-        public string GetAssetBundleManifestBuildDate() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.buildDate : assets.mac.buildDate;
+        public string? GetAssetBundleManifestBuildDate() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate : assets?.mac!.buildDate;
 
         public bool IsEmpty() =>
-            assets.IsEmpty();
+            assets?.IsEmpty() ?? true;
 
         public static AssetBundleManifestVersion CreateFailed()
         {

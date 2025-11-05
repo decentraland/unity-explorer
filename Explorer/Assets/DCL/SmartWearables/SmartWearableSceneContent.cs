@@ -32,14 +32,11 @@ namespace DCL.SmartWearables
 
         public URLDomain ContentBaseUrl { get;}
 
-        public bool TryGetContentUrl(string contentPath, out URLAddress result)
-        {
-            if (!content.TryGetHash(contentPath, out _)) contentPath = contentPrefix + contentPath;
-            return content.TryGetContentUrl(contentPath, out result);
-        }
+        public bool TryGetContentUrl(string contentPath, out URLAddress result) =>
+            content.TryGetContentUrl(contentPrefix + contentPath, out result) || content.TryGetContentUrl(contentPath, out result);
 
         public bool TryGetHash(string name, out string hash) =>
-            content.TryGetHash(name, out hash);
+            content.TryGetHash(contentPrefix + name, out hash) || content.TryGetHash(name, out hash);
 
         public static SmartWearableSceneContent Create(URLDomain contentBaseUrl, IWearable wearable, BodyShape bodyShape) =>
             new (contentBaseUrl, wearable, GetContentPrefix(bodyShape));

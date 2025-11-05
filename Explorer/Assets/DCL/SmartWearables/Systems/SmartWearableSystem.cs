@@ -115,7 +115,7 @@ namespace DCL.SmartWearables
             var promise = ScenePromise.Create(World, intention, partition);
             World.Add(promise.Entity, promise, new SmartWearableId { Value = id });
 
-            pendingScenes.Add(SmartWearableCache.GetCacheId(wearable), promise);
+            pendingScenes.Add(id, promise);
         }
 
         private void OnUnEquipWearable(IWearable wearable) =>
@@ -174,6 +174,8 @@ namespace DCL.SmartWearables
         private void ResolveScenePromise(ref ScenePromise promise, in SmartWearableId smartWearableId)
         {
             if (!promise.TryConsume(World, out var result)) return;
+
+            pendingScenes.Remove(smartWearableId.Value);
 
             if (!result.Succeeded)
             {

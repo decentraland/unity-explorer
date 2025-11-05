@@ -53,8 +53,8 @@ MonoBehaviour:
   - rid: 648265872610426982
   - rid: 657752310186246267
   - rid: 6478896861045588059
-  - rid: 4301237061332762713
-  - rid: 4301237177715785831
+  - rid: 6169970366055448665
+  - rid: 3821626543930605662
   references:
     version: 2
     RefIds:
@@ -230,28 +230,35 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
+          <DeleteOutfitIcon>k__BackingField:
+            m_AssetGUID: 0e0dc1c6390d85440bdf622928e144f5
+            m_SubObjectName: ModalDeleteImg_Addressable
+            m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+              Culture=neutral, PublicKeyToken=null
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 1
         <EmbeddedEmotes>k__BackingField:
-        - wave
-        - fistpump
-        - dance
-        - raiseHand
-        - clap
-        - money
-        - kiss
-        - shrug
-        - headexplode
-        - cry
-        - dab
-        - disco
-        - dontsee
-        - hammer
-        - handsair
-        - hohoho
-        - robot
-        - snowfall
-        - tektonik
-        - tik
-        - confettipopper
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
@@ -543,6 +550,33 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 3821626543930605662
+      type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
+      data:
+        AuthorizationPopup:
+          m_AssetGUID: 000fc6d94dca3b64594f10aae8994ed7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityBackgrounds:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityColors:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        CategoryIcons:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -590,42 +624,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 1
         <ShowUIToast>k__BackingField:
           m_AssetGUID: 4a21ec4cd76d144a5bce86b3ac4cc9d6
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-    - rid: 4301237061332762713
-      type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
-      data:
-        AuthorizationPopup:
-          m_AssetGUID: 000fc6d94dca3b64594f10aae8994ed7
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        RarityBackgrounds:
-          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 1
-        RarityColors:
-          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        CategoryIcons:
-          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-    - rid: 4301237177715785831
-      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
-      data:
-        <MediaPlayerPrefab>k__BackingField:
-          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -747,8 +745,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        startFadeDistanceDithering: 2
-        endFadeDistanceDithering: 0.8
+        startFadeDistanceDithering: 0.42
+        endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
@@ -818,6 +816,15 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 6169970366055448665
+      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
+      data:
+        <MediaPlayerPrefab>k__BackingField:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6478896861045588059
       type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -859,6 +866,7 @@ MonoBehaviour:
       data:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <SkyboxSettings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
