@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
-        
+
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -159,7 +159,7 @@ namespace DCL.PluginSystem.Global
             busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
-            
+
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.CategoryIconsMapping, ct),
@@ -221,12 +221,12 @@ namespace DCL.PluginSystem.Global
                 pageButtonView,
                 gridPool,
                 thumbnailProvider,
+                wearablesProvider,
+                webBrowser,
                 colorToggle,
                 hairColors,
                 eyesColors,
                 bodyshapeColors,
-                wearablesProvider,
-                webBrowser,
                 smartWearableCache,
                 mvcManager
             );

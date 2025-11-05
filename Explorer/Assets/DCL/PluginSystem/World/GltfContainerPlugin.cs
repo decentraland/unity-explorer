@@ -45,13 +45,12 @@ namespace DCL.PluginSystem.World
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps,
             CacheCleaner cacheCleaner,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            IComponentPoolsRegistry poolsRegistry,
             ILaunchMode launchMode,
             bool useRemoteAssetBundles,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
-            IAppArgs appArgs,
-            IGltfContainerAssetsCache assetsCache)
+            IGltfContainerAssetsCache assetsCache,
+            IAppArgs appArgs)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -59,8 +58,8 @@ namespace DCL.PluginSystem.World
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
-            this.appArgs = appArgs;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
+            this.appArgs = appArgs;
 
             cacheCleaner.Register(assetsCache);
         }

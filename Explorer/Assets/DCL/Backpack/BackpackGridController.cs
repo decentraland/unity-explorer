@@ -71,12 +71,12 @@ namespace DCL.Backpack
             IThumbnailProvider thumbnailProvider,
             IWearablesProvider wearablesProvider,
             IWebBrowser webBrowser,
-            SmartWearableCache smartWearableCache,
-            IMVCManager mvcManager,
             ColorToggleView colorToggle,
             ColorPresetsSO hairColors,
             ColorPresetsSO eyesColors,
-            ColorPresetsSO bodyshapeColors)
+            ColorPresetsSO bodyshapeColors,
+            SmartWearableCache smartWearableCache,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.commandBus = commandBus;
