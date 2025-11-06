@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles.EarlyAsset
         private void StartEarlyDownload(Entity entity, ref EarlyAssetBundleFlag earlySceneFlag)
         {
             AssetBundlePromise promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash($"staticscene_{earlySceneFlag.Scene.id}{PlatformUtils.GetCurrentPlatform()}",
+                GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(earlySceneFlag.Scene.id),
                     assetBundleManifestVersion: earlySceneFlag.Scene.assetBundleManifestVersion,
                     parentEntityID: earlySceneFlag.Scene.id),
                 PartitionComponent.TOP_PRIORITY);
@@ -53,7 +53,6 @@ namespace ECS.StreamableLoading.AssetBundles.EarlyAsset
                 //Whoever needs it, will grab it later
                 //TODO (JUANI) : Maybe we should instantiate it already?
                 World.Destroy(entity);
-
                 if (Result.Succeeded)
                 {
                     //Dereferencing, because no one is using it yet

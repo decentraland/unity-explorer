@@ -1,7 +1,4 @@
-﻿using Arch.Core;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using ECS.Abstract;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.SceneBoundsChecker;
@@ -10,32 +7,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace ECS.Unity.GLTFContainer.Asset.Systems
+namespace ECS.Unity.GLTFContainer
 {
-    public abstract class CreateGLTFAssetFromAssetBundleSystemBase :  BaseUnityLoopSystem
+    public class Utils
     {
-
-        private readonly IPerformanceBudget instantiationFrameTimeBudget;
-        private readonly IPerformanceBudget memoryBudget;
-
-        protected CreateGLTFAssetFromAssetBundleSystemBase(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        public static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, string assetHash)
         {
-            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
-            this.memoryBudget = memoryBudget;
-        }
+            GameObject asset = assetBundleData.GetAsset<GameObject>(assetHash);
 
-        protected bool HasBudget() =>
-            instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
-
-        protected GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset, string name = "")
-        {
-            var container = new GameObject($"{name}_{asset.name}");
+            var container = new GameObject($"{asset.name}");
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            var result = GltfContainerAsset.Create(container, assetBundleData);
+            var result = GltfContainerAsset.Create(container, assetBundleData, assetBundleData.InitialSceneStateMetadata.HasValue);
 
             GameObject? instance = Object.Instantiate(asset, containerTransform);
 
@@ -99,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             return result;
         }
 
-        // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
+               // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
         // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local scene development
 
 #region Helper Collider Methods
@@ -151,3 +137,4 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 #endregion
     }
 }
+
