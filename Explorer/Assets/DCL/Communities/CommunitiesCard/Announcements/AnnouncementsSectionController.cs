@@ -3,6 +3,7 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Threading;
@@ -25,12 +26,13 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public AnnouncementsSectionController(
             AnnouncementsSectionView view,
-            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider) : base (view, PAGE_SIZE)
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
+            ProfileRepositoryWrapper profileRepositoryWrapper) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
 
-            view.InitList(cancellationToken);
+            view.InitList(profileRepositoryWrapper, cancellationToken);
 
             view.CreateAnnouncementButtonClicked += CreateAnnouncement;
             view.DeleteAnnouncementButtonClicked += DeleteAnnouncement;

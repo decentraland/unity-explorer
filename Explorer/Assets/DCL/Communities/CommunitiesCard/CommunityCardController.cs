@@ -363,7 +363,7 @@ namespace DCL.Communities.CommunitiesCard
                 decentralandUrlsSource);
 
             announcementsSectionController = new AnnouncementsSectionController(viewInstance.AnnouncementsSectionView,
-                communitiesDataProvider);
+                communitiesDataProvider, profileRepositoryWrapper);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }

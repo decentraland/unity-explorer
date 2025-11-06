@@ -1,5 +1,6 @@
 ﻿using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
@@ -21,6 +22,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public event Action? CreateAnnouncementButtonClicked;
         public event Action<string, string>? DeleteAnnouncementButtonClicked;
 
+        private ProfileRepositoryWrapper profileRepositoryWrapper = null!;
         private SectionFetchData<CommunityPost> currentAnnouncementsFetchData = null!;
 
         private void Awake()
@@ -46,8 +48,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 loadingObject.HideLoading();
         }
 
-        public void InitList(CancellationToken panelCancellationToken) =>
+        public void InitList(ProfileRepositoryWrapper profileRepoWrapper, CancellationToken panelCancellationToken)
+        {
             loopList.InitListView(0, GetLoopListItemByIndex);
+            this.profileRepositoryWrapper = profileRepoWrapper;
+        }
 
         public void RefreshGrid(SectionFetchData<CommunityPost> announcementsFetchData, bool redraw)
         {
@@ -66,7 +71,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             SectionFetchData<CommunityPost> announcementsData = currentAnnouncementsFetchData;
 
             CommunityPost announcementInfo = announcementsData.Items[index];
-            elementView.Configure(announcementInfo);
+            elementView.Configure(announcementInfo, profileRepositoryWrapper);
             elementView.DeleteAnnouncementButtonClicked -= OnDeleteAnnouncementButtonClicked;
             elementView.DeleteAnnouncementButtonClicked += OnDeleteAnnouncementButtonClicked;
 

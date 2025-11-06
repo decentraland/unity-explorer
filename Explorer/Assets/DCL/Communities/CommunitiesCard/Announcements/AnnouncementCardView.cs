@@ -1,7 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -22,12 +26,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         [SerializeField] private TMP_Text announcementContent = null!;
         [SerializeField] private TMP_Text authorName = null!;
+        [SerializeField] private TMP_Text profileTag = null!;
+        [SerializeField] private GameObject verifiedMark = null!;
+        [SerializeField] private GameObject officialMark = null!;
+        [SerializeField] private TMP_Text postDate = null!;
         [SerializeField] private Button createAnnouncementButton = null!;
+        [SerializeField] private ProfilePictureView profilePicture = null!;
 
         private string communityId = null!;
         private string announcementId = null!;
 
-        private CancellationTokenSource confirmationDialogCts;
+        private CancellationTokenSource confirmationDialogCts = null!;
 
         public event Action<string, string>? DeleteAnnouncementButtonClicked;
 
@@ -40,13 +49,20 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private void OnDestroy() =>
             createAnnouncementButton.onClick.RemoveListener(OnDeleteAnnouncementButtonClicked);
 
-        public void Configure(CommunityPost announcementInfo)
+        public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider)
         {
             communityId = announcementInfo.communityId;
             announcementId = announcementInfo.id;
 
             announcementContent.text = announcementInfo.content;
             authorName.text = announcementInfo.authorName;
+            profileTag.text = $"#{announcementInfo.authorAddress[^4..]}";
+            profileTag.gameObject.SetActive(!announcementInfo.authorHasClaimedName);
+            verifiedMark.SetActive(announcementInfo.authorHasClaimedName);
+            officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(announcementInfo.authorAddress));
+            DateTime announcementDateTime = DateTime.Parse(announcementInfo.createdAt, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            postDate.text = announcementDateTime.ToString("MMM d", System.Globalization.CultureInfo.InvariantCulture);
+            profilePicture.Setup(profileDataProvider, NameColorHelper.GetNameColor(announcementInfo.authorName), announcementInfo.authorProfilePictureUrl);
 
             // TODO (Santi): Avoid to use ForceRebuildLayoutImmediate removing the content size fitter and calculating the height manually
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform) transform);
