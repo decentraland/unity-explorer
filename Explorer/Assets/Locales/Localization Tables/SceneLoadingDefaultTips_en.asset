@@ -147,6 +147,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 240512924747030528
+    m_Localized: Music Festival
+    m_Metadata:
+      m_Items: []
+  - m_Id: 240515377949302784
     m_Localized: "Step into SUB/STREAM (Dec 3\u20136)\u2014a four-day virtual celebration
       of stream-native music, \nwith headline sets, epic light shows, and exclusive
       Wearable drops"
