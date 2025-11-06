@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: bbf196456d6041d4e9cb25f216e21f0c
   m_SerializeEntries:
   - m_GUID: 210b7be0b68974749a69a635945ff9f2
-    m_Address: LoadingScreen_MusicFestival
+    m_Address: MusicFestival
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
