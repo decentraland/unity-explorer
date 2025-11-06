@@ -14,7 +14,6 @@ namespace ThirdWebUnity
     public class ThirdWebManager : MonoBehaviour
     {
         private static readonly string THIRDWEB_UNITY_SDK_VERSION = "6.0.5";
-        public static ThirdWebManager Instance { get; private set; }
 
         [field: SerializeField]
         private string ClientId { get; set; }
@@ -23,6 +22,7 @@ namespace ThirdWebUnity
         private string BundleId { get; set; }
 
         private List<RpcOverride> rpcOverrides;
+        public static ThirdWebManager Instance { get; private set; }
 
         public ThirdwebClient Client { get; private set; }
         public IThirdwebWallet ActiveWallet { get; private set; }
@@ -204,9 +204,6 @@ namespace ThirdWebUnity
             [JsonProperty("storageDirectoryPath")]
             public string StorageDirectoryPath;
 
-            [JsonProperty("siweSigner")]
-            public IThirdwebWallet SiweSigner;
-
             [JsonProperty("walletSecret")]
             public string WalletSecret;
 
@@ -215,6 +212,9 @@ namespace ThirdWebUnity
 
             [JsonProperty("executionMode")]
             public ExecutionMode ExecutionMode = ExecutionMode.EOA;
+
+            [JsonProperty("siweSigner")]
+            public IThirdwebWallet SiweSigner;
 
             public EcosystemWalletOptions(
                 string ecosystemId = null,
@@ -356,9 +356,6 @@ namespace ThirdWebUnity
             [JsonProperty("provider")]
             public WalletProvider Provider;
 
-            [JsonProperty("chainId")]
-            public BigInteger ChainId;
-
             [JsonProperty("inAppWalletOptions")]
             public InAppWalletOptions InAppWalletOptions;
 
@@ -370,6 +367,9 @@ namespace ThirdWebUnity
 
             [JsonProperty("reownOptions", NullValueHandling = NullValueHandling.Ignore)]
             public ReownOptions ReownOptions;
+
+            [JsonProperty("chainId")]
+            public BigInteger ChainId;
 
             public WalletOptions(
                 WalletProvider provider,
