@@ -49,7 +49,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 remotePlayerMovement.WasPassedThisFrame = false;
 
-                if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
+      /*          if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
                 {
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "STOP EMOTE MOVED Outcome? " + emote.IsPlayingSocialEmoteOutcome);
                     emote.StopEmote = true;
@@ -57,7 +57,11 @@ namespace DCL.Multiplayer.Movement.Systems
                     view.AvatarAnimator.SetTrigger(AnimationHashes.EMOTE_STOP);
                     view.RestoreArmatureName();
                 }
-
+                else
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=cyan>NOT STOP EMOTE MOVED emote.IsPlayingEmote? " + emote.IsPlayingEmote + " remotePlayerMovement.PastMessage.isEmoting? " + remotePlayerMovement.PastMessage.isEmoting + "</color>");
+                }
+*/
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
             }
 

@@ -57,23 +57,26 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhISCgpp",
             "c19pbnN0YW50GBEgASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgiQgoSTW92ZW1l",
             "bnRDb21wcmVzc2VkEhUKDXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1l",
-            "bnRfZGF0YRgCIAEoAyLrAQoLUGxheWVyRW1vdGUSFgoOaW5jcmVtZW50YWxf",
-            "aWQYASABKA0SCwoDdXJuGAIgASgJEhEKCXRpbWVzdGFtcBgDIAEoAhIhChRz",
-            "b2NpYWxfZW1vdGVfb3V0Y29tZRgEIAEoBUgAiAEBEhgKC2lzX3JlYWN0aW5n",
-            "GAUgASgISAGIAQESIwoWc29jaWFsX2Vtb3RlX2luaXRpYXRvchgGIAEoCUgC",
-            "iAEBQhcKFV9zb2NpYWxfZW1vdGVfb3V0Y29tZUIOCgxfaXNfcmVhY3RpbmdC",
-            "GQoXX3NvY2lhbF9lbW90ZV9pbml0aWF0b3IiNQoKU2NlbmVFbW90ZRIXCg9z",
-            "Y2VuZV9lbnRpdHlfaWQYASABKAkSDgoGc291cmNlGAIgASgJIjEKFkFubm91",
-            "bmNlUHJvZmlsZVZlcnNpb24SFwoPcHJvZmlsZV92ZXJzaW9uGAEgASgNIjoK",
-            "DlByb2ZpbGVSZXF1ZXN0Eg8KB2FkZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92",
-            "ZXJzaW9uGAMgASgNIj8KD1Byb2ZpbGVSZXNwb25zZRIaChJzZXJpYWxpemVk",
-            "X3Byb2ZpbGUYASABKAkSEAoIYmFzZV91cmwYAiABKAkiWgoEQ2hhdBIPCgdt",
-            "ZXNzYWdlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoARIbCg5mb3J3YXJkZWRf",
-            "ZnJvbRgDIAEoCUgAiAEBQhEKD19mb3J3YXJkZWRfZnJvbSInCgVTY2VuZRIQ",
-            "CghzY2VuZV9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIosBCgVWb2ljZRIXCg9l",
-            "bmNvZGVkX3NhbXBsZXMYASABKAwSDQoFaW5kZXgYAiABKA0SPwoFY29kZWMY",
-            "AyABKA4yMC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuVm9pY2Uu",
-            "Vm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVjEgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
+            "bnRfZGF0YRgCIAEoAyLvAgoLUGxheWVyRW1vdGUSFgoOaW5jcmVtZW50YWxf",
+            "aWQYASABKA0SCwoDdXJuGAIgASgJEhEKCXRpbWVzdGFtcBgDIAEoAhIYCgtp",
+            "c19zdG9wcGluZxgEIAEoCEgAiAEBEhkKDGlzX3JlcGVhdGluZxgFIAEoCEgB",
+            "iAEBEiEKFHNvY2lhbF9lbW90ZV9vdXRjb21lGAYgASgFSAKIAQESGAoLaXNf",
+            "cmVhY3RpbmcYByABKAhIA4gBARIjChZzb2NpYWxfZW1vdGVfaW5pdGlhdG9y",
+            "GAggASgJSASIAQESGgoNdGFyZ2V0X2F2YXRhchgJIAEoCUgFiAEBQg4KDF9p",
+            "c19zdG9wcGluZ0IPCg1faXNfcmVwZWF0aW5nQhcKFV9zb2NpYWxfZW1vdGVf",
+            "b3V0Y29tZUIOCgxfaXNfcmVhY3RpbmdCGQoXX3NvY2lhbF9lbW90ZV9pbml0",
+            "aWF0b3JCEAoOX3RhcmdldF9hdmF0YXIiNQoKU2NlbmVFbW90ZRIXCg9zY2Vu",
+            "ZV9lbnRpdHlfaWQYASABKAkSDgoGc291cmNlGAIgASgJIjEKFkFubm91bmNl",
+            "UHJvZmlsZVZlcnNpb24SFwoPcHJvZmlsZV92ZXJzaW9uGAEgASgNIjoKDlBy",
+            "b2ZpbGVSZXF1ZXN0Eg8KB2FkZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92ZXJz",
+            "aW9uGAMgASgNIj8KD1Byb2ZpbGVSZXNwb25zZRIaChJzZXJpYWxpemVkX3By",
+            "b2ZpbGUYASABKAkSEAoIYmFzZV91cmwYAiABKAkiWgoEQ2hhdBIPCgdtZXNz",
+            "YWdlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoARIbCg5mb3J3YXJkZWRfZnJv",
+            "bRgDIAEoCUgAiAEBQhEKD19mb3J3YXJkZWRfZnJvbSInCgVTY2VuZRIQCghz",
+            "Y2VuZV9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIosBCgVWb2ljZRIXCg9lbmNv",
+            "ZGVkX3NhbXBsZXMYASABKAwSDQoFaW5kZXgYAiABKA0SPwoFY29kZWMYAyAB",
+            "KA4yMC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuVm9pY2UuVm9p",
+            "Y2VDb2RlYyIZCgpWb2ljZUNvZGVjEgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -81,7 +84,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator" }, new[]{ "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "IsStopping", "IsRepeating", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, new[]{ "IsStopping", "IsRepeating", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest), global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest.Parser, new[]{ "Address", "ProfileVersion" }, null, null, null, null),
@@ -2455,9 +2458,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       incrementalId_ = other.incrementalId_;
       urn_ = other.urn_;
       timestamp_ = other.timestamp_;
+      isStopping_ = other.isStopping_;
+      isRepeating_ = other.isRepeating_;
       socialEmoteOutcome_ = other.socialEmoteOutcome_;
       isReacting_ = other.isReacting_;
       socialEmoteInitiator_ = other.socialEmoteInitiator_;
+      targetAvatar_ = other.targetAvatar_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2503,8 +2509,64 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "is_stopping" field.</summary>
+    public const int IsStoppingFieldNumber = 4;
+    private bool isStopping_;
+    /// <summary>
+    /// true means the emote has been stopped in the sender's client
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsStopping {
+      get { if ((_hasBits0 & 1) != 0) { return isStopping_; } else { return false; } }
+      set {
+        _hasBits0 |= 1;
+        isStopping_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_stopping" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsStopping {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "is_stopping" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsStopping() {
+      _hasBits0 &= ~1;
+    }
+
+    /// <summary>Field number for the "is_repeating" field.</summary>
+    public const int IsRepeatingFieldNumber = 5;
+    private bool isRepeating_;
+    /// <summary>
+    /// true when it is not the first time the looping animation plays
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsRepeating {
+      get { if ((_hasBits0 & 2) != 0) { return isRepeating_; } else { return false; } }
+      set {
+        _hasBits0 |= 2;
+        isRepeating_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_repeating" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsRepeating {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "is_repeating" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsRepeating() {
+      _hasBits0 &= ~2;
+    }
+
     /// <summary>Field number for the "social_emote_outcome" field.</summary>
-    public const int SocialEmoteOutcomeFieldNumber = 4;
+    public const int SocialEmoteOutcomeFieldNumber = 6;
     private int socialEmoteOutcome_;
     /// <summary>
     /// -1 means it does not use an outcome animation
@@ -2512,9 +2574,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int SocialEmoteOutcome {
-      get { if ((_hasBits0 & 1) != 0) { return socialEmoteOutcome_; } else { return 0; } }
+      get { if ((_hasBits0 & 4) != 0) { return socialEmoteOutcome_; } else { return 0; } }
       set {
-        _hasBits0 |= 1;
+        _hasBits0 |= 4;
         socialEmoteOutcome_ = value;
       }
     }
@@ -2522,17 +2584,17 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasSocialEmoteOutcome {
-      get { return (_hasBits0 & 1) != 0; }
+      get { return (_hasBits0 & 4) != 0; }
     }
     /// <summary>Clears the value of the "social_emote_outcome" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearSocialEmoteOutcome() {
-      _hasBits0 &= ~1;
+      _hasBits0 &= ~4;
     }
 
     /// <summary>Field number for the "is_reacting" field.</summary>
-    public const int IsReactingFieldNumber = 5;
+    public const int IsReactingFieldNumber = 7;
     private bool isReacting_;
     /// <summary>
     /// to a social emote started by other user
@@ -2540,9 +2602,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool IsReacting {
-      get { if ((_hasBits0 & 2) != 0) { return isReacting_; } else { return false; } }
+      get { if ((_hasBits0 & 8) != 0) { return isReacting_; } else { return false; } }
       set {
-        _hasBits0 |= 2;
+        _hasBits0 |= 8;
         isReacting_ = value;
       }
     }
@@ -2550,17 +2612,17 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasIsReacting {
-      get { return (_hasBits0 & 2) != 0; }
+      get { return (_hasBits0 & 8) != 0; }
     }
     /// <summary>Clears the value of the "is_reacting" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearIsReacting() {
-      _hasBits0 &= ~2;
+      _hasBits0 &= ~8;
     }
 
     /// <summary>Field number for the "social_emote_initiator" field.</summary>
-    public const int SocialEmoteInitiatorFieldNumber = 6;
+    public const int SocialEmoteInitiatorFieldNumber = 8;
     private string socialEmoteInitiator_;
     /// <summary>
     /// wallet address of the user that initiated social emote
@@ -2586,6 +2648,33 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       socialEmoteInitiator_ = null;
     }
 
+    /// <summary>Field number for the "target_avatar" field.</summary>
+    public const int TargetAvatarFieldNumber = 9;
+    private string targetAvatar_;
+    /// <summary>
+    /// wallet address of the user whose avatar is the target of a directed emote
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string TargetAvatar {
+      get { return targetAvatar_ ?? ""; }
+      set {
+        targetAvatar_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "target_avatar" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTargetAvatar {
+      get { return targetAvatar_ != null; }
+    }
+    /// <summary>Clears the value of the "target_avatar" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTargetAvatar() {
+      targetAvatar_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2604,9 +2693,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IncrementalId != other.IncrementalId) return false;
       if (Urn != other.Urn) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (IsStopping != other.IsStopping) return false;
+      if (IsRepeating != other.IsRepeating) return false;
       if (SocialEmoteOutcome != other.SocialEmoteOutcome) return false;
       if (IsReacting != other.IsReacting) return false;
       if (SocialEmoteInitiator != other.SocialEmoteInitiator) return false;
+      if (TargetAvatar != other.TargetAvatar) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2617,9 +2709,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IncrementalId != 0) hash ^= IncrementalId.GetHashCode();
       if (Urn.Length != 0) hash ^= Urn.GetHashCode();
       if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
+      if (HasIsStopping) hash ^= IsStopping.GetHashCode();
+      if (HasIsRepeating) hash ^= IsRepeating.GetHashCode();
       if (HasSocialEmoteOutcome) hash ^= SocialEmoteOutcome.GetHashCode();
       if (HasIsReacting) hash ^= IsReacting.GetHashCode();
       if (HasSocialEmoteInitiator) hash ^= SocialEmoteInitiator.GetHashCode();
+      if (HasTargetAvatar) hash ^= TargetAvatar.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2650,17 +2745,29 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(29);
         output.WriteFloat(Timestamp);
       }
-      if (HasSocialEmoteOutcome) {
+      if (HasIsStopping) {
         output.WriteRawTag(32);
+        output.WriteBool(IsStopping);
+      }
+      if (HasIsRepeating) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsRepeating);
+      }
+      if (HasSocialEmoteOutcome) {
+        output.WriteRawTag(48);
         output.WriteInt32(SocialEmoteOutcome);
       }
       if (HasIsReacting) {
-        output.WriteRawTag(40);
+        output.WriteRawTag(56);
         output.WriteBool(IsReacting);
       }
       if (HasSocialEmoteInitiator) {
-        output.WriteRawTag(50);
+        output.WriteRawTag(66);
         output.WriteString(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        output.WriteRawTag(74);
+        output.WriteString(TargetAvatar);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -2684,17 +2791,29 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(29);
         output.WriteFloat(Timestamp);
       }
-      if (HasSocialEmoteOutcome) {
+      if (HasIsStopping) {
         output.WriteRawTag(32);
+        output.WriteBool(IsStopping);
+      }
+      if (HasIsRepeating) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsRepeating);
+      }
+      if (HasSocialEmoteOutcome) {
+        output.WriteRawTag(48);
         output.WriteInt32(SocialEmoteOutcome);
       }
       if (HasIsReacting) {
-        output.WriteRawTag(40);
+        output.WriteRawTag(56);
         output.WriteBool(IsReacting);
       }
       if (HasSocialEmoteInitiator) {
-        output.WriteRawTag(50);
+        output.WriteRawTag(66);
         output.WriteString(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        output.WriteRawTag(74);
+        output.WriteString(TargetAvatar);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -2715,6 +2834,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (Timestamp != 0F) {
         size += 1 + 4;
       }
+      if (HasIsStopping) {
+        size += 1 + 1;
+      }
+      if (HasIsRepeating) {
+        size += 1 + 1;
+      }
       if (HasSocialEmoteOutcome) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(SocialEmoteOutcome);
       }
@@ -2723,6 +2848,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (HasSocialEmoteInitiator) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(TargetAvatar);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2745,6 +2873,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (other.Timestamp != 0F) {
         Timestamp = other.Timestamp;
       }
+      if (other.HasIsStopping) {
+        IsStopping = other.IsStopping;
+      }
+      if (other.HasIsRepeating) {
+        IsRepeating = other.IsRepeating;
+      }
       if (other.HasSocialEmoteOutcome) {
         SocialEmoteOutcome = other.SocialEmoteOutcome;
       }
@@ -2753,6 +2887,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.HasSocialEmoteInitiator) {
         SocialEmoteInitiator = other.SocialEmoteInitiator;
+      }
+      if (other.HasTargetAvatar) {
+        TargetAvatar = other.TargetAvatar;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2782,15 +2919,27 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             break;
           }
           case 32: {
-            SocialEmoteOutcome = input.ReadInt32();
+            IsStopping = input.ReadBool();
             break;
           }
           case 40: {
+            IsRepeating = input.ReadBool();
+            break;
+          }
+          case 48: {
+            SocialEmoteOutcome = input.ReadInt32();
+            break;
+          }
+          case 56: {
             IsReacting = input.ReadBool();
             break;
           }
-          case 50: {
+          case 66: {
             SocialEmoteInitiator = input.ReadString();
+            break;
+          }
+          case 74: {
+            TargetAvatar = input.ReadString();
             break;
           }
         }
@@ -2821,15 +2970,27 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             break;
           }
           case 32: {
-            SocialEmoteOutcome = input.ReadInt32();
+            IsStopping = input.ReadBool();
             break;
           }
           case 40: {
+            IsRepeating = input.ReadBool();
+            break;
+          }
+          case 48: {
+            SocialEmoteOutcome = input.ReadInt32();
+            break;
+          }
+          case 56: {
             IsReacting = input.ReadBool();
             break;
           }
-          case 50: {
+          case 66: {
             SocialEmoteInitiator = input.ReadString();
+            break;
+          }
+          case 74: {
+            TargetAvatar = input.ReadString();
             break;
           }
         }

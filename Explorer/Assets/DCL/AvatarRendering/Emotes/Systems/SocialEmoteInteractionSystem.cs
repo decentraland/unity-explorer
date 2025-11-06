@@ -28,7 +28,6 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             MoveToSocialEmoteInteractionInitiatorTransformQuery(World);
             PlayInitiatorOutcomeAnimationQuery(World);
             MoveReceiverWhileOutcomeAnimationQuery(World);
-            StopAnimationWhenInteractionFinishesQuery(World);
         }
 
         /// <summary>
@@ -37,7 +36,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// </summary>
         [Query]
         [All(typeof(MoveToInitiatorIntent))]
-        private void MoveToSocialEmoteInteractionInitiatorTransform(in Profile profile, in CharacterController characterController, in CharacterRigidTransform characterRigidTransform)
+        private void MoveToSocialEmoteInteractionInitiatorTransform(in Profile profile, ref CharacterController characterController, ref CharacterRigidTransform characterRigidTransform)
         {
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
@@ -59,7 +58,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [Query]
         [All(typeof(IAvatarView))]
         [None(typeof(CharacterEmoteIntent))]
-        private void PlayInitiatorOutcomeAnimation(Entity entity, Profile profile, CharacterEmoteComponent emoteComponent)
+        private void PlayInitiatorOutcomeAnimation(Entity entity, Profile profile, ref CharacterEmoteComponent emoteComponent)
         {
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
@@ -92,7 +91,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         {
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
-            if (socialEmoteInteraction is { AreInteracting: true } &&
+           if (socialEmoteInteraction is { AreInteracting: true } &&
                 socialEmoteInteraction.ReceiverWalletAddress == profile.UserId)
             {
                 MoveToInitiatorIntent newIntent = new MoveToInitiatorIntent()
@@ -101,25 +100,6 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                     OriginalRotation = transform.Rotation
                 };
                 World.Add(entity, newIntent);
-            }
-        }
-
-        /// <summary>
-        /// Cancels the emote animation when the interaction has finished (it could be cancelled by any of the participants).
-        /// </summary>
-        [Query]
-        private void StopAnimationWhenInteractionFinishes(Profile profile, ref CharacterEmoteComponent emoteComponent)
-        {
-            if (emoteComponent.IsPlayingEmote && emoteComponent.Metadata is { IsSocialEmote: true })
-            {
-                SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
-
-                if (interaction == null)
-                {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "STOP no interaction " + profile.UserId);
-                    emoteComponent.StopEmote = true;
-                }
-
             }
         }
     }

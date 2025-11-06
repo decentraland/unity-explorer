@@ -103,7 +103,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>--------TRIGGER EMOTE----------</color>");
 
-                // It's a social emote
+                // It's a social emote reaction
                 SendEmoteMessage(emoteUrn, profile.UserId, entity,  socialEmoteOutcomeIndexForTrigger, useOutcomeReactionAnimationForTrigger, useSocialEmoteOutcomeAnimationForTrigger, socialEmoteInitiatorWalletAddressForTrigger);
             }
             else
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Emotes
                                       int socialEmoteOutcomeIndex = -1,
                                       bool useOutcomeReactionAnimation = false,
                                       bool useSocialEmoteOutcomeAnimation = false,
-                                      string socialEmoteInitiatorWalletAddress = null)
+                                      string socialEmoteInitiatorWalletAddress = "")
         {
             if (emoteId.IsNullOrEmpty()) return;
 
@@ -146,7 +146,7 @@ namespace DCL.AvatarRendering.Emotes
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation, emoteIntent.SocialEmoteInitiatorWalletAddress);
+            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation, emoteIntent.SocialEmoteInitiatorWalletAddress, false);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

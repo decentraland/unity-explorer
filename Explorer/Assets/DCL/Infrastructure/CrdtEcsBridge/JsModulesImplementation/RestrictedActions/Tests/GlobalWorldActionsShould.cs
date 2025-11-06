@@ -232,7 +232,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
 
-            public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress) // Parameter name from interface
+            public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, bool isStopping) // Parameter name from interface
             {
                 SentEmotes.Add((urn, loopCyclePassed));
             }

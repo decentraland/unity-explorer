@@ -16,8 +16,10 @@ namespace DCL.Multiplayer.Emotes
         public readonly int SocialEmoteOutcomeIndex;
         public readonly bool IsReactingToSocialEmote;
         public readonly string SocialEmoteInitiatorWalletAddress;
+        public readonly bool IsStopping;
+        public readonly bool IsRepeating;
 
-        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress)
+        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, bool isStopping, bool isRepeating)
         {
             EmoteId = emoteId;
             WalletId = walletId;
@@ -26,6 +28,8 @@ namespace DCL.Multiplayer.Emotes
             SocialEmoteOutcomeIndex = socialEmoteOutcomeIndex;
             IsReactingToSocialEmote = isReactingToSocialEmote;
             SocialEmoteInitiatorWalletAddress = socialEmoteInitiatorWalletAddress;
+            IsStopping = isStopping;
+            IsRepeating = isRepeating;
         }
 
         public bool Equals(RemoteEmoteIntention other) =>
@@ -35,12 +39,14 @@ namespace DCL.Multiplayer.Emotes
             IsUsingSocialOutcomeAnimation == other.IsUsingSocialOutcomeAnimation &&
             SocialEmoteOutcomeIndex == other.SocialEmoteOutcomeIndex &&
             IsReactingToSocialEmote == other.IsReactingToSocialEmote &&
-            SocialEmoteInitiatorWalletAddress == other.SocialEmoteInitiatorWalletAddress;
+            SocialEmoteInitiatorWalletAddress == other.SocialEmoteInitiatorWalletAddress &&
+            IsStopping == other.IsStopping &&
+            IsRepeating == other.IsRepeating;
 
         public override bool Equals(object? obj) =>
             obj is RemoteEmoteIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(EmoteId, WalletId, Timestamp, IsUsingSocialOutcomeAnimation, SocialEmoteOutcomeIndex, IsReactingToSocialEmote, SocialEmoteInitiatorWalletAddress);
+            HashCode.Combine(EmoteId, WalletId, Timestamp, IsUsingSocialOutcomeAnimation, SocialEmoteOutcomeIndex, IsReactingToSocialEmote, SocialEmoteInitiatorWalletAddress, IsStopping);
     }
 }

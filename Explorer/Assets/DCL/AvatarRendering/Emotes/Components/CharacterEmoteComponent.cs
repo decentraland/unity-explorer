@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using UnityEngine;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -11,6 +10,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool EmoteLoop;
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
+        // TODO: Replace StopEmote with component StopEmoteIntent
         public bool StopEmote;
         public EmoteDTO.EmoteMetadataDto? Metadata;
         public bool IsPlayingSocialEmoteOutcome;
@@ -36,7 +36,8 @@ namespace DCL.AvatarRendering.Emotes
                 // NOTE in Local Scene Development mode -- where legacy anims are allowed -- we will have different behavior
 
                 // Legacy clips are handled with the legacy animation component
-                if (CurrentEmoteReference && CurrentEmoteReference.legacy) return CurrentEmoteReference.animationComp!.isPlaying;
+                if (CurrentEmoteReference != null && CurrentEmoteReference.legacy)
+                    return CurrentEmoteReference.animationComp!.isPlaying;
 
                 // For mecanim animations, we check the actual animator tag
                 // We do that because we can be in a different state even if triggers have been set (e.g., waiting for a jump to finish)
@@ -44,11 +45,16 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+ /*       public CharacterEmoteComponent()
+        {
+            Reset();
+        }
+*/
         public void Reset()
         {
-            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "-emote Reset-");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "-emote Reset- " + EmoteUrn);
+            EmoteUrn = default;
             EmoteLoop = false;
-            CurrentEmoteReference = null;
             StopEmote = false;
             Metadata = null;
             IsPlayingSocialEmoteOutcome = false;
@@ -56,6 +62,9 @@ namespace DCL.AvatarRendering.Emotes
             IsReactingToSocialEmote = false;
             SocialEmoteInitiatorWalletAddress = string.Empty;
             HasOutcomeAnimationStarted = false;
+            // These fields are not reset, on purpose
+            //        CurrentEmoteReference = null;
+            //        CurrentAnimationTag = 0;
         }
     }
 }

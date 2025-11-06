@@ -19,6 +19,7 @@ using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.SocialEmotes.UI;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IWeb3IdentityCache playerIdentity;
 
         private Transform? socialPinsPoolParent = null;
         private Transform poolParent;
@@ -95,7 +97,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
             SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
-            IComponentPoolsRegistry componentPoolsRegistry)
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IWeb3IdentityCache playerIdentity)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -119,6 +122,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
+            this.playerIdentity = playerIdentity;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -146,7 +150,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, playerIdentity);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
