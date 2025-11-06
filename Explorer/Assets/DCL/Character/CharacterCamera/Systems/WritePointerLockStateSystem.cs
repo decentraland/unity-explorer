@@ -42,6 +42,8 @@ namespace DCL.CharacterCamera.Systems
         [All(typeof(PBPointerLock))]
         private void PropagateState(ref CRDTEntity crdtEntity)
         {
+            if (!exposedCameraData.PointerIsLocked.IsDirty) return;
+
             ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(static (pointerLock, data) =>
                     pointerLock.IsPointerLocked = data.PointerIsLocked,
                 crdtEntity, exposedCameraData);
