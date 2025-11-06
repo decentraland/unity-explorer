@@ -14,6 +14,7 @@ using UnityEngine.AddressableAssets;
 using DCL.EventsApi;
 using DCL.Multiplayer.Connectivity;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -47,6 +48,7 @@ namespace Global.Dynamic
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider,
             IWeb3IdentityCache web3IdentityCache,
+            HomePlaceEventBus homePlaceEventBus,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -66,7 +68,8 @@ namespace Global.Dynamic
                     teleportBusController,
                     navmapBus,
                     onlineUsersProvider,
-                    web3IdentityCache));
+                    web3IdentityCache,
+                    homePlaceEventBus));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

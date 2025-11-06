@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using Utility;
 
@@ -26,8 +27,7 @@ namespace DCL.Navmap
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
-            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.SearchResults | MapLayer.LiveEvents |
-            MapLayer.Category;
+            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.SearchResults | MapLayer.LiveEvents | MapLayer.Category | MapLayer.HomeMarker;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
@@ -37,6 +37,7 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly PlaceInfoToastController placeToastController;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
@@ -71,7 +72,8 @@ namespace DCL.Navmap
             NavmapZoomController navmapZoomController,
             SatelliteController satelliteController,
             PlaceInfoToastController placeToastController,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService, 
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -90,6 +92,7 @@ namespace DCL.Navmap
             this.satelliteController = satelliteController;
             this.placeToastController = placeToastController;
             this.placesAPIService = placesAPIService;
+            this.homePlaceEventBus = homePlaceEventBus;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
@@ -103,7 +106,7 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
             navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
-            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus);
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus, homePlaceEventBus);
         }
 
         public void Dispose()

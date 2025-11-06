@@ -7,6 +7,8 @@ using System.Linq;
 using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
+using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Prefs;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using Global.Dynamic.LaunchModes;
 using Unity.Mathematics;
@@ -155,6 +157,22 @@ namespace Global.Dynamic
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+        /// <summary>
+        /// Checking home position override from player prefs. If there is a feature flag, this will be overriden by it.
+        /// </summary>
+        public void CheckStartParcelHomeOverride()
+        {
+            string homeDataString = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_MARKER_DATA, null);
+
+            if (string.IsNullOrEmpty(homeDataString))
+                return;
+
+            HomeMarkerData homeData = new HomeMarkerData();
+            homeData.ParseFromString(homeDataString);
+
+            targetScene = homeData.Position;
+        }
 
         public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {

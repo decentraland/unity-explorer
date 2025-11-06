@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -42,10 +43,12 @@ namespace DCL.Navmap
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController favoriteButton;
+        private readonly MultiStateButtonController homeButton;
         private readonly List<EventElementView> eventElements = new ();
         private readonly CameraReelGalleryController cameraReelGalleryController;
         private PlacesData.PlaceInfo? place;
@@ -71,6 +74,7 @@ namespace DCL.Navmap
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
+            HomePlaceEventBus homePlaceEventBus,
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
@@ -89,6 +93,7 @@ namespace DCL.Navmap
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.galleryEventBus = galleryEventBus;
+            this.homePlaceEventBus = homePlaceEventBus;
 
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
@@ -130,6 +135,12 @@ namespace DCL.Navmap
 
             favoriteButton = new MultiStateButtonController(view.FavoriteButton, true);
             favoriteButton.OnButtonClicked += SetAsFavorite;
+            
+            if(view.HomeButton != null)
+            {
+                homeButton = new MultiStateButtonController(view.HomeButton, true);
+                homeButton.OnButtonClicked += SetAsHome;
+            }
 
             view.ShareButton.onClick.AddListener(Share);
             view.SetAsHomeButton.onClick.AddListener(SetAsHome);
@@ -182,6 +193,8 @@ namespace DCL.Navmap
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
             favoriteButton.SetButtonState(place.user_favorite);
+            if(view.HomeButton != null)
+                homeButton.SetButtonState(homePlaceEventBus.IsHome(place.base_position_processed));
 
             SetCategories(place);
 
@@ -264,6 +277,16 @@ namespace DCL.Navmap
                 await placesAPIService.SetPlaceFavoriteAsync(place!.id, isFavorite, ct);
                 favoriteButton.SetButtonState(isFavorite);
             }
+        }
+
+        private void SetAsHome(bool isHome)
+        {
+            if (place == null) return;
+            
+            if(isHome)
+                homePlaceEventBus.RequestSetAsHome(place);
+            else
+                homePlaceEventBus.RequestUnsetAsHome(place);
         }
 
         private void StartNavigation()

@@ -11,6 +11,7 @@ using DCL.MapRenderer.MapLayers.PointsOfInterest;
 using DCL.MapRenderer.MapLayers.SearchResults;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using System;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 
 namespace DCL.MapRenderer
@@ -32,6 +33,8 @@ namespace DCL.MapRenderer
         ParcelHighlightMarkerObjectRef ParcelHighlight { get; }
 
         PlayerMarkerObjectRef PlayerMarker { get; }
+        
+        HomeMarkerObjectRef HomeMarker { get; }
 
         PinMarkerRef PinMarker { get; }
 
@@ -87,6 +90,12 @@ namespace DCL.MapRenderer
         public class PlayerMarkerObjectRef : ComponentReference<PlayerMarkerObject>
         {
             public PlayerMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class HomeMarkerObjectRef : ComponentReference<HomeMarkerObject>
+        {
+            public HomeMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]

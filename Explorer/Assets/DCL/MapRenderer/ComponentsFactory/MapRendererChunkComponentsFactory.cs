@@ -24,6 +24,7 @@ using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
@@ -46,7 +47,9 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly INavmapBus navmapBus;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly HomePlaceEventBus homePlaceEventBus;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
+        private HomeMarkerInstaller homeMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private CategoryScenesMarkersInstaller categoriesMarkerInstaller { get; }
         private LiveEventsMarkersInstaller liveEventsMarkersInstaller { get; }
@@ -68,7 +71,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IRealmNavigator realmNavigator,
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -83,6 +87,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.navmapBus = navmapBus;
             this.onlineUsersProvider = onlineUsersProvider;
             this.web3IdentityCache = web3IdentityCache;
+            this.homePlaceEventBus = homePlaceEventBus;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -128,6 +133,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
+                homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, homePlaceEventBus, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, web3IdentityCache, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
                 /* List of other creators that can be executed in parallel */);

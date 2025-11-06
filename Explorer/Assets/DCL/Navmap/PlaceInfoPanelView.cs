@@ -34,6 +34,9 @@ namespace DCL.Navmap
         public MultiStateButtonView FavoriteButton { get; private set; }
 
         [field: SerializeField]
+        public MultiStateButtonView HomeButton { get; private set; }
+
+        [field: SerializeField]
         public Button ShareButton { get; private set; }
 
         [field: SerializeField]

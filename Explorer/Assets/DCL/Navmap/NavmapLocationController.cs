@@ -3,6 +3,7 @@ using DCL.Character.Components;
 using DCL.MapRenderer.MapCameraController;
 using DCL.Navmap.FilterPanel;
 using System;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using Utility;
 
@@ -18,19 +19,23 @@ namespace DCL.Navmap
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly NavmapFilterPanelController navmapFilterPanelController;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         public NavmapLocationController(
             NavmapLocationView view,
             World world,
             Entity playerEntity,
             NavmapFilterPanelController navmapFilterPanelController,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.navmapFilterPanelController = navmapFilterPanelController;
+            this.homePlaceEventBus = homePlaceEventBus;
             world.TryGet(playerEntity, out playerTransformComponent);
 
+            view.CenterToHomeButton.onClick.AddListener(CenterToHome);
             view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
             view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
 
@@ -51,17 +56,28 @@ namespace DCL.Navmap
         {
             this.cameraController = controller;
 
-            if (TryGetCoordinates(out var coordinates))
+            if (TryGetPlayerCoordinates(out var coordinates))
                 cameraController.SetPosition(coordinates);
+        }
+
+        private void CenterToHome()
+        {
+            if (TryGetHomeCoordinates(out var coordinates))
+                cameraController.TranslateTo(coordinates, TRANSITION_TIME);
         }
 
         private void CenterToPlayer()
         {
-            if (TryGetCoordinates(out var coordinates))
+            if (TryGetPlayerCoordinates(out var coordinates))
                 cameraController.TranslateTo(coordinates, TRANSITION_TIME);
         }
+        
+        private bool TryGetHomeCoordinates(out Vector2Int coordinates)
+        {
+            return homePlaceEventBus.TryGetHomeCoordinates(out coordinates);
+        }
 
-        private bool TryGetCoordinates(out Vector2 coordinates)
+        private bool TryGetPlayerCoordinates(out Vector2 coordinates)
         {
             if (world.TryGet(playerEntity, out playerTransformComponent))
             {
