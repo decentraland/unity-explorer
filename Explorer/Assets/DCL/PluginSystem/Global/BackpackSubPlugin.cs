@@ -149,7 +149,7 @@ namespace DCL.PluginSystem.Global
             busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
-            
+
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.CategoryIconsMapping, ct),
@@ -204,7 +204,7 @@ namespace DCL.PluginSystem.Global
                 rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                 equippedWearables, sortController, pageButtonView, gridPool,
                 thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
-                wearablesProvider, webBrowser
+                wearablesProvider, webBrowser, wearableStorage
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
