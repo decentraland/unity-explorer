@@ -27,6 +27,7 @@ namespace DCL.Profiles
         private readonly int batchMaxSize;
 
         private readonly IWebRequestController webRequestController;
+        private readonly ProfilesDebug profilesDebug;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
@@ -48,11 +49,13 @@ namespace DCL.Profiles
         public RealmProfileRepository(
             IWebRequestController webRequestController,
             IRealmData realm,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            ProfilesDebug profilesDebug)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
             this.profileCache = profileCache;
+            this.profilesDebug = profilesDebug;
         }
 
         public IEnumerable<ProfilesBatchRequest> ConsumePendingBatch()
@@ -312,6 +315,8 @@ namespace DCL.Profiles
                 // TODO make the cache thread-safe
                 profileCache.Set(userId, profile);
             }
+            else
+                profilesDebug.AddMissing(userId);
 
             // Find the request in the batch
             Resolve(userId, profile);
@@ -323,7 +328,7 @@ namespace DCL.Profiles
         ///     Enforces single get without prioritization and batching
         /// </summary>
         /// <returns></returns>
-        public async UniTask<Profile?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
+        private async UniTask<Profile?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
         {
             try
             {
@@ -337,6 +342,8 @@ namespace DCL.Profiles
                     serializerSettings: SERIALIZER_SETTINGS);
 
                 ProfileJsonDto? profileDto = root?.FirstProfileDto();
+
+                profilesDebug.AddNonAggregated();
 
                 return ResolveProfile(id, profileDto);
             }

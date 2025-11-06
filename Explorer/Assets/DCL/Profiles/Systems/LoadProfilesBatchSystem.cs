@@ -34,13 +34,15 @@ namespace DCL.Profiles
 
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
+        private readonly ProfilesDebug profilesDebug;
 
         private readonly StringBuilder bodyBuilder = new ();
 
-        internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
+        internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController, ProfilesDebug profilesDebug) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
         {
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
+            this.profilesDebug = profilesDebug;
         }
 
         public override void BeforeUpdate(in float t) =>
@@ -89,6 +91,8 @@ namespace DCL.Profiles
                     intention.Ids.Remove(dto.userId);
                     profileRepository.ResolveProfile(dto.userId, dto);
                 }
+
+                profilesDebug.AddAggregated(result.Value.avatars.Count);
             }
 
             foreach (string unresolvedId in intention.Ids)

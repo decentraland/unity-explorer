@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests;
@@ -16,42 +17,46 @@ namespace DCL.Profiles
         public readonly IProfileCache Cache;
 
         private readonly IWebRequestController webRequestController;
-
         private readonly RealmProfileRepository repository;
+        private readonly ProfilesDebug profilesDebug;
 
         public IProfileRepository Repository { get; }
 
-        public ProfilesContainer(IWebRequestController webRequestController, IRealmData realmData)
+        public ProfilesContainer(IWebRequestController webRequestController, IRealmData realmData, IDebugContainerBuilder debugContainerBuilder)
         {
             this.webRequestController = webRequestController;
             Cache = new DefaultProfileCache();
 
+            profilesDebug = ProfilesDebug.Create(debugContainerBuilder);
+
             Repository = new LogProfileRepository(
-                repository = new RealmProfileRepository(webRequestController, realmData, Cache)
+                repository = new RealmProfileRepository(webRequestController, realmData, Cache, profilesDebug)
             );
         }
 
         public ProfilesPlugin CreatePlugin() =>
-            new (repository, webRequestController);
+            new (repository, webRequestController, profilesDebug);
 
         public class ProfilesPlugin : IDCLGlobalPlugin<ProfilesPlugin.Settings>
         {
             private readonly RealmProfileRepository repository;
             private readonly IWebRequestController webRequestController;
+            private readonly ProfilesDebug profilesDebug;
 
             private TimeSpan heartbeat;
 
-            public ProfilesPlugin(RealmProfileRepository repository, IWebRequestController webRequestController)
+            public ProfilesPlugin(RealmProfileRepository repository, IWebRequestController webRequestController, ProfilesDebug profilesDebug)
             {
                 this.repository = repository;
                 this.webRequestController = webRequestController;
+                this.profilesDebug = profilesDebug;
             }
 
             public void Dispose() { }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
             {
-                LoadProfilesBatchSystem.InjectToWorld(ref builder, repository, webRequestController);
+                LoadProfilesBatchSystem.InjectToWorld(ref builder, repository, webRequestController, profilesDebug);
                 PrepareProfilesBatchSystem.InjectToWorld(ref builder, heartbeat, repository);
             }
 
