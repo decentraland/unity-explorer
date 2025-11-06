@@ -7,28 +7,20 @@ using UnityEngine.Networking;
 
 namespace ThirdWebUnity.Playground
 {
-    public class ThirdWebCustomJWTAuth : MonoBehaviour
+    public class ThirdWebCustomJWTAuth
     {
-        [Header("Credentials (used only if jwtToken is empty)")]
         private readonly string email = "popuzin@gmail.com";
-
-        // Take only "idToken" from the token payload
-        private readonly string jwtToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1haW4ta2V5In0.eyJzdWIiOiJwb3B1emluQGdtYWlsLmNvbSIsImVtYWlsIjoicG9wdXppbkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXVkIjoidGhpcmR3ZWIiLCJpc3MiOiJodHRwczovL3BvYy1sb2dpbi1zZXJ2ZXIudmVyY2VsLmFwcCIsImlhdCI6MTc2MjM1NTA4NSwiZXhwIjoxNzYyOTU5ODg1fQ.kSjBAXkUxp_9kAPXxtLRBkaYjAnVkYArDrVsG6cl6anJJEywEU268sER1RLyMwatg94EW60PUvVhCWFeWSMGFqD1VCbhjIVZ4iOrn_LoQuecvd4-GcnGCbmduOnu_9S6H4vZjrUCiHCn6xXYy6cG-2C26TczGg_yRWX4cd-pu_W5sgEAeD71WVLp4rJ0wj79uSG2ZaF676mQjnntC4FaGWzIujwGzqtdwls7phfzzCT4bi6GrySChznqR43pmFxuQV06SY_US2bZQCGZueDqDyG4QPZd1rD_i3kTZXs1XCcwvj4yh-ZxKa5h9rEEUeT4U40LWkvun-edMHXfJ_EqNw";
         private readonly string loginUrl = "https://poc-login-server.vercel.app/api/login";
         private readonly string password = "secret123";
-
         private readonly int chainId = 1; // Ethereum mainnet
 
-        private async void Start() =>
-            await TestJwtAuth();
-
-        public async Task TestJwtAuth()
+        public async Task Login()
         {
             Debug.Log("🚀 Starting thirdweb JWT auth test...");
 
-            string jwt = jwtToken;
+            string jwt; // = jwtToken;
 
-            if (string.IsNullOrWhiteSpace(jwt))
+            // if (string.IsNullOrWhiteSpace(jwt))
             {
                 Debug.Log($"📤 Fetching JWT from: {loginUrl}");
                 jwt = await LoginAndGetJwt(email, password);

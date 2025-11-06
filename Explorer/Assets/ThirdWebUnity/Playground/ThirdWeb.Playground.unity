@@ -267,9 +267,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 276527522}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 414fa91e8199fd34eb2bc4f3ead8082d, type: 3}
+  m_Script: {fileID: 11500000, guid: 9b83d77e1c3a4363b72060f82207f6fc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: ThirdWebUnity::ThirdWebUnity.Playground.ThirdWebCustomJWTAuth
+  m_EditorClassIdentifier: ThirdWebUnity::ThirdWebUnity.Playground.ThirdWebCustomJwtAuthHumble
 --- !u!1 &1245921781
 GameObject:
   m_ObjectHideFlags: 0
