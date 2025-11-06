@@ -151,8 +151,12 @@ namespace DCL.CharacterMotion.Systems
         {
             FinalizeQueuedLoadReport(in teleportIntent, static report => report.SetProgress(1f));
 
-            characterController.transform.position = teleportIntent.Position;
-            rigidTransform.IsGrounded = false; // teleportation is always above
+            // Only apply changes when position is actually different otherwise in-place rotation is bugged
+            if (!teleportIntent.Position.Equals(characterController.transform.position))
+            {
+                characterController.transform.position = teleportIntent.Position;
+                rigidTransform.IsGrounded = false; // teleportation is always above
+            }
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
