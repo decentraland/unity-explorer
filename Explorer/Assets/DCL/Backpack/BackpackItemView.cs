@@ -115,20 +115,6 @@ namespace DCL.Backpack
             UnEquipButton.gameObject.SetActive(IsEquipped && IsUnequippable);
         }
 
-        public void SetNewTagVisibility(DateTime? transferredAt)
-        {
-            if (transferredAt.HasValue)
-            {
-                TimeSpan timeSinceTransfer = DateTime.UtcNow - transferredAt.Value;
-                bool isNew = timeSinceTransfer.TotalHours <= 24;
-                NewTag.SetActive(isNew);
-            }
-            else
-            {
-                NewTag.SetActive(false);
-            }
-        }
-
         private void OnDisable()
         {
             ContainerTransform.localScale = Vector3.one;
