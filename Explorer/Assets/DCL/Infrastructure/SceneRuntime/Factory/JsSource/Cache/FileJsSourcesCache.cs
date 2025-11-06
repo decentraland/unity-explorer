@@ -1,6 +1,8 @@
 using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
+using System;
 using System.IO;
+using Unity.Collections;
 
 namespace SceneRuntime.Factory.WebSceneSource.Cache
 {
@@ -13,22 +15,40 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
             this.directoryPath = directoryPath;
         }
 
-        public void Cache(string path, string sourceCode)
+        public void Cache(string path, ReadOnlySpan<byte> sourceCode)
         {
-            File.WriteAllText(FilePath(path), sourceCode);
+            using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+            stream.Write(sourceCode);
         }
 
-        public bool TryGet(string path, out string? sourceCode)
+        public bool TryGet(string path, out NativeArray<byte> sourceCode, Allocator allocator)
         {
             string filePath = FilePath(path);
 
-            if (File.Exists(filePath) == false)
+            try
             {
-                sourceCode = null;
+                using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read,
+                    FileShare.Read);
+
+                if (stream.Length > int.MaxValue)
+                    throw new IOException($"Scene code file \"{path}\" is larger than int.MaxValue");
+
+                sourceCode = new NativeArray<byte>((int)stream.Length, allocator);
+
+                try { ReadReliably(stream, sourceCode); }
+                catch (Exception)
+                {
+                    sourceCode.Dispose();
+                    sourceCode = default;
+                    throw;
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                sourceCode = default;
                 return false;
             }
 
-            sourceCode = File.ReadAllText(filePath);
             return true;
         }
 
@@ -39,5 +59,18 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
 
         private string FilePath(string path) =>
             Path.Combine(directoryPath, path);
+
+        private static void ReadReliably(Stream stream, Span<byte> buffer)
+        {
+            while (buffer.Length > 0)
+            {
+                int read = stream.Read(buffer);
+
+                if (read <= 0)
+                    throw new EndOfStreamException("Read zero bytes");
+
+                buffer = buffer.Slice(read);
+            }
+        }
     }
 }

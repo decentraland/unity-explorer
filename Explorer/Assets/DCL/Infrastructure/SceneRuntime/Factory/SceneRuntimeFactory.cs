@@ -4,15 +4,21 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization;
 using ECS;
+using Microsoft.ClearScript.V8;
+using SceneRuntime.Apis;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
+using SceneRuntime.ModuleHub;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading;
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace SceneRuntime.Factory
 {
@@ -32,6 +38,12 @@ namespace SceneRuntime.Factory
 
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
+
+        private static readonly byte[] COMMONJS_HEADER_UTF8 = Encoding.UTF8.GetBytes(
+            "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {");
+
+        private static readonly byte[] COMMONJS_FOOTER_UTF8 = Encoding.UTF8.GetBytes(
+            "\n}).call(this, exports, require, module, __filename, __dirname); })");
 
         public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
             IWebJsSources webJsSources)
@@ -69,8 +81,7 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
-            string sourceCode,
-            IInstancePoolsProvider instancePoolsProvider,
+            NativeArray<byte>.ReadOnly sourceCode,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
@@ -82,18 +93,76 @@ namespace SceneRuntime.Factory
                 sourceCode
             );
 
-            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
-
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
                 await UniTask.SwitchToThreadPool();
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-            string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            
-            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
-                engineFactory);
+
+            V8ScriptEngine engine = engineFactory.Create(sceneShortInfo);
+            var moduleHub = new SceneModuleHub(engine);
+
+            byte[] buffer = new byte[29000];
+            COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
+
+            foreach (string moduleName in JS_MODULE_NAMES)
+            {
+                int moduleCodeLength = await LoadScriptAsync(
+                    Path.Combine(Application.streamingAssetsPath, "Js/Modules", moduleName), buffer,
+                    COMMONJS_HEADER_UTF8.Length);
+
+                if (buffer.AsSpan(COMMONJS_HEADER_UTF8.Length, COMMONJS_HEADER_UTF8.Length)
+                          .SequenceEqual(COMMONJS_HEADER_UTF8))
+                {
+                    moduleHub.LoadAndCompileJsModule(moduleName,
+                        buffer.AsSpan(COMMONJS_HEADER_UTF8.Length, moduleCodeLength));
+                }
+                else
+                {
+                    moduleCodeLength += COMMONJS_HEADER_UTF8.Length;
+                    COMMONJS_FOOTER_UTF8.CopyTo(buffer, moduleCodeLength);
+                    moduleCodeLength += COMMONJS_FOOTER_UTF8.Length;
+
+                    moduleHub.LoadAndCompileJsModule(moduleName, buffer.AsSpan(0, moduleCodeLength));
+                }
+            }
+
+            V8Script sceneScript;
+
+            if (sourceCode.Length >= COMMONJS_HEADER_UTF8.Length
+                && sourceCode.AsReadOnlySpan()
+                             .Slice(0, COMMONJS_HEADER_UTF8.Length)
+                             .SequenceEqual(COMMONJS_HEADER_UTF8))
+                sceneScript = engine.CompileScriptFromUtf8(sourceCode);
+            else
+            {
+                ReportHub.LogWarning(ReportCategory.SCENE_FACTORY,
+                    $"The code of the scene \"{sceneShortInfo.Name}\" at parcel {sceneShortInfo.BaseParcel} does not include the CommonJS module wrapper. This is suboptimal.");
+
+                int wrappedCodeLength = COMMONJS_HEADER_UTF8.Length + sourceCode.Length
+                                                                   + COMMONJS_FOOTER_UTF8.Length;
+
+                if (buffer.Length < wrappedCodeLength)
+                {
+                    buffer = new byte[wrappedCodeLength];
+                    COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
+                }
+
+                sourceCode.AsReadOnlySpan().CopyTo(buffer.AsSpan(COMMONJS_HEADER_UTF8.Length));
+                COMMONJS_FOOTER_UTF8.CopyTo(buffer, COMMONJS_HEADER_UTF8.Length + sourceCode.Length);
+
+                sceneScript = engine.CompileScriptFromUtf8(buffer.AsSpan(0, wrappedCodeLength));
+            }
+
+            var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
+            engine.AddHostObject("UnityOpsApi", unityOpsApi);
+
+            int initCodeLength = await LoadScriptAsync(
+                Path.Combine(Application.streamingAssetsPath, "Js/Init.js"), buffer, 0);
+
+            engine.ExecuteScriptFromUtf8(buffer.AsSpan(0, initCodeLength));
+            return new SceneRuntimeImpl(engine);
         }
 
         /// <summary>
@@ -101,14 +170,15 @@ namespace SceneRuntime.Factory
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
             URLAddress path,
-            IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
-            string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+            using DownloadHandler downloadHandler = await webJsSources.SceneSourceCodeAsync(path, ct);
+
+            return await CreateBySourceCodeAsync(downloadHandler.nativeData, sceneShortInfo, ct,
+                instantiationBehavior);
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()
@@ -120,46 +190,18 @@ namespace SceneRuntime.Factory
             }
         }
 
-        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
+        private static async UniTask<int> LoadScriptAsync(string path, byte[] buffer, int offset)
         {
-            string validateCode = await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
-                ct
-            );
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+                FileShare.ReadWrite);
 
-            string initCode = await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
-                ct
-            );
+            if (stream.Length > buffer.Length)
+                throw new IOException(
+                    $"File \"{path}\" is larger than the buffer ({buffer.Length} bytes)");
 
-            return (validateCode, initCode);
-        }
-
-        private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
-            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
-
-        private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
-        {
-            var moduleDictionary = new Dictionary<string, string>();
-            foreach (string name in names) await AddModuleAsync(name, moduleDictionary, ct);
-            return moduleDictionary;
-        }
-
-        // Wrapper https://nodejs.org/api/modules.html#the-module-wrapper
-        // Wrap the source code in a CommonJS module wrapper
-        internal string WrapInModuleCommonJs(string source)
-        {
-            const string HEAD = "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {";
-            const string FOOT = "\n}).call(this, exports, require, module, __filename, __dirname); })";
-
-            if (source.StartsWith(HEAD))
-                return source;
-
-            // create a wrapper for the script
-            source = Regex.Replace(source, @"^#!.*?\n", "");
-            source = $"{HEAD}{source}{FOOT}";
-            return source;
+            int streamLength = (int)stream.Length;
+            stream.ReadReliably(buffer, offset, streamLength);
+            return streamLength;
         }
     }
 }

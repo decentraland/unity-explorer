@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace SceneRuntime.Factory.JsSource
 {
-    public class CachedWebJsSources : IWebJsSources
+    /*public class CachedWebJsSources : IWebJsSources
     {
         private readonly IWebJsSources origin;
         private readonly IGenericCache<string, string> cache;
@@ -51,5 +51,5 @@ namespace SceneRuntime.Factory.JsSource
                 keyPayload.Put(asset);
             }
         }
-    }
+    }*/
 }

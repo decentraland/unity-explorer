@@ -170,7 +170,7 @@ namespace SceneRunner
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;
 
-            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
                 await ReportExceptionAsync(e, deps, deps.ExceptionsHandler);
