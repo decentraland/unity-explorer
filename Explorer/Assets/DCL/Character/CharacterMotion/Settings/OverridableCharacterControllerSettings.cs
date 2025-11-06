@@ -32,7 +32,7 @@ namespace DCL.CharacterMotion.Settings
 
         public float JogSpeed
         {
-            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.JOG_SPEED, impl.JogJumpHeight);
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.JOG_SPEED, impl.JogSpeed);
             set => impl.JogSpeed = value;
         }
 
@@ -68,7 +68,7 @@ namespace DCL.CharacterMotion.Settings
 
         public float RunJumpHeight
         {
-            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT, impl.JogJumpHeight);
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT, impl.RunJumpHeight);
             set => impl.RunJumpHeight = value;
         }
 
@@ -116,7 +116,7 @@ namespace DCL.CharacterMotion.Settings
 
         public float JumpHeightStun => impl.JumpHeightStun;
 
-        public float LongFallStunTime => impl.LongFallStunTime;
+        public float LongFallStunTime => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN, impl.LongFallStunTime);
 
         public float NoSlipDistance => impl.NoSlipDistance;
 

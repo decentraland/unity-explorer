@@ -81,6 +81,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
             if (pbSettings.HasRunSpeed) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.RUN_SPEED, pbSettings.RunSpeed);
             if (pbSettings.HasJumpHeight) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT, pbSettings.JumpHeight);
             if (pbSettings.HasRunJumpHeight) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT, pbSettings.RunJumpHeight);
+            if (pbSettings.HasHardLandingCooldown) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN, pbSettings.HardLandingCooldown);
         }
     }
 }

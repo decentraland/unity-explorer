@@ -14,6 +14,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
                 case AvatarLocomotionOverrides.OverrideID.RUN_SPEED: locomotionOverrides.RunSpeed = value; break;
                 case AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT: locomotionOverrides.JumpHeight = value; break;
                 case AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT: locomotionOverrides.RunJumpHeight = value; break;
+                case AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN: locomotionOverrides.HardLandingCooldown = value; break;
                 default: throw new ArgumentException();
             }
 
@@ -44,6 +45,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
                 AvatarLocomotionOverrides.OverrideID.RUN_SPEED => locomotionOverrides.RunSpeed,
                 AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT => locomotionOverrides.JumpHeight,
                 AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT => locomotionOverrides.RunJumpHeight,
+                AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN => locomotionOverrides.HardLandingCooldown,
                 _ => throw new ArgumentException(),
             };
     }
