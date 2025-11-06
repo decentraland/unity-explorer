@@ -152,8 +152,8 @@ namespace Global.Dynamic
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
@@ -213,7 +213,7 @@ namespace Global.Dynamic
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
-                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),

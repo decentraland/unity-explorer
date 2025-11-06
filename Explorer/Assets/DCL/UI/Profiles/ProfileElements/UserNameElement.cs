@@ -10,6 +10,7 @@ namespace DCL.UI.ProfileElements
         [field: SerializeField] public TMP_Text UserNameText { get; private set; }
         [field: SerializeField] public TMP_Text UserNameHashtagText { get; private set; }
         [field: SerializeField] public GameObject VerifiedMark { get; private set; }
+        [field: SerializeField] public GameObject OfficialMark { get; private set; }
         [field: SerializeField] public Button CopyUserNameButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyNameWarningNotification { get; private set; }
     }

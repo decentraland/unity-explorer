@@ -1,6 +1,6 @@
-﻿using DCL.Diagnostics;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiling;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
@@ -18,7 +18,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly string AssetBundleName;
 
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-        public bool AssetsDestroyed;
 
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
@@ -32,7 +31,7 @@ namespace ECS.StreamableLoading.AssetBundles
             Assets = new Dictionary<string, AssetInfo>();
 
             for (var i = 0; i < loadedAssets.Length; i++)
-                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
+                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source, InitialSceneStateMetadata.HasValue);
 
             Dependencies = dependencies;
 
@@ -63,7 +62,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 return;
 
             AssetBundleUnloaded = true;
-            Asset?.UnloadAsync(false);
+
+            //Needed for quitting, since Unity destroy the Asset out of our control
+            if (Asset != null && Asset)
+                Asset?.UnloadAsync(false);
         }
 
         protected override void DestroyObject()
@@ -79,7 +81,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 Assets = null;
             }
             UnloadAB();
-            AssetsDestroyed = true;
         }
 
         /// <summary>
@@ -98,11 +99,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (string.IsNullOrEmpty(assetName))
             {
-                if (Assets.Count > 1)
-                    throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
-
                 if (Assets.Count == 0)
                     throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");
+
+                if (Assets.Count > 1)
+                    throw new ArgumentException($"Requested an asset by type when there is more than one in the AB {AssetBundleName}");
 
                 assetInfo = Assets.FirstValueOrDefaultNonAlloc();
             }
@@ -122,6 +123,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
     }
+
 }
 
 public struct AssetInfo
@@ -129,11 +131,11 @@ public struct AssetInfo
     public Object Asset { get; }
     public Type AssetType { get; }
 
-    public AssetInfo(Object asset, Type assetType, string version, string source)
+    public AssetInfo(Object asset, Type assetType, string version, string source, bool isISS)
     {
         Asset = asset;
         AssetType = assetType;
-        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
+        Asset.name = isISS ? $"AB:{Asset?.name}_{version}_{source}_ISS" : $"AB:{Asset?.name}_{version}_{source}_NoISS";
     }
 }
 
@@ -146,4 +148,12 @@ public static class DictionaryExtensions
 
         return default;
     }
+}
+
+public struct InitialSceneStateMetadata
+{
+    public List<string> assetHash;
+    public List<Vector3> positions;
+    public List<Quaternion> rotations;
+    public List<Vector3> scales;
 }
