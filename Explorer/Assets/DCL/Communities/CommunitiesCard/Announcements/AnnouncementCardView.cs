@@ -10,6 +10,7 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
 using System;
+using System.Globalization;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -33,8 +34,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private Button createAnnouncementButton = null!;
         [SerializeField] private ProfilePictureView profilePicture = null!;
 
-        private string communityId = null!;
-        private string announcementId = null!;
+        private string currentCommunityId = null!;
+        private string currentAnnouncementId = null!;
+        private string currentProfileThumbnailUrl = null!;
 
         private CancellationTokenSource confirmationDialogCts = null!;
 
@@ -51,8 +53,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider)
         {
-            communityId = announcementInfo.communityId;
-            announcementId = announcementInfo.id;
+            currentCommunityId = announcementInfo.communityId;
+            currentAnnouncementId = announcementInfo.id;
 
             announcementContent.text = announcementInfo.content;
             authorName.text = announcementInfo.authorName;
@@ -60,12 +62,41 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             profileTag.gameObject.SetActive(!announcementInfo.authorHasClaimedName);
             verifiedMark.SetActive(announcementInfo.authorHasClaimedName);
             officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(announcementInfo.authorAddress));
-            DateTime announcementDateTime = DateTime.Parse(announcementInfo.createdAt, null, System.Globalization.DateTimeStyles.RoundtripKind);
-            postDate.text = announcementDateTime.ToString("MMM d", System.Globalization.CultureInfo.InvariantCulture);
-            profilePicture.Setup(profileDataProvider, NameColorHelper.GetNameColor(announcementInfo.authorName), announcementInfo.authorProfilePictureUrl);
+            postDate.text = FormatDateString(announcementInfo.createdAt);
+
+            if (currentProfileThumbnailUrl != announcementInfo.authorProfilePictureUrl)
+            {
+                profilePicture.Setup(profileDataProvider, NameColorHelper.GetNameColor(announcementInfo.authorName), announcementInfo.authorProfilePictureUrl);
+                currentProfileThumbnailUrl = announcementInfo.authorProfilePictureUrl;
+            }
 
             // TODO (Santi): Avoid to use ForceRebuildLayoutImmediate removing the content size fitter and calculating the height manually
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform) transform);
+        }
+
+        private static string FormatDateString(string createdAtDateString)
+        {
+            DateTime announcementDateTime = DateTime.Parse(createdAtDateString, null, DateTimeStyles.RoundtripKind);
+            TimeSpan timeDifference = DateTime.UtcNow - announcementDateTime;
+
+            if (timeDifference.TotalMinutes < 1)
+                return "Now";
+
+            switch (timeDifference.TotalHours)
+            {
+                case < 1:
+                {
+                    int minutes = (int)Math.Floor(timeDifference.TotalMinutes);
+                    return $"{minutes}m";
+                }
+                case < 24:
+                {
+                    int hours = (int)Math.Floor(timeDifference.TotalHours);
+                    return $"{hours}h";
+                }
+                default:
+                    return announcementDateTime.ToString(announcementDateTime.Year == DateTime.UtcNow.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture);
+            }
         }
 
         private void OnDeleteAnnouncementButtonClicked()
@@ -88,7 +119,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
                     return;
 
-                DeleteAnnouncementButtonClicked?.Invoke(communityId, announcementId);
+                DeleteAnnouncementButtonClicked?.Invoke(currentCommunityId, currentAnnouncementId);
             }
         }
     }

@@ -4,7 +4,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -48,7 +47,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 loadingObject.HideLoading();
         }
 
-        public void InitList(ProfileRepositoryWrapper profileRepoWrapper, CancellationToken panelCancellationToken)
+        public void InitList(ProfileRepositoryWrapper profileRepoWrapper)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
             this.profileRepositoryWrapper = profileRepoWrapper;

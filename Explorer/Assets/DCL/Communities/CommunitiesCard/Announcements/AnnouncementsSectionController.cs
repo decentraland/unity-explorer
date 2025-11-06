@@ -32,7 +32,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
 
-            view.InitList(profileRepositoryWrapper, cancellationToken);
+            view.InitList(profileRepositoryWrapper);
 
             view.CreateAnnouncementButtonClicked += CreateAnnouncement;
             view.DeleteAnnouncementButtonClicked += DeleteAnnouncement;
@@ -80,10 +80,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public void ShowAnnouncements(CommunityData community, CancellationToken token)
         {
-            cancellationToken = token;
-
             if (communityData is not null && community.id.Equals(communityData.Value.id))
+            {
+                RefreshGrid(true);
                 return;
+            }
 
             communityData = community;
             FetchNewDataAsync(token).Forget();
