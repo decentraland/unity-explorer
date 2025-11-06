@@ -209,7 +209,7 @@ namespace DCL.PluginSystem.Global
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, this.thumbnailProvider, webBrowser, appArgs);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, this.thumbnailProvider, webBrowser, appArgs, emoteStorage);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
