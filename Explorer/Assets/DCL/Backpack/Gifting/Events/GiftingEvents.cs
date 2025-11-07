@@ -23,6 +23,66 @@ namespace DCL.Backpack.Gifting.Events
             }
         }
 
+        public readonly struct GiftTransferOpenRequested
+        {
+            public readonly string RecipientUserId;
+            public readonly string RecipientName;
+            public readonly string Urn;
+            public readonly string DisplayName;
+            public readonly Sprite? Thumbnail;
+
+            public GiftTransferOpenRequested(
+                string recipientUserId, string recipientName,
+                string urn, string displayName, Sprite? thumbnail)
+            {
+                RecipientUserId = recipientUserId;
+                RecipientName   = recipientName;
+                Urn             = urn;
+                DisplayName     = displayName;
+                Thumbnail       = thumbnail;
+            }
+        }
+
+        public enum GiftTransferPhase { WaitingForWallet, Authorizing, Broadcasting, Confirming, Completed, Failed }
+
+        public readonly struct GiftTransferProgress
+        {
+            public readonly string Urn;
+            public readonly GiftTransferPhase Phase;
+            public readonly string? Message;
+
+            public GiftTransferProgress(string urn, GiftTransferPhase phase, string? message = null)
+            {
+                Urn = urn;
+                Phase = phase;
+                Message = message;
+            }
+        }
+
+        public readonly struct GiftTransferSucceeded
+        {
+            public readonly string Urn;
+            public readonly string? TxHash;
+
+            public GiftTransferSucceeded(string urn, string? txHash)
+            {
+                Urn    = urn;
+                TxHash = txHash;
+            }
+        }
+
+        public readonly struct GiftTransferFailed
+        {
+            public readonly string Urn;
+            public readonly string Reason; // short error for UX
+
+            public GiftTransferFailed(string urn, string reason)
+            {
+                Urn    = urn;
+                Reason = reason;
+            }
+        }
+
         public readonly struct OnSuccessfullGift
         {
             public readonly string Urn;

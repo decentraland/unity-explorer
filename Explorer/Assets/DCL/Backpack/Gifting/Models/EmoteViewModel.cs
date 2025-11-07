@@ -15,7 +15,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
     {
         Giftable = giftable;
         DisplayName = giftable.Name;
-        CategoryId = giftable.Emote.DTO.Metadata.AbstractData.category;
+        CategoryId = "emote";
         RarityId = giftable.Emote.DTO.Metadata.rarity;
         ThumbnailState = ThumbnailState.NotLoaded;
         Thumbnail = null;
@@ -39,6 +39,6 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
 
     public EmoteViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
     {
-        return new EmoteViewModel(Giftable, DisplayName, CategoryId, RarityId, newState, newSprite ?? Thumbnail);
+        return new EmoteViewModel(Giftable, DisplayName, "emote", RarityId, newState, newSprite ?? Thumbnail);
     }
 }

@@ -857,6 +857,8 @@ namespace Global.Dynamic
                     profileRepository,
                     staticContainer.InputBlock,
                     wearablesProvider,
+                    emoteProvider,
+                    identityCache,
                     thumbnailProvider,
                     eventBus),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),

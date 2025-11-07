@@ -3,7 +3,6 @@ using DG.Tweening;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.UI;
 using TMPro;
 using UnityEngine;
@@ -13,6 +12,20 @@ using Utility;
 
 namespace DCL.Backpack.Gifting.Views
 {
+    public readonly struct GiftItemStyleSnapshot
+    {
+        public readonly Sprite? categoryIcon;
+        public readonly Sprite? rarityBackground;
+        public readonly Color flapColor;
+
+        public GiftItemStyleSnapshot(Sprite? categoryIcon, Sprite? rarityBackground, Color flapColor)
+        {
+            this.categoryIcon = categoryIcon;
+            this.rarityBackground = rarityBackground;
+            this.flapColor = flapColor;
+        }
+    }
+    
     public class GiftingItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         private const float ANIMATION_TIME = 0.1f;
@@ -71,14 +84,14 @@ namespace DCL.Backpack.Gifting.Views
             
             currentUrn = viewModel.Urn;
 
-            // Set selection state
             selectionOutline.SetActive(isSelected);
-
-            // Set thumbnail/loading state
+            if (RarityBackground) RarityBackground.color = Color.white;
+            
             switch (viewModel.ThumbnailState)
             {
                 case ThumbnailState.NotLoaded:
                 case ThumbnailState.Loading:
+                case ThumbnailState.Error:
                     loadingStateContainer.SetActive(true);
                     loadedStateContainer.SetActive(false);
                     loadingView.ShowLoading();
@@ -89,13 +102,6 @@ namespace DCL.Backpack.Gifting.Views
                     loadedStateContainer.SetActive(true);
                     thumbnailImage.sprite = viewModel.Thumbnail;
                     loadingView.HideLoading();
-                    break;
-
-                case ThumbnailState.Error:
-                    // For simplicity, we can treat error as a perpetual loading state for now
-                    loadingStateContainer.SetActive(true);
-                    loadedStateContainer.SetActive(false);
-                    loadingView.ShowLoading();
                     break;
             }
         }

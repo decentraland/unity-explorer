@@ -10,11 +10,12 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using MVC;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters
 {
-    public class GiftingController : ControllerBase<GiftingView, GiftingParams>
+    public class GiftSelectionController : ControllerBase<GiftingView, GiftingParams>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
@@ -23,6 +24,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
         private readonly SendGiftCommand sendGiftCommand;
+        private readonly IMVCManager mvcManager;
         
         private GiftingHeaderPresenter? headerPresenter;
         private GiftingFooterPresenter? footerPresenter;
@@ -32,24 +34,21 @@ namespace DCL.Backpack.Gifting.Presenters
         private IGiftingGridPresenter? wearablesGridPresenter;
         private IGiftingGridPresenter? emotesGridPresenter;
         private GiftingErrorsController? giftingErrorsController;
-        
+
         private CancellationTokenSource? lifeCts;
 
-        // TODO: erase this one
-        private UniTask<IGiftingGridPresenter>? wearablesGridBuildTask;
-
-        public GiftingController(ViewFactoryMethod viewFactory,
+        public GiftSelectionController(ViewFactoryMethod viewFactory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
             IGiftingGridPresenterFactory gridFactory,
-            SendGiftCommand sendGiftCommand) : base(viewFactory)
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.inputBlock  = inputBlock;
             this.gridFactory = gridFactory;
-            this.sendGiftCommand = sendGiftCommand;
+            this.mvcManager = mvcManager;
         }
         
         private void OnPublishError()
@@ -65,7 +64,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 var wearablesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.WearablesGrid?.Grid);
-                var emotesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.EmotesGrid?.Grid);
+                var emotesAdapter = new SuperScrollGridAdapter<EmoteViewModel>(viewInstance.EmotesGrid?.Grid);
                 
                 headerPresenter = new GiftingHeaderPresenter(viewInstance.HeaderView,
                     profileRepository,
@@ -81,7 +80,20 @@ namespace DCL.Backpack.Gifting.Presenters
                 tabsManager = new GiftingTabsManager(viewInstance,
                     wearablesGridPresenter,
                     emotesGridPresenter);
+
+                tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
+                tabsManager.OnSectionActivated   += HandleSectionActivated;
             }
+        }
+
+        private void HandleSectionDeactivated(GiftingSection section, IGiftingGridPresenter _)
+        {
+            headerPresenter?.ClearSearchImmediate();
+        }
+
+        private void HandleSectionActivated(GiftingSection section, IGiftingGridPresenter presenter)
+        {
+            //presenter.ForceSearch(string.Empty);
         }
 
         protected override void OnViewShow()
@@ -116,6 +128,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
             wearablesGridPresenter?.Deactivate();
             emotesGridPresenter?.Deactivate();
+
+            tabsManager.OnSectionDeactivated -= HandleSectionDeactivated;
+            tabsManager.OnSectionActivated -= HandleSectionActivated;
             
             giftingErrorsController!.Hide(true);
             lifeCts.SafeCancelAndDispose();
@@ -125,26 +140,49 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             if (string.IsNullOrEmpty(selectedUrn))
             {
-                // Nothing is selected, update footer to its default state.
                 footerPresenter?.UpdateState(null);
+                return;
             }
-            else
-            {
-                // Something is selected. Get the item name from the active presenter and update the footer.
-                // Note: This requires adding a method to IGiftingGridPresenter
-                var activePresenter = tabsManager.ActivePresenter;
-                if (activePresenter is WearableGridPresenter wearablePresenter) // Example for wearables
-                {
-                    string? itemName = wearablePresenter.GetItemNameByUrn(selectedUrn);
-                    footerPresenter?.UpdateState(itemName);
-                }
-            }
+
+            var active = tabsManager.ActivePresenter;
+            string? itemName = active?.GetItemNameByUrn(selectedUrn);
+            footerPresenter?.UpdateState(itemName);
         }
 
         private void HandleSendGift()
         {
             string? selectedUrn = tabsManager.ActivePresenter?.SelectedUrn;
-            sendGiftCommand.ExecuteAsync(inputData.userId, selectedUrn).Forget();
+            OpenTransferPopup().Forget();
+        }
+
+        private async UniTaskVoid OpenTransferPopup()
+        {
+            var active = tabsManager.ActivePresenter;
+            string? urn    = active?.SelectedUrn;
+            if (string.IsNullOrEmpty(urn))
+                return;
+
+            string recipientUserId = inputData.userId;
+            string recipientName = inputData.userName;
+            var userThumb = headerPresenter?.CurrentRecipientAvatarSprite; // or null if you don’t keep it
+
+            // selected gift data
+            string giftDisplayName = active!.GetItemNameByUrn(urn) ?? "Item";
+            var giftThumb = active.GetThumbnailByUrn(urn);
+
+            if (!active.TryBuildStyleSnapshot(urn, out var style))
+                style = new GiftItemStyleSnapshot(null, null, Color.white);
+
+            var data = new GiftTransferStatusParams(recipientUserId,
+                recipientName,
+                userThumb,
+                urn,
+                giftDisplayName,
+                giftThumb,
+                style
+            );
+
+            await mvcManager.ShowAsync(GiftTransferController.IssueCommand(data));
         }
 
         private void HandleSearchChanged(string searchText)
@@ -160,6 +198,7 @@ namespace DCL.Backpack.Gifting.Presenters
             return UniTask.WhenAny(
                 viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance!.BackgroundButton.OnClickAsync(ct),
+                viewInstance!.FooterView.SendGiftButton.OnClickAsync(ct),
                 viewInstance!.FooterView.CancelButton.OnClickAsync(ct)
             );
         }

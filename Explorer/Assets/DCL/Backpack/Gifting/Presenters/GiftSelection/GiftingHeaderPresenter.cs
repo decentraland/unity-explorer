@@ -7,6 +7,7 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters
@@ -26,6 +27,12 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource? searchCts;
+
+        public Sprite? CurrentRecipientAvatarSprite
+        {
+            get;
+            set;
+        }
 
         public GiftingHeaderPresenter(GiftingHeaderView view,
             IProfileRepository profileRepository,
@@ -75,6 +82,9 @@ namespace DCL.Backpack.Gifting.Presenters
             view.UserProfileImage.Setup(profileRepositoryWrapper,
                 profile.UserNameColor,
                 profile.Avatar.FaceSnapshotUrl);
+
+            // Aleary cached
+            CurrentRecipientAvatarSprite =  profileRepositoryWrapper.GetProfileThumbnail(profile.Avatar.FaceSnapshotUrl);
 
             // Delegate the wallet address logic to its dedicated controller
             walletAddressController.Setup(profile);

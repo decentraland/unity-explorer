@@ -30,9 +30,22 @@ using DCL.Backpack.Gifting.Views;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
+using JsonUtility = UnityEngine.JsonUtility;
 
 namespace DCL.UI
 {
+    [Serializable]
+    public struct GiftData
+    {
+        public string userId;
+        public string userName;
+
+        public GiftData(string userId, string userName)
+        {
+            this.userId = userId;
+            this.userName = userName;
+        }
+    }
     public class GenericUserProfileContextMenuController
     {
         private delegate void StringDelegate(string id);
@@ -169,7 +182,8 @@ namespace DCL.UI
 
                     blockButtonControlSettings.SetData(profile.UserId);
                     jumpInButtonControlSettings.SetData(profile.UserId);
-                    giftButtonControlSettings.SetData(profile.UserId);
+                    string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
+                    giftButtonControlSettings.SetData(json);
 
                     contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
@@ -364,15 +378,27 @@ namespace DCL.UI
                 { "friend_position", parcel.ToString() },
             });
 
-        private void OnGiftUserClicked(string userId)
+        private void OnGiftUserClicked(string payload)
         {
             closeContextMenuTask.TrySetResult();
-            ShowGiftingPopupAsync(userId).Forget();
+            if (!string.IsNullOrEmpty(payload) && payload[0] == '{')
+            {
+                try
+                {
+                    var data = JsonUtility.FromJson<GiftData>(payload);
+                    ShowGiftingPopupAsync(data.userId, data.userName).Forget();
+                    return;
+                }
+                catch
+                {
+                    /* fallthrough */
+                }
+            }
         }
 
-        private async UniTaskVoid ShowGiftingPopupAsync(string userId)
+        private async UniTaskVoid ShowGiftingPopupAsync(string userId, string userName)
         {
-            await mvcManager.ShowAsync(GiftingController.IssueCommand(new GiftingParams(userId, userId)));
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftingParams(userId, userName)));
         }
     }
 }

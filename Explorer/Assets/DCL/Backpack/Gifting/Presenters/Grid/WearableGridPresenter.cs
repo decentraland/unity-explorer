@@ -64,6 +64,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.wearablesProvider = wearablesProvider;
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
+            this.wearableStylingCatalog  = wearableStylingCatalog;
             
             rectTransform = view.GetComponent<RectTransform>();
             canvasGroup = view.GetComponent<CanvasGroup>();
@@ -83,6 +84,7 @@ namespace DCL.Backpack.Gifting.Presenters
             adapter.OnItemSelected += OnItemSelected;
 
             ClearData();
+            adapter.RefreshData();
             RequestNextPage().Forget();
         }
 
@@ -120,7 +122,6 @@ namespace DCL.Backpack.Gifting.Presenters
         public void SetSearchText(string searchText)
         {
             searchText ??= string.Empty;
-            ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] SetSearchText received: '{searchText}'");
             if (currentSearch == searchText) return;
             currentSearch = searchText;
 
@@ -233,9 +234,9 @@ namespace DCL.Backpack.Gifting.Presenters
         public void RequestThumbnailLoad(int itemIndex)
         {
             string? urn = viewModelUrnOrder[itemIndex];
-            var vm = viewModelsByUrn[urn];
+            var viewModel = viewModelsByUrn[urn];
 
-            if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
+            if (viewModel.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Thumbs] Requesting thumbnail for index {itemIndex}, URN: {urn}");
             
@@ -243,10 +244,10 @@ namespace DCL.Backpack.Gifting.Presenters
             pendingThumbnailLoads++;
 
             // 2. Update the view model state
-            viewModelsByUrn[urn] = vm.WithState(ThumbnailState.Loading);
+            viewModelsByUrn[urn] = viewModel.WithState(ThumbnailState.Loading);
 
             // 3. Fire and forget the command
-            loadThumbnailCommand.ExecuteAsync(vm.Giftable, urn, lifeCts.Token).Forget();
+            loadThumbnailCommand.ExecuteAsync(viewModel.Giftable, urn, lifeCts.Token).Forget();
         }
 
         private void OnThumbnailLoaded(GiftingEvents.ThumbnailLoadedEvent evt)
@@ -295,9 +296,45 @@ namespace DCL.Backpack.Gifting.Presenters
             return null;
         }
 
+        public void ForceSearch(string? searchText)
+        {
+            currentSearch = searchText ?? string.Empty;
+            searchCts.SafeCancelAndDispose();
+            fetchCts.SafeCancelAndDispose();
+
+            ClearData();
+            adapter.RefreshData();
+            RequestNextPage().Forget();
+        }
+
         public WearableViewModel GetViewModel(int itemIndex)
         {
             return viewModelsByUrn[viewModelUrnOrder[itemIndex]];
+        }
+
+        public Sprite? GetThumbnailByUrn(string urn)
+        {
+            if (viewModelsByUrn.TryGetValue(urn, out var vm))
+                return vm.Thumbnail;
+            return null;
+        }
+
+        public bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style)
+        {
+            style = default;
+
+            if (!viewModelsByUrn.TryGetValue(urn, out var vm))
+                return false;
+
+            string? rarityId = string.IsNullOrEmpty(vm.RarityId) ? "base" : vm.RarityId;
+            string? categoryId = string.IsNullOrEmpty(vm.CategoryId) ? null : vm.CategoryId;
+
+            var rarityBg = wearableStylingCatalog.GetRarityBackground(rarityId);
+            var flapColor = wearableStylingCatalog.GetRarityFlapColor(rarityId);
+            var categoryIc = categoryId != null ? wearableStylingCatalog.GetCategoryIcon(categoryId) : null;
+
+            style = new GiftItemStyleSnapshot(categoryIc, rarityBg, flapColor);
+            return true;
         }
 
         public RectTransform GetRectTransform()

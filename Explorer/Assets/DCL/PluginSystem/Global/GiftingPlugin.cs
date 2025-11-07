@@ -1,19 +1,25 @@
-﻿using Arch.SystemGroups;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.Gifting.Views;
 using MVC;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Web3.Identities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -28,9 +34,12 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IEmoteProvider emoteProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
-        private GiftingController? giftingController;
+        private GiftSelectionController? giftSelectionController;
+        private GiftTransferController? giftTransferStatusController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -38,6 +47,8 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
             IWearablesProvider wearablesProvider,
+            IEmoteProvider emoteProvider,
+            IWeb3IdentityCache web3IdentityCache,
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus)
         {
@@ -47,22 +58,27 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.wearablesProvider = wearablesProvider;
+            this.emoteProvider = emoteProvider;
+            this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus =  eventBus;
         }
 
         public void Dispose()
         {
-            giftingController?.Dispose();
+            giftSelectionController?.Dispose();
         }
 
         public async UniTask InitializeAsync(GiftingSettings settings, CancellationToken ct)
         {
-            var giftingViewPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftingPrefab, ct))
+            var giftSelectionPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftSelectionPopupPrefab, ct))
                 .Value.GetComponent<GiftingView>();
 
+            var giftTransferPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftTransferPopupPrefab, ct))
+                .Value.GetComponent<GiftTransferStatusView>();
+
             var (rarityColors, categoryIcons, rarityBackgrounds, rarityInfoPanelBackgroundsMapping) = await UniTask
-                .WhenAll( assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
+                .WhenAll(assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
@@ -72,25 +88,43 @@ namespace DCL.PluginSystem.Global
             var wearableCatalog = new WearableStylingCatalog(rarityColors,
                 rarityBackgrounds,
                 categoryIcons);
-            
-            var sendGiftCommand = new SendGiftCommand(giftingService);
+
+            var sendGiftCommand = new SendGiftCommand(giftingService, mvcManager);
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider, eventBus);
 
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
+                emoteProvider,
+                web3IdentityCache,
+                settings.EmbeddedEmotesAsURN(),
                 loadThumbnailCommand,
                 wearableCatalog);
-            
-            giftingController = new GiftingController(
-                GiftingController.CreateLazily(giftingViewPrefab, null),
+
+            giftSelectionController = new GiftSelectionController(
+                GiftSelectionController.CreateLazily(giftSelectionPopupPrefab, null),
                 profileRepositoryWrapper,
                 profileRepository,
                 inputBlock,
                 gridFactory,
-                sendGiftCommand
+                mvcManager
             );
 
-            mvcManager.RegisterController(giftingController);
+            var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus);
+            var giftTransferProgressCommand = new GiftTransferProgressCommand();
+            var giftTransferResponseCommand = new GiftTransferResponseCommand();
+            var giftTransferSignCommand = new GiftTransferSignCommand();
+
+            giftTransferStatusController = new GiftTransferController(
+                GiftTransferController.CreateLazily(giftTransferPopupPrefab, null),
+                eventBus,
+                giftTransferProgressCommand,
+                giftTransferRequestCommand,
+                giftTransferResponseCommand,
+                giftTransferSignCommand
+            );
+
+            mvcManager.RegisterController(giftSelectionController);
+            mvcManager.RegisterController(giftTransferStatusController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -100,10 +134,21 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(GiftingPlugin) + "." + nameof(GiftingSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject GiftingPrefab;
+            public AssetReferenceGameObject GiftSelectionPopupPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject GiftTransferPopupPrefab;
 
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }
+
+            [field: SerializeField]
+            public string[] EmbeddedEmotes { get; private set; }
+
+            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN()
+            {
+                return EmbeddedEmotes.Select(s => new URN(s)).ToArray();
+            }
         }
     }
 }

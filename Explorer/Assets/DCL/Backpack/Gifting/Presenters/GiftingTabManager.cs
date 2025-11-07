@@ -20,6 +20,9 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly Dictionary<GiftingSection, IGiftingGridPresenter> presenters;
         private readonly Dictionary<GiftingSection, TabSelectorView> tabs;
 
+        public event Action<GiftingSection, IGiftingGridPresenter>? OnSectionDeactivated;
+        public event Action<GiftingSection, IGiftingGridPresenter>? OnSectionActivated;
+
         private CancellationTokenSource? animationCts;
         private bool isAnimating;
         private GiftingSection lastShownSection;
@@ -145,6 +148,8 @@ namespace DCL.Backpack.Gifting.Presenters
             newSectionRT.anchoredPosition = new Vector2(containerWidth * slideDirection, newSectionRT.anchoredPosition.y);
             newSectionCG.alpha = 0f;
 
+            OnSectionDeactivated?.Invoke(lastShownSection, lastPresenter);
+            
             // Create and run the animation sequence
             var sequence = DOTween.Sequence();
             sequence.Append(lastSectionRT.DOAnchorPosX(-containerWidth * slideDirection, ANIMATION_DURATION).SetEase(Ease.OutBack))
@@ -159,6 +164,9 @@ namespace DCL.Backpack.Gifting.Presenters
                     lastSectionRT.gameObject.SetActive(false);
                     lastPresenter.Deactivate();
                     lastShownSection = newSection;
+
+                    OnSectionActivated?.Invoke(newSection, newPresenter);
+                    
                     isAnimating = false;
                 });
         }
@@ -180,6 +188,10 @@ namespace DCL.Backpack.Gifting.Presenters
         CanvasGroup GetCanvasGroup();
         event Action<string?> OnSelectionChanged;
         string? SelectedUrn { get; }
+        string? GetItemNameByUrn(string urn);
+        void ForceSearch(string? searchText);
+        Sprite? GetThumbnailByUrn(string urn);
+        bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style);
     }
 
     // Generic interface for the Adapter, inheriting the base
@@ -189,5 +201,7 @@ namespace DCL.Backpack.Gifting.Presenters
         TViewModel GetViewModel(int itemIndex);
         void RequestThumbnailLoad(int itemIndex);
         string? GetItemNameByUrn(string urn);
+        void ForceSearch(string? searchText);
+        Sprite? GetThumbnailByUrn(string urn);
     }
 }

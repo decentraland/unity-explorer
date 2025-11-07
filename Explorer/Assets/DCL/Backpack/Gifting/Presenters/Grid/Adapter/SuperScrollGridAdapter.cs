@@ -74,31 +74,37 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 
             var item = grid.NewListViewItem("GiftingItem");
             var cellView = item.GetComponent<GiftingItemView>();
-
             var viewModel = dataProvider.GetViewModel(itemIndex);
+            
             cellView.Bind(viewModel, dataProvider.SelectedUrn == viewModel.Urn);
 
             if (viewModel.ThumbnailState == ThumbnailState.NotLoaded)
                 dataProvider.RequestThumbnailLoad(itemIndex);
-
+            
             cellView.NftCount.text = $"x{Random.Range(1, 200)}";
             
             if (wearableCatalog != null)
             {
-                cellView.RarityBackground.sprite = wearableCatalog
-                    .GetRarityBackground(viewModel.CategoryId);
+                if (!string.IsNullOrEmpty(viewModel.RarityId))
+                {
+                    cellView.FlapBackground.color  = wearableCatalog.GetRarityFlapColor(viewModel.RarityId);
+                    cellView.RarityBackground.sprite = wearableCatalog.GetRarityBackground(viewModel.RarityId);
+                }
+                else
+                {
+                    cellView.FlapBackground.color  = wearableCatalog.GetRarityFlapColor("base");
+                    cellView.RarityBackground.sprite = wearableCatalog.GetRarityBackground("base");
+                }
 
-                cellView.FlapBackground.color = wearableCatalog
-                    .GetRarityFlapColor(viewModel.RarityId);
-
-                cellView.CategoryImage.sprite = wearableCatalog
-                    .GetCategoryIcon(viewModel.CategoryId);
+                if (!string.IsNullOrEmpty(viewModel.CategoryId))
+                {
+                    cellView.CategoryImage.sprite = wearableCatalog.GetCategoryIcon(viewModel.CategoryId);
+                }
             }
 
             cellView.OnItemSelected -= OnItemSelected;
             cellView.OnItemSelected += OnItemSelected;
-
-            ReportHub.Log(ReportCategory.GIFTING, $"GiftingItem {itemIndex} - {viewModel.Urn} has been refreshed/loaded");
+            
             return item;
         }
     }

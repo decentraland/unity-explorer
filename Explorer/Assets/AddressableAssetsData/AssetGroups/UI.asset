@@ -50,6 +50,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 09f9d810bdd59ba4996aa290a346561e
+    m_Address: Assets/DCL/Backpack/Gifting/Views/Prefabs/TransferGitPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0ae66608be2735a4f96e0f1aa9b3a75b
     m_Address: PlayerMarkerObject
     m_ReadOnly: 0
