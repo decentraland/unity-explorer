@@ -120,12 +120,8 @@ namespace DCL.Input.Systems
         [Query]
         private void UpdateCursorLockStateFromIntention(in Entity entity,
             ref CursorComponent cursorComponent,
-            in ExposedCameraData exposedCameraData,
             ref PointerLockIntention intention)
         {
-            Vector2 mousePos = mouseDevice.position.value;
-            IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
-
             if (intention.Locked)
             {
                 if (cursorComponent.CursorState == CursorState.Locked)
@@ -135,7 +131,7 @@ namespace DCL.Input.Systems
                 }
 
                 // Keep the intention as pending if the cursor is over any UI
-                if (raycastResults.Count > 0 || cursorComponent.IsOverUI)
+                if (cursorComponent.IsOverUI)
                     return;
 
                 // In editor sometimes the pointer is still visible even if its locked.
@@ -153,8 +149,6 @@ namespace DCL.Input.Systems
 
                 UpdateState(ref cursorComponent, CursorState.Free);
             }
-
-            UpdateCursorVisualState(ref cursorComponent, raycastResults, in exposedCameraData);
 
             World.Remove<PointerLockIntention>(entity);
         }
