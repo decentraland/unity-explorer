@@ -25,6 +25,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private Profile? currentProfile;
         private ProfileRepositoryWrapper profileRepositoryWrapper = null!;
         private bool isCreationAllowed;
+        private AnnouncementCreationCardView? announcementCreationCardItem = null;
 
         private void Awake() =>
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
@@ -55,6 +56,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public void SetAllowCreation(bool isAllowed) =>
             this.isCreationAllowed = isAllowed;
 
+        public void CleanCreationInput() =>
+            announcementCreationCardItem?.CleanInput();
+
         public void RefreshGrid(SectionFetchData<CommunityPost> announcementsFetchData, bool redraw)
         {
             this.currentAnnouncementsFetchData = announcementsFetchData;
@@ -71,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 if (currentAnnouncementsFetchData.Items[index].type == CommunityPostType.CREATION_INPUT)
                 {
                     LoopListViewItem2 creationInputItem = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
-                    AnnouncementCreationCardView announcementCreationCardItem = creationInputItem.GetComponent<AnnouncementCreationCardView>();
+                    announcementCreationCardItem = creationInputItem.GetComponent<AnnouncementCreationCardView>();
                     announcementCreationCardItem.Configure(currentProfile, profileRepositoryWrapper);
                     announcementCreationCardItem.CreateAnnouncementButtonClicked -= OnCreateAnnouncementButtonClicked;
                     announcementCreationCardItem.CreateAnnouncementButtonClicked += OnCreateAnnouncementButtonClicked;
@@ -84,6 +88,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                     return separatorItem;
                 }
             }
+            else
+                announcementCreationCardItem = null;
 
             LoopListViewItem2 listItem = loopList.NewListViewItem(loopListView.ItemPrefabDataList[2].mItemPrefab.name);
             AnnouncementCardView announcementCardItem = listItem.GetComponent<AnnouncementCardView>();

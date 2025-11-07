@@ -105,6 +105,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             communityData = community;
             isCreationAllowed = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
             view.SetAllowCreation(isCreationAllowed);
+            view.CleanCreationInput();
             FetchNewDataAsync(token).Forget();
         }
 
@@ -148,6 +149,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 currentAnnouncementsFetchData.Reset();
                 FetchNewDataAsync(ct).Forget();
                 RefreshGrid(true);
+                view.CleanCreationInput();
             }
         }
 

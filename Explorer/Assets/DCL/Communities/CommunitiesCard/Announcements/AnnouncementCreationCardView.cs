@@ -37,7 +37,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public void Configure(Profile? profile, ProfileRepositoryWrapper profileDataProvider)
         {
-            announcementInput.text = string.Empty;
             UpdateCreateButtonState();
 
             if (profile != null && currentProfileThumbnailUrl != profile.Avatar.FaceSnapshotUrl)
@@ -46,6 +45,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 currentProfileThumbnailUrl = profile.Avatar.FaceSnapshotUrl;
             }
         }
+
+        public void CleanInput() =>
+            announcementInput.text = string.Empty;
 
         private void OnAnnouncementInputSelected(string _) =>
             createAnnouncementInputOutline.SetActive(true);
