@@ -9,6 +9,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
@@ -17,9 +18,12 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.Tween
 {
+    /// <summary>
+    /// Handles the update logic of PBTween and PBTweenSequence components
+    /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformSystem))]
-    [UpdateAfter(typeof(TweenLoaderSystem))]
+    [UpdateAfter(typeof(TweenSequenceLoaderSystem))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenSequenceUpdaterSystem : BaseUnityLoopSystem
@@ -37,8 +41,32 @@ namespace DCL.SDKComponents.Tween
 
         protected override void Update(float t)
         {
+            UpdatePBTweenQuery(World);
+            UpdateTweenTransformQuery(World);
+            UpdateTweenTextureQuery(World);
             UpdatePBTweenSequenceQuery(World);
             UpdateTweenSequenceStateQuery(World);
+        }
+
+        [Query]
+        [None(typeof(PBTweenSequence))]
+        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        {
+            TweenSDKComponentHelper.UpdatePBTween(ref pbTween, ref sdkTweenComponent);
+        }
+
+        [Query]
+        [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        {
+            TweenSDKComponentHelper.UpdateTweenTransform(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, transformComponent, tweenerPool, ecsToCRDTWriter, sceneStateProvider);
+        }
+
+        [Query]
+        [None(typeof(PBTweenSequence))]
+        private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        {
+            TweenSDKComponentHelper.UpdateTweenTexture(sdkEntity, in pbTween, ref sdkTweenComponent, ref materialComponent, tweenerPool, ecsToCRDTWriter, sceneStateProvider);
         }
 
         [Query]

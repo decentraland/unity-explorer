@@ -11,12 +11,12 @@ using Entity = Arch.Core.Entity;
 namespace DCL.SDKComponents.Tween.Tests
 {
     [TestFixture]
-    public class TweenLoaderSystemShould : UnitySystemTestBase<TweenLoaderSystem>
+    public class TweenSequenceLoaderSystemShould : UnitySystemTestBase<TweenSequenceLoaderSystem>
     {
         [SetUp]
         public void SetUp()
         {
-            system = new TweenLoaderSystem(world);
+            system = new TweenSequenceLoaderSystem(world);
 
             var startVector = new Vector3
                 { X = 0, Y = 0, Z = 0 };
@@ -37,9 +37,14 @@ namespace DCL.SDKComponents.Tween.Tests
                 Playing = true,
             };
 
+            pbTweenSequence = new PBTweenSequence
+            {
+                IsDirty = true,
+            };
+
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
-            world.Add(entity, pbTween);
+            world.Add(entity, pbTween, pbTweenSequence);
         }
 
         [TearDown]
@@ -50,15 +55,17 @@ namespace DCL.SDKComponents.Tween.Tests
 
         private Entity entity;
         private PBTween pbTween;
+        private PBTweenSequence pbTweenSequence;
 
         [Test]
-        public void AddTweenComponentWithCorrectModelToEntityWithPBTween()
+        public void AddTweenSequenceComponentWithCorrectModelToEntityWithPBTweenAndPBTweenSequence()
         {
-            Assert.AreEqual(0, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
+            Assert.AreEqual(0, world.CountEntities(new QueryDescription().WithAll<SDKTweenSequenceComponent>()));
 
             system.Update(0);
 
-            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenSequenceComponent>()));
         }
     }
 }
+

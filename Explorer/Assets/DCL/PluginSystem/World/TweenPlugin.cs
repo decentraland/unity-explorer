@@ -8,6 +8,7 @@ using DCL.SDKComponents.Tween.Components;
 using TweenCleanUpSystem = DCL.SDKComponents.Tween.TweenCleanUpSystem;
 using TweenLoaderSystem = DCL.SDKComponents.Tween.TweenLoaderSystem;
 using TweenUpdaterSystem = DCL.SDKComponents.Tween.TweenUpdaterSystem;
+using TweenSequenceLoaderSystem = DCL.SDKComponents.Tween.TweenSequenceLoaderSystem;
 using TweenSequenceUpdaterSystem = DCL.SDKComponents.Tween.TweenSequenceUpdaterSystem;
 
 namespace DCL.PluginSystem.World
@@ -31,13 +32,17 @@ namespace DCL.PluginSystem.World
             bool nativeTweenSequenceSupport = sharedDependencies.SceneData.IsSDKVersionOrHigher(MIN_TWEEN_SEQUENCE_SDK_VERSION);
 
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
-            TweenLoaderSystem.InjectToWorld(ref builder, nativeTweenSequenceSupport);
-            TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider, nativeTweenSequenceSupport);
 
             if (nativeTweenSequenceSupport)
             {
                 ResetDirtyFlagSystem<PBTweenSequence>.InjectToWorld(ref builder);
+                TweenSequenceLoaderSystem.InjectToWorld(ref builder);
                 TweenSequenceUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider);
+            }
+            else
+            {
+                TweenLoaderSystem.InjectToWorld(ref builder);
+                TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider);
             }
 
             finalizeWorldSystems.Add(TweenCleanUpSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, nativeTweenSequenceSupport));

@@ -2,6 +2,7 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
+using DCL.SDKComponents.Tween.Systems;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -18,7 +19,7 @@ namespace DCL.SDKComponents.Tween.Tests
     public class TweenSequenceSystemShould : UnitySystemTestBase<TweenSequenceUpdaterSystem>
     {
         private TweenerPool tweenerPool;
-        private TweenLoaderSystem loaderSystem;
+        private TweenSequenceLoaderSystem loaderSystem;
         private ISceneStateProvider sceneStateProvider;
         private IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -30,7 +31,7 @@ namespace DCL.SDKComponents.Tween.Tests
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
             tweenerPool = new TweenerPool();
             system = new TweenSequenceUpdaterSystem(world, ecsToCRDTWriter, tweenerPool, sceneStateProvider);
-            loaderSystem = new TweenLoaderSystem(world, true);
+            loaderSystem = new TweenSequenceLoaderSystem(world);
         }
 
         [TearDown]
