@@ -62,9 +62,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
-            SectionFetchData<CommunityPost> announcementsData = currentAnnouncementsFetchData;
-
-            if (announcementsData.Items[index].type == CommunityPostType.CREATION_INPUT)
+            if (currentAnnouncementsFetchData.Items[index].type == CommunityPostType.CREATION_INPUT)
             {
                 LoopListViewItem2 creationInputItem = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
                 AnnouncementCreationCardView announcementCreationCardItem = creationInputItem.GetComponent<AnnouncementCreationCardView>();
@@ -74,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 return creationInputItem;
             }
 
-            if (announcementsData.Items[index].type == CommunityPostType.SEPARATOR)
+            if (currentAnnouncementsFetchData.Items[index].type == CommunityPostType.SEPARATOR)
             {
                 LoopListViewItem2 separatorItem = loopList.NewListViewItem(loopList.ItemPrefabDataList[1].mItemPrefab.name);
                 return separatorItem;
@@ -83,12 +81,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             LoopListViewItem2 listItem = loopList.NewListViewItem(loopListView.ItemPrefabDataList[2].mItemPrefab.name);
             AnnouncementCardView announcementCardItem = listItem.GetComponent<AnnouncementCardView>();
 
-            CommunityPost announcementInfo = announcementsData.Items[index];
+            CommunityPost announcementInfo = currentAnnouncementsFetchData.Items[index];
             announcementCardItem.Configure(announcementInfo, profileRepositoryWrapper);
             announcementCardItem.DeleteAnnouncementButtonClicked -= OnDeleteAnnouncementButtonClicked;
             announcementCardItem.DeleteAnnouncementButtonClicked += OnDeleteAnnouncementButtonClicked;
 
-            if (index >= announcementsData.TotalFetched - 1 && announcementsData.TotalFetched < announcementsData.TotalToFetch)
+            if (index >= currentAnnouncementsFetchData.TotalFetched - 1 && currentAnnouncementsFetchData.TotalFetched < currentAnnouncementsFetchData.TotalToFetch)
                 NewDataRequested?.Invoke();
 
             return listItem;
