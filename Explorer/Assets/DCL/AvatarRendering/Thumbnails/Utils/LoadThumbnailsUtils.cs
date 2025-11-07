@@ -27,6 +27,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
 
         public static async UniTask<Sprite> WaitForThumbnailAsync(this IAvatarAttachment avatarAttachment, int checkInterval, CancellationToken ct)
         {
+            // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
             do await UniTask.Delay(checkInterval, cancellationToken: ct);
             while (avatarAttachment.ThumbnailAssetResult is not { IsInitialized: true });
 
@@ -35,6 +36,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
 
         public static async UniTask<Sprite> WaitForThumbnailAsync(this ITrimmedAvatarAttachment avatarAttachment, int checkInterval, CancellationToken ct)
         {
+            // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
             do await UniTask.Delay(checkInterval, cancellationToken: ct);
             while (avatarAttachment.ThumbnailAssetResult is not { IsInitialized: true });
 
