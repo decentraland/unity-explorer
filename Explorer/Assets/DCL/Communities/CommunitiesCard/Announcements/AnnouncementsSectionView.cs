@@ -12,8 +12,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 {
     public class AnnouncementsSectionView : MonoBehaviour, ICommunityFetchingView<CommunityPost>
     {
-        private const int ELEMENT_MISSING_THRESHOLD = 1;
-
         [SerializeField] private LoopListView2 loopList = null!;
         [SerializeField] private ScrollRect loopListScrollRect = null!;
         [SerializeField] private GameObject emptyState = null!;
@@ -64,29 +62,33 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
-            if (index == 0)
+            SectionFetchData<CommunityPost> announcementsData = currentAnnouncementsFetchData;
+
+            if (announcementsData.Items[index].type == CommunityPostType.CREATION_INPUT)
             {
-                LoopListViewItem2 firstItem = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
-                AnnouncementCreationCardView announcementCreationCardItem = firstItem.GetComponent<AnnouncementCreationCardView>();
+                LoopListViewItem2 creationInputItem = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
+                AnnouncementCreationCardView announcementCreationCardItem = creationInputItem.GetComponent<AnnouncementCreationCardView>();
                 announcementCreationCardItem.Configure(currentProfile, profileRepositoryWrapper);
                 announcementCreationCardItem.CreateAnnouncementButtonClicked -= OnCreateAnnouncementButtonClicked;
                 announcementCreationCardItem.CreateAnnouncementButtonClicked += OnCreateAnnouncementButtonClicked;
-
-                return firstItem;
+                return creationInputItem;
             }
 
-            LoopListViewItem2 listItem = loopList.NewListViewItem(loopListView.ItemPrefabDataList[1].mItemPrefab.name);
+            if (announcementsData.Items[index].type == CommunityPostType.SEPARATOR)
+            {
+                LoopListViewItem2 separatorItem = loopList.NewListViewItem(loopList.ItemPrefabDataList[1].mItemPrefab.name);
+                return separatorItem;
+            }
+
+            LoopListViewItem2 listItem = loopList.NewListViewItem(loopListView.ItemPrefabDataList[2].mItemPrefab.name);
             AnnouncementCardView announcementCardItem = listItem.GetComponent<AnnouncementCardView>();
 
-            SectionFetchData<CommunityPost> announcementsData = currentAnnouncementsFetchData;
-
-            int realIndex = index - 1;
-            CommunityPost announcementInfo = announcementsData.Items[realIndex];
+            CommunityPost announcementInfo = announcementsData.Items[index];
             announcementCardItem.Configure(announcementInfo, profileRepositoryWrapper);
             announcementCardItem.DeleteAnnouncementButtonClicked -= OnDeleteAnnouncementButtonClicked;
             announcementCardItem.DeleteAnnouncementButtonClicked += OnDeleteAnnouncementButtonClicked;
 
-            if (realIndex >= announcementsData.TotalFetched - ELEMENT_MISSING_THRESHOLD && announcementsData.TotalFetched < announcementsData.TotalToFetch)
+            if (index >= announcementsData.TotalFetched - 1 && announcementsData.TotalFetched < announcementsData.TotalToFetch)
                 NewDataRequested?.Invoke();
 
             return listItem;

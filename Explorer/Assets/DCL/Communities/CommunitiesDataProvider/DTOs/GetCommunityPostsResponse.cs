@@ -28,5 +28,13 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public string createdAt;
         public int likesCount;
         public bool isLikedByUser;
+        public CommunityPostType type = CommunityPostType.POST;
+    }
+
+    public enum CommunityPostType
+    {
+        POST,
+        CREATION_INPUT,
+        SEPARATOR,
     }
 }

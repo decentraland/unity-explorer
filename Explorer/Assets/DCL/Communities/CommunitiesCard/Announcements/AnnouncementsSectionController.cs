@@ -76,6 +76,14 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 return currentAnnouncementsFetchData.TotalToFetch;
             }
 
+            if (currentAnnouncementsFetchData.PageNumber == 1)
+            {
+                currentAnnouncementsFetchData.Items.Add(new CommunityPost { type = CommunityPostType.CREATION_INPUT });
+
+                if (response.Value.data.total > 0)
+                    currentAnnouncementsFetchData.Items.Add(new CommunityPost { type = CommunityPostType.SEPARATOR });
+            }
+
             foreach (var announcement in response.Value.data.posts)
                 currentAnnouncementsFetchData.Items.Add(announcement);
 
