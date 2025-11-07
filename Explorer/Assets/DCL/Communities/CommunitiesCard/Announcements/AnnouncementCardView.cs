@@ -21,8 +21,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 {
     public class AnnouncementCardView : MonoBehaviour
     {
-        private const string DELETE_ANNOUNCEMENT_TEXT_FORMAT = "Are you sure you want to delete this announcement?";
-        private const string DELETE_ANNOUNCEMENT_CONFIRM_TEXT = "CONTINUE";
+        private const string DELETE_ANNOUNCEMENT_TEXT_FORMAT = "Are you sure you want to delete this Announcement?";
+        private const string DELETE_ANNOUNCEMENT_CONFIRM_TEXT = "DELETE";
         private const string DELETE_ANNOUNCEMENT_CANCEL_TEXT = "CANCEL";
 
         [SerializeField] private TMP_Text announcementContent = null!;
@@ -33,6 +33,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private TMP_Text postDate = null!;
         [SerializeField] private Button deleteAnnouncementButton = null!;
         [SerializeField] private ProfilePictureView profilePicture = null!;
+        [SerializeField] private Sprite deleteSprite = null!;
 
         private string currentAnnouncementId = null!;
         private string currentProfileThumbnailUrl = null!;
@@ -108,12 +109,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             async UniTask ShowDeleteConfirmationDialogAsync(CancellationToken ct)
             {
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(
-                                                                                     new ConfirmationDialogParameter(
-                                                                                         DELETE_ANNOUNCEMENT_TEXT_FORMAT,
-                                                                                         DELETE_ANNOUNCEMENT_CANCEL_TEXT,
-                                                                                         DELETE_ANNOUNCEMENT_CONFIRM_TEXT,
-                                                                                         null, true, false),
-                                                                                     ct)
+                                                                                     new ConfirmationDialogParameter(DELETE_ANNOUNCEMENT_TEXT_FORMAT, DELETE_ANNOUNCEMENT_CANCEL_TEXT, DELETE_ANNOUNCEMENT_CONFIRM_TEXT,
+                                                                                         deleteSprite, false, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
