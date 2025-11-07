@@ -39,6 +39,9 @@ namespace DCL.Backpack
         public GameObject EquippedIcon { get; private set; }
 
         [field: SerializeField]
+        public GameObject NewTag { get; private set; }
+
+        [field: SerializeField]
         public Image CategoryImage { get; private set; }
 
         [field: SerializeField]
