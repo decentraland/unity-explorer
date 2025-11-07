@@ -17,6 +17,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
     {
         private const int PAGE_SIZE = 10;
         private const string COMMUNITY_ANNOUNCEMENTS_FETCH_ERROR_MESSAGE = "There was an error fetching the community announcements. Please try again.";
+        private const string COMMUNITY_ANNOUNCEMENT_CREATION_ERROR_MESSAGE = "There was an error creating the community announcement. Please try again.";
+        private const string COMMUNITY_ANNOUNCEMENT_DELETION_ERROR_MESSAGE = "There was an error deleting the community announcement. Please try again.";
 
         private readonly AnnouncementsSectionView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
@@ -144,7 +146,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                     return;
 
                 if (!response.Success)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_ANNOUNCEMENT_CREATION_ERROR_MESSAGE));
                     return;
+                }
 
                 currentAnnouncementsFetchData.Reset();
                 FetchNewDataAsync(ct).Forget();
@@ -170,7 +175,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                     return;
 
                 if (!response.Success || !response.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_ANNOUNCEMENT_DELETION_ERROR_MESSAGE));
                     return;
+                }
 
                 currentAnnouncementsFetchData.Reset();
                 FetchNewDataAsync(ct).Forget();
