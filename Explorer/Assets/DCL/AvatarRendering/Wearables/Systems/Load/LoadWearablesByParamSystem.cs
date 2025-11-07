@@ -141,18 +141,20 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
         private async UniTask<StreamableLoadingResult<AssetBundlesVersions>> GetABVersions(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, IPartitionComponent partition, CancellationToken ct)
         {
-            URN[] urns = ARRAY_POOL.Rent(lambdaResponse.TotalAmount);
+            URN[] urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
 
-            for (int i = 0; i < lambdaResponse.TotalAmount; i++)
+            for (int i = 0; i < lambdaResponse.Page.Count; i++)
                 urns[i] = new URN(lambdaResponse.Page[i].Entity.Metadata.id);
 
             var promise = AssetBundleRegistryVersionsPromise.Create(World,
-                GetAssetBundleRegistryVersionsIntention.Create(urns, new CommonLoadingArguments()),
+                GetAssetBundleRegistryVersionsIntention.Create(urns, new CommonLoadingArguments(string.Empty)),
                 partition);
+
+            var result = (await promise.ToUniTaskAsync(World, cancellationToken: ct)).Result.Value;
 
             ARRAY_POOL.Return(urns);
 
-            return (await promise.ToUniTaskAsync(World, cancellationToken: ct)).Result.Value;
+            return result;
         }
 
         private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, StreamableLoadingResult<AssetBundlesVersions> assetBundlesVersions, CancellationToken ct)

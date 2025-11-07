@@ -11,6 +11,7 @@ using ECS.Groups;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
@@ -44,6 +45,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
                 CreateQuery<GetAssetBundleManifestIntention, SceneAssetBundleManifest>(),
+                CreateQuery<GetAssetBundleRegistryVersionsIntention, AssetBundlesVersions>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, TextureData>(),
