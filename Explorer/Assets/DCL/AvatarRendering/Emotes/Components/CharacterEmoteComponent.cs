@@ -13,11 +13,13 @@ namespace DCL.AvatarRendering.Emotes
         // TODO: Replace StopEmote with component StopEmoteIntent
         public bool StopEmote;
         public EmoteDTO.EmoteMetadataDto? Metadata;
+        // TODO: Is it redundant to store this here when the interaction state can be checked from anywhere using the Profile.UserId?
         public bool IsPlayingSocialEmoteOutcome;
         public int CurrentSocialEmoteOutcome;
         public bool IsReactingToSocialEmote;
         public string SocialEmoteInitiatorWalletAddress;
         public bool HasOutcomeAnimationStarted;
+        public int SocialEmoteInteractionId;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
@@ -62,6 +64,7 @@ namespace DCL.AvatarRendering.Emotes
             IsReactingToSocialEmote = false;
             SocialEmoteInitiatorWalletAddress = string.Empty;
             HasOutcomeAnimationStarted = false;
+            SocialEmoteInteractionId = 0;
             // These fields are not reset, on purpose
             //        CurrentEmoteReference = null;
             //        CurrentAnimationTag = 0;

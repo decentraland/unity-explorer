@@ -37,7 +37,7 @@ namespace DCL.SocialEmotes.UI
                 return;
 
             if (interaction is { AreInteracting: false })
-                emotesBus.PlaySocialEmoteReaction(interaction.InitiatorWalletAddress, interaction.Emote, outcomeIndex);
+                emotesBus.PlaySocialEmoteReaction(interaction.InitiatorWalletAddress, interaction.Emote, outcomeIndex, interaction.Id);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;

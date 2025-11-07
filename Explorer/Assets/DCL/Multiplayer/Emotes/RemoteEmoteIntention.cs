@@ -18,8 +18,9 @@ namespace DCL.Multiplayer.Emotes
         public readonly string SocialEmoteInitiatorWalletAddress;
         public readonly bool IsStopping;
         public readonly bool IsRepeating;
+        public readonly int SocialEmoteInteractionId;
 
-        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, bool isStopping, bool isRepeating)
+        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, bool isStopping, bool isRepeating, int socialEmoteInteractionId)
         {
             EmoteId = emoteId;
             WalletId = walletId;
@@ -30,6 +31,7 @@ namespace DCL.Multiplayer.Emotes
             SocialEmoteInitiatorWalletAddress = socialEmoteInitiatorWalletAddress;
             IsStopping = isStopping;
             IsRepeating = isRepeating;
+            SocialEmoteInteractionId = socialEmoteInteractionId;
         }
 
         public bool Equals(RemoteEmoteIntention other) =>
@@ -41,7 +43,8 @@ namespace DCL.Multiplayer.Emotes
             IsReactingToSocialEmote == other.IsReactingToSocialEmote &&
             SocialEmoteInitiatorWalletAddress == other.SocialEmoteInitiatorWalletAddress &&
             IsStopping == other.IsStopping &&
-            IsRepeating == other.IsRepeating;
+            IsRepeating == other.IsRepeating &&
+            SocialEmoteInteractionId == other.SocialEmoteInteractionId;
 
         public override bool Equals(object? obj) =>
             obj is RemoteEmoteIntention other && Equals(other);

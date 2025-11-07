@@ -76,7 +76,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                     SocialEmoteOutcomeIndex = socialEmoteInteraction.OutcomeIndex,
                     UseOutcomeReactionAnimation = false,
                     SocialEmoteInitiatorWalletAddress = profile.UserId,
-                    UseSocialEmoteOutcomeAnimation = true
+                    UseSocialEmoteOutcomeAnimation = true,
+                    SocialEmoteInteractionId = socialEmoteInteraction.Id
                 });
             }
         }
@@ -91,7 +92,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         {
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
-           if (socialEmoteInteraction is { AreInteracting: true } &&
+            if (socialEmoteInteraction is { AreInteracting: true } &&
                 socialEmoteInteraction.ReceiverWalletAddress == profile.UserId)
             {
                 MoveToInitiatorIntent newIntent = new MoveToInitiatorIntent()

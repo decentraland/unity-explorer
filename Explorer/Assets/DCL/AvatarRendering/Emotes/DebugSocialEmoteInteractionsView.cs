@@ -21,6 +21,9 @@ namespace DCL.SocialEmotes
         [SerializeField]
         private Toggle areInteractingToggle;
 
+        [SerializeField]
+        private TMP_Text interactionIdText;
+
         public void SetInitiatorWalletAddress(string wallet)
         {
             initiatorText.text = wallet;
@@ -46,6 +49,11 @@ namespace DCL.SocialEmotes
             areInteractingToggle.isOn = areInteracting;
         }
 
+        public void SetInteractionId(int id)
+        {
+            interactionIdText.text = id.ToString();
+        }
+
         public void OnInteractionStarted(SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction)
         {
             SetInitiatorWalletAddress(interaction.InitiatorWalletAddress);
@@ -53,6 +61,7 @@ namespace DCL.SocialEmotes
             SetReceiverWalletAddress("-1");
             SetOutcomeIndex(-1);
             SetAreInteracting(false);
+            SetInteractionId(interaction.Id);
         }
 
         public void OnInteractionStopped(SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction)

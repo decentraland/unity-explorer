@@ -175,7 +175,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteUrn != default)
             {
                 // Sends stop signal to other clients
-                messageBus.Send(emoteUrn, false, false, -1, false, string.Empty, true);
+                messageBus.Send(emoteUrn, false, false, -1, false, string.Empty, true, emoteComponent.SocialEmoteInteractionId);
             }
         }
 
@@ -224,7 +224,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
            // ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "EmoteComponent set in world");
- //           World.Set(entity, emoteComponent);
+  //          World.Set(entity, emoteComponent);
         }
 
         private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)
@@ -320,19 +320,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
-                    /*if (!emoteIntent.IsRepeating ||
-                        !emoteIntent.UseOutcomeReactionAnimation ||
-                        (emoteIntent.SocialEmoteInitiatorWalletAddress != playerIdentity.Identity.Address && emoteIntent.WalletAddress != playerIdentity.Identity.Address))
-                    {
-
-                    }
-                    else
-                    {
-                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED LOOPING MESSAGE</color>");
-                        World.Remove<CharacterEmoteIntent>(entity);
-                        return;
-                    }*/
-
                     // Previous social emote interaction has to be stopped before starting a new one
                     // When the avatar is already playing a social emote (outcome phase) and then it plays the same one (start phase) it cancels the interaction
                     // Playing a different emote cancels the interaction
@@ -353,6 +340,15 @@ namespace DCL.AvatarRendering.Emotes.Play
                         SocialEmoteInteractionsManager.Instance.StopInteraction(emoteComponent.SocialEmoteInitiatorWalletAddress);
                     }
 
+                    // Playing a social emote for a different interaction, it could happen if the initiator plays the same start animation
+                    if (emoteComponent.Metadata != null &&
+                        emoteComponent.Metadata.IsSocialEmote &&
+                        emoteComponent.IsPlayingEmote &&
+                        emoteComponent.SocialEmoteInteractionId != emoteIntent.SocialEmoteInteractionId)
+                    {
+                        SocialEmoteInteractionsManager.Instance.StopInteraction(emoteComponent.SocialEmoteInitiatorWalletAddress);
+                    }
+
                     // Existing emoteComponent is overwritten with new emote info
                     emoteComponent.Reset();
                     emoteComponent.EmoteUrn = emoteId;
@@ -364,6 +360,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
                     emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.SocialEmoteInitiatorWalletAddress;
+                    emoteComponent.SocialEmoteInteractionId = emoteIntent.SocialEmoteInteractionId;
 
                     if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                     {
@@ -387,7 +384,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         }
                         else // Starting interaction
                         {
-                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform);
+                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId);
                         }
                     }
 
@@ -406,7 +403,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
                 }
 
- //               World.Set(entity, emoteComponent);
+//                World.Set(entity, emoteComponent);
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -432,7 +429,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress, false);
+            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress, false, emoteComponent.SocialEmoteInteractionId);
         }
 
         [Query]

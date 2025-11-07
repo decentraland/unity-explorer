@@ -38,6 +38,7 @@ namespace DCL.AvatarRendering.Emotes
         private bool useOutcomeReactionAnimationForTrigger;
         private bool useSocialEmoteOutcomeAnimationForTrigger;
         private string socialEmoteInitiatorWalletAddressForTrigger;
+        private int socialEmoteInteractionIdForTrigger;
 
         private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus)
             : base(world)
@@ -52,13 +53,14 @@ namespace DCL.AvatarRendering.Emotes
             ListenToSlotsInput(emotesActions.Get());
         }
 
-        private void OnEmoteBusSocialEmoteReactionPlayingRequested(string initiatorWalletAddress, IEmote emote, int outcomeIndex)
+        private void OnEmoteBusSocialEmoteReactionPlayingRequested(string initiatorWalletAddress, IEmote emote, int outcomeIndex, int interactionId)
         {
             triggeredEmoteUrn = emote.DTO.Metadata.id;
             socialEmoteOutcomeIndexForTrigger = outcomeIndex;
             useOutcomeReactionAnimationForTrigger = true;
             useSocialEmoteOutcomeAnimationForTrigger = true;
             socialEmoteInitiatorWalletAddressForTrigger = initiatorWalletAddress;
+            socialEmoteInteractionIdForTrigger = interactionId;
         }
 
         protected override void OnDispose()
@@ -104,10 +106,11 @@ namespace DCL.AvatarRendering.Emotes
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>--------TRIGGER EMOTE----------</color>");
 
                 // It's a social emote reaction
-                SendEmoteMessage(emoteUrn, profile.UserId, entity,  socialEmoteOutcomeIndexForTrigger, useOutcomeReactionAnimationForTrigger, useSocialEmoteOutcomeAnimationForTrigger, socialEmoteInitiatorWalletAddressForTrigger);
+                SendEmoteMessage(emoteUrn, profile.UserId, entity,  socialEmoteOutcomeIndexForTrigger, useOutcomeReactionAnimationForTrigger, useSocialEmoteOutcomeAnimationForTrigger, socialEmoteInitiatorWalletAddressForTrigger, socialEmoteInteractionIdForTrigger);
             }
             else
             {
+                // Normal emotes, or social emote start animation
                 if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible) return;
 
                 IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
@@ -118,8 +121,17 @@ namespace DCL.AvatarRendering.Emotes
                 URN emoteId = emotes[emoteIndex];
 
                 string walletAddress = profile.UserId;
-                SendEmoteMessage(emoteId, walletAddress, entity, socialEmoteInitiatorWalletAddress: walletAddress);
+                int interactionId = UnityEngine.Time.frameCount; // Whatever is unique, increasing and positive in this client (used when playing start animation of social emote)
+                SendEmoteMessage(emoteId, walletAddress, entity, socialEmoteInitiatorWalletAddress: walletAddress, socialEmoteInteractionId: interactionId);
             }
+
+            // Resets temp variables
+            triggeredEmoteUrn = string.Empty;
+            socialEmoteOutcomeIndexForTrigger = -1;
+            useOutcomeReactionAnimationForTrigger = false;
+            useSocialEmoteOutcomeAnimationForTrigger = false;
+            socialEmoteInitiatorWalletAddressForTrigger = string.Empty;
+            socialEmoteInteractionIdForTrigger = 0;
         }
 
         private void SendEmoteMessage(URN emoteId,
@@ -128,7 +140,8 @@ namespace DCL.AvatarRendering.Emotes
                                       int socialEmoteOutcomeIndex = -1,
                                       bool useOutcomeReactionAnimation = false,
                                       bool useSocialEmoteOutcomeAnimation = false,
-                                      string socialEmoteInitiatorWalletAddress = "")
+                                      string socialEmoteInitiatorWalletAddress = "",
+                                      int socialEmoteInteractionId = 0)
         {
             if (emoteId.IsNullOrEmpty()) return;
 
@@ -141,12 +154,13 @@ namespace DCL.AvatarRendering.Emotes
                 SocialEmoteOutcomeIndex = socialEmoteOutcomeIndex,
                 UseOutcomeReactionAnimation = useOutcomeReactionAnimation,
                 UseSocialEmoteOutcomeAnimation = useSocialEmoteOutcomeAnimation,
-                SocialEmoteInitiatorWalletAddress = socialEmoteInitiatorWalletAddress
+                SocialEmoteInitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
+                SocialEmoteInteractionId = socialEmoteInteractionId
             };
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation, emoteIntent.SocialEmoteInitiatorWalletAddress, false);
+            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation, emoteIntent.SocialEmoteInitiatorWalletAddress, false, emoteIntent.SocialEmoteInteractionId);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

@@ -2,6 +2,7 @@ using Arch.Core;
 using CodeLess.Attributes;
 using DCL.Diagnostics;
 using DCL.AvatarRendering.Emotes;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -28,6 +29,7 @@ namespace DCL.SocialEmotes
             int OutcomeIndex { get; }
             Vector3 InitiatorPosition { get; }
             Quaternion InitiatorRotation { get; }
+            int Id { get; }
         }
 
         /// <summary>
@@ -44,6 +46,7 @@ namespace DCL.SocialEmotes
             public int OutcomeIndex { get; set; }
             public Vector3 InitiatorPosition { get; set; }
             public Quaternion InitiatorRotation { get; set; }
+            public int Id { get; set; }
 
             public void Reset()
             {
@@ -56,6 +59,7 @@ namespace DCL.SocialEmotes
                 OutcomeIndex = -1;
                 InitiatorPosition = Vector3.zero;
                 InitiatorRotation = Quaternion.identity;
+                Id = 0;
             }
         }
 
@@ -78,6 +82,8 @@ namespace DCL.SocialEmotes
 
         private readonly IObjectPool<SocialEmoteInteraction?> interactionPool = new ObjectPool<SocialEmoteInteraction?>(createFunc: () => { return new SocialEmoteInteraction(); });
 
+        private readonly HashSet<int> everExistingInteractions = new ();
+
         /// <summary>
         /// Registers a new interaction. Called when an avatar plays the start animation of a social emote.
         /// </summary>
@@ -85,9 +91,10 @@ namespace DCL.SocialEmotes
         /// <param name="initiatorEntity">The ECS id of the avatar that initiated the interaction.</param>
         /// <param name="emote">The social emote played by the initiator.</param>
         /// <param name="initiatorTransform">The transform component of the initiator.</param>
-        public void StartInteraction(string initiatorWalletAddress, Entity initiatorEntity, IEmote emote, Transform initiatorTransform)
+        /// <param name="interactionId">A unique ID for the interaction.</param>
+        public void StartInteraction(string initiatorWalletAddress, Entity initiatorEntity, IEmote emote, Transform initiatorTransform, int interactionId)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>START INTERACTION " + initiatorWalletAddress + "</color>");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>START INTERACTION " + initiatorWalletAddress + " id: " + interactionId + "</color>");
 
             if (participantInteractions.ContainsKey(initiatorWalletAddress))
                 return;
@@ -99,8 +106,10 @@ namespace DCL.SocialEmotes
             newInteraction.Emote = emote;
             newInteraction.InitiatorPosition = initiatorTransform.position;
             newInteraction.InitiatorRotation = initiatorTransform.rotation;
+            newInteraction.Id = interactionId;
 
             participantInteractions.Add(initiatorWalletAddress, newInteraction);
+            everExistingInteractions.Add(interactionId);
             InteractionStarted?.Invoke(newInteraction);
         }
 
@@ -120,7 +129,7 @@ namespace DCL.SocialEmotes
 
             SocialEmoteInteraction? interaction = participantInteractions[initiatorWalletAddress];
             interaction!.AreInteracting = true;
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AreInteracting = true");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AreInteracting = true, id = " + interaction.Id);
             interaction.ReceiverWalletAddress = participantWalletAddress;
             interaction.ReceiverEntity = participantEntity;
             interaction.OutcomeIndex = outcomeIndex;
@@ -134,15 +143,18 @@ namespace DCL.SocialEmotes
         /// <param name="participantWalletAddress">The wallet addres of one of the players that participated in the interaction.</param>
         public void StopInteraction(string participantWalletAddress)
         {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>StopInteraction " + participantWalletAddress + "</color>");
+
             if(string.IsNullOrEmpty(participantWalletAddress))
                 return;
 
             if (!participantInteractions.ContainsKey(participantWalletAddress))
                 return;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>StopInteraction " + participantWalletAddress + "</color>");
-
             SocialEmoteInteraction? interaction = participantInteractions[participantWalletAddress];
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "interaction Id: " + interaction.Id);
+
             participantInteractions.Remove(interaction!.InitiatorWalletAddress);
 
             if(!string.IsNullOrEmpty(interaction.ReceiverWalletAddress))
@@ -168,5 +180,16 @@ namespace DCL.SocialEmotes
         /// <returns>The current state, or null if the player is not interacting.</returns>
         public ISocialEmoteInteractionReadOnly? GetInteractionState(string participantWalletAddress) =>
             participantInteractions.GetValueOrDefault(participantWalletAddress);
+
+        /// <summary>
+        /// Checks if an interaction has ever existed in the current client, by looking for its ID.
+        /// </summary>
+        /// <remarks>
+        /// This is useful when a client connects while interactions are already occurring, so it is possible to distinguish which occurred while connected and which did before connecting.
+        /// </remarks>
+        /// <param name="interactionId">The ID to be checked.</param>
+        /// <returns>True if the interaction existed; False otherwise.</returns>
+        public bool HasInteractionExisted(int interactionId) =>
+            everExistingInteractions.Contains(interactionId);
     }
 }

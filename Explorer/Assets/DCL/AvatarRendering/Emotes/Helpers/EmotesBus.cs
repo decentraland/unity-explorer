@@ -4,7 +4,7 @@ namespace DCL.AvatarRendering.Emotes
 {
 	public class EmotesBus
 	{
-        public delegate void SocialEmoteReactionPlayingRequestedDelegate(string initiatorWalletAddress, IEmote emote, int outcomeIndex);
+        public delegate void SocialEmoteReactionPlayingRequestedDelegate(string initiatorWalletAddress, IEmote emote, int outcomeIndex, int interactionId);
 
 		public event Action QuickActionEmotePlayed;
         public event SocialEmoteReactionPlayingRequestedDelegate SocialEmoteReactionPlayingRequested;
@@ -14,9 +14,9 @@ namespace DCL.AvatarRendering.Emotes
 			QuickActionEmotePlayed?.Invoke();
 		}
 
-        public void PlaySocialEmoteReaction(string initiatorWalletAddress, IEmote emote, int outcomeIndex)
+        public void PlaySocialEmoteReaction(string initiatorWalletAddress, IEmote emote, int outcomeIndex, int interactionId)
         {
-            SocialEmoteReactionPlayingRequested?.Invoke(initiatorWalletAddress, emote, outcomeIndex);
+            SocialEmoteReactionPlayingRequested?.Invoke(initiatorWalletAddress, emote, outcomeIndex, interactionId);
         }
 	}
 }
