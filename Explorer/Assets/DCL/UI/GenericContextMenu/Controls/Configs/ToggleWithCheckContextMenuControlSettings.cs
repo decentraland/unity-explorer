@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.Controls.Configs
 {
     public class ToggleWithCheckContextMenuControlSettings : ToggleContextMenuControlSettings
     {
@@ -15,6 +15,19 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             int horizontalLayoutSpacing = 30,
             bool horizontalLayoutReverseArrangement = false)
             : base(toggleText, toggleAction, horizontalLayoutPadding, horizontalLayoutSpacing, horizontalLayoutReverseArrangement)
+        {
+            this.toggleGroup = toggleGroup;
+        }
+
+        public ToggleWithCheckContextMenuControlSettings(string toggleText,
+            Action<bool> toggleAction,
+            Sprite toggleIcon,
+            ToggleGroup toggleGroup = null,
+            RectOffset horizontalLayoutPadding = null,
+            int horizontalLayoutSpacing = 30,
+            bool horizontalLayoutReverseArrangement = false,
+            Color iconColor = default)
+            : base(toggleText, toggleAction, toggleIcon, horizontalLayoutPadding, horizontalLayoutSpacing, horizontalLayoutReverseArrangement, iconColor)
         {
             this.toggleGroup = toggleGroup;
         }

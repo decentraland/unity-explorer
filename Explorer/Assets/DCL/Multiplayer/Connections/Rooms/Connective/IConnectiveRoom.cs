@@ -82,7 +82,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 : UniTask.FromResult(true);
 
         public static UniTask StopIfNotAsync(this IConnectiveRoom room) =>
-            room.CurrentState() is IConnectiveRoom.State.Running
+            room.CurrentState() is IConnectiveRoom.State.Running or IConnectiveRoom.State.Starting
                 ? room.StopAsync()
                 : UniTask.CompletedTask;
 
@@ -98,6 +98,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 AttemptToConnectState.SUCCESS => "Success",
                 AttemptToConnectState.ERROR => "Error",
                 AttemptToConnectState.NO_CONNECTION_REQUIRED => "NoConnectionRequired",
+                AttemptToConnectState.FORBIDDEN_ACCESS => "ForbiddenAccess",
                 _ => UNDEFINED,
             };
 

@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
+using DCL.Utility.Types;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public ConstSceneRoomMetaDataSource(string name)
         {
             metadataInput = new MetaData.Input(name, Vector2Int.zero);
-            metaData = new MetaData(name, metadataInput);
+            metaData = new MetaData(name, Vector2Int.zero, metadataInput);
         }
 
         public static ConstSceneRoomMetaDataSource FromMachineUUID()

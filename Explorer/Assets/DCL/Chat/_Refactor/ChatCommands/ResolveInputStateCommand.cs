@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
+using DCL.Utility.Types;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -31,11 +31,11 @@ namespace DCL.Chat.ChatCommands
                     return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(PrivateConversationUserStateService.ChatUserState.CONNECTED);
                 case ChatChannel.ChatChannelType.USER:
                 {
-                    PrivateConversationUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(currentChannel.Id.Id, ct);
+                    var status = await getUserChatStatusCommand.ExecuteAsync(currentChannel.Id.Id, ct);
 
                     return currentChannelService.InputState = ct.IsCancellationRequested
                         ? Result<PrivateConversationUserStateService.ChatUserState>.CancelledResult()
-                        : Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(status);
+                        : Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(status.ChatUserState);
                 }
                 default:
                     return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.ErrorResult($"{currentChannel.ChannelType} is not supported for input state resolution");

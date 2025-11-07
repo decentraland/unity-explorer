@@ -32,7 +32,6 @@
         public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
         public const string VOICE_CHAT = "voice-chat";
-        public const string COMMUNITY_VOICE_CHAT = "community-voice-chat";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -40,6 +39,14 @@
         public const string IDENTITY_EXPIRATION_DURATION = "identity-expiration-duration";
 
         public const string SIMULATE_MEMORY = "simulateMemory";
+
+        public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
+        public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
+
+        public const string USE_LOG_MATRIX = "use-log-matrix";
+        public const string WINDOWED_MODE = "windowed-mode";
+
+        public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
         public static class Multiplayer
         {

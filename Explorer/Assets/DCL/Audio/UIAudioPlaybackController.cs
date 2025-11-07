@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using DCL.Utility;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.ApplicationGuards;
 using UnityEngine;
 using Utility;
 
@@ -85,13 +85,13 @@ namespace DCL.Audio
             {
                 audioData.FadeTweener.Kill();
                 audioData.CancellationTokenSource.SafeCancelAndDispose();
-                
+
                 audioData.FadeTweener = audioData.AudioSource
                     .DOFade(0, fadeDuration)
                     .SetAutoKill()
                     .OnComplete(() =>
                 {
-                    if (!mainCancellationTokenSource.IsCancellationRequested) 
+                    if (!mainCancellationTokenSource.IsCancellationRequested)
                         ReleaseOnFadeOut(audioData, audioClipConfig);
                 });
             }
@@ -246,6 +246,8 @@ namespace DCL.Audio
             audioSource.priority = settings.AudioPriority;
             audioSource.outputAudioMixerGroup = settings.MixerGroup;
             audioSource.spatialBlend = 0;
+            audioSource.mute = false;
+            audioSource.volume = 1;
             return audioSource;
         }
 
@@ -281,7 +283,7 @@ namespace DCL.Audio
                     default:
                         continue;
                 }
-                
+
                 audioClipPair.Value.AudioSource.mute = true;
             }
         }

@@ -1,10 +1,9 @@
-﻿using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Arch.Core;
 using DCL.LOD.Systems;
-using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -21,9 +20,15 @@ namespace DCL.LOD.Components
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
 
+        //TODO (JUANI) : Ideally, this would be a LODAsset that gets cached, so we dont have to make the asset bundle request again and neither we have to
+        // recreate the RootGameobject
+        // Same problem related to UNloadSceneLODSystem.UnloadSceneLOFForISS. We need to clear the result because this gets re-initiated every time
+        public InitialSceneStateLOD InitialSceneStateLOD;
 
         public void Dispose(World world)
         {
+            InitialSceneStateLOD.Dispose(world);
+            InitialSceneStateLOD = null;
             CurrentLODPromise.ForgetLoading(world);
         }
 
@@ -31,7 +36,8 @@ namespace DCL.LOD.Components
         {
             return new SceneLODInfo
             {
-                CurrentLODLevelPromise = byte.MaxValue
+                CurrentLODLevelPromise = byte.MaxValue,
+                InitialSceneStateLOD =  new InitialSceneStateLOD(),
             };
         }
 
@@ -135,16 +141,50 @@ namespace DCL.LOD.Components
             metadata.LODChangeRelativeDistance = SceneLODInfoUtils.CalculateLODChangeRelativeHeight(metadata.CullRelativeHeightPercentage, tanValue, metadata.LodGroup.size / 2, defaultLodBias);
         }
 
-        public bool HasLOD(byte lodForAcquisition)
+        public bool HasLOD(byte lodForAcquisition) =>
+            IsInitialized() &&
+            (SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
+             SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition) ||
+             CurrentLODLevelPromise == lodForAcquisition);
+
+        public bool IsInitialized() =>
+            !string.IsNullOrEmpty(id);
+
+        public bool IsLODInstantiated(byte lodForAcquisition) =>
+            IsInitialized() &&
+            (SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
+             SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition));
+
+        public bool HasActiveLODPromise() =>
+            CurrentLODLevelPromise != byte.MaxValue;
+
+        public void ForgetAllLoadings(World world)
         {
-            return SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
-                   SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition) ||
-                   CurrentLODLevelPromise == lodForAcquisition;
+            CurrentLODPromise.ForgetLoading(world);
+            InitialSceneStateLOD.ForgetLoading(world);
         }
 
-        public bool IsInitialized()
+        public void ClearISS(float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
-            return !string.IsNullOrEmpty(id);
+            if (InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
+            {
+                metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(metadata.SuccessfullLODs, 0);
+                UnityEngine.LOD[] currentLODs = metadata.LodGroup.GetLODs();
+
+                // Remove LOD_0 (index 0) from the array, keeping LOD_1
+                // LODs are always created with size 2, and SetupLODRelativeHeights expects size 2, so we maintain size 2
+                // Move LOD_1 (what was at index 1) to index 0, and add an empty LOD at index 1
+                UnityEngine.LOD[] lodsWithoutLOD0 = new UnityEngine.LOD[2]
+                {
+                    new (0f, Array.Empty<Renderer>()),
+                    currentLODs[1],
+                };
+                SetupLODRelativeHeights(lodsWithoutLOD0, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
+                metadata.LodGroup.SetLODs(lodsWithoutLOD0);
+
+                RecalculateLODDistances(defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
+            }
+
         }
     }
 }

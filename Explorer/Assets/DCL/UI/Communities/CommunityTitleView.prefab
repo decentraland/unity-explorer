@@ -322,10 +322,10 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.13333334, g: 0.12941177, b: 0.14117648, a: 0}
-    m_HighlightedColor: {r: 0.25286132, g: 0.23589355, b: 0.2924528, a: 1}
-    m_PressedColor: {r: 0.13333334, g: 0.12941177, b: 0.14117648, a: 1}
-    m_SelectedColor: {r: 0.2509804, g: 0.23529412, b: 0.29411766, a: 1}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.011764706}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
     m_DisabledColor: {r: 0.2509804, g: 0.23529412, b: 0.29411766, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -341,7 +341,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 143949994887666785}
+  m_TargetGraphic: {fileID: 0}
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
@@ -360,6 +360,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 8404404177922087950}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &3274327646695643313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -413,6 +416,22 @@ PrefabInstance:
     - target: {fileID: 1696866409616317005, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_Name
       value: CommunityThumbnailView
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8143267048749335869, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_Pivot.x

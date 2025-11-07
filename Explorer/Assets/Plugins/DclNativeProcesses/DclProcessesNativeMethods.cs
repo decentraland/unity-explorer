@@ -1,3 +1,6 @@
+#nullable enable
+
+using RichTypes;
 using System;
 using System.Runtime.InteropServices;
 
@@ -18,6 +21,28 @@ namespace Plugins.DclNativeProcesses
 
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int free_name(IntPtr name);
+
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int start_process(
+            string fileName,
+            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPUTF8Str, SizeParamIndex = 1)]
+            string[] args,
+            int argc
+        );
+    }
+
+    public static class DclProcesses
+    {
+        public static Result<int> Start(string fileName, string[] args)
+        {
+            int resultCode = DclProcessesNativeMethods.start_process(fileName, args, args.Length);
+
+            if (resultCode == -1)
+                return Result.ErrorResult("Cannot launch process");
+
+            int pid = resultCode;
+            return Result<int>.SuccessResult(pid);
+        }
     }
 
     public readonly struct ProcessName : IDisposable

@@ -1,6 +1,7 @@
 ﻿using DCL.Audio;
 using DCL.Emoji;
 using DCL.UI.CustomInputField;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
@@ -12,6 +13,8 @@ namespace DCL.Chat.ChatInput
 {
     public class ChatInputView : MonoBehaviour
     {
+        public event Action? DebugOnSubmit;
+
         [Serializable]
         public class EmojiContainer
         {
@@ -58,7 +61,6 @@ namespace DCL.Chat.ChatInput
         [field: Header("Event Bus")]
         [field: SerializeField] internal ViewEventBus inputEventBus { get; private set; }
 
-        private string previousText = string.Empty;
         private ChatConfig.ChatConfig chatConfig;
 
         public void ApplyFocusStyle()
@@ -67,7 +69,6 @@ namespace DCL.Chat.ChatInput
             characterCounterObject.SetActive(true);
             emojiButtonObject.SetActive(true);
             inputPlaceholderObject.text = chatConfig.InputFocusedMessages;
-            InsertTextAtCaretPosition(previousText);
         }
 
         private void ApplyUnfocusStyle()
@@ -77,27 +78,22 @@ namespace DCL.Chat.ChatInput
             emojiButtonObject.SetActive(false);
             inputPlaceholderObject.text = chatConfig.InputUnfocusedMessages;
 
-            // NOTE: Remember the last typed message when going to unfocused state,
-            // NOTE: except when it's a single "/" which is used to trigger commands.
+            // NOTE: Clear text when it's a single "/" which is used to trigger commands.
             // NOTE: This prevents storing incomplete command triggers as normal messages.
-            if (inputField.text.Length > 1 ||
-                (inputField.text.Length == 1 && inputField.text[0] != '/'))
+            if (inputField.text.Length <= 1 &&
+                (inputField.text.Length != 1 || inputField.text[0] == '/'))
             {
-                previousText = inputField.text;
-            }
-            else
-            {
-                previousText = string.Empty;
+                inputField.text = string.Empty;
             }
 
-            inputField.text = string.Empty;
             inputField.DeactivateInputField();
         }
 
-        public void Initialize(ChatConfig.ChatConfig chatConfig)
+        public void Initialize(ChatConfig.ChatConfig chatConfig, ITextFormatter textFormatter)
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
+            inputField.SetTextFormatter(textFormatter);
         }
 
         public void InsertTextAtCaretPosition(string text)
@@ -132,7 +128,6 @@ namespace DCL.Chat.ChatInput
         public void ClearInput()
         {
             inputField.text = string.Empty;
-            previousText = string.Empty;
             UpdateCharacterCount();
         }
 
@@ -171,5 +166,13 @@ namespace DCL.Chat.ChatInput
             maskContainer.SetActive(true);
             maskText.text = reason;
         }
+
+        public void DebugInsertTextAndSubmit(string text)
+        {
+            inputField.SetTextWithoutNotify(text);
+            inputField.OnSubmit(null);
+            DebugOnSubmit?.Invoke();
+        }
+
     }
 }

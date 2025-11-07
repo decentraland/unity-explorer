@@ -60,6 +60,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0e0dc1c6390d85440bdf622928e144f5
+    m_Address: Assets/Textures/Common/ModalDeleteImg_Addressable.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0fce4c1a785b1495bbf861787a9a3224
     m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopup.prefab
     m_ReadOnly: 0
@@ -67,6 +72,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 112ec96d4c89d41d68b03e4ba73992e9
     m_Address: Assets/DCL/Communities/EventInfo/Prefabs/EventInfoPanel.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1801d33e8e688a74ea5dd704a91cfac1
+    m_Address: NotoSansSC-SemiBold SDF
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -87,11 +97,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
     m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/LogoDCL154x154SpriteAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
-    m_Address: Nametag
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -170,6 +175,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f25e6657ed14c647b36a55141610e05
+    m_Address: M_SpinnerRuby.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2fe097e0595decf4cbb812bf06bd1651
     m_Address: Assets/Textures/ExplorePanel/MapTabHoverUnhoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -215,8 +225,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3df1198e2008a4f0abdf407103681813
+    m_Address: Assets/DCL/NameTags/Assets/NametagUIDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3efe8a48fc3905f47a0648abd6859394
     m_Address: MapCameraObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 404f87890895f5f4bb7f733c75373620
+    m_Address: Inter-SemiBold SDF (Cyr)
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -265,6 +285,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4cc5b9c92b8be214dbbd4f1f502110de
+    m_Address: NotoSansKR-SemiBold SDF
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f900819503d2412194e6de3e5a95ba0
     m_Address: Assets/DCL/Communities/CommunitiesCard/Prefabs/CommunityCard.prefab
     m_ReadOnly: 0
@@ -302,6 +327,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 58f16fd4b3584431d87e11f043b40408
     m_Address: Assets/DCL/Navmap/Assets/EventScheduleElement.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5918cd70698040249a590ac41e1dfeb9
+    m_Address: Assets/DCL/VoiceChat/VoiceChatPluginSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -350,6 +380,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65718726e8675f3438790051aed58b6a
+    m_Address: Inter-SemiBold SDF (Gr)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 66f8f8427a5c4443e95b0d298addd639
     m_Address: NftInfoPanelRarityBackgrounds
     m_ReadOnly: 0
@@ -362,6 +397,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 688aa1f59829ea64fb0887ed7bb87d26
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithTextAndIcon_StringDelegateVariant.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6ade66d1c3c0b42f389ff610295b9c13
+    m_Address: ConnectionStatusPanelRootCanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -460,6 +500,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82f86e6c95d775f4e8488447b6885323
+    m_Address: NotoSansJP-SemiBold SDF
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8521b529ac852454480e3f6596bca3ba
     m_Address: DebugMenuRootCanvas
     m_ReadOnly: 0
@@ -555,11 +600,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b028edf69a2c54c9194c4ce6524befff
-    m_Address: ChatBubbleConfiguration
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b54d9d4189903c2438fa811308f14ceb
     m_Address: MapConfiguration
     m_ReadOnly: 0
@@ -640,6 +680,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dd40e574a59d9b348a7c02ca96be6ae9
+    m_Address: Assets/DCL/Backpack/AvatarSection/Outfits/Slots/OutfitSlot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de88bd0dde8feda4393664330ac8afb4
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTitleIconAndCheck.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e052984ad30813240bd28c945f4cab60
     m_Address: DottedLineRenderer
     m_ReadOnly: 0
@@ -687,6 +737,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f33ca6aa5d0855d429288687f87c41c0
     m_Address: Assets/Textures/NftPrompt/NftPrompt.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3988fe058c9e463580d97c75e2b574d
+    m_Address: Assets/DCL/VoiceChat/Assets/CommunityVoiceChatContextMenuConfiguration.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

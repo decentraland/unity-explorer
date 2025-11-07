@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
@@ -19,16 +18,15 @@ namespace DCL.Backpack.BackpackBus
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
-        private readonly HashSet<string> forceRender = new (15);
-
+        private readonly IEquippedWearables equippedWearables;
+        
         private int currentEmoteSlot = -1;
-        private readonly IReadOnlyEquippedWearables equippedWearables;
-
+        
         public BackpackBusController(
             IWearableStorage wearableStorage,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
-            IReadOnlyEquippedWearables equippedWearables,
+            IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage)
         {
@@ -46,11 +44,11 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.HideMessageReceived += HandleHideCommand;
             this.backpackCommandBus.SelectWearableMessageReceived += HandleSelectWearableCommand;
             this.backpackCommandBus.SelectEmoteMessageReceived += HandleSelectEmoteCommand;
-            this.backpackCommandBus.FilterCategoryMessageReceived += HandleFilterCategoryCommand;
-            this.backpackCommandBus.SearchMessageReceived += HandleSearchCommand;
+            this.backpackCommandBus.FilterMessageReceived += HandleFilterCommand;
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
             this.backpackCommandBus.ChangeColorMessageReceived += HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived += HandleUnequipAll;
+            this.backpackCommandBus.UnEquipAllWearablesMessageReceived += HandleUnEquipAllWearables;
             this.backpackCommandBus.EmoteSlotSelectMessageReceived += HandleEmoteSlotSelectCommand;
         }
 
@@ -63,47 +61,35 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.HideMessageReceived -= HandleHideCommand;
             backpackCommandBus.SelectWearableMessageReceived -= HandleSelectWearableCommand;
             backpackCommandBus.SelectEmoteMessageReceived -= HandleSelectEmoteCommand;
-            backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
-            backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
+            backpackCommandBus.FilterMessageReceived -= HandleFilterCommand;
             backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
             this.backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
+            backpackCommandBus.UnEquipAllWearablesMessageReceived -= HandleUnEquipAllWearables;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
         }
 
-        private void HandlePublishProfile(BackpackPublishProfileCommand command)
-        {
+        private void HandlePublishProfile(BackpackPublishProfileCommand command) =>
             backpackEventBus.SendPublishProfile();
-        }
 
-        private void HandleUnequipAll(BackpackUnEquipAllCommand obj)
-        {
+        private void HandleUnequipAll(BackpackUnEquipAllCommand obj) =>
             backpackEventBus.SendUnEquipAll();
+
+        private void HandleUnEquipAllWearables(BackpackUnEquipAllWearablesCommand obj)
+        {
+            backpackEventBus.SendUnEquipAllWearables();
         }
 
-        private void HandleChangeColor(BackpackChangeColorCommand command)
-        {
+        private void HandleChangeColor(BackpackChangeColorCommand command) =>
             backpackEventBus.SendChangeColor(command.NewColor, command.Category);
-        }
 
-        private void HandleSearchCommand(BackpackSearchCommand command)
-        {
-            if (!string.IsNullOrEmpty(command.SearchText))
-                backpackEventBus.SendFilterCategory(string.Empty, AvatarWearableCategoryEnum.Body);
-
-            backpackEventBus.SendSearch(command.SearchText);
-        }
+        private void HandleFilterCommand(BackpackFilterCommand command) =>
+            backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
                 backpackEventBus.SendWearableSelect(wearable);
-        }
-
-        private void HandleFilterCategoryCommand(BackpackFilterCategoryCommand command)
-        {
-            backpackEventBus.SendSearch(string.Empty);
-            backpackEventBus.SendFilterCategory(command.Category, command.CategoryEnum);
         }
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
@@ -191,9 +177,6 @@ namespace DCL.Backpack.BackpackBus
             }
 
             backpackEventBus.SendUnEquipWearable(wearable);
-
-            forceRender.Remove(wearable.GetCategory());
-            backpackEventBus.SendForceRender(forceRender);
         }
 
         private void HandleUnEquipEmoteCommand(BackpackUnEquipEmoteCommand command)
@@ -222,11 +205,6 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleHideCommand(BackpackHideCommand command)
         {
-            forceRender.Clear();
-
-            foreach (string category in command.ForceRender)
-                forceRender.Add(category);
-
             backpackEventBus.SendForceRender(command.ForceRender);
         }
 

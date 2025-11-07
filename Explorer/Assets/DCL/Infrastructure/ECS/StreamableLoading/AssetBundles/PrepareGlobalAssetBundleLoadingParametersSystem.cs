@@ -5,8 +5,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
-using System;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -14,7 +12,6 @@ namespace ECS.StreamableLoading.AssetBundles
     ///     Prepares Asset Bundle Parameters for loading Asset Bundle in the global world
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {

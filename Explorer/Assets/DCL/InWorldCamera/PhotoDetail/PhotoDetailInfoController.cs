@@ -7,7 +7,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.InWorldCamera.PassportBridge;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
@@ -39,7 +39,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
-        private readonly IPassportBridge passportBridge;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly List<VisiblePersonController> visiblePersonControllers = new ();
@@ -62,7 +61,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
-            IPassportBridge passportBridge,
             IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
@@ -73,7 +71,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.cameraReelStorageService = cameraReelStorageService;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
-            this.passportBridge = passportBridge;
             this.web3IdentityCache = web3IdentityCache;
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
@@ -87,7 +84,6 @@ namespace DCL.InWorldCamera.PhotoDetail
                 wearablesProvider,
                 decentralandUrlsSource,
                 thumbnailProvider,
-                passportBridge,
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
@@ -116,7 +112,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (string.IsNullOrEmpty(reelOwnerAddress)) return;
 
-            passportBridge.OpenPassport(mvcManager, reelOwnerAddress);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(reelOwnerAddress))).Forget();
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)

@@ -4,13 +4,13 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using Utility;
 
 namespace DCL.Chat
@@ -18,7 +18,6 @@ namespace DCL.Chat
     public class ChatChannelsPresenter : IDisposable
     {
         private readonly ChatChannelsView view;
-        private readonly IEventBus eventBus;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
@@ -28,11 +27,11 @@ namespace DCL.Chat
         private readonly OpenConversationCommand openConversationCommand;
         private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
         private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new ();
+        private readonly EventSubscriptionScope scope = new ();
 
         private bool isInitialized;
 
         private CancellationTokenSource lifeCts;
-        private readonly EventSubscriptionScope scope = new ();
 
         public ChatChannelsPresenter(ChatChannelsView view,
             IEventBus eventBus,
@@ -40,16 +39,12 @@ namespace DCL.Chat
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService,
             CommunityDataService communityDataService,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
             OpenConversationCommand openConversationCommand,
             CreateChannelViewModelCommand createChannelViewModelCommand)
         {
             this.view = view;
-            this.view.Initialize(profileRepositoryWrapper);
-
-            this.eventBus = eventBus;
             this.chatEventBus = chatEventBus;
             this.chatHistory = chatHistory;
             this.currentChannelService = currentChannelService;
@@ -72,31 +67,48 @@ namespace DCL.Chat
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
 
             this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
-            
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
+
+            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
+            scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
+        }
+
+        public void Dispose()
+        {
+            lifeCts.SafeCancelAndDispose();
+
+            view.ConversationSelected -= OnViewConversationSelected;
+            view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
+
+            chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
+            chatHistory.ChannelRemoved -= OnChannelRemoved;
+            chatHistory.MessageAdded -= OnMessageAdded;
+            chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
+
+            chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
+            chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
+
+            scope.Dispose();
         }
 
         private void CommunityChannelMetadataUpdated(CommunityMetadataUpdatedEvent evt)
         {
-            if (!viewModels.TryGetValue(evt.ChannelId, out var baseVm)) return;
+            if (!viewModels.TryGetValue(evt.ChannelId, out BaseChannelViewModel? baseVm)) return;
 
             if (baseVm is CommunityChannelViewModel vm)
             {
                 // Pull latest from the data service
                 // (inject ICommunityDataService instead of CommunityDataService if you prefer)
-                if (communityDataService.TryGetCommunity(evt.ChannelId, out var cd))
+                if (communityDataService.TryGetCommunity(evt.ChannelId, out GetUserCommunitiesData.CommunityData cd))
                 {
                     vm.DisplayName = cd.name;
 
-                    // Optional: if you want to also refresh the picture:
-                    vm.ImageUrl = cd.thumbnails?.raw;
+                    vm.ImageUrl = cd.thumbnailUrl;
                     view.UpdateConversation(vm);
 
                     if (!string.IsNullOrEmpty(vm.ImageUrl))
@@ -163,9 +175,7 @@ namespace DCL.Chat
         {
             if (isInitialized) return;
 
-            lifeCts.Cancel();
-            lifeCts.Dispose();
-            lifeCts = new CancellationTokenSource();
+            lifeCts = lifeCts.SafeRestart();
 
             view.Clear();
             viewModels.Clear();
@@ -188,7 +198,10 @@ namespace DCL.Chat
             view.TryRemoveConversation(removedChannel);
 
             if (currentChannelService.CurrentChannelId.Equals(removedChannel))
+            {
                 selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID, lifeCts.Token);
+                view.SelectConversation(ChatChannel.NEARBY_CHANNEL_ID);
+            }
         }
 
         private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
@@ -198,7 +211,7 @@ namespace DCL.Chat
 
         private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
-            view.SelectConversation(evt.Channel.Id);
+            view.SelectConversation(evt.Channel.Id, !evt.FromInitialization);
         }
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
@@ -234,15 +247,9 @@ namespace DCL.Chat
             if (addedMessage is { IsSentByOwnUser: true, IsSystemMessage: true })
                 return;
 
-            if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
-            {
-                UpdateUnreadStatus(channel);
-            }
+            if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out ChatChannel? channel)) { UpdateUnreadStatus(channel); }
 
-            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
-            {
-                view.MoveChannelToTop(destinationChannel.Id);
-            }
+            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY) { view.MoveChannelToTop(destinationChannel.Id); }
         }
 
         private void OnReadMessagesChanged(ChatChannel changedChannel)
@@ -254,7 +261,7 @@ namespace DCL.Chat
         {
             (int unreadCount, bool hasMentions) = CalculateUnreadStatus(channel);
 
-            if (viewModels.TryGetValue(channel.Id, out var vm))
+            if (viewModels.TryGetValue(channel.Id, out BaseChannelViewModel? vm))
             {
                 vm.UnreadMessagesCount = unreadCount;
                 vm.HasUnreadMentions = hasMentions;
@@ -285,13 +292,13 @@ namespace DCL.Chat
 
             int unreadCount = channel.Messages.Count - channel.ReadMessages;
 
-            bool hasMentions = false;
+            var hasMentions = false;
 
             if (unreadCount > 0)
             {
-                var messages = channel.Messages;
+                IReadOnlyList<ChatMessage> messages = channel.Messages;
 
-                for (int i = 0; i < unreadCount; i++)
+                for (var i = 0; i < unreadCount; i++)
                 {
                     if (messages[i].IsMention)
                     {
@@ -302,24 +309,6 @@ namespace DCL.Chat
             }
 
             return (unreadCount, hasMentions);
-        }
-
-        public void Dispose()
-        {
-            lifeCts.SafeCancelAndDispose();
-
-            view.ConversationSelected -= OnViewConversationSelected;
-            view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
-
-            chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
-            chatHistory.ChannelRemoved -= OnChannelRemoved;
-            chatHistory.MessageAdded -= OnMessageAdded;
-            chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
-
-            chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
-            chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
-
-            scope.Dispose();
         }
     }
 }

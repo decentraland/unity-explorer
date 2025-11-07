@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
@@ -12,10 +11,26 @@ using DCL.Input;
 using DCL.Profiles;
 using DCL.UI;
 using ECS.StreamableLoading.Common;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Logger;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.Backpack.AvatarSection.Outfits.Services;
+using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Browser;
+using DCL.FeatureFlags;
+using DCL.Profiles.Self;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using ECS;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -25,6 +40,9 @@ namespace DCL.Backpack
     public class BackpackController : ISection, IDisposable
     {
         private readonly BackpackView view;
+        private readonly ISelfProfile selfProfile;
+        private readonly IWebBrowser webBrowser;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
@@ -34,13 +52,24 @@ namespace DCL.Backpack
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly BackpackEmoteGridController backpackEmoteGridController;
+        private readonly BackpackGridController backpackGridController;
         private readonly EmotesController emotesController;
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly OutfitsRepository outfitsRepository;
+        private readonly IRealmData realmData;
+        private readonly IWebRequestController webController;
+        private readonly IEquippedWearables equippedWearables;
+        private readonly IEquippedEmotes equippedEmotes;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly INftNamesProvider nftNamesProvider;
+        private readonly IEventBus eventBus;
+        private readonly FeatureFlagsConfiguration featureFlags;
         private BackpackSections lastShownSection;
-
+        
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
@@ -49,11 +78,15 @@ namespace DCL.Backpack
 
         public BackpackController(
             BackpackView view,
+            FeatureFlagsConfiguration featureFlags,
+            ISelfProfile selfProfile,
+            IWebBrowser webBrowser,
+            IWeb3IdentityCache identityCache,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,
             IBackpackEventBus backpackEventBus,
-            BackpackGridController gridController,
+            BackpackGridController backpackGridController,
             BackpackInfoPanelController wearableInfoPanelController,
             BackpackInfoPanelController emoteInfoPanelController,
             World world, Entity playerEntity,
@@ -63,29 +96,100 @@ namespace DCL.Backpack
             BackpackCharacterPreviewController backpackCharacterPreviewController,
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
-            ICursor cursor)
+            ICursor cursor,
+            OutfitsRepository outfitsRepository,
+            IRealmData realmData,
+            IWebRequestController webController,
+            IEquippedWearables equippedWearables,
+            IEquippedEmotes equippedEmotes,
+            IWearableStorage wearableStorage,
+            IWearablesProvider wearablesProvider,
+            INftNamesProvider nftNamesProvider,
+            IEventBus eventBus,
+            Sprite deleteIcon)
         {
             this.view = view;
+            this.featureFlags = featureFlags;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.identityCache = identityCache;
             this.backpackCommandBus = backpackCommandBus;
             this.emoteInfoPanelController = emoteInfoPanelController;
             this.world = world;
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
+            this.backpackGridController = backpackGridController;
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
-
+            this.outfitsRepository = outfitsRepository;
+            this.webController = webController;
+            this.equippedWearables = equippedWearables;
+            this.equippedEmotes = equippedEmotes;
+            this.wearableStorage = wearableStorage;
+            this.wearablesProvider = wearablesProvider;
+            this.nftNamesProvider = nftNamesProvider;
+            this.eventBus = eventBus;
+            this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
+            var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
+                backpackGridController,
+                backpackCommandBus,
+                backpackEventBus,
+                inputBlock);
+            
+            var screenshotService = new AvatarScreenshotService(selfProfile);
+            var outfitsLogger = new OutfitsLogger(wearableStorage, realmData);
+            var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
+            var outfitsCollection = new OutfitsCollection();
+            var outfitApplier = new OutfitApplier(backpackCommandBus);
+            var loadOutfitsCommand = new LoadOutfitsCommand(webController,
+                selfProfile,
+                realmData,
+                outfitsLogger);
+            var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
+                outfitsRepository,
+                wearableStorage,
+                eventBus,
+                outfitsLogger);
+            var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
+            var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
+            var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider, wearableStorage);
+            var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
+                equippedWearables,
+                selfProfile,
+                wearableStorage,
+                outfitsLogger);
+
+            var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
+                eventBus,
+                outfitApplier,
+                outfitsCollection,
+                webBrowser,
+                equippedWearables,
+                loadOutfitsCommand,
+                saveOutfitCommand,
+                deleteOutfitCommand,
+                checkOutfitsBannerCommand,
+                prewarmWearablesCacheCommand,
+                previewOutfitCommand,
+                screenshotService,
+                backpackCharacterPreviewController,
+                outfitSlotFactory);
+            
             avatarController = new AvatarController(
                 avatarView,
+                featureFlags,
+                webBrowser,
                 avatarSlotViews,
                 rarityInfoPanelBackgrounds,
                 backpackCommandBus,
                 backpackEventBus,
-                gridController,
                 wearableInfoPanelController,
-                thumbnailProvider,
-                inputBlock);
+                backpackGridController,
+                categoriesPresenter,
+                outfitsPresenter,
+                thumbnailProvider);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
@@ -115,7 +219,7 @@ namespace DCL.Backpack
                 );
             }
 
-            this.backpackCharacterPreviewController = backpackCharacterPreviewController;
+            
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
@@ -146,7 +250,9 @@ namespace DCL.Backpack
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
+            backpackEmoteGridController.Dispose();
             emoteInfoPanelController.Dispose();
+            
         }
 
         private void ToggleTipsContent()
@@ -166,8 +272,7 @@ namespace DCL.Backpack
             world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
-
-            avatarController.RequestInitialWearablesPage();
+            backpackGridController.RequestPage(1, true);
             backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
@@ -177,9 +282,9 @@ namespace DCL.Backpack
             if (ct.IsCancellationRequested) return;
 
             backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.HairColor, WearablesConstants.Categories.HAIR));
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearablesConstants.Categories.EYES));
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearablesConstants.Categories.BODY_SHAPE));
+            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.HairColor, WearableCategories.Categories.HAIR));
+            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearableCategories.Categories.EYES));
+            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearableCategories.Categories.BODY_SHAPE));
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
             backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
 
@@ -217,17 +322,17 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            profileLoadingCts.SafeCancelAndDispose();
-
-            if (isAvatarLoaded)
-                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
-
             foreach (ISection backpackSectionsValue in backpackSections.Values)
                 backpackSectionsValue.Deactivate();
 
             //Resets the tab selector to the default state (Avatar selected and open)
             foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
                 tabSelector.TabSelectorViews.TabSelectorToggle.isOn = tabSelector.Section == BackpackSections.Avatar;
+
+            profileLoadingCts.SafeCancelAndDispose();
+
+            if (isAvatarLoaded)
+                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();

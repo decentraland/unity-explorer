@@ -1,4 +1,4 @@
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -34,6 +34,8 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_INVITE_RECEIVED_TYPE = "community_invite_received";
         private const string COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE = "community_request_to_join_accepted";
         private const string COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE = "community_deleted_content_violation";
+        private const string USER_BANNED_FROM_SCENE_TYPE = "user_banned_from_scene";
+        private const string USER_UNBANNED_FROM_SCENE_TYPE = "user_unbanned_from_scene";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -103,6 +105,8 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_INVITE_RECEIVED_TYPE => new CommunityUserInvitedNotification(),
                     COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE => new CommunityUserRequestToJoinAcceptedNotification(),
                     COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
+                    USER_BANNED_FROM_SCENE_TYPE => new UserBannedFromSceneNotification(),
+                    USER_UNBANNED_FROM_SCENE_TYPE => new UserUnbannedFromSceneNotification(),
                     _ => null,
                 };
 

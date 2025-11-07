@@ -1,6 +1,7 @@
 using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript;
-using Microsoft.ClearScript.V8.SplitProxy;
+using Microsoft.ClearScript.JavaScript;
+using Microsoft.ClearScript.V8.FastProxy;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -8,19 +9,32 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
-    public class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>, IV8HostObject
+    public sealed class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>, IV8FastHostObject
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly List<PoolableByteArray> lastInput = new (10);
-        private readonly InvokeHostObject sendBinary;
-
+        private static readonly V8FastHostObjectOperations<CommunicationsControllerAPIWrapper> OPERATIONS = new();
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+
+        static CommunicationsControllerAPIWrapper()
+        {
+            OPERATIONS.Configure(static configuration =>
+            {
+                configuration.AddMethodGetter(nameof(SendBinary),
+                    static (CommunicationsControllerAPIWrapper self, in V8FastArgs args, in V8FastResult result) =>
+                    {
+                        var broadcastData = args.Get<IList<object>>(0);
+                        var peerData = args.Count > 1 ? args.Get<IList<object>>(1) : null;
+                        result.Set(self.SendBinary(broadcastData, peerData));
+                    });
+            });
+        }
 
         public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
-            sendBinary = SendBinary;
         }
 
         protected override void DisposeInternal()
@@ -35,18 +49,13 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        private void SendBinaryToParticipants(V8Object dataList, int dataCount, string recipient)
+        private void SendBinaryToParticipants(IList<object> dataList, string? recipient)
         {
             try
             {
-                using var value = V8Value.New();
-
-                for (var i = 0; i < dataCount; i++)
+                for (int i = 0; i < dataList.Count; i++)
                 {
-                    dataList.GetIndexedProperty(i, value);
-                    using var messageHolder = value.Decode();
-                    Uint8Array message = messageHolder.GetUint8Array();
-
+                    var message = (ITypedArray<byte>)dataList[i];
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)
@@ -63,7 +72,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 }
 
                 // Remove excess elements
-                while (lastInput.Count > dataCount)
+                while (lastInput.Count > dataList.Count)
                 {
                     int lastIndex = lastInput.Count - 1;
                     PoolableByteArray message = lastInput[lastIndex];
@@ -79,77 +88,34 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             }
         }
 
-        private void SendBinary(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
+        /// <param name="broadcastData">Uint8Array[]</param>
+        /// <param name="peerData">PeerMessageData[]</param>
+        /// <returns>Uint8Array[]</returns>
+        private ScriptObject SendBinary(IList<object> broadcastData, IList<object>? peerData)
         {
-            var broadcastData = args[0].GetV8Object();
+            SendBinaryToParticipants(broadcastData, null);
 
-            var peerData = args.Length > 0 && args[1].Type != V8Value.Type.Null
-                ? args[1].GetV8Object() : default;
-
-            result.SetV8Object(SendBinary(broadcastData, peerData));
-        }
-
-        private ScriptObject SendBinary(V8Object broadcastData, V8Object peerData)
-        {
-            using var value = V8Value.New();
-
-            broadcastData.GetNamedProperty("length", value);
-            SendBinaryToParticipants(broadcastData, (int)value.GetNumber(), null);
-
-            if (peerData.GetHashCode() != 0)
+            if (peerData != null)
             {
-                peerData.GetNamedProperty("length", value);
-                int peerDataCount = (int)value.GetNumber();
-
-                for (var i = 0; i < peerDataCount; i++)
+                foreach (ScriptObject peerMessageData in peerData)
                 {
-                    peerData.GetIndexedProperty(i, value);
-                    using var perRecipientStructHolder = value.Decode();
-                    V8Object perRecipientStruct = perRecipientStructHolder.GetV8Object();
+                    var data = (IList<object>)peerMessageData.GetProperty("data");
 
-                    perRecipientStruct.GetNamedProperty("data", value);
-                    using var dataHolder = value.Decode();
-                    V8Object data = dataHolder.GetV8Object();
-
-                    data.GetNamedProperty("length", value);
-                    int dataCount = (int)value.GetNumber();
-
-                    if (dataCount == 0)
+                    if (data.Count == 0)
                         continue;
 
-                    perRecipientStruct.GetNamedProperty("address", value);
-                    using var recipientHolder = value.Decode();
-                    V8Object recipient = recipientHolder.GetV8Object();
+                    var address = (IList<object>)peerMessageData.GetProperty("address");
 
-                    recipient.GetNamedProperty("length", value);
-                    int recipientCount = (int)value.GetNumber();
-
-                    if (recipientCount == 0)
-                        SendBinaryToParticipants(data, dataCount, null);
+                    if (address.Count == 0)
+                        SendBinaryToParticipants(data, null);
                     else
-                        for (int j = 0; j < recipientCount; j++)
-                        {
-                            recipient.GetIndexedProperty(j, value);
-                            string address = value.GetString();
-
-                            if (!string.IsNullOrEmpty(address))
-                                SendBinaryToParticipants(data, dataCount, address);
-                        }
+                        foreach (string recipient in address)
+                            if (!string.IsNullOrEmpty(recipient))
+                                SendBinaryToParticipants(data, recipient);
                 }
             }
 
             return api.GetResult();
-        }
-
-        void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst)
-        {
-            isConst = true;
-
-            if (name.Equals(nameof(SendBinary)))
-                value.SetHostObject(sendBinary);
-            else
-                throw new NotImplementedException(
-                    $"Named property {name.ToString()} is not implemented");
         }
     }
 }

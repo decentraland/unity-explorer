@@ -9,11 +9,13 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.Web3;
 using Global.AppArgs;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -102,16 +104,14 @@ namespace DCL.Backpack.EmotesSection
 
         public void Activate()
         {
-            eventBus.FilterCategoryEvent += OnFilterCategory;
-            eventBus.SearchEvent += OnSearch;
+            eventBus.FilterEvent += OnFilterEvent;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
         }
 
         public void Deactivate()
         {
-            eventBus.FilterCategoryEvent -= OnFilterCategory;
-            eventBus.SearchEvent -= OnSearch;
+            eventBus.FilterEvent -= OnFilterEvent;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
@@ -165,6 +165,8 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
+                // TODO: request base emotes collection instead of pointers:
+                // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
                 if (onChainEmotesOnly)
                     emotes = customOwnedEmotes;
                 else
@@ -297,14 +299,9 @@ namespace DCL.Backpack.EmotesSection
         private void EquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
-        private void OnFilterCategory(string category)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
             currentCategory = string.IsNullOrEmpty(category) ? null : category;
-            RequestAndFillEmotes(1, true);
-        }
-
-        private void OnSearch(string searchText)
-        {
             currentSearch = string.IsNullOrEmpty(searchText) ? null : searchText;
             RequestAndFillEmotes(1, true);
         }
@@ -376,7 +373,7 @@ namespace DCL.Backpack.EmotesSection
 
         private void OnWearableEquipped(IWearable wearable)
         {
-            if (wearable.GetCategory() != WearablesConstants.Categories.BODY_SHAPE) return;
+            if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 
             foreach (BodyShape bodyShape in BodyShape.VALUES)
             {

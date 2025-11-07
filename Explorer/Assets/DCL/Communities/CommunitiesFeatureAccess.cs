@@ -28,6 +28,12 @@ namespace DCL.Communities
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
         public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct, bool ignoreAllowedList = false, bool cacheResult = true)
         {
+            //TODO REMOVE THIS!!!! HACK TO ENABLE COMMUNITIES ALL THE TIME
+            // P.s. it's safier to put defines here
+#if UNITY_EDITOR && !COMMUNITIES_FORCE_USER_WHITELIST
+            return true;
+#endif
+
             if (!cacheResult)
                 storedResult = null;
 
@@ -45,7 +51,7 @@ namespace DCL.Communities
                     result = false;
                 else
                 {
-                    FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string? walletsAllowlist);
+                    FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.WALLETS_VARIANT, out string? walletsAllowlist);
                     result = string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownWalletId, StringComparison.OrdinalIgnoreCase);
                 }
             }

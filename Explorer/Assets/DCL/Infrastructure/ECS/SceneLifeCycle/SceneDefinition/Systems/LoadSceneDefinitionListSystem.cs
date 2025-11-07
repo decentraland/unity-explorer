@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.WebRequests;
+using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -31,11 +32,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     /// <summary>
     ///     Loads a scene list originated from pointers
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly bool isLocalSceneDevelopment;
 
         // cache
         private readonly StringBuilder bodyBuilder = new ();
@@ -44,11 +46,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly ProfilerMarker deserializationSampler;
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
+        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment,
             IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
 
@@ -108,7 +111,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             {
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct);
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

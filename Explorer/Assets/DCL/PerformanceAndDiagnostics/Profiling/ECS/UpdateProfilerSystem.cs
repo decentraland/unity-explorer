@@ -64,7 +64,7 @@ namespace DCL.Profiling.ECS
 
             profiler.CurrentSceneHasStats = false;
 
-            if (scenesCache is { CurrentScene: { SceneStateProvider: { IsCurrent: true } } })
+            if (scenesCache.CurrentScene is { SceneStateProvider: { IsCurrent: true } })
             {
                 var scene = (SceneFacade)scenesCache.CurrentScene;
                 var heapInfo = scene.runtimeInstance.RuntimeHeapInfo;

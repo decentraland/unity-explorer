@@ -17,8 +17,8 @@ using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
@@ -38,13 +38,14 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly IRealmNavigator realmNavigator;
         private readonly INavmapBus navmapBus;
         private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private CategoryScenesMarkersInstaller categoriesMarkerInstaller { get; }
@@ -61,12 +62,13 @@ namespace DCL.MapRenderer.ComponentsFactory
             IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             IRealmNavigator realmNavigator,
             INavmapBus navmapBus,
-            IOnlineUsersProvider onlineUsersProvider)
+            IOnlineUsersProvider onlineUsersProvider,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -80,6 +82,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.mapPinsEventBus = mapPinsEventBus;
             this.navmapBus = navmapBus;
             this.onlineUsersProvider = onlineUsersProvider;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -125,7 +128,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, cancellationToken),
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, web3IdentityCache, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 

@@ -9,11 +9,11 @@ using DCL.Friends;
 using DCL.Prefs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Web3.Identities;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -60,7 +60,7 @@ namespace DCL.Chat.ChatCommands
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
             // Initialize Basic Channels and User Conversations
-            await InitializeBaseChannelsAsync(ct);
+            InitializeBaseChannelsAsync();
             ct.ThrowIfCancellationRequested();
 
             // Initialize Community Conversations
@@ -83,7 +83,7 @@ namespace DCL.Chat.ChatCommands
             await chatUserStateUpdater.InitializeAsync(ct);
         }
 
-        private async UniTask InitializeBaseChannelsAsync(CancellationToken ct)
+        private void InitializeBaseChannelsAsync()
         {
             var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
 
@@ -158,7 +158,7 @@ namespace DCL.Chat.ChatCommands
         {
             nearbyUserStateService.Activate();
             currentChannelService.SetCurrentChannel(nearbyChannel, nearbyUserStateService);
-            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel });
+            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel, FromInitialization = true} );
         }
     }
 }

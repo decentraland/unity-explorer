@@ -6,13 +6,13 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using Decentraland.SocialService.V2;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Web3.Identities;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatServices
 {
@@ -140,7 +140,7 @@ namespace DCL.Chat.ChatServices
             if (!onlineParticipantsPerChannel.TryGetValue(channelId, out HashSet<string>? onlineParticipants))
                 return;
 
-            // Notifications for non-current channel are not sent as it's not needed from the esign standpoint (it's possible to open only one community at a time)
+            // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Add(userId) && currentChannelId.Equals(channelId))
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true));
         }
@@ -150,7 +150,7 @@ namespace DCL.Chat.ChatServices
             if (!onlineParticipantsPerChannel.TryGetValue(channelId, out HashSet<string>? onlineParticipants))
                 return;
 
-            // Notifications for non-current channel are not sent as it's not needed from the esign standpoint (it's possible to open only one community at a time)
+            // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Remove(userId) && currentChannelId.Equals(channelId))
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false));
         }

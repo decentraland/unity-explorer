@@ -13,8 +13,9 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string description;
             public string ownerAddress;
             public CommunityPrivacy privacy;
+            public CommunityVisibility visibility;
             public bool active;
-            public CommunityThumbnails? thumbnails;
+            public string thumbnailUrl;
         }
 
         public string message;

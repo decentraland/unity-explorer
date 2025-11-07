@@ -3,13 +3,14 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Prefs;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -55,6 +56,7 @@ namespace DCL.MarketplaceCredits
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ITextFormatter textFormatter;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -78,13 +80,13 @@ namespace DCL.MarketplaceCredits
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
-            ILoadingStatus loadingStatus) : base(viewFactory)
+            ILoadingStatus loadingStatus,
+            ITextFormatter textFormatter) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -99,10 +101,11 @@ namespace DCL.MarketplaceCredits
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
+            this.textFormatter = textFormatter;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             CheckForSidebarButtonState();
         }
@@ -119,7 +122,8 @@ namespace DCL.MarketplaceCredits
                 marketplaceCreditsAPIClient,
                 webRequestController,
                 viewInstance.TotalCreditsWidget,
-                this);
+                this,
+                textFormatter);
 
             marketplaceCreditsWeekGoalsCompletedSubController = new MarketplaceCreditsWeekGoalsCompletedSubController(
                 viewInstance.WeekGoalsCompletedSubView);
@@ -338,7 +342,7 @@ namespace DCL.MarketplaceCredits
 
                 SetSidebarButtonState(creditsProgramProgressResponse);
 
-                if (!creditsProgramProgressResponse.HasUserStartedProgram())
+                if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
                     await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
@@ -354,6 +358,24 @@ namespace DCL.MarketplaceCredits
                 const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private static bool TrySetAsShownThisWeek(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        {
+            if (string.IsNullOrEmpty(creditsProgramProgressResponse.currentSeason.startDate))
+                return false;
+
+            string isoString = DCLPlayerPrefs.GetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, DateTime.MinValue.ToString("o"));
+
+            if (DateTime.TryParse(isoString, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime lastShownWeek)
+                && DateTime.TryParse(creditsProgramProgressResponse.currentSeason.startDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime currentSeasonStart)
+                && currentSeasonStart > lastShownWeek)
+            {
+                DCLPlayerPrefs.SetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, creditsProgramProgressResponse.currentSeason.startDate);
+                return true;
+            }
+
+            return false;
         }
 
         public void SetSidebarButtonAnimationAsAlert(bool isOn) =>

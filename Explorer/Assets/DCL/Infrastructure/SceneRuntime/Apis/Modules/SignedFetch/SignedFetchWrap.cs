@@ -254,6 +254,13 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error,
                         e.ResponseHeaders);
                 }
+                catch (OperationCanceledException)
+                {
+                    // If we are disposing we don't want to throw an exception into oblivion.
+                    // We cannot rethrow as a response to javascript, so we return a dummy response.
+                    // Code on JS is likely to be stopped execution either way.
+                    return FlatFetchResponse.Cancelled;
+                }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));

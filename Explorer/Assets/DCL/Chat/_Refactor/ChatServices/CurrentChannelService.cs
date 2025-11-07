@@ -1,35 +1,42 @@
 ﻿using DCL.Chat.History;
+using DCL.Utilities;
+using DCL.Utility.Types;
 using System;
-using Utility.Types;
 
 namespace DCL.Chat.ChatServices
 {
     public class CurrentChannelService : IDisposable
     {
+        private static readonly ReactiveProperty<ChatChannel> DEFAULT_CHANNEL = new ReactiveProperty<ChatChannel>(ChatChannel.NEARBY_CHANNEL);
+
         public Result<PrivateConversationUserStateService.ChatUserState> InputState { get; internal set; }
 
-        public ChatChannel? CurrentChannel { get; private set; }
-        public ChatChannel.ChannelId CurrentChannelId => CurrentChannel?.Id ?? default;
+        public ChatChannel CurrentChannel => currentChannel.Value;
+        public IReadonlyReactiveProperty<ChatChannel> CurrentChannelProperty => currentChannel;
+
+        private readonly ReactiveProperty<ChatChannel> currentChannel = DEFAULT_CHANNEL;
+
+        public ChatChannel.ChannelId CurrentChannelId => currentChannel.Value?.Id ?? default;
 
         public ICurrentChannelUserStateService? UserStateService { get; private set; }
 
         public void SetCurrentChannel(ChatChannel newChannel, ICurrentChannelUserStateService userStateService)
         {
-            if (CurrentChannel == newChannel)
+            if (currentChannel.Value == newChannel)
                 return;
 
-            CurrentChannel = newChannel;
+            currentChannel.UpdateValue(newChannel);
             UserStateService = userStateService;
         }
 
         public void Dispose()
         {
-            CurrentChannel = null;
+            currentChannel.ClearSubscriptionsList();
         }
 
         public void Reset()
         {
-            CurrentChannel = null;
+            currentChannel.UpdateValue(DEFAULT_CHANNEL);
             UserStateService?.Deactivate();
             UserStateService = null;
         }

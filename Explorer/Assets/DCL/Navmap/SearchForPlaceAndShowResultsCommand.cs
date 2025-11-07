@@ -11,7 +11,7 @@ namespace DCL.Navmap
     public class SearchForPlaceAndShowResultsCommand : INavmapCommand
     {
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly SearchResultPanelController searchResultPanelController;
         private readonly NavmapSearchBarController searchBarController;
@@ -23,7 +23,7 @@ namespace DCL.Navmap
 
         public SearchForPlaceAndShowResultsCommand(
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             PlacesAndEventsPanelController placesAndEventsPanelController,
             SearchResultPanelController searchResultPanelController,
             NavmapSearchBarController searchBarController,

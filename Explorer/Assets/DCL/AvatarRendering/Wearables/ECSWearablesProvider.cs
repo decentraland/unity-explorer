@@ -9,6 +9,7 @@ using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -33,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
 
-        private readonly string[] allWearableCategories = WearablesConstants.CATEGORIES_PRIORITY.ToArray();
+        private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly List<(string, string)> requestParameters = new ();
         private readonly World world;

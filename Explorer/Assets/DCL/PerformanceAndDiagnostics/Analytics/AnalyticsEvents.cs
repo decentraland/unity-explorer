@@ -119,5 +119,20 @@
         {
             public const string ENABLED_FEATURES = "feature_flags";
         }
+
+        public static class AutoTranslate
+        {
+            public const string CHOOSE_PREFERRED_LANGUAGE = "choose_preferred_language";
+            public const string TRANSLATE_MESSAGE_MANUALLY = "translate_message_manually";
+            public const string SEE_ORIGINAL_MESSAGE = "see_original_message";
+            public const string SWITCH_AUTOTRANSLATE = "switch_autotranslate";
+        }
+
+        public static class Outfits
+        {
+            public const string SAVE_OUTFIT = "save_outfit";
+            public const string EQUIP_OUTFIT = "equip_outfit";
+            public const string OUTFIT_CLICK_NAME = "outfit_click_name";
+        }
     }
 }

@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.Utility;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -53,8 +54,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
+            {
                 // If not in cache, try load from asset bundle
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
+            }
+
         }
     }
 }

@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using System;
 using System.Threading;
 using TMPro;
@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuSubMenuButtonView : GenericContextMenuComponentBase, IPointerEnterHandler, IPointerExitHandler
     {

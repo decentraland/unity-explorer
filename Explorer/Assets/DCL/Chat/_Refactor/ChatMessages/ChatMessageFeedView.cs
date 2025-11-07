@@ -1,17 +1,13 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.Diagnostics;
-using DCL.Friends.UserBlocking;
 using DCL.UI.Utilities;
-using DCL.Utilities.Extensions;
 using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
+using DCL.Translation;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -39,6 +35,12 @@ namespace DCL.Chat.ChatMessages
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
 
+        public event Action<string> OnTranslateMessageRequested;
+        public event Action<string> OnRevertMessageRequested;
+        private Func<bool>? isTranslationActivated;
+        private Func<bool>? isAutoTranslationEnabled;
+        private Func<string, bool>? isTranslationForMessageInMemory;
+
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
@@ -59,10 +61,16 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
 
         private Sequence? _fadeSequenceTween;
-        
-        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels)
+
+        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels,
+            Func<bool>? isTranslationActivated = null,
+            Func<bool>? isAutoTranslationEnabled = null,
+            Func<string, bool>? isTranslationForMessageInMemory = null)
         {
             this.viewModels = viewModels;
+            this.isTranslationActivated = isTranslationActivated;
+            this.isAutoTranslationEnabled = isAutoTranslationEnabled;
+            this.isTranslationForMessageInMemory = isTranslationForMessageInMemory;
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
@@ -102,6 +110,11 @@ namespace DCL.Chat.ChatMessages
             loopList.RefreshAllShownItem();
         }
 
+        public void RefreshItem(int viewModelIndex)
+        {
+            RefreshVisibleElements();
+        }
+
         /// <summary>
         ///     Reconstructs the scroll view with the data source that was previously set.
         /// </summary>
@@ -112,7 +125,6 @@ namespace DCL.Chat.ChatMessages
 
             int newEntries = entriesCountWithPaddings - loopList.ItemTotalCount;
 
-            //
             if (newEntries < 0)
                 newEntries = 0;
 
@@ -185,7 +197,7 @@ namespace DCL.Chat.ChatMessages
         }
 
         internal bool IsAtBottom() =>
-            viewModels.Count == 0 || loopList.ScrollRect.normalizedPosition.y <= 0.001f;
+            viewModels.Count == 0 || loopList.IsLastItemVisible();
 
         /// <summary>
         ///     Accounts for the padding
@@ -216,6 +228,8 @@ namespace DCL.Chat.ChatMessages
                 item = listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Separator));
             else
             {
+                ValidateAndResetStaleTranslation(viewModel);
+
                 ChatItemPrefabIndex prefabIndex = chatMessage.IsSystemMessage ? ChatItemPrefabIndex.SystemChatEntry :
                     chatMessage.IsSentByOwnUser ? ChatItemPrefabIndex.ChatEntryOwn : ChatItemPrefabIndex.ChatEntry;
 
@@ -223,7 +237,14 @@ namespace DCL.Chat.ChatMessages
 
                 item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
-                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
+                itemScript.Reset();
+                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
+                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated, isAutoTranslationEnabled);
+
+                itemScript.OnTranslateRequested -= HandleTranslateRequest;
+                itemScript.OnRevertRequested -= HandleRevertRequest;
+                itemScript.OnTranslateRequested += HandleTranslateRequest;
+                itemScript.OnRevertRequested += HandleRevertRequest;
 
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
@@ -246,6 +267,16 @@ namespace DCL.Chat.ChatMessages
             }
 
             return item;
+        }
+
+        private void HandleTranslateRequest(string messageId)
+        {
+            OnTranslateMessageRequested?.Invoke(messageId);
+        }
+
+        private void HandleRevertRequest(string messageId)
+        {
+            OnRevertMessageRequested?.Invoke(messageId);
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
@@ -305,7 +336,7 @@ namespace DCL.Chat.ChatMessages
                     _fadeSequenceTween = null;
                 });
         }
-        
+
         internal void StopChatEntriesFadeout()
         {
             _fadeSequenceTween?.Kill();
@@ -326,6 +357,35 @@ namespace DCL.Chat.ChatMessages
 
         private string GetPrefabName(ChatItemPrefabIndex index) =>
             loopList.ItemPrefabDataList[(int)index].mItemPrefab.name;
+
+
+        /// <summary>
+        ///     NOTE: This method checks if the ViewModel's translation state is still valid.
+        ///     If the ViewModel indicates that a message is translated, it verifies whether the translation memory
+        ///     still contains the translation for that message. If the translation is no longer in memory (e.g., it was cleared or
+        ///     expired),
+        ///     the method resets the ViewModel's translation state to "Original" and clears the translated text.
+        /// </summary>
+        /// <param name="viewModel"></param>
+        private void ValidateAndResetStaleTranslation(ChatMessageViewModel viewModel)
+        {
+            // If the ViewModel thinks it's translated, double-check if the memory state still exists.
+            if (viewModel.TranslationState == TranslationState.Success ||
+                viewModel.TranslationState == TranslationState.Pending)
+            {
+                if (isTranslationForMessageInMemory != null &&
+                    !isTranslationForMessageInMemory(viewModel.Message.MessageId))
+                {
+                    // state got evicted -> avoid a zombie spinner or phantom success
+                    viewModel.TranslationState = TranslationState.Original;
+                    viewModel.TranslatedText = string.Empty;
+
+                    // optional: if auto-translate on & item visible, re-request translation here
+                    // if (isAutoTranslationEnabled?.Invoke() == true)
+                    //     OnTranslateMessageRequested?.Invoke(viewModel.Message.MessageId);
+                }
+            }
+        }
 
         [ContextMenu("Fake Message")]
         public void FakeMessage()

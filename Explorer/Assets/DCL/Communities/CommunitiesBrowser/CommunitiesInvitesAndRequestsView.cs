@@ -17,6 +17,7 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
+        public event Action? BackButtonClicked;
         public event Action? InvitesAndRequestsButtonClicked;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string, string, CommunityResultCardView>? RequestToJoinCommunityCanceled;
@@ -24,6 +25,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationRejected;
 
         [Header("Invites & Requests Section")]
+        [SerializeField] private Button backButton = null!;
         [SerializeField] private Button invitesAndRequestsButton = null!;
         [SerializeField] private GameObject invitesCounterContainer = null!;
         [SerializeField] private TMP_Text invitesCounterText = null!;
@@ -44,19 +46,19 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
 
-        private int currentInvitesCounter = 0;
-
-        private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
-        private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
         private readonly List<CommunityResultCardView> currentInvites = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
+        private readonly CancellationTokenSource thumbnailsCts = new ();
+        private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
+        private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
+
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
-        private CancellationTokenSource thumbnailsCts = new ();
 
         private void Awake()
         {
-            invitesAndRequestsButton.onClick.AddListener(() => InvitesAndRequestsButtonClicked?.Invoke());
+            invitesAndRequestsButton.onClick.AddListener(OnInvitesAndRequestsButtonClicked);
+            backButton.onClick.AddListener(OnBackButtonClicked);
 
             invitedCommunityCardsPool = new ObjectPool<CommunityResultCardView>(
                 InstantiateInvitedCommunityCardPrefab,
@@ -71,9 +73,20 @@ namespace DCL.Communities.CommunitiesBrowser
                 actionOnRelease: requestedToJoinCommunityCardView => requestedToJoinCommunityCardView.gameObject.SetActive(false));
         }
 
+        private void OnInvitesAndRequestsButtonClicked()
+        {
+            InvitesAndRequestsButtonClicked?.Invoke();
+        }
+
+        private void OnBackButtonClicked()
+        {
+            BackButtonClicked?.Invoke();
+        }
+
         private void OnDestroy()
         {
             invitesAndRequestsButton.onClick.RemoveAllListeners();
+            backButton.onClick.RemoveAllListeners();
             thumbnailsCts.SafeCancelAndDispose();
         }
 
@@ -115,7 +128,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             invitesCounterContainer.SetActive(count > 0);
             invitesCounterText.text = count.ToString();
-            currentInvitesCounter = count;
         }
 
         public void ClearRequestsItems()
@@ -166,7 +178,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
                 else
                 {
-                    requestCard.SetActonLoadingActive(false);
+                    requestCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
 
@@ -193,7 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
                 else
                 {
-                    invitationCard.SetActonLoadingActive(false);
+                    invitationCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
 
@@ -223,17 +235,17 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             CommunityResultCardView invitedCommunityCardView = invitedCommunityCardsPool.Get();
 
+            bool isMember = community.role != CommunityMemberRole.none;
+
             // Setup card data
-            invitedCommunityCardView.SetCommunityId(community.communityId);
-            invitedCommunityCardView.SetTitle(community.name);
-            invitedCommunityCardView.SetOwner(community.ownerName);
-            invitedCommunityCardView.SetDescription(community.description);
+            invitedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
-            invitedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
-            invitedCommunityCardView.SetActonLoadingActive(false);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
+            invitedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
+            invitedCommunityCardView.SetActionLoadingActive(false);
+            invitedCommunityCardView.ConfigureListenersCount(false, 0);
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             invitedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;
@@ -262,17 +274,16 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             CommunityResultCardView requestedCommunityCardView = requestedToJoinCommunityCardsPool.Get();
 
+            bool isMember = community.role != CommunityMemberRole.none;
+
             // Setup card data
-            requestedCommunityCardView.SetCommunityId(community.communityId);
-            requestedCommunityCardView.SetTitle(community.name);
-            requestedCommunityCardView.SetOwner(community.ownerName);
-            requestedCommunityCardView.SetDescription(community.description);
+            requestedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetInviteOrRequestId(community.id);
-            requestedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
-            requestedCommunityCardView.SetActonLoadingActive(false);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
+            requestedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
+            requestedCommunityCardView.SetActionLoadingActive(false);
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             requestedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;

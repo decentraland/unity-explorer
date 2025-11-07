@@ -3,13 +3,14 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Utilities;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -32,13 +33,13 @@ namespace DCL.Notifications.NotificationsMenu
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
+            NotificationType.COMMUNITY_VOICE_CHAT_STARTED,
             NotificationType.INTERNAL_DEFAULT_SUCCESS,
-            NotificationType.INTERNAL_SERVER_ERROR
+            NotificationType.INTERNAL_SERVER_ERROR,
         };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly IWebRequestController webRequestController;
@@ -60,7 +61,6 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             IWebRequestController webRequestController,
@@ -72,7 +72,6 @@ namespace DCL.Notifications.NotificationsMenu
 
             this.view = view;
             this.notificationsRequestController = notificationsRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.webRequestController = webRequestController;
@@ -83,7 +82,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-            notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
 
             if (web3IdentityCache.Identity is { IsExpired: false })
@@ -266,10 +265,10 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            notificationsBusController.ClickNotification(notificationType, notification);
+            NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
-        private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
+        private async UniTaskVoid LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
             DefaultNotificationThumbnail defaultThumbnail, CancellationToken ct)
         {
             if (notificationData.Type == NotificationType.REFERRAL_INVITED_USERS_ACCEPTED)
@@ -290,14 +289,14 @@ namespace DCL.Notifications.NotificationsMenu
 
             try
             {
-                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                var ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                     new GetTextureArguments(TextureType.Albedo),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI);
 
-                Texture2D texture = ownedTexture.Texture;
+                Texture2D texture = ownedTexture;
 
                 thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
@@ -317,7 +316,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile? profile = await profileRepository.GetProfileAsync(user, ct);
+                Profile? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
 
                 if (profile != null)
                     return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);

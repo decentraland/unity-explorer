@@ -13,8 +13,9 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NUnit.Framework;
+using Runtime.Wearables;
 using System.Collections.Generic;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
@@ -52,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                             representations = isUnisex
                                 ? new AvatarAttachmentDTO.Representation[] { new (), new () }
                                 : new AvatarAttachmentDTO.Representation[] { new () },
-                            category = WearablesConstants.Categories.UPPER_BODY,
+                            category = WearableCategories.Categories.UPPER_BODY,
                         },
                     },
                 },

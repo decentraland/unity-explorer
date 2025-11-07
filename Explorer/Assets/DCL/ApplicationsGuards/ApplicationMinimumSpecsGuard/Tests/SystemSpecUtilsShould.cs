@@ -1,23 +1,59 @@
+using DCL.FeatureFlags;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace DCL.ApplicationMinimumSpecsGuard.Tests
 {
-    // The name of the class clearly states what is being tested.
     public class SystemSpecUtilsShould
     {
-        // --- Windows CPU Tests ---
+        [SetUp]
+        public void SetUp()
+        {
+            FeatureFlagsResultDto ffDto = new()
+            {
+                flags = new Dictionary<string, bool>(),
+                variants = new Dictionary<string, FeatureFlagVariantDto>()
+                {
+                    {FeatureFlagsStrings.MINIMUM_REQUIREMENTS,
+                        new FeatureFlagVariantDto()
+                        {
+                            name = "minimum_requirements",
+                            enabled = true,
+                            payload = new FeatureFlagPayload()
+                            {
+                                type = "json",
+                                value = "{\n             \"windows_supported_versions\": [\n               \"Windows 10\",\n               \"Windows 11\"\n             ],\n             \"mac_supported_versions\": [\n               \"Mac OS X\",\n               \"macOS\"\n             ],\n             \"integrated_gpu_supported_versions\": [\n               \"intel(r) hd graphics\",\n               \"intel(r) uhd graphics\",\n               \"intel iris\",\n               \"iris(r) xe graphics\",\n               \"amd radeon(tm) graphics\",\n               \"amd radeon graphics\",\n               \"amd radeon vega\",\n               \"amd radeon r5\",\n               \"amd radeon r6\",\n               \"amd radeon r7\"\n             ],\n             \"always_accepted_cpus\": [\n               \"threadripper\"\n             ],\n             \"minimum_macos_major_version\": 11,\n             \"macos_supported_version_regex\": \"(\\\\d+)\\\\.\\\\d+\",\n             \"ryzen_supported_cpu_regex\": \"ryzen.*?(\\\\d+)\",\n             \"ryzen_supported_minimum_series\": 5,\n             \"intel_supported_minimum_series\": 5,\n             \"intel_supported_minimum_generation\": 7,\n             \"intel_ultra_supported_minimum_generation\": 5,\n             \"intel_cpu_supported_version_regex\": \"i([3579])-?(\\\\d{4,5})\",\n             \"intel_ultra_cpu_supported_version_regex\": \"ultra\\\\s+([579])\",\n             \"rtx_gpu_supported_version_regex\": \"rtx\\\\s*(\\\\d{4})\",\n             \"rx_gpu_supported_version_regex\": \"rx\\\\s*(\\\\d{4})\",\n             \"arc_gpu_supported_version_regex\": \"a(\\\\d{3})\",\n             \"minimum_rtx_supported_version\": 2000,\n             \"minimum_rx_supported_version\": 5000,\n             \"minimum_arc_supported_version\": 500,\n             \"apple_silicon_supported_regex\": \"apple\\\\s+m\\\\d\"\n           }"
+                            }
+                        }}
+                },
+            };
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(ffDto));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            FeatureFlagsConfiguration.Reset(true);
+        }
 
         [Test]
+        [TestCase("Intel(R) Core(TM) Ultra 9 185H", true, TestName = "Intel(R) Core(TM) Ultra 9 185H is accepted")]
+        [TestCase("Intel Core Ultra 7 165H", true, TestName = "Intel Core Ultra 7 165H is accepted")]
+        [TestCase("Intel Core Ultra 5 135U", true, TestName = "Intel Core Ultra 5 135U is accepted")]
+        [TestCase("Intel(R) Core(TM) Ultra 7 Processor 155H", true, TestName = "Intel Core Ultra 7 Processor 155H is accepted")]
+        [TestCase("Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz", true, TestName = "Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz is accepted")]
         [TestCase("Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz", true, TestName = "Intel i7 (8th Gen) is accepted")]
         [TestCase("12th Gen Intel(R) Core(TM) i7-12650H", true, TestName = "12th Gen Intel(R) Core(TM) i7-12650H is accepted")]
         [TestCase("Intel Core i5-7600", true, TestName = "Intel i5 (7th Gen) is accepted")]
         [TestCase("Intel Core i9-13900F", true, TestName = "Intel i9 (13th Gen) is accepted")]
         [TestCase("Intel(R) Core(TM) i5-6600 CPU @ 3.30GHz", false, TestName = "Intel i5 (6th Gen) is rejected")]
         [TestCase("Intel Core i3-10100", false, TestName = "Intel i3 is rejected")]
+        [TestCase("AMD Ryzen 1", false, TestName = "AMD Ryzen 1 is not accepted")]
         [TestCase("AMD Ryzen 5 3600 6-Core Processor", true, TestName = "AMD Ryzen 5 is accepted")]
         [TestCase("AMD Ryzen 7 5800X", true, TestName = "AMD Ryzen 7 is accepted")]
         [TestCase("AMD Ryzen 9 7950X", true, TestName = "AMD Ryzen 9 is accepted")]
         [TestCase("AMD Ryzen 3 3200G", false, TestName = "AMD Ryzen 3 is rejected")]
+        [TestCase("AMD Ryzen AI 9 HX 370", true, TestName = "AMD Ryzen AI 9 HX 370 is  accepted")]
         [TestCase("Intel(R) Core(TM) i5-12400F", true, TestName = "Intel i5 (12th Gen) is accepted")]
         [TestCase("Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz", true, TestName = "Intel i9 (9th Gen) is accepted")]
         [TestCase("Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz", false, TestName = "Intel i7 (4th Gen) is rejected")]
@@ -35,8 +71,6 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             // Assert: Verify the result is what we expect.
             Assert.AreEqual(expectedResult, isAcceptable);
         }
-
-        // --- Windows GPU Tests ---
 
         [Test]
         [TestCase("NVIDIA GeForce RTX 2060", true, TestName = "NVIDIA RTX 2060 is accepted")]
@@ -64,8 +98,6 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             Assert.AreEqual(expectedResult, isAcceptable);
         }
 
-        // Mac Device Tests
-
         [Test]
         [TestCase("Apple M1", true, TestName = "Apple M1 is accepted")]
         [TestCase("Apple M1 Pro", true, TestName = "Apple M1 Pro is accepted")]
@@ -88,22 +120,21 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             // Assert
             Assert.AreEqual(expectedResult, isAcceptable);
         }
-        
+
         [Test]
-        // --- Standard Cases (Originals) ---
         [TestCase(16280, 16384, true, TestName = "Memory Check - 15.9GB (reported) for 16GB (required) should PASS")]
         [TestCase(8100, 16384, false, TestName = "Memory Check - 7.9GB (reported) for 16GB (required) should FAIL")]
         [TestCase(8100, 8192, true, TestName = "Memory Check - 7.9GB (reported) for 8GB (required) should PASS")]
         [TestCase(4000, 4096, true, TestName = "Memory Check - 3.9GB (reported) for 4GB (required) should PASS")]
         [TestCase(16384, 16384, true, TestName = "Memory Check - Exact 16GB for 16GB (required) should PASS")]
 
-        // --- Rounding Edge Cases (Key to the fix) ---
+        // --- Rounding Edge Cases ---
         [TestCase(15871, 16384, false, TestName = "Rounding - 15.499GB (rounds down to 15) for 16GB should FAIL")]
         [TestCase(15872, 16384, true, TestName = "Rounding - 15.5GB (rounds up to 16) for 16GB should PASS")]
         [TestCase(16077, 16384, true, TestName = "Rounding - 15.7GB (rounds up to 16) for 16GB should PASS")]
         [TestCase(7679, 8192, false, TestName = "Rounding - 7.499GB (rounds down to 7) for 8GB should FAIL")]
         [TestCase(7680, 8192, true, TestName = "Rounding - 7.5GB (rounds up to 8) for 8GB should PASS")]
-        
+
         // --- High Memory Values ---
         [TestCase(32650, 32768, true, TestName = "High Memory - 31.8GB (reported) for 32GB (required) should PASS")]
         [TestCase(65000, 65536, false, TestName = "High Memory - 63.4GB (reported) for 64GB (required) should FAIL")]
@@ -121,12 +152,12 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         // --- Values Just Above and Below Requirement ---
         [TestCase(16385, 16384, true, TestName = "Slightly Above - 16.001GB for 16GB (required) should PASS")]
         [TestCase(15871, 16384, false, TestName = "Slightly Below - 15.499GB for 16GB (required) should FAIL (as tested above)")]
-        
+
         // --- Zero and Unusual Values ---
         [TestCase(0, 4096, false, TestName = "Zero Value - 0MB for 4GB (required) should FAIL")]
         [TestCase(4096, 0, true, TestName = "Zero Requirement - 4GB for 0GB (required) should PASS")]
         [TestCase(0, 0, true, TestName = "Zero for Zero - 0MB for 0MB (required) should PASS")]
-        
+
         // --- Non-standard Requirement Values ---
         [TestCase(6000, 6144, true, TestName = "Non-Standard - 5.86GB (reported) for 6GB (required) should PASS")] // 5.86 rounds to 6
         [TestCase(5500, 6144, false, TestName = "Non-Standard - 5.37GB (reported) for 6GB (required) should FAIL")] // 5.37 rounds to 5
@@ -138,7 +169,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             // Assert: Verify the result is what we expect.
             Assert.AreEqual(expectedResult, isSufficient, $"Failed on actual: {actualMB}MB, required: {requiredMB}MB");
         }
-        
+
         [Test]
         // --- Standard Discrete GPU VRAM ---
         [TestCase(8100, true, TestName = "VRAM Check - 8GB Card (e.g., RTX 2070) should PASS")]

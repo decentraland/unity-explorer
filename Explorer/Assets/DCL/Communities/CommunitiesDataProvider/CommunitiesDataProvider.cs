@@ -11,7 +11,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
-using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -52,15 +51,26 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             GetCommunityResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                       .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft);
+
+            response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
+
             return response;
         }
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false)
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)
         {
             var url = $"{communitiesBaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            if (isStreaming) //TODO FRAN & DAVIDE: FIX THIS, IT WORKS BUT IS NOT PROPER :)
+                url = $"{communitiesBaseUrl}?onlyWithActiveVoiceChat={isStreaming}";//&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
 
             GetUserCommunitiesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                             .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
+
+            foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
+            {
+                community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);
+            }
 
             if (includeRequestsReceivedPerCommunity)
             {
@@ -93,7 +103,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             }
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
@@ -107,6 +117,9 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             if (privacy != null)
                 formData.Add(new MultipartFormDataSection("privacy", privacy.ToString()));
+
+            if (visibility != null)
+                formData.Add(new MultipartFormDataSection("visibility", visibility.ToString()));
 
             if (lands != null || worlds != null)
             {
@@ -141,6 +154,8 @@ namespace DCL.Communities.CommunitiesDataProvider
                 response = await webRequestController.SignedFetchPostAsync(communitiesBaseUrl, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
+                response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
+
                 CommunityCreated?.Invoke(response.data);
             }
             else
@@ -149,6 +164,8 @@ namespace DCL.Communities.CommunitiesDataProvider
                 var communityEditionUrl = $"{communitiesBaseUrl}/{communityId}";
                 response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPutArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+
+                response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
 
                 CommunityUpdated?.Invoke(communityId);
             }
@@ -312,6 +329,9 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             GetUserInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                               .CreateFromJson<GetUserInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            foreach (GetUserInviteRequestData.UserInviteRequestData inviteRequest in response.data.results)
+                inviteRequest.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), inviteRequest.communityId);
 
             return response;
         }

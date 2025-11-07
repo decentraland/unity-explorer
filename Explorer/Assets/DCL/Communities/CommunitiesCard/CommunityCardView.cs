@@ -7,9 +7,9 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -19,7 +19,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard
 {
@@ -73,6 +72,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
+        [field: SerializeField] internal CommunityCardVoiceChatView communityCardVoiceChatView { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
 
         [field: Header("Community interactions")]
@@ -120,7 +120,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsAllowed { get; private set; }
         [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsNotAllowed { get; private set; }
 
-        private readonly UniTask[] closingTasks = new UniTask[3];
+        private readonly UniTask[] closingTasks = new UniTask[6];
+
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
@@ -243,6 +244,9 @@ namespace DCL.Communities.CommunitiesCard
             closingTasks[0] = closeButton.OnClickAsync(ct);
             closingTasks[1] = backgroundCloseButton.OnClickAsync(ct);
             closingTasks[2] = controllerTask;
+            closingTasks[3] = communityCardVoiceChatView.StartStreamButton.OnClickAsync(ct);
+            closingTasks[4] = communityCardVoiceChatView.ListeningButton.OnClickAsync(ct);
+            closingTasks[5] = communityCardVoiceChatView.JoinStreamButton.OnClickAsync(ct);
 
             return closingTasks;
         }
@@ -332,8 +336,7 @@ namespace DCL.Communities.CommunitiesCard
             publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
             privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
 
-            if (communityData.thumbnails != null)
-                thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, CommunityThumbnail, defaultCommunityImage, cancellationToken, true).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;

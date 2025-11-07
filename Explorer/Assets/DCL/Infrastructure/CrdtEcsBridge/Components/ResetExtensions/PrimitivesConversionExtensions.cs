@@ -1,10 +1,8 @@
-using DCL.Diagnostics;
-using DCL.ECSComponents;
 using Decentraland.Common;
-using System;
 using UnityEngine;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
+using Vector2 = UnityEngine.Vector2;
 
 namespace CrdtEcsBridge.Components.Conversion
 {
@@ -13,7 +11,7 @@ namespace CrdtEcsBridge.Components.Conversion
     /// </summary>
     public static class PrimitivesConversionExtensions
     {
-        public static Vector3 PBVectorToUnityVector(Decentraland.Common.Vector3 protoVector) =>
+        public static Vector3 ToUnityVector(this Decentraland.Common.Vector3 protoVector) =>
             new ()
             {
                 x = protoVector.X,
@@ -21,7 +19,15 @@ namespace CrdtEcsBridge.Components.Conversion
                 z = protoVector.Z,
             };
 
-        public static Quaternion PBQuaternionToUnityQuaternion(Decentraland.Common.Quaternion protoQuaternion) =>
+        public static Decentraland.Common.Vector3 ToProtoVector(this Vector3 unityVector) =>
+            new ()
+            {
+                X = unityVector.x,
+                Y = unityVector.y,
+                Z = unityVector.z,
+            };
+
+        public static Quaternion ToUnityQuaternion(this Decentraland.Common.Quaternion protoQuaternion) =>
             new ()
             {
                 x = protoQuaternion.X,
@@ -30,7 +36,23 @@ namespace CrdtEcsBridge.Components.Conversion
                 w = protoQuaternion.W,
             };
 
-        public static Color PBColorToUnityColor(Color3 protoColor, float alphaValue = 1) =>
+        public static Vector2 ToUnityVector(this Decentraland.Common.Vector2 protoVector) =>
+            new ()
+            {
+                x = protoVector.X,
+                y = protoVector.Y,
+            };
+
+        public static Decentraland.Common.Quaternion ToProtoQuaternion(this Quaternion unityQuaternion) =>
+            new ()
+            {
+                X = unityQuaternion.x,
+                Y = unityQuaternion.y,
+                Z = unityQuaternion.z,
+                W = unityQuaternion.w,
+            };
+
+        public static Color ToUnityColor(this Color3 protoColor, float alphaValue = 1) =>
             new ()
             {
                 r = protoColor.R,
@@ -39,7 +61,7 @@ namespace CrdtEcsBridge.Components.Conversion
                 a = alphaValue,
             };
 
-        public static Color PBColorToUnityColor(Color4 protoColor) =>
+        public static Color ToUnityColor(this Color4 protoColor) =>
             new ()
             {
                 r = protoColor.R,

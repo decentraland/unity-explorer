@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if UNITY_INCLUDE_TESTS
+
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -9,7 +11,6 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -17,7 +18,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Rendering.GPUInstancing;
 using UnityEngine;
 using Utility;
 
@@ -52,7 +52,6 @@ namespace DCL.InWorldCamera.Playground
             Texture = recorder.GetScreenshotAndReset();
             hud.Screenshot = Texture;
         }
-
 
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
@@ -95,7 +94,6 @@ namespace DCL.InWorldCamera.Playground
                 new WearableStorage(),
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
-                new List<string>(),
                 null,
                 new DefaultProfileCache(),
                 world,
@@ -104,3 +102,5 @@ namespace DCL.InWorldCamera.Playground
         }
     }
 }
+
+#endif

@@ -1,4 +1,6 @@
 using DCL.Chat.History;
+using DCL.FeatureFlags;
+using DCL.Translation;
 using System;
 using System.Globalization;
 using TMPro;
@@ -25,19 +27,34 @@ namespace DCL.Chat
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
         [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
         [field: SerializeField] internal TMP_Text timestamp { get; private set; }
+        [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; }
+
+        public event Action OnTranslateRequest;
+        public event Action OnRevertRequest;
+        public event Action OnPointerEnterEvent;
+        public event Action OnPointerExitEvent;
 
         private Vector2 backgroundSize;
         private bool popupOpen;
 
+        private void Awake()
+        {
+            translationView.OnTranslateClicked += () => OnTranslateRequest?.Invoke();
+            translationView.OnSeeOriginalClicked += () => OnRevertRequest?.Invoke();
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton?.gameObject.SetActive(true);
+            OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             if (!popupOpen)
                 messageOptionsButton?.gameObject.SetActive(false);
+
+            OnPointerExitEvent?.Invoke();
         }
 
         public Vector3 PopupPosition => popupPosition.position;
@@ -48,32 +65,49 @@ namespace DCL.Chat
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
+        public void Reset()
+        {
+            messageOptionsButton?.gameObject.SetActive(false);
+        }
+
+        public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
+        {
+            bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(originalData.SenderWalletAddress);
+            usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId, isOfficial);
+            messageContentElement.SetMessageContent(displayText);
+
+            if (originalData.SentTimestamp.HasValue)
+            {
+                timestamp.gameObject.SetActive(true);
+                timestamp.text = originalData.SentTimestamp.Value.ToLocalTime().ToString("hh:mm tt", CultureInfo.InvariantCulture);
+            }
+            else
+                timestamp.gameObject.SetActive(false);
+
+            translationView.SetState(translationState);
+
+            backgroundSize = backgroundRectTransform.sizeDelta;
+            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
+            backgroundSize.y += timestamp.gameObject.activeSelf ? timestamp.rectTransform.sizeDelta.y : 0.0f;
+            backgroundSize.x = CalculatePreferredWidth(displayText, originalData);
+            backgroundRectTransform.sizeDelta = backgroundSize;
+            mentionedOutline.SetActive(originalData.IsMention);
+
+            backgroundImage.color = originalData.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
+        }
+
         /// <summary>
         ///  Sets the chat message data into the chat bubble, adapting the background size accordingly and changing the color & outline if it's a mention
         /// </summary>
         /// <param name="data"> a ChatMessage </param>
         public void SetMessageData(ChatMessage data)
         {
-            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
-            messageContentElement.SetMessageContent(data.Message);
+            SetMessageData(data.Message, data, TranslationState.Original);
+        }
 
-            if (data.SentTimestamp.HasValue)
-            {
-                timestamp.gameObject.SetActive(true);
-                timestamp.text = data.SentTimestamp.Value.ToLocalTime().ToString("hh:mm tt", CultureInfo.InvariantCulture);
-            }
-            else
-                timestamp.gameObject.SetActive(false);
-
-            backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
-            backgroundSize.y += timestamp.gameObject.activeSelf ? timestamp.rectTransform.sizeDelta.y : 0.0f;
-            backgroundSize.x = CalculatePreferredWidth(data);
-            backgroundRectTransform.sizeDelta = backgroundSize;
-            mentionedOutline.SetActive(data.IsMention);
-
-            backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-            //messageOptionsButton.onClick.AddListener(OnMessageOptionsClicked);
+        public void SetTranslationViewVisibility(bool isVisible)
+        {
+            translationView.gameObject.SetActive(isVisible);
         }
 
         private void OnMessageOptionsClicked()
@@ -81,14 +115,16 @@ namespace DCL.Chat
             popupOpen = true;
         }
 
-        private float CalculatePreferredWidth(ChatMessage message)
+        private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage)
         {
-            int nameLength = message.SenderValidatedName.Length;
-            string walletId = message.SenderWalletId;
+            int nameLength = originalMessage.SenderValidatedName.Length;
+            string walletId = originalMessage.SenderWalletId;
             int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
             int nameTotalLength = nameLength + walletIdLength;
-            string messageText = message.Message;
             TMP_Text messageContentText = messageContentElement.messageContentText;
+
+            // We use the displayText to get the textInfo, but the original message for emoji counting.
+            messageContentText.SetText(displayText); // Important: Set text first to get accurate textInfo
             int parsedTextLength = messageContentText.textInfo.characterCount;
 
             var emojisCount = 0;
@@ -97,7 +133,7 @@ namespace DCL.Chat
             if (nameTotalLength > parsedTextLength)
             {
                 needsEmojiCount = true;
-                emojisCount = GetEmojisCount(messageText);
+                emojisCount = GetEmojisCount(originalMessage.Message); // Count emojis from original message
             }
 
             float userNamePreferredWidth = usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth);
@@ -105,7 +141,8 @@ namespace DCL.Chat
             if (nameTotalLength > (needsEmojiCount && emojisCount > 0 ? parsedTextLength + emojisCount : parsedTextLength))
                 return userNamePreferredWidth;
 
-            Vector2 preferredValues = messageContentText.GetPreferredValues(messageText, configurationSo.MaxEntryWidth, 0);
+            // Use the displayText for preferred size calculation
+            var preferredValues = messageContentText.GetPreferredValues(displayText, configurationSo.MaxEntryWidth, 0);
 
             if (preferredValues.x < configurationSo.MaxEntryWidth - configurationSo.BackgroundWidthOffset)
                 return Mathf.Max(preferredValues.x + configurationSo.BackgroundWidthOffset, userNamePreferredWidth);

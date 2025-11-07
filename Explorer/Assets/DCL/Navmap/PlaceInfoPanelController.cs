@@ -36,7 +36,7 @@ namespace DCL.Navmap
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly IWebBrowser webBrowser;
@@ -66,7 +66,7 @@ namespace DCL.Navmap
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
@@ -305,7 +305,10 @@ namespace DCL.Navmap
 
             Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) ? originParcel : currentBaseParcel;
 
-            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}", "jump in");
+            chatMessagesBus
+               .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
+                    $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
+                    ChatMessageOrigin.JUMP_IN);
         }
 
         private void Share()

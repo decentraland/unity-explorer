@@ -5,12 +5,13 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.UI;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -107,16 +108,14 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            eventBus.FilterCategoryEvent += OnFilterCategory;
-            eventBus.SearchEvent += OnSearch;
+            eventBus.FilterEvent += OnFilterChanged;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
         }
 
         public void Deactivate()
         {
-            eventBus.FilterCategoryEvent -= OnFilterCategory;
-            eventBus.SearchEvent -= OnSearch;
+            eventBus.FilterEvent -= OnFilterChanged;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
@@ -186,34 +185,38 @@ namespace DCL.Backpack
 
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && gridWearables[i].IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))
-                                                             || gridWearables[i].GetCategory() == WearablesConstants.Categories.BODY_SHAPE;
+                                                             || gridWearables[i].GetCategory() == WearableCategories.Categories.BODY_SHAPE;
 
                 backpackItemView.SetEquipButtonsState();
+                backpackItemView.IsUnequippable =
+                    gridWearables[i].GetCategory() != WearableCategories.Categories.BODY_SHAPE
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYES
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYEBROWS
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.MOUTH;
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, pageFetchCancellationToken!.Token).Forget();
             }
         }
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(string itemId)
+        {
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
+        }
 
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
 
-        private void OnFilterCategory(string category)
+        private void OnFilterChanged(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if (currentCategory == category)
+            if ((category == null || currentCategory == category) &&
+                (searchText == null || currentSearch == searchText))
                 return;
 
-            currentCategory = category;
-            RequestPage(1, true);
-        }
+            if (category != null)
+                currentCategory = category;
 
-        private void OnSearch(string searchText)
-        {
-            if (currentSearch == searchText)
-                return;
+            if (searchText != null)
+                currentSearch = searchText;
 
-            currentSearch = searchText;
             RequestPage(1, true);
         }
 
@@ -276,10 +279,7 @@ namespace DCL.Backpack
                 SetGridElements(currentPageWearables);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));
-            }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
@@ -333,7 +333,7 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
             }
 
-            if (equippedWearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
+            if (equippedWearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
             {
                 currentBodyShape = equippedWearable;
 
@@ -353,7 +353,7 @@ namespace DCL.Backpack
                 if (itemView == null) continue;
 
                 itemView.IsCompatibleWithBodyShape = wearable.IsCompatibleWithBodyShape(bodyShape.GetUrn())
-                                                     || wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE;
+                                                     || wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE;
 
                 itemView.SetEquipButtonsState();
             }

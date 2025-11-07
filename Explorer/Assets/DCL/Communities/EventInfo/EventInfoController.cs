@@ -5,7 +5,8 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -14,7 +15,6 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.EventInfo
 {
@@ -25,7 +25,7 @@ namespace DCL.Communities.EventInfo
 
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -38,7 +38,7 @@ namespace DCL.Communities.EventInfo
             IWebRequestController webRequestController,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator)
             : base(viewFactory)
         {
@@ -88,7 +88,7 @@ namespace DCL.Communities.EventInfo
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
 
-            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
@@ -121,7 +121,7 @@ namespace DCL.Communities.EventInfo
                 if (!result.Success)
                 {
                     viewInstance!.UpdateInterestedButtonState();
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
                     return;
                 }
 

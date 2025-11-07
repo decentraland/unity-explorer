@@ -4,8 +4,8 @@ using DCL.Communities;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.Settings.Settings;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -104,7 +104,7 @@ namespace DCL.Chat.ChatServices
                             }
                             else
                             {
-                                var nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                                var nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
                                 GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
                             }
                         }

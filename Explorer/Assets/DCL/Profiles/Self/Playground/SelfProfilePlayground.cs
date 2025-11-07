@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -57,7 +59,6 @@ namespace DCL.Profiles.Self.Playground
                 new WearableStorage(),
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
-                new List<string>(),
                 null,
                 new DefaultProfileCache(),
                 world,
@@ -71,3 +72,5 @@ namespace DCL.Profiles.Self.Playground
         }
     }
 }
+
+#endif

@@ -90,7 +90,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             currentPlaceInfo = placeInfo.PlaceInfo;
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(placeInfo.PlaceInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.PlaceInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct, true).Forget();
 
             placeNameText.text = placeInfo.PlaceInfo.title;
             placeDescriptionText.text = placeInfo.OwnerName;

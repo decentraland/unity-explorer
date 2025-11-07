@@ -2,6 +2,7 @@
 using DCL.Chat.ChatServices;
 using DCL.Chat.MessageBus;
 using DCL.Settings.Settings;
+using System;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -12,7 +13,6 @@ namespace DCL.Chat.ChatCommands
 
     public class SendMessageCommand
     {
-        private const string ORIGIN = "chat";
 
         private readonly CurrentChannelService currentChannelService;
         private readonly IChatMessagesBus chatMessageBus;
@@ -40,10 +40,10 @@ namespace DCL.Chat.ChatCommands
             if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(sound);
 
-            chatMessageBus.Send(
+            chatMessageBus.SendWithUtcNowTimestamp(
                 currentChannelService.CurrentChannel,
                 commandPayload.Body,
-                ORIGIN);
+                ChatMessageOrigin.CHAT);
         }
     }
 }

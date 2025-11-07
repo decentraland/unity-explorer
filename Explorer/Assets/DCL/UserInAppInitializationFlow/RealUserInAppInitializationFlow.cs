@@ -9,19 +9,19 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
-using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
 using Utility;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -105,6 +105,15 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
+                // Clear cached identity for non-first instances in local scene development
+                // This ensures each instance (except the first one) shows the authentication screen
+                if (!appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
+                    appArgs.HasFlagWithValueTrue(AppArgsFlags.LOCAL_SCENE) &&
+                    FileDCLPlayerPrefs.PrefsInstanceNumber > 0)
+                {
+                    identityCache.Clear();
+                }
+
                 bool shouldShowAuthentication = parameters.ShowAuthentication &&
                                                 !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
 
@@ -146,16 +155,19 @@ namespace DCL.UserInAppInitializationFlow
                     ? reloginOps
                     : initOps;
 
-                //Set initial position and start async livekit connection
-                characterExposedTransform.Position.Value
-                    = characterObject.Controller.transform.position
-                        = startParcel.Peek().ParcelToPositionFlat();
-                UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
-
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            await checkOnboardingStartupOperation.ExecuteAsync(ct);
+
+                            //Set initial position and start async livekit connection
+                            characterExposedTransform.Position.Value
+                                = characterObject.Controller.transform.position
+                                    = startParcel.Peek().ParcelToPositionFlat();
+
+                            UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+
                             //Create a child report to be able to hold the parallel livekit operation
                             AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
                             EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);

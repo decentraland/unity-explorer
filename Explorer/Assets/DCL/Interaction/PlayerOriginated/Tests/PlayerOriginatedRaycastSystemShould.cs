@@ -69,6 +69,10 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                            return true;
                                        });
 
+            // Set the cursor position to match the mouse input position as the UpdateCursorInputSystem is not running here
+            ref CursorComponent cursorComponent = ref world.Get<CursorComponent>(cameraEntity);
+            cursorComponent.Position = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
+
             system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;

@@ -19,6 +19,7 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
@@ -33,6 +34,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -124,6 +126,7 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 profileRepositoryProxy,
+                bootstrapContainer.Environment,
                 ct,
                 hasDebugFlag
             );
@@ -216,6 +219,11 @@ namespace Global.Dynamic
             }
         }
 
+        public void InitializeFeaturesRegistry()
+        {
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
+        }
+
         public GlobalWorld CreateGlobalWorld(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
@@ -246,7 +254,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
-                bootstrapContainer.Environment
+                bootstrapContainer.Environment,
+                dynamicWorldContainer.SystemClipboard
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
@@ -280,9 +289,15 @@ namespace Global.Dynamic
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
+            BootstrapContainer bootstrapContainer,
             GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
             splashScreen.Show();
+
+            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+            // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenNotFoundException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters

@@ -16,6 +16,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -107,7 +108,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             replaces = Array.Empty<string>(),
                             hides = Array.Empty<string>(),
                             tags = new[] { "body", "male", "man", "base-wearable" },
-                            category = WearablesConstants.Categories.BODY_SHAPE,
+                            category = WearableCategories.Categories.BODY_SHAPE,
                             representations = new[]
                             {
                                 new AvatarAttachmentDTO.Representation
@@ -141,7 +142,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
-                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest("v16", "v15", "1699288905291"),
+                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(),
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
@@ -180,7 +181,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             replaces = Array.Empty<string>(),
                             hides = Array.Empty<string>(),
                             tags = new[] { "body", "female", "woman", "base-wearable" },
-                            category = WearablesConstants.Categories.BODY_SHAPE,
+                            category = WearableCategories.Categories.BODY_SHAPE,
                             representations = new[]
                             {
                                 new AvatarAttachmentDTO.Representation
@@ -214,7 +215,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
-                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest("v16", "v15", "1699288905291"),
+                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(),
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);

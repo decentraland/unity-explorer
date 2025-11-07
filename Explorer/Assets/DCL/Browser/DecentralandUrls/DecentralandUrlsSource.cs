@@ -23,11 +23,11 @@ namespace DCL.Browser.DecentralandUrls
 
             if (environment == DecentralandEnvironment.Today)
             {
-                // The today environemnt is a mixture of the org and today enviroments.
+                // The today environment is a mixture of the org and today environments.
                 // Asset delivery (registry and S3) are used with the `.today` extension
                 // Content and lambdas url are hardcoded to a particular catalyst
-                // All of the remaining urls should use the `Org` domain, thats why we change the domain to forcefully `.org`
-                // Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
+                // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
+                // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundlesCDN);
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
@@ -122,11 +122,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
+                DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.decentraland.{ENV}/social/communities/{{0}}/raw-thumbnail.png",
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
                 DecentralandUrl.DecentralandLambdasOverride => LAMBDAS_URL_OVERRIDE,
                 DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,
                 DecentralandUrl.LambdasProfiles => $"https://peer.decentraland.{ENV}/lambdas/profiles",
+                DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
+                DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
