@@ -31,13 +31,17 @@ namespace DCL.CharacterMotion.Animation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalculateBlendValue(float dt, float currentMovementBlend, MovementKind movementKind, float velocitySqrMagnitude, ICharacterControllerSettings settings)
         {
-            float maxVelocity = SpeedLimit.Get(settings, movementKind);
-            var targetBlend = 0f;
+            float animationBlendingSpeedLimit = SpeedLimit.GetAnimationBlendingSpeedLimit(settings, movementKind);
+            float targetBlend = 0f;
 
-            if (maxVelocity > 0)
-                targetBlend = Mathf.Sqrt(velocitySqrMagnitude) / maxVelocity * (int)movementKind;
+            if (animationBlendingSpeedLimit > 0)
+                targetBlend = Mathf.Sqrt(velocitySqrMagnitude) / animationBlendingSpeedLimit * (int)movementKind;
 
-            float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * settings.MovAnimBlendSpeed);
+            // Make blend speed proportional to current delta, similar to a lerp
+            // We do this because scenes can override the movement speed and blend speed must react to that
+            float blendSpeed = Mathf.Abs(currentMovementBlend - targetBlend) * settings.MovAnimBlendSpeed;
+            blendSpeed = Mathf.Max(blendSpeed, settings.MovAnimBlendSpeed);
+            float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * blendSpeed);
 
             return result.ClampSmallValuesToZero(BLEND_EPSILON);
         }

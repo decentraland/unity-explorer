@@ -1,0 +1,28 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.AvatarLocomotion.Systems;
+using ECS.LifeCycle;
+using System.Collections.Generic;
+
+namespace DCL.SDKComponents.AvatarLocomotion
+{
+    public class AvatarLocomotionOverridesWorldPlugin : IDCLWorldPluginWithoutSettings
+    {
+        private readonly World globalWorld;
+
+        public AvatarLocomotionOverridesWorldPlugin(World globalWorld)
+        {
+            this.globalWorld = globalWorld;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
+            in ECSWorldInstanceSharedDependencies sharedDependencies,
+            in PersistentEntities persistentEntities,
+            List<IFinalizeWorldSystem> finalizeWorldSystems,
+            List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
+            PropagateAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld);
+    }
+}
