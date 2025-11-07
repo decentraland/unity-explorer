@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Character.CharacterCamera.Components;
 using DCL.ECSComponents;
 using DCL.Input.Component;
 using ECS.Abstract;
@@ -14,19 +13,25 @@ namespace DCL.CharacterCamera.Systems
     {
         private readonly World globalWorld;
         private readonly IExposedCameraData cameraData;
+        private readonly Entity cameraEntity;
 
         public UpdatePointerLockSystem(
             World sceneWorld,
             World globalWorld,
-            IExposedCameraData cameraData) : base(sceneWorld)
+            IExposedCameraData cameraData,
+            Entity cameraEntity) : base(sceneWorld)
         {
             this.globalWorld = globalWorld;
             this.cameraData = cameraData;
+            this.cameraEntity = cameraEntity;
         }
 
         protected override void Update(float t)
         {
-            UpdateLockFromSceneQuery(World);
+            ref PBPointerLock sdkPointerLock = ref World.TryGetRef<PBPointerLock>(cameraEntity, out bool exists);
+
+            if (exists)
+                UpdateLockFromScene(ref sdkPointerLock);
         }
 
         [Query]

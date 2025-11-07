@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.ECSComponents;
@@ -32,8 +33,7 @@ namespace DCL.PluginSystem.World
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBPointerLock>.InjectToWorld(ref builder);
-            UpdatePointerLockSystem.InjectToWorld(ref builder, globalWorld, cameraData);
-            WritePointerLockStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, cameraData, sharedDependencies.ScenePartition, 3);
+            UpdatePointerLockSystem.InjectToWorld(ref builder, globalWorld, cameraData, sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY]);
         }
     }
 }
