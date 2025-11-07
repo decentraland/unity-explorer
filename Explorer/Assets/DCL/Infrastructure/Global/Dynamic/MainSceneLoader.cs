@@ -28,6 +28,7 @@ using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.ModuleControllers;
+using DCL.Settings.Utils;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -138,6 +139,7 @@ namespace Global.Dynamic
                 decentralandEnvironment = env;
         }
 
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
@@ -163,6 +165,9 @@ namespace Global.Dynamic
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
+
+            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
+                WindowModeUtils.ApplyWindowedMode();
 
             World world = World.Create();
 
