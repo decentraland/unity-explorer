@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ConfirmationDialog.Opener;
@@ -294,7 +295,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
                 mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, NameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
-                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName);
+                bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(mutualFriend.address);
+                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName, isOfficial);
 
                 if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
                     continue;

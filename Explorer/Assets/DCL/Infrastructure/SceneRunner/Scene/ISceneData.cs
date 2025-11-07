@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -13,6 +14,7 @@ namespace SceneRunner.Scene
         ///     SceneLoadingConcluded is TRUE when the scene has been repositioned to its rightful place away from MORDOR
         /// </summary>
         bool SceneLoadingConcluded { get; set; }
+        IInitialSceneState InitialSceneStateInfo { get; }
 
         SceneShortInfo SceneShortInfo { get; }
 
@@ -90,6 +92,7 @@ namespace SceneRunner.Scene
                 set { }
             }
 
+            public IInitialSceneState InitialSceneStateInfo { get; } = new FakeInitialSceneState();
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 
@@ -149,5 +152,15 @@ namespace SceneRunner.Scene
             public bool IsSDKVersion(string version) =>
                 false;
         }
+
+        public class FakeInitialSceneState : IInitialSceneState
+        {
+            public void Dispose()
+            {
+            }
+
+            public HashSet<string> ISSAssets { get; } = new HashSet<string>();
+        }
     }
+
 }

@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/user_identity.proto
+
 module.exports.getUserPublicKey = async function(message) {
     return UnityUserIdentityApi.UserPublicKey()
 }
