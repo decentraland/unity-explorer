@@ -31,29 +31,27 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private GameObject verifiedMark = null!;
         [SerializeField] private GameObject officialMark = null!;
         [SerializeField] private TMP_Text postDate = null!;
-        [SerializeField] private Button createAnnouncementButton = null!;
+        [SerializeField] private Button deleteAnnouncementButton = null!;
         [SerializeField] private ProfilePictureView profilePicture = null!;
 
-        private string currentCommunityId = null!;
         private string currentAnnouncementId = null!;
         private string currentProfileThumbnailUrl = null!;
 
         private CancellationTokenSource confirmationDialogCts = null!;
 
-        public event Action<string, string>? DeleteAnnouncementButtonClicked;
+        public event Action<string>? DeleteAnnouncementButtonClicked;
 
         private void Awake() =>
-            createAnnouncementButton.onClick.AddListener(OnDeleteAnnouncementButtonClicked);
+            deleteAnnouncementButton.onClick.AddListener(OnDeleteAnnouncementButtonClicked);
 
         private void OnDisable() =>
             confirmationDialogCts.SafeCancelAndDispose();
 
         private void OnDestroy() =>
-            createAnnouncementButton.onClick.RemoveListener(OnDeleteAnnouncementButtonClicked);
+            deleteAnnouncementButton.onClick.RemoveListener(OnDeleteAnnouncementButtonClicked);
 
         public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider)
         {
-            currentCommunityId = announcementInfo.communityId;
             currentAnnouncementId = announcementInfo.id;
 
             announcementContent.text = announcementInfo.content;
@@ -119,7 +117,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
                     return;
 
-                DeleteAnnouncementButtonClicked?.Invoke(currentCommunityId, currentAnnouncementId);
+                DeleteAnnouncementButtonClicked?.Invoke(currentAnnouncementId);
             }
         }
     }

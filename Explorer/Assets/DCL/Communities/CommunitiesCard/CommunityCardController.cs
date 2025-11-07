@@ -12,6 +12,8 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Friends;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -76,6 +78,8 @@ namespace DCL.Communities.CommunitiesCard
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly IProfileRepository profileRepository;
+        private readonly IInputBlock inputBlock;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -113,7 +117,9 @@ namespace DCL.Communities.CommunitiesCard
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
             GalleryEventBus galleryEventBus,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IProfileRepository profileRepository,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -135,6 +141,8 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.profileRepository = profileRepository;
+            this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -362,8 +370,12 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
-            announcementsSectionController = new AnnouncementsSectionController(viewInstance.AnnouncementsSectionView,
-                communitiesDataProvider, profileRepositoryWrapper);
+            announcementsSectionController = new AnnouncementsSectionController(
+                viewInstance.AnnouncementsSectionView,
+                communitiesDataProvider,
+                profileRepositoryWrapper,
+                web3IdentityCache,
+                profileRepository);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -379,8 +391,11 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
-        protected override void OnViewShow() =>
+        protected override void OnViewShow()
+        {
+            DisableShortcutsInput();
             SetDefaultsAndLoadData(inputData.CommunityId);
+        }
 
         private void SetDefaultsAndLoadData(string communityId)
         {
@@ -486,6 +501,7 @@ namespace DCL.Communities.CommunitiesCard
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
             spriteCache = null;
 
+            RestoreInput();
             ResetSubControllers();
             viewInstance!.ResetToggle(false);
         }
@@ -701,6 +717,12 @@ namespace DCL.Communities.CommunitiesCard
                 CloseController();
             }
         }
+
+        private void DisableShortcutsInput() =>
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        private void RestoreInput() =>
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));

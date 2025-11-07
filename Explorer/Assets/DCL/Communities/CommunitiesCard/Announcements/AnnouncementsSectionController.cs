@@ -3,9 +3,11 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using System.Threading;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 
@@ -27,12 +29,14 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public AnnouncementsSectionController(
             AnnouncementsSectionView view,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
-            ProfileRepositoryWrapper profileRepositoryWrapper) : base (view, PAGE_SIZE)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IWeb3IdentityCache identityCache,
+            IProfileRepository profileRepository) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
 
-            view.InitList(profileRepositoryWrapper);
+            InitializeViewAsync(identityCache, profileRepository, profileRepositoryWrapper, cancellationToken).Forget();
 
             view.CreateAnnouncementButtonClicked += CreateAnnouncement;
             view.DeleteAnnouncementButtonClicked += DeleteAnnouncement;
@@ -80,6 +84,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public void ShowAnnouncements(CommunityData community, CancellationToken token)
         {
+            cancellationToken = token;
+
             if (communityData is not null && community.id.Equals(communityData.Value.id))
             {
                 RefreshGrid(true);
@@ -90,17 +96,35 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             FetchNewDataAsync(token).Forget();
         }
 
-        private void CreateAnnouncement()
+        private async UniTaskVoid InitializeViewAsync(
+            IWeb3IdentityCache identity,
+            IProfileRepository profileRepo,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            CancellationToken ct)
+        {
+            view.InitList();
+
+            if (identity.Identity == null)
+            {
+                ReportHub.LogError(ReportCategory.PROFILE, "Cannot setup own profile. Identity is null.");
+                return;
+            }
+
+            Profile? profile = await profileRepo.GetAsync(identity.Identity!.Address, ct);
+            view.SetProfile(profile, profileRepositoryWrapper);
+        }
+
+        private void CreateAnnouncement(string announcementContent)
         {
             if (communityData == null)
                 return;
 
-            CreateAnnouncementAsync($"Test post {UnityEngine.Random.Range(0, 10000)}", CancellationToken.None).Forget();
+            CreateAnnouncementAsync(announcementContent, CancellationToken.None).Forget();
             return;
 
             async UniTaskVoid CreateAnnouncementAsync(string content, CancellationToken ct)
             {
-                Result<CreateCommunityPostResponse> response = await communitiesDataProvider.CreateCommunityPostAsync(communityData.Value.id, content, CancellationToken.None)
+                Result<CreateCommunityPostResponse> response = await communitiesDataProvider.CreateCommunityPostAsync(communityData.Value.id, content, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
@@ -115,14 +139,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             }
         }
 
-        private void DeleteAnnouncement(string communityId, string announcementId)
+        private void DeleteAnnouncement(string announcementId)
         {
-            DeleteAnnouncementAsync(communityId, announcementId, CancellationToken.None).Forget();
+            if (communityData == null)
+                return;
+
+            DeleteAnnouncementAsync(announcementId, CancellationToken.None).Forget();
             return;
 
-            async UniTaskVoid DeleteAnnouncementAsync(string commId, string postId, CancellationToken ct)
+            async UniTaskVoid DeleteAnnouncementAsync(string postId, CancellationToken ct)
             {
-                Result<bool> response = await communitiesDataProvider.DeleteCommunityPostAsync(commId, postId, CancellationToken.None)
+                Result<bool> response = await communitiesDataProvider.DeleteCommunityPostAsync(communityData.Value.id, postId, CancellationToken.None)
                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)

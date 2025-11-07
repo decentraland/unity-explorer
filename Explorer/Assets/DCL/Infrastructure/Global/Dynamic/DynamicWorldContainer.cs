@@ -1083,7 +1083,8 @@ namespace Global.Dynamic
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
-                    voiceChatContainer.VoiceChatOrchestrator));
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    profileRepository));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
