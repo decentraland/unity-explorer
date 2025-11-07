@@ -50,7 +50,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private void OnDestroy() =>
             deleteAnnouncementButton.onClick.RemoveListener(OnDeleteAnnouncementButtonClicked);
 
-        public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider)
+        public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider, bool allowDeletion)
         {
             currentAnnouncementId = announcementInfo.id;
 
@@ -67,6 +67,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 profilePicture.Setup(profileDataProvider, NameColorHelper.GetNameColor(announcementInfo.authorName), announcementInfo.authorProfilePictureUrl);
                 currentProfileThumbnailUrl = announcementInfo.authorProfilePictureUrl;
             }
+
+            deleteAnnouncementButton.gameObject.SetActive(allowDeletion);
 
             // TODO (Santi): Avoid to use ForceRebuildLayoutImmediate removing the content size fitter and calculating the height manually
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform) transform);

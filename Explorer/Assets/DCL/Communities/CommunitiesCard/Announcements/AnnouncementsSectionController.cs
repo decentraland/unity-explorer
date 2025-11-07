@@ -25,6 +25,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         protected override SectionFetchData<CommunityPost> currentSectionFetchData => currentAnnouncementsFetchData;
 
         private CommunityData? communityData;
+        private bool isCreationAllowed;
 
         public AnnouncementsSectionController(
             AnnouncementsSectionView view,
@@ -54,6 +55,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         {
             communityData = null;
             currentAnnouncementsFetchData.Reset();
+            view.SetAllowCreation(false);
 
             base.Reset();
         }
@@ -76,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 return currentAnnouncementsFetchData.TotalToFetch;
             }
 
-            if (currentAnnouncementsFetchData.PageNumber == 1)
+            if (currentAnnouncementsFetchData.PageNumber == 1 && isCreationAllowed)
             {
                 currentAnnouncementsFetchData.Items.Add(new CommunityPost { type = CommunityPostType.CREATION_INPUT });
 
@@ -101,6 +103,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             }
 
             communityData = community;
+            isCreationAllowed = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
+            view.SetAllowCreation(isCreationAllowed);
             FetchNewDataAsync(token).Forget();
         }
 
