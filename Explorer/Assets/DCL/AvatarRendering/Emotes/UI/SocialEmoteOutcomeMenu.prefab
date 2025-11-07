@@ -250,6 +250,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.SocialEmotes::SocialEmoteOutcomeMenuView
   <canvas>k__BackingField: {fileID: 6220523255861055421}
   <raycaster>k__BackingField: {fileID: 8933607560115613611}
+  <RandomizedOutcomeText>k__BackingField: Emote Together
   mainCanvasGroup: {fileID: 2944144402562326927}
   outcomeListCanvasGroup: {fileID: 7850328315517862193}
   outcomeList: {fileID: 7675731140713267282}
@@ -551,8 +552,8 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: 14
-  m_PreferredHeight: 14
+  m_PreferredWidth: 18
+  m_PreferredHeight: 18
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -861,7 +862,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: -1
   m_PreferredWidth: -1
-  m_PreferredHeight: 18
+  m_PreferredHeight: 24
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
