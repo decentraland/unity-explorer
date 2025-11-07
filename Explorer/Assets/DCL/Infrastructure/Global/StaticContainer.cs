@@ -195,7 +195,7 @@ namespace Global
 
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
-            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData);
+            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
