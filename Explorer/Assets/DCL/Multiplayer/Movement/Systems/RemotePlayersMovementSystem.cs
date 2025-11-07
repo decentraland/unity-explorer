@@ -36,11 +36,11 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, 
+        private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote,
             ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
-            
+
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
         }
@@ -166,7 +166,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return true;
         }
 
-        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, 
+        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
@@ -270,7 +270,7 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (distance < settings.MoveKindByDistance[MovementKind.JOG])
                 movementKind = MovementKind.JOG;
 
-            float speed = SpeedLimit.Get(characterControllerSettings, movementKind);
+            float speed = SpeedLimit.GetMovementSpeedLimit(characterControllerSettings, movementKind);
 
             intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
             intComp.UseMessageRotation = false;
