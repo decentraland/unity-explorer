@@ -36,6 +36,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         private readonly IReleasablePerformanceBudget budget;
         private readonly IEntityCollidersSceneCache collidersSceneCache;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly byte raycastBucketThreshold;
@@ -55,6 +56,7 @@ namespace DCL.Interaction.Raycast.Systems
             IComponentPool<ECSComponents.RaycastHit> raycastHitPool,
             IComponentPool<PBRaycastResult> raycastComponentPool,
             IEntityCollidersSceneCache collidersSceneCache,
+            IEntityCollidersGlobalCache collidersGlobalCache,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider) : base(world)
@@ -65,6 +67,7 @@ namespace DCL.Interaction.Raycast.Systems
             this.raycastHitPool = raycastHitPool;
             this.raycastComponentPool = raycastComponentPool;
             this.collidersSceneCache = collidersSceneCache;
+            this.collidersGlobalCache = collidersGlobalCache;
             this.entitiesMap = entitiesMap;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
@@ -272,12 +275,14 @@ namespace DCL.Interaction.Raycast.Systems
                 return true;
             }
 
-            // Fallback: project SDK mask to Unity layers and qualify collider without scene info
-            int unityMask = PhysicsLayers.CreateUnityLayerMaskFromSDKMask(collisionMask);
-            int colliderLayerBit = 1 << collider.gameObject.layer;
-            if ((unityMask & colliderLayerBit) != 0)
+            // Check global cache for cross-scene entities
+            if (collidersGlobalCache.TryGetSceneEntity(collider, out GlobalColliderSceneEntityInfo globalEntityInfo))
             {
-                foundEntity = null; // explicitly mark as no-entity (cross-scene)
+                bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(globalEntityInfo.ColliderSceneEntityInfo.SDKLayer, collisionMask);
+
+                if (!isQualified) return false;
+
+                foundEntity = globalEntityInfo.ColliderSceneEntityInfo.SDKEntity;
                 return true;
             }
 

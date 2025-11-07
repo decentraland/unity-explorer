@@ -28,6 +28,7 @@ namespace DCL.Interaction.Raycast.Tests
     {
         private readonly List<Component> instantiatedTemp = new ();
         private IEntityCollidersSceneCache entityCollidersSceneCache;
+        private IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private IReleasablePerformanceBudget budget;
         private ISceneStateProvider sceneStateProvider;
         private Entity sceneRoot;
@@ -65,6 +66,7 @@ namespace DCL.Interaction.Raycast.Tests
                 raycastHitPool,
                 pbRaycastResultPool,
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(),
+                entityCollidersGlobalCache = Substitute.For<IEntityCollidersGlobalCache>(),
                 entitiesMap = new Dictionary<CRDTEntity, Entity>(),
                 ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>(),
                 sceneStateProvider = Substitute.For<ISceneStateProvider>()
