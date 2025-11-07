@@ -2,8 +2,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
-using DCL.PlacesAPIService;
-using Utility;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
@@ -17,7 +15,8 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		private IHomeMarker homeMarker;
 		private HomeMarkerData? currentMarker = null;
-		
+
+		public bool HomeIsSet => currentMarker != null;
 		public bool ZoomBlocked { get; set; }
 		
 		internal HomeMarkerController(
@@ -52,26 +51,24 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			if (homeMarkerData != null)
 			{
 				homeMarker.SetPosition(coordsUtils.CoordsToPositionWithOffset(homeMarkerData.Value.Position));
-				homeMarker.SetTitle(homeMarkerData.Value.Title);
 			}
 
 			if (serialize)
 				HomeMarkerSerializer.Serialize(homeMarkerData);
 		}
 
-		private void SetAsHomeRequested(PlacesData.PlaceInfo placeInfo)
+		private void SetAsHomeRequested(Vector2Int coordinates)
 		{
-			currentMarker = new HomeMarkerData(placeInfo.base_position, placeInfo.title);
+			currentMarker = new HomeMarkerData(coordinates);
 			SetMarker(currentMarker);
 		}
 
-		private void UnsetAsHomeRequested(PlacesData.PlaceInfo placeInfo)
+		private void UnsetAsHomeRequested(Vector2Int coordinates)
 		{
-			if (currentMarker == null 
-			    || !VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var position)
-			    || currentMarker.Value.Position != position)
+			if (currentMarker == null || currentMarker.Value.Position != coordinates)
 				return;
 			
+			currentMarker = null;
 			SetMarker(null);
 		}
 
@@ -80,13 +77,18 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		public UniTask EnableAsync(CancellationToken cancellationToken)
 		{
-			homeMarker.SetActive(true);
+			if(HomeIsSet)
+				homeMarker.SetActive(true);
+			
 			return UniTask.CompletedTask;
 		}
 
 		public UniTask Disable(CancellationToken cancellationToken)
 		{
 			homeMarker.SetActive(false);
+			
+			mapCullingController.StopTracking(homeMarker);
+			
 			return UniTask.CompletedTask;
 		}
 

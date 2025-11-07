@@ -10,7 +10,9 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		private float currentBaseScale;
 		private float currentNewScale;
-		
+
+
+		public Vector3 CurrentPosition => markerObject.transform.position;
 		public Vector2 Pivot => markerObject.pivot;
 
 		public HomeMarker(HomeMarkerObject markerObject)
@@ -30,29 +32,23 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			markerObject.transform.localPosition = position;
 		}
 
-		public void SetTitle(string title)
-		{
-			markerObject.SetTitle(title);
-		}
-
 		public void SetActive(bool active)
 		{
 			markerObject.gameObject.SetActive(active);
-			
-			if(currentBaseScale != 0)
-				markerObject.SetScale(currentBaseScale, currentNewScale);
+			markerObject.SetScale(currentNewScale);
 		}
 
 		public void SetZoom(float baseScale, float baseZoom, float zoom)
 		{
 			currentBaseScale = baseScale;
 			currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
-			markerObject.SetScale(currentBaseScale, currentNewScale);
+			markerObject.SetScale(currentNewScale);
 		}
 
 		public void ResetToBaseScale()
 		{
-			markerObject.SetScale(currentBaseScale, currentBaseScale);
+			currentNewScale = currentBaseScale;
+			markerObject.SetScale(currentBaseScale);
 		}
 	}
 }

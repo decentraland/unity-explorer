@@ -1,15 +1,15 @@
 using System;
+using DCL.MapRenderer.Culling;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
-	internal interface IHomeMarker : IMapRendererMarker, IDisposable
+	public interface IHomeMarker : IMapRendererMarker, IDisposable, IMapPositionProvider
 	{
 		void SetPosition(Vector3 position);
 		
-		void SetTitle(string title);
-		
 		void SetActive(bool active);
+		
 		
 		void SetZoom(float baseScale, float baseZoom, float zoom);
 		

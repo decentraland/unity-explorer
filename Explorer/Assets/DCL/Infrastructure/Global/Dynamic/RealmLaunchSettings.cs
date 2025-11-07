@@ -161,32 +161,21 @@ namespace Global.Dynamic
         /// <summary>
         /// Checking home position override from player prefs. If there is a feature flag, this will be overriden by it.
         /// </summary>
-        public void CheckStartParcelHomeOverride()
+        public void CheckStartParcelHomeOverride(IAppArgs appArgs)
         {
-            string homeDataString = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_MARKER_DATA, null);
+            if (HasAppArgPosition(appArgs) || HasEditorPositionOverride()) return;
+            
+            HomeMarkerData? homeData = HomeMarkerSerializer.Deserialize();
 
-            if (string.IsNullOrEmpty(homeDataString))
+            if (homeData == null)
                 return;
 
-            HomeMarkerData homeData = new HomeMarkerData();
-            homeData.ParseFromString(homeDataString);
-
-            targetScene = homeData.Position;
+            targetScene = homeData.Value.Position;
         }
 
         public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            //First we need to check if the user has passed a position as an argument.
-            //If we have set a position trough args, the feature flag should not be taken into consideration
-            //This is the case used on local scene development from creator hub/scene args
-            //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
-            if (appArgs.HasFlag(AppArgsFlags.POSITION))
-                return;
-
-            //If this bool is true in editor, we want the position to be the one that has been serialized
-            //This avoid the feature flag from overriding the dev's start position
-            if (Application.isEditor && EditorSceneStartPosition)
-                return;
+            if (HasAppArgPosition(appArgs) || HasEditorPositionOverride()) return;
 
             //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
@@ -201,6 +190,26 @@ namespace Global.Dynamic
 
             if (featureFlagOverride)
                 ParsePositionAppParameter(parcelToTeleportOverride);
+        }
+
+        private static bool HasAppArgPosition(IAppArgs appArgs)
+        {
+            //First we need to check if the user has passed a position as an argument.
+            //If we have set a position trough args, the feature flag should not be taken into consideration
+            //This is the case used on local scene development from creator hub/scene args
+            //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
+            if (appArgs.HasFlag(AppArgsFlags.POSITION))
+                return true;
+            return false;
+        }
+
+        private bool HasEditorPositionOverride()
+        {
+            //If this bool is true in editor, we want the position to be the one that has been serialized
+            //This avoid the feature flag from overriding the dev's start position
+            if (Application.isEditor && EditorSceneStartPosition)
+                return true;
+            return false;
         }
     }
 }

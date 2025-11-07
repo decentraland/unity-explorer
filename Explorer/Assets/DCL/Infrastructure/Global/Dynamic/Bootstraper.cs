@@ -284,7 +284,7 @@ namespace Global.Dynamic
 
         public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            realmLaunchSettings.CheckStartParcelHomeOverride();
+            realmLaunchSettings.CheckStartParcelHomeOverride(appArgs);
             realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsConfigurationCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }

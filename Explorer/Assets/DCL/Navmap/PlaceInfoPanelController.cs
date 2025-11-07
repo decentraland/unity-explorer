@@ -281,12 +281,12 @@ namespace DCL.Navmap
 
         private void SetAsHome(bool isHome)
         {
-            if (place == null) return;
+            if (place == null || !VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates)) return;
             
             if(isHome)
-                homePlaceEventBus.RequestSetAsHome(place);
+                homePlaceEventBus.RequestSetAsHome(coordinates);
             else
-                homePlaceEventBus.RequestUnsetAsHome(place);
+                homePlaceEventBus.RequestUnsetAsHome(coordinates);
         }
 
         private void StartNavigation()

@@ -75,6 +75,7 @@ namespace DCL.Minimap
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
+        private CancellationTokenSource? homeCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
@@ -189,7 +190,7 @@ namespace DCL.Minimap
                           // May be removed if a new control is added
                          .AddControl(new TextContextMenuControlSettings("Scene's Options"))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggled))
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", toggleValue => SetAsHomeToggled(toggleValue)))
                          .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
@@ -206,12 +207,13 @@ namespace DCL.Minimap
 
         private void SetInitialHomeToggleValue()
         {
-            Debug.LogError("<color=cyan>/TODO</color> Set Initial value of home toggle");
-            homeToggleSettings.SetInitialValue(true);
+            bool isHome = homePlaceEventBus.IsHome(previousParcelPosition);
+            homeToggleSettings.SetInitialValue(isHome);
         }
 
         private void ShowContextMenu()
         {
+            SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
                       .Forget();
@@ -219,14 +221,10 @@ namespace DCL.Minimap
 
         private void SetAsHomeToggled(bool value)
         {
-            // if (!value)
-            // {
-            //     // Remove home location
-            //
-            //     return;
-            // }
-            
-            SetHomeLocationAsync(previousParcelPosition).Forget();
+            if (!value)
+                homePlaceEventBus.RequestUnsetAsHome(previousParcelPosition);
+            else
+                homePlaceEventBus.RequestSetAsHome(previousParcelPosition);
         }
 
         private void CopyJumpInLink()
@@ -356,14 +354,6 @@ namespace DCL.Minimap
                 viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
     
             viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
-        }
-        
-        private async UniTaskVoid SetHomeLocationAsync(Vector2Int parcelPosition)
-        {
-            var cts = new CancellationTokenSource();
-            PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, cts.Token);
-    
-            Debug.LogError($"<color=cyan>/TODO</color> Set place as home with parcel {placeInfo.base_position_processed}");
         }
 
         private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(Vector2Int parcelPosition, CancellationToken ct)
