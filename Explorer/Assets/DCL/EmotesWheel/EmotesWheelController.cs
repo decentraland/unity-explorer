@@ -214,7 +214,7 @@ namespace DCL.EmotesWheel
                 ClearCurrentEmote(slot);
             else
                 if(inputData.IsDirectedEmote)
-                    viewInstance.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
+                    viewInstance!.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
                 else
                     viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
@@ -222,7 +222,7 @@ namespace DCL.EmotesWheel
         private void ClearCurrentEmote(int slot)
         {
             if(inputData.IsDirectedEmote)
-                viewInstance.SocialEmoteNameWithUser.text = string.Empty;
+                viewInstance!.SocialEmoteNameWithUser.text = string.Empty;
             else
                 viewInstance!.CurrentEmoteName.text = string.Empty;
         }
@@ -232,7 +232,11 @@ namespace DCL.EmotesWheel
             if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
                 return;
 
-            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
+            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent
+            {
+                Slot = slot,
+                TargetAvatarWalletAddress = inputData.IsDirectedEmote ? inputData.TargetWalletAddress : string.Empty
+            });
 
             Close();
         }

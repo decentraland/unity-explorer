@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -18,6 +19,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SocialEmotes;
+using DCL.UI.EphemeralNotifications;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -56,6 +58,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly EphemeralNotificationsController ephemeralNotificationsController;
+
+        private const string DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME = "DirectedSocialEmoteEphemeralNotification";
+        private const string DIRECTED_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME = "DirectedEmoteEphemeralNotification";
 
         private readonly IWeb3IdentityCache playerIdentity;
 
@@ -68,12 +75,15 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool localSceneDevelopment,
             IAppArgs appArgs,
             IScenesCache scenesCache,
-            IWeb3IdentityCache playerIdentity) : base(world)
+            IWeb3IdentityCache identityCache,
+            EphemeralNotificationsController ephemeralNotificationsController) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
+            this.identityCache = identityCache;
+            this.ephemeralNotificationsController = ephemeralNotificationsController;
             emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
             this.playerIdentity = playerIdentity;
         }
@@ -175,7 +185,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteUrn != default)
             {
                 // Sends stop signal to other clients
-                messageBus.Send(emoteUrn, false, false, -1, false, string.Empty, true, emoteComponent.SocialEmoteInteractionId);
+                messageBus.Send(emoteUrn, false, false, -1, false, string.Empty, string.Empty, true, emoteComponent.SocialEmoteInteractionId);
             }
         }
 
@@ -320,6 +330,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    bool isPlayingDifferentEmote = emoteComponent.EmoteUrn.Shorten() != emoteIntent.EmoteId.Shorten();
+
                     // Previous social emote interaction has to be stopped before starting a new one
                     // When the avatar is already playing a social emote (outcome phase) and then it plays the same one (start phase) it cancels the interaction
                     // Playing a different emote cancels the interaction
@@ -330,7 +342,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (emoteComponent.Metadata != null &&
                         emoteComponent.Metadata.IsSocialEmote &&
                         emoteComponent.IsPlayingEmote &&
-                        (emoteComponent.EmoteUrn.Shorten() != emoteIntent.EmoteId.Shorten() || (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation))) // It's a different emote OR it was playing the outcome phase and now it wants to play the start phase of the same emote interaction (triggered the same social emote again while the previous interaction didn't finish yet, it cancels it)
+                        (isPlayingDifferentEmote || (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation))) // It's a different emote OR it was playing the outcome phase and now it wants to play the start phase of the same emote interaction (triggered the same social emote again while the previous interaction didn't finish yet, it cancels it)
                     {
                         ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "DIFFERENT PHASE? " + emoteIntent.WalletAddress + " " + (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation));
 
@@ -361,6 +373,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
                     emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.SocialEmoteInitiatorWalletAddress;
                     emoteComponent.SocialEmoteInteractionId = emoteIntent.SocialEmoteInteractionId;
+                    emoteComponent.TargetAvatarWalletAddress = emoteIntent.TargetAvatarWalletAddress;
+
+                    bool isLoopingSameEmote = emote.IsLooping() && emoteComponent.IsPlayingEmote && !isPlayingDifferentEmote;
 
                     if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                     {
@@ -384,8 +399,18 @@ namespace DCL.AvatarRendering.Emotes.Play
                         }
                         else // Starting interaction
                         {
-                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId);
+                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId, emoteIntent.TargetAvatarWalletAddress);
+                            emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
+
+                            if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
+                            {
+                                ephemeralNotificationsController.AddNotificationAsync(DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
+                            }
                         }
+                    }
+                    else if (!emoteComponent.Metadata.IsSocialEmote && !isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
+                    {
+                        ephemeralNotificationsController.AddNotificationAsync(DIRECTED_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
                     }
 
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PLAY USER: " + emoteIntent.WalletAddress);
@@ -429,7 +454,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress, false, emoteComponent.SocialEmoteInteractionId);
+            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress, emoteComponent.TargetAvatarWalletAddress, false, emoteComponent.SocialEmoteInteractionId);
         }
 
         [Query]

@@ -20,6 +20,7 @@ namespace DCL.AvatarRendering.Emotes
         public int SocialEmoteOutcomeIndex;
         public bool UseOutcomeReactionAnimation;
         public string SocialEmoteInitiatorWalletAddress;
+        public string TargetAvatarWalletAddress;
         public bool IsRepeating;
         public int SocialEmoteInteractionId;
 
@@ -33,6 +34,7 @@ namespace DCL.AvatarRendering.Emotes
             this.SocialEmoteOutcomeIndex = -1;
             this.UseOutcomeReactionAnimation = false;
             this.SocialEmoteInitiatorWalletAddress = string.Empty;
+            this.TargetAvatarWalletAddress = string.Empty;
             this.IsRepeating = false;
             this.SocialEmoteInteractionId = 0;
         }

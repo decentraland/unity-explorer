@@ -29,6 +29,7 @@ namespace DCL.SocialEmotes
             int OutcomeIndex { get; }
             Vector3 InitiatorPosition { get; }
             Quaternion InitiatorRotation { get; }
+            string TargetWalletAddress { get; }
             int Id { get; }
         }
 
@@ -46,6 +47,7 @@ namespace DCL.SocialEmotes
             public int OutcomeIndex { get; set; }
             public Vector3 InitiatorPosition { get; set; }
             public Quaternion InitiatorRotation { get; set; }
+            public string TargetWalletAddress { get; set; }
             public int Id { get; set; }
 
             public void Reset()
@@ -59,6 +61,7 @@ namespace DCL.SocialEmotes
                 OutcomeIndex = -1;
                 InitiatorPosition = Vector3.zero;
                 InitiatorRotation = Quaternion.identity;
+                TargetWalletAddress = string.Empty;
                 Id = 0;
             }
         }
@@ -92,9 +95,10 @@ namespace DCL.SocialEmotes
         /// <param name="emote">The social emote played by the initiator.</param>
         /// <param name="initiatorTransform">The transform component of the initiator.</param>
         /// <param name="interactionId">A unique ID for the interaction.</param>
-        public void StartInteraction(string initiatorWalletAddress, Entity initiatorEntity, IEmote emote, Transform initiatorTransform, int interactionId)
+        /// <param name="targetWalletAddress">Optional. The wallet address of the player whom the emote is directed. Only that player can be added to the interaction.</param>
+        public void StartInteraction(string initiatorWalletAddress, Entity initiatorEntity, IEmote emote, Transform initiatorTransform, int interactionId, string targetWalletAddress = "")
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>START INTERACTION " + initiatorWalletAddress + " id: " + interactionId + "</color>");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>START INTERACTION " + initiatorWalletAddress + " id: " + interactionId + " target: " + targetWalletAddress + "</color>");
 
             if (participantInteractions.ContainsKey(initiatorWalletAddress))
                 return;
@@ -106,6 +110,7 @@ namespace DCL.SocialEmotes
             newInteraction.Emote = emote;
             newInteraction.InitiatorPosition = initiatorTransform.position;
             newInteraction.InitiatorRotation = initiatorTransform.rotation;
+            newInteraction.TargetWalletAddress = targetWalletAddress;
             newInteraction.Id = interactionId;
 
             participantInteractions.Add(initiatorWalletAddress, newInteraction);

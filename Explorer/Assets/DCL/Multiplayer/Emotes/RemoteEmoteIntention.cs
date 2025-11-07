@@ -16,11 +16,12 @@ namespace DCL.Multiplayer.Emotes
         public readonly int SocialEmoteOutcomeIndex;
         public readonly bool IsReactingToSocialEmote;
         public readonly string SocialEmoteInitiatorWalletAddress;
+        public readonly string TargetAvatarWalletAddress;
         public readonly bool IsStopping;
         public readonly bool IsRepeating;
         public readonly int SocialEmoteInteractionId;
 
-        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, bool isStopping, bool isRepeating, int socialEmoteInteractionId)
+        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, bool isRepeating, int socialEmoteInteractionId)
         {
             EmoteId = emoteId;
             WalletId = walletId;
@@ -29,6 +30,7 @@ namespace DCL.Multiplayer.Emotes
             SocialEmoteOutcomeIndex = socialEmoteOutcomeIndex;
             IsReactingToSocialEmote = isReactingToSocialEmote;
             SocialEmoteInitiatorWalletAddress = socialEmoteInitiatorWalletAddress;
+            TargetAvatarWalletAddress = targetAvatarWalletAddress;
             IsStopping = isStopping;
             IsRepeating = isRepeating;
             SocialEmoteInteractionId = socialEmoteInteractionId;
@@ -42,6 +44,7 @@ namespace DCL.Multiplayer.Emotes
             SocialEmoteOutcomeIndex == other.SocialEmoteOutcomeIndex &&
             IsReactingToSocialEmote == other.IsReactingToSocialEmote &&
             SocialEmoteInitiatorWalletAddress == other.SocialEmoteInitiatorWalletAddress &&
+            TargetAvatarWalletAddress == other.TargetAvatarWalletAddress &&
             IsStopping == other.IsStopping &&
             IsRepeating == other.IsRepeating &&
             SocialEmoteInteractionId == other.SocialEmoteInteractionId;
@@ -50,6 +53,6 @@ namespace DCL.Multiplayer.Emotes
             obj is RemoteEmoteIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(EmoteId, WalletId, Timestamp, IsUsingSocialOutcomeAnimation, SocialEmoteOutcomeIndex, IsReactingToSocialEmote, SocialEmoteInitiatorWalletAddress, IsStopping);
+            HashCode.Combine(EmoteId, WalletId, Timestamp, IsUsingSocialOutcomeAnimation, SocialEmoteOutcomeIndex, IsReactingToSocialEmote, SocialEmoteInitiatorWalletAddress, TargetAvatarWalletAddress);
     }
 }

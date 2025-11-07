@@ -18,6 +18,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.SocialEmotes.UI;
+using DCL.UI.EphemeralNotifications;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -69,7 +70,8 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly IWeb3IdentityCache playerIdentity;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly EphemeralNotificationsController ephemeralNotificationsController;
 
         private Transform? socialPinsPoolParent = null;
         private Transform poolParent;
@@ -98,7 +100,8 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
             IComponentPoolsRegistry componentPoolsRegistry,
-            IWeb3IdentityCache playerIdentity)
+            IWeb3IdentityCache identityCache,
+            EphemeralNotificationsController ephemeralNotificationsController)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -122,7 +125,8 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
-            this.playerIdentity = playerIdentity;
+            this.identityCache = identityCache;
+            this.ephemeralNotificationsController = ephemeralNotificationsController;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -150,7 +154,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, playerIdentity);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController);;
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -160,7 +164,7 @@ namespace DCL.PluginSystem.Global
 
             SocialEmoteInteractionSystem.InjectToWorld(ref builder);
 
-            SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool);
+            SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

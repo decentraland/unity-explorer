@@ -19,6 +19,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsReactingToSocialEmote;
         public string SocialEmoteInitiatorWalletAddress;
         public bool HasOutcomeAnimationStarted;
+        public string TargetAvatarWalletAddress;
         public int SocialEmoteInteractionId;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
@@ -64,6 +65,7 @@ namespace DCL.AvatarRendering.Emotes
             IsReactingToSocialEmote = false;
             SocialEmoteInitiatorWalletAddress = string.Empty;
             HasOutcomeAnimationStarted = false;
+            TargetAvatarWalletAddress = string.Empty;
             SocialEmoteInteractionId = 0;
             // These fields are not reset, on purpose
             //        CurrentEmoteReference = null;

@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.Input;
@@ -18,14 +19,16 @@ namespace DCL.SocialEmotes.UI
             public bool IsCloseEnoughToAvatar;
         }
 
+        private readonly World world;
         private readonly IInputBlock inputBlock;
-        private readonly EmotesBus emotesBus;
+        private readonly Entity playerEntity;
         private bool isInputEnabled;
 
-        public SocialEmoteOutcomeMenuController(ViewFactoryMethod viewFactory, IInputBlock inputBlock, EmotesBus emotesBus) : base(viewFactory)
+        public SocialEmoteOutcomeMenuController(ViewFactoryMethod viewFactory, World world, IInputBlock inputBlock, Entity playerEntity) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
-            this.emotesBus = emotesBus;
+            this.playerEntity = playerEntity;
+            this.world = world;
         }
 
         private void OnOutcomePerformed(int outcomeIndex)
@@ -46,7 +49,15 @@ namespace DCL.SocialEmotes.UI
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
 
-                emotesBus.PlaySocialEmoteReaction(interaction.InitiatorWalletAddress, interaction.Emote, outcomeIndex, interaction.Id);
+                TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent = new TriggerEmoteReactingToSocialEmoteIntent()
+                    {
+                        TriggeredEmoteUrn = interaction.Emote.DTO.Metadata.id,
+                        OutcomeIndex = outcomeIndex,
+                        InitiatorWalletAddress = interaction.InitiatorWalletAddress,
+                        InteractionId = interaction.Id
+                    };
+
+                world.Add(playerEntity, triggerEmoteIntent);
             }
         }
 
