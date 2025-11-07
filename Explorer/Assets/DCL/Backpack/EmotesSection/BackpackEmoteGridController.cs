@@ -275,10 +275,9 @@ namespace DCL.Backpack.EmotesSection
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
 
-                if (emoteStorage.TryGetOwnedNftRegistry(emotes[i].GetUrn(), out var registry) && registry.Count > 0)
+                if (emoteStorage.TryGetLatestTransferredAt(emotes[i].GetUrn(), out DateTime latestTransferredAt))
                 {
-                    var entry = registry.Values.First();
-                    TimeSpan timeSinceTransfer = DateTime.UtcNow - entry.TransferredAt;
+                    TimeSpan timeSinceTransfer = DateTime.UtcNow - latestTransferredAt;
                     backpackItemView.NewTag.SetActive(timeSinceTransfer.TotalHours <= 24);
                 }
                 else

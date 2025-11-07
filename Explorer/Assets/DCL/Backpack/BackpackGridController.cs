@@ -178,10 +178,9 @@ namespace DCL.Backpack
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
 
-                if (wearableStorage.TryGetOwnedNftRegistry(gridWearables[i].GetUrn(), out var registry) && registry.Count > 0)
+                if (wearableStorage.TryGetLatestTransferredAt(gridWearables[i].GetUrn(), out DateTime latestTransferredAt))
                 {
-                    var entry = registry.Values.First();
-                    TimeSpan timeSinceTransfer = DateTime.UtcNow - entry.TransferredAt;
+                    TimeSpan timeSinceTransfer = DateTime.UtcNow - latestTransferredAt;
                     backpackItemView.NewTag.SetActive(timeSinceTransfer.TotalHours <= 24);
                 }
                 else
