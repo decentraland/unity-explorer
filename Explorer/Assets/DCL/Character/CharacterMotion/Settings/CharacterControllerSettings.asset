@@ -123,7 +123,11 @@ MonoBehaviour:
   <WallSlideDetectionDistance>k__BackingField: 0.5
   <WallSlideMaxMoveSpeedMultiplier>k__BackingField: 0
   <StepOffset>k__BackingField: 0.35
+  <HeadIKWeightChangeSpeed>k__BackingField: 2
   <RotationSpeed>k__BackingField: 400
+  <MovAnimBlendMaxWalkSpeed>k__BackingField: 1.5
+  <MovAnimBlendMaxJogSpeed>k__BackingField: 8
+  <MovAnimBlendMaxRunSpeed>k__BackingField: 10
   <MovAnimBlendSpeed>k__BackingField: 5
   <AnimationFallSpeed>k__BackingField: -3
   <AnimationLongFallSpeed>k__BackingField: -8

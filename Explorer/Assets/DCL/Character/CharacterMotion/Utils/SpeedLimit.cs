@@ -7,16 +7,21 @@ namespace DCL.CharacterMotion.Utils
     public static class SpeedLimit
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Get(ICharacterControllerSettings settings, MovementKind movementKind)
-        {
-            switch (movementKind)
+        public static float GetMovementSpeedLimit(ICharacterControllerSettings settings, MovementKind movementKind) =>
+            movementKind switch
             {
-                case MovementKind.RUN:
-                    return settings.RunSpeed;
-                case MovementKind.JOG:
-                    return settings.JogSpeed;
-                default: return settings.WalkSpeed;
-            }
-        }
+                MovementKind.RUN => settings.RunSpeed,
+                MovementKind.JOG => settings.JogSpeed,
+                _ => settings.WalkSpeed
+            };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float GetAnimationBlendingSpeedLimit(ICharacterControllerSettings settings, MovementKind movementKind) =>
+            movementKind switch
+            {
+                MovementKind.RUN => settings.MovAnimBlendMaxRunSpeed,
+                MovementKind.JOG => settings.MovAnimBlendMaxJogSpeed,
+                _ => settings.MovAnimBlendMaxWalkSpeed
+            };
     }
 }

@@ -126,6 +126,12 @@ namespace DCL.CharacterMotion.Settings
 
         public float RotationSpeed => impl.RotationSpeed;
 
+        public float MovAnimBlendMaxWalkSpeed => impl.MovAnimBlendMaxWalkSpeed;
+
+        public float MovAnimBlendMaxJogSpeed => impl.MovAnimBlendMaxJogSpeed;
+
+        public float MovAnimBlendMaxRunSpeed => impl.MovAnimBlendMaxRunSpeed;
+
         public float MovAnimBlendSpeed => impl.MovAnimBlendSpeed;
 
         public float JumpPadForce => impl.JumpPadForce;
