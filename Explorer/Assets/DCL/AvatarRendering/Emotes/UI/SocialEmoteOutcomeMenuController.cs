@@ -33,11 +33,21 @@ namespace DCL.SocialEmotes.UI
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
 
             // Checks if the current emote has an outcome for the given index
-            if (outcomeIndex >= interaction!.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!.Length)
+            int outcomeCount = interaction!.Emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length;
+
+            if (outcomeIndex >= outcomeCount)
                 return;
 
             if (interaction is { AreInteracting: false })
+            {
+                // Random outcome?
+                if (outcomeIndex == 0 && interaction!.Emote.Model.Asset!.metadata.socialEmoteData!.randomizeOutcomes)
+                {
+                    outcomeIndex = Random.Range(0, outcomeCount);
+                }
+
                 emotesBus.PlaySocialEmoteReaction(interaction.InitiatorWalletAddress, interaction.Emote, outcomeIndex, interaction.Id);
+            }
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -92,10 +102,18 @@ namespace DCL.SocialEmotes.UI
             {
                 viewInstance!.ResetChoices();
 
-                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Emote.Model.Asset!.metadata.emoteDataADR287!.outcomes!;
+                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Emote.Model.Asset!.metadata.socialEmoteData!.outcomes!;
 
-                for (int i = 0; i < outcomes.Length; ++i)
-                    viewInstance.AddChoice(outcomes[i].title);
+                if (interaction.Emote.Model.Asset!.metadata.socialEmoteData!.randomizeOutcomes)
+                {
+                    // When outcomes are randomized, it only shows one option
+                    viewInstance.AddChoice(viewInstance.RandomizedOutcomeText);
+                }
+                else
+                {
+                    for (int i = 0; i < outcomes.Length; ++i)
+                        viewInstance.AddChoice(outcomes[i].title);
+                }
 
                 viewInstance.SetEmoteTitle(interaction.Emote.Model.Asset.metadata.name);
             }
