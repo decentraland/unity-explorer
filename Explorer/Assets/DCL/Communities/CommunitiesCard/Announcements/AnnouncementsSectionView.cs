@@ -59,6 +59,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public void CleanCreationInput() =>
             announcementCreationCardItem?.CleanInput();
 
+        public void SetAsPosting(bool isPosting) =>
+            announcementCreationCardItem?.SetAsPosting(isPosting);
+
         public void RefreshGrid(SectionFetchData<CommunityPost> announcementsFetchData, bool redraw)
         {
             this.currentAnnouncementsFetchData = announcementsFetchData;

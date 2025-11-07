@@ -49,6 +49,14 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public void CleanInput() =>
             announcementInput.text = string.Empty;
 
+        public void SetAsPosting(bool isPosting)
+        {
+            if (isPosting)
+                createAnnouncementButton.interactable = false;
+            else
+                UpdateCreateButtonState();
+        }
+
         private void OnAnnouncementInputSelected(string _) =>
             createAnnouncementInputOutline.SetActive(true);
 

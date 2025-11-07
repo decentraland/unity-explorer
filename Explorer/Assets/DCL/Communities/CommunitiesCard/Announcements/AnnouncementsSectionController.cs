@@ -108,6 +108,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             isCreationAllowed = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
             view.SetAllowCreation(isCreationAllowed);
             view.CleanCreationInput();
+            view.SetAsPosting(false);
             FetchNewDataAsync(token).Forget();
         }
 
@@ -139,6 +140,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             async UniTaskVoid CreateAnnouncementAsync(string content, CancellationToken ct)
             {
+                view.SetAsPosting(true);
                 Result<CreateCommunityPostResponse> response = await communitiesDataProvider.CreateCommunityPostAsync(communityData.Value.id, content, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -155,6 +157,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 FetchNewDataAsync(ct).Forget();
                 RefreshGrid(true);
                 view.CleanCreationInput();
+                view.SetAsPosting(false);
             }
         }
 
