@@ -31,7 +31,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private CommunityData? communityData;
         private bool isCreationAllowed;
         private bool isPosting;
-        private readonly List<string> announcementsUpdatingLikeStatus = new();
+        private readonly HashSet<string> announcementsUpdatingLikeStatus = new();
 
         public AnnouncementsSectionController(
             AnnouncementsSectionView view,
