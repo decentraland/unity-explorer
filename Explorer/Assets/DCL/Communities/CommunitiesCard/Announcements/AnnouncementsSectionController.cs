@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
+using System.Collections.Generic;
 using System.Threading;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 
@@ -19,6 +20,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private const string COMMUNITY_ANNOUNCEMENTS_FETCH_ERROR_MESSAGE = "There was an error fetching the community announcements. Please try again.";
         private const string COMMUNITY_ANNOUNCEMENT_CREATION_ERROR_MESSAGE = "There was an error creating the community announcement. Please try again.";
         private const string COMMUNITY_ANNOUNCEMENT_DELETION_ERROR_MESSAGE = "There was an error deleting the community announcement. Please try again.";
+        private const string COMMUNITY_ANNOUNCEMENT_LIKE_ERROR_MESSAGE = "There was an error sending the like status to the community announcement. Please try again.";
 
         private readonly AnnouncementsSectionView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
@@ -28,6 +30,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private CommunityData? communityData;
         private bool isCreationAllowed;
+        private bool isPosting;
+        private readonly List<string> announcementsUpdatingLikeStatus = new();
 
         public AnnouncementsSectionController(
             AnnouncementsSectionView view,
@@ -42,12 +46,16 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             InitializeViewAsync(identityCache, profileRepository, profileRepositoryWrapper, cancellationToken).Forget();
 
             view.CreateAnnouncementButtonClicked += CreateAnnouncement;
+            view.LikeAnnouncementButtonClicked += LikeAnnouncement;
+            view.UnlikeAnnouncementButtonClicked += UnlikeAnnouncement;
             view.DeleteAnnouncementButtonClicked += DeleteAnnouncement;
         }
 
         public override void Dispose()
         {
             view.CreateAnnouncementButtonClicked -= CreateAnnouncement;
+            view.LikeAnnouncementButtonClicked -= LikeAnnouncement;
+            view.UnlikeAnnouncementButtonClicked -= UnlikeAnnouncement;
             view.DeleteAnnouncementButtonClicked -= DeleteAnnouncement;
 
             base.Dispose();
@@ -106,9 +114,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             communityData = community;
             isCreationAllowed = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
+            isPosting = false;
+            announcementsUpdatingLikeStatus.Clear();
             view.SetAllowCreation(isCreationAllowed);
             view.CleanCreationInput();
-            view.SetAsPosting(false);
             FetchNewDataAsync(token).Forget();
         }
 
@@ -132,17 +141,18 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private void CreateAnnouncement(string announcementContent)
         {
-            if (communityData == null)
+            if (communityData == null || isPosting)
                 return;
 
-            CreateAnnouncementAsync(announcementContent, CancellationToken.None).Forget();
+            CreateAnnouncementAsync(announcementContent, cancellationToken).Forget();
             return;
 
             async UniTaskVoid CreateAnnouncementAsync(string content, CancellationToken ct)
             {
-                view.SetAsPosting(true);
+                isPosting = true;
                 Result<CreateCommunityPostResponse> response = await communitiesDataProvider.CreateCommunityPostAsync(communityData.Value.id, content, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                isPosting = false;
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -157,7 +167,82 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 FetchNewDataAsync(ct).Forget();
                 RefreshGrid(true);
                 view.CleanCreationInput();
-                view.SetAsPosting(false);
+            }
+        }
+
+        private void LikeAnnouncement(string announcementId)
+        {
+            if (communityData == null || announcementsUpdatingLikeStatus.Contains(announcementId))
+                return;
+
+            LikeAnnouncementAsync(announcementId, cancellationToken).Forget();
+            return;
+
+            async UniTaskVoid LikeAnnouncementAsync(string postId, CancellationToken ct)
+            {
+                announcementsUpdatingLikeStatus.Add(postId);
+                Result<bool> response = await communitiesDataProvider.LikeCommunityPostAsync(communityData.Value.id, postId, ct)
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                announcementsUpdatingLikeStatus.Remove(postId);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success || !response.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_ANNOUNCEMENT_LIKE_ERROR_MESSAGE));
+                    return;
+                }
+
+                foreach (CommunityPost post in currentAnnouncementsFetchData.Items)
+                {
+                    if (post.id == postId)
+                    {
+                        post.isLikedByUser = true;
+                        post.likesCount++;
+                        break;
+                    }
+                }
+
+                RefreshGrid(true);
+            }
+        }
+
+        private void UnlikeAnnouncement(string announcementId)
+        {
+            if (communityData == null || announcementsUpdatingLikeStatus.Contains(announcementId))
+                return;
+
+            UnlikeAnnouncementAsync(announcementId, cancellationToken).Forget();
+            return;
+
+            async UniTaskVoid UnlikeAnnouncementAsync(string postId, CancellationToken ct)
+            {
+                announcementsUpdatingLikeStatus.Add(postId);
+                Result<bool> response = await communitiesDataProvider.UnlikeCommunityPostAsync(communityData.Value.id, postId, ct)
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                announcementsUpdatingLikeStatus.Remove(postId);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success || !response.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_ANNOUNCEMENT_LIKE_ERROR_MESSAGE));
+                    return;
+                }
+
+                foreach (CommunityPost post in currentAnnouncementsFetchData.Items)
+                {
+                    if (post.id == postId)
+                    {
+                        post.isLikedByUser = false;
+                        post.likesCount--;
+                        break;
+                    }
+                }
+
+                RefreshGrid(true);
             }
         }
 
@@ -166,12 +251,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             if (communityData == null)
                 return;
 
-            DeleteAnnouncementAsync(announcementId, CancellationToken.None).Forget();
+            DeleteAnnouncementAsync(announcementId, cancellationToken).Forget();
             return;
 
             async UniTaskVoid DeleteAnnouncementAsync(string postId, CancellationToken ct)
             {
-                Result<bool> response = await communitiesDataProvider.DeleteCommunityPostAsync(communityData.Value.id, postId, CancellationToken.None)
+                Result<bool> response = await communitiesDataProvider.DeleteCommunityPostAsync(communityData.Value.id, postId, ct)
                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)

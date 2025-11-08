@@ -445,7 +445,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        private async UniTask<bool> UnlikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        public async UniTask<bool> UnlikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
         {
             string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
 

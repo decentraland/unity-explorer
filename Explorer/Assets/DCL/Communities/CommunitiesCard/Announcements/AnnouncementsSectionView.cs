@@ -19,6 +19,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public event Action? NewDataRequested;
         public event Action<string>? CreateAnnouncementButtonClicked;
+        public event Action<string>? LikeAnnouncementButtonClicked;
+        public event Action<string>? UnlikeAnnouncementButtonClicked;
         public event Action<string>? DeleteAnnouncementButtonClicked;
 
         private SectionFetchData<CommunityPost> currentAnnouncementsFetchData = null!;
@@ -59,9 +61,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public void CleanCreationInput() =>
             announcementCreationCardItem?.CleanInput();
 
-        public void SetAsPosting(bool isPosting) =>
-            announcementCreationCardItem?.SetAsPosting(isPosting);
-
         public void RefreshGrid(SectionFetchData<CommunityPost> announcementsFetchData, bool redraw)
         {
             this.currentAnnouncementsFetchData = announcementsFetchData;
@@ -99,6 +98,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             CommunityPost announcementInfo = currentAnnouncementsFetchData.Items[index];
             announcementCardItem.Configure(announcementInfo, profileRepositoryWrapper, isCreationAllowed);
+
+            announcementCardItem.LikeAnnouncementButtonClicked -= OnLikeAnnouncementButtonClicked;
+            announcementCardItem.LikeAnnouncementButtonClicked += OnLikeAnnouncementButtonClicked;
+            announcementCardItem.UnlikeAnnouncementButtonClicked -= OnUnlikeAnnouncementButtonClicked;
+            announcementCardItem.UnlikeAnnouncementButtonClicked += OnUnlikeAnnouncementButtonClicked;
             announcementCardItem.DeleteAnnouncementButtonClicked -= OnDeleteAnnouncementButtonClicked;
             announcementCardItem.DeleteAnnouncementButtonClicked += OnDeleteAnnouncementButtonClicked;
 
@@ -110,6 +114,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private void OnCreateAnnouncementButtonClicked(string announcementContent) =>
             CreateAnnouncementButtonClicked?.Invoke(announcementContent);
+
+        private void OnLikeAnnouncementButtonClicked(string announcementId) =>
+            LikeAnnouncementButtonClicked?.Invoke(announcementId);
+
+        private void OnUnlikeAnnouncementButtonClicked(string announcementId) =>
+            UnlikeAnnouncementButtonClicked?.Invoke(announcementId);
 
         private void OnDeleteAnnouncementButtonClicked(string announcementId) =>
             DeleteAnnouncementButtonClicked?.Invoke(announcementId);

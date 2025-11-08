@@ -31,6 +31,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private GameObject verifiedMark = null!;
         [SerializeField] private GameObject officialMark = null!;
         [SerializeField] private TMP_Text postDate = null!;
+        [SerializeField] private Button likeAnnouncementButton = null!;
+        [SerializeField] private Button unlikeAnnouncementButton = null!;
+        [SerializeField] private TMP_Text likesCounter = null!;
         [SerializeField] private Button deleteAnnouncementButton = null!;
         [SerializeField] private ProfilePictureView profilePicture = null!;
         [SerializeField] private Sprite deleteSprite = null!;
@@ -40,16 +43,26 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private CancellationTokenSource confirmationDialogCts = null!;
 
+        public event Action<string>? LikeAnnouncementButtonClicked;
+        public event Action<string>? UnlikeAnnouncementButtonClicked;
         public event Action<string>? DeleteAnnouncementButtonClicked;
 
-        private void Awake() =>
+        private void Awake()
+        {
+            likeAnnouncementButton.onClick.AddListener(OnLikeAnnouncementButtonClicked);
+            unlikeAnnouncementButton.onClick.AddListener(OnUnlikeAnnouncementButtonClicked);
             deleteAnnouncementButton.onClick.AddListener(OnDeleteAnnouncementButtonClicked);
+        }
 
         private void OnDisable() =>
             confirmationDialogCts.SafeCancelAndDispose();
 
-        private void OnDestroy() =>
+        private void OnDestroy()
+        {
+            likeAnnouncementButton.onClick.RemoveListener(OnLikeAnnouncementButtonClicked);
+            unlikeAnnouncementButton.onClick.RemoveListener(OnUnlikeAnnouncementButtonClicked);
             deleteAnnouncementButton.onClick.RemoveListener(OnDeleteAnnouncementButtonClicked);
+        }
 
         public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider, bool allowDeletion)
         {
@@ -69,6 +82,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 currentProfileThumbnailUrl = announcementInfo.authorProfilePictureUrl;
             }
 
+            likeAnnouncementButton.gameObject.SetActive(!announcementInfo.isLikedByUser);
+            unlikeAnnouncementButton.gameObject.SetActive(announcementInfo.isLikedByUser);
+            likesCounter.text = announcementInfo.likesCount.ToString();
             deleteAnnouncementButton.gameObject.SetActive(allowDeletion);
 
             // TODO (Santi): Avoid to use ForceRebuildLayoutImmediate removing the content size fitter and calculating the height manually
@@ -99,6 +115,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                     return announcementDateTime.ToString(announcementDateTime.Year == DateTime.UtcNow.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture);
             }
         }
+
+        private void OnLikeAnnouncementButtonClicked() =>
+            LikeAnnouncementButtonClicked?.Invoke(currentAnnouncementId);
+
+        private void OnUnlikeAnnouncementButtonClicked() =>
+            UnlikeAnnouncementButtonClicked?.Invoke(currentAnnouncementId);
 
         private void OnDeleteAnnouncementButtonClicked()
         {
