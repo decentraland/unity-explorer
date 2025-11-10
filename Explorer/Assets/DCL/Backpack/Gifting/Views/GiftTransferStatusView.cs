@@ -7,6 +7,9 @@ namespace DCL.Backpack.Gifting.Views
 {
     public class GiftTransferStatusView : ViewBase, IView
     {
+        [field: SerializeField]
+        public Sprite WarningIcon { get; private set; }
+        
         [Header("Header")]
         [field: SerializeField] public Button BackButton { get; private set; }
 

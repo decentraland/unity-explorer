@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Views;
+using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.UI.ConfirmationDialog.Opener;
 using MVC;
@@ -15,8 +17,9 @@ namespace DCL.Backpack.Gifting.Presenters
         : ControllerBase<GiftTransferStatusView, GiftTransferParams>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
+        
         private readonly IEventBus eventBus;
+        private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GiftTransferProgressCommand giftTransferProgressCommand;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
@@ -32,8 +35,10 @@ namespace DCL.Backpack.Gifting.Presenters
         private CancellationTokenSource? delayCts;
         
         private string urn = string.Empty;
+        private const string SUPPORT_URL = "https://docs.decentraland.org/player/support/";
 
         public GiftTransferController(ViewFactoryMethod viewFactory,
+            IWebBrowser webBrowser,
             IEventBus eventBus,
             IMVCManager mvcManager,
             GiftTransferProgressCommand giftTransferProgressCommand,
@@ -43,6 +48,7 @@ namespace DCL.Backpack.Gifting.Presenters
         )
             : base(viewFactory)
         {
+            this.webBrowser = webBrowser;
             this.eventBus = eventBus;
             this.mvcManager = mvcManager;
             this.giftTransferProgressCommand = giftTransferProgressCommand;
@@ -255,18 +261,20 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.BackButton.onClick.Invoke();
             }
         }
-
+        
         private async UniTaskVoid ShowErrorPopupAsync(CancellationToken ct)
         {
             var dialogParams = new ConfirmationDialogParameter(
                 "Something went wrong",
                 "CLOSE",
                 "RETRY",
-                null,
+                viewInstance?.WarningIcon,
                 false,
                 false,
                 null,
-                "The Gift could not be delivered. Please retry, and if the problem persist contact Support."
+                "Your gift wasn't delivered. Please try again of contact Support.",
+                linkText: $"<link=\"{SUPPORT_URL}\">Contact Support</link>",
+                onLinkClickCallback: LinkCallback
             );
 
             var result = await ViewDependencies
@@ -278,6 +286,11 @@ namespace DCL.Backpack.Gifting.Presenters
                 ReportHub.Log(ReportCategory.GIFTING, "User clicked RETRY.");
                 await mvcManager.ShowAsync(IssueCommand(inputData), ct);
             }
+        }
+
+        private void LinkCallback(string url)
+        {
+            webBrowser.OpenUrl(url);
         }
         
         private async UniTaskVoid AutoCloseIn(int ms)

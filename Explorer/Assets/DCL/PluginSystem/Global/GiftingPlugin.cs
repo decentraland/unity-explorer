@@ -16,6 +16,7 @@ using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Styling;
+using DCL.Browser;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -38,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
+        private readonly IWebBrowser webBrowser;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -51,7 +53,8 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
             IThumbnailProvider thumbnailProvider,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            IWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -63,6 +66,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus =  eventBus;
+            this.webBrowser = webBrowser;
         }
 
         public void Dispose()
@@ -119,6 +123,7 @@ namespace DCL.PluginSystem.Global
             
             giftTransferStatusController = new GiftTransferController(
                 GiftTransferController.CreateLazily(giftTransferPopupPrefab, null),
+                webBrowser,
                 eventBus,
                 mvcManager,
                 giftTransferProgressCommand,

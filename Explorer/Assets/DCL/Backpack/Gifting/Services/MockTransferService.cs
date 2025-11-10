@@ -17,7 +17,7 @@
 
         [Tooltip("The chance of the transaction failing, from 0.0 (never) to 1.0 (always).")]
         [Range(0f, 1f)]
-        public float FailureChance { get; set; } = 0.05f;
+        public float FailureChance { get; set; } = 0.95f;
 
         [Header("Delay Durations (in seconds)")]
         [Tooltip("The normal, fast transaction time (must be less than the controller's timeout).")]

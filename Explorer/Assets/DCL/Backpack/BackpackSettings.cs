@@ -38,5 +38,6 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public AssetReferenceSprite DeleteOutfitIcon { get; private set; }
+
     }
 }
