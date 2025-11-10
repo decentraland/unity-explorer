@@ -617,9 +617,21 @@ namespace Global.Dynamic
                 description: "A loading error was encountered. Please reload to try again.",
                 iconType: ErrorPopupWithRetryController.IconType.ERROR);
 
+            ErrorPopupWithRetryController? controller = null;
+
+            mvcManager.OnViewShowed += CacheErrorPopupInstance;
+
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
-            return input.SelectedOption;
+            mvcManager.OnViewShowed -= CacheErrorPopupInstance;
+
+            return controller!.SelectedOption;
+
+            void CacheErrorPopupInstance(IController c)
+            {
+                if (c is not ErrorPopupWithRetryController errorPopup) return;
+                controller = errorPopup;
+            }
         }
 
         [Serializable]
