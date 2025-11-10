@@ -100,10 +100,13 @@ namespace DCL.Backpack.BackpackBus
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
-                backpackEventBus.SendWearableSelect(wearable);
+                SelectWearable(wearable);
             else
-                FetchWearableByPointerAndExecuteAsync(command.Id, fetchedWearable => backpackEventBus.SendWearableSelect(fetchedWearable)).Forget();
+                FetchWearableByPointerAndExecuteAsync(command.Id, SelectWearable).Forget();
         }
+
+        private void SelectWearable(IWearable wearable) =>
+            backpackEventBus.SendWearableSelect(wearable);
 
         private async UniTaskVoid FetchWearableByPointerAndExecuteAsync(string pointer, Action<IWearable> onWearableFetched)
         {
@@ -125,10 +128,10 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
-            if (!wearableStorage.TryGetElement(command.Id, out IWearable wearable))
+            if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
+                EquipWearable(wearable);
+            else
                 FetchWearableByPointerAndExecuteAsync(command.Id, EquipWearable).Forget();
-
-            EquipWearable(wearable);
         }
 
         private void EquipWearable(IWearable wearable)
