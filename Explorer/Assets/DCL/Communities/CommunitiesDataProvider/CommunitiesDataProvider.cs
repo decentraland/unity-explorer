@@ -163,7 +163,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             {
                 // Updating an existing community
                 var communityEditionUrl = $"{communitiesBaseUrl}/{communityId}";
-                response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPutArguments.CreateMultipartForm(formData), string.Empty, ct)
+
+                response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
                 response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
@@ -306,7 +307,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
 
-            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -351,7 +352,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests/{requestId}";
 
-            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

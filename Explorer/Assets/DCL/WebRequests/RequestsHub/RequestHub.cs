@@ -42,9 +42,9 @@ namespace DCL.WebRequests.RequestsHub
 
             Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
             Add<GenericPostArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
-            Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
-            Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
-            Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
+            Add<GenericPostArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
+            Add<GenericPostArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
+            Add<GenericPostArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
             Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);

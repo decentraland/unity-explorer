@@ -1,4 +1,6 @@
-﻿namespace DCL.WebRequests
+﻿using Newtonsoft.Json;
+
+namespace DCL.WebRequests
 {
     /// <summary>
     ///     Retries will be applied only in one of the following cases:
@@ -47,6 +49,7 @@
         internal readonly int maxRetriesCount;
         internal readonly Strictness strictness;
 
+        [JsonConstructor]
         private RetryPolicy(int maxRetriesCount, Strictness strictness, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER)
         {
             this.maxRetriesCount = maxRetriesCount;
