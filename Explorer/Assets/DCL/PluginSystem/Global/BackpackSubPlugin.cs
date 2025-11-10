@@ -174,7 +174,8 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 equippedWearables,
                 BackpackInfoPanelController.AttachmentType.Wearable,
-                thirdPartyNftProviderSource
+                thirdPartyNftProviderSource,
+                thumbnailProvider
             );
 
             EmotesView emoteView = view.GetComponentInChildren<EmotesView>().EnsureNotNull();
@@ -187,7 +188,8 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 equippedWearables,
                 BackpackInfoPanelController.AttachmentType.Emote,
-                thirdPartyNftProviderSource
+                thirdPartyNftProviderSource,
+                thumbnailProvider
             );
 
             //not injected anywhere
