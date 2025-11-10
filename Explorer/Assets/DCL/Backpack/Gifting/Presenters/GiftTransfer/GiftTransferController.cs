@@ -3,6 +3,8 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
+using DCL.UI.ConfirmationDialog.Opener;
 using MVC;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
@@ -10,26 +12,30 @@ using static DCL.Backpack.Gifting.Events.GiftingEvents;
 namespace DCL.Backpack.Gifting.Presenters
 {
     public sealed class GiftTransferController
-        : ControllerBase<GiftTransferStatusView, GiftTransferStatusParams>
+        : ControllerBase<GiftTransferStatusView, GiftTransferParams>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly IEventBus eventBus;
+        private readonly IMVCManager mvcManager;
         private readonly GiftTransferProgressCommand giftTransferProgressCommand;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
         private readonly GiftTransferResponseCommand  giftTransferResponseCommand;
         private readonly GiftTransferSignCommand  giftTransferSignCommand;
-
-        // Event subscriptions with meaningful names
+        
         private IDisposable? subProgress;
         private IDisposable? subSucceeded;
         private IDisposable? subFailed;
         private IDisposable? subOpenRequested;
 
         private CancellationTokenSource? lifeCts;
+        private CancellationTokenSource? delayCts;
+        
         private string urn = string.Empty;
 
-        public GiftTransferController(ViewFactoryMethod viewFactory, IEventBus eventBus,
+        public GiftTransferController(ViewFactoryMethod viewFactory,
+            IEventBus eventBus,
+            IMVCManager mvcManager,
             GiftTransferProgressCommand giftTransferProgressCommand,
             GiftTransferRequestCommand giftTransferRequestCommand,
             GiftTransferResponseCommand  giftTransferResponseCommand,
@@ -38,6 +44,7 @@ namespace DCL.Backpack.Gifting.Presenters
             : base(viewFactory)
         {
             this.eventBus = eventBus;
+            this.mvcManager = mvcManager;
             this.giftTransferProgressCommand = giftTransferProgressCommand;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
             this.giftTransferResponseCommand = giftTransferResponseCommand;
@@ -93,6 +100,7 @@ namespace DCL.Backpack.Gifting.Presenters
             subOpenRequested?.Dispose();
             subOpenRequested = null;
 
+            delayCts.SafeCancelAndDispose();
             lifeCts.SafeCancelAndDispose();
         }
 
@@ -126,19 +134,71 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             if (e.Urn != urn) return;
             SetPhase(e.Phase, e.Message);
+
+            // When we enter the main "waiting" phase, start a timer.
+            if (e.Phase == GiftTransferPhase.Authorizing)
+            {
+                StartDelayedStateTimer(lifeCts!.Token);
+            }
         }
 
-        private void OnSuccess(GiftTransferSucceeded e)
+        private void StartDelayedStateTimer(CancellationToken ct)
+        {
+            delayCts.SafeCancelAndDispose();
+            delayCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            async UniTaskVoid ShowAfterDelay(CancellationToken token)
+            {
+                try
+                {
+                    // Wait for 10 seconds (or any duration you prefer)
+                    await UniTask.Delay(TimeSpan.FromSeconds(10), cancellationToken: token);
+
+                    // If we get here, it means the process is taking too long.
+                    // Show the "delayed" UI elements.
+                    if (viewInstance != null)
+                    {
+                        viewInstance.TitleLabel.text = "Authorisation Delayed";
+                        viewInstance.LongRunningHint?.gameObject.SetActive(true);
+                        // The main close button should also become visible/interactive here
+                        viewInstance.CloseButton.gameObject.SetActive(true);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    /* This is expected if the process succeeds or fails before the delay is over. */
+                }
+            }
+
+            ShowAfterDelay(delayCts.Token)
+                .Forget();
+        }
+
+        private async void OnSuccess(GiftTransferSucceeded e)
         {
             if (e.Urn != urn) return;
-            SetPhase(GiftTransferPhase.Completed, "Gift successfully sent");
-            AutoCloseIn(1200).Forget();
+
+            delayCts.SafeCancelAndDispose();
+
+            RequestClose();
+
+            var successParams = new GiftTransferSuccessParams(inputData.recipientName,
+                inputData.userThumbnail);
+
+            await mvcManager
+                .ShowAsync(GiftTransferSuccessController.IssueCommand(successParams));
         }
 
         private void OnFailure(GiftTransferFailed e)
         {
             if (e.Urn != urn) return;
-            SetPhase(GiftTransferPhase.Failed, e.Reason ?? "Something went wrong");
+
+            delayCts.SafeCancelAndDispose();
+
+            RequestClose();
+
+            ShowErrorPopupAsync(CancellationToken.None)
+                .Forget();
         }
 
         private void SetPhase(GiftTransferPhase phase, string? msg)
@@ -172,13 +232,6 @@ namespace DCL.Backpack.Gifting.Presenters
                     viewInstance.StatusText.text = msg ?? "Failed";
                     break;
             }
-
-            // bool showHint = phase == GiftTransferPhase.Authorizing
-            //                 || phase == GiftTransferPhase.Broadcasting
-            //                 || phase == GiftTransferPhase.Confirming;
-            //
-            // if (viewInstance.LongRunningHint != null)
-            //     viewInstance.LongRunningHint.SetActive(showHint);
         }
 
         private void RequestClose()
@@ -203,6 +256,30 @@ namespace DCL.Backpack.Gifting.Presenters
             }
         }
 
+        private async UniTaskVoid ShowErrorPopupAsync(CancellationToken ct)
+        {
+            var dialogParams = new ConfirmationDialogParameter(
+                "Something went wrong",
+                "CLOSE",
+                "RETRY",
+                null,
+                false,
+                false,
+                null,
+                "The Gift could not be delivered. Please retry, and if the problem persist contact Support."
+            );
+
+            var result = await ViewDependencies
+                .ConfirmationDialogOpener
+                .OpenConfirmationDialogAsync(dialogParams, ct);
+
+            if (result == ConfirmationResult.CONFIRM)
+            {
+                ReportHub.Log(ReportCategory.GIFTING, "User clicked RETRY.");
+                await mvcManager.ShowAsync(IssueCommand(inputData), ct);
+            }
+        }
+        
         private async UniTaskVoid AutoCloseIn(int ms)
         {
             try

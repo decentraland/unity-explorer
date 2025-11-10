@@ -19,6 +19,14 @@ namespace DCL.AvatarRendering.Wearables
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false);
 
+        // UniTask<(IReadOnlyList<IWearable> wearables, int total)> GetAsync(
+        //     int pageSize, int pageNumber, CancellationToken ct,
+        //     string network,
+        //     bool includeAmount,
+        //     string sortingField, OrderBy orderBy, string category,
+        //     CollectionType collectionType, string name, List<IWearable> results
+        // );
+
         UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct);

@@ -26,6 +26,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         private const int SEARCH_DEBOUNCE_MS = 500;
 
         public event Action<string?>? OnSelectionChanged;
+        public event Action<bool>? OnLoadingStateChanged;
+        public int CurrentItemCount => vmByUrn.Count;
         public string? SelectedUrn { get; private set; }
         public int ItemCount => urnOrder.Count;
 
@@ -155,6 +157,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
 
             try
             {
+                OnLoadingStateChanged?.Invoke(true);
                 ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Emotes] Request Page {currentPage} search='{currentSearch}'");
 
                 // 1) Owned (on-chain/third-party) via provider
@@ -237,6 +240,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             finally
             {
                 isLoading = false;
+                OnLoadingStateChanged?.Invoke(false);
+                
                 if (!ct.IsCancellationRequested && pendingThumbs == 0)
                     OnAllLoadsFinished();
             }

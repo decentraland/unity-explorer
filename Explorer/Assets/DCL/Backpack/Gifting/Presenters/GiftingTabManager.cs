@@ -187,6 +187,8 @@ namespace DCL.Backpack.Gifting.Presenters
         RectTransform GetRectTransform();
         CanvasGroup GetCanvasGroup();
         event Action<string?> OnSelectionChanged;
+        event Action<bool> OnLoadingStateChanged;
+        int CurrentItemCount { get; }
         string? SelectedUrn { get; }
         string? GetItemNameByUrn(string urn);
         void ForceSearch(string? searchText);

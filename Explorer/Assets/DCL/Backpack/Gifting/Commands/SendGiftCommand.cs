@@ -10,13 +10,13 @@ namespace DCL.Backpack.Gifting.Commands
 {
     public class SendGiftCommand
     {
-        private readonly IGiftingService giftingService;
+        private readonly IGiftTransferService _giftTransferService;
         private readonly IMVCManager mvcManager;
 
-        public SendGiftCommand(IGiftingService giftingService,
+        public SendGiftCommand(IGiftTransferService giftTransferService,
             IMVCManager mvcManager)
         {
-            this.giftingService = giftingService;
+            _giftTransferService = giftTransferService;
             this.mvcManager = mvcManager;
         }
 
@@ -29,7 +29,8 @@ namespace DCL.Backpack.Gifting.Commands
 
             try
             {
-                return await giftingService.SendGiftAsync(recipientId, itemUrn, CancellationToken.None);
+                // return await _giftTransferService.SendGiftAsync(recipientId, itemUrn, CancellationToken.None);
+                return false;
             }
             catch (Exception e)
             {

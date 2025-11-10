@@ -91,6 +91,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GiftTransferPopupSuccessPrefab:
+          m_AssetGUID: 2b7c17e39a8541341a73119ee9cb0093
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <BackpackSettings>k__BackingField:
           <CategoryIconsMapping>k__BackingField:
             m_AssetGUID: 4a2a7b610414b45c1b576946ce094877

@@ -62,12 +62,10 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct GiftTransferSucceeded
         {
             public readonly string Urn;
-            public readonly string? TxHash;
 
-            public GiftTransferSucceeded(string urn, string? txHash)
+            public GiftTransferSucceeded(string urn)
             {
-                Urn    = urn;
-                TxHash = txHash;
+                Urn = urn;
             }
         }
 

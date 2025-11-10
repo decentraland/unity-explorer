@@ -15,7 +15,7 @@ using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters
 {
-    public class GiftSelectionController : ControllerBase<GiftingView, GiftingParams>
+    public class GiftSelectionController : ControllerBase<GiftingView, GiftSelectionParams>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
@@ -104,8 +104,8 @@ namespace DCL.Backpack.Gifting.Presenters
             headerPresenter?.ClearSearchImmediate();
             wearablesGridPresenter?.Deactivate();
             emotesGridPresenter?.Deactivate();
-            
-            headerPresenter?.SetupAsync(inputData.userId,
+
+            headerPresenter?.SetupAsync(inputData.userAddress,
                 inputData.userName,
                 lifeCts.Token).Forget();
             
@@ -113,8 +113,18 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
             if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
-            if (wearablesGridPresenter != null) wearablesGridPresenter.OnSelectionChanged += OnSelectionChanged;
-            if (emotesGridPresenter != null) emotesGridPresenter.OnSelectionChanged += OnSelectionChanged;
+
+            if (wearablesGridPresenter != null)
+            {
+                wearablesGridPresenter.OnSelectionChanged += OnSelectionChanged;
+                wearablesGridPresenter.OnLoadingStateChanged += OnLoadingStateChanged;
+            }
+
+            if (emotesGridPresenter != null)
+            {
+                emotesGridPresenter.OnSelectionChanged += OnSelectionChanged;
+                emotesGridPresenter.OnLoadingStateChanged += OnLoadingStateChanged;
+            }
 
             tabsManager.Initialize();
         }
@@ -123,8 +133,18 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             if (headerPresenter != null) headerPresenter.OnSearchChanged -= HandleSearchChanged;
             if (footerPresenter != null) footerPresenter.OnSendGift -= HandleSendGift;
-            if (wearablesGridPresenter != null) wearablesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
-            if (emotesGridPresenter != null) emotesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
+
+            if (wearablesGridPresenter != null)
+            {
+                wearablesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
+                wearablesGridPresenter.OnLoadingStateChanged -= OnLoadingStateChanged;
+            }
+
+            if (emotesGridPresenter != null)
+            {
+                emotesGridPresenter.OnSelectionChanged -= OnSelectionChanged;
+                emotesGridPresenter.OnLoadingStateChanged -= OnLoadingStateChanged;
+            }
 
             wearablesGridPresenter?.Deactivate();
             emotesGridPresenter?.Deactivate();
@@ -149,20 +169,37 @@ namespace DCL.Backpack.Gifting.Presenters
             footerPresenter?.UpdateState(itemName);
         }
 
+        private void OnLoadingStateChanged(bool isLoading)
+        {
+            if (viewInstance == null) return;
+
+            var activePresenter = tabsManager.ActivePresenter;
+            if (activePresenter == null) return;
+
+            if (isLoading)
+            {
+                if (activePresenter.CurrentItemCount == 0)
+                    viewInstance.ProgressContainer.SetActive(true);
+            }
+            else
+            {
+                viewInstance.ProgressContainer.SetActive(false);
+            }
+        }
+
         private void HandleSendGift()
         {
-            string? selectedUrn = tabsManager.ActivePresenter?.SelectedUrn;
             OpenTransferPopup().Forget();
         }
 
         private async UniTaskVoid OpenTransferPopup()
         {
             var active = tabsManager.ActivePresenter;
-            string? urn    = active?.SelectedUrn;
+            string? urn = active?.SelectedUrn;
             if (string.IsNullOrEmpty(urn))
                 return;
 
-            string recipientUserId = inputData.userId;
+            string recipientAddress = inputData.userAddress;
             string recipientName = inputData.userName;
             var userThumb = headerPresenter?.CurrentRecipientAvatarSprite; // or null if you don’t keep it
 
@@ -173,7 +210,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (!active.TryBuildStyleSnapshot(urn, out var style))
                 style = new GiftItemStyleSnapshot(null, null, Color.white);
 
-            var data = new GiftTransferStatusParams(recipientUserId,
+            var data = new GiftTransferParams(recipientAddress,
                 recipientName,
                 userThumb,
                 urn,

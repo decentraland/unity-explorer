@@ -24,6 +24,9 @@ namespace DCL.Backpack.Gifting.Views
         [field: SerializeField]
         public RectTransform ContentContainer { get; private set; }
 
+        [field: SerializeField]
+        public GameObject ProgressContainer { get; private set; }
+
         [field: Header("Sections")]
         [field: SerializeField]
         public GiftingHeaderView HeaderView { get; private set; }

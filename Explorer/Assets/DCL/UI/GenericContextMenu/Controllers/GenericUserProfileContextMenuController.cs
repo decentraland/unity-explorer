@@ -26,7 +26,6 @@ using Segment.Serialization;
 using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
-using DCL.Backpack.Gifting.Views;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -387,7 +386,6 @@ namespace DCL.UI
                 {
                     var data = JsonUtility.FromJson<GiftData>(payload);
                     ShowGiftingPopupAsync(data.userId, data.userName).Forget();
-                    return;
                 }
                 catch
                 {
@@ -398,7 +396,7 @@ namespace DCL.UI
 
         private async UniTaskVoid ShowGiftingPopupAsync(string userId, string userName)
         {
-            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftingParams(userId, userName)));
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(userId, userName)));
         }
     }
 }

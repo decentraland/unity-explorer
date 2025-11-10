@@ -23,6 +23,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private const int SEARCH_DEBOUNCE_MS = 500;
 
         public event Action<string?>? OnSelectionChanged;
+        public int CurrentItemCount => viewModelsByUrn.Count;
+        public event Action<bool> OnLoadingStateChanged;
         public string? SelectedUrn { get; set; }
         public int ItemCount => viewModelUrnOrder.Count;
 
@@ -174,6 +176,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
             try
             {
+                OnLoadingStateChanged?.Invoke(true);
+                
                 results.Clear();
                 (var wearables, int total) = await wearablesProvider.GetAsync(
                     pageSize: CURRENT_PAGE_SIZE,
@@ -225,7 +229,7 @@ namespace DCL.Backpack.Gifting.Presenters
             finally
             {
                 isLoading = false;
-
+                OnLoadingStateChanged?.Invoke(false);
                 if (!ct.IsCancellationRequested && results.Count == 0 && pendingThumbnailLoads == 0)
                     OnAllLoadsFinished();
             }

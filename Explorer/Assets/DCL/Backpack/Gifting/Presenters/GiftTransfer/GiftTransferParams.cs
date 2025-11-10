@@ -2,9 +2,9 @@
 
 namespace DCL.Backpack.Gifting.Views
 {
-    public readonly struct GiftTransferStatusParams
+    public readonly struct GiftTransferParams
     {
-        public readonly string recipientUserId;
+        public readonly string recipientAddress;
         public readonly string recipientName;
         public readonly Sprite? userThumbnail;
         public readonly string giftUrn;
@@ -12,7 +12,7 @@ namespace DCL.Backpack.Gifting.Views
         public readonly Sprite giftThumbnail;
         public readonly GiftItemStyleSnapshot style;
 
-        public GiftTransferStatusParams(string recipientUserId,
+        public GiftTransferParams(string recipientAddress,
             string recipientName,
             Sprite? userThumbnail,
             string giftUrn,
@@ -20,7 +20,7 @@ namespace DCL.Backpack.Gifting.Views
             Sprite? giftThumbnail,
             GiftItemStyleSnapshot style)
         {
-            this.recipientUserId = recipientUserId;
+            this.recipientAddress = recipientAddress;
             this.recipientName = recipientName;
             this.userThumbnail = userThumbnail;
             this.giftUrn = giftUrn;

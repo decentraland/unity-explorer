@@ -175,6 +175,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2b7c17e39a8541341a73119ee9cb0093
+    m_Address: Assets/DCL/Backpack/Gifting/Views/Prefabs/TransferSuccessGiftPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2eac55a1aa3034858a71ab0e06baf5de
     m_Address: ClusterMarkerObject
     m_ReadOnly: 0
