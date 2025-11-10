@@ -1,8 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Systems;
 using DCL.SDKComponents.InputModifier.Components;
@@ -28,11 +31,14 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateInputQuery(World);
+            MovingToInitiatorQuery(World);
         }
 
         [Query]
         private void UpdateInput(ref MovementInputComponent inputToUpdate, in InputModifierComponent inputModifierComponent)
         {
+            inputToUpdate.HasPlayerPressed = false;
+
             if (!movementAxis.enabled || inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
             {
                 inputToUpdate.Axes = Vector2.zero;
@@ -45,6 +51,8 @@ namespace DCL.CharacterMotion.Systems
                 inputToUpdate.Kind = MovementKind.IDLE;
             else
             {
+                inputToUpdate.HasPlayerPressed = true;
+
                 bool runPressed = sprintAction.IsPressed();
                 bool walkPressed = walkAction.IsPressed();
 
@@ -81,5 +89,28 @@ namespace DCL.CharacterMotion.Systems
 
             return MovementKind.JOG;
         }
+
+// TODO: Rename to a more generic thing
+        [Query]
+        private void MovingToInitiator(in Entity entity, ref CharacterController characterController, ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent,
+            MoveBeforePlayingSocialEmoteIntent intent)
+        {
+            if (Vector3.SqrMagnitude(characterController.transform.position - intent.InitiatorPosition) < 2.0f ||
+                movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
+                jumpInputComponent.IsPressed)  // If player jumps, the process is canceled
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
+                movementInput.IgnoreCamera = false;
+                World.Remove<MoveBeforePlayingSocialEmoteIntent>(entity);
+            }
+            else
+            {
+                movementInput.Kind = MovementKind.RUN;
+                movementInput.Axes = Vector2.up;
+                movementInput.IgnoreCamera = true;
+                World.Add(entity, new PlayerLookAtIntent(intent.InitiatorPosition));
+            }
+        }
+
     }
 }

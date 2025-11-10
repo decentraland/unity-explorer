@@ -49,13 +49,13 @@ namespace DCL.SocialEmotes.UI
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
 
-                TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent = new TriggerEmoteReactingToSocialEmoteIntent()
-                    {
-                        TriggeredEmoteUrn = interaction.Emote.DTO.Metadata.id,
-                        OutcomeIndex = outcomeIndex,
-                        InitiatorWalletAddress = interaction.InitiatorWalletAddress,
-                        InteractionId = interaction.Id
-                    };
+                TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent = new TriggerEmoteReactingToSocialEmoteIntent(
+                        interaction.Emote.DTO.Metadata.id,
+                        outcomeIndex,
+                        interaction.InitiatorWalletAddress,
+                        interaction.InitiatorEntity,
+                        interaction.Id
+                    );
 
                 world.Add(playerEntity, triggerEmoteIntent);
             }
