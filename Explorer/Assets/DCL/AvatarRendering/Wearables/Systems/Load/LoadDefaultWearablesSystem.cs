@@ -142,7 +142,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
-                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest("v16", "1699288905291", "v15", "1699288905291"),
+                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(),
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
@@ -215,7 +215,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
-                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest("v16", "1699288905291", "v15", "1699288905291"),
+                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(),
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
