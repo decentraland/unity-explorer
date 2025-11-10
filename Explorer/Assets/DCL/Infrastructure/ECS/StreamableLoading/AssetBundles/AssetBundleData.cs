@@ -39,37 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
 
-            if (initialSceneState.HasValue)
-            {
-                InitialSceneStateMetadata state = initialSceneState.Value;
-
-                var seen = new HashSet<string>();
-                var newHashes = new List<string>();
-                var newPositions = new List<Vector3>();
-                var newRotations = new List<Quaternion>();
-                var newScales = new List<Vector3>();
-
-                for (var i = 0; i < state.assetHash.Count; i++)
-                {
-                    string hash = state.assetHash[i];
-
-                    if (seen.Add(hash)) // Add returns false if already present
-                    {
-                        newHashes.Add(hash);
-                        newPositions.Add(state.positions[i]);
-                        newRotations.Add(state.rotations[i]);
-                        newScales.Add(state.scales[i]);
-                    }
-                }
-
-                state.assetHash = newHashes;
-                state.positions = newPositions;
-                state.rotations = newRotations;
-                state.scales = newScales;
-
-                InitialSceneStateMetadata = state;
-            }
-
             UnloadAB();
         }
 
