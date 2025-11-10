@@ -21,7 +21,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             this.world = world;
         }
 
-        protected override async UniTask InternalExecuteAsync(TeleportParams args, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(TeleportParams args, CancellationToken ct)
         {
             // See https://github.com/decentraland/unity-explorer/issues/4935
             // The scene load process it is disrupted due to internet issues remaining in an invalid state
@@ -39,6 +39,8 @@ namespace DCL.RealmNavigation.TeleportOperations
                         sceneLoadingState.PromiseCreated = false;
                     }
                 });
+
+            return UniTask.CompletedTask;
         }
     }
 }
