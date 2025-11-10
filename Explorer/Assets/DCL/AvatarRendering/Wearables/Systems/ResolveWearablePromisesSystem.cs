@@ -99,9 +99,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
                 else if (wearable.Model.Exception != null)
                     finishedDTOs++;
-                else if (!((IAvatarAttachment)wearable).IsLoading)
+                else if (!wearable.IsLoading)
                 {
-                    ((IAvatarAttachment)wearable).UpdateLoadingStatus(true);
+                    wearable.UpdateLoadingStatus(true);
                     missingPointers.Add(loadingIntentionPointer);
                 }
             }
@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
 
-                    if (((IAvatarAttachment)visibleWearable).IsLoading) continue;
+                    if (visibleWearable.IsLoading) continue;
                     if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
                     if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
@@ -172,7 +172,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {
-                ((IAvatarAttachment)component).UpdateLoadingStatus(true);
+                component.UpdateLoadingStatus(true);
                 return true;
             }
 

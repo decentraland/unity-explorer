@@ -30,13 +30,13 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             (hairColor, eyesColor, bodyshapeColor);
 
         public bool IsEquipped(IWearable wearable) =>
-            wearables[((IAvatarAttachment)wearable).GetCategory()] == wearable;
+            wearables[wearable.GetCategory()] == wearable;
 
         public bool IsEquipped(ITrimmedWearable wearable) =>
             wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
 
         public void Equip(IWearable wearable) =>
-            wearables[((IAvatarAttachment)wearable).GetCategory()] = wearable;
+            wearables[wearable.GetCategory()] = wearable;
 
         public void UnEquip(IWearable wearable)
         {

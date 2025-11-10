@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = ((IAvatarAttachment)this).GetUrn().ToString();
+            var id = this.GetUrn().ToString();
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
@@ -228,7 +228,7 @@ namespace DCL.AvatarRendering.Wearables.Components
                 if (wearableItem == null)
                     continue;
 
-                if (result.Contains(((IAvatarAttachment)wearableItem).GetCategory()))
+                if (result.Contains(wearableItem.GetCategory()))
                     continue;
 
                 HashSet<string> wearableHidesList = new (StringComparer.OrdinalIgnoreCase);

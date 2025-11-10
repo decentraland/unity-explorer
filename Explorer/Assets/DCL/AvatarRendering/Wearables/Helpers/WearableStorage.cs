@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal void AddToInternalCache(IWearable wearable)
         {
-            wearablesCache.Add(((IAvatarAttachment)wearable).GetUrn(), wearable);
+            wearablesCache.Add(wearable.GetUrn(), wearable);
         }
 
         public void Set(URN urn, IWearable element)
@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 }
 
                 DateTime latestDate = DateTime.MinValue;
-                
+
                 foreach (var entry in registry.Values)
                 {
                     if (entry.TransferredAt > latestDate)
@@ -133,7 +133,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         latestDate = entry.TransferredAt;
                     }
                 }
-                
+
                 latestTransferredAt = latestDate;
                 return true;
             }
