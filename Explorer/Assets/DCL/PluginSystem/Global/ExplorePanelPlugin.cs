@@ -52,7 +52,6 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBus;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.UI.Profiles.Helpers;
@@ -67,9 +66,11 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
+using UnityEngine.InputSystem;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
@@ -130,6 +131,14 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IChatEventBus chatEventBus;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly UpscalingController upscalingController;
+        private readonly bool isVoiceChatEnabled;
+        private readonly bool isTranslationChatEnabled;
+        private readonly GalleryEventBus galleryEventBus;
+        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly IPassportBridge passportBridge;
+        private readonly DCLInput dclInput;
 
         private readonly bool includeCameraReel;
 
@@ -143,14 +152,7 @@ namespace DCL.PluginSystem.Global
         private PlaceInfoPanelController? placeInfoPanelController;
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private readonly bool isVoiceChatEnabled;
-        private readonly bool isTranslationChatEnabled;
-        private readonly GalleryEventBus galleryEventBus;
-        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
-        private readonly IPassportBridge passportBridge;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -268,6 +270,7 @@ namespace DCL.PluginSystem.Global
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
+            dclInput = DCLInput.Instance;
             this.passportBridge = passportBridge;
         }
 
@@ -279,19 +282,35 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
-            upscalingController?.Dispose();
+            upscalingController.Dispose();
+
+            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
+            dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
+            dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
+                dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
+        [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
+            dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
+            dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
+            dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
+                dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
+
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
-            
+
             backpackSubPlugin = new BackpackSubPlugin(
                 featureFlags,
                 assetsProvisioner,
@@ -474,13 +493,13 @@ namespace DCL.PluginSystem.Global
             PlaceElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
 
             return new ObjectPool<PlaceElementView>(
-                () => CreatePoolElements(asset),
+                CreatePoolElements,
                 actionOnGet: result => result.gameObject.SetActive(true),
                 actionOnRelease: result => result.gameObject.SetActive(false),
                 defaultCapacity: 8
             );
 
-            PlaceElementView CreatePoolElements(PlaceElementView asset)
+            PlaceElementView CreatePoolElements()
             {
                 PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
                 placeElementView.ConfigurePlaceImageController(webRequestController);
@@ -493,17 +512,42 @@ namespace DCL.PluginSystem.Global
             EventElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.EventElementViewRef, ct: ct)).Value;
 
             return new ObjectPool<EventElementView>(
-                () => CreatePoolElements(asset),
+                CreatePoolElements,
                 actionOnGet: result => result.gameObject.SetActive(true),
                 actionOnRelease: result => result.gameObject.SetActive(false),
                 defaultCapacity: 8
             );
 
-            EventElementView CreatePoolElements(EventElementView asset)
+            EventElementView CreatePoolElements()
             {
                 EventElementView placeElementView = Object.Instantiate(asset, view.EventsContentContainer.transform);
                 return placeElementView;
             }
+        }
+
+        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+        }
+
+        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+        }
+
+        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+        }
+
+        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(default(ExplorePanelParameter)));
+        }
+
+        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
         }
 
         private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
@@ -511,13 +555,13 @@ namespace DCL.PluginSystem.Global
             EventScheduleElementView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ScheduleElementRef, ct: ct)).Value;
 
             return new ObjectPool<EventScheduleElementView>(
-                () => CreatePoolElements(asset),
+                CreatePoolElements,
                 actionOnGet: result => result.gameObject.SetActive(true),
                 actionOnRelease: result => result.gameObject.SetActive(false),
                 defaultCapacity: 8
             );
 
-            EventScheduleElementView CreatePoolElements(EventScheduleElementView asset)
+            EventScheduleElementView CreatePoolElements()
             {
                 EventScheduleElementView placeElementView = Object.Instantiate(asset, view.ScheduleElementsContainer);
                 return placeElementView;
@@ -539,74 +583,33 @@ namespace DCL.PluginSystem.Global
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {
-            [field: Header(nameof(ExplorePanelPlugin) + "." + nameof(ExplorePanelSettings))]
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject ExplorePanelPrefab;
-
-            [field: SerializeField]
-            public BackpackSettings BackpackSettings { get; private set; }
-
-            [field: SerializeField]
-            public string[] EmbeddedEmotes { get; private set; }
-
-            [field: SerializeField]
-            public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
-
-            [field: SerializeField]
-            public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
-
-            [field: SerializeField]
-            public VideoPrioritizationSettings VideoPrioritizationSettings { get; private set; }
-
-            [field: SerializeField]
-            public LandscapeDataRef LandscapeData { get; private set; }
-
-            [field: SerializeField]
-            public QualitySettingsAsset QualitySettingsAsset { get; private set; }
-            [field: SerializeField]
-            public SkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
-
-            [field: SerializeField]
-            public ControlsSettingsAsset ControlsSettingsAsset { get; private set; }
-
-            [field: SerializeField]
-            public ChatSettingsAsset ChatSettingsAsset { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; }
+            [field: SerializeField] public AssetReferenceGameObject ExplorePanelPrefab { get; private set; } = null!;
+            [field: SerializeField] public BackpackSettings BackpackSettings { get; private set; } = null!;
+            [field: SerializeField] public string[] EmbeddedEmotes { get; private set; } = null!;
+            [field: SerializeField] public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; } = null!;
+            [field: SerializeField] public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; } = null!;
+            [field: SerializeField] public VideoPrioritizationSettings VideoPrioritizationSettings { get; private set; } = null!;
+            [field: SerializeField] public LandscapeDataRef LandscapeData { get; private set; } = null!;
+            [field: SerializeField] public QualitySettingsAsset QualitySettingsAsset { get; private set; } = null!;
+            [field: SerializeField] public SkyboxSettingsAsset SkyboxSettingsAsset { get; private set; } = null!;
+            [field: SerializeField] public ControlsSettingsAsset ControlsSettingsAsset { get; private set; } = null!;
+            [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; } = null!;
 
             [field: Header("Camera Reel")]
-            [field: SerializeField]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
-            public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }
-
-            [field: SerializeField]
-            public string StorageProgressBarText { get; private set; }
-
-            [field: SerializeField]
-            public int GridLayoutFixedColumnCount { get; private set; }
-            [field: SerializeField]
-            public int ThumbnailHeight { get; private set; }
-            [field: SerializeField]
-            public int ThumbnailWidth { get; private set; }
+            [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
+            [field: SerializeField] public string StorageProgressBarText { get; private set; } = null!;
+            [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField] public int ThumbnailHeight { get; private set; }
+            [field: SerializeField] public int ThumbnailWidth { get; private set; }
 
             [field: Header("Place Reel")]
-
-            [field: SerializeField]
-            public int PlaceGridLayoutFixedColumnCount { get; private set; }
-
-            [field: SerializeField]
-            public int PlaceThumbnailHeight { get; private set; }
-
-            [field: SerializeField]
-            public int PlaceThumbnailWidth { get; private set; }
-
-            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
-                EmbeddedEmotes.Select(s => new URN(s)).ToArray();
+            [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField] public int PlaceThumbnailHeight { get; private set; }
+            [field: SerializeField] public int PlaceThumbnailWidth { get; private set; }
+            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() => EmbeddedEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }

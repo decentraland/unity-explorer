@@ -39,7 +39,7 @@ namespace DCL.FeatureFlags
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
-            //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT that depends on them.
+            //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT as it depends on them.
             SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));
         }

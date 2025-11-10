@@ -168,7 +168,7 @@ MonoBehaviour:
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        ExplorePanelPrefab:
+        <ExplorePanelPrefab>k__BackingField:
           m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
           m_SubObjectName: 
           m_SubObjectType: 
