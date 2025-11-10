@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using Segment.Serialization;
 using System;
 using System.Threading;
 
@@ -17,6 +19,47 @@ namespace DCL.PluginSystem
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogError(ReportCategory.ENGINE, $"Error initializing plugin {plugin.GetType().Name}: {e}");
+                return (plugin, false);
+            }
+
+            return (plugin, true);
+        }
+
+        public static async UniTask<(TPlugin plugin, bool success)> InitializePluginWithAnalyticsAsync<TPlugin>(
+            this IPluginSettingsContainer pluginSettingsContainer,
+            TPlugin plugin,
+            IAnalyticsController analytics,
+            CancellationToken ct
+        ) where TPlugin: class, IDCLPlugin
+        {
+            string pluginName = plugin.GetType().Name;
+
+            analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject
+            {
+                { "plugin", pluginName },
+                { "status", "started" },
+            });
+
+            try
+            {
+                await plugin.Initialize(pluginSettingsContainer, ct);
+
+                analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject
+                {
+                    { "plugin", pluginName },
+                    { "status", "ended" },
+                });
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Error initializing plugin {pluginName}: {e}");
+
+                analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject
+                {
+                    { "plugin", pluginName },
+                    { "status", "failed" },
+                });
+
                 return (plugin, false);
             }
 
