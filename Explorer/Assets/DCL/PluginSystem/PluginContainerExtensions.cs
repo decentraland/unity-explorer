@@ -34,37 +34,23 @@ namespace DCL.PluginSystem
         {
             string pluginName = plugin.GetType().Name;
 
-            analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject
-            {
-                { "plugin", pluginName },
-                { "status", "started" },
-            });
-
+            Track(analytics, pluginName, "started");
             try
             {
                 await plugin.Initialize(pluginSettingsContainer, ct);
-
-                analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject
-                {
-                    { "plugin", pluginName },
-                    { "status", "ended" },
-                });
+                Track(analytics, pluginName, "ended");
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogError(ReportCategory.ENGINE, $"Error initializing plugin {pluginName}: {e}");
-
-                analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject
-                {
-                    { "plugin", pluginName },
-                    { "status", "failed" },
-                });
-
+                Track(analytics, pluginName, "failed");
                 return (plugin, false);
             }
 
             return (plugin, true);
         }
+
+        private static void Track(IAnalyticsController analytics, string pluginName, string status) => analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject { { "plugin", pluginName }, { "status", status } });
 
         public static UniTask<TPlugin> ThrowOnFail<TPlugin>(this UniTask<(TPlugin? plugin, bool success)> parentTask) where TPlugin: class, IDCLPlugin
         {
