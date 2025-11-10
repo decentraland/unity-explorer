@@ -317,7 +317,7 @@ namespace Global.Dynamic
                     if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
                         await LoadStartingRealmAsync(ct);
                     else
-                        throw;
+                        ExitUtils.Exit();
                 }
             }
 
@@ -336,7 +336,7 @@ namespace Global.Dynamic
                     if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
                         await LoadUserFlowAsync(playerEntity, ct);
                     else
-                        throw;
+                        ExitUtils.Exit();
                 }
             }
         }
