@@ -1,6 +1,8 @@
 ﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+using Sentry;
 using System;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using UnityEngine.Device;
 
@@ -66,6 +68,18 @@ namespace DCL.Diagnostics
             }
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
+        }
+
+        public static void LogWebSocketException(Exception exception, string category)
+        {
+            // InnerException is wrapped by the RPC tool (InvalidOperationException)
+            if (exception.InnerException is WebSocketException webSocketException)
+            {
+                SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
+                                        + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
+            }
+
+            ReportHub.LogException(exception, new ReportData(category));
         }
 
         private static void AppendHeader(StringBuilder stringBuilder, string header)

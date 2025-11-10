@@ -1,14 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using PortableExperiences.Controller;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using System;
-using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 {
@@ -38,8 +35,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
             ExitAsync().ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this);
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
-        public object GetLoadedPortableExperiences() =>
-            GetLoadedPortableExperiences(disposeCts.Token);
+        public object GetLoadedPortableExperiences() => GetLoadedPortableExperiences(disposeCts.Token);
 
         private async UniTask<IPortableExperiencesController.SpawnResponse> SpawnAsync(URN pid, ENS ens, CancellationToken ct)
         {
@@ -66,7 +62,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
             return portableExperiencesController.UnloadPortableExperienceById(sceneData.SceneEntityDefinition.id);
         }
 
-        private List<IPortableExperiencesController.SpawnResponse> GetLoadedPortableExperiences(CancellationToken ct) =>
-            portableExperiencesController.GetAllPortableExperiences();
+        private string GetLoadedPortableExperiences(CancellationToken ct) =>
+            JsonConvert.SerializeObject(portableExperiencesController.GetAllPortableExperiences());
     }
 }
