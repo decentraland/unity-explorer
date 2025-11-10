@@ -83,7 +83,7 @@ namespace DCL.SocialService
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             if (!string.IsNullOrEmpty(result.CloseStatusDescription))
-                                ReportHub.LogError(ReportCategory.FRIENDS, $"Friends web socket disconnected. {result.CloseStatusDescription}");
+                                ReportHub.LogError(ReportCategory.SOCIAL, $"Friends web socket disconnected. {result.CloseStatusDescription}");
 
                             await CloseAsync(ct);
                             break;
@@ -97,7 +97,7 @@ namespace DCL.SocialService
                     }
                     catch (Exception e)
                     {
-                        ReportHub.LogException(e, ReportCategory.FRIENDS);
+                        ReportHub.LogException(e, ReportCategory.SOCIAL);
                         OnErrorEvent?.Invoke(e);
                         break;
                     }
