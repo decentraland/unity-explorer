@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaAddress MediaAddress;
         public VideoState State { get; private set; }
-        public ErrorCode ErrorCode;
+        public bool HasFailed { get; private set; }
         public VideoState LastPropagatedState;
         public float LastPropagatedVideoTime;
         public CancellationTokenSource? Cts;
@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             MediaPlayer = mediaPlayer;
             IsFromContentServer = isFromContentServer;
-            ErrorCode = ErrorCode.None;
+            HasFailed = false;
             State = VideoState.VsNone;
             isFrozen = false;
         }
@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.MediaStream
                 state = VideoState.VsNone;
             else if (player.IsFinished)
                 state = VideoState.VsNone;
-            else if (ErrorCode != ErrorCode.None || player.GetLastError() != ErrorCode.None)
+            else if (HasFailed || player.GetLastError() != ErrorCode.None)
                 state = VideoState.VsError;
             else if (player.IsPaused)
                 state = VideoState.VsPaused;
@@ -98,10 +98,13 @@ namespace DCL.SDKComponents.MediaStream
             return isFrozen;
         }
 
+        public void MarkAsFailed(bool failed) =>
+            HasFailed = failed;
+
         public void Dispose()
         {
             State = VideoState.VsNone;
-            ErrorCode = ErrorCode.None;
+            HasFailed = false;
             isFrozen = false;
             MediaPlayer.Dispose(MediaAddress);
             Cts.SafeCancelAndDispose();

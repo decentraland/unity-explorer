@@ -170,8 +170,9 @@ namespace DCL.SDKComponents.MediaStream
                 LastPropagatedVideoTime = 0,
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
-                ErrorCode = isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? ErrorCode.None : ErrorCode.LoadFailed,
             };
+
+            component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
 
             float targetVolume = (hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);

@@ -243,7 +243,7 @@ namespace DCL.SDKComponents.MediaStream
                 return true;
             }
 
-            component.ErrorCode = component.MediaAddress.IsEmpty ? ErrorCode.None : ErrorCode.LoadFailed;
+            component.MarkAsFailed(!component.MediaAddress.IsEmpty);
 
             Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
 
