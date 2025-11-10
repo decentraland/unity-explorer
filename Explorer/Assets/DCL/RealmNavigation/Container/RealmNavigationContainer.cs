@@ -57,7 +57,6 @@ namespace DCL.RealmNavigation
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                new RemoveUnfinishedScenesTeleportOperation(globalWorld),
                 new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
                 new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
             },
@@ -70,7 +69,6 @@ namespace DCL.RealmNavigation
                 {
                     new RestartLoadingStatus(),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                    new RemoveUnfinishedScenesTeleportOperation(globalWorld),
                     new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
                 }, ReportCategory.SCENE_LOADING,
                 analytics,

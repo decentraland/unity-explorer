@@ -23,6 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.RealmNavigation;
+using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine.Networking;
@@ -35,6 +37,9 @@ namespace Global.Dynamic
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
         private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, EmptySceneComponent>().WithNone<PortableExperienceComponent>();
+        private static readonly QueryDescription CLEAR_UNFINISHED_QUERY = new QueryDescription()
+                                                                         .WithAll<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLoadingState>()
+                                                                         .WithNone<DeleteEntityIntention, ISceneFacade>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -190,21 +195,20 @@ namespace Global.Dynamic
 
             string commsAdapterUrl = ExtractCommsAdapterUrl(about.comms?.adapter ?? string.Empty);
 
-            if(string.IsNullOrEmpty(commsAdapterUrl))
+            if (string.IsNullOrEmpty(commsAdapterUrl))
                 return true;
 
             long statusCode;
+
             try
             {
                 statusCode = await webRequestController.SignedFetchPostAsync(
-                    commsAdapterUrl,
-                    SIGN_METADATA,
-                    ct).StatusCodeAsync();
+                                                            commsAdapterUrl,
+                                                            SIGN_METADATA,
+                                                            ct)
+                                                       .StatusCodeAsync();
             }
-            catch (UnityWebRequestException e)
-            {
-                statusCode = e.ResponseCode;
-            }
+            catch (UnityWebRequestException e) { statusCode = e.ResponseCode; }
 
             return statusCode != 401;
         }
@@ -241,6 +245,8 @@ namespace Global.Dynamic
 
             if (globalWorld != null)
             {
+                RemoveUnfinishedScenes();
+
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
 
                 // Destroy everything without awaiting as it's Application Quit
@@ -259,6 +265,8 @@ namespace Global.Dynamic
             if (globalWorld == null) return;
 
             World world = globalWorld.EcsWorld;
+
+            RemoveUnfinishedScenes();
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
@@ -297,6 +305,28 @@ namespace Global.Dynamic
             }
 
             return false;
+        }
+
+        private void RemoveUnfinishedScenes()
+        {
+            if (globalWorld == null) return;
+
+            var world = globalWorld!.EcsWorld;
+
+            // See https://github.com/decentraland/unity-explorer/issues/4935
+            // The scene load process it is disrupted due to internet issues remaining in an invalid state
+            // We need to remove them and reload them, otherwise they will keep in an inconsistent state forever
+            world.Query(CLEAR_UNFINISHED_QUERY,
+                (Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneLoadingState sceneLoadingState) =>
+                {
+                    if (promise is { IsConsumed: true, Result: { Succeeded: false } })
+                    {
+                        world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                        world.Add<DeleteEntityIntention>(entity);
+                        sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+                        sceneLoadingState.PromiseCreated = false;
+                    }
+                });
         }
 
         private List<ISceneFacade> FindLoadedScenesAndClearSceneCache(bool findPortableExperiences = false)
