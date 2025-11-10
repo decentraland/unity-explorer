@@ -13,6 +13,7 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -34,7 +35,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using UnityEngine.Events;
 using Utility;
@@ -190,7 +190,7 @@ namespace DCL.Minimap
                           // May be removed if a new control is added
                          .AddControl(new TextContextMenuControlSettings("Scene's Options"))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", toggleValue => SetAsHomeToggled(toggleValue)))
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
@@ -219,12 +219,12 @@ namespace DCL.Minimap
                       .Forget();
         }
 
-        private void SetAsHomeToggled(bool value)
+        private void SetAsHomeToggledAsync(bool value)
         {
-            if (!value)
-                homePlaceEventBus.RequestUnsetAsHome(previousParcelPosition);
-            else
+            if (value)
                 homePlaceEventBus.RequestSetAsHome(previousParcelPosition);
+            else
+                homePlaceEventBus.RequestUnsetAsHome();
         }
 
         private void CopyJumpInLink()

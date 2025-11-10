@@ -4,6 +4,8 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Navmap;
+using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -12,12 +14,14 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
 	internal struct HomeMarkerInstaller
 	{
-		public async UniTask InstallAsync(
+		public async UniTask<IMapLayerController> InstallAsync(
 			Dictionary<MapLayer, IMapLayerController> writer,
 			List<IZoomScalingLayer> zoomScalingWriter,
 			MapRendererConfiguration configuration,
 			ICoordsUtils coordsUtils,
 			IMapCullingController cullingController,
+			INavmapBus navmapBus,
+			IPlacesAPIService placesAPIService,
 			IMapRendererSettings mapSettings,
 			IAssetsProvisioner assetsProvisioner,
 			HomePlaceEventBus homePlaceEventBus,
@@ -30,6 +34,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 				configuration.HomeMarkerRoot,
 				coordsUtils,
 				cullingController,
+				navmapBus,
+				placesAPIService,
 				homePlaceEventBus
 			);
 
@@ -37,7 +43,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
 			writer.Add(MapLayer.HomeMarker, homeMarkerController);
 			zoomScalingWriter.Add(homeMarkerController);
-			return;
+			
+			return homeMarkerController;
 
 			IHomeMarker CreateMarker(Transform parent)
 			{

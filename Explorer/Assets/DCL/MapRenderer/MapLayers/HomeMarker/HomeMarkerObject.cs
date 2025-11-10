@@ -4,6 +4,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
 	public class HomeMarkerObject : MapRendererMarkerBase
 	{
+		[SerializeField] internal Transform scalingTransform;
 		[SerializeField] private SpriteRenderer homeIcon;
 		
 		public void SetSortingOrder(int sortingOrder)

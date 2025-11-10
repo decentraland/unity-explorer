@@ -28,6 +28,7 @@ namespace Global.Dynamic
 
         [SerializeField] internal InitialRealm initialRealm;
         [SerializeField] internal Vector2Int targetScene;
+        [SerializeField] internal bool ForceHomePosition = false;
         [SerializeField] internal bool EditorSceneStartPosition = true;
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
@@ -163,7 +164,7 @@ namespace Global.Dynamic
         /// </summary>
         public void CheckStartParcelHomeOverride(IAppArgs appArgs)
         {
-            if (HasAppArgPosition(appArgs) || HasEditorPositionOverride()) return;
+            if (HasAppArgPosition(appArgs) || (!ShouldForceHomePosition() && HasEditorPositionOverride())) return;
             
             HomeMarkerData? homeData = HomeMarkerSerializer.Deserialize();
 
@@ -175,18 +176,20 @@ namespace Global.Dynamic
 
         public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            if (HasAppArgPosition(appArgs) || HasEditorPositionOverride()) return;
+            if (ShouldForceHomePosition() || HasAppArgPosition(appArgs) || HasEditorPositionOverride()) return;
 
             //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
             string? parcelToTeleportOverride = null;
 
             //If not, we check the feature flag usage
+            //If parcelToTeleportOverride is just GP, try using home position if its set.
             var featureFlagOverride =
-                featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
-                featureFlagsConfigurationCache.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
-                    FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride) &&
-                parcelToTeleportOverride != null;
+                featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) 
+                && featureFlagsConfigurationCache.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                    FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride) 
+                && parcelToTeleportOverride != null
+                && (parcelToTeleportOverride != "0,0" || !HomeMarkerSerializer.HasSerializedPosition());
 
             if (featureFlagOverride)
                 ParsePositionAppParameter(parcelToTeleportOverride);
@@ -211,5 +214,7 @@ namespace Global.Dynamic
                 return true;
             return false;
         }
+
+        private bool ShouldForceHomePosition() => ForceHomePosition && HomeMarkerSerializer.HasSerializedPosition();
     }
 }

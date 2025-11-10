@@ -1,4 +1,5 @@
 using System;
+using DCL.PlacesAPIService;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
@@ -6,7 +7,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 	public class HomePlaceEventBus
 	{
 		internal event Action<Vector2Int> SetAsHomeRequested;
-		internal event Action<Vector2Int> UnsetAsHomeRequested;
+		internal event Action UnsetAsHomeRequested;
 
 		internal Func<Vector2Int, bool> IsHomeQuery;
 		internal Func<Vector2Int?> GetHomeCoordinatesQuery;
@@ -16,9 +17,9 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			SetAsHomeRequested?.Invoke(coordinates);
 		}
 
-		public void  RequestUnsetAsHome(Vector2Int coordinates)
+		public void  RequestUnsetAsHome()
 		{
-			UnsetAsHomeRequested?.Invoke(coordinates);
+			UnsetAsHomeRequested?.Invoke();
 		}
 
 		public bool IsHome(Vector2Int coordinates)

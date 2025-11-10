@@ -10,6 +10,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -21,7 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
-using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -193,8 +193,11 @@ namespace DCL.Navmap
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
             favoriteButton.SetButtonState(place.user_favorite);
-            if(view.HomeButton != null)
-                homeButton.SetButtonState(homePlaceEventBus.IsHome(place.base_position_processed));
+            if (view.HomeButton != null)
+            {
+                VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
+                homeButton.SetButtonState(homePlaceEventBus.IsHome(coordinates));
+            }
 
             SetCategories(place);
 
@@ -281,12 +284,20 @@ namespace DCL.Navmap
 
         private void SetAsHome(bool isHome)
         {
-            if (place == null || !VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates)) return;
+            if (place == null) 
+                return;
+
+            Vector2Int positionReference;
+            if(TeleportUtils.IsRoad(place.title) && originParcel.HasValue)
+                positionReference = originParcel.Value;
+            else if (VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates))
+                positionReference = coordinates;
+            else return;
             
             if(isHome)
-                homePlaceEventBus.RequestSetAsHome(coordinates);
+                homePlaceEventBus.RequestSetAsHome(positionReference);
             else
-                homePlaceEventBus.RequestUnsetAsHome(coordinates);
+                homePlaceEventBus.RequestUnsetAsHome();
         }
 
         private void StartNavigation()
@@ -326,7 +337,7 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) ? originParcel : currentBaseParcel;
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
 
             chatMessagesBus
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,

@@ -51,6 +51,16 @@ namespace Global.Editor
             SerializedProperty editorSceneStartPosition = parent.FindPropertyRelative(nameof(RealmLaunchSettings.EditorSceneStartPosition));
             EditorGUI.PropertyField(propertyPosition, editorSceneStartPosition, new GUIContent("Editor Start Position", "If this is on, the feature flag position will not be set"), true);
             propertyPosition.y += singleLineHeight;
+            
+            // Add ForceHomePosition field when EditorSceneStartPosition is disabled
+            if (!editorSceneStartPosition.boolValue)
+            {
+                EditorGUI.indentLevel++;
+                SerializedProperty forceHomePosition = parent.FindPropertyRelative(nameof(RealmLaunchSettings.ForceHomePosition));
+                EditorGUI.PropertyField(propertyPosition, forceHomePosition, new GUIContent("Force Home Position", "Use home marker position as start position"), true);
+                EditorGUI.indentLevel--;
+                propertyPosition.y += singleLineHeight;
+            }
 
             Rect fieldPosition = propertyPosition;
             SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetScene));
@@ -252,6 +262,10 @@ namespace Global.Editor
 
             SerializedProperty initialRealmField = property.FindPropertyRelative(nameof(RealmLaunchSettings.initialRealm));
             InitialRealm initialRealmValue = EnumUtils.Values<InitialRealm>()[initialRealmField.enumValueIndex];
+            
+            SerializedProperty editorSceneStartPosition = property.FindPropertyRelative(nameof(RealmLaunchSettings.EditorSceneStartPosition));
+            if (!editorSceneStartPosition.boolValue)
+                fieldsCount += 1;
 
             switch (initialRealmValue)
             {

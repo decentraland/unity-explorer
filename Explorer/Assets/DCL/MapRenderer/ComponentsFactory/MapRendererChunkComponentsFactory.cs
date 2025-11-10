@@ -128,12 +128,13 @@ namespace DCL.MapRenderer.ComponentsFactory
             var categoriesInstallerTask = categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken);
             var sceneOfInterestInstallerTask = sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, navmapBus, cancellationToken);
             var searchResultsInstallerTask = searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, searchResultsClusterObjectsPool, navmapBus, cancellationToken);
+            var homeMarkerInstallerTask = homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, navmapBus, placesAPIService, mapSettings, assetsProvisioner, homePlaceEventBus, cancellationToken);
+
 
             await UniTask.WhenAll(
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, homePlaceEventBus, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, web3IdentityCache, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
@@ -141,11 +142,13 @@ namespace DCL.MapRenderer.ComponentsFactory
             (IMapLayerController liveEventsInstaller,
                 IMapLayerController categoriesInstaller,
                 IMapLayerController sceneOfInterestInstaller,
-                IMapLayerController searchResultsInstaller) = await UniTask.WhenAll(
+                IMapLayerController searchResultsInstaller,
+                IMapLayerController homeInstaller) = await UniTask.WhenAll(
                 liveEventsInstallTask,
                 categoriesInstallerTask,
                 sceneOfInterestInstallerTask,
-                searchResultsInstallerTask
+                searchResultsInstallerTask,
+                homeMarkerInstallerTask
             );
 
             List<IMapLayerController> interactableLayerControllers = new List<IMapLayerController>()
@@ -154,7 +157,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 pinMarkerController,
                 sceneOfInterestInstaller,
                 categoriesInstaller,
-                searchResultsInstaller
+                searchResultsInstaller,
+                homeInstaller
             };
 
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(

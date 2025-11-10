@@ -17,6 +17,11 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			return homeMarkerData;
 		}
 
+		public static bool HasSerializedPosition()
+		{
+			return DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+		}
+
 		internal static void Serialize(HomeMarkerData? data)
 		{
 			if (data == null)
