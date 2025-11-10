@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Profiling;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -37,6 +38,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
+
+            if (initialSceneState.HasValue)
+            {
+                InitialSceneStateMetadata state = initialSceneState.Value;
+                state.assetHash = initialSceneState.Value.assetHash.Distinct().ToList();
+                InitialSceneStateMetadata = state;
+            }
 
             UnloadAB();
         }
