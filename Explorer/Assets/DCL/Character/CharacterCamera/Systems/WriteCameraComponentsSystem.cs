@@ -46,7 +46,7 @@ namespace DCL.CharacterCamera.Systems
         {
             // Set camera position for a newly created scene
             var sdkTransform = ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false)
-                .EnsureNotNull();
+                                                    .EnsureNotNull();
 
             if (!World.Has<SDKTransform>(cameraEntity))
             {
@@ -61,11 +61,9 @@ namespace DCL.CharacterCamera.Systems
             // Initialize SDK Main Camera component
             // The instance used in PutMessage() will automatically return to the pool.
             PBMainCamera pbMainCameraForCRDT = mainCameraPool.Get();
+
             ecsToCrdtWriter.PutMessage<PBMainCamera, PBMainCamera>(
-                static (dataToWrite, ecsInstance) =>
-                {
-                    dataToWrite.VirtualCameraEntity = ecsInstance.VirtualCameraEntity;
-                },
+                static (dataToWrite, ecsInstance) => { dataToWrite.VirtualCameraEntity = ecsInstance.VirtualCameraEntity; },
                 SpecialEntitiesID.CAMERA_ENTITY,
                 pbMainCameraForCRDT);
 
@@ -93,8 +91,10 @@ namespace DCL.CharacterCamera.Systems
             if (!checkIsDirty || exposedCameraData.CameraType.IsDirty)
                 ecsToCrdtWriter.PutMessage<PBCameraMode, IExposedCameraData>(static (mode, data) => mode.Mode = data.CameraType, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
 
-            if (!checkIsDirty || exposedCameraData.PointerIsLocked.IsDirty)
-                ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(static (pointerLock, data) => pointerLock.IsPointerLocked = data.PointerIsLocked, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
+            if (exposedCameraData.PointerIsLocked.IsDirty)
+                ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(
+                    static (pointerLock, data) => pointerLock.IsPointerLocked = data.PointerIsLocked,
+                    SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
         }
     }
 }
