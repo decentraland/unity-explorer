@@ -34,7 +34,7 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private readonly GltfContainerTestResources resources = new ();
 
-        private CreateGltfAssetFromAssetBundleSystemWorld createGltfAssetFromAssetBundleSystem;
+        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
         private EntityEventBuffer<GltfContainerComponent> eventBuffer;
 
         //Required since all tests invoke TearDown, but not all used resources; therefore it could trigger a negative ref count
@@ -56,7 +56,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystemWorld(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
         [TearDown]

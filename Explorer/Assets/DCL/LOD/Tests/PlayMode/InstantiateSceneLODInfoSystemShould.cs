@@ -14,7 +14,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -97,7 +96,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevelPromise = 0;
             sceneLODInfo.id = "scene";
-            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("Unsupported"));
+            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
             system.Update(0);
@@ -121,7 +120,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
             sceneLODInfo.CurrentLODLevelPromise = 0;
             sceneLODInfo.id = "scene";
-            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("Unsupported"));
+            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
             system.Update(0);

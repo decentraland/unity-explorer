@@ -37,6 +37,10 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
             if (!realmData.Configured)
                 return;
 
+            //For now, this only works for Genesis
+            if (!realmData.IsGenesis())
+                return;
+
             if (!sceneRequestInitialized)
                 RequestEarlyScene();
 

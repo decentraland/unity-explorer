@@ -23,7 +23,7 @@ PrefabInstance:
     - target: {fileID: 2166274687723859711, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: <verifiedIcon>k__BackingField
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 2758691132856289706}
     - target: {fileID: 2520904133966978804, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_Alpha
       value: 1
@@ -248,6 +248,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7376387585395414415, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7839301233341862954, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
@@ -284,6 +288,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8540645274900162083, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8890034211953864265, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -307,11 +315,15 @@ PrefabInstance:
     - {fileID: 669214756966493442, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     - {fileID: 3504873494045477904, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     m_RemovedGameObjects:
-    - {fileID: 660116915281079526, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
-    - {fileID: 4097828356427392652, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
-    - {fileID: 8540645274900162083, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 0}
+    - {fileID: 0}
     - {fileID: 6979630135461700999, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
-    - {fileID: 8890034211953864265, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 0}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+--- !u!224 &2758691132856289706 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5165924017890984536, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+  m_PrefabInstance: {fileID: 7059914126619200498}
+  m_PrefabAsset: {fileID: 0}

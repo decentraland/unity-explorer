@@ -3,11 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -16,10 +16,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
-    public partial class CreateGltfAssetFromAssetBundleSystemWorld : CreateGLTFAssetFromAssetBundleSystemBase
+    public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
-        internal CreateGltfAssetFromAssetBundleSystemWorld(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world, instantiationFrameTimeBudget, memoryBudget) { }
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        {
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
+            this.memoryBudget = memoryBudget;
+        }
 
         protected override void Update(float t)
         {
@@ -33,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
-            if (!HasBudget())
+            if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
@@ -49,11 +55,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
-            GltfContainerAsset result;
 
             // Create a new container root. It will be cached and pooled
-            result = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>());
-
+            GltfContainerAsset result = Utils.CreateGltfObject(assetBundleData, assetIntention.Hash);
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
 

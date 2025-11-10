@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/restricted_actions.proto
+
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined

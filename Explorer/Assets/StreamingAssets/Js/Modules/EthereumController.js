@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/ethereum_controller.proto
+
 async function messageToString(dict) {
     const header = `# DCL Signed message\n`
     const payload = Object.entries(dict)

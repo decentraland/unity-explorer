@@ -19,7 +19,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -96,7 +95,7 @@ namespace DCL.SDKComponents.MediaStream
 
             // Only TextureData contains referencing mechanism
             // Create or get it from the entity
-            if (!world.TryGet(videoPlayerEntity, out TextureData textureData))
+            if (!world.TryGet(videoPlayerEntity, out TextureData? textureData))
             {
                 textureData = new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(consumer, mediaPlayer)));
                 world.Add(videoPlayerEntity, textureData);
@@ -108,7 +107,7 @@ namespace DCL.SDKComponents.MediaStream
                 foreach (Renderer? renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
 
-            textureData.AddReference();
+            textureData!.AddReference();
 
             resultData = textureData;
             return true;
@@ -130,7 +129,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [SuppressMessage("ReSharper", "RedundantAssignment")]
-        public MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume)
+        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume)
         {
             bool isValidLocalPath = false;
             bool isValidStreamUrl = false;
@@ -167,14 +166,13 @@ namespace DCL.SDKComponents.MediaStream
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
             {
                 MediaAddress = address,
-                PreviousCurrentTimeChecked = -1,
                 LastPropagatedState = VideoState.VsPaused,
                 LastPropagatedVideoTime = 0,
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };
 
-            component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
+            component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
 
             float targetVolume = (hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);

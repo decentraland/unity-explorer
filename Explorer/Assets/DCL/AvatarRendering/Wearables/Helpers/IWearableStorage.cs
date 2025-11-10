@@ -1,5 +1,7 @@
-﻿using DCL.AvatarRendering.Loading;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
+using System;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -8,5 +10,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public interface IWearableStorage : IAvatarElementStorage<IWearable, WearableDTO>
     {
+        bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
     }
 }

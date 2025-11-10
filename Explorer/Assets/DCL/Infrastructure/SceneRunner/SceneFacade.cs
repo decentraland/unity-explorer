@@ -227,6 +227,7 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
+            SceneData.InitialSceneStateInfo.Dispose();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }

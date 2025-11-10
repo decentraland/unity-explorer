@@ -74,7 +74,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// <summary>
         ///     Return to the pool
         /// </summary>
-        public void Dereference(in string key, GltfContainerAsset asset)
+        public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false)
         {
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
@@ -91,19 +91,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            //If the parent is the bridge, it means that the asset is waiting on the scene-lod state
-            Transform parent = asset.Root.transform.parent;
-
-            if (!parent || parent != sceneLODBridge)
+            if (putInBridge)
+                asset.Root.transform.SetParent(sceneLODBridge, true);
+            else
             {
                 asset.Root.SetActive(false);
                 asset.Root.transform.SetParent(parentContainer, true);
             }
-        }
-
-        public void PutInBridge(GltfContainerAsset gltfContainerAsset)
-        {
-            gltfContainerAsset.Root.transform.SetParent(sceneLODBridge, true);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)

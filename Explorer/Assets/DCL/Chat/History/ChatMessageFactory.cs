@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using System;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -37,7 +38,6 @@ namespace DCL.Chat.History
         public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride, double sentTimestamp)
         {
             Profile? ownProfile = null;
-
             if (web3IdentityCache.Identity != null)
                 ownProfile = profileCache.Get(web3IdentityCache.Identity.Address);
 

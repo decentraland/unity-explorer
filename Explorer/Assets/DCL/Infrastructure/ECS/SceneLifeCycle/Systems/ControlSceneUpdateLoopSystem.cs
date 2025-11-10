@@ -10,7 +10,6 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
@@ -52,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade), typeof(BannedSceneComponent))]
         private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent, ref InitialSceneStateDescriptor initialSceneState)
+            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed)
@@ -63,9 +62,6 @@ namespace ECS.SceneLifeCycle.Systems
 
                 return;
             }
-
-            if (!initialSceneState.IsDownloadedAndReady())
-                return;
 
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {

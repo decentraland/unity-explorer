@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/testing.proto
+
 module.exports.logTestResult = async function(message) {
     console.log('JSMODULE: logTestResult')
     return {};

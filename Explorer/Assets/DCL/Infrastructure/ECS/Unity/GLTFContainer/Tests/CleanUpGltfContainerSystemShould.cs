@@ -29,7 +29,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
-            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
+            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY);
         }
 
         [Test]
@@ -42,6 +42,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             asset.DecodedVisibleSDKColliders = new List<SDKCollider> { new (), new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State = LoadingState.Finished;
+
 
             Entity e = world.Create(c, new DeleteEntityIntention());
 

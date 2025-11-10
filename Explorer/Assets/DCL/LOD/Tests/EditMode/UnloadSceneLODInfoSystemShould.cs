@@ -4,10 +4,10 @@ using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -54,7 +54,7 @@ namespace DCL.LOD.Tests
             };
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
-            system = new UnloadSceneLODSystem(world, scenesCache, lodCache);
+            system = new UnloadSceneLODSystem(world, scenesCache, lodCache, Substitute.For<IRealmPartitionSettings>());
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
             sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
-            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
             //One empty update to allow creation
             system.Update(0);
 
@@ -89,7 +89,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.id = CachedSceneID;
             sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
 
-            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
+            Entity createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo);
             //One empty update to allow creation
             system.Update(0);
 

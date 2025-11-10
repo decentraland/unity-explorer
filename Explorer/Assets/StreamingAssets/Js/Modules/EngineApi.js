@@ -1,4 +1,6 @@
-﻿// engine module
+﻿// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/engine_api.proto
+
 module.exports.crdtSendToRenderer = async function(messages) {
     const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
     return {

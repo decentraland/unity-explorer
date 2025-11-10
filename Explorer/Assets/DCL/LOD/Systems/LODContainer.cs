@@ -102,7 +102,8 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     textureArrayContainerFactory, c.lodSettingsAsset.Value,
-                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
+                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS,
+                    staticContainer.GltfContainerAssetsCache);
 
                 return UniTask.CompletedTask;
             });

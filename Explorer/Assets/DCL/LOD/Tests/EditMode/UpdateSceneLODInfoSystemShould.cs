@@ -7,7 +7,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
@@ -75,37 +74,12 @@ namespace DCL.LOD.Tests
             //Arrange
             partitionComponent.IsDirty = true;
             partitionComponent.Bucket = bucket;
-            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene(), InitialSceneStateDescriptor.CreateUnsupported("UnsupportedSceneID"));
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene());
 
             //Act
             system.Update(0);
 
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
-            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLODLevelPromise, expectedLODLevel);
-        }
-
-        [Test]
-
-        //Note: Test modified due to LOD level always defaulting to 3 while we rebuild all of them
-        [TestCase(0, 0)]
-        [TestCase(1, 0)]
-        [TestCase(2, 1)]
-        [TestCase(3, 1)]
-        [TestCase(4, 1)]
-        [TestCase(10, 1)]
-        public void ResolveLODLevelWithSupportedISS(byte bucket, int expectedLODLevel)
-        {
-            //Arrange
-            partitionComponent.IsDirty = true;
-            partitionComponent.Bucket = bucket;
-
-            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene(),
-                InitialSceneStateDescriptor.CreateSupported(world, Substitute.For<IGltfContainerAssetsCache>(), sceneDefinitionComponent.Definition));
-
-            //Act
-            system.Update(0);
-
-            SceneLODInfo sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
             Assert.AreEqual(sceneLODInfoRetrieved.CurrentLODLevelPromise, expectedLODLevel);
         }
     }

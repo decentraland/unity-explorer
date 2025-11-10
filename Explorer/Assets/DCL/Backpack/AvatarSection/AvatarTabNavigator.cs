@@ -81,7 +81,6 @@ namespace DCL.Backpack
         public void InitializeAndEnable()
         {
             WireTabMappingHandlers();
-            ActivateDefault();
         }
 
         public void Show()

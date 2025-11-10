@@ -110,7 +110,7 @@ namespace Global
                                                         .Build())
                .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBCameraMode>.Create(ComponentID.CAMERA_MODE).AsProtobufResult())
-               .Add(SDKComponentBuilder<PBPointerLock>.Create(ComponentID.POINTER_LOCK).AsProtobufResult())
+               .Add(SDKComponentBuilder<PBPointerLock>.Create(ComponentID.POINTER_LOCK).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBEngineInfo>.Create(ComponentID.ENGINE_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent())

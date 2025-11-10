@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
@@ -14,6 +15,7 @@ using DCL.UI;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -43,6 +45,7 @@ namespace DCL.Backpack
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebBrowser webBrowser;
+        private readonly IWearableStorage wearableStorage;
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
@@ -71,7 +74,8 @@ namespace DCL.Backpack
             ColorPresetsSO eyesColors,
             ColorPresetsSO bodyshapeColors,
             IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IWearableStorage wearableStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -85,6 +89,7 @@ namespace DCL.Backpack
             this.wearablesProvider = wearablesProvider;
             this.gridItemsPool = gridItemsPool;
             this.webBrowser = webBrowser;
+            this.wearableStorage = wearableStorage;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
@@ -172,6 +177,16 @@ namespace DCL.Backpack
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
+
+                if (wearableStorage.TryGetLatestTransferredAt(gridWearables[i].GetUrn(), out DateTime latestTransferredAt))
+                {
+                    TimeSpan timeSinceTransfer = DateTime.UtcNow - latestTransferredAt;
+                    backpackItemView.NewTag.SetActive(timeSinceTransfer.TotalHours <= 24);
+                }
+                else
+                {
+                    backpackItemView.NewTag.SetActive(false);
+                }
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnEquip += EquipItem;
                 backpackItemView.OnSelectItem += SelectItem;

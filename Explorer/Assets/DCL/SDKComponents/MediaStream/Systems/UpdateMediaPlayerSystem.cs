@@ -11,6 +11,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -73,6 +74,8 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
+            component.UpdateState();
+
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
             if (component.State != VideoState.VsError)
@@ -86,6 +89,9 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+
+            // Need to re-update state in case an update was needed from the sdk component or promise
+            component.UpdateState();
         }
 
         [Query]
@@ -96,6 +102,8 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(sdkComponent.Src!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
+
+            component.UpdateState();
 
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
@@ -116,6 +124,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (ConsumePromise(ref component, false))
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
+
+            // Need to re-update state in case an update was needed from the sdk component or promise
+            component.UpdateState();
         }
 
         /// <summary>
@@ -136,11 +147,16 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
-            if (!playerComponent.IsPlaying
-                || playerComponent.State == VideoState.VsError)
+            if (!playerComponent.IsPlaying)
             {
-                RenderBlackTexture(ref assignedTexture);
-                return;
+                if (playerComponent.State == VideoState.VsError)
+                {
+                    RenderBlackTexture(ref assignedTexture);
+                    return;
+                }
+
+                if (playerComponent.State == VideoState.VsPaused)
+                    return;
             }
 
             if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
@@ -227,7 +243,8 @@ namespace DCL.SDKComponents.MediaStream
                 return true;
             }
 
-            component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+            component.MarkAsFailed(!component.MediaAddress.IsEmpty);
+
             Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
 
             try { component.MediaPlayer.CloseCurrentStream(); }

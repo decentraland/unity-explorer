@@ -1,6 +1,7 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Utility;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -92,6 +93,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
+
+        public static string BuildInitialSceneStateURL(string initialSceneStateID) =>
+            $"staticscene_{initialSceneStateID}{PlatformUtils.GetCurrentPlatform()}";
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetAssetBundleIntention>
         {

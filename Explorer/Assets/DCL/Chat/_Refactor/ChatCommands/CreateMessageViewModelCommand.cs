@@ -2,6 +2,7 @@
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Translation.Service;
 using DCL.UI.ProfileElements;
@@ -40,7 +41,7 @@ namespace DCL.Chat.ChatCommands
         {
             ChatMessageViewModel? viewModel = ChatMessageViewModel.POOL.Get();
             viewModel.Message = message;
-            viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(message.SenderWalletId != ChatMessageFactory.LOADING_PROFILE_TEXT, message.SenderValidatedName, message.SenderWalletId));
+            viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(message.SenderWalletId != ChatMessageFactory.LOADING_PROFILE_TEXT, message.SenderValidatedName, message.SenderWalletId, message.IsSenderOfficial));
 
             // Whether the timestamp is not null (old messages, backward compatibility),
             // it's not the last padding message, and either the message is the first in the feed or the day it was sent is different from the previous messages
@@ -90,7 +91,8 @@ namespace DCL.Chat.ChatCommands
             if (profile != null)
             {
                 viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.UserNameColor));
-                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.ValidatedName, profile.WalletId));
+                var isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(walletId);
+                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.ValidatedName, profile.WalletId, isOfficial));
 
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
                     walletId, profile.Avatar.FaceSnapshotUrl, cancellationToken);

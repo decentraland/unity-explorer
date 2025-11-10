@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
         private ProvidedInstance<CinemachineCameraAudioSettings> cinemachineCameraAudioSettings;
-        private ControlsSettingsAsset controlsSettingsAsset;
+        private ControlsSettingsAsset? controlsSettingsAsset;
 
         public CharacterCameraPlugin(
             IAssetsProvisioner assetsProvisioner,

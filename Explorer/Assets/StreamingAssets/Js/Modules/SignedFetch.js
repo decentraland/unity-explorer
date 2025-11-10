@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/signed_fetch.proto
+
 const fetchApi = require('~system/FetchApi');
 
 module.exports.signedFetch = async function(message) {

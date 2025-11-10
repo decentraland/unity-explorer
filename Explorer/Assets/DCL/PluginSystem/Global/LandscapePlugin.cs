@@ -111,9 +111,10 @@ namespace DCL.PluginSystem.Global
                     treesProfile, out treeRendererKeys[prototypeIndex]);
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys,
-                ref emptyParcelsRef, ref ownedParcelsRef);
+                ref emptyParcelsRef, ref ownedParcelsRef, landscapeData.Value);
 
-            await worldTerrainGenerator.InitializeAsync(landscapeData.Value.worldsTerrainData, treeRendererKeys);
+            await worldTerrainGenerator.InitializeAsync(landscapeData.Value.worldsTerrainData,
+                treeRendererKeys, landscapeData.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -122,7 +123,8 @@ namespace DCL.PluginSystem.Global
 
             if (!enableLandscape) return;
 
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings, landscapeData.Value);
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor,
+                realmPartitionSettings, landscape, landscapeData.Value);
 
             //LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);

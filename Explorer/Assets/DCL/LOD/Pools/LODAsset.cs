@@ -1,11 +1,8 @@
-using Arch.Core;
-using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using ECS.StreamableLoading.Common;
+using DCL.LOD.Components;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.LOD
@@ -26,7 +23,7 @@ namespace DCL.LOD
         public void Dispose()
         {
             UnityObjectUtils.SafeDestroy(Root);
-            
+
             AssetBundleReference.Dereference();
             AssetBundleReference = null;
 

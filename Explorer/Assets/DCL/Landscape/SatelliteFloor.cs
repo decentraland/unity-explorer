@@ -42,7 +42,7 @@ namespace DCL.Landscape
 
             satelliteRenderers = new Renderer[SATELLITE_MAP_RESOLUTION * SATELLITE_MAP_RESOLUTION];
 
-            debugSettingEnabled = landscapeData.showSatelliteView;
+            debugSettingEnabled = landscapeData.ShowSatelliteFloor;
 
             SetCurrentlyInGenesis(realmData.RealmType.Value);
             realmData.RealmType.OnUpdate += SetCurrentlyInGenesis;

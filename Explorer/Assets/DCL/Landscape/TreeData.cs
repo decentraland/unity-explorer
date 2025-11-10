@@ -136,9 +136,6 @@ namespace DCL.Landscape
 
                 GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex],
                     matrices, 0, 0, matrices.Count);
-
-                GPUICoreAPI.SetInstanceCount(rendererKeys[prototypeIndex],
-                    instanceCounts[prototypeIndex]);
             }
         }
 

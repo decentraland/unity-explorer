@@ -84,5 +84,25 @@ namespace DCL.CharacterMotion.Tests
             Assert.That(cameraSamplingData.Position, Is.EqualTo(camera!.transform.position));
             Assert.That(cameraSamplingData.IsDirty, Is.True);
         }
+
+        [Test]
+        public void PreserveIsGroundedOnInPlaceRotation()
+        {
+            Vector3 samePosition = new Vector3(10, 5, 10);
+            characterController.transform.position = samePosition;
+
+            var rigidTransform = new CharacterRigidTransform { IsGrounded = true };
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), rigidTransform,
+                new PlayerTeleportIntent(null, new Vector2Int(22, 22), samePosition, CancellationToken.None, isPositionSet: true));
+
+            system!.Update(0);
+
+            Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
+            Assert.That(characterController.transform.position, Is.EqualTo(samePosition), "Position should remain unchanged");
+
+            // Verify IsGrounded is preserved when position doesn't change (in-place rotation scenario)
+            CharacterRigidTransform updatedRigidTransform = world.Get<CharacterRigidTransform>(e);
+            Assert.That(updatedRigidTransform.IsGrounded, Is.True, "IsGrounded should be preserved for in-place rotation");
+        }
     }
 }

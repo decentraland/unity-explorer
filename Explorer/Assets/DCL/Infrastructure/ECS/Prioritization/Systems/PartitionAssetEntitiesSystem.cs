@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
@@ -165,5 +166,6 @@ namespace ECS.Unity.Systems
             // mind that taking cosines is not cheap
             partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
         }
+
     }
 }

@@ -109,7 +109,10 @@ namespace DCL.Friends
                     }
 
                     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        DiagnosticInfoUtils.LogWebSocketException(e,ReportCategory.FRIENDS);
+                    }
                 }
             }
         }

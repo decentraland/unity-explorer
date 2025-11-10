@@ -215,7 +215,10 @@ namespace DCL.VoiceChat.Services
                             try { PrivateVoiceChatUpdateReceived?.Invoke(response); }
 
                             // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.VOICE_CHAT); }
+                            catch (Exception e) when (e is not OperationCanceledException)
+                            {
+                                DiagnosticInfoUtils.LogWebSocketException(e,ReportCategory.VOICE_CHAT);
+                            }
                         }
 
                         // If we reach here, the stream has ended normally

@@ -44,6 +44,7 @@
         public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
+        public const string WINDOWED_MODE = "windowed-mode";
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 

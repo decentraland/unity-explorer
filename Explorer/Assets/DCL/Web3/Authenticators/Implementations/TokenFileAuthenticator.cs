@@ -85,8 +85,7 @@ namespace DCL.Web3.Authenticators
 
             IWeb3Account ephemeralAccount = web3AccountFactory.CreateAccount(new EthECKey(json.identity.ephemeralIdentity.privateKey));
 
-            DateTime expiration = DateTime.ParseExact(json.identity.expiration, "yyyy-MM-ddTHH:mm:ss.fffZ",
-                CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain);
         }

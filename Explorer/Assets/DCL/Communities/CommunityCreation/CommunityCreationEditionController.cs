@@ -67,6 +67,7 @@ namespace DCL.Communities.CommunityCreation
         private string originalCommunityNameForEdition;
         private string originalCommunityDescriptionForEdition;
         private CommunityPrivacy? originalCommunityPrivacyForEdition;
+        private CommunityVisibility? originalCommunityVisibilityForEdition;
         private readonly List<string> originalCommunityLandsForEdition = new ();
         private readonly List<string> originalCommunityWorldsForEdition = new ();
 
@@ -402,6 +403,7 @@ namespace DCL.Communities.CommunityCreation
             originalCommunityNameForEdition = getCommunityResult.Value.data.name;
             originalCommunityDescriptionForEdition = getCommunityResult.Value.data.description;
             originalCommunityPrivacyForEdition = getCommunityResult.Value.data.privacy;
+            originalCommunityVisibilityForEdition = getCommunityResult.Value.data.visibility;
             originalCommunityLandsForEdition.Clear();
             originalCommunityWorldsForEdition.Clear();
 
@@ -409,6 +411,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCommunityPrivacy(getCommunityResult.Value.data.privacy, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
+            viewInstance.SetCommunityVisibility(getCommunityResult.Value.data.visibility, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
 
             // Load community places ids
             var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
@@ -506,18 +509,18 @@ namespace DCL.Communities.CommunityCreation
             }
         }
 
-        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
+        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CommunityVisibility visibility)
         {
             viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, lands, worlds, privacy, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, lands, worlds, privacy, visibility, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CommunityVisibility visibility, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
 
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, privacy, visibility, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES,
                                                 exceptionToResult: exception =>
                                                 {
@@ -550,7 +553,7 @@ namespace DCL.Communities.CommunityCreation
                 ShowModerationErrorModal(result.Value.moderationData);
         }
 
-        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
+        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CommunityVisibility visibility)
         {
             viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
@@ -561,10 +564,11 @@ namespace DCL.Communities.CommunityCreation
                 originalCommunityLandsForEdition.Count == lands.Count && !originalCommunityLandsForEdition.Except(lands).Any() ? null : lands,
                 originalCommunityWorldsForEdition.Count == worlds.Count && !originalCommunityWorldsForEdition.Except(worlds).Any() ? null : worlds,
                 originalCommunityPrivacyForEdition == privacy ? null : privacy,
+                originalCommunityVisibilityForEdition == visibility ? null : visibility,
                 createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string? name, string? description, List<string>? lands, List<string>? worlds, CommunityPrivacy? privacy,
+        private async UniTaskVoid UpdateCommunityAsync(string id, string? name, string? description, List<string>? lands, List<string>? worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility,
             CancellationToken ct)
         {
             if (name == null &&
@@ -572,6 +576,7 @@ namespace DCL.Communities.CommunityCreation
                 lands == null &&
                 worlds == null &&
                 privacy == null &&
+                visibility == null &&
                 lastSelectedImageData == null)
             {
                 // If there is nothing to save, just close the panel
@@ -581,7 +586,7 @@ namespace DCL.Communities.CommunityCreation
 
             viewInstance!.SetCommunityCreationInProgress(true);
 
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, visibility, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES,
                                                 exceptionToResult: exception =>
                                                 {

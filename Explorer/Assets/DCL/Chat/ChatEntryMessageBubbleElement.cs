@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.Translation;
 using System;
 using System.Globalization;
@@ -71,7 +72,8 @@ namespace DCL.Chat
 
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
         {
-            usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId);
+            bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(originalData.SenderWalletAddress);
+            usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId, isOfficial);
             messageContentElement.SetMessageContent(displayText);
 
             if (originalData.SentTimestamp.HasValue)

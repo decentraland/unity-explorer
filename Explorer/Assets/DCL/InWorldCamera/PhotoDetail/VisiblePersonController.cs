@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.FeatureFlags;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Profiles;
 using DG.Tweening;
@@ -70,6 +71,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListContainer.gameObject.SetActive(false);
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
+            view.verifiedMark.SetActive(false);
+            view.officialMark.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
             Color userColor = NameColorHelper.GetNameColor(visiblePerson.userName);
 
@@ -84,6 +87,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             if (profile is not null)
             {
                 view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
+                view.verifiedMark.SetActive(profile.HasClaimedName);
+                view.officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(visiblePerson.userAddress));
                 await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -227,13 +226,13 @@ namespace DCL.Backpack
 
         private async UniTask TakeScreenshotAndDisplayAsync(int slotIndex, CancellationToken ct)
         {
-            byte[]? pngBytes = await screenshotService
-                .CaptureSaveAndGetPngAsync(characterPreviewController, slotIndex, ct);
+            var thumbnail = await screenshotService
+                .CaptureAndSavePngAsync(characterPreviewController, slotIndex, ct);
 
-            if (ct.IsCancellationRequested || pngBytes == null) return;
+            if (ct.IsCancellationRequested || thumbnail == null) return;
 
             var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
-            presenter?.SetThumbnailFromPngBytes(pngBytes);
+            presenter?.SetThumbnail(thumbnail);
         }
 
         private void OnDeleteOutfitRequested(int slotIndex)

@@ -60,10 +60,7 @@ namespace DCL.Landscape
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
-
-        [Obsolete]
-        public IReadOnlyList<Terrain> Terrains => Array.Empty<Terrain>();
-
+        private LandscapeData landscapeData;
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
@@ -81,13 +78,14 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
-            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
+            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels,
+            LandscapeData landscapeData)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
             Trees = new TreeData(treeRendererKeys, terrainGenData);
-
+            this.landscapeData = landscapeData;
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
 
@@ -104,9 +102,6 @@ namespace DCL.Landscape
                 UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
 
-        [Obsolete]
-        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled) { }
-
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
@@ -120,7 +115,8 @@ namespace DCL.Landscape
             // TODO is it necessary to yield?
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            Trees!.Show();
+            if (landscapeData.RenderTrees)
+                Trees!.Show();
 
             IsTerrainShown = true;
 
@@ -200,6 +196,11 @@ namespace DCL.Landscape
                         OccupancyMapData, OccupancyMapSize, OccupancyFloor, MaxHeight);
 
                     Trees.Instantiate();
+
+                    if (landscapeData.RenderTrees)
+                        Trees.Show();
+                    else
+                        Trees.Hide();
 
                     processReport?.SetProgress(1f);
 

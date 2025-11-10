@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -110,6 +111,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             lock (lockObject)
             {
                 ownedNftsRegistry.Clear();
+            }
+        }
+
+        public bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt)
+        {
+            lock (lockObject)
+            {
+                if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> registry) || registry.Count == 0)
+                {
+                    latestTransferredAt = default;
+                    return false;
+                }
+
+                DateTime latestDate = DateTime.MinValue;
+                
+                foreach (var entry in registry.Values)
+                {
+                    if (entry.TransferredAt > latestDate)
+                    {
+                        latestDate = entry.TransferredAt;
+                    }
+                }
+                
+                latestTransferredAt = latestDate;
+                return true;
             }
         }
 

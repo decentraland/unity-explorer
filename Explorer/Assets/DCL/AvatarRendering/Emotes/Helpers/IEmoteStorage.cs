@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Emotes
@@ -8,5 +9,6 @@ namespace DCL.AvatarRendering.Emotes
     {
         List<URN> EmbededURNs { get; }
         void AddEmbeded(URN urn, IEmote emote);
+        bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
     }
 }
