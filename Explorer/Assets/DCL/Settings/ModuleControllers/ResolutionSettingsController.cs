@@ -22,6 +22,7 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
             this.upscalingController = upscalingController;
+            this.appParameters = appParameters;
 
             LoadResolutionOptions();
 
@@ -47,8 +48,13 @@ namespace DCL.Settings.ModuleControllers
                 }
             }
 
-            view.DropdownView.Dropdown.onValueChanged.AddListener(SetResolutionSettings);
-            SetResolutionSettings(view.DropdownView.Dropdown.value);
+            view.DropdownView.Dropdown.onValueChanged.AddListener(SetResolutionSettingsOnChange);
+            SetResolutionSettings(view.DropdownView.Dropdown.value, true);
+        }
+
+        private void SetResolutionSettingsOnChange(int index)
+        {
+            SetResolutionSettings(index, false);
         }
 
         private void LoadResolutionOptions()
@@ -69,17 +75,21 @@ namespace DCL.Settings.ModuleControllers
             }
         }
 
-        private void SetResolutionSettings(int index)
+        private void SetResolutionSettings(int index, bool isInitialSetup)
         {
-            Resolution selectedResolution = possibleResolutions[index];
-            Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
+            if (appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE) && isInitialSetup)
+                return;
+
+            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
+            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE));
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
-            upscalingController.ResolutionChanged(selectedResolution);
+            upscalingController.ResolutionChanged(targetResolution);
         }
 
         public override void Dispose()
         {
-            view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetResolutionSettings);
+            view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetResolutionSettingsOnChange);
         }
     }
 }

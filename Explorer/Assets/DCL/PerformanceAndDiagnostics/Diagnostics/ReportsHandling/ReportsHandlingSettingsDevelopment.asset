@@ -236,6 +236,8 @@ MonoBehaviour:
       Severity: 4
     - Category: BADGES
       Severity: 4
+    - Category: CAMERA_REEL
+      Severity: 4
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 4
     - Category: COMMS_SCENE_HANDLER
@@ -380,6 +382,8 @@ MonoBehaviour:
       Severity: 1
     - Category: BADGES
       Severity: 1
+    - Category: CAMERA_REEL
+      Severity: 1
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 1
     - Category: COMMS_SCENE_HANDLER
@@ -579,18 +583,6 @@ MonoBehaviour:
     - Category: OUTFITS
       Severity: 4
     - Category: OUTFITS
-      Severity: 1
-    - Category: ANALYTICS
-      Severity: 3
-    - Category: GIFTING
-      Severity: 3
-    - Category: GIFTING
-      Severity: 2
-    - Category: GIFTING
-      Severity: 0
-    - Category: GIFTING
-      Severity: 4
-    - Category: GIFTING
       Severity: 1
   sentryMatrix:
     entries: []

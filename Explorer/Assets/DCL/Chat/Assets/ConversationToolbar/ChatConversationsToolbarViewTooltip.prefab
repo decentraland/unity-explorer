@@ -714,6 +714,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7952237847612314218, guid: faaa81bda20189649961c29e42d56d57, type: 3}
+      propertyPath: m_Maskable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8512937881895506565, guid: faaa81bda20189649961c29e42d56d57, type: 3}
       propertyPath: m_MinWidth
       value: 16
