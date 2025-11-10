@@ -60,6 +60,7 @@ namespace DCL.AvatarRendering.AvatarShape
             BlockAvatarsQuery(World);
             BanAvatarsQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
+            UpdateMainPlayerAvatarVisibilityStateQuery(World, camera.GetCameraComponent(World));
             GetAvatarsVisibleWithOutlineQuery(World);
         }
 
@@ -181,13 +182,35 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         private void UpdateMainPlayerVisibilityState([Data] in CameraComponent cameraComponent, ref AvatarShapeComponent avatarShape, in PlayerComponent playerComponent, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
-            float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
-            bool shouldBeHidden = cameraComponent.Mode == CameraMode.FirstPerson && currentDistance < startFadeDithering;
+            bool shouldBeHidden = false;
+
+            if (cameraComponent.Mode == CameraMode.FirstPerson)
+            {
+                if (cameraComponent.IsTransitioningToFirstPerson)
+                {
+                    float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
+                    shouldBeHidden = currentDistance < startFadeDithering;
+                }
+                else
+                {
+                    shouldBeHidden = true;
+                }
+            }
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 
+        [Query]
+        [All(typeof(PlayerComponent))]
+        private void UpdateMainPlayerAvatarVisibilityState([Data] in CameraComponent cameraComponent, in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        {
+            if (cameraComponent.Mode == CameraMode.FirstPerson) return;
+
+            bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<HiddenPlayerComponent>(entity);
+            UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
+        }
 
         [Query]
+        [None(typeof(PlayerComponent))]
         private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<HiddenPlayerComponent>(entity);
