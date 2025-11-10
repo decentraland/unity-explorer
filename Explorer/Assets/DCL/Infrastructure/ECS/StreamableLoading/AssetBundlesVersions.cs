@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace ECS.StreamableLoading
@@ -18,15 +17,13 @@ namespace ECS.StreamableLoading
         public struct PlatformVersionInfo
         {
             public VersionInfo mac;
-            public VersionInfo webgl;
             public VersionInfo windows;
         }
 
         public struct VersionInfo
         {
             public string version;
-            public DateTime buildDate;
-            public string originalBuildDate;
+            public string buildDate;
         }
     }
 }

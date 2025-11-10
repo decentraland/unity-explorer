@@ -166,7 +166,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             if (!assetBundlesVersions.Succeeded)
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
             else if (assetBundlesVersions.Asset.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
-                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.originalBuildDate, wearableVersions.windows.version,  wearableVersions.windows.originalBuildDate);
+                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 

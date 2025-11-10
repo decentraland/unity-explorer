@@ -86,20 +86,12 @@ namespace ECS.StreamableLoading.AssetBundles
                     mac = new AssetBundlesVersions.VersionInfo
                     {
                         version = element.versions.assets.mac.version,
-                        originalBuildDate = element.versions.assets.mac.buildDate,
-                        buildDate = element.versions.assets.mac.ProcessedBuildDate
-                    },
-                    webgl = new AssetBundlesVersions.VersionInfo
-                    {
-                        version = element.versions.assets.webgl.version,
-                        originalBuildDate = element.versions.assets.webgl.buildDate,
-                        buildDate = element.versions.assets.webgl.ProcessedBuildDate
+                        buildDate = element.versions.assets.mac.buildDate,
                     },
                     windows = new AssetBundlesVersions.VersionInfo
                     {
                         version = element.versions.assets.windows.version,
-                        originalBuildDate = element.versions.assets.windows.buildDate,
-                        buildDate = element.versions.assets.windows.ProcessedBuildDate
+                        buildDate = element.versions.assets.windows.buildDate,
                     }
                 });
 
