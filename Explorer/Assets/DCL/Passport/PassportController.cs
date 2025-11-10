@@ -44,6 +44,8 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Views;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
@@ -143,6 +145,8 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
+        private readonly bool isGiftingEnabled;
+        private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
@@ -239,6 +243,7 @@ namespace DCL.Passport
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);;
+            isGiftingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GIFTING_ENABLED);
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -382,6 +387,14 @@ namespace DCL.Passport
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
 
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+            {
+                contextMenu.AddControl(contextMenuGiftButton =
+                    new GenericContextMenuElement(
+                        new ButtonContextMenuControlSettings(viewInstance.GiftText,
+                            viewInstance.GiftSprite, GiftUserClicked), true));
+            }
+            
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
@@ -532,7 +545,7 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
         }
-
+        
         private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct, string? badgeIdSelected = null)
         {
             try
@@ -820,6 +833,17 @@ namespace DCL.Passport
             userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
+        private async void GiftUserClicked()
+        {
+            if (targetProfile == null)
+                return;
+
+            ReportHub.Log(ReportCategory.GIFTING, $"Gifting user: {inputData.UserId}");
+            // open gifting popup
+            // close passport popup
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile?.UserId, targetProfile?.DisplayName)));
+        }
+        
         private void BlockUserClicked()
         {
             BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();

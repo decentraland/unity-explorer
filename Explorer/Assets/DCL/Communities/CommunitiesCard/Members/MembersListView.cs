@@ -15,6 +15,7 @@ using MVC;
 using Nethereum.Siwe.Core.Recap;
 using System;
 using System.Threading;
+using DCL.FeatureFlags;
 using UnityEngine.UI;
 using Utility;
 
@@ -63,6 +64,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
+        public event Action<ICommunityMemberData>? GiftUserRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
@@ -86,6 +88,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private GenericContextMenuElement? kickUserContextMenuElement;
         private GenericContextMenuElement? banUserContextMenuElement;
         private GenericContextMenuElement? communityOptionsSeparatorContextMenuElement;
+        private GenericContextMenuElement? contextMenuGiftButton;
         private GetCommunityResponse.CommunityData? communityData;
         private CancellationTokenSource contextMenuCts = new ();
         private UniTask panelTask;
@@ -104,17 +107,26 @@ namespace DCL.Communities.CommunitiesCard.Members
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing, showRim: true)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
-                         .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)))
-                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))))
-                         .AddControl(communityOptionsSeparatorContextMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
-                         .AddControl(removeModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.RemoveModeratorText, contextMenuSettings.RemoveModeratorSprite, () => RemoveModeratorRequested?.Invoke(lastClickedProfileCtx!))))
-                         .AddControl(addModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.AddModeratorText, contextMenuSettings.AddModeratorSprite, () => AddModeratorRequested?.Invoke(lastClickedProfileCtx!))))
-                         .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickUserText, contextMenuSettings.KickUserSprite, () => ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
-                         .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
+                .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
+                .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)))
+                .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))));
+
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+                contextMenu.AddControl(contextMenuGiftButton =
+                    new GenericContextMenuElement(
+                        new ButtonContextMenuControlSettings(contextMenuSettings.GiftUserText,
+                            contextMenuSettings.GiftUserSprite,
+                            () => GiftUserRequested?.Invoke(lastClickedProfileCtx!))));
+
+            contextMenu.AddControl(communityOptionsSeparatorContextMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
+                .AddControl(removeModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.RemoveModeratorText, contextMenuSettings.RemoveModeratorSprite, () => RemoveModeratorRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(addModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.AddModeratorText, contextMenuSettings.AddModeratorSprite, () => AddModeratorRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickUserText, contextMenuSettings.KickUserSprite, () => ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
+                .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
         }
 
         public void Close()
@@ -140,6 +152,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
             addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+            {
+                bool isOwnProfile = profile.Address.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address);
+                bool isBlocked = profile.FriendshipStatus is FriendshipStatus.blocked or FriendshipStatus.blocked_by;
+                contextMenuGiftButton!.Enabled = !isOwnProfile && !isBlocked;
+            }
+            
             kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
             banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
 

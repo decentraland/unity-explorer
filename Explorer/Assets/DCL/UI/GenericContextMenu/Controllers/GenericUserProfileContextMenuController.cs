@@ -26,6 +26,7 @@ using Segment.Serialization;
 using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Views;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -139,12 +140,13 @@ namespace DCL.UI
                 .AddControl(mentionUserButtonControlSettings)
                 .AddControl(openUserProfileButtonControlSettings)
                 .AddControl(openConversationControlSettings)
-                .AddControl(contextMenuCallButton)
-                .AddControl(contextMenuJumpInButton)
-                .AddControl(contextMenuBlockUserButton);
-
+                .AddControl(contextMenuCallButton);
+            
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);
+
+            contextMenu.AddControl(contextMenuJumpInButton)
+                .AddControl(contextMenuBlockUserButton);
 
             if (includeCommunities)
             {

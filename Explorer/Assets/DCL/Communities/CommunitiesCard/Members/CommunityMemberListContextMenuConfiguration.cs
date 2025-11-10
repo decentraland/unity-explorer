@@ -36,5 +36,12 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         [field: SerializeField] public Sprite InviteToCommunitySprite { get; private set; } = null!;
         [field: SerializeField] public string InviteToCommunityText { get; private set; } = "Invite to Community";
+
+        [field: Header("Gifting")]
+        [field: SerializeField]
+        public string GiftUserText { get; private set; } = "Send Gift";
+
+        [field: SerializeField]
+        public Sprite GiftUserSprite { get; private set; }
     }
 }

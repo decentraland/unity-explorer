@@ -135,6 +135,6 @@ namespace DCL.FeatureFlags
         COMMUNITIES_MEMBERS_COUNTER,
         AUTH_CODE_VALIDATION,
         GPUI_ENABLED,
-
+        GIFTING_ENABLED
     }
 }

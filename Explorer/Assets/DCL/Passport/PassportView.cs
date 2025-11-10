@@ -119,6 +119,12 @@ namespace DCL.Passport
         public string JumpInText { get; private set; } = "Jump to Location";
 
         [field: SerializeField]
+        public Sprite GiftSprite { get; private set; }
+
+        [field: SerializeField]
+        public string GiftText { get; private set; } = "Send Gift";
+
+        [field: SerializeField]
         public Sprite InviteToCommunitySprite { get; private set; }
 
         [field: SerializeField]

@@ -38,3 +38,5 @@ MonoBehaviour:
   <BanUserText>k__BackingField: Ban
   <InviteToCommunitySprite>k__BackingField: {fileID: 21300000, guid: 8be81fdf59a094b458426c66803c47e3, type: 3}
   <InviteToCommunityText>k__BackingField: Invite to Community
+  <GiftUserText>k__BackingField: Send Gift
+  <GiftUserSprite>k__BackingField: {fileID: 21300000, guid: 5e94cf755de954ea889213667ad9d540, type: 3}
