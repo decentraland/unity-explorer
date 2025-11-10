@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -25,6 +26,7 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearablesProvider wearablesProvider;
         private readonly URN[] urnRequest = new URN[1];
+        private readonly CancellationTokenSource fetchWearableCts = new ();
 
         private int currentEmoteSlot = -1;
 
@@ -75,6 +77,7 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
             backpackCommandBus.UnEquipAllWearablesMessageReceived -= HandleUnEquipAllWearables;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
+            fetchWearableCts.SafeCancelAndDispose();
         }
 
         private void HandlePublishProfile(BackpackPublishProfileCommand command) =>
@@ -108,8 +111,8 @@ namespace DCL.Backpack.BackpackBus
             {
                 urnRequest[0] = new URN(pointer);
 
-                await UniTask.WhenAll(wearablesProvider.RequestPointersAsync(urnRequest, BodyShape.MALE, CancellationToken.None),
-                        wearablesProvider.RequestPointersAsync(urnRequest, BodyShape.FEMALE, CancellationToken.None));
+                await UniTask.WhenAll(wearablesProvider.RequestPointersAsync(urnRequest, BodyShape.MALE, fetchWearableCts.Token),
+                        wearablesProvider.RequestPointersAsync(urnRequest, BodyShape.FEMALE, fetchWearableCts.Token));
 
                 if (wearableStorage.TryGetElement(pointer, out IWearable wearable))
                     onWearableFetched(wearable);
