@@ -22,8 +22,6 @@ namespace DCL.SocialService.PerformanceTests
         private readonly DecentralandEnvironment env;
         private readonly DecentralandUrlsSource urlsSource;
 
-        private MockedReportScope? reportScope;
-
         // We need an identity for Signed Fetch, assume here it is taken from Player Prefabs as we can't authenticate in Tests
         // private readonly IWeb3IdentityCache identityCache = new ProxyIdentityCache(
         //     new MemoryWeb3IdentityCache(),

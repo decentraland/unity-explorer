@@ -24,6 +24,8 @@ namespace DCL.SocialService.PerformanceTests
         protected IWebRequestController? controller;
         protected PerformanceTestWebRequestsAnalytics analytics;
 
+        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+
         private MockedReportScope? reportScope;
 
         [SetUp]
@@ -41,18 +43,19 @@ namespace DCL.SocialService.PerformanceTests
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 
-            controller = new BudgetedWebRequestController(new WebRequestController(analytics, Substitute.For<IWeb3IdentityCache>(),
+            controller = new BudgetedWebRequestController(new WebRequestController(analytics, identityCache,
                 new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)),
                 ChromeDevtoolProtocolClient.NewForTest()), concurrency, new ElementBinding<ulong>(0));
         }
 
-        protected async UniTask BenchmarkAsync(int concurrency, Func<string, UniTask> createRequest, string[] loopThrough, int warmupCount, int targetRequestsCount,
+        protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, TParam[] loopThrough, int warmupCount, int targetRequestsCount,
             int iterationsCount, TimeSpan delayBetweenIterations)
         {
             analytics.WarmingUp = true;
 
             // Warmup a few times (DNS/TLS/JIT)
-            for (int i = 0; i < warmupCount; i++) { await UniTask.WhenAll(loopThrough.Select(createRequest)); }
+            for (int i = 0; i < warmupCount; i++)
+                await UniTask.WhenAll(loopThrough.Select(createRequest));
 
             analytics.WarmingUp = false;
 
