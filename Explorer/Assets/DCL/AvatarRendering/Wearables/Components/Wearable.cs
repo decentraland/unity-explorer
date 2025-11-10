@@ -29,6 +29,12 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
+        StreamableLoadingResult<WearableDTO> IAvatarAttachment<WearableDTO>.Model
+        {
+            get => Model;
+            set => Model = value;
+        }
+        
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
