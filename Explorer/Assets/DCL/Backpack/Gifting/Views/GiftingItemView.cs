@@ -40,6 +40,7 @@ namespace DCL.Backpack.Gifting.Views
         [SerializeField] private GameObject loadingStateContainer;
 
         [SerializeField] private GameObject loadedStateContainer;
+        [SerializeField] private GameObject equippedContainer;
 
         [Header("UI Elements")]
         [SerializeField] private Image thumbnailImage;
@@ -84,7 +85,12 @@ namespace DCL.Backpack.Gifting.Views
             
             currentUrn = viewModel.Urn;
 
-            selectionOutline.SetActive(isSelected);
+            if (viewModel.IsEquipped)
+            {
+                equippedContainer.SetActive(true);
+                // selectionOutline.SetActive(false);
+            }
+            
             if (RarityBackground) RarityBackground.color = Color.white;
             
             switch (viewModel.ThumbnailState)

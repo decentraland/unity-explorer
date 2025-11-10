@@ -9,6 +9,7 @@ using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
@@ -35,6 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IEquippedWearables equippedWearables;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -50,6 +52,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
             IWearablesProvider wearablesProvider,
+            IEquippedWearables equippedWearables,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
             IThumbnailProvider thumbnailProvider,
@@ -62,6 +65,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.wearablesProvider = wearablesProvider;
+            this.equippedWearables = equippedWearables;
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
@@ -110,7 +114,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 settings.EmbeddedEmotesAsURN(),
                 loadThumbnailCommand,
-                wearableCatalog);
+                wearableCatalog,
+                equippedWearables);
 
             giftSelectionController = new GiftSelectionController(
                 GiftSelectionController.CreateLazily(giftSelectionPopupPrefab, null),

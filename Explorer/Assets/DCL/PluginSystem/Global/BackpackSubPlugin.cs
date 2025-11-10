@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.FeatureFlags;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 

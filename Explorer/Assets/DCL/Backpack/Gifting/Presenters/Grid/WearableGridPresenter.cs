@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
@@ -34,6 +35,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
+        private readonly IReadOnlyEquippedWearables equippedWearables;
 
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly Dictionary<string, WearableViewModel> viewModelsByUrn = new();
@@ -59,7 +61,8 @@ namespace DCL.Backpack.Gifting.Presenters
             IWearablesProvider wearablesProvider,
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
-            IWearableStylingCatalog wearableStylingCatalog)
+            IWearableStylingCatalog wearableStylingCatalog,
+            IReadOnlyEquippedWearables equippedWearables)
         {
             this.view = view;
             this.adapter = adapter;
@@ -67,6 +70,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
             this.wearableStylingCatalog  = wearableStylingCatalog;
+            this.equippedWearables = equippedWearables;
             
             rectTransform = view.GetComponent<RectTransform>();
             canvasGroup = view.GetComponent<CanvasGroup>();
@@ -156,6 +160,13 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void OnItemSelected(string urn)
         {
+            if (viewModelsByUrn.TryGetValue(urn, out var viewModel) && viewModel.IsEquipped)
+            {
+                ReportHub.Log(ReportCategory.GIFTING, $"Attempted to select equipped wearable {urn} for gifting. Selection denied.");
+                return;
+            }
+
+            
             SelectedUrn = SelectedUrn == urn ? null : urn;
             OnSelectionChanged?.Invoke(SelectedUrn);
             adapter.RefreshAllShownItem();
@@ -212,7 +223,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
                     viewModelUrnOrder.Add(urn);
                     var giftable = new WearableGiftable(wearable);
-                    viewModelsByUrn[urn] = new WearableViewModel(giftable);
+                    bool isEquipped = equippedWearables.IsEquipped(wearable);
+
+                    viewModelsByUrn[urn] = new WearableViewModel(giftable, isEquipped);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters;
@@ -30,6 +31,7 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
+        private readonly IEquippedWearables equippedWearables;
 
         public GiftingGridPresenterFactory(
             IEventBus eventBus,
@@ -38,7 +40,8 @@ namespace DCL.Backpack.Gifting.Factory
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyCollection<URN> embeddedEmotes,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
-            IWearableStylingCatalog wearableStylingCatalog)
+            IWearableStylingCatalog wearableStylingCatalog,
+            IEquippedWearables equippedWearables)
         {
             this.wearablesProvider = wearablesProvider;
             this.emoteProvider = emoteProvider;
@@ -47,6 +50,7 @@ namespace DCL.Backpack.Gifting.Factory
             this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
             this.wearableStylingCatalog  = wearableStylingCatalog;
+            this.equippedWearables = equippedWearables;
         }
         
         public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
@@ -57,7 +61,8 @@ namespace DCL.Backpack.Gifting.Factory
                 wearablesProvider,
                 eventBus,
                 loadThumbnailCommand,
-                wearableStylingCatalog);
+                wearableStylingCatalog,
+                equippedWearables);
         }
 
         public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<EmoteViewModel> adapter)

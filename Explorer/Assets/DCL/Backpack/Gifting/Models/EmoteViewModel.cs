@@ -10,8 +10,9 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
     public string? RarityId { get; }
     public ThumbnailState ThumbnailState { get; }
     public Sprite? Thumbnail { get; }
+    public bool IsEquipped { get; }
 
-    public EmoteViewModel(EmoteGiftable giftable)
+    public EmoteViewModel(EmoteGiftable giftable, bool isEquipped = false)
     {
         Giftable = giftable;
         DisplayName = giftable.Name;
@@ -19,6 +20,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         RarityId = giftable.Emote.DTO.Metadata.rarity;
         ThumbnailState = ThumbnailState.NotLoaded;
         Thumbnail = null;
+        IsEquipped = isEquipped;
     }
 
     private EmoteViewModel(
@@ -27,7 +29,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         string? categoryId,
         string? rarityId,
         ThumbnailState state,
-        Sprite? thumbnail)
+        Sprite? thumbnail, bool isEquipped)
     {
         Giftable = giftable;
         DisplayName = displayName;
@@ -35,10 +37,16 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         RarityId = rarityId;
         ThumbnailState = state;
         Thumbnail = thumbnail;
+        IsEquipped = isEquipped;
     }
 
     public EmoteViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
     {
-        return new EmoteViewModel(Giftable, DisplayName, "emote", RarityId, newState, newSprite ?? Thumbnail);
+        return new EmoteViewModel(Giftable,
+            DisplayName,
+            "emote",
+            RarityId, newState,
+            newSprite ?? Thumbnail,
+            IsEquipped);
     }
 }

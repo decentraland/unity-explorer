@@ -31,5 +31,7 @@ namespace DCL.Backpack.Gifting.Models
 
         /// <summary>Thumbnail sprite when loaded (null until Loaded).</summary>
         Sprite? Thumbnail { get; }
+
+        bool IsEquipped { get; }
     }
 }

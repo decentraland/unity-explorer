@@ -11,8 +11,9 @@ namespace DCL.Backpack.Gifting.Models
         public string? RarityId { get; }
         public ThumbnailState ThumbnailState { get; }
         public Sprite? Thumbnail { get; }
+        public bool IsEquipped { get; }
 
-        public WearableViewModel(WearableGiftable giftable)
+        public WearableViewModel(WearableGiftable giftable, bool isEquipped = false)
         {
             Giftable = giftable;
             DisplayName = giftable.Name;
@@ -20,15 +21,17 @@ namespace DCL.Backpack.Gifting.Models
             RarityId = giftable.Wearable.DTO.Metadata.rarity;
             ThumbnailState = ThumbnailState.NotLoaded;
             Thumbnail = null;
+            IsEquipped = isEquipped;
         }
-
+        
         private WearableViewModel(
             IGiftable giftable,
             string displayName,
             string? categoryId,
             string? rarityId,
             ThumbnailState state,
-            Sprite? thumbnail)
+            Sprite? thumbnail,
+            bool isEquipped)
         {
             Giftable = giftable;
             DisplayName = displayName;
@@ -36,11 +39,19 @@ namespace DCL.Backpack.Gifting.Models
             RarityId = rarityId;
             ThumbnailState = state;
             Thumbnail = thumbnail;
+            IsEquipped = isEquipped;
         }
 
         public WearableViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
         {
-            return new WearableViewModel(Giftable, DisplayName, CategoryId, RarityId, newState, newSprite ?? Thumbnail);
+            return new WearableViewModel(
+                Giftable,
+                DisplayName,
+                CategoryId,
+                RarityId,
+                newState,
+                newSprite ?? Thumbnail,
+                IsEquipped);
         }
     }
 }
