@@ -146,7 +146,7 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
-            busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage);
+            busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage, wearablesProvider);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
