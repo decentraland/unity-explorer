@@ -6,6 +6,7 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Navmap.FilterPanel;
@@ -16,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using DCL.MapRenderer.MapLayers.HomeMarker;
 using UnityEngine;
 using Utility;
 
@@ -35,9 +35,7 @@ namespace DCL.Navmap
         private readonly NavmapSearchBarController searchBarController;
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
-        private readonly PlaceInfoToastController placeToastController;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
@@ -71,7 +69,6 @@ namespace DCL.Navmap
             NavmapSearchBarController navmapSearchBarController,
             NavmapZoomController navmapZoomController,
             SatelliteController satelliteController,
-            PlaceInfoToastController placeToastController,
             IPlacesAPIService placesAPIService, 
             HomePlaceEventBus homePlaceEventBus)
         {
@@ -90,9 +87,7 @@ namespace DCL.Navmap
             navmapBus.OnDestinationSelected += SetDestination;
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             this.satelliteController = satelliteController;
-            this.placeToastController = placeToastController;
             this.placesAPIService = placesAPIService;
-            this.homePlaceEventBus = homePlaceEventBus;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;

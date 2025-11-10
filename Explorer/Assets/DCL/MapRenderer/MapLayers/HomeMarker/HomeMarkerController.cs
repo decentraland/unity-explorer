@@ -9,6 +9,9 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
+	/// <summary>
+	/// Controls the home marker on the map, handling placement, highlighting, and interaction with the home location.
+	/// </summary>
 	public class HomeMarkerController : MapLayerControllerBase, IMapLayerController, IZoomScalingLayer
 	{
 		internal delegate IHomeMarker HomeMarkerBuilder(Transform parent);
@@ -54,6 +57,13 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			homeMarker = builder(instantiationParent);
 			currentMarker = HomeMarkerSerializer.Deserialize();
 			SetMarker(currentMarker, false);
+		}
+
+		protected override void DisposeImpl()
+		{
+			highlightCt.SafeCancelAndDispose();
+			deHighlightCt.SafeCancelAndDispose();
+			homeMarker.Dispose();
 		}
 
 		private void SetMarker(HomeMarkerData? homeMarkerData, bool serialize = true)
@@ -158,13 +168,6 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			if (placesCts.IsCancellationRequested)
 				return;
 			navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true).Forget();
-		}
-
-		protected override void DisposeImpl()
-		{
-			highlightCt.SafeCancelAndDispose();
-			deHighlightCt.SafeCancelAndDispose();
-			homeMarker.Dispose();
 		}
 	}
 }

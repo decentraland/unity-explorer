@@ -38,9 +38,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         public Transform FavoritesMarkersRoot { get; private set; }
 
         [field: SerializeField]
-        public Transform HomePointRoot { get; private set; }
-
-        [field: SerializeField]
         public Transform HomeMarkerRoot { get; private set; }
 
         [field: SerializeField]

@@ -423,7 +423,6 @@ namespace DCL.PluginSystem.Global
                 searchBarController,
                 zoomController,
                 satelliteController,
-                placeToastController,
                 placesAPIService,
                 homePlaceEventBus);
 

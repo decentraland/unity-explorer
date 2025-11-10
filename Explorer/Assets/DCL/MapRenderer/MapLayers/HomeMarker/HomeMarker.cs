@@ -8,6 +8,9 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
+	/// <summary>
+	/// Represents the home marker on the map with animation and scaling capabilities.
+	/// </summary>
 	public class HomeMarker : IHomeMarker
 	{
 		private static readonly Vector2 TARGET_SCALE = new (1.2f, 1.2f);
@@ -17,12 +20,10 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		private float currentBaseScale;
 		private float currentNewScale;
-
-
+		
 		public Vector3 CurrentPosition => markerObject.transform.position;
 		public Vector2 Pivot => markerObject.pivot;
 		public HomeMarkerObject MarkerObject => markerObject;
-		public PlacesData.PlaceInfo PlaceInfo { get; set;  }
 
 		public HomeMarker(HomeMarkerObject markerObject)
 		{

@@ -1,9 +1,8 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.MapRenderer.MapCameraController;
-using DCL.Navmap.FilterPanel;
-using System;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Navmap.FilterPanel;
 using UnityEngine;
 using Utility;
 

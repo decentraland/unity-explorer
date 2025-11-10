@@ -195,25 +195,23 @@ namespace Global.Dynamic
                 ParsePositionAppParameter(parcelToTeleportOverride);
         }
 
-        private static bool HasAppArgPosition(IAppArgs appArgs)
-        {
-            //First we need to check if the user has passed a position as an argument.
-            //If we have set a position trough args, the feature flag should not be taken into consideration
-            //This is the case used on local scene development from creator hub/scene args
-            //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
-            if (appArgs.HasFlag(AppArgsFlags.POSITION))
-                return true;
-            return false;
-        }
+        /// <summary>
+        /// Checks if the user has passed a position as an argument.
+        /// If a position is set through args, the feature flag should not be taken into consideration.
+        /// This is the case used on local scene development from Creator Hub/scene args.
+        /// See: https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
+        /// </summary>
+        /// <param name="appArgs">The application arguments to check.</param>
+        /// <returns>True if the POSITION flag is present in the arguments.</returns>
+        private static bool HasAppArgPosition(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.POSITION);
 
-        private bool HasEditorPositionOverride()
-        {
-            //If this bool is true in editor, we want the position to be the one that has been serialized
-            //This avoid the feature flag from overriding the dev's start position
-            if (Application.isEditor && EditorSceneStartPosition)
-                return true;
-            return false;
-        }
+        /// <summary>
+        /// Checks if the Editor position override is enabled.
+        /// If this is true in the Editor, the position will be the one that has been serialized.
+        /// This prevents the feature flag from overriding the developer's start position.
+        /// </summary>
+        /// <returns>True if running in Editor and EditorSceneStartPosition is enabled.</returns>
+        private bool HasEditorPositionOverride() => Application.isEditor && EditorSceneStartPosition;
 
         private bool ShouldForceHomePosition() => ForceHomePosition && HomeMarkerSerializer.HasSerializedPosition();
     }

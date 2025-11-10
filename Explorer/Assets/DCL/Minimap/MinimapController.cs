@@ -75,7 +75,6 @@ namespace DCL.Minimap
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
-        private CancellationTokenSource? homeCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
