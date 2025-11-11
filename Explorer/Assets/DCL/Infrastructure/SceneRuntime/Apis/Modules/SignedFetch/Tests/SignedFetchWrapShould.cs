@@ -28,6 +28,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         private CancellationTokenSource disposeCts;
         private SignedFetchWrap signedFetchWrap;
 
+        private Vector2Int sceneBase;
+        private string sceneID;
+
         [SetUp]
         public void SetUp()
         {
@@ -37,17 +40,20 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             identityCache = Substitute.For<IWeb3IdentityCache>();
             disposeCts = new CancellationTokenSource();
 
+            sceneBase = new Vector2Int(10, 20);
+            sceneID = "test-scene-id";
             // Setup scene data
             var sceneMetadata = new SceneMetadata
             {
                 scene = new SceneMetadataScene
                 {
-                    DecodedBase = new Vector2Int(10, 20)
+                    DecodedBase = sceneBase,
                 }
             };
-            var sceneEntityDefinition = new SceneEntityDefinition("test-scene-id", sceneMetadata);
+
+            var sceneEntityDefinition = new SceneEntityDefinition(sceneID, sceneMetadata);
             sceneData.SceneEntityDefinition.Returns(sceneEntityDefinition);
-            sceneData.SceneShortInfo.Returns(new SceneShortInfo(new Vector2Int(10, 20), "test-scene-id"));
+            sceneData.SceneShortInfo.Returns(new SceneShortInfo(sceneBase, sceneID));
 
             // Setup realm data
             realmData.Hostname.Returns("test-hostname.decentraland.org");
@@ -82,7 +88,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         }
 
         [Test]
-        public void UseDecentralandKernelSceneAsSignerInGetSignedHeaders()
+        public void UseCorrectMetadataWhenInvokingGetSignedHeaders()
         {
             // Arrange
             string url = "https://example.com/api";
@@ -114,10 +120,24 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
                 metadata.signer,
                 "CreateSignatureMetadata must always use 'decentraland-kernel-scene' as the signer. This is critical for security and must not be changed."
             );
+
+            // Assert the parcel has the correct coords
+            Assert.AreEqual(
+                $"{sceneBase.x},{sceneBase.y}",
+                metadata.parcel,
+                "CreateSignatureMetadata must always have the scene base in the metadata. This is critical for security and must not be changed."
+            );
+
+            // Assert the parcel has the correct Scene Base
+            Assert.AreEqual(
+                sceneID,
+                metadata.sceneId,
+                "CreateSignatureMetadata must always have the scene ID in the metadata. This is critical for security and must not be changed."
+            );
         }
 
         [Test]
-        public void UseDecentralandKernelSceneAsSignerWhenCreatingSignatureMetadata()
+        public void UseCorrectMetadataWhenInvokingCreatingSignatureMetadata()
         {
             // Arrange - Test CreateSignatureMetadata directly (now internal for testing)
             string? hashPayload = null;
@@ -137,6 +157,20 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
                 "decentraland-kernel-scene",
                 metadata.signer,
                 "CreateSignatureMetadata must always use 'decentraland-kernel-scene' as the signer. This is critical for security and must not be changed."
+            );
+
+            // Assert the parcel has the correct coords
+            Assert.AreEqual(
+                $"{sceneBase.x},{sceneBase.y}",
+                metadata.parcel,
+                "CreateSignatureMetadata must always have the scene base in the metadata. This is critical for security and must not be changed."
+            );
+
+            // Assert the parcel has the correct Scene Base
+            Assert.AreEqual(
+                sceneID,
+                metadata.sceneId,
+                "CreateSignatureMetadata must always have the scene ID in the metadata. This is critical for security and must not be changed."
             );
         }
 
