@@ -210,11 +210,11 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     if (!string.IsNullOrEmpty(expectedBuilderItemType) && elementDTO.type != expectedBuilderItemType)
                         continue;
 
-                    ITrimmedWearable avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
+                    IWearable avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
 
                     //Builder items will never have an asset bundle
-                    if (avatarElement.TrimmedDTO.assetBundleManifestVersion == null)
-                        avatarElement.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
+                    if (avatarElement.DTO.assetBundleManifestVersion == null)
+                        avatarElement.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
 
                     intention.AppendToResult(avatarElement);
                     totalCount++;
