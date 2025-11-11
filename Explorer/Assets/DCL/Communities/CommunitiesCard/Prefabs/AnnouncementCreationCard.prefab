@@ -535,12 +535,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Communities.CommunitiesCard.Announcements.AnnouncementCreationCardView
   profilePicture: {fileID: 8551618322753554247}
-  announcementInput: {fileID: 3069235938684532030}
+  announcementInput: {fileID: 1000365873535981171}
   createAnnouncementButton: {fileID: 2377946982854523898}
   createAnnouncementInputOutline: {fileID: 7415728060491493895}
   characterCounter: {fileID: 1969553801340406173}
   emojiButton: {fileID: 4017628168029410300}
   emojiPanel: {fileID: 2788626263768453102}
+  emojiPanelConfiguration: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
+  emojiSectionViewPrefab: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+  emojiButtonPrefab: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
+  addEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
+  openEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
 --- !u!1 &6838399260398429114
 GameObject:
   m_ObjectHideFlags: 0
@@ -995,7 +1000,7 @@ GameObject:
   - component: {fileID: 4951593036773516930}
   - component: {fileID: 4391581281075065335}
   - component: {fileID: 3227231960249763763}
-  - component: {fileID: 3069235938684532030}
+  - component: {fileID: 1000365873535981171}
   - component: {fileID: 5114775097306318761}
   m_Layer: 5
   m_Name: AnnouncementInput
@@ -1065,7 +1070,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &3069235938684532030
+--- !u!114 &1000365873535981171
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1074,7 +1079,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7602365930213427393}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 540d6cb25a7124d428c68ac42b3e7de4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
@@ -1157,7 +1162,7 @@ MonoBehaviour:
   m_ReadOnly: 0
   m_RichText: 1
   m_GlobalFontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
-  m_OnFocusSelectAll: 1
+  m_OnFocusSelectAll: 0
   m_ResetOnDeActivation: 1
   m_KeepTextSelectionVisible: 0
   m_RestoreOriginalTextOnEscape: 1
