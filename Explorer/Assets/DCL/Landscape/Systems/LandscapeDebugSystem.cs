@@ -13,15 +13,13 @@ using UnityEngine.UIElements;
 
 namespace DCL.Landscape.Systems
 {
-    using Landscape = Global.Dynamic.Landscapes.Landscape;
-
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LandscapeDebugSystem : BaseUnityLoopSystem
     {
         private readonly SatelliteFloor floor;
         private readonly RealmPartitionSettingsAsset realmPartitionSettings;
-        private readonly Landscape landscape;
+        private readonly global::Global.Dynamic.Landscapes.Landscape landscape;
         private readonly LandscapeData landscapeData;
         private readonly ElementBinding<int> lodBias;
         private readonly ElementBinding<int> cullDistance;
@@ -30,7 +28,7 @@ namespace DCL.Landscape.Systems
 
         private LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder,
             SatelliteFloor floor, RealmPartitionSettingsAsset realmPartitionSettings,
-            Landscape landscape, LandscapeData landscapeData) : base(world)
+            global::Global.Dynamic.Landscapes.Landscape landscape, LandscapeData landscapeData) : base(world)
         {
             this.floor = floor;
             this.realmPartitionSettings = realmPartitionSettings;
