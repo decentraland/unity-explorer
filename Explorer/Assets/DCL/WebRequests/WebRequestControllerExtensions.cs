@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.CustomDownloadHandlers;
+using DCL.WebRequests.Dumper;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -229,6 +230,9 @@ namespace DCL.WebRequests
             ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric) =>
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
+
+        public static IWebRequestController WithDump(this IWebRequestController origin) =>
+            new WebRequestDumpRecorder(origin);
 
         public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget)
         {

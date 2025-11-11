@@ -29,8 +29,11 @@ namespace DCL.WebRequests.Dumper
             writer.WritePropertyName("args");
             serializer.Serialize(writer, value.Args);
 
-            writer.WritePropertyName("headersInfo");
-            serializer.Serialize(writer, value.HeadersInfo);
+            if (value.HeadersInfo != null)
+            {
+                writer.WritePropertyName("headersInfo");
+                serializer.Serialize(writer, value.HeadersInfo);
+            }
 
             writer.WriteEndObject();
         }
@@ -46,7 +49,7 @@ namespace DCL.WebRequests.Dumper
             Type? requestType = null;
             Type? argsType = null;
             object? args = null;
-            WebRequestHeadersInfo headersInfo = default;
+            WebRequestHeadersInfo? headersInfo = null;
 
             // First pass: read argsType to know how to deserialize args
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
