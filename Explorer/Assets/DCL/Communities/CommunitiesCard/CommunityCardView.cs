@@ -96,6 +96,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject privateCommunityIcon { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
+        [field: SerializeField] public GameObject UnlistedMark { get; private set; } = null!;
+        [field: SerializeField] public GameObject UnlistedSeparator { get; private set; } = null!;
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
@@ -340,6 +342,8 @@ namespace DCL.Communities.CommunitiesCard
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
             communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
+            UnlistedMark.SetActive(communityData.visibility == CommunityVisibility.unlisted);
+            UnlistedSeparator.SetActive(communityData.visibility == CommunityVisibility.unlisted);
 
             publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
             privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
