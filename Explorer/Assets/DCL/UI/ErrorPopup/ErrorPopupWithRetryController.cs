@@ -13,8 +13,6 @@ namespace DCL.UI.ErrorPopup
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public Result SelectedOption { get; private set; }
-
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
@@ -22,10 +20,10 @@ namespace DCL.UI.ErrorPopup
             viewInstance!.ExitButton.onClick.AddListener(() =>
             {
                 ExitUtils.Exit();
-                SelectedOption = Result.EXIT;
+                inputData.SelectedOption = Result.EXIT;
             });
 
-            viewInstance.RestartButton.onClick.AddListener(() => SelectedOption = Result.RESTART);
+            viewInstance.RestartButton.onClick.AddListener(() => inputData.SelectedOption = Result.RESTART);
         }
 
         protected override void OnBeforeViewShow()
@@ -57,8 +55,13 @@ namespace DCL.UI.ErrorPopup
             CONNECTION_LOST,
         }
 
-        public struct Input
+        public class Input
         {
+            /// <summary>
+            /// Out value
+            /// </summary>
+            public Result SelectedOption;
+
             public readonly string Title;
             public readonly string Description;
             public readonly string RetryText;
