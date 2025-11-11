@@ -59,7 +59,10 @@ namespace DCL.WebRequests.Dumper
 
             writer.WritePropertyName("kind");
             writer.WriteValue((int)Kind.RAW);
+
+            writer.WritePropertyName("postData");
             writer.WriteValue(value.PostData);
+            writer.WritePropertyName("contentType");
             writer.WriteValue(value.ContentType);
 
             writer.WriteEndObject();
@@ -74,7 +77,9 @@ namespace DCL.WebRequests.Dumper
             switch (kind)
             {
                 case Kind.RAW:
+                    reader.Read(); // Read property name "postData"
                     string postData = reader.ReadAsString() ?? string.Empty;
+                    reader.Read(); // Read property name "contentType"
                     string contentType = reader.ReadAsString() ?? string.Empty;
                     reader.Read(); // End object
                     return GenericPostArguments.Create(postData, contentType);
