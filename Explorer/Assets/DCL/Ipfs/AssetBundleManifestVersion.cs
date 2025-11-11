@@ -90,8 +90,8 @@ public class AssetBundleManifestVersion
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1");
-            assets.windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1");
+            assets.mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1699288905291");
+            assets.windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1699288905291");
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 
