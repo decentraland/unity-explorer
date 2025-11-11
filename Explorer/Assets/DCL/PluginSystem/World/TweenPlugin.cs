@@ -18,7 +18,7 @@ namespace DCL.PluginSystem.World
         // Previous SDK versions have the TweenSequence logic running in the SDK Runtime,
         // we need to still support those already deployed scenes and we
         // cannot have both running at the same time (SDK Runtime & Explorer)
-        private const string MIN_TWEEN_SEQUENCE_SDK_VERSION = "7.12.3";
+        private const string MIN_TWEEN_SEQUENCE_SDK_VERSION = "7.13.0";
 
         private readonly TweenerPool tweenerPool;
 
