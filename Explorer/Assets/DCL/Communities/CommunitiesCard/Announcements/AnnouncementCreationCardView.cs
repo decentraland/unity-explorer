@@ -1,4 +1,6 @@
-﻿using DCL.Profiles;
+﻿using DCL.Chat;
+using DCL.Emoji;
+using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -14,6 +16,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private TMP_InputField announcementInput = null!;
         [SerializeField] private Button createAnnouncementButton = null!;
         [SerializeField] private GameObject createAnnouncementInputOutline = null!;
+        [SerializeField] private CharacterCounterView characterCounter = null!;
+        [SerializeField] internal EmojiButtonView emojiButton = null!;
+        [SerializeField] internal EmojiPanelView emojiPanel = null!;
 
         public event Action<string>? CreateAnnouncementButtonClicked;
 
@@ -25,6 +30,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onDeselect.AddListener(OnAnnouncementInputDeselected);
             announcementInput.onValueChanged.AddListener(OnAnnouncementInputValueChanged);
             createAnnouncementButton.onClick.AddListener(OnCreateAnnouncementButton);
+            emojiButton.Button.onClick.AddListener(OnToggleEmojisPanel);
+
+            characterCounter.SetMaximumLength(announcementInput.characterLimit);
         }
 
         private void OnDestroy()
@@ -33,11 +41,13 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onDeselect.RemoveListener(OnAnnouncementInputDeselected);
             announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
             createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButton);
+            emojiButton.Button.onClick.RemoveListener(OnToggleEmojisPanel);
         }
 
         public void Configure(Profile? profile, ProfileRepositoryWrapper profileDataProvider)
         {
             UpdateCreateButtonState();
+            UpdateCharacterCounter();
 
             if (profile != null && currentProfileThumbnailUrl != profile.Avatar.FaceSnapshotUrl)
             {
@@ -46,8 +56,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             }
         }
 
-        public void CleanInput() =>
+        public void CleanInput()
+        {
             announcementInput.text = string.Empty;
+            UpdateCharacterCounter();
+        }
 
         private void OnAnnouncementInputSelected(string _) =>
             createAnnouncementInputOutline.SetActive(true);
@@ -55,13 +68,24 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private void OnAnnouncementInputDeselected(string _) =>
             createAnnouncementInputOutline.SetActive(false);
 
-        private void OnAnnouncementInputValueChanged(string text) =>
+        private void OnAnnouncementInputValueChanged(string text)
+        {
             UpdateCreateButtonState();
+            UpdateCharacterCounter();
+        }
 
         private void OnCreateAnnouncementButton() =>
             CreateAnnouncementButtonClicked?.Invoke(announcementInput.text);
 
+        private void OnToggleEmojisPanel()
+        {
+            emojiPanel.gameObject.SetActive(!emojiPanel.gameObject.activeSelf);
+        }
+
         private void UpdateCreateButtonState() =>
             createAnnouncementButton.interactable = !string.IsNullOrEmpty(announcementInput.text);
+
+        private void UpdateCharacterCounter() =>
+            characterCounter.SetCharacterCount(announcementInput.text.Length);
     }
 }
