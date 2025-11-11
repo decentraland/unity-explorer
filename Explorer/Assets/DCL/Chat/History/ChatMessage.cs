@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using System;
 using System.Globalization;
 
@@ -12,6 +13,7 @@ namespace DCL.Chat.History
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
         public readonly string SenderWalletAddress;
+        public readonly bool IsSenderOfficial;
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
@@ -44,6 +46,7 @@ namespace DCL.Chat.History
             IsSentByOwnUser = isSentByOwnUser;
             SenderWalletId = senderWalletId;
             IsMention = isMention;
+            IsSenderOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(senderWalletAddress);
             IsSystemMessage = isSystemMessage;
             SentTimestampRaw = sentTimestamp;
             SentTimestamp = sentTimestamp != 0.0 ? DateTime.FromOADate(sentTimestamp) : null;
