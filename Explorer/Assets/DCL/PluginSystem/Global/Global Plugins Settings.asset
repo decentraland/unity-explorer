@@ -723,7 +723,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        startFadeDistanceDithering: 0.42
+        startFadeDistanceDithering: 0.8
         endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100
         computeShader:

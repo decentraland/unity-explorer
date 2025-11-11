@@ -127,6 +127,8 @@ namespace DCL.LOD.Systems
             asset.Root.transform.localRotation = initialSceneStateMetadata.rotations[indexToPosition];
             asset.Root.transform.localScale = initialSceneStateMetadata.scales[indexToPosition];
 
+            asset.ToggleAnimationState(false);
+
             initialSceneStateLOD.AddResolvedAsset(assetHash, asset);
         }
 

@@ -65,7 +65,8 @@ namespace DCL.Landscape.Systems
             {
                 Camera camera = cinemachinePreset!.Brain.OutputCamera;
 
-                RenderGroundInternal(camera);
+                if (landscapeData.RenderGround)
+                    RenderGroundInternal(camera);
 
 #if UNITY_EDITOR
                 const bool RENDER_TO_ALL_CAMERAS = true;
@@ -73,7 +74,7 @@ namespace DCL.Landscape.Systems
                 const bool RENDER_TO_ALL_CAMERAS = false;
 #endif
 
-                if (grassIndirectRenderer != null)
+                if (landscapeData.RenderGrass && grassIndirectRenderer != null)
                     grassIndirectRenderer.Render(landscapeData, terrain, camera, RENDER_TO_ALL_CAMERAS);
             }
         }

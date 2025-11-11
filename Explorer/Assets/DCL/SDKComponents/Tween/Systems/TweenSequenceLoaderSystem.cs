@@ -11,24 +11,25 @@ using ECS.Groups;
 namespace DCL.SDKComponents.Tween
 {
     /// <summary>
-    /// Handles the loading of PBTween ONLY (when PBTweenSequence runs in SDK Runtime)
+    /// Handles the loading of PBTween and PBTweenSequence components
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
-    public partial class TweenLoaderSystem : BaseUnityLoopSystem
+    public partial class TweenSequenceLoaderSystem : BaseUnityLoopSystem
     {
-        public TweenLoaderSystem(World world) : base(world)
+        public TweenSequenceLoaderSystem(World world) : base(world)
         {
         }
 
         protected override void Update(float t)
         {
             LoadTweenQuery(World);
+            LoadTweenSequenceQuery(World);
         }
 
         [Query]
-        [None(typeof(SDKTweenComponent))]
+        [None(typeof(SDKTweenComponent), typeof(PBTweenSequence))]
         private void LoadTween(Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
@@ -40,5 +41,21 @@ namespace DCL.SDKComponents.Tween
 
             World.Add(entity, sdkTweenComponent);
         }
+
+        [Query]
+        [None(typeof(SDKTweenSequenceComponent))]
+        private void LoadTweenSequence(Entity entity, ref PBTween pbTween, ref PBTweenSequence pbTweenSequence)
+        {
+            // For sequences, PBTween must exist and be valid
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            var sdkTweenSequenceComponent = new SDKTweenSequenceComponent
+            {
+                IsDirty = true,
+            };
+
+            World.Add(entity, sdkTweenSequenceComponent);
+        }
     }
 }
+
