@@ -43,8 +43,6 @@ namespace DCL.WebRequests.Dumper
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            reader.Read(); // Start object
-
             CommonArguments? commonArguments = null;
             Type? requestType = null;
             Type? argsType = null;
@@ -66,7 +64,7 @@ namespace DCL.WebRequests.Dumper
                         string? requestTypeString = reader.Value?.ToString();
 
                         if (!string.IsNullOrEmpty(requestTypeString))
-                            argsType = Type.GetType(requestTypeString);
+                            requestType = Type.GetType(requestTypeString);
 
                         break;
 

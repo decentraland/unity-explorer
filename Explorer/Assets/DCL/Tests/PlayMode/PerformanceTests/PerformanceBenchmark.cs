@@ -12,6 +12,7 @@ using Global.Dynamic.LaunchModes;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
 
@@ -39,17 +40,17 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public void TearDown() =>
             reportScope?.Dispose();
 
-        public void CreateController(int concurrency)
+        public void CreateController(int concurrency, bool disableABCache = false)
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 
             controller = new BudgetedWebRequestController(new WebRequestController(analytics, identityCache,
-                new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)),
+                new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache),
                 ChromeDevtoolProtocolClient.NewForTest()), concurrency, new ElementBinding<ulong>(0));
         }
 
-        protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, TParam[] loopThrough, int warmupCount, int targetRequestsCount,
-            int iterationsCount, TimeSpan delayBetweenIterations)
+        protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
+            int iterationsCount, TimeSpan delayBetweenIterations, Action? onIterationFinished = null)
         {
             analytics.WarmingUp = true;
 
@@ -68,11 +69,13 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 var tasks = new UniTask[targetRequestsCount];
 
                 for (int j = 0; j < targetRequestsCount; j++)
-                    tasks[j] = createRequest(loopThrough[j % loopThrough.Length]).SuppressToResultAsync();
+                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync();
 
                 await UniTask.WhenAll(tasks);
 
                 Measure.Custom(iterationTotalTime, PerformanceTestWebRequestsAnalytics.ToMs(ts, Stopwatch.GetTimestamp()));
+
+                onIterationFinished?.Invoke();
 
                 await UniTask.Delay(delayBetweenIterations);
             }

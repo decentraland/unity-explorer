@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.GenericDelete;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NUnit;
 using System;
@@ -19,7 +20,7 @@ namespace DCL.WebRequests.Dumper
     [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
     public partial class WebRequestsDumper
     {
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
+        internal static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
         {
             ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
             ContractResolver = new WebRequestsDumperResolver(),
@@ -41,8 +42,8 @@ namespace DCL.WebRequests.Dumper
         public string Serialize() =>
             JsonConvert.SerializeObject(dump, SERIALIZER_SETTINGS);
 
-        public WebRequestDump Load(string path) =>
-            JsonConvert.DeserializeObject<WebRequestDump>(File.ReadAllText(path));
+        public static WebRequestDump Deserialize(string path) =>
+            JsonConvert.DeserializeObject<WebRequestDump>(File.ReadAllText(path), SERIALIZER_SETTINGS);
 
         public void Add(WebRequestDump.Envelope envelope) =>
             dump.entries.Add(envelope);
@@ -63,16 +64,47 @@ namespace DCL.WebRequests.Dumper
     [Preserve]
     public class WebRequestDump
     {
-        internal List<Envelope> entries = new ();
+        internal readonly List<Envelope> entries = new ();
+
+        public IReadOnlyList<Envelope> Entries => entries;
 
         [Serializable]
         [Preserve]
         public class Envelope
         {
+            public readonly object Args;
+            public readonly Type ArgsType;
+            public readonly CommonArguments CommonArguments;
+            public readonly WebRequestHeadersInfo? HeadersInfo;
+
+            public readonly Type RequestType;
+
+            // Sign is not supported
+
+            [JsonConstructor]
+            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo)
+            {
+                CommonArguments = commonArguments;
+                ArgsType = argsType;
+                Args = args;
+                HeadersInfo = headersInfo;
+                RequestType = requestType;
+            }
+
+            public UniTask RecreateWithNoOp(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken token)
+            {
+                Type type = typeof(Typed<,>).MakeGenericType(RequestType, ArgsType);
+                object? typed = Activator.CreateInstance(type);
+                MethodInfo? method = type.GetMethod("SendAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+                return (UniTask)method.Invoke(typed, new object[] { webRequestController, assetBundleLoadingMutex, this, token });
+            }
+
             private class Typed<TWebRequest, TWebRequestArgs>
                 where TWebRequestArgs: struct
                 where TWebRequest: struct, ITypedWebRequest
             {
+                [Preserve]
+                [UsedImplicitly]
                 internal UniTask SendAsync(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, Envelope envelope, CancellationToken token)
                 {
                     if (typeof(TWebRequest) == typeof(GenericGetRequest) && typeof(TWebRequestArgs) == typeof(GenericGetArguments))
@@ -105,32 +137,6 @@ namespace DCL.WebRequests.Dumper
 
                     throw new NotSupportedException($"\"{typeof(TWebRequest).FullName} & {envelope.Args.GetType()}\" is not supported");
                 }
-            }
-
-            public readonly Type RequestType;
-            public readonly CommonArguments CommonArguments;
-            public readonly Type ArgsType;
-            public readonly object Args;
-            public readonly WebRequestHeadersInfo? HeadersInfo;
-
-            // Sign is not supported
-
-            [JsonConstructor]
-            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo)
-            {
-                CommonArguments = commonArguments;
-                ArgsType = argsType;
-                Args = args;
-                HeadersInfo = headersInfo;
-                RequestType = requestType;
-            }
-
-            public UniTask RecreateWithNoOp(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken token)
-            {
-                Type type = typeof(Typed<,>).MakeGenericType(RequestType, ArgsType);
-                object? typed = Activator.CreateInstance(type);
-                MethodInfo? method = type.GetMethod("SendAsync", BindingFlags.NonPublic | BindingFlags.Instance);
-                return (UniTask)method.Invoke(typed, new object[] { webRequestController, assetBundleLoadingMutex, this, token });
             }
         }
     }
