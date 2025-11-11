@@ -196,6 +196,14 @@ namespace Global.Dynamic
         }
 
         /// <summary>
+        /// Checks if the Editor position override is enabled.
+        /// If this is true in the Editor, the position will be the one that has been serialized.
+        /// This prevents the feature flag from overriding the developer's start position.
+        /// </summary>
+        /// <returns>True if running in Editor and EditorSceneStartPosition is enabled.</returns>
+        internal bool HasEditorPositionOverride() => Application.isEditor && EditorSceneStartPosition;
+
+        /// <summary>
         /// Checks if the user has passed a position as an argument.
         /// If a position is set through args, the feature flag should not be taken into consideration.
         /// This is the case used on local scene development from Creator Hub/scene args.
@@ -204,14 +212,6 @@ namespace Global.Dynamic
         /// <param name="appArgs">The application arguments to check.</param>
         /// <returns>True if the POSITION flag is present in the arguments.</returns>
         private static bool HasAppArgPosition(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.POSITION);
-
-        /// <summary>
-        /// Checks if the Editor position override is enabled.
-        /// If this is true in the Editor, the position will be the one that has been serialized.
-        /// This prevents the feature flag from overriding the developer's start position.
-        /// </summary>
-        /// <returns>True if running in Editor and EditorSceneStartPosition is enabled.</returns>
-        private bool HasEditorPositionOverride() => Application.isEditor && EditorSceneStartPosition;
 
         private bool ShouldForceHomePosition() => ForceHomePosition && HomeMarkerSerializer.HasSerializedPosition();
     }
