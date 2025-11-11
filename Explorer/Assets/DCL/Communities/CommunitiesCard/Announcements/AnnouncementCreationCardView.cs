@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesCard.Announcements
@@ -50,10 +51,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onDeselect.AddListener(OnAnnouncementInputDeselected);
             announcementInput.onValueChanged.AddListener(OnAnnouncementInputValueChanged);
             createAnnouncementButton.onClick.AddListener(OnCreateAnnouncementButton);
-            emojiButton.Button.onClick.AddListener(OnToggleEmojisPanel);
+            emojiButton.Button.onClick.AddListener(OnOpenEmojisPanel);
             announcementInput.PasteShortcutPerformed += OnAnnouncementInputPasteShortcut;
             ViewDependencies.ClipboardManager.OnPaste += OnPasteClipboardText;
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
+            DCLInput.Instance.UI.Click.performed += OnUIClicked;
         }
 
         private void OnDestroy()
@@ -62,10 +64,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onDeselect.RemoveListener(OnAnnouncementInputDeselected);
             announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
             createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButton);
-            emojiButton.Button.onClick.RemoveListener(OnToggleEmojisPanel);
+            emojiButton.Button.onClick.RemoveListener(OnOpenEmojisPanel);
             announcementInput.PasteShortcutPerformed -= OnAnnouncementInputPasteShortcut;
             ViewDependencies.ClipboardManager.OnPaste -= OnPasteClipboardText;
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
+            DCLInput.Instance.UI.Click.performed -= OnUIClicked;
             emojiPanelPresenter.Dispose();
         }
 
@@ -114,11 +117,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private void UpdateCreateButtonState() =>
             createAnnouncementButton.interactable = !string.IsNullOrEmpty(announcementInput.text);
 
-        private void OnToggleEmojisPanel()
+        private void OnOpenEmojisPanel()
         {
-            emojiPanelPresenter.SetPanelVisibility(!emojiPanel.gameObject.activeSelf);
-            emojiButton.SetState(emojiPanel.gameObject.activeSelf);
-            emojiPanel.EmojiContainer.gameObject.SetActive(emojiPanel.gameObject.activeSelf);
+            if (emojiPanel.gameObject.activeSelf) return;
+            SetEmojiPanelVisibility(true);
         }
 
         private void OnEmojiSelected(string emoji)
@@ -126,6 +128,30 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
             if (!announcementInput.IsWithinCharacterLimit(emoji.Length)) return;
             announcementInput.InsertTextAtCaretPosition(emoji);
+        }
+
+        private void OnUIClicked(InputAction.CallbackContext context)
+        {
+            var clickPosition = GetPointerPosition(context);
+            bool isClickedOutsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
+            if (!isClickedOutsideEmojiPanel)
+                SetEmojiPanelVisibility(false);
+        }
+
+        private static Vector2 GetPointerPosition(InputAction.CallbackContext context)
+        {
+            if (context.control is Pointer pCtrl) return pCtrl.position.ReadValue();
+            if (Pointer.current != null) return Pointer.current.position.ReadValue();
+            if (Mouse.current != null) return Mouse.current.position.ReadValue();
+            if (Touchscreen.current?.primaryTouch != null) return Touchscreen.current.primaryTouch.position.ReadValue();
+            return Vector2.zero;
+        }
+
+        private void SetEmojiPanelVisibility(bool isVisible)
+        {
+            emojiPanelPresenter.SetPanelVisibility(isVisible);
+            emojiPanel.EmojiContainer.gameObject.SetActive(isVisible);
+            emojiButton.SetState(isVisible);
         }
     }
 }
