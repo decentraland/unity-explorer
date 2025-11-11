@@ -27,7 +27,7 @@ namespace DCL.Landscape
         private Transform rootGo;
         public bool IsInitialized { get; private set; }
         public bool IsTerrainShown { get; private set; }
-
+        private LandscapeData landscapeData;
         public TerrainModel? TerrainModel { get; private set; }
         public Texture2D? OccupancyMap { get; private set; }
         public NativeArray<byte> OccupancyMapData { get; private set; }
@@ -41,10 +41,11 @@ namespace DCL.Landscape
             // If we destroy rootGo here it causes issues on application exit
         }
 
-        public async UniTask InitializeAsync(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
+        public async UniTask InitializeAsync(TerrainGenerationData terrainGenData,
+            int[] treeRendererKeys, LandscapeData landscapeData)
         {
             this.terrainGenData = terrainGenData;
-
+            this.landscapeData = landscapeData;
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
@@ -99,6 +100,11 @@ namespace DCL.Landscape
                 OccupancyMapSize, OccupancyFloor, MaxHeight);
 
             Trees.Instantiate();
+
+            if (landscapeData.RenderTrees)
+                Trees.Show();
+            else
+                Trees.Hide();
 
             processReport?.SetProgress(1f);
 

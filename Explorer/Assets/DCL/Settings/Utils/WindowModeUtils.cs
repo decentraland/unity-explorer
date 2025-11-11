@@ -34,7 +34,7 @@ namespace DCL.Settings.Utils
             Resolution GetSavedResolution()
             {
                 int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
-                return possibleResolutions[index];
+                return index < 0 || index >= possibleResolutions.Count ? GetDefaultResolution() : possibleResolutions[index];
             }
 
             Resolution GetDefaultResolution()

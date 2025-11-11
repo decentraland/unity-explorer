@@ -46,6 +46,9 @@ namespace SceneRuntime
             // Setup UniTask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
 
+            // Set global SDK configuration flags
+            engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
+
             arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
             unit8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
             uint8Arrays = new List<ITypedArray<byte>>();
