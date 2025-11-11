@@ -196,6 +196,12 @@ namespace DCL.AvatarRendering.AvatarShape
                     shouldBeHidden = true;
                 }
             }
+            else
+            {
+                float currentDistance = (playerComponent.CameraFocus.position - playerCamera.transform.position).magnitude;
+                shouldBeHidden = currentDistance < startFadeDithering;
+            }
+
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 
