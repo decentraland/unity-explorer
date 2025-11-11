@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
@@ -160,6 +161,11 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, StreamableLoadingResult<AssetBundlesVersions> assetBundlesVersions, CancellationToken ct)
         {
             TrimmedWearableDTO elementDTO = element.Entity;
+
+            // Same "hack" as in: AssetBundleManifestVersion.InjectContent
+            if (PlatformUtils.GetCurrentPlatform() == "_mac" && elementDTO.thumbnail.StartsWith("Qm"))
+                elementDTO.thumbnail = elementDTO.thumbnail.ToLower();
+
             ITrimmedWearable wearable = new TrimmedWearable(elementDTO);
 
             // Run the asset bundle fallback check in parallel
