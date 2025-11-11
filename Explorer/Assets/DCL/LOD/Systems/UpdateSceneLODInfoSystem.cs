@@ -77,7 +77,8 @@ namespace DCL.LOD.Systems
                     GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
                     typeof(GameObject),
                     permittedSources: AssetSource.WEB,
-                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion
+                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
+                    parentEntityID: sceneDefinitionComponent.Definition.id
                 );
                 sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
                 sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING;
