@@ -5,6 +5,7 @@ using DCL.AssetsProvision.CodeResolver;
 using ECS.TestSuite;
 using DCL.Diagnostics;
 using ECS;
+using ECS.StreamableLoading.Cache.Disk;
 using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
@@ -12,12 +13,12 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections;
 using System.Text;
 using System.Threading;
-using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.TestTools;
@@ -43,26 +44,33 @@ namespace SceneRuntime.Tests
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
         }
 
+        internal static DataHolder CreateCode(string code)
+        {
+            byte[] codeBytes = Encoding.UTF8.GetBytes(code);
+            var codeMemory = new SlicedOwnedMemory<byte>(codeBytes.Length);
+            codeBytes.CopyTo(codeMemory.Memory);
+            return new DataHolder(codeMemory);
+        }
+
         [UnityTest]
         public IEnumerator EngineApi_GetState() =>
             UniTask.ToCoroutine(async () =>
             {
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
 
-                var code = new NativeArray<byte>(Encoding.UTF8.GetBytes(@"
+                using DataHolder code = CreateCode(@"
                     const engineApi = require('~system/EngineApi')
                     exports.onStart = async function() {
                         return engineApi.crdtGetState()
                     };
                     exports.onUpdate = async function(dt) {};
-                "), Allocator.Temp);
+                ");
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
 
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(
-                    code.AsReadOnly(), new SceneShortInfo(), CancellationToken.None);
+                    code, new SceneShortInfo(), CancellationToken.None);
 
-                code.Dispose();
                 sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, Substitute.For<IInstancePoolsProvider>(), sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
@@ -76,7 +84,7 @@ namespace SceneRuntime.Tests
             {
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
 
-                var code = new NativeArray<byte>(Encoding.UTF8.GetBytes(@"
+                using DataHolder code = CreateCode(@"
                     const engineApi = require('~system/EngineApi')
                     exports.onStart = async function() {};
                     exports.onUpdate = async function(dt) {
@@ -85,12 +93,12 @@ namespace SceneRuntime.Tests
                         await engineApi.crdtSendToRenderer({ data })
                         test.Ok()
                     };
-                "),  Allocator.Temp);
+                ");
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
 
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(
-                    code.AsReadOnly(), new SceneShortInfo(), CancellationToken.None);
+                    code, new SceneShortInfo(), CancellationToken.None);
 
                 code.Dispose();
                 sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, poolsProvider, sceneExceptionsHandler);
@@ -124,15 +132,15 @@ namespace SceneRuntime.Tests
         public IEnumerator ProfileOnUpdate() =>
             UniTask.ToCoroutine(async () =>
             {
-                var code = new NativeArray<byte>(Encoding.UTF8.GetBytes(@"
+                using var code = CreateCode(@"
                     exports.onStart = async function() {};
                     exports.onUpdate = async function(dt) {};
-                "),   Allocator.Temp);
+                ");
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
 
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(
-                    code.AsReadOnly(), new SceneShortInfo(), CancellationToken.None);
+                    code, new SceneShortInfo(), CancellationToken.None);
 
                 code.Dispose();
                 sceneRuntime.ExecuteSceneJson();

@@ -1,12 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using SceneRuntime.Factory.JsSource;
 using System.Threading;
-using UnityEngine.Networking;
 
 namespace SceneRuntime.Factory.WebSceneSource
 {
     public interface IWebJsSources
     {
-        public UniTask<DownloadHandler> SceneSourceCodeAsync(URLAddress path, CancellationToken ct);
+        public UniTask<DataHolder> SceneSourceCodeAsync(URLAddress path, CancellationToken ct);
     }
 }

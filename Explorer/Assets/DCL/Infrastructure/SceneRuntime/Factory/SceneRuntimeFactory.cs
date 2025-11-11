@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization;
@@ -7,6 +6,7 @@ using ECS;
 using Microsoft.ClearScript.V8;
 using SceneRuntime.Apis;
 using SceneRuntime.Factory.JsSceneSourceCode;
+using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
 using SceneRuntime.ModuleHub;
@@ -16,9 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace SceneRuntime.Factory
 {
@@ -81,7 +79,7 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
-            NativeArray<byte>.ReadOnly sourceCode,
+            DataHolder sourceCode,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
@@ -103,6 +101,7 @@ namespace SceneRuntime.Factory
             V8ScriptEngine engine = engineFactory.Create(sceneShortInfo);
             var moduleHub = new SceneModuleHub(engine);
 
+            // TODO: Grab a SlicedOwnedMemory from some pool or something?
             byte[] buffer = new byte[29000];
             COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
 
@@ -175,9 +174,9 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
-            using DownloadHandler downloadHandler = await webJsSources.SceneSourceCodeAsync(path, ct);
+            using DataHolder data = await webJsSources.SceneSourceCodeAsync(path, ct);
 
-            return await CreateBySourceCodeAsync(downloadHandler.nativeData, sceneShortInfo, ct,
+            return await CreateBySourceCodeAsync(data, sceneShortInfo, ct,
                 instantiationBehavior);
         }
 
@@ -199,9 +198,9 @@ namespace SceneRuntime.Factory
                 throw new IOException(
                     $"File \"{path}\" is larger than the buffer ({buffer.Length} bytes)");
 
-            int streamLength = (int)stream.Length;
-            stream.ReadReliably(buffer, offset, streamLength);
-            return streamLength;
+            int count = (int)stream.Length;
+            await stream.ReadReliablyAsync(buffer, offset, count);
+            return count;
         }
     }
 }

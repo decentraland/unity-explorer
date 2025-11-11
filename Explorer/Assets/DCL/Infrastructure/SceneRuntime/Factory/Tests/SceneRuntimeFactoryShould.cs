@@ -11,10 +11,9 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.Tests;
 using System.Collections;
-using System.Text;
 using System.Threading;
-using Unity.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -42,7 +41,7 @@ namespace SceneRuntime.Factory.Tests
                 var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
                     webJsSources);
 
-                var sourceCode = new NativeArray<byte>(Encoding.UTF8.GetBytes(@"
+                var sourceCode = SceneRuntimeShould.CreateCode(@"
                 const engineApi = require('~system/EngineApi')
                 exports.onStart = async function() {
                     data = new Uint8Array(10)
@@ -51,14 +50,14 @@ namespace SceneRuntime.Factory.Tests
                     test.Ok()
                 };
                 exports.onUpdate = async function(dt) {};
-                "), Allocator.Temp);
+                ");
 
                 // Act
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(
-                    sourceCode.AsReadOnly(), new SceneShortInfo(), CancellationToken.None);
+                    sourceCode, new SceneShortInfo(), CancellationToken.None);
 
                 sourceCode.Dispose();
                 sceneRuntime.ExecuteSceneJson();
