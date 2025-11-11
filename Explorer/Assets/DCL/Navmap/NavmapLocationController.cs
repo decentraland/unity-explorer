@@ -15,6 +15,7 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private CharacterTransform playerTransformComponent;
 
+        private readonly NavmapLocationView view;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly NavmapFilterPanelController navmapFilterPanelController;
@@ -28,15 +29,16 @@ namespace DCL.Navmap
             INavmapBus navmapBus,
             HomePlaceEventBus homePlaceEventBus)
         {
+            this.view = view;
             this.world = world;
             this.playerEntity = playerEntity;
             this.navmapFilterPanelController = navmapFilterPanelController;
             this.homePlaceEventBus = homePlaceEventBus;
             world.TryGet(playerEntity, out playerTransformComponent);
 
-            view.CenterToHomeButton.onClick.AddListener(CenterToHome);
-            view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
-            view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
+            this.view.CenterToHomeButton.onClick.AddListener(CenterToHome);
+            this.view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
+            this.view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
 
             navmapBus.OnMoveCameraTo += MoveCameraTo;
         }
@@ -44,6 +46,11 @@ namespace DCL.Navmap
         private void MoveCameraTo(Vector2 destination, float speed = 0)
         {
             cameraController.TranslateTo(destination, speed == 0 ? TRANSITION_TIME : speed);
+        }
+        
+        private void OnHomeLocationChanged(HomeMarkerData? homeMarkerData)
+        {
+            view.CenterToHomeButton.interactable = homeMarkerData != null;
         }
 
         private void ToggleFilterPanel()
@@ -61,8 +68,9 @@ namespace DCL.Navmap
 
         private void CenterToHome()
         {
-            if (TryGetHomeCoordinates(out var coordinates))
-                cameraController.TranslateTo(coordinates, TRANSITION_TIME);
+            cameraController.TranslateTo(TryGetHomeCoordinates(out var coordinates) 
+                ? coordinates 
+                : Vector2Int.zero, TRANSITION_TIME);
         }
 
         private void CenterToPlayer()

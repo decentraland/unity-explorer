@@ -1,4 +1,5 @@
 using System;
+using DCL.Diagnostics;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
@@ -17,14 +18,22 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			return $"position:{Position.x.ToString()},{Position.y.ToString()}";
 		}
 
-		public void ParseFromString(string str)
+		public bool ParseFromString(string str)
 		{
 			int posStart = str.IndexOf("position:", StringComparison.Ordinal) + "position:".Length;
 			
 			string positionStr = str.Substring(posStart);
 			string[] coords = positionStr.Split(',');
+			int x,y;
+			if (int.TryParse(coords[0], out x) && int.TryParse(coords[1], out y))
+			{
+				Position = new Vector2Int(x, y);
+				return true;
+			}
 			
-			Position = new Vector2Int(int.Parse(coords[0]), int.Parse(coords[1]));
+			ReportHub.LogError(ReportCategory.UNSPECIFIED, "HomeMarkerData: Unable to parse position from string.");
+			Position = Vector2Int.zero;
+			return false;
 		}
 	}
 }

@@ -43,9 +43,6 @@ namespace DCL.Navmap
         public RectTransform SharePivot { get; private set; }
 
         [field: SerializeField]
-        public Button SetAsHomeButton { get; private set; }
-
-        [field: SerializeField]
         public GameObject LiveEventContainer { get; private set; }
 
         [field: SerializeField]

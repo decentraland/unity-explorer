@@ -143,7 +143,6 @@ namespace DCL.Navmap
             }
 
             view.ShareButton.onClick.AddListener(Share);
-            view.SetAsHomeButton.onClick.AddListener(SetAsHome);
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
@@ -210,9 +209,12 @@ namespace DCL.Navmap
 
             if (originParcel == null) return;
             if (place == null) return;
-
-            if (TeleportUtils.IsRoad(place.title))
-                view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
+            if (!TeleportUtils.IsRoad(place.title)) return;
+            
+            view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
+            
+            if(!homeButton.IsButtonOn)
+                homeButton.SetButtonState(homePlaceEventBus.IsHome(originParcel.Value));
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -323,11 +325,6 @@ namespace DCL.Navmap
         private void SetDestination(Vector2Int parcel, IPinMarker? arg2)
         {
             destination = parcel;
-        }
-
-        private void SetAsHome()
-        {
-            // TODO
         }
 
         private void JumpIn()

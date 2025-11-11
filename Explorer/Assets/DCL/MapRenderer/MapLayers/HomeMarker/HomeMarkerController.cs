@@ -1,5 +1,7 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.Navmap;
@@ -49,6 +51,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			this.homePlaceEventBus.UnsetAsHomeRequested += UnsetAsHomeRequested;
 			this.homePlaceEventBus.IsHomeQuery = (coordinates) => 
 				currentMarker != null && currentMarker.Value.Position == coordinates;
+			this.homePlaceEventBus.HasHomeLocationQuery = () => currentMarker != null;
 			this.homePlaceEventBus.GetHomeCoordinatesQuery = () => currentMarker?.Position;
 		}
 
@@ -63,6 +66,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			highlightCt.SafeCancelAndDispose();
 			deHighlightCt.SafeCancelAndDispose();
+			placesCts.SafeCancelAndDispose();
 			homeMarker.Dispose();
 		}
 
@@ -77,6 +81,8 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 			if (serialize)
 				HomeMarkerSerializer.Serialize(homeMarkerData);
+
+			homePlaceEventBus.NotifyHomeLocationChanged(homeMarkerData);
 		}
 
 		private void SetAsHomeRequested(Vector2Int coordinates)
@@ -162,12 +168,22 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			if (currentMarker == null)
 				return;
-			placesCts = placesCts.SafeRestart();
-			PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(currentMarker.Value.Position, placesCts.Token) 
-			                                  ?? new PlacesData.PlaceInfo(currentMarker.Value.Position);
-			if (placesCts.IsCancellationRequested)
-				return;
-			navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true).Forget();
+
+			try
+			{
+				placesCts = placesCts.SafeRestart();
+				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(currentMarker.Value.Position, placesCts.Token) 
+				                                  ?? new PlacesData.PlaceInfo(currentMarker.Value.Position);
+				if (placesCts.IsCancellationRequested)
+					return;
+				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, currentMarker.Value.Position).Forget();
+			}
+			catch (OperationCanceledException _) { }
+			catch (Exception e)
+			{
+				ReportHub.LogError(ReportCategory.UNSPECIFIED, "HomeMarkerController: Error while fetching place info" + e);
+			}
+			
 		}
 	}
 }

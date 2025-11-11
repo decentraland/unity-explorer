@@ -12,9 +12,12 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 				return null;
 
 			HomeMarkerData homeMarkerData = new HomeMarkerData();
-			homeMarkerData.ParseFromString(data);
+			if (homeMarkerData.ParseFromString(data)) 
+				return homeMarkerData;
 			
-			return homeMarkerData;
+			// Removes corrupted data from player prefs;
+			Serialize(null);
+			return null;
 		}
 
 		public static bool HasSerializedPosition()
