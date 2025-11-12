@@ -14,7 +14,7 @@ namespace SceneRuntime.Factory.JsSource
         private readonly SlicedOwnedMemory<byte> cached;
 
         /// <remarks>
-        /// Can only be called from the main thread.
+        /// Must be called from the main thread.
         /// </remarks>
         public DownloadedOrCachedData(DownloadHandler downloadHandler)
         {
@@ -42,12 +42,12 @@ namespace SceneRuntime.Factory.JsSource
             downloaded != null ? new MemoryManager(downloadedData).Memory : cached.Memory;
 
         public ReadOnlySpan<byte> AsReadOnlySpan() =>
-            downloaded != null ? downloaded.nativeData.AsReadOnlySpan() : cached.Memory.Span;
+            downloaded != null ? downloadedData.AsReadOnlySpan() : cached.Memory.Span;
 
         public SingleMemoryIterator GetMemoryIterator() =>
             new (AsReadOnlyMemory());
 
-        public int Length => downloaded != null ? downloaded.nativeData.Length : cached.Memory.Length;
+        public int Length => downloaded != null ? downloadedData.Length : cached.Memory.Length;
 
         public static implicit operator ReadOnlySpan<byte>(DownloadedOrCachedData self) =>
             self.AsReadOnlySpan();
