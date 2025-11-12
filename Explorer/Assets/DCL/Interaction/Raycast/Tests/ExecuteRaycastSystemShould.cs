@@ -254,8 +254,11 @@ namespace DCL.Interaction.Raycast.Tests
         }
 
         [Test]
-        public void FindCrossSceneHitWhenNotInSceneCache()
+        public void FindCrossSceneHitWhenNotInSceneCache_PortableExperience()
         {
+            // Set up scene as Portable Experience
+            sceneData.IsPortableExperience().Returns(true);
+
             // Create a collider that is NOT in the scene cache but IS in the global cache
             CreateCrossSceneColliders(ColliderLayer.ClPhysics);
 
@@ -275,8 +278,34 @@ namespace DCL.Interaction.Raycast.Tests
         }
 
         [Test]
-        public void FilterCrossSceneHitsByCollisionMask()
+        public void RegularSceneDoesNotCheckGlobalCache()
         {
+            // Ensure scene is NOT a Portable Experience (default)
+            sceneData.IsPortableExperience().Returns(false);
+
+            // Create a collider that is NOT in the scene cache but IS in the global cache
+            CreateCrossSceneColliders(ColliderLayer.ClPhysics);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
+
+            // Regular scenes should NOT find cross-scene entities (only check scene cache)
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void FilterCrossSceneHitsByCollisionMask_PortableExperience()
+        {
+            // Set up scene as Portable Experience
+            sceneData.IsPortableExperience().Returns(true);
+
             // Create cross-scene colliders with different layers
             CreateCrossSceneColliders(ColliderLayer.ClCustom5, ColliderLayer.ClPhysics);
 
@@ -292,8 +321,11 @@ namespace DCL.Interaction.Raycast.Tests
         }
 
         [Test]
-        public void FindAllQualifiedCrossSceneHits()
+        public void FindAllQualifiedCrossSceneHits_PortableExperience()
         {
+            // Set up scene as Portable Experience
+            sceneData.IsPortableExperience().Returns(true);
+
             // Create multiple cross-scene colliders
             CreateCrossSceneColliders(ColliderLayer.ClCustom2, ColliderLayer.ClCustom4, ColliderLayer.ClCustom7, ColliderLayer.ClCustom8);
 
@@ -313,12 +345,12 @@ namespace DCL.Interaction.Raycast.Tests
         }
 
         [Test]
-        public void FindMixedSceneAndCrossSceneHits()
+        public void FindCrossSceneHits_PortableExperience()
         {
-            // Create one collider in scene cache
-            CreateColliders(ColliderLayer.ClPhysics);
+            // Set up scene as Portable Experience
+            sceneData.IsPortableExperience().Returns(true);
 
-            // Create one collider in global cache only
+            // Create colliders in global cache only (Portable Experiences only check global cache)
             CreateCrossSceneColliders(ColliderLayer.ClPhysics);
 
             pbRaycast.QueryType = RaycastQueryType.RqtQueryAll;
@@ -326,19 +358,60 @@ namespace DCL.Interaction.Raycast.Tests
 
             system.Update(0);
 
-            Assert.That(raycastResult.Hits.Count, Is.EqualTo(2)); // Should find both hits
+            // Portable Experiences only check global cache (scene-agnostic), not their own scene cache
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1)); // Should find global cache hit
 
-            var entityIds = raycastResult.Hits.Select(h => h.EntityId).ToList();
-            // Scene cache entity should have its actual entity ID (0)
-            Assert.That(entityIds, Contains.Item(0u));
-            // Cross-scene entity should have EntityId 0 because foundEntity is null (we don't inform of entity IDs from other scenes)
-            // Note: Both will be 0u, but we verify that we found 2 hits total
-            Assert.That(entityIds.Count(id => id == 0u), Is.EqualTo(2));
+            // Cross-scene entities should have EntityId 0 because foundEntity is null (we don't inform of entity IDs from other scenes)
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(0u));
         }
 
         [Test]
-        public void IgnoreCrossSceneColliderNotInCollisionMask()
+        public void RegularSceneOnlyFindsSceneCacheHits()
         {
+            // Ensure scene is NOT a Portable Experience
+            sceneData.IsPortableExperience().Returns(false);
+
+            // Create one collider in scene cache
+            CreateColliders(ColliderLayer.ClPhysics);
+
+            // Create one collider in global cache only (should be ignored for regular scenes)
+            CreateCrossSceneColliders(ColliderLayer.ClPhysics);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtQueryAll;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            // Regular scenes should only find scene cache hits, not global cache hits
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(0u)); // Scene cache entity
+        }
+
+        [Test]
+        public void PortableExperienceDoesNotCheckSceneCache()
+        {
+            // Set up scene as Portable Experience
+            sceneData.IsPortableExperience().Returns(true);
+
+            // Create a collider in scene cache only (should NOT be found by Portable Experiences)
+            CreateColliders(ColliderLayer.ClPhysics);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            // Portable Experiences only check global cache, not their own scene cache
+            // So scene cache entities should NOT be found
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void IgnoreCrossSceneColliderNotInCollisionMask_PortableExperience()
+        {
+            // Set up scene as Portable Experience
+            sceneData.IsPortableExperience().Returns(true);
+
             // Create cross-scene collider with wrong layer
             CreateCrossSceneColliders(ColliderLayer.ClCustom5);
 
