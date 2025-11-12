@@ -237,10 +237,10 @@ namespace ECS.StreamableLoading.Cache.Disk
 
     public struct SingleMemoryIterator : IMemoryIterator
     {
-        private readonly byte[] data;
+        private readonly ReadOnlyMemory<byte> data;
         private int index;
 
-        public SingleMemoryIterator(byte[] data) : this()
+        public SingleMemoryIterator(ReadOnlyMemory<byte> data) : this()
         {
             this.data = data;
             index = -1;

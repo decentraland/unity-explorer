@@ -23,9 +23,10 @@ namespace DCL.AssetsProvision.CodeResolver
             var request = webRequestController.GetAsync(new CommonArguments(url), cancellationToken,
                     ReportCategory.SCENE_LOADING);
 
-            string contentType = await request.GetResponseHeaderAsync("Content-Type");
+            string? contentType = await request.GetResponseHeaderAsync("Content-Type");
 
-            if (contentType != null && contentType.Contains("charset")
+            if (contentType != null
+                && contentType.Contains("charset", StringComparison.InvariantCultureIgnoreCase)
                 && !contentType.Contains("utf-8", StringComparison.InvariantCultureIgnoreCase))
                 throw new NotImplementedException($"Can't handle content type {contentType}");
 

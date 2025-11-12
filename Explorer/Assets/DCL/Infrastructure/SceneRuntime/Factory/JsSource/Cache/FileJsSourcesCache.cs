@@ -20,20 +20,18 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
             stream.Write(sourceCode);
         }
 
-        public bool TryGet(string path, out string sceneCode)
+        public bool TryGet(string path, out string? sourceCode)
         {
             string filePath = FilePath(path);
 
-            try
+            if (File.Exists(filePath) == false)
             {
-                sceneCode = File.ReadAllText(filePath);
-                return true;
-            }
-            catch (FileNotFoundException)
-            {
-                sceneCode = "";
+                sourceCode = null;
                 return false;
             }
+
+            sourceCode = File.ReadAllText(filePath);
+            return true;
         }
 
         public void Unload(IPerformanceBudget budgetToUse)

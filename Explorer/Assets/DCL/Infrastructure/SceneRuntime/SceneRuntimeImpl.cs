@@ -43,11 +43,11 @@ namespace SceneRuntime
             this.engine = engine;
             jsApiBunch = new JsApiBunch(engine);
 
-            // Setup UniTask resolver
-            engine.AddHostObject("__resetableSource", resetableSource);
-
             // Set global SDK configuration flags
             engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
+
+            // Setup UniTask resolver
+            engine.AddHostObject("__resetableSource", resetableSource);
 
             arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
             unit8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");

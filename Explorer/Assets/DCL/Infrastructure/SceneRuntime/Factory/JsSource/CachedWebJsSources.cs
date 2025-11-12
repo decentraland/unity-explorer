@@ -36,15 +36,15 @@ namespace SceneRuntime.Factory.JsSource
             }
             else
             {
-                DownloadedOrCachedData sceneCode = await origin.SceneSourceCodeAsync(path, ct);
+                DownloadedOrCachedData sourceCode = await origin.SceneSourceCodeAsync(path, ct);
 
-                var putResult = await diskCache.PutAsync(key, EXTENSION, sceneCode.GetMemoryIterator(),
+                var putResult = await diskCache.PutAsync(key, EXTENSION, sourceCode.GetMemoryIterator(),
                     ct);
 
                 if (!putResult.Success)
                     ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Could not write to the disk cache because {putResult.Error}");
 
-                return sceneCode;
+                return sourceCode;
             }
         }
     }

@@ -79,7 +79,7 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
-            DownloadedOrCachedData sceneCode,
+            DownloadedOrCachedData sourceCode,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
@@ -88,7 +88,7 @@ namespace SceneRuntime.Factory
 
             jsSourcesCache.Cache(
                 $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
-                sceneCode
+                sourceCode
             );
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
@@ -129,17 +129,17 @@ namespace SceneRuntime.Factory
 
             V8Script sceneScript;
 
-            if (sceneCode.Length >= COMMONJS_HEADER_UTF8.Length
-                && sceneCode.AsReadOnlySpan()
+            if (sourceCode.Length >= COMMONJS_HEADER_UTF8.Length
+                && sourceCode.AsReadOnlySpan()
                              .Slice(0, COMMONJS_HEADER_UTF8.Length)
                              .SequenceEqual(COMMONJS_HEADER_UTF8))
-                sceneScript = engine.CompileScriptFromUtf8(sceneCode);
+                sceneScript = engine.CompileScriptFromUtf8(sourceCode);
             else
             {
                 ReportHub.LogWarning(ReportCategory.SCENE_FACTORY,
                     $"The code of the scene \"{sceneShortInfo.Name}\" at parcel {sceneShortInfo.BaseParcel} does not include the CommonJS module wrapper. This is suboptimal.");
 
-                int wrappedCodeLength = COMMONJS_HEADER_UTF8.Length + sceneCode.Length
+                int wrappedCodeLength = COMMONJS_HEADER_UTF8.Length + sourceCode.Length
                                                                    + COMMONJS_FOOTER_UTF8.Length;
 
                 if (buffer.Length < wrappedCodeLength)
@@ -148,8 +148,8 @@ namespace SceneRuntime.Factory
                     COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
                 }
 
-                sceneCode.AsReadOnlySpan().CopyTo(buffer.AsSpan(COMMONJS_HEADER_UTF8.Length));
-                COMMONJS_FOOTER_UTF8.CopyTo(buffer, COMMONJS_HEADER_UTF8.Length + sceneCode.Length);
+                sourceCode.AsReadOnlySpan().CopyTo(buffer.AsSpan(COMMONJS_HEADER_UTF8.Length));
+                COMMONJS_FOOTER_UTF8.CopyTo(buffer, COMMONJS_HEADER_UTF8.Length + sourceCode.Length);
 
                 sceneScript = engine.CompileScriptFromUtf8(buffer.AsSpan(0, wrappedCodeLength));
             }
@@ -174,8 +174,8 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
-            using DownloadedOrCachedData sceneCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sceneCode, sceneShortInfo, ct, instantiationBehavior);
+            using DownloadedOrCachedData sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
+            return await CreateBySourceCodeAsync(sourceCode, sceneShortInfo, ct, instantiationBehavior);
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()
