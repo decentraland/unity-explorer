@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuView : ViewBaseWithAnimationElement
+    public class NotificationsMenuView : ViewBaseWithAnimationElement, IView
     {
         [field: SerializeField]
         public LoopListView2 LoopList { get; private set; }

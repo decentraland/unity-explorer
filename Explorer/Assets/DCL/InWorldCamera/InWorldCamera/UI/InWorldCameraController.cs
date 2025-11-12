@@ -141,8 +141,9 @@ namespace DCL.InWorldCamera.UI
             RequestDisableInWorldCamera();
 
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden);
+            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
 
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
+            //await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
         }
 
         private void RequestTakeScreenshot()

@@ -5,7 +5,7 @@ using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.Controls
 {
-    public class ControlsPanelController : ControllerBase<ControlsPanelView>, IControllerInSharedSpace<ControlsPanelView>
+    public class ControlsPanelController : ControllerBase<ControlsPanelView>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -25,22 +25,18 @@ namespace DCL.UI.Controls
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            closeViewTask?.TrySetCanceled(ct);
             closeViewTask = new UniTaskCompletionSource();
-            
-            ViewShowingComplete?.Invoke(this);
+
+            // Handle external cancellation
+            using var registration = ct.Register(() => closeViewTask.TrySetCanceled(ct));
 
             await closeViewTask.Task;
+
+            closeViewTask?.TrySetCanceled(ct);
+            closeViewTask = new UniTaskCompletionSource();
+            await closeViewTask.Task;
         }
-        
-        private void Close() =>
-            closeViewTask?.TrySetResult();
-        
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            Close();
-            
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
+
+        private void Close() => closeViewTask?.TrySetResult();
     }
 }
