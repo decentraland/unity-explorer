@@ -20,15 +20,13 @@ using static Unity.Mathematics.math;
 
 namespace DCL.Landscape.Systems
 {
-    using Landscape = Global.Dynamic.Landscapes.Landscape;
-
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public sealed partial class CollideTerrainSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;
-        private readonly Landscape landscape;
+        private readonly global::Global.Dynamic.Landscapes.Landscape landscape;
         private readonly float collisionRadius;
         private readonly List<ParcelData> dirtyParcels;
         private readonly List<ParcelData> freeParcels;
@@ -44,7 +42,7 @@ namespace DCL.Landscape.Systems
 #endif
         };
 
-        private CollideTerrainSystem(World world, Landscape landscape, LandscapeData landscapeData)
+        private CollideTerrainSystem(World world, global::Global.Dynamic.Landscapes.Landscape landscape, LandscapeData landscapeData)
             : base(world)
         {
             this.landscapeData = landscapeData;
