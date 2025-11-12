@@ -14,6 +14,7 @@ namespace DCL.Ipfs
         public long timestamp;
         public string version;
         public string[] pointers;
+        public ContentDefinition[] content;
 
         protected EntityDefinitionBase() { }
 
@@ -30,7 +31,6 @@ namespace DCL.Ipfs
     {
         public string? id;
         public string thumbnail;
-        public ContentDefinition[] content;
 
         // Asset bundle manifest properties
         [JsonProperty("versions")]

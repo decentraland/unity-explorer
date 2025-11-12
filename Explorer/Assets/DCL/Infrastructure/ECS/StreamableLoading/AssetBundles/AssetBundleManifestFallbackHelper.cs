@@ -14,7 +14,14 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public class AssetBundleManifestFallbackHelper
     {
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
+        {
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD);
+
+            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
+        }
+
+        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
         {
             if (isLSD)
             {
@@ -40,8 +47,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 else
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
             }
-
-            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
         }
+
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false) =>
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD);
     }
 }
