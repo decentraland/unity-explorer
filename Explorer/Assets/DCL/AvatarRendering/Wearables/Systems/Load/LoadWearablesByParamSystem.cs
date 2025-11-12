@@ -142,6 +142,9 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
         private async UniTask<StreamableLoadingResult<AssetBundlesVersions>> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, IPartitionComponent partition, CancellationToken ct)
         {
+            if (lambdaResponse.TotalAmount == 0)
+                return new StreamableLoadingResult<AssetBundlesVersions>(AssetBundlesVersions.Create());
+
             URN[] urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
 
             for (int i = 0; i < lambdaResponse.Page.Count; i++)
