@@ -254,6 +254,15 @@ namespace DCL.Backpack
             AwaitWearablesPromiseAsync(pageNumber, refreshPageSelector, pageFetchCancellationToken.Token).Forget();
         }
 
+        private void DisposeOldResult()
+        {
+            foreach (ITrimmedWearable wearable in results)
+                if (wearable.ThumbnailAssetResult is { IsInitialized: true })
+                    wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
+
+            results.Clear();
+        }
+
         private async UniTaskVoid AwaitWearablesPromiseAsync(int pageNumber, bool refreshPageSelector, CancellationToken ct)
         {
             if (refreshPageSelector)
@@ -264,7 +273,7 @@ namespace DCL.Backpack
             if (currentCollectiblesOnly)
                 collectionType = IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty;
 
-            results.Clear();
+            DisposeOldResult();
 
             try
             {
