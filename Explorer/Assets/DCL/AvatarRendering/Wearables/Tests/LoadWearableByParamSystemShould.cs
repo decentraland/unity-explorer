@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, realmData,
+            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), new WearableStorage(), trimmedWearableStorage);
         }
 
