@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
+using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.MediaStream
@@ -39,7 +40,10 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(Entity entity, ref PBAudioStream sdkComponent)
         {
-            if (mediaFactory.TryCreateMediaPlayer(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, out MediaPlayerComponent component))
+            // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
+            bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasIsSpatial: true, IsSpatial: true };
+
+            if (mediaFactory.TryCreateMediaPlayer(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, isSpatialAudio, out MediaPlayerComponent component))
                 World.Add(entity, component);
         }
 
@@ -56,7 +60,11 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!World.Has<MediaPlayerComponent>(entity))
             {
-                if (!mediaFactory.TryCreateMediaPlayer(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, out MediaPlayerComponent mediaPlayerComponent))
+                // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
+                bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasIsSpatial: true, IsSpatial: true };
+
+                if (!mediaFactory.TryCreateMediaPlayer(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, isSpatialAudio,
+                        out MediaPlayerComponent mediaPlayerComponent))
                     return;
 
                 World.Add(entity, mediaPlayerComponent);

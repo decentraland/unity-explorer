@@ -25,14 +25,15 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXVkaW9fc3RyZWFtLnBy",
-            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMiXgoNUEJBdWRpb1N0",
-            "cmVhbRIUCgdwbGF5aW5nGAEgASgISACIAQESEwoGdm9sdW1lGAIgASgCSAGI",
-            "AQESCwoDdXJsGAMgASgJQgoKCF9wbGF5aW5nQgkKB192b2x1bWVCFKoCEURD",
-            "TC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMihgEKDVBCQXVkaW9T",
+            "dHJlYW0SFAoHcGxheWluZxgBIAEoCEgAiAEBEhMKBnZvbHVtZRgCIAEoAkgB",
+            "iAEBEgsKA3VybBgDIAEoCRIXCgppc19zcGF0aWFsGAQgASgISAKIAQFCCgoI",
+            "X3BsYXlpbmdCCQoHX3ZvbHVtZUINCgtfaXNfc3BhdGlhbEIUqgIRRENMLkVD",
+            "U0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioStream), global::DCL.ECSComponents.PBAudioStream.Parser, new[]{ "Playing", "Volume", "Url" }, new[]{ "Playing", "Volume" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioStream), global::DCL.ECSComponents.PBAudioStream.Parser, new[]{ "Playing", "Volume", "Url", "IsSpatial" }, new[]{ "Playing", "Volume", "IsSpatial" }, null, null, null)
           }));
     }
     #endregion
@@ -83,6 +84,7 @@ namespace DCL.ECSComponents {
       playing_ = other.playing_;
       volume_ = other.volume_;
       url_ = other.url_;
+      isSpatial_ = other.isSpatial_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -163,6 +165,36 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "is_spatial" field.</summary>
+    public const int IsSpatialFieldNumber = 4;
+    private bool isSpatial_;
+    /// <summary>
+    /// either the audio will be global or spatial (default: false)
+    /// global: plays the same way for every listener. It is not affected by distance, direction, or position.
+    /// spatial: changes depending on where the listener is relative to the sound source
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsSpatial {
+      get { if ((_hasBits0 & 4) != 0) { return isSpatial_; } else { return false; } }
+      set {
+        _hasBits0 |= 4;
+        isSpatial_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_spatial" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsSpatial {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "is_spatial" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsSpatial() {
+      _hasBits0 &= ~4;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -181,6 +213,7 @@ namespace DCL.ECSComponents {
       if (Playing != other.Playing) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Volume, other.Volume)) return false;
       if (Url != other.Url) return false;
+      if (IsSpatial != other.IsSpatial) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -191,6 +224,7 @@ namespace DCL.ECSComponents {
       if (HasPlaying) hash ^= Playing.GetHashCode();
       if (HasVolume) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Volume);
       if (Url.Length != 0) hash ^= Url.GetHashCode();
+      if (HasIsSpatial) hash ^= IsSpatial.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -221,6 +255,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(26);
         output.WriteString(Url);
       }
+      if (HasIsSpatial) {
+        output.WriteRawTag(32);
+        output.WriteBool(IsSpatial);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -243,6 +281,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(26);
         output.WriteString(Url);
       }
+      if (HasIsSpatial) {
+        output.WriteRawTag(32);
+        output.WriteBool(IsSpatial);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -261,6 +303,9 @@ namespace DCL.ECSComponents {
       }
       if (Url.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Url);
+      }
+      if (HasIsSpatial) {
+        size += 1 + 1;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -282,6 +327,9 @@ namespace DCL.ECSComponents {
       }
       if (other.Url.Length != 0) {
         Url = other.Url;
+      }
+      if (other.HasIsSpatial) {
+        IsSpatial = other.IsSpatial;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -310,6 +358,10 @@ namespace DCL.ECSComponents {
             Url = input.ReadString();
             break;
           }
+          case 32: {
+            IsSpatial = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -335,6 +387,10 @@ namespace DCL.ECSComponents {
           }
           case 26: {
             Url = input.ReadString();
+            break;
+          }
+          case 32: {
+            IsSpatial = input.ReadBool();
             break;
           }
         }

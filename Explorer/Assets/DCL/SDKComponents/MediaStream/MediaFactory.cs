@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.MediaStream
         public VideoTextureData CreateVideoPlayback(string url)
         {
             VideoTextureConsumer consumer = CreateVideoConsumer();
-            MediaPlayerComponent mediaPlayer = CreateMediaPlayerComponent(url, false, MediaPlayerComponent.DEFAULT_VOLUME);
+            MediaPlayerComponent mediaPlayer = CreateMediaPlayerComponent(url, false, MediaPlayerComponent.DEFAULT_VOLUME, false);
 
             return new VideoTextureData(consumer, mediaPlayer);
         }
@@ -116,7 +116,7 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Create media player with budgeting
         /// </summary>
-        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, out MediaPlayerComponent component)
+        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, out MediaPlayerComponent component)
         {
             if (!frameBudget.TrySpendBudget())
             {
@@ -124,12 +124,12 @@ namespace DCL.SDKComponents.MediaStream
                 return false;
             }
 
-            component = CreateMediaPlayerComponent(url, hasVolume, volume);
+            component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio);
             return true;
         }
 
         [SuppressMessage("ReSharper", "RedundantAssignment")]
-        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume)
+        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool isSpatialAudio)
         {
             bool isValidLocalPath = false;
             bool isValidStreamUrl = false;
@@ -180,12 +180,9 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
-            // There is no way to set this from the scene code, at the moment
-            // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
-            if (component.MediaPlayer.TryGetAvProPlayer(out MediaPlayer? mediaPlayer) && mediaPlayer!.TryGetComponent(out AudioSource mediaPlayerAudio))
-
-                // At the moment we consider streams as global audio always, until there is a way to change it from the scene
-                mediaPlayerAudio!.spatialBlend = 0.0f;
+            if (component.MediaPlayer.TryGetAvProPlayer(out MediaPlayer? mediaPlayer)
+                && mediaPlayer!.TryGetComponent(out AudioSource mediaPlayerAudio))
+                mediaPlayerAudio!.spatialBlend = isSpatialAudio ? 1.0f : 0.0f;
 
             return component;
         }
