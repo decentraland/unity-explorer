@@ -33,7 +33,7 @@ namespace SceneRuntime.Factory.JsSource
         }
 
         private ReadOnlyMemory<byte> AsReadOnlyMemory() =>
-            downloaded != null ? MemoryManager.GetMemory(downloaded) : cached.Memory;
+            downloaded != null ? new MemoryManager(downloaded).Memory : cached.Memory;
 
         public ReadOnlySpan<byte> AsReadOnlySpan() =>
             downloaded != null ? downloaded.nativeData.AsReadOnlySpan() : cached.Memory.Span;
@@ -48,29 +48,23 @@ namespace SceneRuntime.Factory.JsSource
 
         private sealed class MemoryManager : MemoryManager<byte>
         {
-            private DownloadHandler? downloadHandler;
-            private static readonly MemoryManager INSTANCE = new ();
+            private readonly DownloadHandler downloadHandler;
 
-            public static Memory<byte> GetMemory(DownloadHandler downloadHandler)
+            public MemoryManager(DownloadHandler downloadHandler)
             {
-                // Evil code gymnastics to turn a span into a memory because async methods cannot work
-                // with spans because they're ref structs.
-                INSTANCE.downloadHandler = downloadHandler;
-                Memory<byte> memory = INSTANCE.Memory;
-                INSTANCE.downloadHandler = null;
-                return memory;
+                this.downloadHandler = downloadHandler;
             }
 
             protected override void Dispose(bool disposing) { }
 
             public override unsafe Span<byte> GetSpan()
             {
-                NativeArray<byte>.ReadOnly nativeData = downloadHandler!.nativeData;
+                NativeArray<byte>.ReadOnly nativeData = downloadHandler.nativeData;
                 return new Span<byte>(nativeData.GetUnsafeReadOnlyPtr(), nativeData.Length);
             }
 
             public override unsafe MemoryHandle Pin(int elementIndex = 0) =>
-                new ((byte*)downloadHandler!.nativeData.GetUnsafeReadOnlyPtr() + elementIndex);
+                new ((byte*)downloadHandler.nativeData.GetUnsafeReadOnlyPtr() + elementIndex);
 
             public override void Unpin() { }
         }
