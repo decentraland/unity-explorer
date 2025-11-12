@@ -67,6 +67,9 @@ namespace SceneRuntime
             // engine.Execute(initCode.validateCode!);
             engine.Execute(initCode.jsInitCode!);
 
+            // Set global SDK configuration flags
+            engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
+
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
 

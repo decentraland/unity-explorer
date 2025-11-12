@@ -292,6 +292,7 @@ namespace Global
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
+                new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
