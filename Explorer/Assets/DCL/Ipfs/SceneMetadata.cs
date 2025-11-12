@@ -12,12 +12,14 @@ namespace DCL.Ipfs
         public string main;
         public SceneMetadataScene scene;
         public string runtimeVersion;
+        public string sdkVersion;
         public List<string> allowedMediaHostnames;
         public List<string> requiredPermissions;
         public List<SpawnPoint>? spawnPoints;
         public bool isPortableExperience;
         public WorldConfiguration? worldConfiguration;
         public SkyboxConfigData? skyboxConfig;
+        public bool authoritativeMultiplayer;
 
         /// <summary>
         /// Configuration specific to Decentraland Worlds (Realms).

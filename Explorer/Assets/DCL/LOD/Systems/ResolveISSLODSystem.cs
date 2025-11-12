@@ -46,16 +46,8 @@ namespace DCL.LOD.Systems
         private void ResolveInitialSceneStateLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinition)
         {
             InitialSceneStateLOD initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
-            InitialSceneStateLOD.InitialSceneStateLODState InitialSceneStateLODState = initialSceneStateLOD.CurrentState;
 
-            if (InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.FAILED))
-                return;
-
-            if (InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
-                || InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.UNINITIALIZED))
-                return;
-
-            if (InitialSceneStateLODState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING))
+            if (initialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING)
             {
                 // Skip if promise hasn't been created yet or is already consumed
                 if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
@@ -134,6 +126,8 @@ namespace DCL.LOD.Systems
             asset.Root.transform.localPosition = initialSceneStateMetadata.positions[indexToPosition];
             asset.Root.transform.localRotation = initialSceneStateMetadata.rotations[indexToPosition];
             asset.Root.transform.localScale = initialSceneStateMetadata.scales[indexToPosition];
+
+            asset.ToggleAnimationState(false);
 
             initialSceneStateLOD.AddResolvedAsset(assetHash, asset);
         }
