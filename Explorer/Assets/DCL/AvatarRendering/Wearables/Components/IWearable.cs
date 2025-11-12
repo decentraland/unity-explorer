@@ -58,6 +58,9 @@ namespace DCL.AvatarRendering.Wearables.Components
             return new URLPath(thumbnailHash);
         }
 
+        URN ITrimmedAvatarAttachment.GetUrn() =>
+            this.DTO.Metadata.id;
+
         URN IThumbnailAttachment.GetUrn() => this.DTO.Metadata.id;
         string IThumbnailAttachment.GetHash() => this.DTO.GetHash();
         AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() => this.DTO.assetBundleManifestVersion;
