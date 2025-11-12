@@ -253,6 +253,97 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.False);
         }
 
+        [Test]
+        public void FindCrossSceneHitWhenNotInSceneCache()
+        {
+            // Create a collider that is NOT in the scene cache but IS in the global cache
+            CreateCrossSceneColliders(ColliderLayer.ClPhysics);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
+
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(100u)); // Cross-scene entity ID
+        }
+
+        [Test]
+        public void FilterCrossSceneHitsByCollisionMask()
+        {
+            // Create cross-scene colliders with different layers
+            CreateCrossSceneColliders(ColliderLayer.ClCustom5, ColliderLayer.ClPhysics);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics; // Only Physics should qualify
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(101u)); // Second collider (Physics)
+        }
+
+        [Test]
+        public void FindAllQualifiedCrossSceneHits()
+        {
+            // Create multiple cross-scene colliders
+            CreateCrossSceneColliders(ColliderLayer.ClCustom2, ColliderLayer.ClCustom4, ColliderLayer.ClCustom7, ColliderLayer.ClCustom8);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtQueryAll;
+            pbRaycast.CollisionMask = (uint)(ColliderLayer.ClCustom2 | ColliderLayer.ClCustom4 | ColliderLayer.ClCustom7);
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(3)); // Should find 3 qualified hits
+
+            // Verify entity IDs are from cross-scene (starting at 100)
+            var entityIds = raycastResult.Hits.Select(h => h.EntityId).OrderBy(id => id).ToList();
+            Assert.That(entityIds, Is.EqualTo(new[] { 100u, 101u, 102u }));
+        }
+
+        [Test]
+        public void FindMixedSceneAndCrossSceneHits()
+        {
+            // Create one collider in scene cache
+            CreateColliders(ColliderLayer.ClPhysics);
+
+            // Create one collider in global cache only
+            CreateCrossSceneColliders(ColliderLayer.ClPhysics);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtQueryAll;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(2)); // Should find both hits
+
+            var entityIds = raycastResult.Hits.Select(h => h.EntityId).OrderBy(id => id).ToList();
+            Assert.That(entityIds, Contains.Item(0u)); // Scene cache entity
+            Assert.That(entityIds, Contains.Item(100u)); // Cross-scene entity
+        }
+
+        [Test]
+        public void IgnoreCrossSceneColliderNotInCollisionMask()
+        {
+            // Create cross-scene collider with wrong layer
+            CreateCrossSceneColliders(ColliderLayer.ClCustom5);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics; // Different mask
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0)); // Should not find any hits
+        }
+
         private void AssertHit(int index, int colliderIndex)
         {
             var sorted = raycastResult.Hits.OrderBy(x => x.Length).ToList();
@@ -276,23 +367,65 @@ namespace DCL.Interaction.Raycast.Tests
             {
                 ColliderLayer mask = sdkLayerMask[i];
                 var entity = new CRDTEntity(i);
-                Transform colliderTransform = new GameObject(nameof(ExecuteRaycastSystemShould) + i).transform;
-                colliderTransform.position = new UnityEngine.Vector3(0, 0, (i + 1) * 5f);
-                PhysicsLayers.TryGetUnityLayerFromSDKLayer(mask, out int unityLayer);
-                colliderTransform.gameObject.layer = unityLayer;
-                BoxCollider collider = colliderTransform.gameObject.AddComponent<BoxCollider>();
-                collider.size = UnityEngine.Vector3.one;
-                collider.isTrigger = false;
+                CreateSingleCollider(mask, i, entity, true);
+            }
+        }
 
-                instantiatedTemp.Add(collider);
+        private void CreateCrossSceneColliders(params ColliderLayer[] sdkLayerMask)
+        {
+            for (var i = 0; i < sdkLayerMask.Length; i++)
+            {
+                ColliderLayer mask = sdkLayerMask[i];
+                // Use entity IDs starting at 100 for cross-scene entities to distinguish them
+                var entity = new CRDTEntity(100 + i);
+                CreateSingleCollider(mask, i, entity, false);
+            }
+        }
 
+        private BoxCollider CreateSingleCollider(ColliderLayer sdkLayerMask, int index, CRDTEntity? entity = null, bool inSceneCache = true)
+        {
+            var entityId = entity ?? new CRDTEntity(index);
+            Transform colliderTransform = new GameObject(nameof(ExecuteRaycastSystemShould) + index).transform;
+            colliderTransform.position = new UnityEngine.Vector3(0, 0, (index + 1) * 5f);
+            PhysicsLayers.TryGetUnityLayerFromSDKLayer(sdkLayerMask, out int unityLayer);
+            colliderTransform.gameObject.layer = unityLayer;
+            BoxCollider collider = colliderTransform.gameObject.AddComponent<BoxCollider>();
+            collider.size = UnityEngine.Vector3.one;
+            collider.isTrigger = false;
+
+            instantiatedTemp.Add(collider);
+
+            if (inSceneCache)
+            {
+                // Set up scene cache
                 entityCollidersSceneCache.TryGetEntity(collider, out Arg.Any<ColliderSceneEntityInfo>())
                                          .Returns(x =>
                                           {
-                                              x[1] = new ColliderSceneEntityInfo(Entity.Null, entity, mask);
+                                              x[1] = new ColliderSceneEntityInfo(Entity.Null, entityId, sdkLayerMask);
                                               return true;
                                           });
             }
+            else
+            {
+                // Ensure scene cache returns false (not found)
+                entityCollidersSceneCache.TryGetEntity(collider, out Arg.Any<ColliderSceneEntityInfo>())
+                                         .Returns(false);
+
+                // Set up global cache for cross-scene collider
+                var sceneEcsExecutor = new SceneEcsExecutor(World.Create());
+                var globalEntityInfo = new GlobalColliderSceneEntityInfo(
+                    sceneEcsExecutor,
+                    new ColliderSceneEntityInfo(Entity.Null, entityId, sdkLayerMask));
+
+                entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
+                                          .Returns(x =>
+                                           {
+                                               x[1] = globalEntityInfo;
+                                               return true;
+                                           });
+            }
+
+            return collider;
         }
     }
 }
