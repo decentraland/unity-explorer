@@ -62,6 +62,17 @@ namespace DCL.AvatarRendering.Wearables.Components
             this.DTO.Metadata.id;
 
         URN IThumbnailAttachment.GetUrn() => this.DTO.Metadata.id;
+
+        string ITrimmedAvatarAttachment.GetRarity()
+        {
+            const string DEFAULT_RARITY = "base";
+            string result = this.DTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
+        }
+
+        string ITrimmedAvatarAttachment.GetCategory() =>
+            DTO.Metadata.AbstractData.category;
+
         string IThumbnailAttachment.GetHash() => this.DTO.GetHash();
         AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() => this.DTO.assetBundleManifestVersion;
         string? IThumbnailAttachment.GetContentDownloadUrl() => this.DTO.ContentDownloadUrl;
