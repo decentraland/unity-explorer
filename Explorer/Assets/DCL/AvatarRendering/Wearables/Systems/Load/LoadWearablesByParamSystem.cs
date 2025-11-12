@@ -1,10 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -40,6 +38,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly IWebRequestController webRequestController;
         private readonly IAvatarElementStorage<IWearable, WearableDTO> avatarElementStorage;
+        private readonly ITrimmedAvatarElementStorage<ITrimmedWearable, TrimmedWearableDTO> trimmedAvatarElementStorage;
         private readonly string? builderContentURL;
         private readonly string expectedBuilderItemType = "wearable";
         private readonly IRealmData realmData;
@@ -49,7 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            IWearableStorage wearableStorage, string? builderContentURL = null
+            IWearableStorage wearableStorage, TrimmedWearableStorage trimmedWearableStorage, string? builderContentURL = null
         ) : base(world, NoCache<WearablesResponse, GetWearableByParamIntention>.INSTANCE)
         {
             this.lambdaSubdirectory = lambdaSubdirectory;
@@ -57,6 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.avatarElementStorage = wearableStorage;
+            this.trimmedAvatarElementStorage = trimmedWearableStorage;
             this.builderContentURL = builderContentURL;
         }
 
@@ -166,7 +166,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             if (PlatformUtils.GetCurrentPlatform() == "_mac" && elementDTO.thumbnail.StartsWith("Qm"))
                 elementDTO.thumbnail = elementDTO.thumbnail.ToLowerInvariant();
 
-            ITrimmedWearable wearable = new TrimmedWearable(elementDTO);
+            ITrimmedWearable wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
             if (!assetBundlesVersions.Succeeded)

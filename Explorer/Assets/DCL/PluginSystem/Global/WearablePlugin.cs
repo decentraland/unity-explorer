@@ -31,21 +31,25 @@ namespace DCL.AvatarRendering.Wearables
         private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
+        private readonly TrimmedWearableStorage trimmedWearableStorage;
 
         public WearablePlugin(IWebRequestController webRequestController,
             IRealmData realmData,
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
+            TrimmedWearableStorage trimmedWearableStorage,
             string builderContentURL,
             bool builderCollectionsPreview)
         {
             this.wearableStorage = wearableStorage;
+            this.trimmedWearableStorage = trimmedWearableStorage;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = builderCollectionsPreview;
 
             cacheCleaner.Register(this.wearableStorage);
+            cacheCleaner.Register(this.trimmedWearableStorage);
         }
 
         public void Dispose() { }
@@ -53,7 +57,7 @@ namespace DCL.AvatarRendering.Wearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, builderContentURL);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, trimmedWearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 

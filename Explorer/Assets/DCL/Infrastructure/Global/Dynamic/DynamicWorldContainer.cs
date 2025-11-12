@@ -298,6 +298,7 @@ namespace Global.Dynamic
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableStorage();
+            var trimmedWearableCatalog = new TrimmedWearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
@@ -719,7 +720,7 @@ namespace Global.Dynamic
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
