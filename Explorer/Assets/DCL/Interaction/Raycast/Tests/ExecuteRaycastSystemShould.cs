@@ -270,7 +270,8 @@ namespace DCL.Interaction.Raycast.Tests
                            .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
-            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(100u)); // Cross-scene entity ID
+            // Cross-scene entities should have EntityId 0 because foundEntity is null (we don't inform of entity IDs from other scenes)
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(0u));
         }
 
         [Test]
@@ -286,7 +287,8 @@ namespace DCL.Interaction.Raycast.Tests
 
             Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
-            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(101u)); // Second collider (Physics)
+            // Cross-scene entities should have EntityId 0 because foundEntity is null (we don't inform of entity IDs from other scenes)
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(0u));
         }
 
         [Test]
@@ -303,9 +305,11 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(3)); // Should find 3 qualified hits
 
-            // Verify entity IDs are from cross-scene (starting at 100)
-            var entityIds = raycastResult.Hits.Select(h => h.EntityId).OrderBy(id => id).ToList();
-            Assert.That(entityIds, Is.EqualTo(new[] { 100u, 101u, 102u }));
+            // Cross-scene entities should all have EntityId 0 because foundEntity is null (we don't inform of entity IDs from other scenes)
+            foreach (var hit in raycastResult.Hits)
+            {
+                Assert.That(hit.EntityId, Is.EqualTo(0u));
+            }
         }
 
         [Test]
@@ -324,9 +328,12 @@ namespace DCL.Interaction.Raycast.Tests
 
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(2)); // Should find both hits
 
-            var entityIds = raycastResult.Hits.Select(h => h.EntityId).OrderBy(id => id).ToList();
-            Assert.That(entityIds, Contains.Item(0u)); // Scene cache entity
-            Assert.That(entityIds, Contains.Item(100u)); // Cross-scene entity
+            var entityIds = raycastResult.Hits.Select(h => h.EntityId).ToList();
+            // Scene cache entity should have its actual entity ID (0)
+            Assert.That(entityIds, Contains.Item(0u));
+            // Cross-scene entity should have EntityId 0 because foundEntity is null (we don't inform of entity IDs from other scenes)
+            // Note: Both will be 0u, but we verify that we found 2 hits total
+            Assert.That(entityIds.Count(id => id == 0u), Is.EqualTo(2));
         }
 
         [Test]

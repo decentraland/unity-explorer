@@ -279,10 +279,8 @@ namespace DCL.Interaction.Raycast.Systems
             if (collidersGlobalCache.TryGetSceneEntity(collider, out GlobalColliderSceneEntityInfo globalEntityInfo))
             {
                 bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(globalEntityInfo.ColliderSceneEntityInfo.SDKLayer, collisionMask);
-
                 if (!isQualified) return false;
-
-                foundEntity = globalEntityInfo.ColliderSceneEntityInfo.SDKEntity;
+                // 'foundEntity' has to be null here because we shouldn't inform of an entity ID from another scene
                 return true;
             }
 
