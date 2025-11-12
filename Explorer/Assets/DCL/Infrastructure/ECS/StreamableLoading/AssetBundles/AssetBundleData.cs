@@ -95,7 +95,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (Assets == null || Assets.Count == 0)
             {
-                ReportHub.LogException(new ArgumentException($"No assets were loaded for {AssetBundleName}"), ReportCategory.ASSET_BUNDLES);
+                ReportHub.LogWarning($"No assets were loaded for {AssetBundleName}", ReportCategory.ASSET_BUNDLES);
                 return false;
             }
 
@@ -104,7 +104,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (string.IsNullOrEmpty(assetName))
             {
                 if (Assets.Count > 1)
-                    ReportHub.LogException(new ArgumentException($"Requested an asset by type when there is more than one in the AB {AssetBundleName}, the first one will be returned"), ReportCategory.ASSET_BUNDLES);
+                    ReportHub.LogWarning($"Requested an asset by type when there is more than one in the AB {AssetBundleName}, the first one will be returned", ReportCategory.ASSET_BUNDLES);
 
                 assetInfo = Assets.FirstValueOrDefaultNonAlloc();
             }
@@ -112,18 +112,19 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 if (!Assets.TryGetValue(assetName, out assetInfo))
                 {
-                    ReportHub.LogException(new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}"), ReportCategory.ASSET_BUNDLES);
+                    ReportHub.LogWarning($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}", ReportCategory.ASSET_BUNDLES);
                     return false;
                 }
             }
 
             if (assetInfo.AssetType != typeof(T))
             {
-                ReportHub.LogException(new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}"), ReportCategory.ASSET_BUNDLES);
+                ReportHub.LogWarning($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}", ReportCategory.ASSET_BUNDLES);
                 return false;
             }
 
-            return (T)assetInfo.Asset!;
+            asset = (T)assetInfo.Asset!;
+            return true;
         }
 
     }
