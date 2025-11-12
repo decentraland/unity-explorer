@@ -21,6 +21,7 @@ namespace DCL.Ipfs
         public bool isPortableExperience;
         public WorldConfiguration? worldConfiguration;
         public SkyboxConfigData? skyboxConfig;
+        public bool authoritativeMultiplayer;
         public FeatureToggles featureToggles;
 
         /// <summary>
