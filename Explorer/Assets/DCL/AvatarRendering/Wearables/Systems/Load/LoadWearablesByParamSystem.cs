@@ -164,7 +164,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             // Same "hack" as in: AssetBundleManifestVersion.InjectContent
             if (PlatformUtils.GetCurrentPlatform() == "_mac" && elementDTO.thumbnail.StartsWith("Qm"))
-                elementDTO.thumbnail = elementDTO.thumbnail.ToLower();
+                elementDTO.thumbnail = elementDTO.thumbnail.ToLowerInvariant();
 
             ITrimmedWearable wearable = new TrimmedWearable(elementDTO);
 
