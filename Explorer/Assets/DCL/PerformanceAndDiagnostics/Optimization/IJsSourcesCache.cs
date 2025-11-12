@@ -8,7 +8,7 @@ namespace DCL.Optimization
     {
         public void Cache(string path, ReadOnlySpan<byte> sourceCode);
 
-        public bool TryGet(string path, out NativeArray<byte> sourceCode, Allocator allocator);
+        public bool TryGet(string path, out string sceneCode);
 
         public void Unload(IPerformanceBudget budgetToUse);
 
@@ -19,9 +19,9 @@ namespace DCL.Optimization
                 //ignore
             }
 
-            public bool TryGet(string path, out NativeArray<byte> sourceCode, Allocator allocator)
+            public bool TryGet(string path, out string sceneCode)
             {
-                sourceCode = default;
+                sceneCode = "";
                 return false;
             }
 

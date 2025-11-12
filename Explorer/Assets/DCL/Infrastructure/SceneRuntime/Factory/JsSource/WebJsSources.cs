@@ -15,7 +15,8 @@ namespace SceneRuntime.Factory.WebSceneSource
             this.codeContentResolver = codeContentResolver;
         }
 
-        public async UniTask<DataHolder> SceneSourceCodeAsync(URLAddress path, CancellationToken ct) =>
-            new DataHolder(await codeContentResolver.GetCodeContent(path, ct));
+        public async UniTask<DownloadedOrCachedData> SceneSourceCodeAsync(URLAddress path,
+            CancellationToken ct) =>
+            new (await codeContentResolver.GetCodeContent(path, ct));
     }
 }

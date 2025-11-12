@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk;
 using SceneRuntime.Factory.WebSceneSource;
@@ -20,19 +21,31 @@ namespace SceneRuntime.Factory.JsSource
             this.diskCache = diskCache;
         }
 
-        public async UniTask<DataHolder> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
+        public async UniTask<DownloadedOrCachedData> SceneSourceCodeAsync(URLAddress path,
+            CancellationToken ct)
         {
-            string key = path.Value;
-
-            if (key.StartsWith("file://", StringComparison.Ordinal))
+            if (path.Value.StartsWith("file://", StringComparison.Ordinal))
                 return await origin.SceneSourceCodeAsync(path, ct);
 
-            var result = await diskCache.ContentAsync(HashKey.FromString(key), EXTENSION, ct);
+            using HashKey key = HashKey.FromString(path.Value);
+            var getResult = await diskCache.ContentAsync(key, EXTENSION, ct);
 
-            if (!result.Success || result.Value == null)
-                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path.Value}: {result.Error!.Value.State} {result.Error!.Value.Message}");
+            if (getResult is { Success: true, Value: not null })
+            {
+                return new DownloadedOrCachedData(getResult.Value.Value);
+            }
+            else
+            {
+                DownloadedOrCachedData sceneCode = await origin.SceneSourceCodeAsync(path, ct);
 
-            return new DataHolder(result.Value.Value);
+                var putResult = await diskCache.PutAsync(key, EXTENSION, sceneCode.GetMemoryIterator(),
+                    ct);
+
+                if (!putResult.Success)
+                    ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Could not write to the disk cache because {putResult.Error}");
+
+                return sceneCode;
+            }
         }
     }
 }

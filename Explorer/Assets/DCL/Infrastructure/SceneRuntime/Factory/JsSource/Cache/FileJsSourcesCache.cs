@@ -2,7 +2,6 @@ using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using System;
 using System.IO;
-using Unity.Collections;
 
 namespace SceneRuntime.Factory.WebSceneSource.Cache
 {
@@ -21,35 +20,20 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
             stream.Write(sourceCode);
         }
 
-        public bool TryGet(string path, out NativeArray<byte> sourceCode, Allocator allocator)
+        public bool TryGet(string path, out string sceneCode)
         {
             string filePath = FilePath(path);
 
             try
             {
-                using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read,
-                    FileShare.Read);
-
-                if (stream.Length > int.MaxValue)
-                    throw new IOException($"Scene code file \"{path}\" is larger than int.MaxValue");
-
-                sourceCode = new NativeArray<byte>((int)stream.Length, allocator);
-
-                try { ReadReliably(stream, sourceCode); }
-                catch (Exception)
-                {
-                    sourceCode.Dispose();
-                    sourceCode = default;
-                    throw;
-                }
+                sceneCode = File.ReadAllText(filePath);
+                return true;
             }
             catch (FileNotFoundException)
             {
-                sourceCode = default;
+                sceneCode = "";
                 return false;
             }
-
-            return true;
         }
 
         public void Unload(IPerformanceBudget budgetToUse)
@@ -59,18 +43,5 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
 
         private string FilePath(string path) =>
             Path.Combine(directoryPath, path);
-
-        private static void ReadReliably(Stream stream, Span<byte> buffer)
-        {
-            while (buffer.Length > 0)
-            {
-                int read = stream.Read(buffer);
-
-                if (read <= 0)
-                    throw new EndOfStreamException("Read zero bytes");
-
-                buffer = buffer.Slice(read);
-            }
-        }
     }
 }

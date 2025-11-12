@@ -44,12 +44,12 @@ namespace SceneRuntime.Tests
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
         }
 
-        internal static DataHolder CreateCode(string code)
+        internal static DownloadedOrCachedData CreateCode(string code)
         {
             byte[] codeBytes = Encoding.UTF8.GetBytes(code);
             var codeMemory = new SlicedOwnedMemory<byte>(codeBytes.Length);
             codeBytes.CopyTo(codeMemory.Memory);
-            return new DataHolder(codeMemory);
+            return new DownloadedOrCachedData(codeMemory);
         }
 
         [UnityTest]
@@ -58,7 +58,7 @@ namespace SceneRuntime.Tests
             {
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
 
-                using DataHolder code = CreateCode(@"
+                using DownloadedOrCachedData code = CreateCode(@"
                     const engineApi = require('~system/EngineApi')
                     exports.onStart = async function() {
                         return engineApi.crdtGetState()
@@ -84,7 +84,7 @@ namespace SceneRuntime.Tests
             {
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
 
-                using DataHolder code = CreateCode(@"
+                using DownloadedOrCachedData code = CreateCode(@"
                     const engineApi = require('~system/EngineApi')
                     exports.onStart = async function() {};
                     exports.onUpdate = async function(dt) {
