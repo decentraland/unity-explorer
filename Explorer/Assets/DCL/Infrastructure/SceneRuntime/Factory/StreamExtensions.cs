@@ -8,7 +8,7 @@ namespace SceneRuntime.Factory
         public static async UniTask ReadReliablyAsync(this Stream stream, byte[] buffer, int offset,
             int count)
         {
-            while (buffer.Length > 0)
+            while (count > 0)
             {
                 int read = await stream.ReadAsync(buffer, offset, count);
 
