@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Threading;
 using DCL.Web3.Authenticators;
+using Newtonsoft.Json.Linq;
 
 namespace DCL.Backpack.Gifting.Services
 {
@@ -59,75 +60,27 @@ namespace DCL.Backpack.Gifting.Services
                 if (parsedUrn == null)
                     return GiftTransferResult.Fail($"Invalid gift URN format: {giftUrn}");
 
-                verifiedEthereumApi.AddVerificationListener(OnVerification);
-
                 string contractAddress = parsedUrn.Value.contractAddress;
                 string tokenId = parsedUrn.Value.tokenId;
                 string fromAddress = identity.Address.ToString();
 
-                // --- Step 1: Craft the EIP-712 Typed Data for Signing ---
-                // This structure is critical and MUST match exactly what the backend relayer
-                // and the smart contract expect. Confirm this with your backend team (Andrés).
-                var typedData = new
+                // Build calldata for transferFrom(from, to, tokenId)
+                string data = ManualTxEncoder.EncodeTransferFrom(fromAddress, recipientAddress, tokenId);
+
+                // Compose tx: ONLY from, to, data
+                var tx = new JObject
                 {
-                    types = new
-                    {
-                        EIP712Domain = new[]
-                        {
-                            new
-                            {
-                                name = "name", type = "string"
-                            },
-                            new
-                            {
-                                name = "version", type = "string"
-                            },
-                            new
-                            {
-                                name = "chainId", type = "uint256"
-                            },
-                            new
-                            {
-                                name = "verifyingContract", type = "address"
-                            }
-                        },
-                        // The name "Gift" and its properties must match the smart contract's implementation.
-                        Gift = new[]
-                        {
-                            new
-                            {
-                                name = "from", type = "address"
-                            },
-                            new
-                            {
-                                name = "to", type = "address"
-                            },
-                            new
-                            {
-                                name = "tokenId", type = "uint256"
-                            }
-                        }
-                    },
-                    primaryType = "Gift", domain = new
-                    {
-                        name = "Decentraland Gifting", version = "1", chainId = 137, // 137 for Polygon Mainnet. This may need to be dynamic based on the network.
-                        verifyingContract = contractAddress
-                    },
-                    message = new
-                    {
-                        from = fromAddress, to = recipientAddress,  tokenId
-                    }
+                    ["from"] = fromAddress, ["to"]   = contractAddress, ["data"] = data
                 };
 
-                // --- Step 2: Create and send the request to get the user's signature ---
                 var request = new EthApiRequest
                 {
-                    id = Guid.NewGuid().GetHashCode(), method = "eth_signTypedData_v4", @params = new object[]
+                    id = Guid.NewGuid().GetHashCode(), method = "eth_sendTransaction", @params = new object[]
                     {
-                        fromAddress, JsonConvert.SerializeObject(typedData)
+                        tx
                     }
                 };
-
+                
                 // This call automatically triggers the browser pop-up via DappWeb3Authenticator
                 var response = await ethereumApi.SendAsync(request, ct);
 
@@ -136,23 +89,7 @@ namespace DCL.Backpack.Gifting.Services
 
                 string signature = response.result.ToString();
                 ReportHub.Log(ReportCategory.GIFTING, $"Gifting message signed successfully. Signature: {signature.Substring(0, 10)}...");
-
-                // --- Step 3: Send the signed message to the Foundation's Relayer API ---
-                // The relayer will now submit the transaction and pay the gas fee.
-                // The implementation of this POST request depends on your project's HTTP client.
-
-                // TODO: Implement the HTTP POST call to your relayer.
-                // Example:
-                // var relayerPayload = new { signature, message = typedData.message };
-                // var relayerResponse = await YourHttpClient.PostAsync(RELAYER_API_URL, relayerPayload);
-                // if (!relayerResponse.IsSuccessStatusCode)
-                //     return GiftTransferResult.Fail("Relayer failed to process the transaction.");
-                //
-                // string txHash = await relayerResponse.Content.ReadAsStringAsync();
-                // return GiftTransferResult.Success(txHash);
-
-                // For now, we return success assuming the relayer call will be implemented.
-                // The "txHash" is a placeholder until the relayer call is made.
+                
                 return GiftTransferResult.Success();
             }
             catch (Exception e)
@@ -160,11 +97,6 @@ namespace DCL.Backpack.Gifting.Services
                 ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
                 return GiftTransferResult.Fail(e.Message);
             }
-        }
-
-        private void OnVerification(int code, DateTime expiration)
-        {
-            OnVerificationCodeReceived?.Invoke(code, expiration);
         }
     }
 
