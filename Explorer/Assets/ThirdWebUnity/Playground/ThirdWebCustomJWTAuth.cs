@@ -40,22 +40,26 @@ namespace ThirdWebUnity.Playground
             await ConnectWallet(jwt);
         }
 
-        public async Task Register(string email, string password)
+        public async Task<bool> Register(string email, string password)
         {
             Debug.Log("📮 Starting registration...");
             bool registered = await RegisterUser(email, password);
 
             if (registered) { Debug.Log("✅ Registration request sent. Please confirm via email."); }
             else { Debug.LogWarning("⚠️ Registration failed. See errors above."); }
+
+            return registered;
         }
 
-        public async Task CheckConfirmed(string email)
+        public async Task<bool> CheckConfirmed(string email)
         {
             Debug.Log("🔎 Checking confirmation status...");
             bool confirmed = await IsConfirmed(email);
 
             if (confirmed) { Debug.Log("✅ Account is confirmed."); }
             else { Debug.LogWarning("⏳ Account is NOT confirmed yet."); }
+
+            return confirmed;
         }
 
         private async Task<string> LoginAndGetJwt(string userEmail, string userPassword)
@@ -79,7 +83,7 @@ namespace ThirdWebUnity.Playground
                 try
                 {
                     LoginResponse data = JsonUtility.FromJson<LoginResponse>(response);
-                    return data?.token;
+                    return data?.idToken;
                 }
                 catch (Exception ex)
                 {
@@ -189,6 +193,7 @@ namespace ThirdWebUnity.Playground
         {
             public string message;
             public string token;
+            public string idToken;
             public User user;
         }
 
