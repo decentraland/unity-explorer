@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                         )
                     );
 
-                var assetBundlesVersions = await GetABVersions(lambdaResponse, partition, ct);
+                var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, partition, ct);
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                 {
@@ -140,7 +140,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             return new StreamableLoadingResult<WearablesResponse>(AssetFromPreparedIntention(in intention));
         }
 
-        private async UniTask<StreamableLoadingResult<AssetBundlesVersions>> GetABVersions(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<AssetBundlesVersions>> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, IPartitionComponent partition, CancellationToken ct)
         {
             URN[] urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
 

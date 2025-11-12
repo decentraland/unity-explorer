@@ -67,9 +67,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct) =>
 
             // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
-            WaitForThumbnailAsyncImpl(this, checkInterval, ct);
+            WaitForThumbnailImplAsync(this, checkInterval, ct);
 
-        private static async UniTask<Sprite> WaitForThumbnailAsyncImpl(IThumbnailAttachment attachment, int checkInterval, CancellationToken ct)
+        private static async UniTask<Sprite> WaitForThumbnailImplAsync(IThumbnailAttachment attachment, int checkInterval, CancellationToken ct)
         {
             do await UniTask.Delay(checkInterval, cancellationToken: ct);
             while (attachment.ThumbnailAssetResult is not { IsInitialized: true });
