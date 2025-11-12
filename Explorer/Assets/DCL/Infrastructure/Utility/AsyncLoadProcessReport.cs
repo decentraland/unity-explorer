@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System;
 using System.Threading;
@@ -44,8 +43,29 @@ namespace DCL.Utilities
         ///     Translates internals that can throw exceptions into a result free from exceptions <br/>
         ///     If reportData is provided, it will log the exception
         /// </summary>
-        public UniTask<EnumResult<TaskError>> WaitUntilFinishedAsync(ReportData? reportData = null) =>
-            completionSource.Task.SuppressToResultAsync(reportData);
+        public async UniTask<EnumResult<TaskError>> WaitUntilFinishedAsync(ReportData? reportData = null)
+        {
+            try
+            {
+                await completionSource.Task;
+                return EnumResult<TaskError>.SuccessResult();
+            }
+            catch (OperationCanceledException) { return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled); }
+            catch (TimeoutException e)
+            {
+                if (reportData != null)
+                    ReportHub.LogException(e, reportData.Value);
+
+                return EnumResult<TaskError>.ErrorResult(TaskError.Timeout, exception: e);
+            }
+            catch (Exception e)
+            {
+                if (reportData != null)
+                    ReportHub.LogException(e, reportData.Value);
+
+                return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message, e);
+            }
+        }
 
         public Status GetStatus() =>
             new (exception, completionSource.UnsafeGetStatus());
@@ -73,7 +93,6 @@ namespace DCL.Utilities
             completionSource.TrySetCanceled();
             parent?.SetCancelled();
         }
-
 
         // if the operation has fully succeeded:
         // 1. Set the progress to 1.0f
