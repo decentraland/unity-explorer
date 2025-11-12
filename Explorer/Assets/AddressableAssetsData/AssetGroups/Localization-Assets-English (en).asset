@@ -15,6 +15,12 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-English (en)
   m_GUID: bbf196456d6041d4e9cb25f216e21f0c
   m_SerializeEntries:
+  - m_GUID: 210b7be0b68974749a69a635945ff9f2
+    m_Address: MusicFestival
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2475d2ea34b451047936aaecb0ef9ad3
     m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/BringYourVibe.png
     m_ReadOnly: 1
@@ -23,6 +29,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3d9c80e4179389748acbca560257f6e2
     m_Address: Camera
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 64c6166a69a49054cbc3af01a067001e
+    m_Address: FrightNight
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
