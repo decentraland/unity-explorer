@@ -56,12 +56,6 @@ namespace CrdtEcsBridge.RestrictedActions
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
             Vector3? newAbsoluteAvatarTarget = avatarTarget != null ? sceneData.Geometry.BaseParcelPosition + avatarTarget.Value : null;
 
-            if (!IsPositionValid(newAbsolutePosition))
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Position is out of scene");
-                return;
-            }
-
             MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget).Forget();
         }
 
