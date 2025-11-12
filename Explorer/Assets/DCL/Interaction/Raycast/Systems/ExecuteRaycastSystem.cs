@@ -257,27 +257,29 @@ namespace DCL.Interaction.Raycast.Systems
         {
             foundEntity = null;
 
-            // Player is always qualified
+            // 1. Player is always qualified
             if (RaycastUtils.IsPlayer(collider))
             {
                 foundEntity = SpecialEntitiesID.PLAYER_ENTITY;
                 return true;
             }
 
-            // If the collider is not a character, we need to check if it's in the collision mask
-            if (collidersSceneCache.TryGetEntity(collider, out ColliderSceneEntityInfo entityInfo))
+            // 2. If the collider is not a character, we need to check if it's in the collision mask
+            if (!sceneData.IsPortableExperience())
             {
-                bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(entityInfo.SDKLayer, collisionMask);
+                if (collidersSceneCache.TryGetEntity(collider, out ColliderSceneEntityInfo entityInfo))
+                {
+                    bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(entityInfo.SDKLayer, collisionMask);
 
-                if (!isQualified) return false;
+                    if (!isQualified) return false;
 
-                foundEntity = entityInfo.SDKEntity;
-                return true;
+                    foundEntity = entityInfo.SDKEntity;
+                    return true;
+                }
             }
-
-            // Check global cache for cross-scene entities
-            if (collidersGlobalCache.TryGetSceneEntity(collider, out GlobalColliderSceneEntityInfo globalEntityInfo))
+            else if (collidersGlobalCache.TryGetSceneEntity(collider, out GlobalColliderSceneEntityInfo globalEntityInfo))
             {
+                // Check global cache for 'scene-agnostic' check
                 bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(globalEntityInfo.ColliderSceneEntityInfo.SDKLayer, collisionMask);
                 if (!isQualified) return false;
                 // 'foundEntity' has to be null here because we shouldn't inform of an entity ID from another scene
