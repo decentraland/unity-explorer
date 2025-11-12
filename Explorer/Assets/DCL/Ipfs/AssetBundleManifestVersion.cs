@@ -15,6 +15,9 @@ public class AssetBundleManifestVersion
         //From v41 ISS is supported for scenes
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
 
+        public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
+        public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
 
@@ -83,12 +86,13 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
-        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin, string buildDate)
+        //Should only be used for compatibility dto generation. No meaningful information can be retrieved from here
+        public static AssetBundleManifestVersion CreateManualManifest()
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);
-            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);
+            assets.mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1");
+            assets.windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1");
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 

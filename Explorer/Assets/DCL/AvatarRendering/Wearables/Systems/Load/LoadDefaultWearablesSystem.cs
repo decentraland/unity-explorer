@@ -80,6 +80,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             // The face features (eyes, mouth, eyebrows) have been removed because they share the same ABs with other wearables, like urn:decentraland:off-chain:base-avatars:f_mouth_00,
             // but we have problems by trying to solve them as dependencies
             // ABs have been specifically built without these dependencies
+            // This assets are embedded in the StreamingAssets folders
+            // Thumbnails dont need to be in the /Wearables/ subdirectory
             {
                 WearableDTO dto = new WearableDTO
                 {
@@ -142,7 +144,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
-                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest("v16", "v15", "1699288905291"),
+                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(),
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
@@ -215,7 +217,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
-                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest("v16", "v15", "1699288905291"),
+                    assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(),
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);

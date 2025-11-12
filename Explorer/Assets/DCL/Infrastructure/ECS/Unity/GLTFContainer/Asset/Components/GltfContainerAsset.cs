@@ -83,9 +83,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public void SetCastingShadows(bool newValue)
         {
             for (var i = 0; i < Renderers.Count; i++)
-            {
                 Renderers[i].shadowCastingMode = newValue ? ShadowCastingMode.On : ShadowCastingMode.Off;
-            }
+        }
+
+        public void ToggleAnimationState(bool newState)
+        {
+            foreach (Animation animation in Animations)
+                animation.enabled = newState;
+
+            foreach (Animator animator in Animators)
+                animator.enabled = newState;
         }
 
         public void Dispose()
