@@ -30,10 +30,11 @@ namespace SceneRuntime.Factory.JsSource
             using HashKey key = HashKey.FromString(path.Value);
             var getResult = await diskCache.ContentAsync(key, EXTENSION, ct);
 
-            if (getResult is { Success: true, Value: not null })
-            {
+            if (getResult is { Success: true, Value: not null }
+
+                // Ignore old UTF-16 encoded cached files.
+                && getResult.Value.Value.Memory.Span[1] != 0)
                 return new DownloadedOrCachedData(getResult.Value.Value);
-            }
             else
             {
                 DownloadedOrCachedData sourceCode = await origin.SceneSourceCodeAsync(path, ct);
@@ -42,7 +43,8 @@ namespace SceneRuntime.Factory.JsSource
                     ct);
 
                 if (!putResult.Success)
-                    ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Could not write to the disk cache because {putResult.Error}");
+                    ReportHub.LogWarning(ReportCategory.SCENE_LOADING,
+                        $"Could not write to the disk cache because {putResult.Error}");
 
                 return sourceCode;
             }

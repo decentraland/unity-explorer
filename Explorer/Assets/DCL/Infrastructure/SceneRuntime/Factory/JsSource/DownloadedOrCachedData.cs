@@ -10,17 +10,23 @@ namespace SceneRuntime.Factory.JsSource
     public readonly struct DownloadedOrCachedData : IDisposable
     {
         private readonly DownloadHandler? downloaded;
+        private readonly NativeArray<byte>.ReadOnly downloadedData;
         private readonly SlicedOwnedMemory<byte> cached;
 
+        /// <remarks>
+        /// Can only be called from the main thread.
+        /// </remarks>
         public DownloadedOrCachedData(DownloadHandler downloadHandler)
         {
             downloaded = downloadHandler;
+            downloadedData = downloadHandler.nativeData;
             cached = default;
         }
 
         public DownloadedOrCachedData(SlicedOwnedMemory<byte> memory)
         {
             downloaded = null;
+            downloadedData = default;
             cached = memory;
         }
 
@@ -33,7 +39,7 @@ namespace SceneRuntime.Factory.JsSource
         }
 
         private ReadOnlyMemory<byte> AsReadOnlyMemory() =>
-            downloaded != null ? new MemoryManager(downloaded).Memory : cached.Memory;
+            downloaded != null ? new MemoryManager(downloadedData).Memory : cached.Memory;
 
         public ReadOnlySpan<byte> AsReadOnlySpan() =>
             downloaded != null ? downloaded.nativeData.AsReadOnlySpan() : cached.Memory.Span;
@@ -48,23 +54,20 @@ namespace SceneRuntime.Factory.JsSource
 
         private sealed class MemoryManager : MemoryManager<byte>
         {
-            private readonly DownloadHandler downloadHandler;
+            private readonly NativeArray<byte>.ReadOnly data;
 
-            public MemoryManager(DownloadHandler downloadHandler)
+            public MemoryManager(NativeArray<byte>.ReadOnly data)
             {
-                this.downloadHandler = downloadHandler;
+                this.data = data;
             }
 
             protected override void Dispose(bool disposing) { }
 
-            public override unsafe Span<byte> GetSpan()
-            {
-                NativeArray<byte>.ReadOnly nativeData = downloadHandler.nativeData;
-                return new Span<byte>(nativeData.GetUnsafeReadOnlyPtr(), nativeData.Length);
-            }
+            public override unsafe Span<byte> GetSpan() =>
+                new (data.GetUnsafeReadOnlyPtr(), data.Length);
 
             public override unsafe MemoryHandle Pin(int elementIndex = 0) =>
-                new ((byte*)downloadHandler.nativeData.GetUnsafeReadOnlyPtr() + elementIndex);
+                new ((byte*)data.GetUnsafeReadOnlyPtr() + elementIndex);
 
             public override void Unpin() { }
         }

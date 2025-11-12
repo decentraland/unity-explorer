@@ -176,6 +176,9 @@ namespace SceneRuntime.Factory
             await EnsureCalledOnMainThreadAsync();
             using DownloadedOrCachedData sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
             return await CreateBySourceCodeAsync(sourceCode, sceneShortInfo, ct, instantiationBehavior);
+
+            // DownloadHandler.Dispose is being called on a background thread at this point. Unity does
+            // not seem to mind, but if that changes, this comment will help you.
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()
