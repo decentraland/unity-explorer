@@ -37,7 +37,6 @@ namespace DCL.Backpack
         {
             view.gameObject.SetActive(true);
             backpackGridController.Activate();
-            backpackGridController.RequestPage(1, true);
         }
 
         public void Deactivate()
