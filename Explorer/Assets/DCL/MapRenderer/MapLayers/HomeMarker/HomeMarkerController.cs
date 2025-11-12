@@ -81,8 +81,6 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 			if (serialize)
 				HomeMarkerSerializer.Serialize(homeMarkerData);
-
-			homePlaceEventBus.NotifyHomeLocationChanged(homeMarkerData);
 		}
 
 		private void SetAsHomeRequested(Vector2Int coordinates)

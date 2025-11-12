@@ -47,11 +47,6 @@ namespace DCL.Navmap
         {
             cameraController.TranslateTo(destination, speed == 0 ? TRANSITION_TIME : speed);
         }
-        
-        private void OnHomeLocationChanged(HomeMarkerData? homeMarkerData)
-        {
-            view.CenterToHomeButton.interactable = homeMarkerData != null;
-        }
 
         private void ToggleFilterPanel()
         {

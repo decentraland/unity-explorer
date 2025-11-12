@@ -6,18 +6,12 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
 	public class HomePlaceEventBus
 	{
-		public event Action<HomeMarkerData?> HomeLocationChanged;
 		internal event Action<Vector2Int> SetAsHomeRequested;
 		internal event Action UnsetAsHomeRequested;
 
 		internal Func<Vector2Int, bool> IsHomeQuery;
 		internal Func<bool> HasHomeLocationQuery;
 		internal Func<Vector2Int?> GetHomeCoordinatesQuery;
-
-		internal void NotifyHomeLocationChanged(HomeMarkerData? homeMarkerData)
-		{
-			HomeLocationChanged?.Invoke(homeMarkerData);
-		}
 		
 		public void RequestSetAsHome(Vector2Int coordinates)
 		{
@@ -46,7 +40,5 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			coordinates = result.Value;
 			return true;
 		}
-
-		public bool HasHomeLocation() => HasHomeLocationQuery?.Invoke() ?? false;
 	}
 }

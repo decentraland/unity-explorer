@@ -82,34 +82,18 @@ namespace Global.Tests.EditMode
         }
 
         [Test]
-        public void UseHomePositionWhenForceHomeIsTrue()
-        {
-            // Arrange
-            var homePosition = new Vector2Int(100, 200);
-            HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
-            launchSettings.ForceHomePosition = true;
-            launchSettings.targetScene = new Vector2Int(0, 0);
-
-            // Act
-            launchSettings.CheckStartParcelHomeOverride(appArgs);
-
-            // Assert
-            Assert.AreEqual(homePosition, launchSettings.targetScene);
-        }
-
-        [Test]
         public void NotUseHomePositionWhenAppArgPositionExists()
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
             HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
-            launchSettings.ForceHomePosition = true;
             launchSettings.targetScene = new Vector2Int(0, 0);
-            
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(true);
+            string featureFlagPosition = "0,0";
+            var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelHomeOverride(appArgs);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
 
             // Assert
             Assert.AreEqual(new Vector2Int(0, 0), launchSettings.targetScene);
@@ -123,9 +107,11 @@ namespace Global.Tests.EditMode
             HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
             launchSettings.HasEditorPositionOverride().Returns(true);
             launchSettings.targetScene = new Vector2Int(50, 50);
-
+            string featureFlagPosition = "0,0";
+            var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
+            
             // Act
-            launchSettings.CheckStartParcelHomeOverride(appArgs);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
 
             // Assert
             Assert.AreEqual(new Vector2Int(50, 50), launchSettings.targetScene);
@@ -136,14 +122,13 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             launchSettings.targetScene = new Vector2Int(0, 0);
-            launchSettings.ForceHomePosition = false;
             launchSettings.EditorSceneStartPosition = false;
 
             string featureFlagPosition = "75,80";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
 
             // Assert
             Assert.AreEqual(new Vector2Int(75, 80), launchSettings.targetScene);
@@ -156,15 +141,13 @@ namespace Global.Tests.EditMode
             var homePosition = new Vector2Int(100, 200);
             HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
             launchSettings.targetScene = new Vector2Int(0, 0);
-            launchSettings.ForceHomePosition = false;
             launchSettings.EditorSceneStartPosition = false;
             
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelHomeOverride(appArgs);
-            launchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
 
             // Assert
             Assert.AreEqual(homePosition, launchSettings.targetScene);
@@ -177,11 +160,11 @@ namespace Global.Tests.EditMode
             var initialPosition = new Vector2Int(10, 10);
             launchSettings.targetScene = initialPosition;
             
-            string featureFlagPosition = "00,00";
+            string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(false, featureFlagPosition);
 
             // Act
-            launchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlags);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
 
             // Assert
             Assert.AreEqual(initialPosition, launchSettings.targetScene);

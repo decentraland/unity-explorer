@@ -28,7 +28,6 @@ namespace Global.Dynamic
 
         [SerializeField] internal InitialRealm initialRealm;
         [SerializeField] internal Vector2Int targetScene;
-        [SerializeField] internal bool ForceHomePosition = false;
         [SerializeField] internal bool EditorSceneStartPosition = true;
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
@@ -158,41 +157,37 @@ namespace Global.Dynamic
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-
-        /// <summary>
-        /// Checking home position override from player prefs. If there is a feature flag, this will be overriden by it.
-        /// </summary>
-        public void CheckStartParcelHomeOverride(IAppArgs appArgs)
+        
+        public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            if (HasAppArgPosition(appArgs) || (!ShouldForceHomePosition() && HasEditorPositionOverride())) return;
-            
-            HomeMarkerData? homeData = HomeMarkerSerializer.Deserialize();
-
-            if (homeData == null)
+            // Priority 1: App argument position (highest - from command line/Creator Hub)
+            if (HasAppArgPosition(appArgs))
+                return;
+    
+            // Priority 2: Editor position override (for development convenience)
+            if (HasEditorPositionOverride())
                 return;
 
-            targetScene = homeData.Value.Position;
-        }
+            string? parcelToTeleportOverride = "0,0";
+            bool hasDefaultSpawnFlag = featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL)
+                                       && featureFlagsConfigurationCache.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                                           FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride)
+                                       && parcelToTeleportOverride != null;
 
-        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
-        {
-            if (ShouldForceHomePosition() || HasAppArgPosition(appArgs) || HasEditorPositionOverride()) return;
+            // Priority 3: Serialized home position (used when no feature flag exists, or feature flag is set to "0,0")
+            if (HomeMarkerSerializer.HasSerializedPosition() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            {
+                HomeMarkerData? homeData = HomeMarkerSerializer.Deserialize();
+                if (homeData != null)
+                    targetScene = homeData.Value.Position;
+                return;
+            }
 
-            //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
+            // Priority 4: Feature flag override (used as fallback if home position not available or feature flag has specific value)
+            // Note: If you don't want the feature flag for localhost, remove it from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
-            string? parcelToTeleportOverride = null;
-
-            //If not, we check the feature flag usage
-            //If parcelToTeleportOverride is just GP, try using home position if its set.
-            var featureFlagOverride =
-                featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) 
-                && featureFlagsConfigurationCache.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
-                    FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride) 
-                && parcelToTeleportOverride != null
-                && (parcelToTeleportOverride != "0,0" || !HomeMarkerSerializer.HasSerializedPosition());
-
-            if (featureFlagOverride)
-                ParsePositionAppParameter(parcelToTeleportOverride);
+            if (hasDefaultSpawnFlag)
+                ParsePositionAppParameter(parcelToTeleportOverride!);
         }
 
         /// <summary>
@@ -212,7 +207,5 @@ namespace Global.Dynamic
         /// <param name="appArgs">The application arguments to check.</param>
         /// <returns>True if the POSITION flag is present in the arguments.</returns>
         private static bool HasAppArgPosition(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.POSITION);
-
-        private bool ShouldForceHomePosition() => ForceHomePosition && HomeMarkerSerializer.HasSerializedPosition();
     }
 }
