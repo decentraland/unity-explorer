@@ -29,14 +29,21 @@ namespace DCL.AvatarRendering.Emotes
             public readonly URN? collectionId;
             public readonly OrderOperation? orderOperation;
             public readonly string? name;
+            public readonly bool? includeAmount;
 
-            public OwnedEmotesRequestOptions(int? pageNum, int? pageSize, URN? collectionId, IEmoteProvider.OrderOperation? orderOperation, string? name)
+            public OwnedEmotesRequestOptions(int? pageNum,
+                int? pageSize,
+                URN? collectionId,
+                OrderOperation? orderOperation,
+                string? name,
+                bool? includeAmount = null)
             {
                 this.pageNum = pageNum;
                 this.pageSize = pageSize;
                 this.collectionId = collectionId;
                 this.orderOperation = orderOperation;
                 this.name = name;
+                this.includeAmount = includeAmount;
             }
         }
 

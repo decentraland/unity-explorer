@@ -148,6 +148,11 @@ namespace DCL.Multiplayer.SDK.Tests
             public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
 
+            public int GetOwnedNftCount(URN nftUrn)
+            {
+                return 1;
+            }
+
             public void ClearOwnedNftRegistry()
             {
                 throw new NotImplementedException();

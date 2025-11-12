@@ -216,7 +216,7 @@ GameObject:
   - component: {fileID: 2358002852752076127}
   - component: {fileID: 1688992257091718174}
   m_Layer: 5
-  m_Name: Count
+  m_Name: NftCount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -757,6 +757,7 @@ MonoBehaviour:
   equippedContainer: {fileID: 5274118969608279153}
   thumbnailImage: {fileID: 3738078155287286338}
   NftCount: {fileID: 2734564836472412647}
+  NftCountCountainer: {fileID: 2384821633565382304}
   RarityBackground: {fileID: 4650344333737655355}
   FlapBackground: {fileID: 2248039299495904326}
   CategoryImage: {fileID: 541057936104771926}

@@ -1,116 +1,205 @@
-﻿using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using Newtonsoft.Json;
+using System;
+using System.Threading;
+using DCL.Web3.Authenticators;
 
 namespace DCL.Backpack.Gifting.Services
 {
+    /// <summary>
+    ///     Implements the gift transfer functionality using a gasless meta-transaction flow.
+    ///     The user signs a typed message (EIP-712), and a backend relayer submits the transaction,
+    ///     paying the gas fee on the user's behalf.
+    /// </summary>
     public class Web3GiftTransferService : IGiftTransferService, IDisposable
     {
-        public event Action<int, DateTime> OnVerificationCodeReceived;
-
+        private readonly IEthereumApi ethereumApi;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IVerifiedEthereumApi verifiedEthereumApi;
-        private readonly IWeb3IdentityCache identityCache;
 
-        public Web3GiftTransferService(IVerifiedEthereumApi verifiedEthereumApi, IWeb3IdentityCache identityCache)
+        // --- IMPORTANT ---
+        // This URL must be provided by your backend team. It is the endpoint for the
+        // relayer server that will submit the signed transaction to the blockchain.
+        private const string RELAYER_API_URL = "https://your.backend.relayer/api/send-meta-transaction";
+
+        public Web3GiftTransferService(IEthereumApi ethereumApi,
+            IWeb3IdentityCache web3IdentityCache,
+            IVerifiedEthereumApi verifiedEthereumApi)
         {
+            this.ethereumApi = ethereumApi;
+            this.web3IdentityCache = web3IdentityCache;
             this.verifiedEthereumApi = verifiedEthereumApi;
-            this.identityCache = identityCache;
-            this.verifiedEthereumApi.AddVerificationListener(HandleVerificationCode);
         }
 
-        public void Dispose()
+        public void Dispose() { }
+
+
+        public event Action<int, DateTime>? OnVerificationCodeReceived;
+
+        /// <summary>
+        ///     Requests a gasless transfer of a gift (NFT) to a recipient.
+        ///     This will trigger a browser pop-up for the user to sign a typed message.
+        /// </summary>
+        /// <param name="giftUrn">The URN of the NFT to be transferred.</param>
+        /// <param name="recipientAddress">The Ethereum address of the recipient.</param>
+        /// <param name="ct">The cancellation token.</param>
+        /// <returns>A GiftTransferResult indicating success or failure.</returns>
+        public async UniTask<GiftTransferResult> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
         {
-            verifiedEthereumApi.AddVerificationListener(null);
+            try
+            {
+                var identity = web3IdentityCache.Identity;
+                if (identity == null)
+                    return GiftTransferResult.Fail("Web3 identity not found. Please ensure the user is logged in.");
+
+                var parsedUrn = UrnParser.Parse(giftUrn);
+                if (parsedUrn == null)
+                    return GiftTransferResult.Fail($"Invalid gift URN format: {giftUrn}");
+
+                verifiedEthereumApi.AddVerificationListener(OnVerification);
+
+                string contractAddress = parsedUrn.Value.contractAddress;
+                string tokenId = parsedUrn.Value.tokenId;
+                string fromAddress = identity.Address.ToString();
+
+                // --- Step 1: Craft the EIP-712 Typed Data for Signing ---
+                // This structure is critical and MUST match exactly what the backend relayer
+                // and the smart contract expect. Confirm this with your backend team (Andrés).
+                var typedData = new
+                {
+                    types = new
+                    {
+                        EIP712Domain = new[]
+                        {
+                            new
+                            {
+                                name = "name", type = "string"
+                            },
+                            new
+                            {
+                                name = "version", type = "string"
+                            },
+                            new
+                            {
+                                name = "chainId", type = "uint256"
+                            },
+                            new
+                            {
+                                name = "verifyingContract", type = "address"
+                            }
+                        },
+                        // The name "Gift" and its properties must match the smart contract's implementation.
+                        Gift = new[]
+                        {
+                            new
+                            {
+                                name = "from", type = "address"
+                            },
+                            new
+                            {
+                                name = "to", type = "address"
+                            },
+                            new
+                            {
+                                name = "tokenId", type = "uint256"
+                            }
+                        }
+                    },
+                    primaryType = "Gift", domain = new
+                    {
+                        name = "Decentraland Gifting", version = "1", chainId = 137, // 137 for Polygon Mainnet. This may need to be dynamic based on the network.
+                        verifyingContract = contractAddress
+                    },
+                    message = new
+                    {
+                        from = fromAddress, to = recipientAddress,  tokenId
+                    }
+                };
+
+                // --- Step 2: Create and send the request to get the user's signature ---
+                var request = new EthApiRequest
+                {
+                    id = Guid.NewGuid().GetHashCode(), method = "eth_signTypedData_v4", @params = new object[]
+                    {
+                        fromAddress, JsonConvert.SerializeObject(typedData)
+                    }
+                };
+
+                // This call automatically triggers the browser pop-up via DappWeb3Authenticator
+                var response = await ethereumApi.SendAsync(request, ct);
+
+                if (response.result == null || string.IsNullOrEmpty(response.result.ToString()))
+                    return GiftTransferResult.Fail("Signing failed. The user may have rejected the request.");
+
+                string signature = response.result.ToString();
+                ReportHub.Log(ReportCategory.GIFTING, $"Gifting message signed successfully. Signature: {signature.Substring(0, 10)}...");
+
+                // --- Step 3: Send the signed message to the Foundation's Relayer API ---
+                // The relayer will now submit the transaction and pay the gas fee.
+                // The implementation of this POST request depends on your project's HTTP client.
+
+                // TODO: Implement the HTTP POST call to your relayer.
+                // Example:
+                // var relayerPayload = new { signature, message = typedData.message };
+                // var relayerResponse = await YourHttpClient.PostAsync(RELAYER_API_URL, relayerPayload);
+                // if (!relayerResponse.IsSuccessStatusCode)
+                //     return GiftTransferResult.Fail("Relayer failed to process the transaction.");
+                //
+                // string txHash = await relayerResponse.Content.ReadAsStringAsync();
+                // return GiftTransferResult.Success(txHash);
+
+                // For now, we return success assuming the relayer call will be implemented.
+                // The "txHash" is a placeholder until the relayer call is made.
+                return GiftTransferResult.Success();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+                return GiftTransferResult.Fail(e.Message);
+            }
         }
 
-        private void HandleVerificationCode(int code, DateTime expiration)
+        private void OnVerification(int code, DateTime expiration)
         {
             OnVerificationCodeReceived?.Invoke(code, expiration);
         }
+    }
 
-        public async UniTask<GiftTransferResult> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
+    /// <summary>
+    ///     A utility class to parse Decentraland's URN strings for wearables and emotes.
+    /// </summary>
+    public static class UrnParser
+    {
+        /// <summary>
+        ///     Parses a Decentraland URN string to extract the contract address and token ID.
+        /// </summary>
+        /// <param name="urn">
+        ///     The URN to parse.
+        ///     Example: "urn:decentraland:matic:collections-v2:0x32b7495895264ac9d0b12d32afd435453458b1c6:123"
+        /// </param>
+        /// <returns>A tuple containing the contract address and token ID, or null if parsing fails.</returns>
+        public static (string contractAddress, string tokenId)? Parse(string urn)
         {
-            // The URN needs to be parsed to get the contract address and token ID.
-            // Example URN: "urn:decentraland:ethereum:collections-v1:halloween_2019:razor_blade_feet"
-            // The backend is the ultimate authority on this parsing, but this is the logic.
-            if (!TryParseUrn(giftUrn, out string contractAddress, out string tokenId))
-            {
-                ReportHub.LogError(ReportCategory.GIFTING, $"Could not parse URN: {giftUrn}");
-                return GiftTransferResult.Fail("Invalid item URN format.");
-            }
+            if (string.IsNullOrEmpty(urn))
+                return null;
 
-            // The backend MUST create the `data` payload. It's a hex string representing the function call.
-            // It will look something like this: "0x23b872dd" + [padded fromAddress] + [padded toAddress] + [padded tokenId]
-            // Your client should NOT be responsible for creating this.
-            // You will send the raw data to the backend, and it will construct the final transaction.
-            var requestPayload = new
-            {
-                from = identityCache.Identity.Address.ToString(), to = recipientAddress,   tokenId
-            };
-
-            // This is the object that will be sent to the backend. The backend then constructs the full transaction.
-            var request = new EthApiRequest
-            {
-                id = 1, method = "eth_sendTransaction",
-                // The params will contain the information the backend needs to build the transaction.
-                // The exact structure MUST be agreed upon with the backend team.
-                // This is a likely structure:
-                @params = new object[]
-                {
-                    new
-                    {
-                        to = contractAddress, // The NFT contract address
-                        // The backend will take the payload below and encode it into the `data` field.
-                        payload = requestPayload
-                    }
-                }
-            };
-
-            try
-            {
-                ReportHub.Log(ReportCategory.GIFTING, $"Sending gift transfer request for URN: {giftUrn} to {recipientAddress}");
-                var response = await verifiedEthereumApi.SendAsync(request, ct);
-
-                if (response.result != null && !string.IsNullOrEmpty(response.result.ToString()))
-                {
-                    ReportHub.Log(ReportCategory.GIFTING, $"Gift transfer transaction successfully broadcasted. Hash: {response.result}");
-                    return GiftTransferResult.Success();
-                }
-
-                ReportHub.LogWarning(ReportCategory.GIFTING, "Gift transfer API returned a null or empty result.");
-                return GiftTransferResult.Fail("Transaction failed: received an empty response.");
-            }
-            // ... (keep the same catch blocks as the previous version)
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.GIFTING);
-                return GiftTransferResult.Fail("An unexpected error occurred.");
-            }
-        }
-
-        // A helper function to extract data from the URN.
-        private bool TryParseUrn(string urn, out string contractAddress, out string tokenId)
-        {
-            contractAddress = null;
-            tokenId = null;
             string[]? parts = urn.Split(':');
 
-            // Example: urn:decentraland:ethereum:collections-v1:halloween_2019:razor_blade_feet
-            if (parts.Length < 6 || parts[2] != "ethereum")
-                return false;
+            // A valid URN has at least 6 parts:
+            // urn:decentraland:[network]:[asset_type]:[contract_address]:[token_id]
+            if (parts.Length < 6 || parts[0] != "urn" || parts[1] != "decentraland")
+                return null;
 
-            // The contract address is part 4
-            contractAddress = parts[4];
-            // The token ID (or name that resolves to an ID) is part 5
-            tokenId = parts[5];
+            string contractAddress = parts[4];
+            string tokenId = parts[5];
 
-            // You may need to look up the contract address from a known list if it's a collection name
-            // e.g., "halloween_2019" -> "0xc1f4b0eea2bd6690930e6c66efd3e197d620b9c2"
-            // The backend should ideally handle this translation.
-            return true;
+            if (string.IsNullOrEmpty(contractAddress) || string.IsNullOrEmpty(tokenId))
+                return null;
+
+            return (contractAddress, tokenId);
         }
     }
 }

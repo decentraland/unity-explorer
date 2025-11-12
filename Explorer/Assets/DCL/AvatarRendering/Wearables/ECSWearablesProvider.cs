@@ -23,6 +23,8 @@ namespace DCL.AvatarRendering.Wearables
     {
         private const string PAGE_NUMBER = "pageNum";
         private const string PAGE_SIZE = "pageSize";
+        private const string NETWORK = "network";
+        private const string INCLUDE_AMOUNT = "includeAmount";
         private const string CATEGORY = "category";
         private const string ORDER_BY = "orderBy";
         private const string COLLECTION_TYPE = "collectionType";
@@ -53,10 +55,24 @@ namespace DCL.AvatarRendering.Wearables
             string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
+            return await GetAsync(pageSize, pageNumber, ct,
+                network: null,
+                includeAmount: false,
+                sortingField, orderBy, category, collectionType, name, results, loadingArguments, needsBuilderAPISigning);
+        }
+
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct, string? network, bool includeAmount, IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending, string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All, string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null, bool needsBuilderAPISigning = false)
+        {
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
             requestParameters.Add((PAGE_SIZE, pageSize.ToString()));
 
+            if (!string.IsNullOrEmpty(network))
+                requestParameters.Add((NETWORK, network));
+
+            if (includeAmount)
+                requestParameters.Add((INCLUDE_AMOUNT, "true"));
+            
             if (!string.IsNullOrEmpty(category))
                 requestParameters.Add((CATEGORY, category));
 

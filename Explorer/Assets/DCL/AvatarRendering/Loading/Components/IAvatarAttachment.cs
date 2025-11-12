@@ -19,6 +19,9 @@ namespace DCL.AvatarRendering.Loading.Components
 
         AvatarAttachmentDTO DTO { get; }
 
+        int Amount { get; }
+        void SetAmount(int amount);
+        
         public string ToString() =>
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
     }

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
@@ -27,6 +28,11 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
                 "Opening wallet to authorize…"
             ));
 
+            giftTransferService.OnVerificationCodeReceived += (i, time) =>
+            {
+                ReportHub.Log(ReportCategory.GIFTING, $"gift service {i}-{time}");
+            };
+            
             // 2. Call the service. The 'TODO' is now resolved.
             // This single line handles everything: browser opening, waiting for signature, and getting the result.
             var result = await giftTransferService.RequestTransferAsync(data.giftUrn, data.recipientAddress, ct);

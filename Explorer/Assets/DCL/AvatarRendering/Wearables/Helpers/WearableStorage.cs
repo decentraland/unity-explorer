@@ -139,6 +139,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
+        public int GetOwnedNftCount(URN nftUrn)
+        {
+            lock (lockObject)
+            {
+                if (ownedNftsRegistry.TryGetValue(nftUrn, out var registry))
+                {
+                    return registry.Count;
+                }
+
+                return 0;
+            }
+        }
+
         internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
             lock (lockObject)

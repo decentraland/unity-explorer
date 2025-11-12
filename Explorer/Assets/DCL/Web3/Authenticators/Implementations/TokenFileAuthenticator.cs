@@ -92,5 +92,10 @@ namespace DCL.Web3.Authenticators
 
         public UniTask LogoutAsync(CancellationToken cancellationToken) =>
             UniTask.CompletedTask;
+
+        public UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

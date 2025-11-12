@@ -12,8 +12,9 @@ namespace DCL.Backpack.Gifting.Models
         public ThumbnailState ThumbnailState { get; }
         public Sprite? Thumbnail { get; }
         public bool IsEquipped { get; }
+        public int NftCount { get; }
 
-        public WearableViewModel(WearableGiftable giftable, bool isEquipped = false)
+        public WearableViewModel(WearableGiftable giftable, int amount, bool isEquipped = false)
         {
             Giftable = giftable;
             DisplayName = giftable.Name;
@@ -22,6 +23,7 @@ namespace DCL.Backpack.Gifting.Models
             ThumbnailState = ThumbnailState.NotLoaded;
             Thumbnail = null;
             IsEquipped = isEquipped;
+            NftCount = amount;
         }
         
         private WearableViewModel(
@@ -31,6 +33,7 @@ namespace DCL.Backpack.Gifting.Models
             string? rarityId,
             ThumbnailState state,
             Sprite? thumbnail,
+            int amount,
             bool isEquipped)
         {
             Giftable = giftable;
@@ -40,6 +43,7 @@ namespace DCL.Backpack.Gifting.Models
             ThumbnailState = state;
             Thumbnail = thumbnail;
             IsEquipped = isEquipped;
+            NftCount = amount;
         }
 
         public WearableViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
@@ -51,6 +55,7 @@ namespace DCL.Backpack.Gifting.Models
                 RarityId,
                 newState,
                 newSprite ?? Thumbnail,
+                NftCount,
                 IsEquipped);
         }
     }

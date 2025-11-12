@@ -11,8 +11,9 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
     public ThumbnailState ThumbnailState { get; }
     public Sprite? Thumbnail { get; }
     public bool IsEquipped { get; }
+    public int NftCount { get; }
 
-    public EmoteViewModel(EmoteGiftable giftable, bool isEquipped = false)
+    public EmoteViewModel(EmoteGiftable giftable, int amount, bool isEquipped = false)
     {
         Giftable = giftable;
         DisplayName = giftable.Name;
@@ -20,6 +21,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         RarityId = giftable.Emote.DTO.Metadata.rarity;
         ThumbnailState = ThumbnailState.NotLoaded;
         Thumbnail = null;
+        NftCount = amount;
         IsEquipped = isEquipped;
     }
 
@@ -29,7 +31,9 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         string? categoryId,
         string? rarityId,
         ThumbnailState state,
-        Sprite? thumbnail, bool isEquipped)
+        Sprite? thumbnail,
+        int amount,
+        bool isEquipped)
     {
         Giftable = giftable;
         DisplayName = displayName;
@@ -37,6 +41,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         RarityId = rarityId;
         ThumbnailState = state;
         Thumbnail = thumbnail;
+        NftCount = amount;
         IsEquipped = isEquipped;
     }
 
@@ -47,6 +52,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
             "emote",
             RarityId, newState,
             newSprite ?? Thumbnail,
+            NftCount,
             IsEquipped);
     }
 }

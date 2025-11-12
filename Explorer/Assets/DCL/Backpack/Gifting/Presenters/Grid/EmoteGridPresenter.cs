@@ -170,7 +170,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                         pageSize: PAGE_SIZE,
                         collectionId: null,
                         orderOperation: currentOrder,
-                        name: currentSearch),
+                        name: currentSearch,
+                        includeAmount: true),
                     owned);
 
                 // 2) Off-chain embedded emotes (optional union like Backpack)
@@ -220,7 +221,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     if (vmByUrn.ContainsKey(urn)) continue;
 
                     var giftable = new EmoteGiftable(emote);
-                    vmByUrn[urn] = new EmoteViewModel(giftable);
+                    int amount = emote.IsOnChain() ? emote.Amount : 1;
+                    vmByUrn[urn] = new EmoteViewModel(giftable, amount);
                     urnOrder.Add(urn);
                 }
 

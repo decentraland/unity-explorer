@@ -46,6 +46,7 @@ namespace DCL.Backpack.Gifting.Views
         [SerializeField] private Image thumbnailImage;
 
         [SerializeField] public TextMeshProUGUI NftCount;
+        [SerializeField] public GameObject NftCountCountainer;
         [SerializeField] public Image RarityBackground;
         [SerializeField] public Image FlapBackground;
         [SerializeField] public Image CategoryImage;

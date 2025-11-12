@@ -21,6 +21,8 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -39,9 +41,11 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedWearables equippedWearables;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IVerifiedEthereumApi webAuthenticator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
+        private readonly IEthereumApi ethereumApi;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -55,9 +59,11 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
+            IVerifiedEthereumApi webAuthenticator,
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IEthereumApi ethereumApi)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -68,9 +74,11 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
+            this.webAuthenticator = webAuthenticator;
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus =  eventBus;
             this.webBrowser = webBrowser;
+            this.ethereumApi = ethereumApi;
         }
 
         public void Dispose()
@@ -95,7 +103,8 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            var giftTransferService = new MockGiftTransferService();
+            var giftTransferService = new Web3GiftTransferService(ethereumApi, web3IdentityCache, webAuthenticator);
+            // var giftTransferService = new MockGiftTransferService();
 
             var wearableCatalog = new WearableStylingCatalog(rarityColors,
                 rarityBackgrounds,

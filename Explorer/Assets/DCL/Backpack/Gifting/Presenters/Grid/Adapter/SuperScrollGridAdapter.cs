@@ -80,8 +80,16 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 
             if (viewModel.ThumbnailState == ThumbnailState.NotLoaded)
                 dataProvider.RequestThumbnailLoad(itemIndex);
-            
-            cellView.NftCount.text = $"x{Random.Range(1, 200)}";
+
+            if (viewModel.NftCount <= 1)
+            {
+                cellView.NftCountCountainer.SetActive(false);
+            }
+            else
+            {
+                cellView.NftCountCountainer.SetActive(true);
+                cellView.NftCount.text = $"x{viewModel.NftCount}";
+            }
             
             if (wearableCatalog != null)
             {

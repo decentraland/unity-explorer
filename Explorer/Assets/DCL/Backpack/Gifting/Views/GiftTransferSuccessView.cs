@@ -1,4 +1,5 @@
-﻿using MVC;
+﻿using DCL.RewardPanel;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,5 +16,8 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: SerializeField]
         public TextMeshProUGUI GiftSentText { get; private set; }
+
+        [field: SerializeField]
+        public GiftTransferBackgroundAnimation BackgroundRaysAnimation { get; private set; }
     }
 }

@@ -33,5 +33,7 @@ namespace DCL.Backpack.Gifting.Models
         Sprite? Thumbnail { get; }
 
         bool IsEquipped { get; }
+
+        int NftCount { get; }
     }
 }

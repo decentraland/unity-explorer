@@ -8,6 +8,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 {
     public interface IWearable : IAvatarAttachment<WearableDTO>
     {
+        int Amount { get; }
         WearableType Type { get; }
 
         /// <summary>

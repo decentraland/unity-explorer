@@ -584,6 +584,16 @@ MonoBehaviour:
       Severity: 4
     - Category: OUTFITS
       Severity: 1
+    - Category: GIFTING
+      Severity: 3
+    - Category: GIFTING
+      Severity: 2
+    - Category: GIFTING
+      Severity: 0
+    - Category: GIFTING
+      Severity: 4
+    - Category: GIFTING
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

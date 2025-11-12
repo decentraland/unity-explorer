@@ -7,6 +7,8 @@ namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmote : IAvatarAttachment<EmoteDTO>
     {
+        int Amount { get; set; }
+        
         StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
         StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
 

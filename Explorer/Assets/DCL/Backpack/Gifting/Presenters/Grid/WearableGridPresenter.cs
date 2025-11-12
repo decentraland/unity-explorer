@@ -225,7 +225,7 @@ namespace DCL.Backpack.Gifting.Presenters
                     var giftable = new WearableGiftable(wearable);
                     bool isEquipped = equippedWearables.IsEquipped(wearable);
 
-                    viewModelsByUrn[urn] = new WearableViewModel(giftable, isEquipped);
+                    viewModelsByUrn[urn] = new WearableViewModel(giftable, wearable.Amount, isEquipped);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);

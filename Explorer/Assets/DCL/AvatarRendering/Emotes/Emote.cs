@@ -14,6 +14,7 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
+        public int Amount { get; set; }
         public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
 
         public bool IsLoading { get; private set; }
@@ -39,6 +40,11 @@ namespace DCL.AvatarRendering.Emotes
 
         public AvatarAttachmentDTO DTO =>
             Model.Asset!;
+
+        public void SetAmount(int amount)
+        {
+            Amount = amount;
+        }
 
         public override string ToString() =>
             ((IAvatarAttachment<EmoteDTO>)this).ToString();
