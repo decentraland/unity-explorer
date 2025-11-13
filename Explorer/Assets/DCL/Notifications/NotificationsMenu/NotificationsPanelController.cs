@@ -7,7 +7,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Utilities;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -24,7 +23,7 @@ using Utility;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuController : ControllerBase<NotificationsMenuView>,IDisposable, IPanelInSharedSpace<ControllerNoData>
+    public class NotificationsPanelController : ControllerBase<NotificationsMenuView>,IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int DEFAULT_NOTIFICATION_INDEX = 0;
@@ -51,13 +50,9 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly CancellationTokenSource notificationThumbnailCts = new ();
 
         private UniTaskCompletionSource? closeViewTask;
-        private CancellationTokenSource? notificationPanelCts = new ();
         private int unreadNotifications;
 
-        public bool IsVisibleInSharedSpace => viewInstance != null && viewInstance.gameObject.activeSelf;
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-
-        public NotificationsMenuController(
+        public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
             NotificationsRequestController notificationsRequestController,
             NotificationIconTypes notificationIconTypes,
@@ -91,44 +86,19 @@ namespace DCL.Notifications.NotificationsMenu
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            await UniTask.WaitUntilCanceled(notificationPanelCts.Token);
-        }
-
-        protected override void OnBeforeViewShow()
-        {
-            base.OnBeforeViewShow();
-            notificationPanelCts = notificationPanelCts.SafeRestart();
+            closeViewTask = new UniTaskCompletionSource();
+            await closeViewTask.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
         }
 
         public new void Dispose()
         {
             notificationThumbnailCts.SafeCancelAndDispose();
-            notificationPanelCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
             viewInstance?.CloseButton.onClick.RemoveListener(ClosePanel);
         }
 
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ControllerNoData parameters)
-        {
-            notificationPanelCts = notificationPanelCts.SafeRestart();
-            await viewInstance.ShowAsync(notificationPanelCts.Token);
-            ViewShowingComplete?.Invoke(this);
-            await UniTask.WaitUntilCanceled(notificationPanelCts.Token);
-            await viewInstance.HideAsync(notificationPanelCts.Token);
-        }
-
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            notificationPanelCts = notificationPanelCts.SafeRestart();
-
-            await UniTask.WaitUntil(() => !viewInstance.gameObject.activeSelf, PlayerLoopTiming.Update, ct);
-        }
-
-        private void ClosePanel()
-        {
-            notificationPanelCts = notificationPanelCts.SafeRestart();
-        }
+        private void ClosePanel() => closeViewTask?.TrySetResult();
 
         protected override void OnViewShow()
         {
@@ -136,7 +106,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             if (unreadNotifications > 0)
             {
-                viewInstance.LoopList.DoActionForEachShownItem((item2, _) =>
+                viewInstance!.LoopList.DoActionForEachShownItem((item2, _) =>
                 {
                     INotificationView notificationView = item2!.GetComponent<INotificationView>();
                     INotification notificationData = notificationView.Notification;
@@ -157,7 +127,7 @@ namespace DCL.Notifications.NotificationsMenu
         {
             unreadNotifications = 0;
             notifications.Clear();
-            viewInstance.LoopList.SetListItemCount(notifications.Count, false);
+            viewInstance!.LoopList.SetListItemCount(notifications.Count, false);
 
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
 
@@ -297,7 +267,7 @@ namespace DCL.Notifications.NotificationsMenu
                 return;
             }
 
-            Sprite? thumbnailSprite = null;
+            Sprite thumbnailSprite = null!;
 
             try
             {
@@ -313,7 +283,7 @@ namespace DCL.Notifications.NotificationsMenu
                 thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
-                //Try add has been added in case it happens that BE returns duplicated notifications id
+                //TryAdd has been added in case it happens that BE returns duplicated notifications id
                 //In that case we will just use the same thumbnail for each notification with the same id
                 notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
             }

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
-using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.Controls
 {
@@ -12,11 +11,7 @@ namespace DCL.UI.Controls
         private bool closePanel;
         private UniTaskCompletionSource? closeViewTask;
 
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-
-        public ControlsPanelController(ViewFactoryMethod viewFactory) : base(viewFactory)
-        {
-        }
+        public ControlsPanelController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
         protected override void OnViewInstantiated()
         {
@@ -26,17 +21,9 @@ namespace DCL.UI.Controls
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             closeViewTask = new UniTaskCompletionSource();
-
-            // Handle external cancellation
-            using var registration = ct.Register(() => closeViewTask.TrySetCanceled(ct));
-
-            await closeViewTask.Task;
-
-            closeViewTask?.TrySetCanceled(ct);
-            closeViewTask = new UniTaskCompletionSource();
-            await closeViewTask.Task;
+            await closeViewTask.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
         }
 
-        private void Close() => closeViewTask?.TrySetResult();
+        private void Close() => closeViewTask?.TrySetCanceled();
     }
 }

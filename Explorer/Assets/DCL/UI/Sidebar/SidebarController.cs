@@ -35,7 +35,7 @@ namespace DCL.UI.Sidebar
     {
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
-        private readonly NotificationsMenuController notificationsMenuController;
+        private readonly NotificationsPanelController notificationsPanelController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
@@ -63,7 +63,7 @@ namespace DCL.UI.Sidebar
         public SidebarController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            NotificationsMenuController notificationsMenuController,
+            NotificationsPanelController notificationsPanelController,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
@@ -84,7 +84,7 @@ namespace DCL.UI.Sidebar
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
             this.profileMenuController = profileMenuMenuWidgetController;
-            this.notificationsMenuController = notificationsMenuController;
+            this.notificationsPanelController = notificationsPanelController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
@@ -105,7 +105,7 @@ namespace DCL.UI.Sidebar
         {
             base.Dispose();
 
-            notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
+            notificationsPanelController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
@@ -117,7 +117,7 @@ namespace DCL.UI.Sidebar
         protected override void OnViewInstantiated()
         {
             mvcManager.RegisterController(controlsPanelController);
-            mvcManager.RegisterController(notificationsMenuController);
+            mvcManager.RegisterController(notificationsPanelController);
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
@@ -388,7 +388,7 @@ namespace DCL.UI.Sidebar
             viewInstance.BlockSidebar();
             viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
 
-            await mvcManager.ShowAsync(NotificationsMenuController.IssueCommand());
+            await mvcManager.ShowAsync(NotificationsPanelController.IssueCommand());
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
 
             viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
