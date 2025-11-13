@@ -266,7 +266,7 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ResetToggle(bool invokeEvent) =>
-            ToggleSection(Sections.MEMBERS, invokeEvent);
+            ToggleSection(Sections.ANNOUNCEMENTS, invokeEvent);
 
         public void SetLoadingState(bool isLoading)
         {

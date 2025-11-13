@@ -71,8 +71,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<ICommunityMemberData>? KickUserRequested;
         public event Action<ICommunityMemberData>? BanUserRequested;
 
-        private float scrollViewMaxHeight;
-        private float scrollViewHeight;
         private MemberListSections currentSection;
         private CancellationTokenSource confirmationDialogCts = new ();
         private SectionFetchData<ICommunityMemberData> membersData = null!;
@@ -97,8 +95,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void Awake()
         {
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
-            scrollViewHeight = scrollViewRect.sizeDelta.y;
-            scrollViewMaxHeight = scrollViewHeight + sectionButtons.sizeDelta.y;
 
             foreach (var sectionMapping in memberListSectionsElements)
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
@@ -226,7 +222,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public void SetSectionButtonsActive(bool isActive)
         {
             sectionButtons.gameObject.SetActive(isActive);
-            scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
+            scrollViewRect.offsetMax = new Vector2(scrollViewRect.offsetMax.x, isActive ? -sectionButtons.sizeDelta.y : 0);
         }
 
         public void InitGrid()

@@ -412,7 +412,8 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                viewInstance.MembersListView.SetLoadingStateActive(true);
+                //viewInstance.MembersListView.SetLoadingStateActive(true);
+                viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
 
                 if (spriteCache == null)
                 {
