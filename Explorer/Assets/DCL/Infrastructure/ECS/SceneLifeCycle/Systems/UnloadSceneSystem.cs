@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -54,7 +55,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                //TODO: Wait until LOD is Ready
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);

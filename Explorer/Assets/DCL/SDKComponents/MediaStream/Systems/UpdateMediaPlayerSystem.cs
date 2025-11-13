@@ -2,17 +2,16 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -28,7 +27,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-
         private readonly float audioFadeSpeed;
 
         public UpdateMediaPlayerSystem(
@@ -53,7 +51,6 @@ namespace DCL.SDKComponents.MediaStream
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
             UpdateCustomStreamQuery(World, t);
-
             UpdateVideoTextureQuery(World);
         }
 
@@ -77,15 +74,24 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
+            component.UpdateState();
+
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
             if (component.State != VideoState.VsError)
             {
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+
+                if (component.IsPlaying)
+                    if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                        livekitPlayer?.EnsureAudioIsPlaying();
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+
+            // Need to re-update state in case an update was needed from the sdk component or promise
+            component.UpdateState();
         }
 
         [Query]
@@ -97,6 +103,8 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
 
+            component.UpdateState();
+
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
             if (component.State != VideoState.VsError)
@@ -106,10 +114,19 @@ namespace DCL.SDKComponents.MediaStream
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
                     component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
                 }
+
+                if (component.IsPlaying)
+                    // Covers cases like leaving and re-entering the scene
+                    // or the stream not being available for some time, like OBS not started while the stream is active
+                    if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+                        livekitPlayer?.EnsureVideoIsPlaying();
             }
 
             if (ConsumePromise(ref component, false))
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
+
+            // Need to re-update state in case an update was needed from the sdk component or promise
+            component.UpdateState();
         }
 
         /// <summary>
@@ -130,13 +147,26 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
-            playerComponent.MediaPlayer.EnsurePlaying();
+            if (!playerComponent.IsPlaying)
+            {
+                if (playerComponent.State == VideoState.VsError)
+                {
+                    RenderBlackTexture(ref assignedTexture);
+                    return;
+                }
 
-            if (!playerComponent.IsPlaying
-                || playerComponent.State == VideoState.VsError
-                || !playerComponent.MediaPlayer.MediaOpened
-               )
-                return;
+                if (playerComponent.State == VideoState.VsPaused)
+                    return;
+            }
+
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+            {
+                if (!livekitPlayer?.IsVideoOpened ?? false)
+                {
+                    RenderBlackTexture(ref assignedTexture);
+                    return;
+                }
+            }
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
@@ -151,6 +181,11 @@ namespace DCL.SDKComponents.MediaStream
                 Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
             else
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
+
+            return;
+
+            void RenderBlackTexture(ref VideoTextureConsumer assignedTexture) =>
+                Graphics.Blit(Texture2D.blackTexture, assignedTexture.Texture);
         }
 
         [Query]
@@ -208,7 +243,8 @@ namespace DCL.SDKComponents.MediaStream
                 return true;
             }
 
-            component.SetState(component.MediaAddress.IsEmpty ? VideoState.VsNone : VideoState.VsError);
+            component.MarkAsFailed(!component.MediaAddress.IsEmpty);
+
             Profiler.BeginSample("MediaPlayer.CloseCurrentStream");
 
             try { component.MediaPlayer.CloseCurrentStream(); }

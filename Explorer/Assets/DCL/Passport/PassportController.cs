@@ -368,8 +368,6 @@ namespace DCL.Passport
             viewInstance.JumpInButton.onClick.AddListener(OnJumpToFriendButtonClicked);
             viewInstance.ChatButton.onClick.AddListener(OnChatButtonClicked);
 
-            viewInstance.CallButton.gameObject.SetActive(isCallEnabled);
-
             if (isCallEnabled)
                 viewInstance.CallButton.onClick.AddListener(OnStartCallButtonClicked);
 
@@ -757,9 +755,10 @@ namespace DCL.Passport
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
                     // Dont show any interaction for our own user
                     if (ownProfile?.UserId == inputData.UserId) return;
+
+                    viewInstance!.CallButton.gameObject.SetActive(isCallEnabled);
 
                     FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
 
@@ -887,6 +886,7 @@ namespace DCL.Passport
             viewInstance.CancelFriendButton.gameObject.SetActive(false);
             viewInstance.RemoveFriendButton.gameObject.SetActive(false);
             viewInstance.UnblockFriendButton.gameObject.SetActive(false);
+            viewInstance.CallButton.gameObject.SetActive(false);
         }
 
         private void RemoveFriend()

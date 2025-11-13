@@ -45,6 +45,7 @@ namespace DCL.Backpack
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebBrowser webBrowser;
+        private readonly IWearableStorage wearableStorage;
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
@@ -73,7 +74,8 @@ namespace DCL.Backpack
             ColorPresetsSO eyesColors,
             ColorPresetsSO bodyshapeColors,
             IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IWearableStorage wearableStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -87,6 +89,7 @@ namespace DCL.Backpack
             this.wearablesProvider = wearablesProvider;
             this.gridItemsPool = gridItemsPool;
             this.webBrowser = webBrowser;
+            this.wearableStorage = wearableStorage;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
@@ -174,6 +177,16 @@ namespace DCL.Backpack
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
+
+                if (wearableStorage.TryGetLatestTransferredAt(gridWearables[i].GetUrn(), out DateTime latestTransferredAt))
+                {
+                    TimeSpan timeSinceTransfer = DateTime.UtcNow - latestTransferredAt;
+                    backpackItemView.NewTag.SetActive(timeSinceTransfer.TotalHours <= 24);
+                }
+                else
+                {
+                    backpackItemView.NewTag.SetActive(false);
+                }
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnEquip += EquipItem;
                 backpackItemView.OnSelectItem += SelectItem;
@@ -190,12 +203,19 @@ namespace DCL.Backpack
                                                              || gridWearables[i].GetCategory() == WearableCategories.Categories.BODY_SHAPE;
 
                 backpackItemView.SetEquipButtonsState();
+                backpackItemView.IsUnequippable =
+                    gridWearables[i].GetCategory() != WearableCategories.Categories.BODY_SHAPE
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYES
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.EYEBROWS
+                    && gridWearables[i].GetCategory() != WearableCategories.Categories.MOUTH;
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, pageFetchCancellationToken!.Token).Forget();
             }
         }
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(string itemId)
+        {
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
+        }
 
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));

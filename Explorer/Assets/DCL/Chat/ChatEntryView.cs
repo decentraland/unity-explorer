@@ -4,8 +4,10 @@ using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
+using DCL.FeatureFlags;
 using DCL.Translation;
 using DCL.Utilities;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -86,20 +88,6 @@ namespace DCL.Chat
             chatEntryCanvasGroup.DOFade(1, 0.5f);
         }
 
-        public void SetItemData(ChatMessage data, bool showDateDivider)
-        {
-            chatMessage = data;
-            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
-            messageBubbleElement.SetMessageData(data);
-
-            dateDividerElement.gameObject.SetActive(showDateDivider);
-
-            if (showDateDivider)
-                dateDividerText.text = GetDateRepresentation(data.SentTimestamp!.Value.Date);
-
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
-        }
-
         private string GetDateRepresentation(DateTime date)
         {
             if(date == DateTime.Today)
@@ -122,7 +110,7 @@ namespace DCL.Chat
             this.IsTranslationActivated = IsTranslationActivated;
             this.IsAutoTranslationEnabled = IsAutoTranslationEnabled;
             chatMessage = viewModel.Message;
-            usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId);
+            usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId, chatMessage.IsSenderOfficial);
             messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage, viewModel.TranslationState);
 
             UpdateTranslationViewVisibility();
@@ -138,7 +126,12 @@ namespace DCL.Chat
 
             // Binding is done for non-system messages only
             if (!viewModel.Message.IsSystemMessage)
+            {
                 ProfilePictureView.Bind(viewModel.ProfileData);
+
+                if (!chatMessage.SenderWalletAddress.Equals(ViewDependencies.CurrentIdentity?.Address.ToString()))
+                    ProfilePictureView.ConfigureThumbnailClickData(OnUsernameClicked, chatMessage.SenderWalletAddress);
+            }
             else
                 ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!);
 
@@ -153,7 +146,7 @@ namespace DCL.Chat
                 if (profileInfo.DataIsPresent)
                 {
                     view.usernameElement.UserNameClicked += OnUsernameClicked;
-                    view.usernameElement.SetUsername(profileInfo.UserName, profileInfo.UserWalletId);
+                    view.usernameElement.SetUsername(profileInfo.UserName, profileInfo.UserWalletId, profileInfo.IsOfficial);
                 }
                 else
                     view.usernameElement.UserNameClicked -= OnUsernameClicked;

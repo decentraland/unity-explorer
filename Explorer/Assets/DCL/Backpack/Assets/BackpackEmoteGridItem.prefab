@@ -305,6 +305,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1516561254018689797 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 710708144762118524, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1877216464682181992 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 493759110962425617, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
@@ -354,6 +359,7 @@ MonoBehaviour:
   <EquipButton>k__BackingField: {fileID: 5665178272263481625}
   <UnEquipButton>k__BackingField: {fileID: 7903757533396073920}
   <EquippedIcon>k__BackingField: {fileID: 1877216464682181992}
+  <NewTag>k__BackingField: {fileID: 1516561254018689797}
   <CategoryImage>k__BackingField: {fileID: 1245937801371786677}
   <WearableThumbnail>k__BackingField: {fileID: 1117224063652898579}
   <RarityBackground>k__BackingField: {fileID: 4476560434392169801}

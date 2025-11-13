@@ -12,15 +12,21 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        internal bool? HasHashInPathValue;
+        //From v41 ISS is supported for scenes
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
+
+        public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
+        public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+
+        private bool? HasHashInPathValue;
+        private bool? SupportsISS;
+
 
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform assets;
 
         private HashSet<string>? convertedFiles;
-
-        private AssetBundleManifestVersion() { }
 
         public bool HasHashInPath()
         {
@@ -35,6 +41,19 @@ public class AssetBundleManifestVersion
             return HasHashInPathValue.Value;
         }
 
+        public bool SupportsInitialSceneState()
+        {
+            if (SupportsISS == null)
+            {
+                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
+                    SupportsISS = false;
+                else
+                    SupportsISS = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
+            }
+
+            return SupportsISS.Value;
+        }
+
         public string GetAssetBundleManifestVersion() =>
             IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.version : assets.mac.version;
 
@@ -46,11 +65,14 @@ public class AssetBundleManifestVersion
 
         public static AssetBundleManifestVersion CreateFailed()
         {
+            //All AB requests will fail when this occurs; its a dead end
+            var failedAssets = new AssetBundleManifestVersionPerPlatform();
+            failedAssets.SetVersion("v1", "1");
             var assetBundleManifestVersion = new AssetBundleManifestVersion
             {
                 assetBundleManifestRequestFailed = true,
+                assets = failedAssets,
             };
-
             return assetBundleManifestVersion;
         }
 
@@ -64,12 +86,12 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
-        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin, string buildDate)
+        public static AssetBundleManifestVersion CreateManualManifest()
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);
-            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);
+            assets.mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1");
+            assets.windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1");
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 

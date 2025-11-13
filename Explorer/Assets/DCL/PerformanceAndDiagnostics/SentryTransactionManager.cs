@@ -4,6 +4,7 @@ using DCL.Utility;
 using Sentry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics
@@ -11,6 +12,12 @@ namespace DCL.PerformanceAndDiagnostics
     [Singleton]
     public partial class SentryTransactionManager
     {
+        private const string ERROR_COUNT = "error_count";
+        private const string ERROR_MESSAGE_TAG = "error.message";
+        private const string ERROR_TYPE_TAG = "error.type";
+        private const string ERROR_EXCEPTION_MESSAGE_TAG = "error.exception_message";
+        private const string ERROR_STACK_TAG = "error.stack";
+
         private readonly Dictionary<string, ITransactionTracer> sentryTransactions = new();
         private readonly Dictionary<string, int> sentryTransactionErrors = new();
         private readonly Dictionary<string, Stack<ISpan>> transactionsSpans = new();
@@ -28,12 +35,21 @@ namespace DCL.PerformanceAndDiagnostics
 
             ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
 
-            transactionTracer.SetTag(transactionData.TransactionTag, transactionData.TransactionTagValue);
+            if (transactionData.Tags != null)
+                transactionTracer.SetTags(transactionData.Tags);
+
+            IEnumerable<(string, object)>? extra = transactionData.ExtraData;
+
+            if (extra != null)
+            {
+                foreach ((string key, object value) in extra)
+                    transactionTracer.SetExtra(key, value);
+            }
 
             sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
 
             sentryTransactionErrors.Add(transactionData.TransactionName, 0);
-            transactionTracer.SetExtra("error_count", 0);
+            transactionTracer.SetTag(ERROR_COUNT, "0");
         }
 
         public void StartSpan(SpanData spanData)
@@ -80,7 +96,7 @@ namespace DCL.PerformanceAndDiagnostics
             currentSpan.Finish();
         }
 
-        public void EndTransaction(string transactionName)
+        public void EndTransaction(string transactionName, SpanStatus finishWithStatus = SpanStatus.Ok)
         {
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
             {
@@ -88,19 +104,43 @@ namespace DCL.PerformanceAndDiagnostics
                 return;
             }
 
+            // Inherit the errors from the last failed span if the status is not ok
+            // it will enable grouping by errors on the level of transactions in Sentry
+
+            if (finishWithStatus != SpanStatus.Ok)
+            {
+                ISpan? lastFailedSpan = transaction.Spans.FirstOrDefault(s => s.Status != SpanStatus.Ok);
+
+                if (lastFailedSpan != null)
+                {
+                    CopyTag(lastFailedSpan, transaction, ERROR_MESSAGE_TAG);
+                    CopyTag(lastFailedSpan, transaction, ERROR_TYPE_TAG);
+                    CopyTag(lastFailedSpan, transaction, ERROR_EXCEPTION_MESSAGE_TAG);
+                    CopyTag(lastFailedSpan, transaction, ERROR_STACK_TAG);
+                }
+            }
+
             if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
             {
                 while (spanStack.Count > 0)
                 {
                     ISpan span = spanStack.Pop();
-                    span.Finish();
+                    span.Finish(finishWithStatus);
                 }
             }
 
-            transaction.Finish();
+            transaction.Finish(finishWithStatus);
 
             sentryTransactions.Remove(transactionName);
             transactionsSpans.Remove(transactionName);
+        }
+
+        private static void CopyTag(ISpan from, ISpan to, string tag)
+        {
+            from.Finish();
+
+            if (from.Tags.TryGetValue(tag, out string tagValue))
+                to.SetTag(tag, tagValue);
         }
 
         public void EndTransactionWithError(string transactionName, string errorMessage, Exception? exception = null)
@@ -122,12 +162,12 @@ namespace DCL.PerformanceAndDiagnostics
 
             // Set the transaction status to error and add error information
             transaction.SetTag("status", "error");
-            transaction.SetTag("error.message", errorMessage);
+            transaction.SetTag(ERROR_MESSAGE_TAG, errorMessage);
 
             if (exception != null)
             {
-                transaction.SetTag("error.type", exception.GetType().Name);
-                transaction.SetTag("error.stack", exception.StackTrace);
+                transaction.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
+                transaction.SetTag(ERROR_STACK_TAG, exception.StackTrace);
                 transaction.Finish(exception, SpanStatus.InternalError);
             }
             else
@@ -147,7 +187,7 @@ namespace DCL.PerformanceAndDiagnostics
                 sentryTransactionErrors[transactionName] = currentErrorCount + 1;
 
                 if(sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
-                    transaction.SetExtra("error_count", sentryTransactionErrors[transactionName]);
+                    transaction.SetTag(ERROR_COUNT, sentryTransactionErrors[transactionName].ToString());
             }
 
             if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
@@ -165,12 +205,13 @@ namespace DCL.PerformanceAndDiagnostics
             ISpan currentSpan = spanStack.Pop();
 
             currentSpan.SetTag("status", "error");
-            currentSpan.SetTag("error.message", errorMessage);
+            currentSpan.SetTag(ERROR_MESSAGE_TAG, errorMessage);
 
             if (exception != null)
             {
-                currentSpan.SetTag("error.type", exception.GetType().Name);
-                currentSpan.SetTag("error.stack", exception.StackTrace);
+                currentSpan.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
+                currentSpan.SetTag(ERROR_EXCEPTION_MESSAGE_TAG, exception.Message);
+                currentSpan.SetTag(ERROR_STACK_TAG, exception.StackTrace);
                 currentSpan.Finish(exception, SpanStatus.InternalError);
             }
             else
@@ -192,7 +233,7 @@ namespace DCL.PerformanceAndDiagnostics
             {
                 try
                 {
-                    EndTransaction(transactionKey);
+                    EndTransaction(transactionKey, SpanStatus.Aborted);
                 }
                 catch (Exception ex)
                 {
@@ -206,8 +247,8 @@ namespace DCL.PerformanceAndDiagnostics
     {
         public string TransactionName;
         public string TransactionOperation;
-        public string TransactionTag;
-        public string TransactionTagValue;
+        public IEnumerable<KeyValuePair<string, string>>? Tags;
+        public IEnumerable<(string, object)>? ExtraData;
     }
 
     public struct SpanData
