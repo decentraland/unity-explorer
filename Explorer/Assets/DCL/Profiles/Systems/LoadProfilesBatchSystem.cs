@@ -107,7 +107,10 @@ namespace DCL.Profiles
                     successfullyResolved++;
                 }
 
-                profilesDebug.AddAggregated(successfullyResolved);
+                if (successfullyResolved > 1)
+                    profilesDebug.AddAggregated(successfullyResolved);
+                else
+                    profilesDebug.AddNonCombined(successfullyResolved);
             }
 
             foreach (string unresolvedId in intention.Ids)

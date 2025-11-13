@@ -392,8 +392,9 @@ namespace DCL.Profiles
         {
             urlBuilder.Clear();
 
+            // Warning: putting a trailing slash break the backend routing!
             urlBuilder.AppendDomain(fromCatalyst)
-                      .AppendPath(URLPath.FromString("profiles/"));
+                      .AppendPath(URLPath.FromString("profiles"));
 
             return urlBuilder.Build();
         }

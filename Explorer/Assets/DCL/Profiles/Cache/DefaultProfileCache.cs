@@ -8,7 +8,7 @@ namespace DCL.Profiles
 {
     public class DefaultProfileCache : IProfileCache
     {
-        private readonly ConcurrentDictionary<string, Profile> profiles = new ();
+        private readonly ConcurrentDictionary<string, Profile> profiles = new (StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, string> userNameToIdMap = new ();
 
         public Profile? Get(string id) =>
