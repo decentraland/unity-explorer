@@ -48,6 +48,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
+            // See https://github.com/decentraland/unity-explorer/issues/6124 we should teleport the player even if the scene cannot be loaded due to a missing manifest
             // We need to prevent the error propagation, otherwise the load state remains invalid which provokes issues like the incapability of typing another command in the chat
             if (res.Error is { Exception: ScriptEngineException } or { Exception: ManifestNotFoundException })
             {
