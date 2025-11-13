@@ -27,6 +27,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private Profile? currentProfile;
         private ProfileRepositoryWrapper profileRepositoryWrapper = null!;
         private bool isCreationAllowed;
+        private CommunityMemberRole currentRole;
         private AnnouncementCreationCardView? announcementCreationCardItem = null;
 
         private void Awake() =>
@@ -57,6 +58,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public void SetAllowCreation(bool isAllowed) =>
             this.isCreationAllowed = isAllowed;
+
+        public void SetRole(CommunityMemberRole role) =>
+            this.currentRole = role;
 
         public void CleanCreationInput() =>
             announcementCreationCardItem?.CleanInput();
@@ -97,7 +101,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             AnnouncementCardView announcementCardItem = listItem.GetComponent<AnnouncementCardView>();
 
             CommunityPost announcementInfo = currentAnnouncementsFetchData.Items[index];
-            announcementCardItem.Configure(announcementInfo, profileRepositoryWrapper, isCreationAllowed);
+            bool allowDeletion = currentRole == CommunityMemberRole.owner || string.Equals(currentProfile?.UserId, announcementInfo.authorAddress, StringComparison.CurrentCultureIgnoreCase);
+            announcementCardItem.Configure(announcementInfo, profileRepositoryWrapper, allowDeletion);
 
             announcementCardItem.LikeAnnouncementButtonClicked -= OnLikeAnnouncementButtonClicked;
             announcementCardItem.LikeAnnouncementButtonClicked += OnLikeAnnouncementButtonClicked;

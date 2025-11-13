@@ -66,6 +66,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             communityData = null;
             currentAnnouncementsFetchData.Reset();
             view.SetAllowCreation(false);
+            view.SetRole(CommunityMemberRole.none);
 
             base.Reset();
         }
@@ -117,6 +118,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             isPosting = false;
             announcementsUpdatingLikeStatus.Clear();
             view.SetAllowCreation(isCreationAllowed);
+            view.SetRole(communityData.Value.role);
             view.CleanCreationInput();
             FetchNewDataAsync(token).Forget();
         }
