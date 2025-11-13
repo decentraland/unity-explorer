@@ -171,8 +171,12 @@ namespace DCL.Communities.CommunitiesCard
             membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
-            announcementsButton.onClick.AddListener(() => ToggleSection(Sections.ANNOUNCEMENTS));
             placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
+
+            bool isAnnouncementsFeatureEnabled = CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled();
+            announcementsButton.gameObject.SetActive(isAnnouncementsFeatureEnabled);
+            if (isAnnouncementsFeatureEnabled)
+                announcementsButton.onClick.AddListener(() => ToggleSection(Sections.ANNOUNCEMENTS));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget,
@@ -266,7 +270,7 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ResetToggle(bool invokeEvent) =>
-            ToggleSection(Sections.ANNOUNCEMENTS, invokeEvent);
+            ToggleSection(CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? Sections.ANNOUNCEMENTS : Sections.MEMBERS, invokeEvent);
 
         public void SetLoadingState(bool isLoading)
         {

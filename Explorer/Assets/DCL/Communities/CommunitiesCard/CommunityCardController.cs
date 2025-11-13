@@ -370,12 +370,15 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
-            announcementsSectionController = new AnnouncementsSectionController(
-                viewInstance.AnnouncementsSectionView,
-                communitiesDataProvider,
-                profileRepositoryWrapper,
-                web3IdentityCache,
-                profileRepository);
+            if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+            {
+                announcementsSectionController = new AnnouncementsSectionController(
+                    viewInstance.AnnouncementsSectionView,
+                    communitiesDataProvider,
+                    profileRepositoryWrapper,
+                    web3IdentityCache,
+                    profileRepository);
+            }
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -412,8 +415,11 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                //viewInstance.MembersListView.SetLoadingStateActive(true);
-                viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
+                if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                    viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
+                else
+                    viewInstance.MembersListView.SetLoadingStateActive(true);
+
 
                 if (spriteCache == null)
                 {
