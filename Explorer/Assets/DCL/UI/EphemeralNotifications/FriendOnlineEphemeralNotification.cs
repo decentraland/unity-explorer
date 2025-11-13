@@ -14,7 +14,9 @@ namespace DCL.SocialEmotes.UI
         {
             base.SetData(sender, textValues);
 
-            profilePictureView.SetImage(sender.ProfilePicture!.Value.Asset.Sprite);
+            if(sender.ProfilePicture != null)
+                profilePictureView.SetImage(sender.ProfilePicture.Value.Asset.Sprite);
+
             profilePictureView.SetBackgroundColor(sender.UserNameColor);
         }
     }
