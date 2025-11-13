@@ -79,10 +79,6 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
         private void RunCleanup(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            //Material destruction during quit could lead to a NRE
-            if (UnityObjectUtils.IsQuitting)
-                return;
-
             CleanupAllGltfNodeEntities(containerEntity, ref nodeModifiers);
             ResetOriginalMaterials(nodeModifiers);
             DictionaryPool<Renderer, Material>.Release(nodeModifiers.OriginalMaterials);

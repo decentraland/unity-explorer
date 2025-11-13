@@ -13,7 +13,7 @@ using UnityEngine.UIElements;
 
 namespace DCL.Landscape.Systems
 {
-    using Landscape = Global.Dynamic.Landscapes.Landscape;
+    using Landscape = global::Global.Dynamic.Landscapes.Landscape;
 
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]

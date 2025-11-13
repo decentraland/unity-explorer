@@ -86,6 +86,7 @@ namespace DCL.Chat.Commands
                        ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
                        ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
                        ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
+                       ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
@@ -105,7 +106,7 @@ namespace DCL.Chat.Commands
             return error.State switch
                    {
                        TaskError.MessageError => $"🔴 Error: {error.Message}",
-                       TaskError.Timeout => "🔴 Error: Timeout",
+                       TaskError.Timeout => "🔴 Error: Timeout. Verify your connection.",
                        TaskError.Cancelled => "🔴 Error: The operation was canceled!",
                        TaskError.UnexpectedException => $"🔴 Error: {error.Message}",
                        _ => throw new ArgumentOutOfRangeException(),
