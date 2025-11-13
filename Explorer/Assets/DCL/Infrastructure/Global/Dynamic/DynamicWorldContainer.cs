@@ -13,7 +13,6 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -60,7 +59,6 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
-using DCL.Nametags;
 using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
@@ -112,7 +110,6 @@ using System.Threading;
 using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -449,6 +446,8 @@ namespace Global.Dynamic
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
+            FeaturesRegistry.Instance.RegisterFeatureProvider(FeatureId.MARKETPLACE_CREDITS, new MarketplaceCreditsFeatureProvider(staticContainer.RealmData, selfProfile));
+
             var chatHistory = new ChatHistory();
             var emotesBus = new EmotesBus();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesBus);
@@ -748,7 +747,7 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
+                    globalWorld, playerEntity,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus),
