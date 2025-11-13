@@ -30,6 +30,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] internal AudioClipConfig addEmojiAudio = null!;
         [SerializeField] internal AudioClipConfig openEmojiPanelAudio = null!;
         [SerializeField] internal InputSuggestionPanelView suggestionPanel = null!;
+        [SerializeField] internal Transform suggestionPanelParent = null!;
         [SerializeField] internal ViewEventBus inputEventBus = null!;
 
         public event Action<string>? CreateAnnouncementButtonClicked;
@@ -58,6 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 addEmojiAudio,
                 openEmojiPanelAudio,
                 suggestionPanel,
+                suggestionPanelParent,
                 inputEventBus);
         }
 

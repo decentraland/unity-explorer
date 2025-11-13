@@ -43,6 +43,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             AudioClipConfig addEmojiAudio,
             AudioClipConfig openEmojiPanelAudio,
             InputSuggestionPanelView suggestionPanel,
+            Transform suggestionPanelParent,
             ViewEventBus inputEventBus)
         {
             this.announcementInput = announcementInput;
@@ -51,6 +52,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             this.addEmojiAudio = addEmojiAudio;
             this.openEmojiPanelAudio = openEmojiPanelAudio;
             this.suggestionPanel = suggestionPanel;
+
+            if (suggestionPanelParent != null)
+                this.suggestionPanel.transform.SetParent(suggestionPanelParent);
 
             EmojiMapping emojiMapping = new EmojiMapping(emojiPanelConfiguration);
             emojiPanelPresenter = new EmojiPanelPresenter(
@@ -138,8 +142,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 return;
 
             var clickPosition = GetPointerPosition(context);
-            bool isClickedOutsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
-            if (!isClickedOutsideEmojiPanel)
+            bool isClickedInsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
+            if (!isClickedInsideEmojiPanel)
                 SetEmojiPanelVisibility(false);
         }
 

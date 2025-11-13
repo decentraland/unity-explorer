@@ -548,6 +548,7 @@ MonoBehaviour:
   addEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
   openEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
   suggestionPanel: {fileID: 5416596297756989396}
+  suggestionPanelParent: {fileID: 0}
   inputEventBus: {fileID: 0}
 --- !u!1 &6838399260398429114
 GameObject:
@@ -2254,10 +2255,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7089509983381319841, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5667158122892072209}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
 --- !u!224 &4147233075175538898 stripped
 RectTransform:
@@ -2269,40 +2267,12 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8205371132817715096, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
   m_PrefabInstance: {fileID: 4248240457778755660}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6383351045931600109}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f64b84f7c7e83d147b36c93fa95117db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &6383351045931600109 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7089509983381319841, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
-  m_PrefabInstance: {fileID: 4248240457778755660}
-  m_PrefabAsset: {fileID: 0}
---- !u!223 &5667158122892072209
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6383351045931600109}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 2
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 1
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 0
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 500
-  m_TargetDisplay: 0
 --- !u!1001 &9141975984558187405
 PrefabInstance:
   m_ObjectHideFlags: 0

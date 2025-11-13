@@ -4676,10 +4676,18 @@ PrefabInstance:
       propertyPath: inputEventBus
       value: 
       objectReference: {fileID: 1365206404890331977}
+    - target: {fileID: 3861230768072304523, guid: 8a43326734ed12f4e983f725a0e2b973, type: 3}
+      propertyPath: suggestionPanelParent
+      value: 
+      objectReference: {fileID: 3062120162556471782}
     - target: {fileID: 5416596297756989396, guid: 8a43326734ed12f4e983f725a0e2b973, type: 3}
       propertyPath: eventBus
       value: 
       objectReference: {fileID: 1365206404890331977}
+    - target: {fileID: 5667158122892072209, guid: 8a43326734ed12f4e983f725a0e2b973, type: 3}
+      propertyPath: m_SortingOrder
+      value: 999
+      objectReference: {fileID: 0}
     - target: {fileID: 6597762851601814088, guid: 8a43326734ed12f4e983f725a0e2b973, type: 3}
       propertyPath: m_Name
       value: AnnouncementCreationCard
