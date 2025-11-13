@@ -51,7 +51,8 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>()
+                CreateQuery<GetGLTFIntention, GLTFData>(),
+                CreateQuery<GetProfilesBatchIntent, ProfilesBatchResult>(),
             };
 
             COMPONENT_HANDLERS_SCENES = new[]

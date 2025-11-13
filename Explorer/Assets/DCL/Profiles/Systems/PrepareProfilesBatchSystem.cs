@@ -18,13 +18,13 @@ namespace DCL.Profiles
     public partial class PrepareProfilesBatchSystem : BaseUnityLoopSystem
     {
         private readonly TimeSpan batchHeartbeat;
-        private readonly RealmProfileRepository profileRepository;
+        private readonly IBatchedProfileRepository profileRepository;
 
         private readonly CancellationTokenSource cts = new ();
 
         private DateTime nextDispatch = DateTime.MinValue;
 
-        internal PrepareProfilesBatchSystem(World world, TimeSpan batchHeartbeat, RealmProfileRepository profileRepository) : base(world)
+        internal PrepareProfilesBatchSystem(World world, TimeSpan batchHeartbeat, IBatchedProfileRepository profileRepository) : base(world)
         {
             this.batchHeartbeat = batchHeartbeat;
             this.profileRepository = profileRepository;
@@ -32,7 +32,7 @@ namespace DCL.Profiles
 
         protected override void Update(float t)
         {
-            if (nextDispatch < DateTime.Now)
+            if (nextDispatch > DateTime.Now)
                 return;
 
             // Create a separate request for each Lambdas URL
@@ -49,7 +49,7 @@ namespace DCL.Profiles
                     intent.Ids.Add(userId);
 
                     // Set the closest partition
-                    if (BucketBasedComparer.INSTANCE.Compare(partition, input.Partition) <= 0)
+                    if (BucketBasedComparer.INSTANCE.Compare(partition, input.Partition) > 0)
                         partition = input.Partition;
                 }
 

@@ -20,7 +20,7 @@ using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfi
 
 namespace DCL.Profiles
 {
-    public partial class RealmProfileRepository : IProfileRepository
+    public partial class RealmProfileRepository : IBatchedProfileRepository
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
 
@@ -68,7 +68,7 @@ namespace DCL.Profiles
 
                 ongoingBatches.AddRange(pendingBatches);
                 pendingBatches.Clear();
-                return ongoingBatches.Take(count);
+                return ongoingBatches.TakeLast(count);
             }
         }
 
@@ -262,7 +262,7 @@ namespace DCL.Profiles
                 {
                     case IProfileRepository.BatchBehaviour.DEFAULT:
                         // Batching is allowed
-                        Profile? result = await AddToBatch(id, fromCatalyst, pendingBatches, partition).Task;
+                        Profile? result = await AddToBatch(id, fromCatalyst, pendingBatches, partition).Task!.AttachExternalCancellation<Profile>(ct);
 
                         // Not found profiles (Catalyst replication delays) will be processed individually by GET
                         // ⚠️ The following produces potentially a very long-living task ⚠️

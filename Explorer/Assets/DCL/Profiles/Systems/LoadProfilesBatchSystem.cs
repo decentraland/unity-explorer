@@ -2,6 +2,8 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
@@ -12,8 +14,10 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.Profiles
 {
@@ -31,6 +35,8 @@ namespace DCL.Profiles
     public partial class LoadProfilesBatchSystem : LoadSystemBase<ProfilesBatchResult, GetProfilesBatchIntent>
     {
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
+
+        private static readonly ThreadSafeListPool<GetProfileJsonRootDto> BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
 
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
@@ -74,25 +80,34 @@ namespace DCL.Profiles
 
             bodyBuilder.Append("]}");
 
-            Result<GetProfileJsonRootDto> result = await webRequestController.PostAsync(
-                                                                                  intention.CommonArguments.URL,
-                                                                                  GenericPostArguments.CreateJson(bodyBuilder.ToString()),
-                                                                                  ct,
-                                                                                  ReportCategory.PROFILE)
-                                                                             .CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                                                             .SuppressToResultAsync(ReportCategory.PROFILE);
+            using PooledObject<List<GetProfileJsonRootDto>> __ = BATCH_POOL.Get(out List<GetProfileJsonRootDto> batch);
+
+            var result = await webRequestController.PostAsync(
+                                                        intention.CommonArguments.URL,
+                                                        GenericPostArguments.CreateJson(bodyBuilder.ToString()),
+                                                        ct,
+                                                        ReportCategory.PROFILE)
+                                                   .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
+                                                   .SuppressToResultAsync(ReportCategory.PROFILE);
 
             // Keep processing on the thread pool
 
-            if (result is { Success: true, Value: { avatars: not null } })
+            if (result is { Success: true })
             {
-                foreach (ProfileJsonDto dto in result.Value.avatars)
+                int successfullyResolved = 0;
+
+                foreach (GetProfileJsonRootDto dto in result.Value)
                 {
-                    intention.Ids.Remove(dto.userId);
-                    profileRepository.ResolveProfile(dto.userId, dto);
+                    ProfileJsonDto? profileDto = dto.FirstProfileDto();
+
+                    if (profileDto == null) continue;
+
+                    intention.Ids.Remove(profileDto.userId);
+                    profileRepository.ResolveProfile(profileDto.userId, profileDto);
+                    successfullyResolved++;
                 }
 
-                profilesDebug.AddAggregated(result.Value.avatars.Count);
+                profilesDebug.AddAggregated(successfullyResolved);
             }
 
             foreach (string unresolvedId in intention.Ids)
