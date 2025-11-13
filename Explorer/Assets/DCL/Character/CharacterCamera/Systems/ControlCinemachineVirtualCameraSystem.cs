@@ -150,6 +150,9 @@ namespace DCL.Character.CharacterCamera.Systems
         {
             if (cameraComponent.Mode == CameraMode.SDKCamera) return;
 
+            if (cameraComponent.Mode == CameraMode.FirstPerson)
+                cameraComponent.IsTransitioningToFirstPerson = cinemachinePreset.Brain.IsBlending;
+
             SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
         }
 

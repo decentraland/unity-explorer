@@ -7,7 +7,6 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
-using ECS.SceneLifeCycle.Systems.InitialSceneState;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.EarlyAsset;
 using ECS.StreamableLoading.Cache;
@@ -82,7 +81,6 @@ namespace DCL.PluginSystem.World
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
 
             EarlyAssetBundleRequestSystem.InjectToWorld(ref builder);
-            ResolveInitialSceneStateSystem.InjectToWorld(ref builder, gltfContainerAssetsCache);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>

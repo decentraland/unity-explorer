@@ -12,6 +12,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Arch;
 
 namespace ECS.Unity.GltfNodeModifiers.Systems

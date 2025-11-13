@@ -1,15 +1,23 @@
 ﻿using Arch.Core;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -42,13 +50,15 @@ namespace ECS.SceneLifeCycle.Systems
             var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
+            var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
-            (_, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt);
+            (_, var mainCrdt, var ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt),
+                ISSAssets);
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
@@ -58,8 +68,34 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             sceneFacade.Initialize();
-            ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' ended");
+            ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' (sdk version: '{sceneData.GetSDKVersion()}') ended");
             return sceneFacade;
+        }
+
+        private async UniTask<IInitialSceneState> LoadISSAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
+        {
+            if (sceneDefinitionComponent.SupportInitialSceneState())
+            {
+                var promise = AssetBundlePromise.Create(world,
+                    GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),
+                        assetBundleManifestVersion: sceneDefinitionComponent.assetBundleManifestVersion,
+                        parentEntityID: sceneDefinitionComponent.id),
+                        PartitionComponent.TOP_PRIORITY);
+
+                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+
+                if (promise.Result.Value.Succeeded)
+                {
+                    var result = new HashSet<string>();
+
+                    foreach (string s in promise.Result.Value.Asset.InitialSceneStateMetadata.Value.assetHash)
+                        result.Add($"{s}{PlatformUtils.GetCurrentPlatform()}");
+
+                    return InitialSceneStateInfo.CreateISS(promise.Result.Value.Asset, result);
+                }
+            }
+
+            return InitialSceneStateInfo.CreateEmpty();
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

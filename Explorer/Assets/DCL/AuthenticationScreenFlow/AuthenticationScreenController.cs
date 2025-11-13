@@ -16,6 +16,7 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
+using Global.AppArgs;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
@@ -61,9 +62,6 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private const int ANIMATION_DELAY = 300;
-        private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
-        private const int MAX_WINDOWED_WIDTH = 2560;
-        private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.FullScreenWindow;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -81,6 +79,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
         private readonly SentryTransactionManager sentryTransactionManager;
+        private readonly IAppArgs appArgs;
 
         private const string LOADING_TRANSACTION_NAME = "loading_process";
 
@@ -112,7 +111,8 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            SentryTransactionManager sentryTransactionManager)
+            SentryTransactionManager sentryTransactionManager,
+            IAppArgs appArgs)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -129,6 +129,7 @@ namespace DCL.AuthenticationScreenFlow
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
             this.sentryTransactionManager = sentryTransactionManager;
+            this.appArgs = appArgs;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -319,7 +320,7 @@ namespace DCL.AuthenticationScreenFlow
 
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
-                ForceResolutionAndWindowedMode();
+                WindowModeUtils.ApplyWindowedMode();
 
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
@@ -593,64 +594,11 @@ namespace DCL.AuthenticationScreenFlow
             animator.gameObject.SetActive(false);
         }
 
-        private void ForceResolutionAndWindowedMode()
-        {
-            Resolution current = Screen.currentResolution;
-
-            // To avoid ultra-wide window on ultra-wide screens
-            int targetWidth = Mathf.Min((int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT), MAX_WINDOWED_WIDTH);
-            int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
-
-            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);
-        }
-
         private void RestoreResolutionAndScreenMode()
         {
-            Resolution targetResolution = GetTargetResolution();
-            FullScreenMode targetScreenMode = GetTargetScreenMode();
+            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
+            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
             Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
-        }
-
-        private Resolution GetTargetResolution()
-        {
-            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION)
-                ? GetSavedResolution()
-                : GetDefaultResolution();
-
-            Resolution GetSavedResolution()
-            {
-                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
-                return possibleResolutions[index];
-            }
-
-            Resolution GetDefaultResolution()
-            {
-                int defaultIndex = 0;
-
-                for (var index = 0; index < possibleResolutions.Count; index++)
-                {
-                    Resolution resolution = possibleResolutions[index];
-
-                    if (!ResolutionUtils.IsDefaultResolution(resolution))
-                        continue;
-
-                    defaultIndex = index;
-                    break;
-                }
-
-                return possibleResolutions[defaultIndex];
-            }
-        }
-
-        private FullScreenMode GetTargetScreenMode()
-        {
-            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE) ? GetSavedScreenMode() : DEFAULT_SCREEN_MODE;
-
-            FullScreenMode GetSavedScreenMode()
-            {
-                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
-                return FullscreenModeUtils.Modes[index];
-            }
         }
 
         private void CancelLoginProcess()
