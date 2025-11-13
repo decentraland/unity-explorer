@@ -36,7 +36,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         public event Action<string>? CreateAnnouncementButtonClicked;
 
         private string currentProfileThumbnailUrl = null!;
-        private AnnouncementEmojiController announcementEmojiController = null!;
+        private AnnouncementEmojiController? announcementEmojiController;
 
         private void Awake()
         {
@@ -48,19 +48,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.PasteShortcutPerformed += OnAnnouncementInputPasteShortcut;
             createAnnouncementButton.onClick.AddListener(OnCreateAnnouncementButton);
             ViewDependencies.ClipboardManager.OnPaste += OnPasteClipboardText;
-
-            announcementEmojiController = new AnnouncementEmojiController(
-                announcementInput,
-                emojiButton,
-                emojiPanel,
-                emojiPanelConfiguration,
-                emojiSectionViewPrefab,
-                emojiButtonPrefab,
-                addEmojiAudio,
-                openEmojiPanelAudio,
-                suggestionPanel,
-                suggestionPanelParent,
-                inputEventBus);
         }
 
         private void OnDestroy()
@@ -72,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButton);
             ViewDependencies.ClipboardManager.OnPaste -= OnPasteClipboardText;
 
-            announcementEmojiController.Dispose();
+            announcementEmojiController?.Dispose();
         }
 
         public void Configure(Profile? profile, ProfileRepositoryWrapper profileDataProvider)
@@ -85,6 +72,19 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 profilePicture.Setup(profileDataProvider, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 currentProfileThumbnailUrl = profile.Avatar.FaceSnapshotUrl;
             }
+
+            announcementEmojiController ??= new AnnouncementEmojiController(
+                announcementInput,
+                emojiButton,
+                emojiPanel,
+                emojiPanelConfiguration,
+                emojiSectionViewPrefab,
+                emojiButtonPrefab,
+                addEmojiAudio,
+                openEmojiPanelAudio,
+                suggestionPanel,
+                suggestionPanelParent,
+                inputEventBus);
         }
 
         public void CleanInput()
