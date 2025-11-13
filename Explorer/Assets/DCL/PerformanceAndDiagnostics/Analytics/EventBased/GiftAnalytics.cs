@@ -1,4 +1,5 @@
 ﻿using DCL.Backpack.Gifting.Events;
+using Segment.Serialization;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -13,7 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.analytics = analytics;
 
             scope = new EventSubscriptionScope();
-            scope.Add(eventBus.Subscribe<GiftingEvents.OnSuccessfullGift>(OnSuccessfullGift));
+            scope.Add(eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnSuccessfulGift));
             scope.Add(eventBus.Subscribe<GiftingEvents.OnFailedGift>(OnFailedGift));
         }
 
@@ -22,26 +23,46 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             scope.Dispose();
         }
 
-        private void OnSuccessfullGift(GiftingEvents.OnSuccessfullGift evt)
+        private void OnSuccessfulGift(GiftingEvents.OnSuccessfulGift evt)
         {
-            // // var wearablesArray = new JsonArray();
-            // //
-            // // foreach (string? urn in evt.WearablesUrns)
-            // //     wearablesArray.Add(urn);
-            //
-            // var payload = new JsonObject
-            // {
-            //     {
-            //         "wearables_urn", wearablesArray
-            //     }
-            // };
+            var payload = new JsonObject
+            {
+                {
+                    "item", evt.ItemUrn
+                },
+                {
+                    "sender", evt.SenderAddress
+                },
+                {
+                    "receiver", evt.ReceiverAddress
+                },
+                {
+                    "item_type", evt.ItemType
+                }
+            };
 
-            analytics.Track(AnalyticsEvents.Gifts.SUCCESSFULL_GIFT);
+            analytics.Track(AnalyticsEvents.Gifts.SUCCESSFULL_GIFT, payload);
         }
 
         private void OnFailedGift(GiftingEvents.OnFailedGift evt)
         {
-            analytics.Track(AnalyticsEvents.Gifts.FAILED_GIFT);
+            var payload = new JsonObject
+            {
+                {
+                    "item", evt.ItemUrn
+                },
+                {
+                    "sender", evt.SenderAddress
+                },
+                {
+                    "receiver", evt.ReceiverAddress
+                },
+                {
+                    "item_type", evt.ItemType
+                }
+            };
+
+            analytics.Track(AnalyticsEvents.Gifts.FAILED_GIFT, payload);
         }
     }
 }

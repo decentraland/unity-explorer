@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Presenters.Grid;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
 using DCL.Input;
@@ -210,13 +211,21 @@ namespace DCL.Backpack.Gifting.Presenters
             if (!active.TryBuildStyleSnapshot(urn, out var style))
                 style = new GiftItemStyleSnapshot(null, null, Color.white);
 
+            string itemType = active switch
+            {
+                WearableGridPresenter => "wearable",
+                EmoteGridPresenter => "emote",
+                _ => "unknown"
+            };
+
             var data = new GiftTransferParams(recipientAddress,
                 recipientName,
                 userThumb,
                 urn,
                 giftDisplayName,
                 giftThumb,
-                style
+                style,
+                itemType
             );
 
             await mvcManager.ShowAsync(GiftTransferController.IssueCommand(data));

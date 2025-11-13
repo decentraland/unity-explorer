@@ -11,6 +11,7 @@ namespace DCL.Backpack.Gifting.Views
         public readonly string giftDisplayName;
         public readonly Sprite giftThumbnail;
         public readonly GiftItemStyleSnapshot style;
+        public readonly string itemType;
 
         public GiftTransferParams(string recipientAddress,
             string recipientName,
@@ -18,7 +19,8 @@ namespace DCL.Backpack.Gifting.Views
             string giftUrn,
             string giftDisplayName,
             Sprite? giftThumbnail,
-            GiftItemStyleSnapshot style)
+            GiftItemStyleSnapshot style,
+            string itemType)
         {
             this.recipientAddress = recipientAddress;
             this.recipientName = recipientName;
@@ -27,6 +29,7 @@ namespace DCL.Backpack.Gifting.Views
             this.giftDisplayName = giftDisplayName;
             this.giftThumbnail = giftThumbnail;
             this.style = style;
+            this.itemType = itemType;
         }
     }
 }

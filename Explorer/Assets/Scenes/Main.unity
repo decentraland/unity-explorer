@@ -397,9 +397,9 @@ MonoBehaviour:
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0
   debugSettings:
-    showSplash: 0
-    showAuthentication: 0
-    showLoading: 0
+    showSplash: 1
+    showAuthentication: 1
+    showLoading: 1
     enableLandscape: 0
     enableLOD: 0
     enableVersionUpdateGuard: 0

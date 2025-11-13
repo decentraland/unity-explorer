@@ -61,5 +61,7 @@ namespace DCL.NotificationsBus.NotificationTypes
 
         USER_BANNED_FROM_SCENE,
         USER_UNBANNED_FROM_SCENE,
+
+        GIFT_RECEIVED
     }
 }

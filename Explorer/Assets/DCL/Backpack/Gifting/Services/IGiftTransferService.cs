@@ -29,14 +29,8 @@ namespace DCL.Backpack.Gifting.Services
     public interface IGiftTransferService
     {
         /// <summary>
-        /// Fired when a verification code is available to be shown to the user.
-        /// Parameters are: (code, expirationTime)
-        /// </summary>
-        event Action<int, DateTime> OnVerificationCodeReceived;
-
-        /// <summary>
         ///     Initiates the transfer of a gift by requesting a signature from the user.
         /// </summary>
-        UniTask<GiftTransferResult> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct);
+        UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string recipientAddress, CancellationToken ct);
     }
 }

@@ -72,7 +72,7 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct GiftTransferFailed
         {
             public readonly string Urn;
-            public readonly string Reason; // short error for UX
+            public readonly string Reason;
 
             public GiftTransferFailed(string urn, string reason)
             {
@@ -81,31 +81,39 @@ namespace DCL.Backpack.Gifting.Events
             }
         }
 
-        public readonly struct OnSuccessfullGift
-        {
-            public readonly string Urn;
-            public readonly Sprite Sprite;
-            public readonly bool Success;
 
-            public OnSuccessfullGift(string urn, Sprite sprite, bool success)
+        public readonly struct OnSuccessfulGift
+        {
+            public readonly string ItemUrn;
+            public readonly string SenderAddress;
+            public readonly string ReceiverAddress;
+            public readonly string ItemType;
+
+            public OnSuccessfulGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
             {
-                Urn = urn;
-                Sprite = sprite;
-                Success = success;
+                ItemUrn = itemUrn;
+                SenderAddress = senderAddress;
+                ReceiverAddress = receiverAddress;
+                ItemType = itemType;
             }
         }
 
+        /// <summary>
+        ///     Published when a gift transfer fails, containing all data for analytics.
+        /// </summary>
         public readonly struct OnFailedGift
         {
-            public readonly string Urn;
-            public readonly Sprite Sprite;
-            public readonly bool Success;
+            public readonly string ItemUrn;
+            public readonly string SenderAddress;
+            public readonly string ReceiverAddress;
+            public readonly string ItemType;
 
-            public OnFailedGift(string urn, Sprite sprite, bool success)
+            public OnFailedGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
             {
-                Urn = urn;
-                Sprite = sprite;
-                Success = success;
+                ItemUrn = itemUrn;
+                SenderAddress = senderAddress;
+                ReceiverAddress = receiverAddress;
+                ItemType = itemType;
             }
         }
     }

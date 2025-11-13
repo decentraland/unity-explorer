@@ -103,7 +103,7 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            var giftTransferService = new Web3GiftTransferService(ethereumApi, web3IdentityCache, webAuthenticator);
+            var giftTransferService = new Web3GiftTransferService(ethereumApi);
             // var giftTransferService = new MockGiftTransferService();
 
             var wearableCatalog = new WearableStylingCatalog(rarityColors,
@@ -111,7 +111,7 @@ namespace DCL.PluginSystem.Global
                 categoryIcons);
 
             var sendGiftCommand = new SendGiftCommand(giftTransferService, mvcManager);
-            var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus, giftTransferService);
+            var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus, web3IdentityCache, giftTransferService);
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider, eventBus);
             var giftTransferProgressCommand = new GiftTransferProgressCommand();
             var giftTransferResponseCommand = new GiftTransferResponseCommand();

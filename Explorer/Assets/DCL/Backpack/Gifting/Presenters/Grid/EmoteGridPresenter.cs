@@ -144,6 +144,111 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             adapter.RefreshAllShownItem();
         }
 
+        // private async UniTask RequestNextPage()
+        // {
+        //     if (isLoading) return;
+        //
+        //     isLoading = true;
+        //     canLoadNext = false;
+        //     currentPage++;
+        //
+        //     fetchCts = fetchCts.SafeRestartLinked(lifeCts!.Token);
+        //     var ct = fetchCts.Token;
+        //
+        //     try
+        //     {
+        //         OnLoadingStateChanged?.Invoke(true);
+        //         ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Emotes] Request Page {currentPage} search='{currentSearch}'");
+        //
+        //         // 1) Owned (on-chain/third-party) via provider
+        //         using var ownedScope = ListPool<IEmote>.Get(out var owned);
+        //         int ownedTotal = await emoteProvider.GetOwnedEmotesAsync(
+        //             identityCache.Identity!.Address,
+        //             ct,
+        //             new IEmoteProvider.OwnedEmotesRequestOptions(
+        //                 pageNum: currentPage,
+        //                 pageSize: PAGE_SIZE,
+        //                 collectionId: null,
+        //                 orderOperation: currentOrder,
+        //                 name: currentSearch,
+        //                 includeAmount: true),
+        //             owned);
+        //
+        //         // 2) Off-chain embedded emotes (optional union like Backpack)
+        //         List<IEmote> pageEmotes;
+        //         int grandTotal = ownedTotal;
+        //
+        //         if (!onlyOnChain)
+        //         {
+        //             using var embeddedScope = ListPool<IEmote>.Get(out var embedded);
+        //             await emoteProvider.GetEmotesAsync(embeddedEmoteIds, BodyShape.MALE, ct, embedded);
+        //
+        //             IEnumerable<IEmote> filtered = embedded;
+        //             if (!string.IsNullOrEmpty(currentSearch))
+        //                 filtered = filtered.Where(e => e.GetName().IndexOf(currentSearch, StringComparison.OrdinalIgnoreCase) >= 0);
+        //
+        //             // order by name if needed (align with Backpack)
+        //             if (currentOrder.By == "name")
+        //                 filtered = currentOrder.IsAscendent ? filtered.OrderBy(e => e.GetName()) : filtered.OrderByDescending(e => e.GetName());
+        //
+        //             var embeddedList = filtered.ToList();
+        //             grandTotal += embeddedList.Count;
+        //
+        //             // follow Backpack’s concat-at-end rule for pagination
+        //             int pageIndex = (currentPage - 1) * PAGE_SIZE;
+        //             int skipFromEmbedded = Mathf.Max(0, pageIndex - ownedTotal);
+        //
+        //             pageEmotes = owned.Concat(embeddedList.Skip(skipFromEmbedded))
+        //                 .Take(PAGE_SIZE)
+        //                 .ToList();
+        //         }
+        //         else
+        //         {
+        //             pageEmotes = owned;
+        //         }
+        //
+        //         // First page -> show/hide containers
+        //         if (currentPage == 1)
+        //         {
+        //             bool hasResults = grandTotal > 0;
+        //             view.RegularResultsContainer.SetActive(hasResults);
+        //             view.NoResultsContainer.SetActive(!hasResults);
+        //         }
+        //
+        //         foreach (var emote in pageEmotes)
+        //         {
+        //             var urn = emote.GetUrn();
+        //             if (vmByUrn.ContainsKey(urn)) continue;
+        //
+        //             var giftable = new EmoteGiftable(emote);
+        //             int amount = emote.IsOnChain() ? emote.Amount : 1;
+        //             vmByUrn[urn] = new EmoteViewModel(giftable, amount);
+        //             urnOrder.Add(urn);
+        //         }
+        //
+        //         totalCount = grandTotal;
+        //
+        //         await UniTask.Yield(PlayerLoopTiming.Update, ct);
+        //         adapter.RefreshData();
+        //     }
+        //     catch (OperationCanceledException)
+        //     {
+        //         /* swallow */
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+        //     }
+        //     finally
+        //     {
+        //         isLoading = false;
+        //         OnLoadingStateChanged?.Invoke(false);
+        //         
+        //         if (!ct.IsCancellationRequested && pendingThumbs == 0)
+        //             OnAllLoadsFinished();
+        //     }
+        // }
+
         private async UniTask RequestNextPage()
         {
             if (isLoading) return;
@@ -160,54 +265,26 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 OnLoadingStateChanged?.Invoke(true);
                 ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Emotes] Request Page {currentPage} search='{currentSearch}'");
 
-                // 1) Owned (on-chain/third-party) via provider
-                using var ownedScope = ListPool<IEmote>.Get(out var owned);
-                int ownedTotal = await emoteProvider.GetOwnedEmotesAsync(
+                using var pageEmotesScope = ListPool<IEmote>.Get(out var pageEmotes);
+
+                var requestOptions = new IEmoteProvider.OwnedEmotesRequestOptions(
+                    pageNum: currentPage,
+                    pageSize: PAGE_SIZE,
+                    collectionId: null, // Not used in gifting search
+                    orderOperation: currentOrder,
+                    name: currentSearch,
+                    includeAmount: true);
+
+                int grandTotal = await emoteProvider.GetOwnedEmotesAsync(
                     identityCache.Identity!.Address,
                     ct,
-                    new IEmoteProvider.OwnedEmotesRequestOptions(
-                        pageNum: currentPage,
-                        pageSize: PAGE_SIZE,
-                        collectionId: null,
-                        orderOperation: currentOrder,
-                        name: currentSearch,
-                        includeAmount: true),
-                    owned);
+                    requestOptions,
+                    pageEmotes);
 
-                // 2) Off-chain embedded emotes (optional union like Backpack)
-                List<IEmote> pageEmotes;
-                int grandTotal = ownedTotal;
+                ct.ThrowIfCancellationRequested();
 
-                if (!onlyOnChain)
-                {
-                    using var embeddedScope = ListPool<IEmote>.Get(out var embedded);
-                    await emoteProvider.GetEmotesAsync(embeddedEmoteIds, BodyShape.MALE, ct, embedded);
+                totalCount = grandTotal;
 
-                    IEnumerable<IEmote> filtered = embedded;
-                    if (!string.IsNullOrEmpty(currentSearch))
-                        filtered = filtered.Where(e => e.GetName().IndexOf(currentSearch, StringComparison.OrdinalIgnoreCase) >= 0);
-
-                    // order by name if needed (align with Backpack)
-                    if (currentOrder.By == "name")
-                        filtered = currentOrder.IsAscendent ? filtered.OrderBy(e => e.GetName()) : filtered.OrderByDescending(e => e.GetName());
-
-                    var embeddedList = filtered.ToList();
-                    grandTotal += embeddedList.Count;
-
-                    // follow Backpack’s concat-at-end rule for pagination
-                    int pageIndex = (currentPage - 1) * PAGE_SIZE;
-                    int skipFromEmbedded = Mathf.Max(0, pageIndex - ownedTotal);
-
-                    pageEmotes = owned.Concat(embeddedList.Skip(skipFromEmbedded))
-                        .Take(PAGE_SIZE)
-                        .ToList();
-                }
-                else
-                {
-                    pageEmotes = owned;
-                }
-
-                // First page -> show/hide containers
                 if (currentPage == 1)
                 {
                     bool hasResults = grandTotal > 0;
@@ -221,12 +298,10 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     if (vmByUrn.ContainsKey(urn)) continue;
 
                     var giftable = new EmoteGiftable(emote);
-                    int amount = emote.IsOnChain() ? emote.Amount : 1;
+                    int amount = emote.Amount;
                     vmByUrn[urn] = new EmoteViewModel(giftable, amount);
                     urnOrder.Add(urn);
                 }
-
-                totalCount = grandTotal;
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
                 adapter.RefreshData();
@@ -243,7 +318,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             {
                 isLoading = false;
                 OnLoadingStateChanged?.Invoke(false);
-                
+
                 if (!ct.IsCancellationRequested && pendingThumbs == 0)
                     OnAllLoadsFinished();
             }

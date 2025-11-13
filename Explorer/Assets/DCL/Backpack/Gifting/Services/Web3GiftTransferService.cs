@@ -18,42 +18,28 @@ namespace DCL.Backpack.Gifting.Services
     public class Web3GiftTransferService : IGiftTransferService, IDisposable
     {
         private readonly IEthereumApi ethereumApi;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IVerifiedEthereumApi verifiedEthereumApi;
 
-        // --- IMPORTANT ---
-        // This URL must be provided by your backend team. It is the endpoint for the
-        // relayer server that will submit the signed transaction to the blockchain.
-        private const string RELAYER_API_URL = "https://your.backend.relayer/api/send-meta-transaction";
-
-        public Web3GiftTransferService(IEthereumApi ethereumApi,
-            IWeb3IdentityCache web3IdentityCache,
-            IVerifiedEthereumApi verifiedEthereumApi)
+        public Web3GiftTransferService(IEthereumApi ethereumApi)
         {
             this.ethereumApi = ethereumApi;
-            this.web3IdentityCache = web3IdentityCache;
-            this.verifiedEthereumApi = verifiedEthereumApi;
         }
 
         public void Dispose() { }
-
-
-        public event Action<int, DateTime>? OnVerificationCodeReceived;
 
         /// <summary>
         ///     Requests a gasless transfer of a gift (NFT) to a recipient.
         ///     This will trigger a browser pop-up for the user to sign a typed message.
         /// </summary>
+        /// <param name="fromAddress"></param>
         /// <param name="giftUrn">The URN of the NFT to be transferred.</param>
         /// <param name="recipientAddress">The Ethereum address of the recipient.</param>
         /// <param name="ct">The cancellation token.</param>
         /// <returns>A GiftTransferResult indicating success or failure.</returns>
-        public async UniTask<GiftTransferResult> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
+        public async UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string recipientAddress, CancellationToken ct)
         {
             try
             {
-                var identity = web3IdentityCache.Identity;
-                if (identity == null)
+                if (string.IsNullOrEmpty(fromAddress))
                     return GiftTransferResult.Fail("Web3 identity not found. Please ensure the user is logged in.");
 
                 var parsedUrn = UrnParser.Parse(giftUrn);
@@ -62,9 +48,8 @@ namespace DCL.Backpack.Gifting.Services
 
                 string contractAddress = parsedUrn.Value.contractAddress;
                 string tokenId = parsedUrn.Value.tokenId;
-                string fromAddress = identity.Address.ToString();
 
-                // Build calldata for transferFrom(from, to, tokenId)
+                // Build call data for transferFrom(from, to, tokenId)
                 string data = ManualTxEncoder.EncodeTransferFrom(fromAddress, recipientAddress, tokenId);
 
                 // Compose tx: ONLY from, to, data

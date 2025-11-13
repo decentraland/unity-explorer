@@ -2,6 +2,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
@@ -180,10 +181,19 @@ namespace DCL.Backpack.Gifting.Presenters
                 .Forget();
         }
 
-        private async void OnSuccess(GiftTransferSucceeded e)
+        private void OnSuccess(GiftTransferSucceeded e)
         {
             if (e.Urn != urn) return;
 
+            ShowSuccessPopupAsync(inputData.recipientName, () =>
+                {
+                    OnSuccessConfirmAsync().Forget();
+                }, CancellationToken.None)
+                .Forget();
+        }
+
+        private async UniTaskVoid OnSuccessConfirmAsync()
+        {
             delayCts.SafeCancelAndDispose();
 
             RequestClose();
@@ -282,6 +292,30 @@ namespace DCL.Backpack.Gifting.Presenters
                 .OpenConfirmationDialogAsync(dialogParams, ct);
 
             if (result == ConfirmationResult.CONFIRM)
+            {
+                ReportHub.Log(ReportCategory.GIFTING, "User clicked RETRY.");
+                await mvcManager.ShowAsync(IssueCommand(inputData), ct);
+            }
+        }
+
+        private async UniTaskVoid ShowSuccessPopupAsync(string recepient, Action onContinue, CancellationToken ct)
+        {
+            var dialogParams = new ConfirmationDialogParameter(
+                $"Transfer to {recepient} Successful",
+                "CLOSE",
+                "OK",
+                null,
+                false,
+                false,
+                null,
+                "Your gift was successfully delivered!"
+            );
+
+            var result = await ViewDependencies
+                .ConfirmationDialogOpener
+                .OpenConfirmationDialogAsync(dialogParams, ct);
+
+            if (result == ConfirmationResult.CONFIRM || result == ConfirmationResult.CANCEL)
             {
                 ReportHub.Log(ReportCategory.GIFTING, "User clicked RETRY.");
                 await mvcManager.ShowAsync(IssueCommand(inputData), ct);
