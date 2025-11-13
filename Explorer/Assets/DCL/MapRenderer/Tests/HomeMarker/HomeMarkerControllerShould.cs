@@ -175,7 +175,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             homePlaceEventBus.SetAsHome(new Vector2Int(5, 10));
 
             // Act
-            homePlaceEventBus.UnsetAsHome();
+            homePlaceEventBus.UnsetHome();
 
             // Assert
             marker.Received(2).SetActive(false); // Once on unset, once initially

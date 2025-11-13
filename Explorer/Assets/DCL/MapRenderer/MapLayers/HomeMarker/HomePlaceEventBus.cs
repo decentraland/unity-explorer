@@ -13,7 +13,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			Controller.SetMarker(coordinates);
 		}
 
-		public void UnsetAsHome()
+		public void UnsetHome()
 		{
 			Controller.SetMarker(null);
 		}

@@ -300,7 +300,7 @@ namespace DCL.Navmap
             if(isHome)
                 homePlaceEventBus.SetAsHome(positionReference);
             else
-                homePlaceEventBus.UnsetAsHome();
+                homePlaceEventBus.UnsetHome();
         }
 
         private void StartNavigation()

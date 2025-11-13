@@ -223,7 +223,7 @@ namespace DCL.Minimap
             if (value)
                 homePlaceEventBus.SetAsHome(previousParcelPosition);
             else
-                homePlaceEventBus.UnsetAsHome();
+                homePlaceEventBus.UnsetHome();
             
             // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
             // gaining focus again.

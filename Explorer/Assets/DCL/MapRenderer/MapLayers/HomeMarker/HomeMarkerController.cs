@@ -71,6 +71,8 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			return DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, Vector2Int.zero);
 		}
 
+		public static bool HasSerializedPosition() => DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+
 		internal static void Serialize(Vector2Int? coordinates)
 		{
 			if (!coordinates.HasValue)
@@ -81,8 +83,6 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 			DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, coordinates.Value);
 		}
-
-		public static bool HasSerializedPosition() => DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
 
 		public void SetMarker(Vector2Int? coordinates)
 		{
