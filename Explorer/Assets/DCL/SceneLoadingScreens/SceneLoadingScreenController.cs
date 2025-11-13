@@ -203,7 +203,7 @@ namespace DCL.SceneLoadingScreens
             viewInstance.ProgressBar.normalizedValue = progress;
 
             var value = (int)(progress * 100);
-            string formatted = progressLocalizationString.Replace("{progressValue}", value.ToString());
+            string formatted = progressLocalizationString.Replace("0", value.ToString());
             viewInstance.LoadingPercentageText.SetText(formatted);
         }
 
