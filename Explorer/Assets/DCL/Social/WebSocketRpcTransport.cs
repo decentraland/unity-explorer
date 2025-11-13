@@ -19,9 +19,9 @@ namespace DCL.SocialService
         private bool isConnected => State == WebSocketState.Open;
 
         public event Action? OnCloseEvent;
-        public event Action<Exception> OnErrorEvent;
-        public event Action<byte[]> OnMessageEvent;
-        public event Action OnConnectEvent;
+        public event Action<Exception>? OnErrorEvent;
+        public event Action<byte[]>? OnMessageEvent;
+        public event Action? OnConnectEvent;
 
         public WebSocketState State => webSocket.State;
 
@@ -83,13 +83,24 @@ namespace DCL.SocialService
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             if (!string.IsNullOrEmpty(result.CloseStatusDescription))
-                                ReportHub.LogError(ReportCategory.FRIENDS, $"Friends web socket disconnected. {result.CloseStatusDescription}");
+                                ReportHub.LogError(ReportCategory.SOCIAL, $"Friends web socket disconnected. {result.CloseStatusDescription}");
 
                             await CloseAsync(ct);
                             break;
                         }
                     }
-                    catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
+                    catch (OperationCanceledException) { break; }
+                    catch (WebSocketException e)
+                    {
+                        OnErrorEvent?.Invoke(e);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogException(e, ReportCategory.SOCIAL);
+                        OnErrorEvent?.Invoke(e);
+                        break;
+                    }
                 }
             }
         }

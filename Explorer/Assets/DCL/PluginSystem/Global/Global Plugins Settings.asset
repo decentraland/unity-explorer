@@ -384,6 +384,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <ErrorPopupWithRetry>k__BackingField:
+          m_AssetGUID: c16a7c2b7d6b642a4822df00f8bd5f71
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2872862648882692098
       type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

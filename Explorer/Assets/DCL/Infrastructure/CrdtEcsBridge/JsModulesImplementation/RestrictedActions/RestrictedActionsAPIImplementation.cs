@@ -56,7 +56,7 @@ namespace CrdtEcsBridge.RestrictedActions
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
             Vector3? newAbsoluteAvatarTarget = avatarTarget != null ? sceneData.Geometry.BaseParcelPosition + avatarTarget.Value : null;
 
-            if (!IsPositionValid(newAbsolutePosition))
+            if (!IsPositionValid(newAbsolutePosition) && !sceneData.IsPortableExperience())
             {
                 ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Position is out of scene");
                 return;
