@@ -176,13 +176,11 @@ namespace DCL.LOD.Components
                 // Move LOD_1 (what was at index 1) to index 0, and add an empty LOD at index 1
                 UnityEngine.LOD[] lodsWithoutLOD0 = new UnityEngine.LOD[2]
                 {
-                    new (0f, Array.Empty<Renderer>()),
-                    currentLODs[1],
+                    new (1f, Array.Empty<Renderer>()),
+                    new (0.99f, currentLODs[1].renderers),
                 };
                 SetupLODRelativeHeights(lodsWithoutLOD0, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
                 metadata.LodGroup.SetLODs(lodsWithoutLOD0);
-
-                RecalculateLODDistances(defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
             }
 
         }

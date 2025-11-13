@@ -94,6 +94,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject privateCommunityIcon { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
+        [field: SerializeField] public GameObject UnlistedMark { get; private set; } = null!;
+        [field: SerializeField] public GameObject UnlistedSeparator { get; private set; } = null!;
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
@@ -127,6 +129,7 @@ namespace DCL.Communities.CommunitiesCard
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
+        private Sections currentSection;
 
         private void Awake()
         {
@@ -275,6 +278,10 @@ namespace DCL.Communities.CommunitiesCard
 
         private void ToggleSection(Sections section, bool invokeEvent = true)
         {
+            if (section == currentSection) return;
+
+            currentSection = section;
+
             photosSectionSelection.SetActive(section == Sections.PHOTOS);
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
             placesSectionSelection.SetActive(section == Sections.PLACES);
@@ -332,6 +339,8 @@ namespace DCL.Communities.CommunitiesCard
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
             communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
+            UnlistedMark.SetActive(communityData.visibility == CommunityVisibility.unlisted);
+            UnlistedSeparator.SetActive(communityData.visibility == CommunityVisibility.unlisted);
 
             publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
             privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
