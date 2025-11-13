@@ -46,7 +46,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
-        private TrimmedWearableStorage? trimmedWearableStorage;
+        private ITrimmedWearableStorage? trimmedWearableStorage;
         private IProfileCache? profileCache;
         private IRoadAssetPool? roadCache;
         private IEmoteStorage? emoteCache;
@@ -128,7 +128,7 @@ namespace DCL.ResourcesUnloading
         public void Register(IWearableStorage storage) =>
             wearableStorage = storage;
 
-        public void Register(TrimmedWearableStorage storage) =>
+        public void Register(ITrimmedWearableStorage storage) =>
             trimmedWearableStorage = storage;
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>

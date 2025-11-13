@@ -9,7 +9,7 @@ using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public class TrimmedWearableStorage : ITrimmedAvatarElementStorage<ITrimmedWearable, TrimmedWearableDTO>
+    public class TrimmedWearableStorage : ITrimmedWearableStorage
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
