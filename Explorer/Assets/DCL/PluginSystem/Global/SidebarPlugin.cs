@@ -161,20 +161,11 @@ namespace DCL.PluginSystem.Global
 
         public class SidebarSettings : IDCLPluginSettings
         {
-            [field: SerializeField]
-            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
-
-            [field: SerializeField]
-            public SkyboxSettingsAsset SettingsAsset { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceGameObject ControlsPanelPrefab;
+            [field: SerializeField] public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; } = null!;
+            [field: SerializeField] public SkyboxSettingsAsset SettingsAsset { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
         }
     }
 }
