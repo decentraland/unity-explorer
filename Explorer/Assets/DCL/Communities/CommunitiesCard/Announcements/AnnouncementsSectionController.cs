@@ -120,6 +120,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             view.SetAllowCreation(isCreationAllowed);
             view.SetRole(communityData.Value.role);
             view.CleanCreationInput();
+            view.SetCreationAsLoading(false);
             FetchNewDataAsync(token).Forget();
         }
 
@@ -152,6 +153,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             async UniTaskVoid CreateAnnouncementAsync(string content, CancellationToken ct)
             {
                 isPosting = true;
+                view.SetCreationAsLoading(true);
                 Result<CreateCommunityPostResponse> response = await communitiesDataProvider.CreateCommunityPostAsync(communityData.Value.id, content, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 isPosting = false;
@@ -169,6 +171,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 FetchNewDataAsync(ct).Forget();
                 RefreshGrid(true);
                 view.CleanCreationInput();
+                view.SetCreationAsLoading(false);
             }
         }
 

@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private ProfilePictureView profilePicture = null!;
         [SerializeField] private CustomInputField announcementInput = null!;
         [SerializeField] private Button createAnnouncementButton = null!;
+        [SerializeField] private TMP_Text createAnnouncementButtonText = null!;
+        [SerializeField] private GameObject createAnnouncementButtonLoadingSpinner = null!;
         [SerializeField] private GameObject createAnnouncementInputOutline = null!;
         [SerializeField] private CharacterCounterView characterCounter = null!;
 
@@ -91,6 +94,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         {
             announcementInput.text = string.Empty;
             UpdateCharacterCounter();
+        }
+
+        public void SetAsLoading(bool isLoading)
+        {
+            if (isLoading)
+                createAnnouncementButton.interactable = false;
+            else
+                UpdateCreateButtonState();
+
+            createAnnouncementButtonText.gameObject.SetActive(!isLoading);
+            createAnnouncementButtonLoadingSpinner.SetActive(isLoading);
         }
 
         private void OnAnnouncementInputSelected(string _) =>
