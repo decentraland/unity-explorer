@@ -292,7 +292,7 @@ namespace DCL.Profiles
         public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
             IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
             IPartitionComponent? partition = null) =>
-            GetAsync(id, version, fromCatalyst, ct, false, getFromCacheIfPossible, batchBehaviour, partition);
+            GetAsync(id, version, fromCatalyst, ct, true, getFromCacheIfPossible, batchBehaviour, partition);
 
         /// <summary>
         ///     Should be called from the background thread

@@ -50,7 +50,7 @@ namespace DCL.Profiles
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}, {batchBehaviour}, {partition}");
 
-            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible);
+            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, batchBehaviour, partition);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");
