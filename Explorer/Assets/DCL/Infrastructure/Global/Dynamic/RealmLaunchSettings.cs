@@ -175,11 +175,9 @@ namespace Global.Dynamic
                                        && parcelToTeleportOverride != null;
 
             // Priority 3: Serialized home position (used when no feature flag exists, or feature flag is set to "0,0")
-            if (HomeMarkerSerializer.HasSerializedPosition() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            if (HomeMarkerController.HasSerializedPosition() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
-                HomeMarkerData? homeData = HomeMarkerSerializer.Deserialize();
-                if (homeData != null)
-                    targetScene = homeData.Value.Position;
+                targetScene = HomeMarkerController.Deserialize()!.Value;
                 return;
             }
 

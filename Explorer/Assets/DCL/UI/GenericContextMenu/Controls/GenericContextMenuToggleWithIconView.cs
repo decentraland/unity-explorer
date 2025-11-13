@@ -14,7 +14,5 @@ namespace DCL.UI.Controls
             base.Configure(settings, initialValue);
             ImageComponent.sprite = settings.toggleIcon;
         }
-
-        public override void RegisterCloseListener(Action listener) {}
     }
 }

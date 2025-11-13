@@ -8,6 +8,7 @@ using DCL.Prefs;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using Utility;
 
 namespace DCL.MapRenderer.Tests.HomeMarker
 {
@@ -21,6 +22,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 		private INavmapBus navmapBus;
 		private IPlacesAPIService placesAPIService;
 		private HomePlaceEventBus homePlaceEventBus;
+		private IEventBus eventBus;
 		private Transform parent;
 		
 		private static IDCLPrefs originalPrefs;
@@ -50,6 +52,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			navmapBus = Substitute.For<INavmapBus>();
 			placesAPIService = Substitute.For<IPlacesAPIService>();
 			homePlaceEventBus = new HomePlaceEventBus();
+			eventBus = Substitute.For<IEventBus>();			
 
 			coordsUtils.CoordsToPositionWithOffset(Arg.Any<Vector2>())
 				.Returns(callInfo => 
@@ -65,12 +68,13 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 				cullingController,
 				navmapBus,
 				placesAPIService,
-				homePlaceEventBus
+				eventBus
 			);
+			homePlaceEventBus.Controller = controller;
 
 			// Clear prefs keys (safe because player prefs are replaced for test duration)
-			if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
-				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
+				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
 		}
 		
 		[TearDown]
@@ -81,8 +85,8 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 				Object.DestroyImmediate(parent.gameObject);
 	        
 			// Clean up test data
-			if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
-				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
+				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
         }
 		
 		private static void InitializeTestPrefs()
@@ -123,12 +127,11 @@ namespace DCL.MapRenderer.Tests.HomeMarker
         public void InitializeWithSerializedHomePosition()
         {
             // Arrange
-            var homePosition = new Vector2Int(10, 20);
-            var homeData = new HomeMarkerData(homePosition);
-            HomeMarkerSerializer.Serialize(homeData);
+            Vector2Int? homePosition = new Vector2Int(10, 20);
+	        controller.Initialize();
 
             // Act
-            controller.Initialize();
+	        controller.SetMarker(homePosition);
 
             // Assert
             marker.Received(1).SetActive(true);
@@ -155,13 +158,13 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             var newHomePosition = new Vector2Int(15, 25);
 
             // Act
-            homePlaceEventBus.RequestSetAsHome(newHomePosition);
+            homePlaceEventBus.SetAsHome(newHomePosition);
 
             // Assert
             marker.Received(1).SetActive(true);
             marker.Received(1).SetPosition(new Vector3(15, 25, 0));
             Assert.IsTrue(controller.HomeIsSet);
-            Assert.IsTrue(HomeMarkerSerializer.HasSerializedPosition());
+            Assert.IsTrue(HomeMarkerController.HasSerializedPosition());
         }
 
         [Test]
@@ -169,15 +172,15 @@ namespace DCL.MapRenderer.Tests.HomeMarker
         {
             // Arrange
             controller.Initialize();
-            homePlaceEventBus.RequestSetAsHome(new Vector2Int(5, 10));
+            homePlaceEventBus.SetAsHome(new Vector2Int(5, 10));
 
             // Act
-            homePlaceEventBus.RequestUnsetAsHome();
+            homePlaceEventBus.UnsetAsHome();
 
             // Assert
             marker.Received(2).SetActive(false); // Once on unset, once initially
             Assert.IsFalse(controller.HomeIsSet);
-            Assert.IsFalse(HomeMarkerSerializer.HasSerializedPosition());
+            Assert.IsFalse(HomeMarkerController.HasSerializedPosition());
         }
 
         [Test]
@@ -186,11 +189,11 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             // Arrange
             controller.Initialize();
             var homePosition = new Vector2Int(30, 40);
-            homePlaceEventBus.RequestSetAsHome(homePosition);
+            homePlaceEventBus.SetAsHome(homePosition);
 
             // Act & Assert
-            Assert.IsTrue(homePlaceEventBus.IsHome(homePosition));
-            Assert.IsFalse(homePlaceEventBus.IsHome(new Vector2Int(0, 0)));
+            Assert.IsTrue(homePlaceEventBus.CurrentHomeCoordinates == homePosition);
+            Assert.IsFalse(homePlaceEventBus.CurrentHomeCoordinates == Vector2Int.zero);
         }
 
         [Test]
@@ -199,14 +202,13 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             // Arrange
             controller.Initialize();
             var homePosition = new Vector2Int(50, 60);
-            homePlaceEventBus.RequestSetAsHome(homePosition);
 
             // Act
-            var hasHome = homePlaceEventBus.TryGetHomeCoordinates(out var coordinates);
+	        homePlaceEventBus.SetAsHome(homePosition);
 
             // Assert
-            Assert.IsTrue(hasHome);
-            Assert.AreEqual(homePosition, coordinates);
+	        Assert.IsTrue(homePlaceEventBus.CurrentHomeCoordinates != null);
+            Assert.AreEqual(homePosition, homePlaceEventBus.CurrentHomeCoordinates);
         }
 
         [Test]
@@ -215,11 +217,8 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             // Arrange
             controller.Initialize();
 
-            // Act
-            var hasHome = homePlaceEventBus.TryGetHomeCoordinates(out var coordinates);
-
             // Assert
-            Assert.IsFalse(hasHome);
+            Assert.IsTrue(homePlaceEventBus.CurrentHomeCoordinates == null);
         }
 	}
 }

@@ -473,6 +473,7 @@ namespace Global.Dynamic
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
+            IEventBus eventBus = new EventBus(true);
             
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
@@ -491,6 +492,7 @@ namespace Global.Dynamic
                         onlineUsersProvider,
                         identityCache,
                         homePlaceEventBus,
+                        eventBus,
                         ct
                     );
 
@@ -633,7 +635,6 @@ namespace Global.Dynamic
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
-            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 

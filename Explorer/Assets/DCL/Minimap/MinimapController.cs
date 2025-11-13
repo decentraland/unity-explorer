@@ -206,7 +206,7 @@ namespace DCL.Minimap
 
         private void SetInitialHomeToggleValue()
         {
-            bool isHome = homePlaceEventBus.IsHome(previousParcelPosition);
+            bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
             homeToggleSettings.SetInitialValue(isHome);
         }
 
@@ -221,9 +221,13 @@ namespace DCL.Minimap
         private void SetAsHomeToggledAsync(bool value)
         {
             if (value)
-                homePlaceEventBus.RequestSetAsHome(previousParcelPosition);
+                homePlaceEventBus.SetAsHome(previousParcelPosition);
             else
-                homePlaceEventBus.RequestUnsetAsHome();
+                homePlaceEventBus.UnsetAsHome();
+            
+            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
+            // gaining focus again.
+            OnFocus();
         }
 
         private void CopyJumpInLink()

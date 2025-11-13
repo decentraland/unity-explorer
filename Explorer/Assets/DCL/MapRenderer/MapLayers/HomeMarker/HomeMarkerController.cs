@@ -6,6 +6,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
+using DCL.Prefs;
 using UnityEngine;
 using Utility;
 
@@ -21,15 +22,15 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		private readonly HomeMarkerBuilder builder;
 		private readonly INavmapBus navmapBus;
 		private readonly IPlacesAPIService placesAPIService;
-		private readonly HomePlaceEventBus homePlaceEventBus;
+		private readonly IEventBus analyticsEventBus;
 
+		public Vector2Int? CurrentCoordinates { get; private set; }
 		private IHomeMarker homeMarker;
-		private HomeMarkerData? currentMarker = null;
 		private CancellationTokenSource highlightCt = new();
 		private CancellationTokenSource deHighlightCt = new();
 		private CancellationTokenSource placesCts = new();
 
-		public bool HomeIsSet => currentMarker != null;
+		public bool HomeIsSet => CurrentCoordinates.HasValue;
 		public bool ZoomBlocked { get; set; }
 		
 		internal HomeMarkerController(
@@ -39,27 +40,19 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			IMapCullingController cullingController,
 			INavmapBus navmapBus,
 			IPlacesAPIService placesAPIService,
-			HomePlaceEventBus homePlaceEventBus) 
+			IEventBus analyticsEventBus) 
 			: base(instantiationParent, coordsUtils, cullingController)
 		{
 			this.builder = builder;
 			this.navmapBus = navmapBus;
 			this.placesAPIService = placesAPIService;
-			this.homePlaceEventBus = homePlaceEventBus;
-
-			this.homePlaceEventBus.SetAsHomeRequested += SetAsHomeRequested;
-			this.homePlaceEventBus.UnsetAsHomeRequested += UnsetAsHomeRequested;
-			this.homePlaceEventBus.IsHomeQuery = (coordinates) => 
-				currentMarker != null && currentMarker.Value.Position == coordinates;
-			this.homePlaceEventBus.HasHomeLocationQuery = () => currentMarker != null;
-			this.homePlaceEventBus.GetHomeCoordinatesQuery = () => currentMarker?.Position;
+			this.analyticsEventBus = analyticsEventBus;
 		}
 
 		internal void Initialize()
 		{
 			homeMarker = builder(instantiationParent);
-			currentMarker = HomeMarkerSerializer.Deserialize();
-			SetMarker(currentMarker, false);
+			SetMarker(Deserialize());
 		}
 
 		protected override void DisposeImpl()
@@ -69,30 +62,38 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			placesCts.SafeCancelAndDispose();
 			homeMarker.Dispose();
 		}
-
-		private void SetMarker(HomeMarkerData? homeMarkerData, bool serialize = true)
+		
+		public static Vector2Int? Deserialize()
 		{
-			homeMarker.SetActive(homeMarkerData != null);
+			if (!HasSerializedPosition())
+				return null;
+			
+			return DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, Vector2Int.zero);
+		}
 
-			if (homeMarkerData != null)
+		internal static void Serialize(Vector2Int? coordinates)
+		{
+			if (!coordinates.HasValue)
 			{
-				homeMarker.SetPosition(coordsUtils.CoordsToPositionWithOffset(homeMarkerData.Value.Position));
+				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+				return;
 			}
 
-			if (serialize)
-				HomeMarkerSerializer.Serialize(homeMarkerData);
+			DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, coordinates.Value);
 		}
 
-		private void SetAsHomeRequested(Vector2Int coordinates)
-		{
-			currentMarker = new HomeMarkerData(coordinates);
-			SetMarker(currentMarker);
-		}
+		public static bool HasSerializedPosition() => DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
 
-		private void UnsetAsHomeRequested()
+		public void SetMarker(Vector2Int? coordinates)
 		{
-			currentMarker = null;
-			SetMarker(null);
+			homeMarker.SetActive(coordinates.HasValue);
+			CurrentCoordinates = coordinates;
+
+			if (CurrentCoordinates.HasValue)
+				homeMarker.SetPosition(coordsUtils.CoordsToPositionWithOffset(CurrentCoordinates.Value));
+			
+			Serialize(CurrentCoordinates);
+			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates));
 		}
 
 		public UniTask InitializeAsync(CancellationToken cancellationToken) =>
@@ -164,17 +165,17 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		private async UniTask DisplayPlacesInfoPanelAsync()
 		{
-			if (currentMarker == null)
+			if (!CurrentCoordinates.HasValue)
 				return;
 
 			try
 			{
 				placesCts = placesCts.SafeRestart();
-				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(currentMarker.Value.Position, placesCts.Token) 
-				                                  ?? new PlacesData.PlaceInfo(currentMarker.Value.Position);
+				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(CurrentCoordinates.Value, placesCts.Token) 
+				                                  ?? new PlacesData.PlaceInfo(CurrentCoordinates.Value);
 				if (placesCts.IsCancellationRequested)
 					return;
-				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, currentMarker.Value.Position).Forget();
+				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, CurrentCoordinates.Value).Forget();
 			}
 			catch (OperationCanceledException _) { }
 			catch (Exception e)

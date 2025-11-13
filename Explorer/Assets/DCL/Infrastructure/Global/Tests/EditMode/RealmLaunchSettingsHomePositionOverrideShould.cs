@@ -44,7 +44,7 @@ namespace Global.Tests.EditMode
         [TearDown]
         public void TearDown()
         {
-            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+            DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
         }
         
         private static void InitializeTestPrefs()
@@ -86,7 +86,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
+            HomeMarkerController.Serialize(homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(true);
             string featureFlagPosition = "0,0";
@@ -104,7 +104,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
+            HomeMarkerController.Serialize(homePosition);
             launchSettings.HasEditorPositionOverride().Returns(true);
             launchSettings.targetScene = new Vector2Int(50, 50);
             string featureFlagPosition = "0,0";
@@ -139,7 +139,7 @@ namespace Global.Tests.EditMode
         {
             // Arrange
             var homePosition = new Vector2Int(100, 200);
-            HomeMarkerSerializer.Serialize(new HomeMarkerData(homePosition));
+            HomeMarkerController.Serialize(homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
             

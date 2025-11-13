@@ -195,7 +195,8 @@ namespace DCL.Navmap
             if (view.HomeButton != null)
             {
                 VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-                homeButton.SetButtonState(homePlaceEventBus.IsHome(coordinates));
+                bool isHome = homePlaceEventBus.CurrentHomeCoordinates == coordinates;
+                homeButton.SetButtonState(isHome);
             }
 
             SetCategories(place);
@@ -214,7 +215,7 @@ namespace DCL.Navmap
             view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
             
             if(!homeButton.IsButtonOn)
-                homeButton.SetButtonState(homePlaceEventBus.IsHome(originParcel.Value));
+                homeButton.SetButtonState(homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -297,9 +298,9 @@ namespace DCL.Navmap
             else return;
             
             if(isHome)
-                homePlaceEventBus.RequestSetAsHome(positionReference);
+                homePlaceEventBus.SetAsHome(positionReference);
             else
-                homePlaceEventBus.RequestUnsetAsHome();
+                homePlaceEventBus.UnsetAsHome();
         }
 
         private void StartNavigation()

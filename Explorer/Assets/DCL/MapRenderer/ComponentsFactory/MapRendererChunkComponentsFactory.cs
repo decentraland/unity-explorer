@@ -27,6 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.ComponentsFactory
@@ -48,6 +49,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IEventBus eventBus;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private HomeMarkerInstaller homeMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
@@ -72,7 +74,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider,
             IWeb3IdentityCache web3IdentityCache,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -88,6 +91,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.onlineUsersProvider = onlineUsersProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.eventBus = eventBus;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -128,7 +132,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             var categoriesInstallerTask = categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken);
             var sceneOfInterestInstallerTask = sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, navmapBus, cancellationToken);
             var searchResultsInstallerTask = searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, searchResultsClusterObjectsPool, navmapBus, cancellationToken);
-            var homeMarkerInstallerTask = homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, navmapBus, placesAPIService, mapSettings, assetsProvisioner, homePlaceEventBus, cancellationToken);
+            var homeMarkerInstallerTask = homeMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, navmapBus, placesAPIService, mapSettings, assetsProvisioner, homePlaceEventBus, eventBus, cancellationToken);
 
 
             await UniTask.WhenAll(

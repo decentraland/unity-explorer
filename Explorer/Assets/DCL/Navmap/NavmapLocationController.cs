@@ -63,20 +63,13 @@ namespace DCL.Navmap
 
         private void CenterToHome()
         {
-            cameraController.TranslateTo(TryGetHomeCoordinates(out var coordinates) 
-                ? coordinates 
-                : Vector2Int.zero, TRANSITION_TIME);
+            cameraController.TranslateTo(homePlaceEventBus.CurrentHomeCoordinates ?? Vector2Int.zero, TRANSITION_TIME);
         }
 
         private void CenterToPlayer()
         {
             if (TryGetPlayerCoordinates(out var coordinates))
                 cameraController.TranslateTo(coordinates, TRANSITION_TIME);
-        }
-        
-        private bool TryGetHomeCoordinates(out Vector2Int coordinates)
-        {
-            return homePlaceEventBus.TryGetHomeCoordinates(out coordinates);
         }
 
         private bool TryGetPlayerCoordinates(out Vector2 coordinates)
