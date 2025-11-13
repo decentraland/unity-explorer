@@ -16,6 +16,7 @@ namespace DCL.SDKComponents.MediaStream
         private float lastVideoTime;
         private float frozenTimestamp;
         private bool isFrozen;
+        private bool isSpatial;
 
         public readonly MultiMediaPlayer MediaPlayer;
         public readonly bool IsFromContentServer;
@@ -27,6 +28,12 @@ namespace DCL.SDKComponents.MediaStream
         public float LastPropagatedVideoTime;
         public CancellationTokenSource? Cts;
         public OpenMediaPromise? OpenMediaPromise;
+
+        public bool IsSpatial
+        {
+            get => MediaPlayer.IsSpatial;
+            set => MediaPlayer.UpdateSpatialAudio(value);
+        }
 
         public MediaPlayerComponent(MultiMediaPlayer mediaPlayer, bool isFromContentServer) : this()
         {

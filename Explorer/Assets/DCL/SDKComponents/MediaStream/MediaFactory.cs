@@ -180,9 +180,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
-            if (component.MediaPlayer.TryGetAvProPlayer(out MediaPlayer? mediaPlayer)
-                && mediaPlayer!.TryGetComponent(out AudioSource mediaPlayerAudio))
-                mediaPlayerAudio!.spatialBlend = isSpatialAudio ? 1.0f : 0.0f;
+            component.IsSpatial = isSpatialAudio;
 
             return component;
         }

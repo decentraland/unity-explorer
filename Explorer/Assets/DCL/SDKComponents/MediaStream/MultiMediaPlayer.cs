@@ -78,6 +78,16 @@ namespace DCL.SDKComponents.MediaStream
             static _ => new Vector2(1, -1)
         );
 
+        public bool IsSpatial => Match(static avPro =>
+            {
+                if (avPro.AvProMediaPlayer.AudioSource == null)
+                    if (avPro.AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
+                        avPro.AvProMediaPlayer.SetAudioSource(audioSource);
+
+                return Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f);
+            },
+            static _ => false);
+
         public void Dispose(MediaAddress address)
         {
             Match(
@@ -252,6 +262,20 @@ namespace DCL.SDKComponents.MediaStream
                 static avPro => avPro.AvProMediaPlayer.Control.GetLastError(),
                 static _ => ErrorCode.None
             );
+        }
+
+        public void UpdateSpatialAudio(bool isSpatial)
+        {
+            Match(avPro =>
+                {
+                    if (avPro.AvProMediaPlayer.AudioSource == null)
+                        if (avPro.AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
+                            avPro.AvProMediaPlayer.SetAudioSource(audioSource);
+
+                    if (avPro.AvProMediaPlayer.AudioSource != null)
+                        avPro.AvProMediaPlayer.AudioSource.spatialBlend = isSpatial ? 1f : 0f;
+                },
+                static _ => { });
         }
     }
 }

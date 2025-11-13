@@ -86,6 +86,9 @@ namespace DCL.SDKComponents.MediaStream
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureAudioIsPlaying();
+
+                if (sdkComponent.HasIsSpatial && sdkComponent.IsSpatial != component.IsSpatial)
+                    component.IsSpatial = sdkComponent.IsSpatial;
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -120,6 +123,9 @@ namespace DCL.SDKComponents.MediaStream
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureVideoIsPlaying();
+
+                if (sdkComponent.HasIsSpatial && sdkComponent.IsSpatial != component.IsSpatial)
+                    component.IsSpatial = sdkComponent.IsSpatial;
             }
 
             if (ConsumePromise(ref component, false))
