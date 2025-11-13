@@ -312,7 +312,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            List<EmoteOutcomeAnimationPose>? outcomeAnimationPoses = null;
+
+            if (result.Asset.SocialEmoteOutcomeAnimationStartPoses != null)
+            {
+                outcomeAnimationPoses = AttachmentRegularAsset.OUTCOME_ANIMATION_POSE_POOL.Get();
+
+                foreach (AssetBundleMetadata.SocialEmoteOutcomeAnimationPose outcomeAnimationPose in result.Asset.SocialEmoteOutcomeAnimationStartPoses)
+                    outcomeAnimationPoses.Add(new EmoteOutcomeAnimationPose(outcomeAnimationPose.Position, outcomeAnimationPose.Rotation));
+            }
+
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, outcomeAnimationPoses);
         }
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
@@ -327,7 +337,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, null);
         }
 
         public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)

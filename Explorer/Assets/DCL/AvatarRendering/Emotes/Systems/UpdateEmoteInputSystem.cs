@@ -73,15 +73,10 @@ namespace DCL.AvatarRendering.Emotes
         [All(typeof(PlayerComponent))]
         private void TriggerEmoteReactingToSocialEmoteIntent(in Entity entity, ref TriggerEmoteReactingToSocialEmoteIntent intent)
         {
-        /*    triggeredEmoteUrn = intent.TriggeredEmoteUrn;
+            triggeredEmoteUrn = intent.TriggeredEmoteUrn;
             socialEmoteOutcomeIndexForTrigger = intent.OutcomeIndex;
             socialEmoteInitiatorWalletAddressForTrigger = intent.InitiatorWalletAddress;
             socialEmoteInteractionIdForTrigger = intent.InteractionId;
-            World.Add<MoveBeforePlayingSocialEmoteIntent>(new MoveBeforePlayingSocialEmoteIntent());
-*/
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>MOVING --> TO INITIATOR</color>");
-            Vector3 initiatorPosition = World.Get<CharacterTransform>(intent.InitiatorEntity).Transform.position;
-            World.Add(entity, new MoveBeforePlayingSocialEmoteIntent(initiatorPosition));
 
             World.Remove<TriggerEmoteReactingToSocialEmoteIntent>(entity);
         }

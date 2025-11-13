@@ -23,21 +23,15 @@ namespace DCL.AvatarRendering.Emotes
         public readonly string InitiatorWalletAddress;
 
         /// <summary>
-        ///
-        /// </summary>
-        public readonly Entity InitiatorEntity;
-
-        /// <summary>
         /// The ID that identifies the interaction for which the avatar is to play the animation.
         /// </summary>
         public readonly int InteractionId;
 
-        public TriggerEmoteReactingToSocialEmoteIntent(string? triggeredEmoteUrn, int outcomeIndex, string initiatorWalletAddress, Entity initiatorEntity, int interactionId)
+        public TriggerEmoteReactingToSocialEmoteIntent(string? triggeredEmoteUrn, int outcomeIndex, string initiatorWalletAddress, int interactionId)
         {
             this.TriggeredEmoteUrn = triggeredEmoteUrn;
             this.OutcomeIndex = outcomeIndex;
             this.InitiatorWalletAddress = initiatorWalletAddress;
-            this.InitiatorEntity = initiatorEntity;
             this.InteractionId = interactionId;
         }
     }

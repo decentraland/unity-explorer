@@ -97,6 +97,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 AssetBundleMetrics? metrics = !string.IsNullOrEmpty(metricsJSON) ? JsonUtility.FromJson<AssetBundleMetrics>(metricsJSON) : null;
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
+                AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? socialEmoteOutcomeAnimationStartPoses = null;
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -106,6 +107,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     JsonUtility.FromJsonOverwrite(metadataJSON, reusableMetadata.Value);
                     mainAsset = reusableMetadata.Value.mainAsset;
                     dependencies = await LoadDependenciesAsync(intention, partition, reusableMetadata.Value, ct);
+                    socialEmoteOutcomeAnimationStartPoses = reusableMetadata.Value.socialEmoteOutcomeAnimationStartPoses?.ToArray();
                 }
                 else
                     dependencies = Array.Empty<AssetBundleData>();
@@ -117,7 +119,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 // if the type was not specified don't load any assets
                 return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, ct);
+                    source, intention.LookForShaderAssets, socialEmoteOutcomeAnimationStartPoses, ct);
             }
             catch (Exception e)
             {
@@ -141,6 +143,7 @@ namespace ECS.StreamableLoading.AssetBundles
             string version,
             string source,
             bool lookForShaderAssets,
+            AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? socialEmoteOutcomeAnimationStartPoses,
             CancellationToken ct)
         {
             // if the type was not specified don't load any assets
@@ -160,7 +163,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
-                source: source));
+                source: source,
+                socialEmoteOutcomeAnimationStartPoses: socialEmoteOutcomeAnimationStartPoses));
         }
 
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
@@ -172,9 +176,15 @@ namespace ECS.StreamableLoading.AssetBundles
                 ? assetBundle.LoadAssetAsync(mainAsset)
                 : assetBundle.LoadAllAssetsAsync(objectType);
 
+
             await asyncOp.WithCancellation(ct);
+            assetBundle.LoadAllAssets();
 
             Object[]? assets = asyncOp.allAssets;
+
+            // This forces the runtimeAnimatorController to be loaded
+            if (objectType == typeof(GameObject) && assets.Length > 0 && ((GameObject)assets[0]).TryGetComponent(out Animator animator))
+                animator.runtimeAnimatorController = animator.runtimeAnimatorController;
 
             switch (assets.Length)
             {

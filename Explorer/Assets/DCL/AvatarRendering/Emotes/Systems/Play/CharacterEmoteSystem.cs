@@ -92,6 +92,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
+            MoveAvatarToInteractionInitiatorPositionQuery(World); // This must occur before ConsumeEmoteIntentQuery, because it has to execute 1 frame later after animation has played
             CancelEmotesByMovementQuery(World);
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
@@ -218,23 +219,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "RESET EmoteComponent User: " + ((AvatarBase)avatarView).name);
             emoteComponent.Reset();
-
-            if (hasToMoveReceiverToOriginalPosition &&
-                World.TryGet(entity, out CharacterController? characterController))
-            {
-                // Returns the receiver avatar in the social emote interaction to its original position
-                if (World.TryGet(entity, out MoveToInitiatorIntent intent))
-                {
-                    // It has to be disabled, otherwise position will be overriden
-                    characterController!.enabled = false;
-                    characterController.transform.position = intent.OriginalPosition;
-                    characterController.transform.rotation = intent.OriginalRotation;
-                    characterController.enabled = true;
-                    World.Remove<MoveToInitiatorIntent>(entity);
-                }
-            }
-           // ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "EmoteComponent set in world");
-  //          World.Set(entity, emoteComponent);
         }
 
         private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)
@@ -418,6 +402,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
+                    if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.UseOutcomeReactionAnimation)
+                    {
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added Animate");
+                        World.Add(entity, new MoveWhenOutcomeAnimationStartsIntent(){ InitiatorEntity = SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity});
+                    }
+
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AFTER PLAY USER: hash " + emoteComponent.GetHashCode() + " " + emoteIntent.WalletAddress + " " + emoteComponent.EmoteUrn + " " + emoteComponent.Metadata?.name ?? string.Empty);
 
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -427,10 +417,24 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
                     CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
                 }
-
-//                World.Set(entity, emoteComponent);
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+        }
+// TODO
+        private struct MoveWhenOutcomeAnimationStartsIntent
+        {
+            public Entity InitiatorEntity;
+        }
+
+        [Query]
+        private void MoveAvatarToInteractionInitiatorPosition(Entity entity, ref IAvatarView avatarView, MoveWhenOutcomeAnimationStartsIntent animationInfo)
+        {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consumed Animate");
+
+            IAvatarView initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
+            avatarView.GetTransform().position = initiatorAvatar.GetTransform().position;
+            avatarView.GetTransform().rotation = initiatorAvatar.GetTransform().rotation;
+            World.Remove<MoveWhenOutcomeAnimationStartsIntent>(entity);
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet

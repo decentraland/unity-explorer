@@ -23,12 +23,15 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public readonly AssetBundleMetrics? Metrics;
 
+        // Note: The order of the outcomes is the same as the order in which they appear in the Emote DTO metadata
+        public readonly AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? SocialEmoteOutcomeAnimationStartPoses;
+
         private readonly string description;
 
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "", AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? socialEmoteOutcomeAnimationStartPoses = null)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
@@ -38,6 +41,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assetType = assetType;
 
             description = $"AB:{AssetBundle?.name}_{version}_{source}";
+            SocialEmoteOutcomeAnimationStartPoses = socialEmoteOutcomeAnimationStartPoses;
             UnloadAB();
         }
 

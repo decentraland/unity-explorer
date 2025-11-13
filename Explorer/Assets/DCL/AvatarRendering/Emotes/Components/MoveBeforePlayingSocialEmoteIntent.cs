@@ -1,3 +1,4 @@
+using Arch.Core;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
@@ -10,17 +11,29 @@ namespace DCL.AvatarRendering.Emotes
         /// <summary>
         ///
         /// </summary>
-        public readonly Vector3 InitiatorPosition;
+        public readonly Vector3 InitiatorWorldPosition;
 
         /// <summary>
         ///
         /// </summary>
-        public readonly float MovementStartTime;
+        public readonly Quaternion InitiatorWorldRotation;
 
-        public MoveBeforePlayingSocialEmoteIntent(Vector3 initiatorPosition)
+        /// <summary>
+        ///
+        /// </summary>
+        public readonly Entity InitiatorEntityId;
+
+        /// <summary>
+        ///
+        /// </summary>
+        public readonly TriggerEmoteReactingToSocialEmoteIntent TriggerEmoteIntent;
+
+        public MoveBeforePlayingSocialEmoteIntent(Vector3 initiatorWorldPosition, Quaternion initiatorWorldRotation, Entity initiatorEntityId, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent)
         {
-            InitiatorPosition = initiatorPosition;
-            MovementStartTime = Time.time;
+            InitiatorWorldPosition = initiatorWorldPosition;
+            InitiatorWorldRotation = initiatorWorldRotation;
+            TriggerEmoteIntent = triggerEmoteIntent;
+            InitiatorEntityId = initiatorEntityId;
         }
     }
 }

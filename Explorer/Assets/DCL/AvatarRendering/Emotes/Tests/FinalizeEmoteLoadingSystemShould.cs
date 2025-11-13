@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             // Common mock assets
             mockGameObject = new GameObject("MockAsset");
             mockStreamableData = new MockStreamableDataWithURN(new URN("urn:mock:asset"));
-            mockAttachmentAsset = new AttachmentRegularAsset(mockGameObject, new List<AttachmentRegularAsset.RendererInfo>(), mockStreamableData);
+            mockAttachmentAsset = new AttachmentRegularAsset(mockGameObject, new List<AttachmentRegularAsset.RendererInfo>(), mockStreamableData, null);
         }
 
         [TearDown]

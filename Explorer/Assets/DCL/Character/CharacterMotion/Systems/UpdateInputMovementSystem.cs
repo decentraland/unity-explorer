@@ -31,7 +31,6 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateInputQuery(World);
-            MovingToInitiatorQuery(World);
         }
 
         [Query]
@@ -89,28 +88,5 @@ namespace DCL.CharacterMotion.Systems
 
             return MovementKind.JOG;
         }
-
-// TODO: Rename to a more generic thing
-        [Query]
-        private void MovingToInitiator(in Entity entity, ref CharacterController characterController, ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent,
-            MoveBeforePlayingSocialEmoteIntent intent)
-        {
-            if (Vector3.SqrMagnitude(characterController.transform.position - intent.InitiatorPosition) < 2.0f ||
-                movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
-                jumpInputComponent.IsPressed)  // If player jumps, the process is canceled
-            {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
-                movementInput.IgnoreCamera = false;
-                World.Remove<MoveBeforePlayingSocialEmoteIntent>(entity);
-            }
-            else
-            {
-                movementInput.Kind = MovementKind.RUN;
-                movementInput.Axes = Vector2.up;
-                movementInput.IgnoreCamera = true;
-                World.Add(entity, new PlayerLookAtIntent(intent.InitiatorPosition));
-            }
-        }
-
     }
 }

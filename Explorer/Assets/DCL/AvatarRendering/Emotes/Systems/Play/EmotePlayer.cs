@@ -293,6 +293,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
+            // This flag makes the animator choose a different transition to Emote, which does not have an interpolation between animations
+            view.SetAnimatorBool(AnimationHashes.IS_SOCIAL_EMOTE_OUTCOME, emoteComponent.Metadata.IsSocialEmote);
 
             // Prop
             AnimationClip? propClip = null;
