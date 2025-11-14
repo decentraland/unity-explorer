@@ -584,12 +584,12 @@ MonoBehaviour:
       Severity: 4
     - Category: OUTFITS
       Severity: 1
-    - Category: OUTFITS
-      Severity: 3
-    - Category: OUTFITS
-      Severity: 2
-    - Category: ANALYTICS
-      Severity: 3
+    - Category: SOCIAL
+      Severity: 0
+    - Category: SOCIAL
+      Severity: 4
+    - Category: SOCIAL
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

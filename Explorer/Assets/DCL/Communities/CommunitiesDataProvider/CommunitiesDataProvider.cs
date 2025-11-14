@@ -104,7 +104,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return totalRequests;
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
@@ -118,6 +118,9 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             if (privacy != null)
                 formData.Add(new MultipartFormDataSection("privacy", privacy.ToString()));
+
+            if (visibility != null)
+                formData.Add(new MultipartFormDataSection("visibility", visibility.ToString()));
 
             if (lands != null || worlds != null)
             {

@@ -117,6 +117,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBTweenSequence : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBMapPin : IDirtyMarker
     {
         public bool IsDirty { get; set; }
@@ -198,6 +203,11 @@ namespace DCL.ECSComponents
     }
 
     public partial class PBTriggerArea : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBPointerLock : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

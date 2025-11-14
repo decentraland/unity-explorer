@@ -1,6 +1,5 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
@@ -18,7 +17,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly string AssetBundleName;
 
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-        public bool AssetsDestroyed;
 
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
@@ -32,7 +30,7 @@ namespace ECS.StreamableLoading.AssetBundles
             Assets = new Dictionary<string, AssetInfo>();
 
             for (var i = 0; i < loadedAssets.Length; i++)
-                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
+                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source, InitialSceneStateMetadata.HasValue);
 
             Dependencies = dependencies;
 
@@ -63,7 +61,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 return;
 
             AssetBundleUnloaded = true;
-            Asset?.UnloadAsync(false);
+
+            //Needed for quitting, since Unity destroy the Asset out of our control
+            if (Asset != null && Asset)
+                Asset?.UnloadAsync(false);
         }
 
         protected override void DestroyObject()
@@ -79,49 +80,55 @@ namespace ECS.StreamableLoading.AssetBundles
                 Assets = null;
             }
             UnloadAB();
-            AssetsDestroyed = true;
         }
 
         /// <summary>
-        /// Get an asset loaded from the asset bundle.
+        /// Try to get an asset loaded from the asset bundle without throwing exceptions.
         /// </summary>
         /// <param name="assetName">Asset to be requested. If its empty, the first asset loaded will be returned</param>
+        /// <param name="asset">The retrieved asset if successful</param>
         /// <typeparam name="T">Type of the asset to load</typeparam>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">Describes the failling situation</exception>
-        public T GetAsset<T>(string assetName = "") where T : Object
+        /// <returns>True if the asset was successfully retrieved, false otherwise</returns>
+        public bool TryGetAsset<T>(out T asset, string assetName = "") where T: Object
         {
-            AssetInfo assetInfo;
+            asset = null;
 
-            if (Assets == null)
-                throw new ArgumentException($"No assets were loaded for {AssetBundleName}");
+            if (Assets == null || Assets.Count == 0)
+            {
+                ReportHub.LogWarning($"No assets were loaded for {AssetBundleName}", ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
+
+            AssetInfo assetInfo;
 
             if (string.IsNullOrEmpty(assetName))
             {
                 if (Assets.Count > 1)
-                    throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
-
-                if (Assets.Count == 0)
-                    throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");
+                    ReportHub.LogWarning($"Requested an asset by type when there is more than one in the AB {AssetBundleName}, the first one will be returned", ReportCategory.ASSET_BUNDLES);
 
                 assetInfo = Assets.FirstValueOrDefaultNonAlloc();
             }
             else
             {
                 if (!Assets.TryGetValue(assetName, out assetInfo))
-                    throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}");
+                {
+                    ReportHub.LogWarning($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}", ReportCategory.ASSET_BUNDLES);
+                    return false;
+                }
             }
 
-            Assert.IsNotNull(assetInfo.AssetType,
-                $"GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified for Asset Bundle {AssetBundleName}");
-
             if (assetInfo.AssetType != typeof(T))
-                throw new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}");
+            {
+                ReportHub.LogWarning($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}", ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
 
-            return (T)assetInfo.Asset!;
+            asset = (T)assetInfo.Asset!;
+            return true;
         }
 
     }
+
 }
 
 public struct AssetInfo
@@ -129,11 +136,11 @@ public struct AssetInfo
     public Object Asset { get; }
     public Type AssetType { get; }
 
-    public AssetInfo(Object asset, Type assetType, string version, string source)
+    public AssetInfo(Object asset, Type assetType, string version, string source, bool isISS)
     {
         Asset = asset;
         AssetType = assetType;
-        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
+        Asset.name = isISS ? $"AB:{Asset?.name}_{version}_{source}_ISS" : $"AB:{Asset?.name}_{version}_{source}_NoISS";
     }
 }
 
@@ -146,4 +153,12 @@ public static class DictionaryExtensions
 
         return default;
     }
+}
+
+public struct InitialSceneStateMetadata
+{
+    public List<string> assetHash;
+    public List<Vector3> positions;
+    public List<Quaternion> rotations;
+    public List<Vector3> scales;
 }

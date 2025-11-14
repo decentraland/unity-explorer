@@ -110,6 +110,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.NotificationsBus;
+using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
@@ -151,6 +152,8 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; }
 
+        public ISystemClipboard SystemClipboard { get; }
+
         private DynamicWorldContainer(
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
@@ -164,7 +167,8 @@ namespace Global.Dynamic
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            ISystemClipboard systemClipboard)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -175,6 +179,7 @@ namespace Global.Dynamic
             MessagePipesHub = messagePipesHub;
             RemoteMetadata = remoteMetadata;
             RoomHub = roomHub;
+            SystemClipboard = systemClipboard;
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
@@ -511,7 +516,7 @@ namespace Global.Dynamic
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.SmartWearableCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
@@ -747,7 +752,8 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus),
+                    bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
+                    staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -845,11 +851,12 @@ namespace Global.Dynamic
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
-                    chatEventBus
+                    chatEventBus,
+                    staticContainer.SmartWearableCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
@@ -935,6 +942,15 @@ namespace Global.Dynamic
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new SmartWearablesGlobalPlugin(wearableCatalog,
+                    backpackEventBus,
+                    staticContainer.PortableExperiencesController,
+                    staticContainer.ScenesCache,
+                    staticContainer.SmartWearableCache,
+                    assetsProvisioner,
+                    staticContainer.LoadingStatus,
+                    mvcManager,
+                    thumbnailProvider)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
@@ -1131,7 +1147,8 @@ namespace Global.Dynamic
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
-                staticContainer.LandscapeParcelData
+                staticContainer.LandscapeParcelData,
+                builderCollectionsPreview
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);
@@ -1149,7 +1166,8 @@ namespace Global.Dynamic
                 profileBroadcast,
                 roomHub,
                 socialServiceContainer,
-                selfProfile
+                selfProfile,
+                clipboard
             );
 
             // Init itself

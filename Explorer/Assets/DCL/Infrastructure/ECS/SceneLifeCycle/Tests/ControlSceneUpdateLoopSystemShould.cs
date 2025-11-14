@@ -6,7 +6,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -49,7 +48,7 @@ namespace ECS.SceneLifeCycle.Tests
             }, new IpfsPath());
             world.Add(promise.Entity, new StreamableLoadingResult<ISceneFacade>(scene));
 
-            Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedScene"));
+            Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
 
             system.Update(0f);
 
@@ -76,7 +75,7 @@ namespace ECS.SceneLifeCycle.Tests
             world.Add(promise.Entity, new StreamableLoadingResult<ISceneFacade>(scene));
 
             var partition = new PartitionComponent { Bucket = 3 };
-            Entity e = world.Create(promise, partition, sceneDefinitionComponent, InitialSceneStateDescriptor.CreateUnsupported("UnsupportedScene"));
+            Entity e = world.Create(promise, partition, sceneDefinitionComponent);
             realmPartitionSettings.GetSceneUpdateFrequency(in partition).Returns(15);
 
             system.Update(0f);

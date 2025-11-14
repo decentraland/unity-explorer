@@ -397,15 +397,17 @@ MonoBehaviour:
     - Category: PROFILE
       Severity: 0
     - Category: OUTFITS
-      Severity: 3
-    - Category: OUTFITS
-      Severity: 2
-    - Category: OUTFITS
       Severity: 0
     - Category: OUTFITS
       Severity: 4
     - Category: OUTFITS
       Severity: 1
+    - Category: SOCIAL
+      Severity: 4
+    - Category: SOCIAL
+      Severity: 1
+    - Category: SOCIAL
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -764,6 +766,10 @@ MonoBehaviour:
       Severity: 1
     - Category: ASSET_BUNDLES
       Severity: 0
+    - Category: SOCIAL
+      Severity: 4
+    - Category: SOCIAL
+      Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

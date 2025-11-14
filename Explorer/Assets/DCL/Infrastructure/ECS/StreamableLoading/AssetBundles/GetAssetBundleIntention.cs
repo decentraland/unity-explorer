@@ -1,6 +1,7 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Utility;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -35,6 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal Hash128? cacheHash;
 
         public bool IsDependency;
+        public bool LookForDependencies;
 
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
@@ -42,6 +44,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleManifestVersion? assetBundleVersion = null,
             string parentEntityID = "",
             bool isDependency = false,
+            bool lookForDependencies = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -56,6 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles
             ParentEntityID = parentEntityID;
             AssetBundleManifestVersion = assetBundleVersion;
             IsDependency = isDependency;
+            LookForDependencies = lookForDependencies;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -78,8 +82,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default, CancellationTokenSource cancellationTokenSource = null,
-            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false) =>
-            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, cancellationTokenSource: cancellationTokenSource);
+            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false, bool lookForDependencies = false) =>
+            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, lookForDependencies: lookForDependencies, cancellationTokenSource: cancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
@@ -89,6 +93,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
+
+        public static string BuildInitialSceneStateURL(string initialSceneStateID) =>
+            $"staticscene_{initialSceneStateID}{PlatformUtils.GetCurrentPlatform()}";
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetAssetBundleIntention>
         {
