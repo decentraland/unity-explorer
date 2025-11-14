@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.ProfileElements;
@@ -25,6 +26,8 @@ namespace DCL.UI.ConfirmationDialog
         [field: SerializeField] private Image rimImage { get; set; } = null!;
         [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
         [field: SerializeField] private Image profileActionIcon { get; set; } = null!;
+        [field: SerializeField] private TMP_Text additonalUrlText { get; set; }
+        [field: SerializeField] private TMP_Text_ClickeableLink additionalUrlTextLinkHandler { get; set; } = null!;
 
         private readonly UniTask[] closeTasks = new UniTask[3];
 
@@ -35,7 +38,7 @@ namespace DCL.UI.ConfirmationDialog
             closeTasks[2] = confirmButton.Button.OnClickAsync(ct);
             return closeTasks;
         }
-
+        
         public void Configure(ConfirmationDialogParameter dialogData, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             cancelButton.gameObject.SetActive(true);
@@ -72,6 +75,20 @@ namespace DCL.UI.ConfirmationDialog
 
             profilePictureView.SetDefaultThumbnail();
             profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
+
+            additonalUrlText.gameObject.SetActive(false);
+            additionalUrlTextLinkHandler.ClearHookedEvents();
+        }
+
+        public void SetAdditionalUrlText(string text)
+        {
+            additonalUrlText.text = text;
+            additonalUrlText.gameObject.SetActive(!string.IsNullOrEmpty(text));
+        }
+
+        public void HookLinkClickEvent(Action<string> onLinkClicked)
+        {
+            additionalUrlTextLinkHandler.OnLinkClicked += onLinkClicked;
         }
 
         public void Reset()

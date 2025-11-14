@@ -52,13 +52,13 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             else
             {
                 urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                          .AppendSubDirectory(wearablesSubdirectory);
+                    .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                    .AppendSubDirectory(wearablesSubdirectory);
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
                 urlBuilder.AppendParameter(urlEncodedParams[i]);
-
+            
             return urlBuilder.Build();
         }
 

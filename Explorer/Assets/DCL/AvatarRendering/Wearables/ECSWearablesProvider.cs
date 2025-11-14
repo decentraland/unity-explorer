@@ -23,6 +23,8 @@ namespace DCL.AvatarRendering.Wearables
     {
         private const string PAGE_NUMBER = "pageNum";
         private const string PAGE_SIZE = "pageSize";
+        private const string NETWORK = "network";
+        private const string INCLUDE_AMOUNT = "includeAmount";
         private const string CATEGORY = "category";
         private const string ORDER_BY = "orderBy";
         private const string COLLECTION_TYPE = "collectionType";
@@ -48,9 +50,8 @@ namespace DCL.AvatarRendering.Wearables
             this.world = world;
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize,
-            int pageNumber,
-            CancellationToken ct,
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
+            int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
@@ -58,6 +59,8 @@ namespace DCL.AvatarRendering.Wearables
             bool smartWearablesOnly = false,
             string? name = null,
             List<IWearable>? results = null,
+            string? network = null,
+            bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
@@ -65,19 +68,25 @@ namespace DCL.AvatarRendering.Wearables
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
             requestParameters.Add((PAGE_SIZE, pageSize.ToString()));
 
+            if (!string.IsNullOrEmpty(network))
+                requestParameters.Add((NETWORK, network));
+
+            if (includeAmount ?? true)
+                requestParameters.Add((INCLUDE_AMOUNT, "true"));
+            
             if (!string.IsNullOrEmpty(category))
                 requestParameters.Add((CATEGORY, category));
 
             requestParameters.Add((ORDER_BY, sortingField.ToString()));
             requestParameters.Add((ORDER_DIRECTION, GetDirectionParamValue(orderBy)));
 
-            if ((collectionType & IWearablesProvider.CollectionType.Base) != 0)
+            if (collectionType.HasFlag(IWearablesProvider.CollectionType.Base))
                 requestParameters.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
 
-            if ((collectionType & IWearablesProvider.CollectionType.OnChain) != 0)
+            if (collectionType.HasFlag(IWearablesProvider.CollectionType.OnChain))
                 requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
 
-            if ((collectionType & IWearablesProvider.CollectionType.ThirdParty) != 0)
+            if (collectionType.HasFlag(IWearablesProvider.CollectionType.ThirdParty))
                 requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
 
             if (smartWearablesOnly)

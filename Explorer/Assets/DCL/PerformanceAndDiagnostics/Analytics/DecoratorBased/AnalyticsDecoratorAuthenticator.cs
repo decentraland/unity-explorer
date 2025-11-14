@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -30,5 +31,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await core.LogoutAsync(cancellationToken);
+
+        public async UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
+        {
+            return null;
+        }
     }
 }

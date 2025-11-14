@@ -36,6 +36,7 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE = "community_deleted_content_violation";
         private const string USER_BANNED_FROM_SCENE_TYPE = "user_banned_from_scene";
         private const string USER_UNBANNED_FROM_SCENE_TYPE = "user_unbanned_from_scene";
+        private const string GIFT_RECEIVED_TYPE = "gift_received";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -107,6 +108,7 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
                     USER_BANNED_FROM_SCENE_TYPE => new UserBannedFromSceneNotification(),
                     USER_UNBANNED_FROM_SCENE_TYPE => new UserUnbannedFromSceneNotification(),
+                    GIFT_RECEIVED_TYPE => new GiftReceivedNotification(),
                     _ => null,
                 };
 

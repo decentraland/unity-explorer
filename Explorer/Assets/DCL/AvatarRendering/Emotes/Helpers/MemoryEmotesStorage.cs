@@ -115,6 +115,19 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+        public int GetOwnedNftCount(URN nftUrn)
+        {
+            lock (lockObject)
+            {
+                if (ownedNftsRegistry.TryGetValue(nftUrn, out var registry))
+                {
+                    return registry.Count;
+                }
+
+                return 0;
+            }
+        }
+
         public void ClearOwnedNftRegistry()
         {
             lock (lockObject)
