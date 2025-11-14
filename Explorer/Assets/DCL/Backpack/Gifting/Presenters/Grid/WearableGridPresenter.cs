@@ -190,6 +190,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 OnLoadingStateChanged?.Invoke(true);
                 
                 results.Clear();
+
                 (var wearables, int total) = await wearablesProvider.GetAsync(
                     pageSize: CURRENT_PAGE_SIZE,
                     pageNumber: currentPage,
@@ -197,10 +198,11 @@ namespace DCL.Backpack.Gifting.Presenters
                     sortingField: currentSort.OrderByOperation.ToSortingField(),
                     orderBy: currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                     category: string.Empty,
-                    collectionType: IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty,
-                    // collectionType: IWearablesProvider.CollectionType.All,
+                    collectionType: IWearablesProvider.CollectionType.None,
                     name: currentSearch,
-                    results: results
+                    results: results,
+                    network: "MATIC",
+                    includeAmount: true
                 );
 
                 ct.ThrowIfCancellationRequested();

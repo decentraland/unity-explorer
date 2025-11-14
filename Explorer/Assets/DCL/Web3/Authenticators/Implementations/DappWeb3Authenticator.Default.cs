@@ -33,8 +33,7 @@ namespace DCL.Web3.Authenticators
                         new[]
                         {
                             "eth_getBalance",
-                            "eth_call",
-                            "eth_blockNumber", "eth_signTypedData_v4"
+                            "eth_call", "eth_blockNumber", "eth_signTypedData_v4", "eth_sendTransaction"
                         }
                     ),
                     new HashSet<string>
@@ -51,8 +50,7 @@ namespace DCL.Web3.Authenticators
                         "web3_sha3",
                         "web3_clientVersion",
                         "eth_getTransactionCount",
-                        "eth_getBlockByNumber",
-                        "eth_getCode", "eth_sendTransaction"
+                        "eth_getBlockByNumber", "eth_getCode"
                     },
                     environment,
                     new InvalidAuthCodeVerificationFeatureFlag()

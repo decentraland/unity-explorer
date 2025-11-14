@@ -27,35 +27,19 @@ namespace DCL.AvatarRendering.Wearables
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
+            int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             string? name = null,
             List<IWearable>? results = null,
+            string? network = null,
+            bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
-            // Delegate ALL work to the new overload, passing null/false for the new parameters.
-            return GetAsync(pageSize, pageNumber, ct,
-                network: null,
-                includeAmount: false,
-                sortingField, orderBy, category, collectionType, name, results, loadingArguments, needsBuilderAPISigning);
-        }
-
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
-            string? network, bool includeAmount, // <-- New parameters are used here
-            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
-            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
-            string? category = null,
-            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            string? name = null,
-            List<IWearable>? results = null,
-            CommonLoadingArguments? loadingArguments = null,
-            bool needsBuilderAPISigning = false)
-        {
-            // This is the original logic from your old method. It is now correctly placed here.
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
             {
                 URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -87,15 +71,18 @@ namespace DCL.AvatarRendering.Wearables
 
                 for (var i = 0; i < collections.Length; i++)
                 {
-                    // Call the new overload on the source provider
-                    await source.GetAsync(pageSize, pageNumber, ct,
-                        network, includeAmount, // Pass the new parameters through
-                        sortingField, orderBy, category, collectionType, name, localBuffer,
-                        new CommonLoadingArguments(
+                    await source.GetAsync(
+                        pageSize: pageSize, pageNumber: pageNumber, ct: ct,
+                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType, name: name,
+                        results: localBuffer,
+                        network: network,
+                        includeAmount: includeAmount,
+                        loadingArguments: new CommonLoadingArguments(
                             builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
-                        true);
+                        needsBuilderAPISigning: true
+                    );
                 }
 
                 const int OWNED_PAGE_SIZE = 200;
@@ -106,11 +93,13 @@ namespace DCL.AvatarRendering.Wearables
                 while (localBuffer.Count < ownedTotal)
                 {
                     ownedPageBuffer.Clear();
-                    // Call the new overload on the source provider
+                    
                     (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
-                        OWNED_PAGE_SIZE, ownedPage, ct,
-                        network, includeAmount, // Pass the new parameters through
-                        sortingField, orderBy, category, collectionType, name, ownedPageBuffer
+                        pageSize: OWNED_PAGE_SIZE, pageNumber: ownedPage, ct: ct,
+                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType, name: name,
+                        results: ownedPageBuffer,
+                        network: network,
+                        includeAmount: includeAmount
                     );
 
                     ownedTotal = ownedPageTotal;
@@ -127,10 +116,15 @@ namespace DCL.AvatarRendering.Wearables
                 return (results, count);
             }
 
-            // Regular path: Pass all parameters, including the new ones, to the source provider.
-            return await source.GetAsync(pageSize, pageNumber, ct,
-                network, includeAmount,
-                sortingField, orderBy, category, collectionType, name, results, loadingArguments, needsBuilderAPISigning);
+            return await source.GetAsync(
+                pageSize: pageSize, pageNumber: pageNumber, ct: ct,
+                sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType, name: name,
+                results: results,
+                network: network,
+                includeAmount: includeAmount,
+                loadingArguments: loadingArguments,
+                needsBuilderAPISigning: needsBuilderAPISigning
+            );
         }
 
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,

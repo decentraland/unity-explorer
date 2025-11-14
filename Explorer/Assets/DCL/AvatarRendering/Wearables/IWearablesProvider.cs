@@ -11,21 +11,22 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
-            SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
-            string? category = null, CollectionType collectionType = CollectionType.All,
+        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
+            int pageSize,
+            int pageNumber,
+            CancellationToken ct,
+            SortingField sortingField = SortingField.Date,
+            OrderBy orderBy = OrderBy.Descending,
+            string? category = null,
+            CollectionType collectionType = CollectionType.All, // Default for Backpack
             string? name = null,
             List<IWearable>? results = null,
+            string? network = null,
+            bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
-            bool needsBuilderAPISigning = false);
-
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
-            string? network, bool includeAmount,
-            SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
-            string? category = null, CollectionType collectionType = CollectionType.All,
-            string? name = null, List<IWearable>? results = null,
-            CommonLoadingArguments? loadingArguments = null, bool needsBuilderAPISigning = false);
-
+            bool needsBuilderAPISigning = false
+        );
+        
         UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct);
@@ -49,7 +50,8 @@ namespace DCL.AvatarRendering.Wearables
             Base = 1 << 0,
             OnChain = 1 << 1,
             ThirdParty = 1 << 2,
-            All = -1,
+            All = Base | OnChain | ThirdParty,
+            None = 0
         }
     }
 }

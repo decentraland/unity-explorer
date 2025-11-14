@@ -49,19 +49,18 @@ namespace DCL.AvatarRendering.Wearables
             this.world = world;
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
-            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
-            string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null,
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
+            int pageSize, int pageNumber, CancellationToken ct,
+            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
+            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
+            string? category = null,
+            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            string? name = null,
+            List<IWearable>? results = null,
+            string? network = null,
+            bool? includeAmount = null,
+            CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
-        {
-            return await GetAsync(pageSize, pageNumber, ct,
-                network: null,
-                includeAmount: false,
-                sortingField, orderBy, category, collectionType, name, results, loadingArguments, needsBuilderAPISigning);
-        }
-
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct, string? network, bool includeAmount, IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending, string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All, string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null, bool needsBuilderAPISigning = false)
         {
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
@@ -70,7 +69,7 @@ namespace DCL.AvatarRendering.Wearables
             if (!string.IsNullOrEmpty(network))
                 requestParameters.Add((NETWORK, network));
 
-            if (includeAmount)
+            if (includeAmount ?? true)
                 requestParameters.Add((INCLUDE_AMOUNT, "true"));
             
             if (!string.IsNullOrEmpty(category))
@@ -79,13 +78,13 @@ namespace DCL.AvatarRendering.Wearables
             requestParameters.Add((ORDER_BY, sortingField.ToString()));
             requestParameters.Add((ORDER_DIRECTION, GetDirectionParamValue(orderBy)));
 
-            if ((collectionType & IWearablesProvider.CollectionType.Base) != 0)
+            if (collectionType.HasFlag(IWearablesProvider.CollectionType.Base))
                 requestParameters.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
 
-            if ((collectionType & IWearablesProvider.CollectionType.OnChain) != 0)
+            if (collectionType.HasFlag(IWearablesProvider.CollectionType.OnChain))
                 requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
 
-            if ((collectionType & IWearablesProvider.CollectionType.ThirdParty) != 0)
+            if (collectionType.HasFlag(IWearablesProvider.CollectionType.ThirdParty))
                 requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
 
             if (!string.IsNullOrEmpty(name))

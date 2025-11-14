@@ -43,13 +43,13 @@ namespace DCL.AvatarRendering.Emotes
                 results?.Clear();
                 urlBuilder.Clear();
 
-                // urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                //     .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
-                //     .AppendParameter(new URLParameter("includeEntities", "true"));
+                urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+                    .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
+                    .AppendParameter(new URLParameter("includeEntities", "true"));
 
-                urlBuilder.AppendDomain(URLDomain.FromString("https://peer-testing-2.decentraland.org"))
-                    .AppendPath(URLPath.FromString($"/explorer/{userId}/emotes"))
-                          .AppendParameter(new URLParameter("includeEntities", "true"));
+                // urlBuilder.AppendDomain(URLDomain.FromString("https://peer-testing-2.decentraland.org"))
+                //     .AppendPath(URLPath.FromString($"/explorer/{userId}/emotes"))
+                //           .AppendParameter(new URLParameter("includeEntities", "true"));
 
                 int? pageNum = requestOptions.pageNum;
                 int? pageSize = requestOptions.pageSize;

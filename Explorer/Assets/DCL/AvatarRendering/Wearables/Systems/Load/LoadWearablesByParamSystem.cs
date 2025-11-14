@@ -51,16 +51,16 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
             else
             {
-                // urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                //           .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                //           .AppendSubDirectory(wearablesSubdirectory);
-                //
-
-                const string testingCatalystUrl = "https://peer-testing-2.decentraland.org/explorer/";
-
-                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(testingCatalystUrl), lambdaSubdirectory)
+                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
                     .AppendSubDirectory(URLSubdirectory.FromString(userID))
                     .AppendSubDirectory(wearablesSubdirectory);
+
+
+                // const string testingCatalystUrl = "https://peer-testing-2.decentraland.org/explorer/";
+                //
+                // urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(testingCatalystUrl), lambdaSubdirectory)
+                //     .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                //     .AppendSubDirectory(wearablesSubdirectory);
 
                 // try
                 // {
