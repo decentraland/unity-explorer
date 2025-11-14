@@ -322,6 +322,7 @@ MonoBehaviour:
   <SelectedText>k__BackingField: {fileID: 85566942900833079}
   tabAnimator: {fileID: 0}
   <TabClickAudio>k__BackingField: {fileID: 11400000, guid: 0df7b16e196525d40a3a98032e38abea, type: 2}
+  <HoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &3388056574719437513
 GameObject:
   m_ObjectHideFlags: 0
@@ -436,7 +437,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
