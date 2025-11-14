@@ -135,6 +135,8 @@ namespace DCL.Profiles
                     intention.Ids.Remove(profileDto.userId);
                     profileRepository.ResolveProfile(profileDto.userId, profileDto);
                     successfullyResolved++;
+
+                    dto.Dispose();
                 }
 
                 if (successfullyResolved > 1)
