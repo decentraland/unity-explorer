@@ -1,3 +1,4 @@
+using DCL.Communities;
 using DCL.NotificationsBus.NotificationTypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -106,7 +107,7 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_INVITE_RECEIVED_TYPE => new CommunityUserInvitedNotification(),
                     COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE => new CommunityUserRequestToJoinAcceptedNotification(),
                     COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
-                    COMMUNITY_POST_ADDED_TYPE => new CommunityPostAddedNotification(),
+                    COMMUNITY_POST_ADDED_TYPE => CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? new CommunityPostAddedNotification() : null,
                     USER_BANNED_FROM_SCENE_TYPE => new UserBannedFromSceneNotification(),
                     USER_UNBANNED_FROM_SCENE_TYPE => new UserUnbannedFromSceneNotification(),
                     _ => null,
