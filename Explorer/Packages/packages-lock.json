@@ -508,7 +508,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "f3535d786be28b19936f49c9baf3d096d07fe2f5"
+      "hash": "6cac5ec6f98378d4e756b060df9912b8b206b2ec"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
