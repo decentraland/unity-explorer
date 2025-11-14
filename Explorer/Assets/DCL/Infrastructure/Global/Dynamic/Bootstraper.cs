@@ -103,7 +103,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            bool hasDebugFlag,
+            IAppArgs appArgs,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -129,7 +129,7 @@ namespace Global.Dynamic
                 profileRepositoryProxy,
                 bootstrapContainer.Environment,
                 ct,
-                hasDebugFlag
+                appArgs
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(

@@ -6,6 +6,7 @@ namespace DCL.Backpack
     {
         public event Action<BackpackGridSort> OnSortChanged;
         public event Action<bool> OnCollectiblesOnlyChanged;
+        public event Action<bool> OnSmartWearablesOnlyChanged;
 
 		private readonly BackpackSortDropdownView view;
         private BackpackGridSort currentSort;
@@ -22,11 +23,17 @@ namespace DCL.Backpack
             view.sortNameAz.onValueChanged.AddListener(OnSortNameAz);
             view.sortNameZa.onValueChanged.AddListener(OnSortNameZa);
             view.collectiblesOnly.onValueChanged.AddListener(OnCollectiblesOnly);
+            view.smartWearablesOnly.onValueChanged.AddListener(OnSmartWearablesOnly);
         }
 
         private void OnCollectiblesOnly(bool isOn)
         {
             OnCollectiblesOnlyChanged?.Invoke(isOn);
+        }
+
+        private void OnSmartWearablesOnly(bool isOn)
+        {
+            OnSmartWearablesOnlyChanged?.Invoke(isOn);
         }
 
         private void OnSortNewest(bool isOn)

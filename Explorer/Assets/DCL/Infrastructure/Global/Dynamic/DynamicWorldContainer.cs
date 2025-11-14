@@ -110,6 +110,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.NotificationsBus;
+using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
@@ -515,7 +516,7 @@ namespace Global.Dynamic
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.SmartWearableCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
@@ -751,7 +752,8 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus),
+                    bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
+                    staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -849,7 +851,8 @@ namespace Global.Dynamic
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
-                    chatEventBus
+                    chatEventBus,
+                    staticContainer.SmartWearableCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -939,6 +942,15 @@ namespace Global.Dynamic
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new SmartWearablesGlobalPlugin(wearableCatalog,
+                    backpackEventBus,
+                    staticContainer.PortableExperiencesController,
+                    staticContainer.ScenesCache,
+                    staticContainer.SmartWearableCache,
+                    assetsProvisioner,
+                    staticContainer.LoadingStatus,
+                    mvcManager,
+                    thumbnailProvider)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
@@ -1135,7 +1147,8 @@ namespace Global.Dynamic
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
-                staticContainer.LandscapeParcelData
+                staticContainer.LandscapeParcelData,
+                builderCollectionsPreview
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

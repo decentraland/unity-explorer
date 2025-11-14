@@ -28,6 +28,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Factory;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -131,7 +132,7 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
 
-            return await CreateSceneAsync(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectoryAsync(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -152,20 +153,20 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
 
-            return await CreateSceneAsync(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
 
-        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
-            CreateSceneAsync(sceneData, partitionProvider, ct);
+        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct) =>
+            CreateSceneAsync(sceneData, permissionsProvider, partitionProvider, ct);
 
         public void SetGlobalWorldActions(IGlobalWorldActions actions)
         {
             globalWorldActions = actions;
         }
 
-        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory);
+            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
 
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;
@@ -188,6 +189,7 @@ namespace SceneRunner
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
+            var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
             if (ENABLE_SDK_OBSERVABLES)
             {
@@ -208,7 +210,7 @@ namespace SceneRunner
                     webRequestController,
                     runtimeDeps.RestrictedActionsAPI,
                     runtimeDeps.RuntimeImplementation,
-                    ethereumApi,
+                    ethereumApiImpl,
                     runtimeDeps.WebSocketAipImplementation,
                     identityCache,
                     dclEnvironment,
@@ -237,7 +239,7 @@ namespace SceneRunner
                     runtimeDeps.RestrictedActionsAPI,
                     dclEnvironment,
                     runtimeDeps.RuntimeImplementation,
-                    ethereumApi,
+                    ethereumApiImpl,
                     runtimeDeps.WebSocketAipImplementation,
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
