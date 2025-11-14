@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -48,10 +49,19 @@ namespace ECS.StreamableLoading.AssetBundles
             URLAddress url = urlBuilder.Build();
             using PoolExtensions.Scope<List<ABVersionsResponse>> dtoPooledList = DTO_POOL.AutoScope();
 
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, reportCategory)
-                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-
             AssetBundlesVersions result = AssetBundlesVersions.Create();
+
+            try
+            {
+                await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, reportCategory)
+                                          .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, reportCategory);
+                return result;
+            }
 
             foreach (var element in dtoPooledList.Value)
                 result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
