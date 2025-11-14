@@ -6,6 +6,7 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3;
 using DCL.WebRequests;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -34,6 +35,13 @@ namespace DCL.Profiles
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     public partial class LoadProfilesBatchSystem : LoadSystemBase<ProfilesBatchResult, GetProfilesBatchIntent>
     {
+        // JSON structure overhead for {"ids":[...]}
+        private const int BASE_JSON_OVERHEAD = 10; // {"ids":[]}
+
+        // Per-string overhead in JSON
+        private const int QUOTES_PER_STRING = 2; // Opening and closing quotes
+        private const int COMMA_SEPARATOR = 1; // Comma between array elements
+
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
 
         private static readonly ThreadSafeListPool<GetProfileJsonRootDto> BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
@@ -41,8 +49,6 @@ namespace DCL.Profiles
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesDebug profilesDebug;
-
-        private readonly StringBuilder bodyBuilder = new ();
 
         internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController, ProfilesDebug profilesDebug) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
         {
@@ -56,39 +62,63 @@ namespace DCL.Profiles
             // Clean up resolves requests
             World.Destroy(COMPLETED_BATCHES);
 
+        /// <summary>
+        ///     Calculates the exact buffer size needed for a JSON payload with ETH wallet IDs.
+        ///     Format: {"ids":["0x1234...","0x5678...",...]}.
+        /// </summary>
+        /// <param name="idCount">Number of ETH wallet addresses</param>
+        /// <returns>Exact byte size needed for the JSON payload</returns>
+        private static int CalculateExactSize(int idCount)
+        {
+            if (idCount <= 0)
+                return BASE_JSON_OVERHEAD; // Empty array: {"ids":[]}
+
+            // Base structure: {"ids":[]}
+            int totalSize = BASE_JSON_OVERHEAD;
+
+            // Each ID contributes:
+            // - 2 bytes for quotes: ""
+            // - addressLength bytes for the actual address
+            // - 1 byte for comma (except last element)
+            int bytesPerId = QUOTES_PER_STRING + Web3Address.ETH_ADDRESS_LENGTH;
+            totalSize += bytesPerId * idCount;
+
+            // Add commas between elements (idCount - 1 commas)
+            totalSize += (idCount - 1) * COMMA_SEPARATOR;
+
+            return totalSize;
+        }
+
         protected override async UniTask<StreamableLoadingResult<ProfilesBatchResult>> FlowInternalAsync(GetProfilesBatchIntent intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             using GetProfilesBatchIntent _ = intention;
 
-            bodyBuilder.Clear();
+            using var uploadHandler = new BufferedStringUploadHandler(CalculateExactSize(intention.Ids.Count));
 
-            bodyBuilder.Append("{\"ids\":[");
+            uploadHandler.WriteString("{\"ids\":[");
 
             int i = 0;
 
             foreach (string id in intention.Ids)
             {
-                bodyBuilder.Append('\"');
-                bodyBuilder.Append(id);
-                bodyBuilder.Append('\"');
+                uploadHandler.WriteJsonString(id);
 
                 if (i != intention.Ids.Count - 1)
-                    bodyBuilder.Append(",");
-
+                    uploadHandler.WriteChar(',');
                 i++;
             }
 
-            bodyBuilder.Append("]}");
+            uploadHandler.WriteString("]}");
 
             using PooledObject<List<GetProfileJsonRootDto>> __ = BATCH_POOL.Get(out List<GetProfileJsonRootDto> batch);
 
-            var result = await webRequestController.PostAsync(
-                                                        intention.CommonArguments.URL,
-                                                        GenericPostArguments.CreateJson(bodyBuilder.ToString()),
-                                                        ct,
-                                                        ReportCategory.PROFILE)
-                                                   .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                                   .SuppressToResultAsync(ReportCategory.PROFILE);
+            Result<List<GetProfileJsonRootDto>> result = await webRequestController.PostAsync(
+                                                                                        intention.CommonArguments.URL,
+                                                                                        GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
+                                                                                        ct,
+                                                                                        ReportCategory.PROFILE)
+                                                                                   .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
+                                                                                   .SuppressToResultAsync(ReportCategory.PROFILE);
 
             // Keep processing on the thread pool
 
