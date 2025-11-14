@@ -19,7 +19,8 @@
         internal const int SCENES_OF_INTEREST = 23;
         internal const int PIN_MARKER = 24;
         internal const int PIN_MARKER_THUMBNAIL = 25;
-        internal const int LIVE_EVENTS = 26;
+        internal const int HOME_MARKER = 26;
+        internal const int LIVE_EVENTS = 27;
         internal const int PARCEL_HIGHLIGHT = 30;
 
     }

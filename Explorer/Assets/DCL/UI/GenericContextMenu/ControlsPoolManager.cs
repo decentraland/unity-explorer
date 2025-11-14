@@ -108,21 +108,21 @@ namespace DCL.UI
         public GenericContextMenuComponentBase GetContextMenuComponent(IContextMenuControlSettings settings, int index, Transform parent)
         {
             GenericContextMenuComponentBase component = settings switch
-                                                        {
-                                                            SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
-                                                            ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
-                                                            SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
-                                                            ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
-                ToggleWithIconAndCheckContextMenuControlSettings toggleWithTitleAndIconSettings => GetToggleWithTitleIcon(toggleWithTitleAndIconSettings),
-                                                            ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
-                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
-                                                            UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
-                                                            ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
-                                                            TextContextMenuControlSettings textSettings => GetText(textSettings),
-                                                            SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
-                                                            ScrollableButtonListControlSettings scrollableButtonList => GetScrollableButtonList(scrollableButtonList),
-                                                            _ => throw new ArgumentOutOfRangeException(),
-                                                        };
+                {
+                    SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
+                    ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
+                    SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
+                    ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
+                    ToggleWithIconAndCheckContextMenuControlSettings toggleWithTitleAndIconSettings => GetToggleWithTitleIcon(toggleWithTitleAndIconSettings),
+                    ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
+                    ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
+                    UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
+                    ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
+                    TextContextMenuControlSettings textSettings => GetText(textSettings),
+                    SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
+                    ScrollableButtonListControlSettings scrollableButtonList => GetScrollableButtonList(scrollableButtonList),
+                    _ => throw new ArgumentOutOfRangeException(),
+                };
 
             component.transform.SetParent(parent);
             component!.transform.SetSiblingIndex(index);

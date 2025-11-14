@@ -38,6 +38,7 @@
             public const string OPEN_SUPPORT = "open_support";
             public const string SKIP_MINIMUM_REQUIREMENTS_SCREEN = "skip_minimum_requirements_screen";
             public const string EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN = "exit_app_from_minimum_requirements_screen";
+            public const string HOME_POSITION_SET = "home_position_set";
         }
 
         public static class Profile

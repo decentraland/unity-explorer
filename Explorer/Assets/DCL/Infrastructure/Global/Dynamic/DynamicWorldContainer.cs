@@ -109,6 +109,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
@@ -471,7 +472,9 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
-
+            HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
+            IEventBus eventBus = new EventBus(true);
+            
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -488,6 +491,8 @@ namespace Global.Dynamic
                         sharedNavmapCommandBus,
                         onlineUsersProvider,
                         identityCache,
+                        homePlaceEventBus,
+                        eventBus,
                         ct
                     );
 
@@ -556,7 +561,8 @@ namespace Global.Dynamic
                 reloadSceneChatCommand,
                 roomHub,
                 staticContainer.LoadingStatus,
-                includeBannedUsersFromScene
+                includeBannedUsersFromScene,
+                homePlaceEventBus
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -629,7 +635,6 @@ namespace Global.Dynamic
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
-            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -849,7 +854,8 @@ namespace Global.Dynamic
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
-                    chatEventBus
+                    chatEventBus,
+                    homePlaceEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
