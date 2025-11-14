@@ -15,7 +15,7 @@ using System;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
 
-namespace DCL.SocialService.PerformanceTests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     public class PerformanceBenchmark
     {

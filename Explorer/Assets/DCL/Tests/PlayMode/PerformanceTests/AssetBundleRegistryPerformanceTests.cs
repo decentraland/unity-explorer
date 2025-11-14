@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.PerformanceTesting;
 
-namespace DCL.SocialService.PerformanceTests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     [TestFixture("https://asset-bundle-registry.decentraland.zone/")]
     [TestFixture("https://asset-bundle-registry-test.decentraland.zone/")]

@@ -5,13 +5,12 @@ using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.PerformanceTesting;
 using UnityEngine;
 
-namespace DCL.SocialService.PerformanceTests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     [TestFixture("https://comms-gatekeeper.decentraland.zone/")]
     [TestFixture("https://comms-gatekeeper-test.decentraland.zone/")]

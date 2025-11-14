@@ -2,7 +2,6 @@
 using DCL.Browser.DecentralandUrls;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
-using DCL.Diagnostics.Tests;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using Global.Dynamic.LaunchModes;
@@ -13,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.PerformanceTesting;
 
-namespace DCL.SocialService.PerformanceTests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     [TestFixture(DecentralandEnvironment.Org)]
     [TestFixture(DecentralandEnvironment.Zone)]

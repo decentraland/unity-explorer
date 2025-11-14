@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.PerformanceTesting;
 
-namespace DCL.SocialService.PerformanceTests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     [TestFixture("https://peer-ec1.decentraland.org/lambdas/")]
     [TestFixture("https://peer-ec2.decentraland.org/lambdas/")]

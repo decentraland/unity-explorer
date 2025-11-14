@@ -1,12 +1,11 @@
-﻿using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
+﻿using DCL.WebRequests.Analytics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
 using UnityEngine.Networking;
 
-namespace DCL.SocialService.PerformanceTests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     public class PerformanceTestWebRequestsAnalytics : IWebRequestsAnalyticsContainer
     {
