@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Storage;
@@ -31,7 +30,11 @@ namespace DCL.SceneLoadingScreens
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
-        private IntVariable? progressLabel;
+
+        // IntVariable causes deadlock occasionally.
+        // There is a similar issue reported on the forum:https://discussions.unity.com/t/deadlock-freezing-issue-with-localizationsettings-stringdatabase-getlocalizedstring-under-multiple-concurrent-calls-on-mobile/1566794
+        // private IntVariable? progressLabel;
+        private string progressLocalizationString = string.Empty;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -75,7 +78,7 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
 
-            progressLabel = (IntVariable)viewInstance.ProgressLabel.StringReference["progressValue"];
+            progressLocalizationString = viewInstance.ProgressLabel.StringReference!.GetLocalizedString()!.EnsureNotNull();
         }
 
         protected override void OnBeforeViewShow()
@@ -97,6 +100,9 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
+
+            // Fetch fresh localization string on loading screen show event
+            progressLocalizationString = viewInstance.ProgressLabel.StringReference!.GetLocalizedString()!.EnsureNotNull();
         }
 
         protected override void OnViewClose()
@@ -195,7 +201,10 @@ namespace DCL.SceneLoadingScreens
         {
             progress = Mathf.Clamp01(progress);
             viewInstance.ProgressBar.normalizedValue = progress;
-            progressLabel!.Value = (int)(progress * 100);
+
+            var value = (int)(progress * 100);
+            string formatted = progressLocalizationString.Replace("0", value.ToString());
+            viewInstance.LoadingPercentageText.SetText(formatted);
         }
 
         private void AddLoadProgress(float progress) =>
