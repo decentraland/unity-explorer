@@ -11,7 +11,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
-using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -86,6 +85,12 @@ namespace DCL.SDKComponents.MediaStream
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureAudioIsPlaying();
+
+                if ((sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial)
+                    || (sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(sdkComponent.SpatialMaxDistance, component.SpatialMaxDistance))
+                    // In case the sdk component has no spatial max distance, then it should reset to its default value
+                    || (!sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(component.SpatialMaxDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE)))
+                    component.UpdateSpatialAudio(sdkComponent.Spatial, sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
             }
 
             ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
@@ -120,6 +125,12 @@ namespace DCL.SDKComponents.MediaStream
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureVideoIsPlaying();
+
+                if ((sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial)
+                    || (sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(sdkComponent.SpatialMaxDistance, component.SpatialMaxDistance))
+                    // In case the sdk component has no spatial max distance, then it should reset to its default value
+                    || (!sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(component.SpatialMaxDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE)))
+                    component.UpdateSpatialAudio(sdkComponent.Spatial, sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
             }
 
             if (ConsumePromise(ref component, false))
