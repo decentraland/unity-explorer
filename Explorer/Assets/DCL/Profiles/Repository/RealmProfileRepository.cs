@@ -218,9 +218,9 @@ namespace DCL.Profiles
             var results = new List<Profile>(ids.Count);
 
             // Pool is inside WhenAll
-            await UniTask.WhenAll(ids.Select(WaitForProfile));
+            await UniTask.WhenAll(ids.Select(WaitForProfileAsync));
 
-            async UniTask WaitForProfile(string id)
+            async UniTask WaitForProfileAsync(string id)
             {
                 Result<Profile?> profile = await GetAsync(id, 0, fromCatalyst, ct, false, true)
                    .SuppressToResultAsync();
