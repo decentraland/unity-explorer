@@ -54,6 +54,7 @@ MonoBehaviour:
   - rid: 657752310186246267
   - rid: 6478896861045588059
   - rid: 6169970366055448665
+  - rid: 3821626543930605662
   - rid: 745469515127586908
   references:
     version: 2
@@ -662,6 +663,33 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 3821626543930605662
+      type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
+      data:
+        AuthorizationPopup:
+          m_AssetGUID: 000fc6d94dca3b64594f10aae8994ed7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityBackgrounds:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityColors:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        CategoryIcons:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -830,7 +858,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        startFadeDistanceDithering: 0.8
+        startFadeDistanceDithering: 0.42
         endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100
         computeShader:

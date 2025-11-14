@@ -33,6 +33,7 @@ namespace DCL.AvatarRendering.Wearables
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            bool smartWearablesOnly = false,
             string? name = null,
             List<IWearable>? results = null,
             string? network = null,
@@ -73,7 +74,9 @@ namespace DCL.AvatarRendering.Wearables
                 {
                     await source.GetAsync(
                         pageSize: pageSize, pageNumber: pageNumber, ct: ct,
-                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType, name: name,
+                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType,
+                        smartWearablesOnly: smartWearablesOnly,
+                        name: name,
                         results: localBuffer,
                         network: network,
                         includeAmount: includeAmount,
@@ -96,7 +99,9 @@ namespace DCL.AvatarRendering.Wearables
                     
                     (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
                         pageSize: OWNED_PAGE_SIZE, pageNumber: ownedPage, ct: ct,
-                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType, name: name,
+                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType,
+                        smartWearablesOnly: smartWearablesOnly,
+                        name: name,
                         results: ownedPageBuffer,
                         network: network,
                         includeAmount: includeAmount
@@ -118,7 +123,9 @@ namespace DCL.AvatarRendering.Wearables
 
             return await source.GetAsync(
                 pageSize: pageSize, pageNumber: pageNumber, ct: ct,
-                sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType, name: name,
+                sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType,
+                smartWearablesOnly: smartWearablesOnly,
+                name: name,
                 results: results,
                 network: network,
                 includeAmount: includeAmount,

@@ -48,8 +48,10 @@ namespace Global.Tests.PlayMode
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
+            var appArgs = new ApplicationParametersParser();
+
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
-            FeaturesRegistry.Initialize(new FeaturesRegistry(new ApplicationParametersParser(), false));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
@@ -100,7 +102,7 @@ namespace Global.Tests.PlayMode
                 new ObjectProxy<IProfileRepository>(),
                 DecentralandEnvironment.Org,
                 ct,
-                hasDebugFlag: false,
+                appArgs,
                 enableGPUInstancing: false
             );
 

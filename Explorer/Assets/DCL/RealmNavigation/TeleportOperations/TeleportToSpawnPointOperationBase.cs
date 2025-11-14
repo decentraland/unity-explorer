@@ -5,6 +5,7 @@ using DCL.Ipfs;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 using DCL.Utility.Types;
+using DCL.Utility.Exceptions;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
@@ -47,8 +48,9 @@ namespace DCL.RealmNavigation.TeleportOperations
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
+            // See https://github.com/decentraland/unity-explorer/issues/6124 we should teleport the player even if the scene cannot be loaded due to a missing manifest
             // We need to prevent the error propagation, otherwise the load state remains invalid which provokes issues like the incapability of typing another command in the chat
-            if (res.Error is { Exception: ScriptEngineException })
+            if (res.Error is { Exception: ScriptEngineException } or { Exception: ManifestNotFoundException })
             {
                 ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Error on teleport to spawn point {parcel}: {res.Error.Value.Exception}");
                 return EnumResult<TaskError>.SuccessResult();

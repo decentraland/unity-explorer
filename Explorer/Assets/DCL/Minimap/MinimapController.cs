@@ -382,7 +382,7 @@ namespace DCL.Minimap
         private bool CanInteractWithContextualButton(bool isGenesisModeActivated) =>
             !isGenesisModeActivated &&
             (!realmData.IsLocalSceneDevelopment ||
-             (realmData.IsLocalSceneDevelopment && scenesCache.CurrentScene != null));
+             (realmData.IsLocalSceneDevelopment && scenesCache.CurrentScene.Value != null));
 
         private string GetContextualButtonText(bool isGenesisModeActivated)
         {
