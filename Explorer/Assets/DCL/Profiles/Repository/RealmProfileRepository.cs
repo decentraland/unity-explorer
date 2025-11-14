@@ -311,7 +311,6 @@ namespace DCL.Profiles
                 profileDTO.CopyTo(profile);
                 profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
 
-                // TODO make the cache thread-safe
                 profileCache.Set(userId, profile);
             }
             else

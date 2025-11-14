@@ -10,9 +10,6 @@ namespace DCL.Profiles
         /// <summary>
         ///     Should be called from the background thread
         /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="profileDTO"></param>
-        /// <returns></returns>
         public Profile? ResolveProfile(string userId, ProfileJsonDto? profileDTO);
 
         public URLAddress PostUrl(URLDomain fromCatalyst);
