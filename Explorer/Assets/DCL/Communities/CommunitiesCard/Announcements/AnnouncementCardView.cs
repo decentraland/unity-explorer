@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private const string DELETE_ANNOUNCEMENT_TEXT_FORMAT = "Are you sure you want to delete this Announcement?";
         private const string DELETE_ANNOUNCEMENT_CONFIRM_TEXT = "DELETE";
         private const string DELETE_ANNOUNCEMENT_CANCEL_TEXT = "CANCEL";
+        private const float MIN_CARD_HEIGHT = 87f;
 
         [SerializeField] private TMP_Text announcementContent = null!;
         [SerializeField] private TMP_Text authorName = null!;
@@ -37,6 +38,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private Button deleteAnnouncementButton = null!;
         [SerializeField] private ProfilePictureView profilePicture = null!;
         [SerializeField] private Sprite deleteSprite = null!;
+        [SerializeField] private ContentSizeFitter messageContentSizeFitter = null!;
 
         private string currentAnnouncementId = null!;
         private string currentProfileThumbnailUrl = null!;
@@ -87,8 +89,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             likesCounter.text = announcementInfo.likesCount.ToString();
             deleteAnnouncementButton.gameObject.SetActive(allowDeletion);
 
-            // TODO (Santi): Avoid to use ForceRebuildLayoutImmediate removing the content size fitter and calculating the height manually
-            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform) transform);
+            RefreshCardHeight();
         }
 
         private static string FormatDateString(string createdAtDateString)
@@ -114,6 +115,15 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 default:
                     return announcementDateTime.ToString(announcementDateTime.Year == DateTime.UtcNow.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture);
             }
+        }
+
+        private void RefreshCardHeight()
+        {
+            announcementContent.ForceMeshUpdate(true, true);
+            messageContentSizeFitter.SetLayoutVertical();
+            ((RectTransform) transform).sizeDelta = new Vector2(
+                ((RectTransform) transform).sizeDelta.x,
+                MIN_CARD_HEIGHT + ((RectTransform) announcementContent.transform).sizeDelta.y);
         }
 
         private void OnLikeAnnouncementButtonClicked() =>
