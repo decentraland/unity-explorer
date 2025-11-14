@@ -162,9 +162,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         {
             TrimmedWearableDTO elementDTO = element.Entity;
 
-            // Same "hack" as in: AssetBundleManifestVersion.InjectContent
-            if (PlatformUtils.GetCurrentPlatform() == "_mac" && elementDTO.thumbnail.StartsWith("Qm"))
-                elementDTO.thumbnail = elementDTO.thumbnail.ToLowerInvariant();
+            elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail);
 
             ITrimmedWearable wearable = trimmedWearableStorage.GetOrAddByDTO(elementDTO);
 

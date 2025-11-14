@@ -156,25 +156,17 @@ public class AssetBundleManifestVersion
             // But we cannot use it anymore since we are not downloading the whole manifest
             // Whatsmore, the dependencies inside Qm files are always lowercase. But in Windows, files are case dependant. So, Windows also needs to handle this sepcial cases
             // Maybe one day, when `Qm` deployments dont exist anymore, this method can be removed
-            ReadOnlySpan<char> span = entityID.AsSpan();
-            bool isQM = span.Length >= 2 && span[0] == 'Q' && span[1] == 'm';
+            if (!AssetBundleManifestHelper.IsQmEntity(entityID)) return;
 
-            if (isQM)
-            {
-                convertedFiles = new HashSet<string>(new UrlHashComparer());
+            convertedFiles = new HashSet<string>(new UrlHashComparer());
 
-                if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                {
-                    for (var i = 0; i < entityDefinitionContent.Length; i++)
-                        convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
-                }
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
+                for (var i = 0; i < entityDefinitionContent.Length; i++)
+                    convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
 
-                if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                {
-                    for (var i = 0; i < entityDefinitionContent.Length; i++)
-                        convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
-                }
-            }
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+                for (var i = 0; i < entityDefinitionContent.Length; i++)
+                    convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
         }
     }
 
