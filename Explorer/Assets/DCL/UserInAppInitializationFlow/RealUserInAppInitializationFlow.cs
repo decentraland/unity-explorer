@@ -94,6 +94,7 @@ namespace DCL.UserInAppInitializationFlow
             this.roomHub = roomHub;
         }
 
+
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
@@ -120,6 +121,7 @@ namespace DCL.UserInAppInitializationFlow
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
 
+                shouldShowAuthentication = true;
                 if (shouldShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
@@ -158,8 +160,6 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            // We need to do this before livekit because there is a realm change in this operation
-                            // and we need to ensure that livekit connects to the correct endpoint
                             await checkOnboardingStartupOperation.ExecuteAsync(ct);
 
                             //Set initial position and start async livekit connection
@@ -167,11 +167,6 @@ namespace DCL.UserInAppInitializationFlow
                                 = characterObject.Controller.transform.position
                                     = startParcel.Peek().ParcelToPositionFlat();
 
-                            // This operation is not awaited immediately to save approximately 3-4 seconds during the load process,
-                            // as it runs in parallel with other tasks.
-                            // However, this approach introduces potential risks.
-                            // If any of the LiveKit parameters change after this call (e.g., realm configuration),
-                            // the task may become outdated, leading to an inconsistent state.
                             UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                             //Create a child report to be able to hold the parallel livekit operation
@@ -183,8 +178,7 @@ namespace DCL.UserInAppInitializationFlow
                                 mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
                             else
                             {
-                                // Finally, wait for livekit to end handshake that started before.
-                                // At this point it is necessary that the task did not become invalid by any modification in the process
+                                //Wait for livekit to end handshake
                                 var livekitOperationResult = await livekitHandshake;
 
                                 if (isLocalSceneDevelopment)
@@ -211,7 +205,6 @@ namespace DCL.UserInAppInitializationFlow
                     );
 
                 result = loadingResult;
-
                 if (result.Success == false)
                 {
                     //Fail straight away
@@ -251,13 +244,6 @@ namespace DCL.UserInAppInitializationFlow
             if (result.Error is { Exception: UserBlockedException })
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
 
-            if (result.Error is { State: TaskError.Timeout })
-                return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
-                    title: "Connection Error",
-                    description: "We were unable to connect to Decentraland. Please verify your connection and retry.",
-                    iconType: ErrorPopupWithRetryController.IconType.CONNECTION_LOST,
-                    retryText: "Continue")), ct);
-
             var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
         }
@@ -275,9 +261,9 @@ namespace DCL.UserInAppInitializationFlow
             return error.State switch
                    {
                        TaskError.MessageError => $"Error: {error.Message}",
-                       TaskError.Timeout => "Load timeout. Verify yor connection.",
-                       TaskError.Cancelled => "Operation cancelled.",
-                       TaskError.UnexpectedException => "Critical error occured.",
+                       TaskError.Timeout => "Load timeout",
+                       TaskError.Cancelled => "Operation cancelled",
+                       TaskError.UnexpectedException => "Critical error occured",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }

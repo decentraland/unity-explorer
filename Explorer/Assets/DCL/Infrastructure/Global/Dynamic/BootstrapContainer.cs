@@ -215,19 +215,27 @@ namespace Global.Dynamic
                 IAppArgs appArgs,
                 WebRequestsContainer webRequestsContainer)
         {
-            var dappWeb3Authenticator = new DappWeb3Authenticator(
-                webBrowser,
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
-                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
-                identityCache,
-                web3AccountFactory,
-                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+            var dappWeb3Authenticator = new ThirdWebAuthenticator(
                 dclEnvironment,
-                new AuthCodeVerificationFeatureFlag(),
+                identityCache,
+                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                web3AccountFactory,
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
+
+            //    = new DappWeb3Authenticator(
+            //     webBrowser,
+            //     URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+            //     URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+            //     URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
+            //     identityCache,
+            //     web3AccountFactory,
+            //     new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+            //     new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+            //     dclEnvironment,
+            //     new AuthCodeVerificationFeatureFlag(),
+            //     appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
+            // );
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
 

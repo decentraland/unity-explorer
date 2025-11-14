@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,61 +13,16 @@ namespace ThirdWebUnity.Playground
         // private readonly string email = "popuzin@gmail.com";
         // private readonly string password = "secret123";
 
-        private readonly string loginUrl = "https://poc-login-server.vercel.app/api/login";
-        private readonly string registerUrl = "https://poc-login-server.vercel.app/api/register";
-        private readonly string checkUrl = "https://poc-login-server.vercel.app/api/check-confirmed";
-        private readonly int chainId = 1; // Ethereum mainnet
+        private const string LOGIN_URL = "https://poc-login-server.vercel.app/api/login";
+        private const string REGISTER_URL = "https://poc-login-server.vercel.app/api/register";
+        private const string CHECK_URL = "https://poc-login-server.vercel.app/api/check-confirmed";
+        private const int CHAIN_ID = 1; // Ethereum mainnet
 
-        public async Task Login(string email, string password)
-        {
-            Debug.Log("🚀 Starting thirdweb JWT auth test...");
-
-            string jwt; // = jwtToken;
-
-            // if (string.IsNullOrWhiteSpace(jwt))
-            {
-                Debug.Log($"📤 Fetching JWT from: {loginUrl}");
-                jwt = await LoginAndGetJwt(email, password);
-            }
-
-            if (string.IsNullOrWhiteSpace(jwt))
-            {
-                Debug.LogError("❌ No JWT available. Provide jwtToken in Inspector or ensure login succeeds.");
-                return;
-            }
-
-            Debug.Log("🔑 JWT acquired , connecting to thirdweb...");
-
-            await ConnectWallet(jwt);
-        }
-
-        public async Task<bool> Register(string email, string password)
-        {
-            Debug.Log("📮 Starting registration...");
-            bool registered = await RegisterUser(email, password);
-
-            if (registered) { Debug.Log("✅ Registration request sent. Please confirm via email."); }
-            else { Debug.LogWarning("⚠️ Registration failed. See errors above."); }
-
-            return registered;
-        }
-
-        public async Task<bool> CheckConfirmed(string email)
-        {
-            Debug.Log("🔎 Checking confirmation status...");
-            bool confirmed = await IsConfirmed(email);
-
-            if (confirmed) { Debug.Log("✅ Account is confirmed."); }
-            else { Debug.LogWarning("⏳ Account is NOT confirmed yet."); }
-
-            return confirmed;
-        }
-
-        private async Task<string> LoginAndGetJwt(string userEmail, string userPassword)
+        public static async UniTask<string> GetJWT(string userEmail, string userPassword)
         {
             var jsonData = $"{{\"email\":\"{userEmail}\",\"password\":\"{userPassword}\"}}";
 
-            using var request = new UnityWebRequest(loginUrl, "POST");
+            using var request = new UnityWebRequest(LOGIN_URL, "POST");
 
             byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -98,11 +54,22 @@ namespace ThirdWebUnity.Playground
             return null;
         }
 
-        private async Task<bool> RegisterUser(string userEmail, string userPassword)
+        public static async Task<bool> Register(string email, string password)
+        {
+            Debug.Log("📮 Starting registration...");
+            bool registered = await RegisterUser(email, password);
+
+            if (registered) { Debug.Log("✅ Registration request sent. Please confirm via email."); }
+            else { Debug.LogWarning("⚠️ Registration failed. See errors above."); }
+
+            return registered;
+        }
+
+        private static async Task<bool> RegisterUser(string userEmail, string userPassword)
         {
             var jsonData = $"{{\"email\":\"{userEmail}\",\"password\":\"{userPassword}\"}}";
 
-            using var request = new UnityWebRequest(registerUrl, "POST");
+            using var request = new UnityWebRequest(REGISTER_URL, "POST");
 
             byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -135,9 +102,43 @@ namespace ThirdWebUnity.Playground
             return false;
         }
 
+        public async Task Login(string email, string password)
+        {
+            Debug.Log("🚀 Starting thirdweb JWT auth test...");
+
+            string jwt; // = jwtToken;
+
+            // if (string.IsNullOrWhiteSpace(jwt))
+            {
+                Debug.Log($"📤 Fetching JWT from: {LOGIN_URL}");
+                jwt = await GetJWT(email, password);
+            }
+
+            if (string.IsNullOrWhiteSpace(jwt))
+            {
+                Debug.LogError("❌ No JWT available. Provide jwtToken in Inspector or ensure login succeeds.");
+                return;
+            }
+
+            Debug.Log("🔑 JWT acquired , connecting to thirdweb...");
+
+            await ConnectWallet(jwt);
+        }
+
+        public async Task<bool> CheckConfirmed(string email)
+        {
+            Debug.Log("🔎 Checking confirmation status...");
+            bool confirmed = await IsConfirmed(email);
+
+            if (confirmed) { Debug.Log("✅ Account is confirmed."); }
+            else { Debug.LogWarning("⏳ Account is NOT confirmed yet."); }
+
+            return confirmed;
+        }
+
         private async Task<bool> IsConfirmed(string userEmail)
         {
-            var url = $"{checkUrl}?email={UnityWebRequest.EscapeURL(userEmail)}";
+            var url = $"{CHECK_URL}?email={UnityWebRequest.EscapeURL(userEmail)}";
             using var request = UnityWebRequest.Get(url);
 
             await request.SendWebRequestAsync();
@@ -177,7 +178,7 @@ namespace ThirdWebUnity.Playground
 
                 var options = new ThirdWebManager.WalletOptions(
                     ThirdWebManager.WalletProvider.InAppWallet,
-                    chainId,
+                    CHAIN_ID,
                     inAppWalletOptions
                 );
 

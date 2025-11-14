@@ -295,10 +295,10 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
-            // Exceptions on auto-login should not block the application bootstrap
-            catch (AutoLoginTokenNotFoundException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            // try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+            // // Exceptions on auto-login should not block the application bootstrap
+            // catch (AutoLoginTokenNotFoundException) { }
+            // catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters

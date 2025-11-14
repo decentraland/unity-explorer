@@ -23,12 +23,6 @@ namespace DCL.Web3.Authenticators
     {
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
-        private const string NETWORK_MAINNET = "mainnet";
-        private const string NETWORK_SEPOLIA = "sepolia";
-        private const string MAINNET_CHAIN_ID = "0x1";
-        private const string SEPOLIA_CHAIN_ID = "0xaa36a7";
-        private const string MAINNET_NET_VERSION = "1";
-        private const string SEPOLIA_NET_VERSION = "11155111";
 
         private readonly IWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
@@ -64,8 +58,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
-            DecentralandEnvironment environment,
-            ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
+            DecentralandEnvironment environment, ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -110,7 +103,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "eth_chainId"))
             {
-                string chainId = GetChainId();
+                string chainId = EnvChainsUtils.GetChainId(environment);
 
                 return new EthApiResponse
                 {
@@ -122,7 +115,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "net_version"))
             {
-                string netVersion = GetNetVersion();
+                string netVersion = EnvChainsUtils.GetNetVersion(environment);
 
                 return new EthApiResponse
                 {
@@ -146,7 +139,7 @@ namespace DCL.Web3.Authenticators
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -248,7 +241,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(GetNetworkId(), ct);
+                await ConnectToRpcAsync(EnvChainsUtils.GetNetworkId(environment), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -506,17 +499,6 @@ namespace DCL.Web3.Authenticators
             return false;
         }
 
-        private string GetNetVersion() =>
-            // TODO: this is a temporary thing until we solve the network in a better way
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
-
-        private string GetChainId() =>
-            // TODO: this is a temporary thing until we solve the network in a better way
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
-
-        private string GetNetworkId() =>
-            // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? NETWORK_MAINNET : NETWORK_SEPOLIA;
 
         /// <summary>
         /// Waits until we receive the verification status from the server
@@ -533,7 +515,7 @@ namespace DCL.Web3.Authenticators
             {
                 SocketIOResponse response = await codeVerificationTask.Task.Timeout(duration).AttachExternalCancellation(ct);
 
-                var validation = response.GetValue<CodeVerificationStatus>();
+                CodeVerificationStatus validation = response.GetValue<CodeVerificationStatus>();
 
                 if (validation.requestId == requestId)
                 {

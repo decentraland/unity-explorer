@@ -58,7 +58,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             cancellationTokenSource?.SafeCancelAndDispose();
             cancellationTokenSource = new CancellationTokenSource();
-            web3Authenticator.LoginAsync(cancellationTokenSource.Token).Forget();
+            web3Authenticator.LoginAsync("", "", cancellationTokenSource.Token).Forget();
         }
 
         private void OpenAuthenticationFlow()

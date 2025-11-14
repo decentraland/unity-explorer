@@ -92,16 +92,18 @@ namespace ThirdWebUnity
             // InAppWallet auth flow
             if (walletOptions.Provider == WalletProvider.InAppWallet && !await wallet.IsConnected())
             {
-                Debug.Log("VVV Session does not exist or is expired, proceeding with InAppWallet authentication.");
+                Debug.Log("VVV InAppWallet authentication (WalletConnect).");
 
                 var inAppWallet = (InAppWallet)wallet;
 
                 switch (walletOptions.InAppWalletOptions.AuthProvider)
                 {
-                    // case AuthProvider.Default:
-                    //     await inAppWallet.SendOTP();
-                    //     _ = await InAppWalletModal.LoginWithOtp(inAppWallet);
-                    //     break;
+                    case AuthProvider.Default:
+                        await inAppWallet.SendOTP();
+
+                        // Wait OTP form UI ->// _ = await InAppWalletModal.LoginWithOtp(inAppWallet);
+                        // Verify with OTP -> //_ = await inAppWallet.LoginWithOtp(otp);
+                        break;
                     case AuthProvider.JWT:
                         _ = await inAppWallet.LoginWithJWT(walletOptions.InAppWalletOptions.JwtOrPayload);
                         break;
@@ -135,6 +137,15 @@ namespace ThirdWebUnity
 
             ActiveWallet = wallet;
             return wallet;
+        }
+
+        public virtual async Task DisconnectWallet()
+        {
+            if (ActiveWallet != null)
+                try { await ActiveWallet.Disconnect(); }
+                finally { ActiveWallet = null; }
+
+            // PlayerPrefs.DeleteKey(THIRDWEB_AUTO_CONNECT_OPTIONS_KEY);
         }
 
 #region Wallet Options

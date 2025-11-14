@@ -18,7 +18,7 @@ namespace ThirdWebUnity.Playground
 
         [ContextMenu(nameof(Register))]
         private void Register() =>
-            _ = auth.Register(email, password);
+            _ = ThirdWebCustomJWTAuth.Register(email, password);
 
         [ContextMenu(nameof(CheckConfirmed))]
         private void CheckConfirmed() =>

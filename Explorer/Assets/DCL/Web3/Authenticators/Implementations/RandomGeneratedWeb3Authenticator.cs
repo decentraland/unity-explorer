@@ -19,7 +19,7 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose() { }
 
-        public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
         {
             var signer = accountFactory.CreateRandomAccount();
             var ephemeralAccount = accountFactory.CreateRandomAccount();

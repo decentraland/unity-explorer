@@ -51,7 +51,7 @@ namespace DCL.Web3.Authenticators
         {
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
         {
             if (!File.Exists(TOKEN_PATH))
                 throw new AutoLoginTokenNotFoundException();

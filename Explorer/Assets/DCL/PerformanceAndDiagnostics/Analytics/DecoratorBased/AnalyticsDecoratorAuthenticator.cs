@@ -21,9 +21,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core?.Dispose();
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
         {
-            IWeb3Identity identity = await core.LoginAsync(ct);
+            IWeb3Identity identity = await core.LoginAsync(email, password, ct);
             analytics.Identify(identity);
             return identity;
         }

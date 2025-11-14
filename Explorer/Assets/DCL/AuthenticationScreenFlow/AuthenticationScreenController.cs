@@ -28,6 +28,7 @@ using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
 using Sentry;
+using ThirdWebUnity.Playground;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -152,6 +153,7 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
+            viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
@@ -173,6 +175,11 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
+        }
+
+        private void SendRegistration()
+        {
+            _ = ThirdWebCustomJWTAuth.Register(viewInstance.EmailInputField.text, viewInstance.PasswordInputField.text);
         }
 
         protected override void OnBeforeViewShow()
@@ -318,6 +325,122 @@ namespace DCL.AuthenticationScreenFlow
         {
             CancelLoginProcess();
 
+            loginCancellationToken = new CancellationTokenSource();
+            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+
+            return;
+
+            async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
+            {
+                try
+                {
+                    CurrentRequestID = string.Empty;
+
+                    viewInstance!.ErrorPopupRoot.SetActive(false);
+                    viewInstance!.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = false;
+
+                    var web3AuthSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "Web3Authentication",
+                        SpanOperation = "auth.web3_login",
+                        Depth = 1,
+                    };
+
+                    sentryTransactionManager.StartSpan(web3AuthSpan);
+
+                    string email = viewInstance!.EmailInputField.text;
+                    string password = viewInstance!.PasswordInputField.text;
+
+                    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                        Debug.Log("ERROR: Email and Password are required");
+
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync(email, password, ct);
+
+                    var identityValidationSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "IdentityValidation",
+                        SpanOperation = "auth.identity_validation",
+                        Depth = 1,
+                    };
+
+                    sentryTransactionManager.StartSpan(identityValidationSpan);
+
+                    if (IsUserAllowedToAccessToBeta(identity))
+                    {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
+                        SwitchState(ViewState.Loading);
+
+                        var profileFetchSpan = new SpanData
+                        {
+                            TransactionName = LOADING_TRANSACTION_NAME,
+                            SpanName = "FetchProfile",
+                            SpanOperation = "auth.profile_fetch",
+                            Depth = 1,
+                        };
+
+                        sentryTransactionManager.StartSpan(profileFetchSpan);
+
+                        await FetchProfileAsync(ct);
+
+                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
+                        CurrentState.Value = AuthenticationStatus.LoggedIn;
+                        SwitchState(ViewState.Finalize);
+                    }
+                    else
+                    {
+                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
+                        SwitchState(ViewState.Login);
+                        ShowRestrictedUserPopup();
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                    SwitchState(ViewState.Login);
+                }
+                catch (SignatureExpiredException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Web3SignatureException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (CodeVerificationException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (ProfileNotFoundException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Exception e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    SwitchState(ViewState.Login);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ShowConnectionErrorPopup();
+                }
+                finally { RestoreResolutionAndScreenMode(); }
+            }
+        }
+
+        private void StartLoginFlowUntilEnd2()
+        {
+            CancelLoginProcess();
+
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
@@ -348,7 +471,7 @@ namespace DCL.AuthenticationScreenFlow
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
 
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync("", "", ct);
 
                     web3Authenticator.SetVerificationListener(null);
 
