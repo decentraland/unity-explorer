@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
-        private readonly TrimmedWearableStorage trimmedWearableStorage;
+        private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly URLDomain assetBundleRegistryURL;
 
         public WearablePlugin(IWebRequestController webRequestController,
@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables
             URLDomain assetBundleRegistryURL,
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
-            TrimmedWearableStorage trimmedWearableStorage,
+            ITrimmedWearableStorage trimmedWearableStorage,
             string builderContentURL,
             bool builderCollectionsPreview)
         {

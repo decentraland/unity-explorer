@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly IWebRequestController webRequestController;
         private readonly IAvatarElementStorage<IWearable, WearableDTO> avatarElementStorage;
-        private readonly ITrimmedAvatarElementStorage<ITrimmedWearable, TrimmedWearableDTO> trimmedAvatarElementStorage;
+        private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly string? builderContentURL;
         private readonly string expectedBuilderItemType = "wearable";
         private readonly IRealmData realmData;
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             World world, IWebRequestController webRequestController,
             IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, URLDomain assetBundleRegistryVersionURL,
-            IWearableStorage wearableStorage, TrimmedWearableStorage trimmedWearableStorage, string? builderContentURL = null
+            IWearableStorage wearableStorage, ITrimmedWearableStorage trimmedWearableStorage, string? builderContentURL = null
         ) : base(world, cache)
         {
             this.lambdaSubdirectory = lambdaSubdirectory;
@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.avatarElementStorage = wearableStorage;
-            this.trimmedAvatarElementStorage = trimmedWearableStorage;
+            this.trimmedWearableStorage = trimmedWearableStorage;
             this.builderContentURL = builderContentURL;
         }
 
@@ -166,7 +166,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             if (PlatformUtils.GetCurrentPlatform() == "_mac" && elementDTO.thumbnail.StartsWith("Qm"))
                 elementDTO.thumbnail = elementDTO.thumbnail.ToLowerInvariant();
 
-            ITrimmedWearable wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
+            ITrimmedWearable wearable = trimmedWearableStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
             if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))

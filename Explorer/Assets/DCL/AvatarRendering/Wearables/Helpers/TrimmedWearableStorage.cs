@@ -1,9 +1,6 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -70,15 +67,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation) =>
-            throw new NotImplementedException();
-
-        public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
-            throw new NotImplementedException();
-
-        public void ClearOwnedNftRegistry() =>
-            throw new NotImplementedException();
-
         private ITrimmedWearable AddWearable(URN urn, ITrimmedWearable wearable, bool qualifiedForUnloading)
         {
             lock (lockObject)
@@ -107,9 +95,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static void DisposeThumbnail(ITrimmedWearable wearable)
         {
-            ITrimmedAvatarAttachment attachment = wearable;
-            if (attachment.ThumbnailAssetResult is { IsInitialized: true })
-                attachment.ThumbnailAssetResult.Value.Asset.RemoveReference();
+            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
+                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
         }
     }
 }
