@@ -15,6 +15,12 @@ namespace ECS.Prioritization.Components
             IsBehind = false,
         };
 
+        public static readonly PartitionComponent MIN_PRIORITY = new ()
+        {
+            Bucket = byte.MaxValue,
+            IsBehind = true,
+        };
+
         /// <remarks>Only the component pool and tests may call this!</remarks>
         public PartitionComponent() { }
 

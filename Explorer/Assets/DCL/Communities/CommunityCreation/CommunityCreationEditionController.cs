@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -106,7 +106,7 @@ namespace DCL.Communities.CommunityCreation
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
-            LambdasProfilesProvider lambdasProfilesProvider) : base(viewFactory)
+            IProfileRepository profileRepository) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -114,7 +114,7 @@ namespace DCL.Communities.CommunityCreation
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -328,19 +328,18 @@ namespace DCL.Communities.CommunityCreation
                     userIds.Value.Add(communityPlace.OwnerId);
                 }
 
-                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
-                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
 
-                if (getAvatarsDetailsResult.Success)
+                if (getAvatarsDetailsResult.Count > 0)
                 {
                     foreach (var communityPlace in currentCommunityPlaces)
                     {
-                        foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                        foreach (Profile? profile in getAvatarsDetailsResult)
                         {
-                            if (avatarDetails.avatars.Count == 0 || !string.Equals(communityPlace.OwnerId, avatarDetails.avatars[0].userId, StringComparison.CurrentCultureIgnoreCase))
+                            if (!string.Equals(communityPlace.OwnerId, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
                                 continue;
 
-                            communityPlace.OwnerName = avatarDetails.avatars[0].name;
+                            communityPlace.OwnerName = profile.Name;
                             break;
                         }
                     }
@@ -453,10 +452,9 @@ namespace DCL.Communities.CommunityCreation
                         userIds.Value.Add(communityPlace.owner);
                     }
 
-                    var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
-                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
 
-                    if (!getAvatarsDetailsResult.Success)
+                    if (getAvatarsDetailsResult.Count == 0)
                     {
                         NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                     }
@@ -479,17 +477,16 @@ namespace DCL.Communities.CommunityCreation
                         }
 
                         string ownerName = string.Empty;
-                        if (getAvatarsDetailsResult.Success)
-                        {
-                            foreach (var avatarDetails in getAvatarsDetailsResult.Value)
-                            {
-                                if (avatarDetails.avatars.Count == 0 || !string.Equals(placeInfo.owner, avatarDetails.avatars[0].userId, StringComparison.CurrentCultureIgnoreCase))
-                                    continue;
 
-                                ownerName = avatarDetails.avatars[0].name;
-                                break;
-                            }
+                        foreach (Profile? profile in getAvatarsDetailsResult)
+                        {
+                            if (!string.Equals(placeInfo.owner, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
+                                continue;
+
+                            ownerName = profile.Name;
+                            break;
                         }
+
 
                         if (string.IsNullOrEmpty(placeInfo.world_name))
                             originalCommunityLandsForEdition.Add(placeInfo.id);

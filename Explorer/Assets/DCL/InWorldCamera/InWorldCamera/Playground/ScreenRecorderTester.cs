@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
@@ -87,7 +88,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
+                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()))
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

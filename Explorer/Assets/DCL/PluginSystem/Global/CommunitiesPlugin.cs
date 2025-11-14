@@ -56,7 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatEventBus chatEventBus;
         private readonly IRPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
-            LambdasProfilesProvider lambdasProfilesProvider,
+            IProfileRepository profileRepository,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IVoiceChatOrchestrator voiceChatOrchestrator)
@@ -109,7 +109,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -154,7 +154,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 decentralandUrlsSource,
                 web3IdentityCache,
-                lambdasProfilesProvider,
+                profileRepository,
                 galleryEventBus,
                 voiceChatOrchestrator);
 
@@ -173,7 +173,7 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 selfProfile,
                 mvcManager,
-                lambdasProfilesProvider);
+                profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();

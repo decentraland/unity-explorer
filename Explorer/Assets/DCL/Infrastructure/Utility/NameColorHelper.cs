@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -8,11 +9,11 @@ namespace DCL.Utilities
     public static class NameColorHelper
     {
         private static readonly Color DEFAULT_COLOR = Color.white;
-        private static List<Color> nameColors;
+        private static IReadOnlyList<Color> nameColors = Array.Empty<Color>();
         private static byte[] asciiValues;
         private static int seed;
 
-        public static void SetNameColors(List<Color> colors)
+        public static void SetNameColors(IReadOnlyList<Color> colors)
         {
             nameColors = colors;
         }

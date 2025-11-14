@@ -380,6 +380,9 @@ namespace DCL.Profiles
         }
     }
 
+    /// <summary>
+    ///     The result type for both GET and POST "/lambdas/profiles/"
+    /// </summary>
     [Serializable]
     public class GetProfileJsonRootDto : IDisposable
     {
@@ -424,12 +427,5 @@ namespace DCL.Profiles
 
         public ProfileJsonDto? FirstProfileDto() =>
             AnyAvatarInList() ? avatars[0] : null;
-    }
-
-    [Serializable]
-    public class GetAvatarsDetailsDto
-    {
-        public long timestamp;
-        public List<ProfileJsonDto> avatars;
     }
 }

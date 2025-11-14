@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Components.Intentions;

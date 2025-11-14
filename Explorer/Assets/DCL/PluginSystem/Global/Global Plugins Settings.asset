@@ -54,6 +54,7 @@ MonoBehaviour:
   - rid: 657752310186246267
   - rid: 6478896861045588059
   - rid: 6169970366055448665
+  - rid: 2008243996523495520
   - rid: 3821626543930605662
   references:
     version: 2
@@ -324,6 +325,10 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
+    - rid: 2008243996523495520
+      type: {class: ProfilesContainer/ProfilesPlugin/Settings, ns: DCL.Profiles, asm: DCL.Plugins}
+      data:
+        <batchHeartbeatMs>k__BackingField: 100
     - rid: 2168772563850493955
       type: {class: FriendsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

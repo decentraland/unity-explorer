@@ -155,6 +155,13 @@ namespace DCL.WebRequests
                 CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
                 SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure));
 
+            public UniTask<T> OverwriteFromNewtonsoftJsonAsync<T>(
+                T targetObject,
+                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
+                JsonSerializerSettings? serializerSettings = null) =>
+                SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, WRJsonParser.Newtonsoft, threadFlags, createCustomExceptionOnFailure, serializerSettings));
+
             /// <summary>
             ///     Executes the web request and does nothing with the result
             /// </summary>
@@ -262,17 +269,19 @@ namespace DCL.WebRequests
         public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
+            private readonly JsonSerializerSettings? newtonsoftSettings;
             private readonly WRJsonParser jsonParser;
 
             public readonly T Target;
             private readonly WRThreadFlags threadFlags;
 
-            public OverwriteFromJsonAsyncOp(T target, WRJsonParser jsonParser, WRThreadFlags threadFlags, CreateExceptionOnParseFail? createCustomExceptionOnFailure)
+            public OverwriteFromJsonAsyncOp(T target, WRJsonParser jsonParser, WRThreadFlags threadFlags, CreateExceptionOnParseFail? createCustomExceptionOnFailure, JsonSerializerSettings? newtonsoftSettings = null)
             {
                 Target = target;
                 this.jsonParser = jsonParser;
                 this.threadFlags = threadFlags;
                 this.createCustomExceptionOnFailure = createCustomExceptionOnFailure;
+                this.newtonsoftSettings = newtonsoftSettings;
             }
 
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
@@ -302,7 +311,7 @@ namespace DCL.WebRequests
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await UniTask.SwitchToThreadPool();
 
-                        var serializer = JsonSerializer.CreateDefault();
+                        var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
                         unsafe
                         {
