@@ -29,6 +29,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         protected override SectionFetchData<CommunityPost> currentSectionFetchData => currentAnnouncementsFetchData;
 
         private CommunityData? communityData;
+        private bool lastFetchSucceeded;
         private bool isCreationAllowed;
         private bool isPosting;
         private readonly HashSet<string> announcementsUpdatingLikeStatus = new();
@@ -76,11 +77,15 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             if (communityData == null)
                 return 0;
 
+            lastFetchSucceeded = false;
             Result<GetCommunityPostsResponse> response = await communitiesDataProvider.GetCommunityPostsAsync(communityData.Value.id, currentAnnouncementsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
+            {
+                currentAnnouncementsFetchData.PageNumber--;
                 return 0;
+            }
 
             if (!response.Success)
             {
@@ -100,6 +105,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             foreach (var announcement in response.Value.data.posts)
                 currentAnnouncementsFetchData.Items.Add(announcement);
 
+            lastFetchSucceeded = true;
             return response.Value.data.total;
         }
 
@@ -107,7 +113,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         {
             cancellationToken = token;
 
-            if (communityData is not null && community.id.Equals(communityData.Value.id))
+            if (communityData is not null && community.id.Equals(communityData.Value.id) && lastFetchSucceeded)
             {
                 RefreshGrid(true);
                 return;

@@ -283,6 +283,11 @@ namespace DCL.Communities.CommunitiesCard
             communityDescription.enabled = !isLoading;
             EventListView.SetLoadingStateActive(isLoading);
 
+            announcementsButton.interactable = !isLoading;
+            membersButton.interactable = !isLoading;
+            placesButton.interactable = !isLoading;
+            photosButton.interactable = !isLoading;
+
             if (isLoading)
                 loadingObject.ShowLoading();
             else
