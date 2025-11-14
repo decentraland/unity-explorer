@@ -32,9 +32,11 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
         private readonly TrimmedWearableStorage trimmedWearableStorage;
+        private readonly URLDomain assetBundleRegistryURL;
 
         public WearablePlugin(IWebRequestController webRequestController,
             IRealmData realmData,
+            URLDomain assetBundleRegistryURL,
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
             TrimmedWearableStorage trimmedWearableStorage,
@@ -45,6 +47,7 @@ namespace DCL.AvatarRendering.Wearables
             this.trimmedWearableStorage = trimmedWearableStorage;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
+            this.assetBundleRegistryURL = assetBundleRegistryURL;
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = builderCollectionsPreview;
 
@@ -57,7 +60,7 @@ namespace DCL.AvatarRendering.Wearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, trimmedWearableStorage, builderContentURL);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, assetBundleRegistryURL, wearableStorage, trimmedWearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 

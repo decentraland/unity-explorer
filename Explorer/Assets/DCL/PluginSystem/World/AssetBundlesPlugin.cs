@@ -42,20 +42,16 @@ namespace DCL.PluginSystem.World
         private readonly ArrayPool<byte> buffersPool;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
-        private readonly URLDomain assetBundleRegistryURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
 
-
-
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, URLDomain assetBundleRegistryURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
+            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
             this.partialsDiskCache = partialsDiskCache;
             this.assetBundleURL = assetBundleURL;
-            this.assetBundleRegistryURL = assetBundleRegistryURL;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
@@ -78,8 +74,6 @@ namespace DCL.PluginSystem.World
             PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL);
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
-            LoadAssetBundleRegistryVersionsSystem.InjectToWorld(ref builder, new NoCache<AssetBundlesVersions, GetAssetBundleRegistryVersionsIntention>(true, true), assetBundleRegistryURL, webRequestController);
-
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);

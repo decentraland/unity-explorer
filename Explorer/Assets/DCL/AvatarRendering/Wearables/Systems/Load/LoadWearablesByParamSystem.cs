@@ -16,7 +16,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
@@ -24,7 +23,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading;
-using AssetBundleRegistryVersionsPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundlesVersions, ECS.StreamableLoading.AssetBundles.GetAssetBundleRegistryVersionsIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
@@ -42,18 +40,20 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         private readonly string? builderContentURL;
         private readonly string expectedBuilderItemType = "wearable";
         private readonly IRealmData realmData;
+        private readonly URLDomain assetBundleRegistryVersionURL;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController,
             IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
-            IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
+            IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, URLDomain assetBundleRegistryVersionURL,
             IWearableStorage wearableStorage, TrimmedWearableStorage trimmedWearableStorage, string? builderContentURL = null
         ) : base(world, cache)
         {
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearablesSubdirectory = wearablesSubdirectory;
+            this.assetBundleRegistryVersionURL = assetBundleRegistryVersionURL;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.avatarElementStorage = wearableStorage;
@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                         )
                     );
 
-                var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, partition, ct);
+                var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, ct);
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                 {
@@ -141,28 +141,24 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             return new StreamableLoadingResult<WearablesResponse>(AssetFromPreparedIntention(in intention));
         }
 
-        private async UniTask<StreamableLoadingResult<AssetBundlesVersions>> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<AssetBundlesVersions> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, CancellationToken ct)
         {
             if (lambdaResponse.TotalAmount == 0)
-                return new StreamableLoadingResult<AssetBundlesVersions>(AssetBundlesVersions.Create());
+                return AssetBundlesVersions.Create();
 
             URN[] urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
 
             for (int i = 0; i < lambdaResponse.Page.Count; i++)
                 urns[i] = new URN(lambdaResponse.Page[i].Entity.Metadata.id);
 
-            var promise = AssetBundleRegistryVersionsPromise.Create(World,
-                GetAssetBundleRegistryVersionsIntention.Create(urns, new CommonLoadingArguments(string.Empty)),
-                partition);
-
-            var result = (await promise.ToUniTaskAsync(World, cancellationToken: ct)).Result.Value;
+            var result = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(urns, webRequestController, assetBundleRegistryVersionURL, GetReportData(), ct);
 
             ARRAY_POOL.Return(urns);
 
             return result;
         }
 
-        private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, StreamableLoadingResult<AssetBundlesVersions> assetBundlesVersions, CancellationToken ct)
+        private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, AssetBundlesVersions assetBundlesVersions, CancellationToken ct)
         {
             TrimmedWearableDTO elementDTO = element.Entity;
 
@@ -173,9 +169,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             ITrimmedWearable wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
-            if (!assetBundlesVersions.Succeeded)
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
-            else if (assetBundlesVersions.Asset.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
+            if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
                 wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);

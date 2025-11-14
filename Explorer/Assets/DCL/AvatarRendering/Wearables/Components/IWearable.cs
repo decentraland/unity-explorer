@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
+    // It implements ITrimmedWearable to allow using trimmed wearables in systems that only need trimmed data, such as the builder flow. Check LoadWearablesByParamSystem and ApplicationParametersWearablesProvider
     public interface IWearable : IAvatarAttachment<WearableDTO>, ITrimmedWearable
     {
         WearableType Type { get; }

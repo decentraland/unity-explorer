@@ -45,7 +45,6 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
                 CreateQuery<GetAssetBundleManifestIntention, SceneAssetBundleManifest>(),
-                CreateQuery<GetAssetBundleRegistryVersionsIntention, AssetBundlesVersions>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, TextureData>(),
