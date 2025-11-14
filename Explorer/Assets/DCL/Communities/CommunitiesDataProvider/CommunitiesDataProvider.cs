@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -399,6 +400,60 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                                                     .CreateFromJson<GetInvitableCommunityListResponse>(WRJsonParser.Newtonsoft);
 
             return response;
+        }
+
+        public async UniTask<GetCommunityPostsResponse> GetCommunityPostsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
+            GetCommunityPostsResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                           .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
+        }
+
+        public async UniTask<CreateCommunityPostResponse> CreateCommunityPostAsync(string communityId, string content, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts";
+            string jsonBody = JsonUtility.ToJson(new CreateCommunityPostBody { content = content });
+
+            var response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                     .CreateFromJson<CreateCommunityPostResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
+        }
+
+        public async UniTask<bool> DeleteCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> LikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
+
+            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> UnlikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
         }
 
         // TODO: Pending to implement these methods:

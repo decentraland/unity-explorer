@@ -447,7 +447,7 @@ namespace Global.Dynamic
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
             bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
 
-            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
+            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
@@ -1095,7 +1095,8 @@ namespace Global.Dynamic
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
-                    voiceChatContainer.VoiceChatOrchestrator));
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    profileRepository));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
