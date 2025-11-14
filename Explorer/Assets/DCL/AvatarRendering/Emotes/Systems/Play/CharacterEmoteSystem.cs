@@ -92,11 +92,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
-            MoveAvatarToInteractionInitiatorPositionQuery(World); // This must occur before ConsumeEmoteIntentQuery, because it has to execute 1 frame later after animation has played
             CancelEmotesByMovementQuery(World);
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World);
+            MoveAvatarToInteractionInitiatorPositionQuery(World); // This must occur after ConsumeEmoteIntentQuery
             ConsumeStopEmoteIntentQuery(World); // Repeated on purpose, if the state of both participants in a social emote interaction must be consistent all the time
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
@@ -215,10 +215,14 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             avatarView.RestoreArmatureName();
 
-            bool hasToMoveReceiverToOriginalPosition = emoteComponent.IsReactingToSocialEmote;
+            avatarView.GetTransform().localPosition = Vector3.zero;
+            avatarView.GetTransform().localRotation = Quaternion.identity;
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "RESET EmoteComponent User: " + ((AvatarBase)avatarView).name);
             emoteComponent.Reset();
+
+            if(World.Has<MoveWhenOutcomeAnimationStartsIntent>(entity))
+                World.Remove<MoveWhenOutcomeAnimationStartsIntent>(entity);
         }
 
         private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)
@@ -267,6 +271,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             URN emoteId = emoteIntent.EmoteId;
 
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - Is reacting? " + emoteIntent.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
+
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
             {
@@ -274,7 +280,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
                 if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
-                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
+                    (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
@@ -429,10 +435,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void MoveAvatarToInteractionInitiatorPosition(Entity entity, ref IAvatarView avatarView, MoveWhenOutcomeAnimationStartsIntent animationInfo)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consumed Animate");
+            // It waits for the Emote state to execute
+            if (avatarView.AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash != AnimationHashes.EMOTE)
+                return;
 
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation of reacting avatar as initiator");
+
+            // Rotates the reacting avatar to coincide with the initiator's avatar, because the animation of the reaction occurs at the same place with same pose
             IAvatarView initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
-            avatarView.GetTransform().position = initiatorAvatar.GetTransform().position;
             avatarView.GetTransform().rotation = initiatorAvatar.GetTransform().rotation;
             World.Remove<MoveWhenOutcomeAnimationStartsIntent>(entity);
         }

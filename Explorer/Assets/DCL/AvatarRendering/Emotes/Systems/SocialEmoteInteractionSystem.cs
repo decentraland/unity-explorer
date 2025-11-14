@@ -14,6 +14,7 @@ using DCL.SocialEmotes;
 using DCL.Utilities;
 using ECS.Abstract;
 using UnityEngine;
+using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
@@ -72,13 +73,20 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [Query]
         private void AdjustReceiverBeforeOutcomeAnimation(Entity entity, IAvatarView avatarView, MoveToOutcomeStartPositionIntent moveIntent)
         {
-            const float INTERPOLATION_DURATION = 1.0f;
+            const float INTERPOLATION_DURATION = 0.4f;
             float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / INTERPOLATION_DURATION;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")}</color>");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Emote tag?: {avatarView.AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == AnimationHashes.EMOTE} Speed: {avatarView.AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND).ToString("F6")}</color>");
 
-            avatarView.GetTransform().position = Vector3.Lerp(moveIntent.OriginalAvatarPosition, moveIntent.TargetAvatarPosition, interpolation);
-            avatarView.GetTransform().rotation = Quaternion.AngleAxis(180.0f, Vector3.up) * moveIntent.TargetAvatarRotation;
+            // Since the outcome emote has already started to play, the avatar is moving its position, but we need to create the illusion of the avatar not moving at all
+            Vector3 currentHipToOriginalPosition = moveIntent.OriginalAvatarPosition - ((AvatarBase)avatarView).HipAnchorPoint.position;
+            avatarView.GetTransform().position += new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
+
+            Debug.DrawRay(avatarView.GetTransform().position, UnityEngine.Vector3.up, Color.yellow, 3.0f);
+            GizmoDrawer.Instance.DrawWireSphere(5, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
+
+            avatarView.GetTransform().position = Vector3.Lerp(avatarView.GetTransform().position, moveIntent.InitiatorWorldPosition, interpolation);
+  //          avatarView.GetTransform().rotation = /*Quaternion.AngleAxis(180.0f, Vector3.up) **/ moveIntent.TargetAvatarRotation;
 
             Debug.DrawRay(moveIntent.OriginalAvatarPosition, UnityEngine.Vector3.up, Color.red, 3.0f);
             GizmoDrawer.Instance.DrawWireSphere(0, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
@@ -90,16 +98,13 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (interpolation >= 1.0f)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>INTERPOLATION FINISHED</color>");
-
-                World.Add(entity, moveIntent.TriggerEmoteIntent);
-
                 World.Remove<MoveToOutcomeStartPositionIntent>(entity);
             }
         }
 
-// TODO: Rename to a more generic thing
+        // Executed locally only
         [Query]
-        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform, ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, AvatarBase avatarBase,
+        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform, ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, AvatarBase avatarBase, ref CharacterAnimationComponent animationComponent,
             MoveBeforePlayingSocialEmoteIntent moveIntent)
         {
             bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < 2.0f;
@@ -109,6 +114,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 jumpInputComponent.IsPressed)  // If player jumps, the process is canceled
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
+
+                // The avatar has to stop walking, otherwise it will spend some time to blend
+                animationComponent.States.MovementBlendValue = 0.0f;
+                // The avatar can walk freely towards the initiator without taking the camera's orientation into consideration
                 movementInput.IgnoreCamera = false;
                 World.Remove<MoveBeforePlayingSocialEmoteIntent>(entity);
 
@@ -134,6 +143,11 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>Movement: {originalAvatarPosition.ToString("F3")} -> {targetAvatarPosition.ToString("F3")}</color>");
 
+                    GizmoDrawer.Instance.DrawWireSphere(3, targetAvatarPosition, 0.2f, Color.magenta);
+
+      //              targetAvatarPosition = targetAvatarPosition + (targetAvatarPosition - moveIntent.InitiatorWorldPosition);
+
+                    // Adjustment interpolation
                     World.Add(entity, new MoveToOutcomeStartPositionIntent(
                         originalAvatarPosition,
                         avatarBase.GetTransform().rotation,
@@ -141,6 +155,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                         World.Get<IAvatarView>(moveIntent.InitiatorEntityId).GetTransform().rotation,
                         moveIntent.TriggerEmoteIntent,
                         moveIntent.InitiatorWorldPosition));
+
+                    // Emote playing
+                    World.Add(entity, moveIntent.TriggerEmoteIntent);
                 }
             }
             else
