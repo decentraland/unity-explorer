@@ -9,9 +9,17 @@ namespace DCL.Backpack.Gifting.Views
     {
         [field: SerializeField]
         public Sprite WarningIcon { get; private set; }
+
+        [Header("UI State Elements")]
+        [SerializeField] private GameObject statusGroup;
+
+        [SerializeField] private GameObject successContainer;
         
         [Header("Header")]
         [field: SerializeField] public Button BackButton { get; private set; }
+
+        [Header("Success Elements")]
+        [SerializeField] private Button successOkButton;
 
         [field: SerializeField] public Image ItemBackground { get; private set; }
         [field: SerializeField] public Image ItemCategory { get; private set; }
@@ -31,5 +39,9 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: SerializeField]
         public GameObject? LongRunningHint { get; private set; }
+
+        public GameObject StatusContainer => statusGroup;
+        public GameObject SuccessContainer => successContainer;
+        public Button SuccessOkButton => successOkButton;
     }
 }

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
-using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
@@ -18,6 +16,10 @@ namespace DCL.Backpack.Gifting.Presenters
         : ControllerBase<GiftTransferStatusView, GiftTransferParams>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        private enum State { Waiting, Success, Failed }
+
+        private State currentState;
         
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
@@ -60,7 +62,6 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override void OnViewInstantiated()
         {
-            // Wire UI -> controller intents here (static, once)
             if (viewInstance == null) return;
         }
 
@@ -72,206 +73,153 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (viewInstance != null)
             {
-                viewInstance.TitleLabel.text = "Preparing Gift for";
                 viewInstance.RecipientName.text = inputData.recipientName;
+                
                 if (inputData.userThumbnail != null)
                     viewInstance.RecipientAvatar.sprite = inputData.userThumbnail;
-
+                
                 viewInstance.ItemName.text = inputData.giftDisplayName;
+                
                 if (inputData.giftThumbnail != null)
                     viewInstance.ItemThumbnail.sprite = inputData.giftThumbnail;
-
+                
                 viewInstance.ItemCategory.sprite = inputData.style.categoryIcon;
                 viewInstance.ItemCategoryBackground.color = inputData.style.flapColor;
                 viewInstance.ItemBackground.sprite = inputData.style.rarityBackground;
 
+                SetViewState(State.Waiting);
                 SetPhase(GiftTransferPhase.WaitingForWallet, "A browser window should open for you to confirm the transaction.");
             }
-
+            
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);
             subSucceeded = eventBus.Subscribe<GiftTransferSucceeded>(OnSuccess);
             subFailed = eventBus.Subscribe<GiftTransferFailed>(OnFailure);
-            subOpenRequested = eventBus.Subscribe<GiftTransferOpenRequested>(OnOpenRequested);
 
+            // Start the process
             giftTransferRequestCommand.ExecuteAsync(inputData, lifeCts.Token).Forget();
         }
 
         protected override void OnViewClose()
         {
             subProgress?.Dispose();
-            subProgress = null;
             subSucceeded?.Dispose();
-            subSucceeded = null;
             subFailed?.Dispose();
-            subFailed = null;
-            subOpenRequested?.Dispose();
-            subOpenRequested = null;
-
             delayCts.SafeCancelAndDispose();
             lifeCts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            if (viewInstance == null) return UniTask.Never(ct);
-
-            var closeClick = viewInstance.CloseButton.OnClickAsync(ct);
-            if (viewInstance.BackButton != null)
+            if (viewInstance == null)
             {
-                var backClick  = viewInstance.BackButton.OnClickAsync(ct);
-                return UniTask.WhenAny(closeClick, backClick).AsUniTask();
+                await UniTask.Never(ct);
+                return;
             }
 
-            return UniTask.WhenAny(closeClick).AsUniTask();
+            var closeTasks = new[]
+            {
+                viewInstance.CloseButton.OnClickAsync(ct), viewInstance.SuccessOkButton.OnClickAsync(ct)
+            };
+
+            await UniTask.WhenAny(closeTasks);
+
+            if (currentState == State.Success)
+                OpenSuccessScreenAfterCloseAsync(ct).Forget();
         }
 
-        private void OnOpenRequested(GiftTransferOpenRequested e)
+        private async UniTaskVoid OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
         {
-            if (e.Urn != urn || viewInstance == null) return;
+            await UniTask.Yield(cancellationToken: ct);
 
-            if (!string.IsNullOrEmpty(e.RecipientName))
-                viewInstance.RecipientName.text = e.RecipientName!;
-            if (!string.IsNullOrEmpty(e.DisplayName))
-                viewInstance.ItemName.text = e.DisplayName!;
-            if (e.Thumbnail != null)
-                viewInstance.ItemThumbnail.sprite = e.Thumbnail;
+            var successParams = new GiftTransferSuccessParams(inputData.recipientName, inputData.userThumbnail);
+            await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
         }
 
         private void OnProgress(GiftTransferProgress e)
         {
-            if (e.Urn != urn) return;
             SetPhase(e.Phase, e.Message);
 
-            // When we enter the main "waiting" phase, start a timer.
             if (e.Phase == GiftTransferPhase.Authorizing)
-            {
                 StartDelayedStateTimer(lifeCts!.Token);
-            }
         }
 
         private void StartDelayedStateTimer(CancellationToken ct)
         {
-            delayCts.SafeCancelAndDispose();
-            delayCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            delayCts = delayCts.SafeRestartLinked(ct);
+            ShowAfterDelay(delayCts.Token).Forget();
+        }
 
-            async UniTaskVoid ShowAfterDelay(CancellationToken token)
+        private async UniTaskVoid ShowAfterDelay(CancellationToken token)
+        {
+            try
             {
-                try
-                {
-                    // Wait for 10 seconds (or any duration you prefer)
-                    await UniTask.Delay(TimeSpan.FromSeconds(10), cancellationToken: token);
-
-                    // If we get here, it means the process is taking too long.
-                    // Show the "delayed" UI elements.
-                    if (viewInstance != null)
-                    {
-                        viewInstance.TitleLabel.text = "Authorisation Delayed";
-                        viewInstance.LongRunningHint?.gameObject.SetActive(true);
-                        // The main close button should also become visible/interactive here
-                        viewInstance.CloseButton.gameObject.SetActive(true);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    /* This is expected if the process succeeds or fails before the delay is over. */
-                }
+                await UniTask.Delay(TimeSpan.FromSeconds(10), cancellationToken: token);
+                if (viewInstance != null && viewInstance.LongRunningHint != null)
+                    viewInstance.LongRunningHint.gameObject.SetActive(true);
             }
-
-            ShowAfterDelay(delayCts.Token)
-                .Forget();
+            catch (OperationCanceledException)
+            {
+                /* Expected */
+            }
         }
 
         private void OnSuccess(GiftTransferSucceeded e)
         {
             if (e.Urn != urn) return;
-
-            ShowSuccessPopupAsync(inputData.recipientName, () =>
-                {
-                    OnSuccessConfirmAsync().Forget();
-                }, CancellationToken.None)
-                .Forget();
-        }
-
-        private async UniTaskVoid OnSuccessConfirmAsync()
-        {
             delayCts.SafeCancelAndDispose();
-
-            RequestClose();
-
-            var successParams = new GiftTransferSuccessParams(inputData.recipientName,
-                inputData.userThumbnail);
-
-            await mvcManager
-                .ShowAsync(GiftTransferSuccessController.IssueCommand(successParams));
+            SetViewState(State.Success);
         }
 
         private void OnFailure(GiftTransferFailed e)
         {
             if (e.Urn != urn) return;
-
+            currentState = State.Failed;
             delayCts.SafeCancelAndDispose();
 
             RequestClose();
-
-            ShowErrorPopupAsync(CancellationToken.None)
-                .Forget();
+            ShowErrorPopupAsync(CancellationToken.None).Forget();
         }
 
-        private void SetPhase(GiftTransferPhase phase, string? msg)
+        private void SetViewState(State newState)
         {
+            currentState = newState;
             if (viewInstance == null) return;
 
-            switch (phase)
+            switch (newState)
             {
-                case GiftTransferPhase.WaitingForWallet:
-                    viewInstance.StatusText.text = msg ?? "Waiting for wallet…";
+                case State.Waiting:
+                    viewInstance.TitleLabel.text = "Sending Gift to";
+                    viewInstance.StatusContainer.SetActive(true);
+                    viewInstance.SuccessContainer.SetActive(false);
+
+                    if (viewInstance.LongRunningHint != null)
+                        viewInstance.LongRunningHint.gameObject.SetActive(false);
+
+                    break;
+                case State.Success:
+                    viewInstance.TitleLabel.text = "Gift Sent to";
+                    viewInstance.StatusContainer.SetActive(false);
                     viewInstance.LongRunningHint?.gameObject.SetActive(false);
-                    break;
+                    viewInstance.SuccessContainer.SetActive(true);
 
-                case GiftTransferPhase.Authorizing:
-                    viewInstance.StatusText.text = msg ?? "Processing authorization…";
-                    break;
+                    if (viewInstance.LongRunningHint != null)
+                        viewInstance.LongRunningHint.gameObject.SetActive(false);
 
-                case GiftTransferPhase.Broadcasting:
-                    viewInstance.StatusText.text = msg ?? "Broadcasting transaction…";
-                    break;
-
-                case GiftTransferPhase.Confirming:
-                    viewInstance.StatusText.text = msg ?? "Waiting for confirmations…";
-                    break;
-
-                case GiftTransferPhase.Completed:
-                    viewInstance.StatusText.text = msg ?? "Completed";
-                    break;
-
-                case GiftTransferPhase.Failed:
-                    viewInstance.StatusText.text = msg ?? "Failed";
                     break;
             }
+        }
+        
+        private void SetPhase(GiftTransferPhase phase, string? msg)
+        {
+            if (viewInstance == null || currentState != State.Waiting) return;
+            viewInstance.StatusText.text = msg ?? "Processing...";
         }
 
         private void RequestClose()
         {
-            SignalClose();
+            viewInstance?.CloseButton.onClick.Invoke();
         }
 
-        private void SignalClose()
-        {
-            if (viewInstance == null) return;
-
-            // Prefer CloseButton, fallback to BackButton if Close is absent/disabled
-            if (viewInstance.CloseButton != null && viewInstance.CloseButton.interactable && viewInstance.CloseButton.gameObject.activeInHierarchy)
-            {
-                viewInstance.CloseButton.onClick.Invoke();
-                return;
-            }
-
-            if (viewInstance.BackButton != null && viewInstance.BackButton.interactable && viewInstance.BackButton.gameObject.activeInHierarchy)
-            {
-                viewInstance.BackButton.onClick.Invoke();
-            }
-        }
-        
         private async UniTaskVoid ShowErrorPopupAsync(CancellationToken ct)
         {
             var dialogParams = new ConfirmationDialogParameter(
@@ -298,46 +246,9 @@ namespace DCL.Backpack.Gifting.Presenters
             }
         }
 
-        private async UniTaskVoid ShowSuccessPopupAsync(string recepient, Action onContinue, CancellationToken ct)
-        {
-            var dialogParams = new ConfirmationDialogParameter(
-                $"Transfer to {recepient} Successful",
-                "CLOSE",
-                "OK",
-                null,
-                false,
-                false,
-                null,
-                "Your gift was successfully delivered!"
-            );
-
-            var result = await ViewDependencies
-                .ConfirmationDialogOpener
-                .OpenConfirmationDialogAsync(dialogParams, ct);
-
-            if (result == ConfirmationResult.CONFIRM || result == ConfirmationResult.CANCEL)
-            {
-                ReportHub.Log(ReportCategory.GIFTING, "User clicked RETRY.");
-                await mvcManager.ShowAsync(IssueCommand(inputData), ct);
-            }
-        }
-
         private void LinkCallback(string url)
         {
             webBrowser.OpenUrl(url);
-        }
-        
-        private async UniTaskVoid AutoCloseIn(int ms)
-        {
-            try
-            {
-                await UniTask.Delay(ms, cancellationToken: lifeCts!.Token);
-                SignalClose();
-            }
-            catch (OperationCanceledException)
-            {
-                /* ignore */
-            }
         }
     }
 }

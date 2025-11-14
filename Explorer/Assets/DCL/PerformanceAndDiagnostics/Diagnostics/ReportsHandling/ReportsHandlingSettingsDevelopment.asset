@@ -600,6 +600,10 @@ MonoBehaviour:
       Severity: 4
     - Category: SOCIAL
       Severity: 1
+    - Category: ANALYTICS
+      Severity: 3
+    - Category: ANALYTICS
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
