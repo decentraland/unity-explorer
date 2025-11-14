@@ -58,21 +58,18 @@ namespace DCL.SDKComponents.MediaStream
             else if (player.IsPlaying)
             {
                 bool wasFrozen = isFrozen;
-                isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
-
-                if (!isNowFrozen)
+                if (player.IsSeeking || player.IsBuffering)
                 {
-                    lastVideoTime = player.CurrentTime;
-                    frozenTimestamp = UnityEngine.Time.realtimeSinceStartup;
-                    state = VideoState.VsPlaying;
-                }
-                else
-                {
-                    // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
+                    isNowFrozen = true;
                     state = player.IsSeeking ? VideoState.VsSeeking : VideoState.VsBuffering;
 
                     if (isNowFrozen != wasFrozen)
                         frozenTimestamp = UnityEngine.Time.realtimeSinceStartup;
+                }
+                else
+                {
+                    isNowFrozen = false;
+                    state = VideoState.VsPlaying;
                 }
             }
 
