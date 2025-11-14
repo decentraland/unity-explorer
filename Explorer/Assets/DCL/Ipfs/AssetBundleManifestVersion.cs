@@ -86,6 +86,7 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
+        //Should only be used for compatibility dto generation. No meaningful information can be retrieved from here
         public static AssetBundleManifestVersion CreateManualManifest()
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
