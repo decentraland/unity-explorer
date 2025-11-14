@@ -8,10 +8,10 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SceneRunner.Scene;
 using DCL.Utility;
+using DCL.Utility.Exceptions;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.InitialSceneState;
@@ -130,8 +130,16 @@ namespace ECS.SceneLifeCycle.Systems
 
             var target = intention.DefinitionComponent.Definition.metadata;
 
-            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
-                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            try
+            {
+                await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
+                                          .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            }
+            catch (UnityWebRequestException ex)
+            {
+                if (ex.ResponseCode == WebRequestUtils.NOT_FOUND)
+                    throw new ManifestNotFoundException($"Scene manifest not found for scene {sceneID} from {sceneJsonUrl}: {ex.Message}");
+            }
 
             intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
 
