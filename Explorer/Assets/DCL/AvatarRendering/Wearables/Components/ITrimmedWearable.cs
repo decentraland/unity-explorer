@@ -3,11 +3,8 @@ using DCL.AvatarRendering.Wearables.Helpers;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface ITrimmedWearable : ITrimmedAvatarAttachment<TrimmedWearableDTO>
+    public interface ITrimmedWearable : ITrimmedAvatarAttachment
     {
         bool IsCompatibleWithBodyShape(string bodyShape);
-
-        public static ITrimmedWearable NewEmpty() =>
-            new TrimmedWearable();
     }
 }
