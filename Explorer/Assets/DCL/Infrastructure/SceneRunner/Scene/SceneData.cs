@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using SceneRuntime.ScenePermissions;
 using DCL.SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -23,16 +24,14 @@ namespace SceneRunner.Scene
 #endif
 
         public ISceneContent SceneContent { get; }
-
         public SceneEntityDefinition SceneEntityDefinition { get; }
-
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
         public IInitialSceneState InitialSceneStateInfo { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
-
+        public bool IsWearableBuilderCollectionPreview { get; set; }
 
         public SceneData(
             ISceneContent sceneContent,

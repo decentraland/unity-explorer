@@ -7,6 +7,7 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
@@ -43,6 +44,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 sceneStateProvider,
                 globalWorldActions,
                 sceneData,
+                new AllowEverythingJsApiPermissionsProvider(),
                 systemClipboard);
         }
 

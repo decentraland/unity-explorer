@@ -12,7 +12,7 @@ namespace DCL.LOD.Components
 {
     public class InitialSceneStateLOD
     {
-        private List<(string, GltfContainerAsset)> Assets = new ();
+        private readonly List<ISSStoredAsset> Assets = new ();
         public GameObject ParentContainer { get; private set; }
         public IGltfContainerAssetsCache gltfCache { get; private set; }
         public int TotalAssetsToInstantiate { get; private set; }
@@ -50,8 +50,11 @@ namespace DCL.LOD.Components
             AssetBundleData?.Dereference();
             AssetBundleData = null;
 
-            foreach ((string, GltfContainerAsset) gltfContainerAsset in Assets)
-                gltfCache.Dereference(gltfContainerAsset.Item1, gltfContainerAsset.Item2, AssetsShouldGoToTheBridge);
+            foreach (ISSStoredAsset gltfContainerAsset in Assets)
+            {
+                if (gltfContainerAsset.succeded)
+                    gltfCache.Dereference(gltfContainerAsset.AssetHash, gltfContainerAsset.Asset, AssetsShouldGoToTheBridge);
+            }
 
             Assets.Clear();
             UnityObjectUtils.SafeDestroy(ParentContainer);
@@ -64,7 +67,12 @@ namespace DCL.LOD.Components
         }
 
         public void AddResolvedAsset(string assetHash, GltfContainerAsset asset) =>
-            Assets.Add((assetHash, asset));
+            Assets.Add(new ISSStoredAsset
+            {
+                AssetHash = assetHash,
+                Asset = asset,
+                succeded = true,
+            });
 
         public bool AllAssetsInstantiated() =>
             AssetBundleData != null && Assets.Count == TotalAssetsToInstantiate;
@@ -80,6 +88,22 @@ namespace DCL.LOD.Components
             AssetBundleData = resultAsset;
             gltfCache = gltfContainerAssetsCache;
             TotalAssetsToInstantiate = assetHashCount;
+        }
+
+        public void AddFailedAsset(string creationHelperAssetHash)
+        {
+            Assets.Add(new ISSStoredAsset
+            {
+                AssetHash = creationHelperAssetHash,
+                succeded = false,
+            });
+        }
+
+        private struct ISSStoredAsset
+        {
+            public string AssetHash;
+            public GltfContainerAsset Asset;
+            public bool succeded;
         }
     }
 }
