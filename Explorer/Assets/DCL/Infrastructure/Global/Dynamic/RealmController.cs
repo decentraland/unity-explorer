@@ -28,8 +28,9 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine.Networking;
+using Utility;
 
-namespace Global.Dynamic
+ namespace Global.Dynamic
 {
     public class RealmController : IGlobalRealmController
     {
@@ -263,6 +264,10 @@ namespace Global.Dynamic
 
         private async UniTask UnloadCurrentRealmAsync()
         {
+            //No need to dispose if we are quitting. Pools and assets may be destroyed by Unity, creating unnecessarily null-refs on exit
+            if (UnityObjectUtils.IsQuitting)
+                return;
+
             if (globalWorld == null) return;
 
             World world = globalWorld.EcsWorld;

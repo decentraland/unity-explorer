@@ -15,7 +15,6 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
-using SceneRunner.Scene;
 using System;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
@@ -71,31 +70,67 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeGltfLoading(
-            Entity entity,
-            ref GltfPromise promise,
-            ref IEmote emote,
-            in BodyShape bodyShape)
-        {
-            FinalizeAssetLoading<GLTFData, GetGLTFIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
-        }
-
-        [Query]
         private void FinalizeAssetBundleLoading(
             Entity entity,
             ref AssetBundlePromise promise,
             ref IEmote emote,
             in BodyShape bodyShape)
         {
-            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
+            if (IsCancellationRequested(entity, ref promise, ref emote, in bodyShape))
+                return;
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> gltfAssetResult))
+            {
+                if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
+                    AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                else
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+
+                emote.UpdateLoadingStatus(false);
+                World.Destroy(entity);
+            }
         }
 
-        private void FinalizeAssetLoading<TAsset, TLoadingIntention>(
+        [Query]
+        private void FinalizeGltfLoading(
+            Entity entity,
+            ref GltfPromise promise,
+            ref IEmote emote,
+            in BodyShape bodyShape)
+        {
+            if (IsCancellationRequested(entity, ref promise, ref emote, in bodyShape))
+                return;
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<GLTFData> gltfAssetResult))
+            {
+                if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
+                    AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                else
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
+
+                emote.UpdateLoadingStatus(false);
+                World.Destroy(entity);
+            }
+        }
+
+        private void AssignEmoteResult(IEmote emote, BodyShape bodyShape, AttachmentRegularAsset regularAssetResult)
+        {
+            var asset = new StreamableLoadingResult<AttachmentRegularAsset>(regularAssetResult);
+
+            if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
+            {
+                emote.AssetResults[BodyShape.MALE] = asset;
+                emote.AssetResults[BodyShape.FEMALE] = asset;
+            }
+            else
+                emote.AssetResults[bodyShape] = asset;
+        }
+
+        private bool IsCancellationRequested<TAsset, TLoadingIntention>(
             Entity entity,
             ref AssetPromise<TAsset, TLoadingIntention> promise,
             ref IEmote emote,
-            in BodyShape bodyShape,
-            Func<StreamableLoadingResult<TAsset>, AttachmentRegularAsset> toRegularAsset)
+            in BodyShape bodyShape)
             where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
@@ -103,27 +138,10 @@ namespace DCL.AvatarRendering.Emotes
                 ResetEmoteResultOnCancellation(emote, bodyShape);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
-                return;
+                return true;
             }
 
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<TAsset> result))
-            {
-                if (result.Succeeded)
-                {
-                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(toRegularAsset.Invoke(result));
-
-                    if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
-                    {
-                        emote.AssetResults[BodyShape.MALE] = asset;
-                        emote.AssetResults[BodyShape.FEMALE] = asset;
-                    }
-                    else
-                        emote.AssetResults[bodyShape] = asset;
-                }
-
-                emote.UpdateLoadingStatus(false);
-                World.Destroy(entity);
-            }
+            return false;
         }
 
         [Query]

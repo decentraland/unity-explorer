@@ -129,6 +129,7 @@ namespace DCL.Communities.CommunitiesCard
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
+        private Sections currentSection;
 
         private void Awake()
         {
@@ -277,6 +278,10 @@ namespace DCL.Communities.CommunitiesCard
 
         private void ToggleSection(Sections section, bool invokeEvent = true)
         {
+            if (section == currentSection) return;
+
+            currentSection = section;
+
             photosSectionSelection.SetActive(section == Sections.PHOTOS);
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
             placesSectionSelection.SetActive(section == Sections.PLACES);
