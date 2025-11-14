@@ -2,20 +2,16 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using System;
 using System.Linq;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    [Serializable]
     public class TrimmedWearable : ITrimmedWearable
     {
         public TrimmedWearable(TrimmedWearableDTO model)
         {
             TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(model);
         }
-
-        public TrimmedWearable() { }
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;

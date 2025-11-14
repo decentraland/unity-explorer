@@ -28,15 +28,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public void Set(URN urn, ITrimmedWearable element)
-        {
-            lock (lockObject)
-            {
-                wearablesCache[urn] = element;
-                UpdateListedCachePriority(urn);
-            }
-        }
-
         public ITrimmedWearable GetOrAddByDTO(TrimmedWearableDTO dto, bool qualifiedForUnloading = true)
         {
             lock (lockObject)

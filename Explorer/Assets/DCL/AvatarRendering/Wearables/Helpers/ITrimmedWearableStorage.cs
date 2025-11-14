@@ -14,8 +14,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <returns>Returns true if the element exists; otherwise, false.</returns>
         bool TryGetElement(URN urn, out ITrimmedWearable element);
 
-        void Set(URN urn, ITrimmedWearable element);
-
         /// <summary>
         ///     Retrieves an element by its DTO or adds a new one if it doesn't exist.
         /// </summary>
