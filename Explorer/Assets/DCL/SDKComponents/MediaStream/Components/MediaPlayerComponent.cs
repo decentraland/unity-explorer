@@ -12,9 +12,11 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_VOLUME = 1f;
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
+        private const float PLAY_CHECK_THRESHOLD = 0.5f;
 
         private float lastVideoTime;
         private float frozenTimestamp;
+        private float lastPlayTimestamp;
         private bool isFrozen;
 
         public readonly MultiMediaPlayer MediaPlayer;
@@ -57,22 +59,33 @@ namespace DCL.SDKComponents.MediaStream
                 state = VideoState.VsPaused;
             else if (player.IsPlaying)
             {
-                bool wasFrozen = isFrozen;
-                isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
+                state = VideoState.VsPlaying;
 
-                if (!isNowFrozen)
-                {
-                    lastVideoTime = player.CurrentTime;
-                    frozenTimestamp = UnityEngine.Time.realtimeSinceStartup;
-                    state = VideoState.VsPlaying;
-                }
-                else
-                {
-                    // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
-                    state = player.IsSeeking ? VideoState.VsSeeking : VideoState.VsBuffering;
+                float timestamp = UnityEngine.Time.realtimeSinceStartup;
 
-                    if (isNowFrozen != wasFrozen)
-                        frozenTimestamp = UnityEngine.Time.realtimeSinceStartup;
+                // This threshold solves the case on which it is updated many times in a row in the same frame
+                if (timestamp - lastPlayTimestamp > PLAY_CHECK_THRESHOLD)
+                {
+                    lastPlayTimestamp = timestamp;
+
+                    bool wasFrozen = isFrozen;
+                    isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
+
+                    if (!isNowFrozen)
+                    {
+                        lastVideoTime = player.CurrentTime;
+                        frozenTimestamp = timestamp;
+                    }
+                    else
+                    {
+                        if (isNowFrozen != wasFrozen)
+                            frozenTimestamp = timestamp;
+
+                        if (player.IsSeeking)
+                            state = VideoState.VsSeeking;
+                        else if (player.IsBuffering)
+                            state = VideoState.VsBuffering;
+                    }
                 }
             }
 
