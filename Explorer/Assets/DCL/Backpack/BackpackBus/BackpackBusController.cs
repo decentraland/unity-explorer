@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -114,13 +115,19 @@ namespace DCL.Backpack.BackpackBus
             {
                 urnRequest[0] = new URN(pointer);
 
-                await UniTask.WhenAll(wearablesProvider.RequestPointersAsync(urnRequest, BodyShape.MALE, fetchWearableCts.Token),
-                        wearablesProvider.RequestPointersAsync(urnRequest, BodyShape.FEMALE, fetchWearableCts.Token));
+                BodyShape currenBodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
 
-                if (wearableStorage.TryGetElement(pointer, out IWearable wearable))
-                    onWearableFetched(wearable);
-                else
-                    ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Couldn't fetch wearable for pointer: {pointer}");
+                var results = await wearablesProvider.RequestPointersAsync(urnRequest, currenBodyShape, fetchWearableCts.Token);
+
+                if (results != null)
+                    foreach (var result in results)
+                        if (result.GetUrn() == pointer)
+                        {
+                            onWearableFetched(result);
+                            return;
+                        }
+
+                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Couldn't fetch wearable for pointer: {pointer}");
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.WEARABLE)); }
