@@ -1,5 +1,7 @@
 ﻿using System.Threading;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Models;
@@ -22,6 +24,7 @@ namespace DCL.Backpack.Gifting.Presenters
         
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
+        private readonly IWearableStorage wearableStorage;
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
         private readonly SendGiftCommand sendGiftCommand;
@@ -43,13 +46,15 @@ namespace DCL.Backpack.Gifting.Presenters
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
             IGiftingGridPresenterFactory gridFactory,
-            IMVCManager mvcManager) : base(viewFactory)
+            IMVCManager mvcManager,
+            IWearableStorage wearableStorage) : base(viewFactory)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.inputBlock  = inputBlock;
             this.gridFactory = gridFactory;
             this.mvcManager = mvcManager;
+            this.wearableStorage = wearableStorage;
         }
         
         private void OnPublishError()
@@ -218,6 +223,15 @@ namespace DCL.Backpack.Gifting.Presenters
                 _ => "unknown"
             };
 
+            var wearableUrn = new URN(urn);
+            string tokenId = "0";
+
+            if (itemType == "wearable" &&
+                wearableStorage.TryGetLatestOwnedNft(wearableUrn, out var entry))
+            {
+                tokenId = entry.TokenId;
+            }
+
             var data = new GiftTransferParams(recipientAddress,
                 recipientName,
                 userThumb,
@@ -225,7 +239,8 @@ namespace DCL.Backpack.Gifting.Presenters
                 giftDisplayName,
                 giftThumb,
                 style,
-                itemType
+                itemType,
+                tokenId
             );
 
             await mvcManager.ShowAsync(GiftTransferController.IssueCommand(data));

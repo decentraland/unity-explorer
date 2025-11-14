@@ -43,6 +43,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             var result = await giftTransferService
                 .RequestTransferAsync(senderAddress,
                     data.giftUrn,
+                    data.tokenId,
                     data.recipientAddress, ct);
             
             if (ct.IsCancellationRequested)

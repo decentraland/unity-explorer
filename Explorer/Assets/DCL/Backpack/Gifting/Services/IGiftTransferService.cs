@@ -31,6 +31,6 @@ namespace DCL.Backpack.Gifting.Services
         /// <summary>
         ///     Initiates the transfer of a gift by requesting a signature from the user.
         /// </summary>
-        UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string recipientAddress, CancellationToken ct);
+        UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string tokenId, string recipientAddress, CancellationToken ct);
     }
 }

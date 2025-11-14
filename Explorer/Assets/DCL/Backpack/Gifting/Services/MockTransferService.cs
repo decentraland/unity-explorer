@@ -26,7 +26,7 @@
         [Tooltip("The delayed transaction time (must be more than the controller's timeout).")]
         public float LongDelayDuration { get; set; } = 12.0f;
 
-        public async UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string recipientAddress, CancellationToken ct)
+        public async UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string tokenId, string recipientAddress, CancellationToken ct)
         {
             bool isLongDelay = UnityEngine.Random.value < LongDelayChance;
             bool shouldSucceed = UnityEngine.Random.value > FailureChance;

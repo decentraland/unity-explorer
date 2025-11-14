@@ -860,6 +860,7 @@ namespace Global.Dynamic
                     profileRepository,
                     staticContainer.InputBlock,
                     wearablesProvider,
+                    wearableCatalog,
                     equippedWearables,
                     emoteProvider,
                     identityCache,

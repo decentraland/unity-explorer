@@ -152,6 +152,35 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
+        public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+        {
+            lock (lockObject)
+            {
+                entry = default;
+
+                if (!ownedNftsRegistry.TryGetValue(nftUrn, out var registry) || registry.Count == 0)
+                    return false;
+
+                NftBlockchainOperationEntry best = default;
+                bool hasBest = false;
+
+                foreach (var e in registry.Values)
+                {
+                    if (!hasBest || e.TransferredAt > best.TransferredAt)
+                    {
+                        best = e;
+                        hasBest = true;
+                    }
+                }
+
+                if (!hasBest)
+                    return false;
+
+                entry = best;
+                return true;
+            }
+        }
+
         internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
             lock (lockObject)

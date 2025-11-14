@@ -11,5 +11,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public interface IWearableStorage : IAvatarElementStorage<IWearable, WearableDTO>
     {
         bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
+        bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry);
     }
 }

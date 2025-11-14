@@ -32,10 +32,15 @@ namespace DCL.Backpack.Gifting.Services
         /// </summary>
         /// <param name="fromAddress"></param>
         /// <param name="giftUrn">The URN of the NFT to be transferred.</param>
+        /// <param name="tokenId"></param>
         /// <param name="recipientAddress">The Ethereum address of the recipient.</param>
         /// <param name="ct">The cancellation token.</param>
         /// <returns>A GiftTransferResult indicating success or failure.</returns>
-        public async UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress, string giftUrn, string recipientAddress, CancellationToken ct)
+        public async UniTask<GiftTransferResult> RequestTransferAsync(string fromAddress,
+            string giftUrn,
+            string tokenId,
+            string recipientAddress,
+            CancellationToken ct)
         {
             try
             {
@@ -47,7 +52,6 @@ namespace DCL.Backpack.Gifting.Services
                     return GiftTransferResult.Fail($"Invalid gift URN format: {giftUrn}");
 
                 string contractAddress = parsedUrn.Value.contractAddress;
-                string tokenId = parsedUrn.Value.tokenId;
 
                 // Build call data for transferFrom(from, to, tokenId)
                 string data = ManualTxEncoder.EncodeTransferFrom(fromAddress, recipientAddress, tokenId);
