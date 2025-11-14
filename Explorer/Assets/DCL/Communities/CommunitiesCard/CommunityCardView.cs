@@ -134,7 +134,7 @@ namespace DCL.Communities.CommunitiesCard
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
-        private Sections currentSection;
+        private Sections? currentSection;
 
         private void Awake()
         {
@@ -270,8 +270,11 @@ namespace DCL.Communities.CommunitiesCard
             backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        public void ResetToggle(bool invokeEvent) =>
+        public void ResetToggle(bool invokeEvent)
+        {
+            currentSection = null;
             ToggleSection(CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? Sections.ANNOUNCEMENTS : Sections.MEMBERS, invokeEvent);
+        }
 
         public void SetLoadingState(bool isLoading)
         {
