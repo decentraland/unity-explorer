@@ -41,9 +41,11 @@ namespace DCL.SDKComponents.MediaStream
         private void CreateAudioStream(Entity entity, ref PBAudioStream sdkComponent)
         {
             // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
-            bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasIsSpatial: true, IsSpatial: true };
+            bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasSpatial: true, Spatial: true };
 
-            if (mediaFactory.TryCreateMediaPlayer(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, isSpatialAudio, out MediaPlayerComponent component))
+            if (mediaFactory.TryCreateMediaPlayer(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume,
+                    isSpatialAudio, sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
+                    out MediaPlayerComponent component))
                 World.Add(entity, component);
         }
 
@@ -61,9 +63,10 @@ namespace DCL.SDKComponents.MediaStream
             if (!World.Has<MediaPlayerComponent>(entity))
             {
                 // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
-                bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasIsSpatial: true, IsSpatial: true };
+                bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasSpatial: true, Spatial: true };
 
-                if (!mediaFactory.TryCreateMediaPlayer(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, isSpatialAudio,
+                if (!mediaFactory.TryCreateMediaPlayer(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume,
+                        isSpatialAudio, sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
                         out MediaPlayerComponent mediaPlayerComponent))
                     return;
 

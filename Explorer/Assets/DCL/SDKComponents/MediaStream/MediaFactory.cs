@@ -14,6 +14,7 @@ using ECS.Unity.Textures.Components;
 using LiveKit.Rooms;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -67,7 +68,9 @@ namespace DCL.SDKComponents.MediaStream
         public VideoTextureData CreateVideoPlayback(string url)
         {
             VideoTextureConsumer consumer = CreateVideoConsumer();
-            MediaPlayerComponent mediaPlayer = CreateMediaPlayerComponent(url, false, MediaPlayerComponent.DEFAULT_VOLUME, false);
+            MediaPlayerComponent mediaPlayer = CreateMediaPlayerComponent(url,
+                false, MediaPlayerComponent.DEFAULT_VOLUME,
+                false, null);
 
             return new VideoTextureData(consumer, mediaPlayer);
         }
@@ -116,7 +119,7 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Create media player with budgeting
         /// </summary>
-        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, out MediaPlayerComponent component)
+        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMaxDistance, out MediaPlayerComponent component)
         {
             if (!frameBudget.TrySpendBudget())
             {
@@ -124,12 +127,12 @@ namespace DCL.SDKComponents.MediaStream
                 return false;
             }
 
-            component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio);
+            component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio, spatialMaxDistance);
             return true;
         }
 
         [SuppressMessage("ReSharper", "RedundantAssignment")]
-        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool isSpatialAudio)
+        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMaxDistance)
         {
             bool isValidLocalPath = false;
             bool isValidStreamUrl = false;
@@ -180,7 +183,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
-            component.IsSpatial = isSpatialAudio;
+            component.UpdateSpatialAudio(isSpatialAudio, spatialMaxDistance);
 
             return component;
         }
