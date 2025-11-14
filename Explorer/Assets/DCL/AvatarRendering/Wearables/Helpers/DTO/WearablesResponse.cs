@@ -5,10 +5,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public struct WearablesResponse
     {
-        public readonly IReadOnlyList<IWearable> Wearables;
+        public readonly IReadOnlyList<ITrimmedWearable> Wearables;
         public readonly int TotalAmount;
 
-        public WearablesResponse(IReadOnlyList<IWearable> wearables, int totalAmount)
+        public WearablesResponse(IReadOnlyList<ITrimmedWearable> wearables, int totalAmount)
         {
             Wearables = wearables;
             TotalAmount = totalAmount;

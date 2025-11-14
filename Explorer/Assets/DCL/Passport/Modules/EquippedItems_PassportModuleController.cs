@@ -198,7 +198,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
-                equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
+                equippedWearableItem.BuyButton.gameObject.SetActive(((IAvatarAttachment<WearableDTO>)wearable).IsOnChain() && marketPlaceLink != string.Empty);
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -272,7 +272,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                Sprite sprite = await thumbnailProvider.GetAsync((IAvatarAttachment)itemWearable, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }

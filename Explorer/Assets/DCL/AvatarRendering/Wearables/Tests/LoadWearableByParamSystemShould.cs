@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Tests;
 using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -22,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
     {
-        private WearableStorage wearableStorage;
+        private TrimmedWearableStorage trimmedWearableStorage;
         private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
 
         private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
@@ -33,34 +34,34 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
         protected override LoadWearablesByParamSystem CreateSystem()
         {
-            wearableStorage = new WearableStorage();
+            trimmedWearableStorage = new TrimmedWearableStorage();
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
             return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableStorage);
+                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), URLDomain.EMPTY, new WearableStorage(), trimmedWearableStorage);
         }
 
         protected override void AssertSuccess(WearablesResponse asset)
         {
             base.AssertSuccess(asset);
 
-            foreach (string wearableCatalogKey in wearableStorage.wearablesCache.Keys)
+            foreach (string wearableCatalogKey in trimmedWearableStorage.wearablesCache.Keys)
                 Debug.Log(wearableCatalogKey);
 
-            Assert.AreEqual(wearableStorage.wearablesCache.Count, 1);
-            Assert.NotNull(wearableStorage.wearablesCache[existingURN]);
+            Assert.AreEqual(trimmedWearableStorage.wearablesCache.Count, 1);
+            Assert.NotNull(trimmedWearableStorage.wearablesCache[existingURN]);
         }
 
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            WearableDTO wearableDTO = new WearableDTO();
+            TrimmedWearableDTO wearableDTO = new TrimmedWearableDTO();
             wearableDTO.id = existingURN;
             wearableDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback("v18", "2024-05-01T05:41:08.138Z");
 
-            wearableStorage.wearablesCache.Add(existingURN, new FakeWearable(wearableDTO));
+            trimmedWearableStorage.wearablesCache.Add(existingURN, new FakeTrimmedWearable(wearableDTO));
             await ConcludeSuccess();
         }
 
@@ -74,13 +75,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             system.urlBuilder = urlBuilder;
 
-            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>(), totalAmount);
+            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<ITrimmedWearable>(), totalAmount);
         }
 
         protected override GetWearableByParamIntention CreateNotFoundIntention() =>
-            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>(), totalAmount);
+            new (Array.Empty<(string, string)>(), failPath, new List<ITrimmedWearable>(), totalAmount);
 
         protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
-            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>(), totalAmount);
+            new (Array.Empty<(string, string)>(), wrongTypePath, new List<ITrimmedWearable>(), totalAmount);
     }
 }

@@ -10,7 +10,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         (Color, Color, Color) GetColors();
 
-        bool IsEquipped(IWearable wearable);
+        bool IsEquipped(ITrimmedWearable wearable);
 
         IReadOnlyDictionary<string, IWearable?> Items();
     }

@@ -39,7 +39,7 @@ namespace DCL.Backpack
         private readonly BackpackSortController backpackSortController;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
-        private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
+        private readonly List<ITrimmedWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -53,7 +53,7 @@ namespace DCL.Backpack
         private string currentSearch = "";
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
         private IWearable? currentBodyShape;
-        private IReadOnlyList<IWearable>? currentPageWearables;
+        private IReadOnlyList<ITrimmedWearable>? currentPageWearables;
 
         private BackpackBreadCrumbController breadcrumbController;
 
@@ -155,7 +155,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void SetGridElements(IReadOnlyList<IWearable> gridWearables)
+        private void SetGridElements(IReadOnlyList<ITrimmedWearable> gridWearables)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = gridWearables.Count; j < CURRENT_PAGE_SIZE; j++)
@@ -268,7 +268,7 @@ namespace DCL.Backpack
 
             try
             {
-                (IReadOnlyList<IWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
+                (IReadOnlyList<ITrimmedWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
                     currentSort.OrderByOperation.ToSortingField(),
                     currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                     currentCategory, collectionType, currentSearch, results);
@@ -297,7 +297,7 @@ namespace DCL.Backpack
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
             Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
 
@@ -358,11 +358,11 @@ namespace DCL.Backpack
             }
         }
 
-        private void UpdateBodyShapeCompatibility(IReadOnlyList<IWearable> wearables, IAvatarAttachment bodyShape)
+        private void UpdateBodyShapeCompatibility(IReadOnlyList<ITrimmedWearable> wearables, IAvatarAttachment bodyShape)
         {
             for (int i = Math.Min(wearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
-                IWearable wearable = wearables[i];
+                ITrimmedWearable wearable = wearables[i];
                 BackpackItemView? itemView = loadingResults[i];
 
                 if (itemView == null) continue;

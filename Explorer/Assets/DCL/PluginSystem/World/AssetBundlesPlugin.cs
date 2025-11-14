@@ -7,6 +7,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.EarlyAsset;
 using ECS.StreamableLoading.Cache;
@@ -43,8 +44,6 @@ namespace DCL.PluginSystem.World
         private readonly URLDomain assetBundleURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
 
-
-
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
             URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
         {
@@ -75,7 +74,6 @@ namespace DCL.PluginSystem.World
             PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL);
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
-
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
