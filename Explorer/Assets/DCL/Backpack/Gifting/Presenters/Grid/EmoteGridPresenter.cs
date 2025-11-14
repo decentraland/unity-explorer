@@ -270,7 +270,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 var requestOptions = new IEmoteProvider.OwnedEmotesRequestOptions(
                     pageNum: currentPage,
                     pageSize: PAGE_SIZE,
-                    collectionId: null, // Not used in gifting search
+                    collectionId: null,
                     orderOperation: currentOrder,
                     name: currentSearch,
                     includeAmount: true);

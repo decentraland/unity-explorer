@@ -54,28 +54,6 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
                     .AppendSubDirectory(URLSubdirectory.FromString(userID))
                     .AppendSubDirectory(wearablesSubdirectory);
-
-
-                // const string testingCatalystUrl = "https://peer-testing-2.decentraland.org/explorer/";
-                //
-                // urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(testingCatalystUrl), lambdaSubdirectory)
-                //     .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                //     .AppendSubDirectory(wearablesSubdirectory);
-
-                // try
-                // {
-                //     urlBuilder.AppendDomain(URLDomain.FromString(testingCatalystUrl))
-                //         // 3. Use AppendPath to add the new "/explorer" path from the API docs.
-                //         .AppendPath(URLPath.FromString("/explorer"))
-                //         // 4. Use AppendSubDirectory for the remaining parts, as before.
-                //         .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                //         .AppendSubDirectory(wearablesSubdirectory);
-                // }
-                // catch (Exception e)
-                // {
-                //     
-                //     throw;
-                // }
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
