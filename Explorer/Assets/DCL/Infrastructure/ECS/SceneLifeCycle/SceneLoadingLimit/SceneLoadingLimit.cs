@@ -13,7 +13,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Dictionary<SceneLimitsKey, SceneLimits> constantSceneLimits = new ()
         {
             // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 561MB
-            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE + SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(1.0f, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // 3 scenes, 5 high quality LODs, 30 low quality LODs. Limit: 1925MB
             { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits((3 * SceneLoadingMemoryConstants.MAX_SCENE_SIZE) + (5 * SceneLoadingMemoryConstants.MAX_SCENE_LOD), 30 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
@@ -48,7 +48,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             systemMemoryCap = memoryCap;
 
             initialKey = SceneLimitsKey.MAX_MEMORY;
-            currentSceneLimits = constantSceneLimits[initialKey];
+            currentSceneLimits = constantSceneLimits[SceneLimitsKey.LOW_MEMORY];
         }
 
         public void ResetCurrentUsage()
@@ -106,7 +106,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 initialKey = SceneLimitsKey.MAX_MEMORY;
 
             //We reset any possible transition and let it re-acomodate again
-            currentSceneLimits = constantSceneLimits[initialKey];
+            currentSceneLimits = constantSceneLimits[SceneLimitsKey.LOW_MEMORY];
             sceneTransitionState = SceneTransitionState.NORMAL;
             currentTransitionFrames = 0;
         }
