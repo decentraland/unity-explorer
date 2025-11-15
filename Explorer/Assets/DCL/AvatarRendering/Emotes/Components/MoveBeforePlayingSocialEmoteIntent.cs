@@ -6,7 +6,7 @@ namespace DCL.AvatarRendering.Emotes
     /// <summary>
     ///
     /// </summary>
-    public readonly struct MoveBeforePlayingSocialEmoteIntent
+    public struct MoveBeforePlayingSocialEmoteIntent
     {
         /// <summary>
         ///
@@ -28,12 +28,18 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         public readonly TriggerEmoteReactingToSocialEmoteIntent TriggerEmoteIntent;
 
+        /// <summary>
+        /// Indicates whether avatars are already looking at each other or not. This will be changed in a system.
+        /// </summary>
+        public bool AreAvatarsLookingAtEachOther;
+
         public MoveBeforePlayingSocialEmoteIntent(Vector3 initiatorWorldPosition, Quaternion initiatorWorldRotation, Entity initiatorEntityId, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent)
         {
             InitiatorWorldPosition = initiatorWorldPosition;
             InitiatorWorldRotation = initiatorWorldRotation;
             TriggerEmoteIntent = triggerEmoteIntent;
             InitiatorEntityId = initiatorEntityId;
+            AreAvatarsLookingAtEachOther = false;
         }
     }
 }

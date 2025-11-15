@@ -13,6 +13,7 @@ namespace DCL.AvatarRendering.Emotes
         // TODO: Replace StopEmote with component StopEmoteIntent
         public bool StopEmote;
         public EmoteDTO.EmoteMetadataDto? Metadata;
+        // TODO: Put all the fields of the social emote into an inner class SocialEmote
         // TODO: Is it redundant to store this here when the interaction state can be checked from anywhere using the Profile.UserId?
         public bool IsPlayingSocialEmoteOutcome;
         public int CurrentSocialEmoteOutcome;

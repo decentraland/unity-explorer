@@ -15,6 +15,7 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using System;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -232,6 +233,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
 
+            public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
+                throw new NotImplementedException();
+
             public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId) // Parameter name from interface
             {
                 SentEmotes.Add((urn, loopCyclePassed));
@@ -240,6 +244,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new System.NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new System.NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new System.NotImplementedException();
+
+            public void SaveForRetry(LookAtPositionIntention intention)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private class MockSceneData : ISceneData

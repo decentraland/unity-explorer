@@ -16,6 +16,7 @@ namespace DCL.AvatarRendering.Emotes
         public URN EmoteId;
         public bool Spatial;
         public TriggerSource TriggerSource;
+        // TODO: Put all the fields of the social emote into an inner class SocialEmote
         public bool UseSocialEmoteOutcomeAnimation;
         public int SocialEmoteOutcomeIndex;
         public bool UseOutcomeReactionAnimation;
