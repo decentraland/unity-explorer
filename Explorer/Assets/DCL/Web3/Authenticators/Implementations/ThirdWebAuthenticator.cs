@@ -156,12 +156,10 @@ namespace DCL.Web3.Authenticators
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback)
         {
-            throw new NotImplementedException();
         }
 
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback)
         {
-            throw new NotImplementedException();
         }
     }
 }

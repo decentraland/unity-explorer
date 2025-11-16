@@ -1,5 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -10,7 +12,6 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -28,6 +29,7 @@ using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
 using Sentry;
+using ThirdWebUnity;
 using ThirdWebUnity.Playground;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -584,6 +586,9 @@ namespace DCL.AuthenticationScreenFlow
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
+            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                profile = await CreateAndPublishDefaultProfileAsync(ct);
+
             if (profile == null)
                 throw new ProfileNotFoundException();
 
@@ -600,6 +605,53 @@ namespace DCL.AuthenticationScreenFlow
 
             bool IsNewUser() =>
                 profile.Version == 1;
+        }
+
+        private async UniTask<Profile> CreateAndPublishDefaultProfileAsync(CancellationToken ct)
+        {
+            IWeb3Identity? identity = storedIdentityProvider.Identity;
+
+            if (identity == null)
+                throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
+
+            Profile defaultProfile = BuildDefaultProfile(identity.Address.ToString());
+            Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
+
+            if (publishedProfile == null)
+                throw new ProfileNotFoundException();
+
+            return publishedProfile;
+        }
+
+        private static Profile BuildDefaultProfile(string walletAddress)
+        {
+            var avatar = new Profiles.Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
+
+            var profile = Profile.Create(walletAddress, IProfileRepository.PLAYER_RANDOM_ID, avatar);
+            profile.HasClaimedName = false;
+            profile.HasConnectedWeb3 = true;
+            profile.Description = string.Empty;
+            profile.Country = string.Empty;
+            profile.EmploymentStatus = string.Empty;
+            profile.Gender = string.Empty;
+            profile.Pronouns = string.Empty;
+            profile.RelationshipStatus = string.Empty;
+            profile.SexualOrientation = string.Empty;
+            profile.Language = string.Empty;
+            profile.Profession = string.Empty;
+            profile.RealName = string.Empty;
+            profile.Hobbies = string.Empty;
+            profile.TutorialStep = 0;
+            profile.Version = 0;
+            profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
+            profile.IsDirty = true;
+
+            return profile;
         }
 
         private void ChangeAccount()
