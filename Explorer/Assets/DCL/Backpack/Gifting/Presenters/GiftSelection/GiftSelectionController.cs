@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
@@ -8,6 +9,7 @@ using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
@@ -25,9 +27,9 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
         private readonly IWearableStorage wearableStorage;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
-        private readonly SendGiftCommand sendGiftCommand;
         private readonly IMVCManager mvcManager;
         
         private GiftingHeaderPresenter? headerPresenter;
@@ -47,7 +49,8 @@ namespace DCL.Backpack.Gifting.Presenters
             IInputBlock inputBlock,
             IGiftingGridPresenterFactory gridFactory,
             IMVCManager mvcManager,
-            IWearableStorage wearableStorage) : base(viewFactory)
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage) : base(viewFactory)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
@@ -55,11 +58,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.gridFactory = gridFactory;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
-        }
-        
-        private void OnPublishError()
-        {
-            giftingErrorsController!.Show();
+            this.emoteStorage = emoteStorage;
         }
         
         #region MVC
@@ -195,47 +194,36 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void HandleSendGift()
         {
-            OpenTransferPopup().Forget();
+            OpenTransferPopupAsync().Forget();
         }
 
-        private async UniTaskVoid OpenTransferPopup()
+        private async UniTaskVoid OpenTransferPopupAsync()
         {
-            var active = tabsManager.ActivePresenter;
-            string? urn = active?.SelectedUrn;
-            if (string.IsNullOrEmpty(urn))
+            var activePresenter = tabsManager.ActivePresenter;
+            string selectedUrn = activePresenter?.SelectedUrn;
+
+            if (string.IsNullOrEmpty(selectedUrn)) return;
+
+            // Determine the item type and try to get a valid, unique tokenId for the transaction.
+            string itemType = activePresenter is WearableGridPresenter ? "wearable" : "emote";
+            if (!TryGetGiftTokenId(new URN(selectedUrn), itemType, out string tokenId))
+            {
+                ReportHub.LogError(ReportCategory.GIFTING, $"Could not find a valid tokenId for URN {selectedUrn}. Aborting gift transfer.");
+                giftingErrorsController.Show("Cannot send this item as a gift because it's not a transferable NFT.");
                 return;
-
-            string recipientAddress = inputData.userAddress;
-            string recipientName = inputData.userName;
-            var userThumb = headerPresenter?.CurrentRecipientAvatarSprite; // or null if you don’t keep it
-
-            // selected gift data
-            string giftDisplayName = active!.GetItemNameByUrn(urn) ?? "Item";
-            var giftThumb = active.GetThumbnailByUrn(urn);
-
-            if (!active.TryBuildStyleSnapshot(urn, out var style))
-                style = new GiftItemStyleSnapshot(null, null, Color.white);
-
-            string itemType = active switch
-            {
-                WearableGridPresenter => "wearable",
-                EmoteGridPresenter => "emote",
-                _ => "unknown"
-            };
-
-            var wearableUrn = new URN(urn);
-            string tokenId = "0";
-
-            if (itemType == "wearable" &&
-                wearableStorage.TryGetLatestOwnedNft(wearableUrn, out var entry))
-            {
-                tokenId = entry.TokenId;
             }
 
-            var data = new GiftTransferParams(recipientAddress,
-                recipientName,
-                userThumb,
-                urn,
+            // Gather all remaining data for the transfer popup
+            string giftDisplayName = activePresenter.GetItemNameByUrn(selectedUrn) ?? "Item";
+            var giftThumb = activePresenter.GetThumbnailByUrn(selectedUrn);
+            if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
+                style = new GiftItemStyleSnapshot(null, null, Color.white);
+
+            var transferParams = new GiftTransferParams(
+                inputData.userAddress,
+                inputData.userName,
+                headerPresenter.CurrentRecipientAvatarSprite,
+                selectedUrn,
                 giftDisplayName,
                 giftThumb,
                 style,
@@ -243,7 +231,29 @@ namespace DCL.Backpack.Gifting.Presenters
                 tokenId
             );
 
-            await mvcManager.ShowAsync(GiftTransferController.IssueCommand(data));
+            await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams));
+        }
+
+        /// <summary>
+        ///     Retrieves the latest owned unique Token ID for a given NFT URN.
+        ///     This is necessary to identify which specific copy of an item to transfer.
+        /// </summary>
+        /// <returns>True if a valid, on-chain token ID was found.</returns>
+        private bool TryGetGiftTokenId(URN itemUrn, string itemType, out string tokenId)
+        {
+            tokenId = "0";
+
+            switch (itemType)
+            {
+                case "wearable" when wearableStorage.TryGetLatestOwnedNft(itemUrn, out var wearableEntry):
+                    tokenId = wearableEntry.TokenId;
+                    return true;
+                case "emote" when emoteStorage.TryGetLatestOwnedNft(itemUrn, out var emoteEntry):
+                    tokenId = emoteEntry.TokenId;
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private void HandleSearchChanged(string searchText)

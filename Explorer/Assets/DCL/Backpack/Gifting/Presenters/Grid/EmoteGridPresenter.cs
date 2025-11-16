@@ -68,7 +68,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IReadOnlyCollection<URN> embeddedEmoteIds,
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumb,
-            IWearableStylingCatalog wearableStylingCatalog)
+            IWearableStylingCatalog wearablesStylingCatalog)
         {
             this.view = view;
             this.adapter = adapter;
@@ -77,7 +77,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             this.embeddedEmoteIds = embeddedEmoteIds;
             this.eventBus = eventBus;
             this.loadThumb = loadThumb;
-            wearablesStylingCatalog = wearablesStylingCatalog;
+            this.wearablesStylingCatalog = wearablesStylingCatalog;
 
             rectTransform = view.GetComponent<RectTransform>();
             canvasGroup = view.GetComponent<CanvasGroup>();

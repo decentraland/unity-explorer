@@ -582,6 +582,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public class MockEmote : IEmote

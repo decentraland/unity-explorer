@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Loading
         bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry);
 
         int GetOwnedNftCount(URN nftUrn);
-        
+
         void ClearOwnedNftRegistry();
     }
 

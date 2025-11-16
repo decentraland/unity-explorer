@@ -161,6 +161,35 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+        public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+        {
+            lock (lockObject)
+            {
+                entry = default;
+
+                if (!ownedNftsRegistry.TryGetValue(nftUrn, out var registry) || registry.Count == 0)
+                    return false;
+
+                NftBlockchainOperationEntry best = default;
+                bool hasBest = false;
+
+                foreach (var e in registry.Values)
+                {
+                    if (!hasBest || e.TransferredAt > best.TransferredAt)
+                    {
+                        best = e;
+                        hasBest = true;
+                    }
+                }
+
+                if (!hasBest)
+                    return false;
+
+                entry = best;
+                return true;
+            }
+        }
+
         private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)
         {
             emotes.Add(urn, wearable);

@@ -861,6 +861,7 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     wearablesProvider,
                     wearableCatalog,
+                    emotesCache,
                     equippedWearables,
                     emoteProvider,
                     identityCache,

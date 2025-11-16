@@ -40,6 +40,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStorage wearableStorage;
+        private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             IWearablesProvider wearablesProvider,
             IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage,
             IEquippedWearables equippedWearables,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
@@ -75,6 +77,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.wearablesProvider = wearablesProvider;
             this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
@@ -137,7 +140,8 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 gridFactory,
                 mvcManager,
-                wearableStorage
+                wearableStorage,
+                emoteStorage
             );
             
             giftTransferStatusController = new GiftTransferController(

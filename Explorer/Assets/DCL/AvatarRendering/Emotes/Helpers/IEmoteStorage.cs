@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
 using System;
 using System.Collections.Generic;
+using DCL.AvatarRendering.Wearables.Components;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -10,5 +11,6 @@ namespace DCL.AvatarRendering.Emotes
         List<URN> EmbededURNs { get; }
         void AddEmbeded(URN urn, IEmote emote);
         bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
+        bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry);
     }
 }
