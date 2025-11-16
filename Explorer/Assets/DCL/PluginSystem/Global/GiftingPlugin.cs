@@ -21,9 +21,9 @@ using DCL.Backpack.Gifting.Styling;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -49,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
         private readonly IEthereumApi ethereumApi;
+        private readonly ISelfProfile selfProfile;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -68,7 +69,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
             IWebBrowser webBrowser,
-            IEthereumApi ethereumApi)
+            IEthereumApi ethereumApi,
+            ISelfProfile selfProfile)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -86,6 +88,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus =  eventBus;
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose()
@@ -141,7 +144,8 @@ namespace DCL.PluginSystem.Global
                 gridFactory,
                 mvcManager,
                 wearableStorage,
-                emoteStorage
+                emoteStorage,
+                selfProfile
             );
             
             giftTransferStatusController = new GiftTransferController(

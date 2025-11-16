@@ -13,6 +13,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
         private readonly IMVCManager mvcManager;
+        private readonly ISelfProfile selfProfile;
         
         private GiftingHeaderPresenter? headerPresenter;
         private GiftingFooterPresenter? footerPresenter;
@@ -50,7 +52,8 @@ namespace DCL.Backpack.Gifting.Presenters
             IGiftingGridPresenterFactory gridFactory,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
-            IEmoteStorage emoteStorage) : base(viewFactory)
+            IEmoteStorage emoteStorage,
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
@@ -59,6 +62,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
+            this.selfProfile = selfProfile;
         }
         
         #region MVC
@@ -103,7 +107,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override void OnViewShow()
         {
+            
             lifeCts = new CancellationTokenSource();
+            ShowCurrentProfileWearables().Forget();
             viewInstance!.ErrorNotification.Hide(true);
 
             headerPresenter?.ClearSearchImmediate();
@@ -132,6 +138,32 @@ namespace DCL.Backpack.Gifting.Presenters
             }
 
             tabsManager.Initialize();
+        }
+
+        private async UniTaskVoid ShowCurrentProfileWearables()
+        {
+            var profile = await selfProfile.ProfileAsync(lifeCts.Token);
+            if (profile != null)
+            {
+                string debugMessage = "--- EQUIPPED ITEMS ON GIFTING POPUP OPEN ---\n";
+                debugMessage += "Wearables:\n";
+                foreach (var wearableUrn in profile.Avatar.Wearables)
+                    debugMessage += $"- {wearableUrn}\n";
+
+                debugMessage += "Emotes:\n";
+                for (int i = 0; i < profile.Avatar.Emotes.Count; i++)
+                {
+                    var emoteUrn = profile.Avatar.Emotes[i];
+                    if (!emoteUrn.IsNullOrEmpty())
+                        debugMessage += $"- Slot {i}: {emoteUrn}\n";
+                }
+
+                ReportHub.Log(ReportCategory.GIFTING, debugMessage);
+            }
+            else
+            {
+                ReportHub.LogError(ReportCategory.GIFTING, "Could not load self profile to check equipped items!");
+            }
         }
 
         protected override void OnViewClose()
