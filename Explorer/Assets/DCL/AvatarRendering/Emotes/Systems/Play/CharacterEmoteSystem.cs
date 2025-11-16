@@ -224,6 +224,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if(World.Has<MoveBeforePlayingSocialEmoteIntent>(entity))
                 World.Remove<MoveBeforePlayingSocialEmoteIntent>(entity);
+
+            if(World.Has<MoveToOutcomeStartPositionIntent>(entity))
+                World.Remove<MoveToOutcomeStartPositionIntent>(entity);
         }
 
         private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)

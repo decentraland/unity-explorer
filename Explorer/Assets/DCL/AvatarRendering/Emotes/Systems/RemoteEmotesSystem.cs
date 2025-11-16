@@ -150,17 +150,13 @@ namespace DCL.AvatarRendering.Emotes
 
             using (OwnedBunch<LookAtPositionIntention> lookAtPositionIntentions = emotesMessageBus.LookAtPositionIntentions())
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Processing look ats (remote)...");
-
                 if (lookAtPositionIntentions.Available())
                 {
                     foreach (LookAtPositionIntention lookAtPositionIntention in lookAtPositionIntentions.Collection())
                     {
-                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Processing look at: " + lookAtPositionIntention.WalletAddress + " pos: " + lookAtPositionIntention.TargetPosition.ToString("F6"));
-
                         if (entityParticipantTable.TryGet(lookAtPositionIntention.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added look at.");
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added look at (remote)." + lookAtPositionIntention.WalletAddress + " pos: " + lookAtPositionIntention.TargetPosition.ToString("F6"));
                             World.Add(entry.Entity, lookAtPositionIntention);
                         }
                         else
@@ -191,17 +187,13 @@ namespace DCL.AvatarRendering.Emotes
 
             using (OwnedBunch<LookAtPositionIntention> lookAtPositionIntentions = emotesMessageBus.LookAtPositionIntentions())
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Processing look ats (local)...");
-
                 if (lookAtPositionIntentions.Available())
                 {
                     foreach (LookAtPositionIntention lookAtPositionIntention in lookAtPositionIntentions.Collection())
                     {
-                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Processing look at: " + lookAtPositionIntention.WalletAddress + " pos: " + lookAtPositionIntention.TargetPosition.ToString("F6"));
-
                         if (profile.UserId == lookAtPositionIntention.WalletAddress)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added look at.");
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added look at (local)." + lookAtPositionIntention.WalletAddress + " pos: " + lookAtPositionIntention.TargetPosition.ToString("F6"));
                             World.Add(entity, lookAtPositionIntention);
                         }
                         else
