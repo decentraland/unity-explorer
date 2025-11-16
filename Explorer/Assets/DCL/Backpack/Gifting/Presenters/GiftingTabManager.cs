@@ -181,6 +181,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
     public interface IGiftingGridPresenter
     {
+        void PrepareForLoading(HashSet<string>? equippedUrns);
         void Activate();
         void Deactivate();
         void SetSearchText(string text);

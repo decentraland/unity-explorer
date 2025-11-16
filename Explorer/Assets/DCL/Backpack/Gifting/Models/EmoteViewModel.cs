@@ -4,6 +4,7 @@ using UnityEngine;
 public readonly struct EmoteViewModel : IGiftableItemViewModel
 {
     public IGiftable Giftable { get; }
+    public bool IsGiftable { get; }
     public string Urn => Giftable.Urn;
     public string DisplayName { get; }
     public string? CategoryId { get; }
@@ -13,7 +14,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
     public bool IsEquipped { get; }
     public int NftCount { get; }
 
-    public EmoteViewModel(EmoteGiftable giftable, int amount, bool isEquipped = false)
+    public EmoteViewModel(EmoteGiftable giftable, int amount, bool isEquipped = false,  bool isGiftable = false)
     {
         Giftable = giftable;
         DisplayName = giftable.Name;
@@ -23,6 +24,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         Thumbnail = null;
         NftCount = amount;
         IsEquipped = isEquipped;
+        IsGiftable = isGiftable;
     }
 
     private EmoteViewModel(
@@ -33,7 +35,8 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         ThumbnailState state,
         Sprite? thumbnail,
         int amount,
-        bool isEquipped)
+        bool isEquipped,
+        bool isGiftable)
     {
         Giftable = giftable;
         DisplayName = displayName;
@@ -43,6 +46,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
         Thumbnail = thumbnail;
         NftCount = amount;
         IsEquipped = isEquipped;
+        IsGiftable = isGiftable;
     }
 
     public EmoteViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
@@ -53,6 +57,7 @@ public readonly struct EmoteViewModel : IGiftableItemViewModel
             RarityId, newState,
             newSprite ?? Thumbnail,
             NftCount,
-            IsEquipped);
+            IsEquipped,
+            IsGiftable);
     }
 }

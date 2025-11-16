@@ -1,9 +1,10 @@
 ﻿using System.Threading;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Views;
-using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -54,6 +55,8 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 
             if (result.IsSuccess)
             {
+                PendingGiftsCache.Add(new URN(data.giftUrn));
+                
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
                 eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
             }

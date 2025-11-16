@@ -86,7 +86,7 @@ namespace DCL.Backpack.Gifting.Views
             
             currentUrn = viewModel.Urn;
 
-            equippedContainer.SetActive(viewModel.IsEquipped);
+            equippedContainer.SetActive(viewModel is { IsEquipped: true, IsGiftable: false });
             selectionOutline.SetActive(isSelected);
 
             if (RarityBackground) RarityBackground.color = Color.white;

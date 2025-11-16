@@ -14,6 +14,11 @@ namespace DCL.Backpack.Gifting.Models
         /// <summary>Unified attachment wrapper (Wearable or Emote).</summary>
         IGiftable Giftable { get; }
 
+        /// <summary>
+        ///     Is item giftable?
+        /// </summary>
+        public bool IsGiftable { get; }
+
         /// <summary>Convenience pass-through of Giftable.Urn (used by selection/ids).</summary>
         string Urn { get; }
 

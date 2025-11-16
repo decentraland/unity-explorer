@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
@@ -22,7 +24,6 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private const int CURRENT_PAGE_SIZE = 16;
         private const int SEARCH_DEBOUNCE_MS = 500;
-
         public event Action<string?>? OnSelectionChanged;
         public int CurrentItemCount => viewModelsByUrn.Count;
         public event Action<bool> OnLoadingStateChanged;
@@ -36,6 +37,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
         private readonly IReadOnlyEquippedWearables equippedWearables;
+        private readonly HashSet<string> equippedUrnsContext = new ();
 
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly Dictionary<string, WearableViewModel> viewModelsByUrn = new();
@@ -77,6 +79,15 @@ namespace DCL.Backpack.Gifting.Presenters
 
             adapter.UseWearableStyling(wearableStylingCatalog);
             adapter.SetDataProvider(this);
+        }
+
+        public void PrepareForLoading(HashSet<string>? equippedUrns)
+        {
+            equippedUrnsContext.Clear();
+
+            if (equippedUrns == null) return;
+            foreach (string urn in equippedUrns)
+                equippedUrnsContext.Add(urn);
         }
 
         public void Activate()
@@ -160,13 +171,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void OnItemSelected(string urn)
         {
-            if (viewModelsByUrn.TryGetValue(urn, out var viewModel) && viewModel.IsEquipped)
-            {
-                ReportHub.Log(ReportCategory.GIFTING, $"Attempted to select equipped wearable {urn} for gifting. Selection denied.");
+            if (viewModelsByUrn.TryGetValue(urn, out var viewModel) && !viewModel.IsGiftable)
                 return;
-            }
 
-            
             SelectedUrn = SelectedUrn == urn ? null : urn;
             OnSelectionChanged?.Invoke(SelectedUrn);
             adapter.RefreshAllShownItem();
@@ -208,26 +215,45 @@ namespace DCL.Backpack.Gifting.Presenters
                 ct.ThrowIfCancellationRequested();
 
                 ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] Response: wearables: {wearables.Count} result {results.Count} - {total}");
-
+                
                 totalCount = total;
 
                 if (currentPage == 1)
                 {
-                    bool hasResults = total > 0;
+                    var allOwnedUrns = new List<string>(wearables.Count);
+                    foreach (var w in wearables)
+                        allOwnedUrns.Add(w.GetUrn().ToString());
+                    PendingGiftsCache.Prune(allOwnedUrns);
+                }
+
+                var giftableWearables = new List<IWearable>();
+                foreach (var w in wearables)
+                {
+                    if (!PendingGiftsCache.Contains(w.GetUrn()))
+                        giftableWearables.Add(w);
+                }
+                
+                if (currentPage == 1)
+                {
+                    bool hasResults = giftableWearables.Count > 0;
+                    ;
                     view.RegularResultsContainer.SetActive(hasResults);
                     view.NoResultsContainer.SetActive(!hasResults);
                 }
 
-                foreach (var wearable in wearables)
+                foreach (var wearable in giftableWearables)
                 {
                     var urn = wearable.GetUrn();
                     if (viewModelsByUrn.ContainsKey(urn)) continue;
 
                     viewModelUrnOrder.Add(urn);
                     var giftable = new WearableGiftable(wearable);
-                    bool isEquipped = equippedWearables.IsEquipped(wearable);
 
-                    viewModelsByUrn[urn] = new WearableViewModel(giftable, wearable.Amount, isEquipped);
+                    bool isEquipped = equippedUrnsContext.Contains(urn.ToString());
+                    bool isGiftable = !isEquipped || wearable.Amount > 1;
+
+                    viewModelsByUrn[urn] =
+                        new WearableViewModel(giftable, wearable.Amount, isEquipped, isGiftable);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);

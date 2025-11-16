@@ -1,12 +1,11 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Models;
-using DCL.Backpack.Gifting.Presenters.Grid;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
@@ -105,12 +104,16 @@ namespace DCL.Backpack.Gifting.Presenters
             //presenter.ForceSearch(string.Empty);
         }
 
-        protected override void OnViewShow()
+        protected override async void OnViewShow()
         {
-            
             lifeCts = new CancellationTokenSource();
-            ShowCurrentProfileWearables().Forget();
             viewInstance!.ErrorNotification.Hide(true);
+
+            var equippedUrnsContext = await CreateEquippedContextAsync(lifeCts.Token);
+            if (lifeCts.IsCancellationRequested) return;
+
+            wearablesGridPresenter?.PrepareForLoading(equippedUrnsContext);
+            emotesGridPresenter?.PrepareForLoading(equippedUrnsContext);
 
             headerPresenter?.ClearSearchImmediate();
             wearablesGridPresenter?.Deactivate();
@@ -140,30 +143,22 @@ namespace DCL.Backpack.Gifting.Presenters
             tabsManager.Initialize();
         }
 
-        private async UniTaskVoid ShowCurrentProfileWearables()
+        private async UniTask<HashSet<string>> CreateEquippedContextAsync(CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(lifeCts.Token);
+            var equippedUrns = new HashSet<string>();
+            var profile = await selfProfile.ProfileAsync(ct);
+
             if (profile != null)
             {
-                string debugMessage = "--- EQUIPPED ITEMS ON GIFTING POPUP OPEN ---\n";
-                debugMessage += "Wearables:\n";
                 foreach (var wearableUrn in profile.Avatar.Wearables)
-                    debugMessage += $"- {wearableUrn}\n";
+                    equippedUrns.Add(wearableUrn.ToString());
 
-                debugMessage += "Emotes:\n";
-                for (int i = 0; i < profile.Avatar.Emotes.Count; i++)
-                {
-                    var emoteUrn = profile.Avatar.Emotes[i];
+                foreach (var emoteUrn in profile.Avatar.Emotes)
                     if (!emoteUrn.IsNullOrEmpty())
-                        debugMessage += $"- Slot {i}: {emoteUrn}\n";
-                }
+                        equippedUrns.Add(emoteUrn.ToString());
+            }
 
-                ReportHub.Log(ReportCategory.GIFTING, debugMessage);
-            }
-            else
-            {
-                ReportHub.LogError(ReportCategory.GIFTING, "Could not load self profile to check equipped items!");
-            }
+            return equippedUrns;
         }
 
         protected override void OnViewClose()

@@ -5,6 +5,7 @@ namespace DCL.Backpack.Gifting.Models
     public readonly struct WearableViewModel : IGiftableItemViewModel
     {
         public IGiftable Giftable { get; }
+        public bool IsGiftable { get; }
         public string Urn => Giftable.Urn;
         public string DisplayName { get; }
         public string? CategoryId { get; }
@@ -14,7 +15,7 @@ namespace DCL.Backpack.Gifting.Models
         public bool IsEquipped { get; }
         public int NftCount { get; }
 
-        public WearableViewModel(WearableGiftable giftable, int amount, bool isEquipped = false)
+        public WearableViewModel(WearableGiftable giftable, int amount, bool isEquipped = false, bool isGiftable = false)
         {
             Giftable = giftable;
             DisplayName = giftable.Name;
@@ -23,6 +24,7 @@ namespace DCL.Backpack.Gifting.Models
             ThumbnailState = ThumbnailState.NotLoaded;
             Thumbnail = null;
             IsEquipped = isEquipped;
+            IsGiftable = isGiftable;
             NftCount = amount;
         }
         
@@ -34,7 +36,8 @@ namespace DCL.Backpack.Gifting.Models
             ThumbnailState state,
             Sprite? thumbnail,
             int amount,
-            bool isEquipped)
+            bool isEquipped,
+            bool isGiftable)
         {
             Giftable = giftable;
             DisplayName = displayName;
@@ -43,6 +46,7 @@ namespace DCL.Backpack.Gifting.Models
             ThumbnailState = state;
             Thumbnail = thumbnail;
             IsEquipped = isEquipped;
+            IsGiftable = isGiftable;
             NftCount = amount;
         }
 
@@ -56,7 +60,8 @@ namespace DCL.Backpack.Gifting.Models
                 newState,
                 newSprite ?? Thumbnail,
                 NftCount,
-                IsEquipped);
+                IsEquipped,
+                IsGiftable);
         }
     }
 }
