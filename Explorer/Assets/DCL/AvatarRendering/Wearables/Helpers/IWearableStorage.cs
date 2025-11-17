@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -12,5 +13,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
         bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry);
+        Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
     }
 }

@@ -26,7 +26,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         private const int PAGE_SIZE = 16;
         private const int SEARCH_DEBOUNCE_MS = 500;
 
-        private readonly HashSet<string> equippedUrnsContext = new ();
+        private EquippedItemContext equippedContext;
         public event Action<string?>? OnSelectionChanged;
         public event Action<bool>? OnLoadingStateChanged;
         public int CurrentItemCount => vmByUrn.Count;
@@ -87,14 +87,11 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             adapter.SetDataProvider(this);
         }
 
-        public void PrepareForLoading(HashSet<string>? equippedUrns)
+        public void PrepareForLoading(EquippedItemContext context)
         {
-            equippedUrnsContext.Clear();
-
-            if (equippedUrns == null) return;
-            foreach (string urn in equippedUrns)
-                equippedUrnsContext.Add(urn);
+            equippedContext = context;
         }
+
 
         public void Activate()
         {
@@ -181,7 +178,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     name: currentSearch,
                     includeAmount: true);
 
-                int grandTotal = await emoteProvider.GetOwnedEmotesAsync(
+                // 1. Fetch the raw data from the provider
+                int totalFromServer = await emoteProvider.GetOwnedEmotesAsync(
                     identityCache.Identity!.Address,
                     ct,
                     requestOptions,
@@ -189,42 +187,41 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
 
                 ct.ThrowIfCancellationRequested();
 
-                totalCount = grandTotal;
+                // 2. Keep the server's total count for pagination. Do not modify it.
+                // This ensures we know if there are more pages to fetch from the backend.
+                totalCount = totalFromServer;
 
-                if (currentPage == 1)
+                // 3. Build the list of view models with the correct state
+                foreach (var emote in pageEmotes)
                 {
-                    var allOwnedUrns = new List<string>(pageEmotes.Count);
-                    foreach (var e in pageEmotes)
-                        allOwnedUrns.Add(e.GetUrn().ToString());
-                    PendingGiftsCache.Prune(allOwnedUrns);
-                }
-
-                // Filter out pending gifts (No LINQ)
-                var giftableEmotes = new List<IEmote>();
-                foreach (var e in pageEmotes)
-                {
-                    if (!PendingGiftsCache.Contains(e.GetUrn()))
-                        giftableEmotes.Add(e);
-                }
-
-                if (currentPage == 1)
-                {
-                    bool hasResults = giftableEmotes.Count > 0;
-                    view.RegularResultsContainer.SetActive(hasResults);
-                    view.NoResultsContainer.SetActive(!hasResults);
-                }
-
-                foreach (var emote in giftableEmotes)
-                {
-                    var urn = emote.GetUrn();
+                    var urn = emote.GetUrn(); // This is the BASE URN
                     if (vmByUrn.ContainsKey(urn)) continue;
 
-                    var giftable = new EmoteGiftable(emote);
-                    bool isEquipped = equippedUrnsContext.Contains(urn.ToString());
-                    bool isGiftable = !isEquipped || emote.Amount > 1;
+                    // Calculate the real number of items available to gift
+                    int totalOwned = emote.Amount;
+                    int pendingCount = PendingGiftsCache.GetPendingCount(urn);
+                    int displayAmount = totalOwned - pendingCount;
 
-                    vmByUrn[urn] = new EmoteViewModel(giftable, emote.Amount, isEquipped, isGiftable);
+                    // If all available copies are pending transfer, don't show this item at all
+                    if (displayAmount <= 0) continue;
+
+                    var giftable = new EmoteGiftable(emote);
+                    bool isEquipped = equippedContext.IsItemTypeEquipped(urn);
+
+                    // An item is giftable if it's not equipped, OR if the number of
+                    // available (non-pending) copies is greater than 1.
+                    bool isGiftable = !isEquipped || displayAmount > 1;
+
                     urnOrder.Add(urn);
+                    vmByUrn[urn] = new EmoteViewModel(giftable, displayAmount, isEquipped, isGiftable);
+                }
+
+                // 4. Update UI visibility based on whether we have any items to show on the first page
+                if (currentPage == 1)
+                {
+                    bool hasResults = urnOrder.Count > 0;
+                    view.RegularResultsContainer.SetActive(hasResults);
+                    view.NoResultsContainer.SetActive(!hasResults);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);

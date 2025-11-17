@@ -172,6 +172,8 @@ namespace DCL.Multiplayer.SDK.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
         }
     }
 }

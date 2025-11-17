@@ -55,10 +55,20 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 
             if (result.IsSuccess)
             {
-                PendingGiftsCache.Add(new URN(data.giftUrn));
-                
+                // data.giftUrn = BASE URN (no tokenId)
+                // data.tokenId = the on-chain token to transfer
+
+                var baseUrn = new URN(data.giftUrn);
+                string fullUrnString = $"{baseUrn}:{data.tokenId}";
+                var fullUrn = new URN(fullUrnString);
+
+                var instanceUrn = new URN(data.instanceUrn);
+
+                PendingGiftsCache.Add(instanceUrn);
+
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
-                eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+                eventBus.Publish(new GiftingEvents.OnSuccessfulGift(
+                    data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
             }
             else
             {

@@ -37,7 +37,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
         private readonly IReadOnlyEquippedWearables equippedWearables;
-        private readonly HashSet<string> equippedUrnsContext = new ();
+        private EquippedItemContext equippedContext;
 
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly Dictionary<string, WearableViewModel> viewModelsByUrn = new();
@@ -81,13 +81,9 @@ namespace DCL.Backpack.Gifting.Presenters
             adapter.SetDataProvider(this);
         }
 
-        public void PrepareForLoading(HashSet<string>? equippedUrns)
+        public void PrepareForLoading(EquippedItemContext context)
         {
-            equippedUrnsContext.Clear();
-
-            if (equippedUrns == null) return;
-            foreach (string urn in equippedUrns)
-                equippedUrnsContext.Add(urn);
+            equippedContext = context;
         }
 
         public void Activate()
@@ -218,42 +214,36 @@ namespace DCL.Backpack.Gifting.Presenters
                 
                 totalCount = total;
 
-                if (currentPage == 1)
+                // Build the list of view models to add to the grid
+                foreach (var wearable in wearables)
                 {
-                    var allOwnedUrns = new List<string>(wearables.Count);
-                    foreach (var w in wearables)
-                        allOwnedUrns.Add(w.GetUrn().ToString());
-                    PendingGiftsCache.Prune(allOwnedUrns);
-                }
-
-                var giftableWearables = new List<IWearable>();
-                foreach (var w in wearables)
-                {
-                    if (!PendingGiftsCache.Contains(w.GetUrn()))
-                        giftableWearables.Add(w);
-                }
-                
-                if (currentPage == 1)
-                {
-                    bool hasResults = giftableWearables.Count > 0;
-                    ;
-                    view.RegularResultsContainer.SetActive(hasResults);
-                    view.NoResultsContainer.SetActive(!hasResults);
-                }
-
-                foreach (var wearable in giftableWearables)
-                {
-                    var urn = wearable.GetUrn();
+                    var urn = wearable.GetUrn(); // This is the BASE URN
                     if (viewModelsByUrn.ContainsKey(urn)) continue;
 
-                    viewModelUrnOrder.Add(urn);
+                    // 1. Calculate the real number of items available to gift
+                    int totalOwned = wearable.Amount;
+                    int pendingCount = PendingGiftsCache.GetPendingCount(urn);
+                    int displayAmount = totalOwned - pendingCount;
+
+                    // 2. If all copies are pending transfer, don't show this item at all
+                    if (displayAmount <= 0) continue;
+
                     var giftable = new WearableGiftable(wearable);
+                    bool isEquipped = equippedContext.IsItemTypeEquipped(urn);
 
-                    bool isEquipped = equippedUrnsContext.Contains(urn.ToString());
-                    bool isGiftable = !isEquipped || wearable.Amount > 1;
+                    // 3. An item is giftable if it's not equipped, OR if the number of
+                    //    available (non-pending) copies is greater than 1.
+                    bool isGiftable = !isEquipped || displayAmount > 1;
 
-                    viewModelsByUrn[urn] =
-                        new WearableViewModel(giftable, wearable.Amount, isEquipped, isGiftable);
+                    viewModelUrnOrder.Add(urn);
+                    viewModelsByUrn[urn] = new WearableViewModel(giftable, displayAmount, isEquipped, isGiftable);
+                }
+
+                if (currentPage == 1)
+                {
+                    bool hasResults = viewModelUrnOrder.Count > 0;
+                    view.RegularResultsContainer.SetActive(hasResults);
+                    view.NoResultsContainer.SetActive(!hasResults);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);

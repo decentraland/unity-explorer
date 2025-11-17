@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Views;
 using DCL.UI;
@@ -181,7 +182,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
     public interface IGiftingGridPresenter
     {
-        void PrepareForLoading(HashSet<string>? equippedUrns);
+        void PrepareForLoading(EquippedItemContext context);
         void Activate();
         void Deactivate();
         void SetSearchText(string text);

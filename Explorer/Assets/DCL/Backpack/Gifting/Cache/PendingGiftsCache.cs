@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using UnityEngine;
 
@@ -14,59 +15,71 @@ namespace DCL.Backpack.Gifting.Cache
     public static class PendingGiftsCache
     {
         private const string PREFS_KEY = "PendingGifts";
-        private static readonly HashSet<string> pendingUrns;
+        private static readonly HashSet<string> pendingFullUrns;
 
         static PendingGiftsCache()
         {
-            pendingUrns = new HashSet<string>();
+            pendingFullUrns = new HashSet<string>();
             Load();
         }
 
         private static void Load()
         {
-            if (PlayerPrefs.HasKey(PREFS_KEY))
-            {
-                string savedData = PlayerPrefs.GetString(PREFS_KEY);
-                if (string.IsNullOrEmpty(savedData)) return;
+            if (!PlayerPrefs.HasKey(PREFS_KEY)) return;
+            string savedData = PlayerPrefs.GetString(PREFS_KEY);
+            if (string.IsNullOrEmpty(savedData)) return;
 
-                string[]? loadedUrns = savedData.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                foreach (string urn in loadedUrns)
-                    pendingUrns.Add(urn);
-            }
+            string[]? loadedUrns = savedData.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            foreach (string urn in loadedUrns)
+                pendingFullUrns.Add(urn);
         }
 
         private static void Save()
         {
-            string dataToSave = string.Join(';', pendingUrns);
+            string dataToSave = string.Join(';', pendingFullUrns);
             PlayerPrefs.SetString(PREFS_KEY, dataToSave);
-            PlayerPrefs.Save();
         }
 
-        /// <summary>
-        ///     Adds a URN to the pending cache after a successful gift transfer.
-        /// </summary>
-        public static void Add(URN urn)
+        public static void Add(URN fullUrn)
         {
-            if (pendingUrns.Add(urn.ToString()))
+            if (pendingFullUrns.Add(fullUrn.ToString()))
                 Save();
         }
 
-        /// <summary>
-        ///     Checks if a URN is currently in the pending transfer cache.
-        /// </summary>
-        public static bool Contains(URN urn)
+        public static bool Contains(URN fullUrn)
         {
-            return pendingUrns.Contains(urn.ToString());
+            return pendingFullUrns.Contains(fullUrn.ToString());
         }
 
-        /// <summary>
-        ///     Compares the pending cache against the full list of actually owned items from the backend.
-        ///     Any pending item that is no longer owned is considered fully transferred and is removed from the cache.
-        /// </summary>
-        public static void Prune(IReadOnlyCollection<string> actualOwnedUrns)
+        public static int GetPendingCount(URN baseUrn)
         {
-            var actuals = new HashSet<string>(actualOwnedUrns);
-            int itemsRemoved = pendingUrns.RemoveWhere(pending => !actuals.Contains(pending));
+            int count = 0;
+            string baseUrnString = baseUrn.ToString();
+            foreach (string pendingFullUrn in pendingFullUrns)
+            {
+                if (pendingFullUrn.StartsWith(baseUrnString) && pendingFullUrn.Length > baseUrnString.Length && pendingFullUrn[baseUrnString.Length] == ':')
+                    count++;
+            }
+
+            return count;
+        }
+
+        public static void Prune(Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>? allOwnedWearables,
+            Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>? allOwnedEmotes)
+        {
+            var allActualFullUrns = new HashSet<string>();
+
+            if (allOwnedWearables != null)
+                foreach (var registry in allOwnedWearables.Values)
+                foreach (var entry in registry.Values)
+                    allActualFullUrns.Add(entry.Urn);
+
+            if (allOwnedEmotes != null)
+                foreach (var registry in allOwnedEmotes.Values)
+                foreach (var entry in registry.Values)
+                    allActualFullUrns.Add(entry.Urn);
+
+            int itemsRemoved = pendingFullUrns.RemoveWhere(pendingUrn => !allActualFullUrns.Contains(pendingUrn));
 
             if (itemsRemoved > 0)
             {

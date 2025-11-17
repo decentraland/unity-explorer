@@ -3,7 +3,9 @@ using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
@@ -43,6 +45,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private GiftingErrorsController? giftingErrorsController;
 
         private CancellationTokenSource? lifeCts;
+        private EquippedItemContext equippedItemsContext;
 
         public GiftSelectionController(ViewFactoryMethod viewFactory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -109,11 +112,13 @@ namespace DCL.Backpack.Gifting.Presenters
             lifeCts = new CancellationTokenSource();
             viewInstance!.ErrorNotification.Hide(true);
 
-            var equippedUrnsContext = await CreateEquippedContextAsync(lifeCts.Token);
+            await CreateEquippedContextAsync(lifeCts.Token);
             if (lifeCts.IsCancellationRequested) return;
 
-            wearablesGridPresenter?.PrepareForLoading(equippedUrnsContext);
-            emotesGridPresenter?.PrepareForLoading(equippedUrnsContext);
+            PendingGiftsCache.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
+
+            wearablesGridPresenter?.PrepareForLoading(equippedItemsContext);
+            emotesGridPresenter?.PrepareForLoading(equippedItemsContext);
 
             headerPresenter?.ClearSearchImmediate();
             wearablesGridPresenter?.Deactivate();
@@ -143,22 +148,12 @@ namespace DCL.Backpack.Gifting.Presenters
             tabsManager.Initialize();
         }
 
-        private async UniTask<HashSet<string>> CreateEquippedContextAsync(CancellationToken ct)
+        private async UniTask CreateEquippedContextAsync(CancellationToken ct)
         {
-            var equippedUrns = new HashSet<string>();
+            equippedItemsContext = new EquippedItemContext();
             var profile = await selfProfile.ProfileAsync(ct);
-
             if (profile != null)
-            {
-                foreach (var wearableUrn in profile.Avatar.Wearables)
-                    equippedUrns.Add(wearableUrn.ToString());
-
-                foreach (var emoteUrn in profile.Avatar.Emotes)
-                    if (!emoteUrn.IsNullOrEmpty())
-                        equippedUrns.Add(emoteUrn.ToString());
-            }
-
-            return equippedUrns;
+                equippedItemsContext.Populate(profile.Avatar);
         }
 
         protected override void OnViewClose()
@@ -223,7 +218,7 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             OpenTransferPopupAsync().Forget();
         }
-
+        
         private async UniTaskVoid OpenTransferPopupAsync()
         {
             var activePresenter = tabsManager.ActivePresenter;
@@ -231,16 +226,15 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (string.IsNullOrEmpty(selectedUrn)) return;
 
-            // Determine the item type and try to get a valid, unique tokenId for the transaction.
             string itemType = activePresenter is WearableGridPresenter ? "wearable" : "emote";
-            if (!TryGetGiftTokenId(new URN(selectedUrn), itemType, out string tokenId))
+
+            if (!TryGetGiftTokenId(new URN(selectedUrn), itemType, out string tokenId, out var instanceUrn))
             {
                 ReportHub.LogError(ReportCategory.GIFTING, $"Could not find a valid tokenId for URN {selectedUrn}. Aborting gift transfer.");
                 giftingErrorsController.Show("Cannot send this item as a gift because it's not a transferable NFT.");
                 return;
             }
 
-            // Gather all remaining data for the transfer popup
             string giftDisplayName = activePresenter.GetItemNameByUrn(selectedUrn) ?? "Item";
             var giftThumb = activePresenter.GetThumbnailByUrn(selectedUrn);
             if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
@@ -250,37 +244,94 @@ namespace DCL.Backpack.Gifting.Presenters
                 inputData.userAddress,
                 inputData.userName,
                 headerPresenter.CurrentRecipientAvatarSprite,
-                selectedUrn,
+                selectedUrn,     // base URN
                 giftDisplayName,
                 giftThumb,
                 style,
                 itemType,
-                tokenId
+                tokenId,
+                instanceUrn.ToString()  // <-- NEW FIELD
             );
 
             await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams));
         }
 
-        /// <summary>
-        ///     Retrieves the latest owned unique Token ID for a given NFT URN.
-        ///     This is necessary to identify which specific copy of an item to transfer.
-        /// </summary>
-        /// <returns>True if a valid, on-chain token ID was found.</returns>
-        private bool TryGetGiftTokenId(URN itemUrn, string itemType, out string tokenId)
+        private bool TryGetGiftTokenId(
+            URN itemBaseUrn,
+            string itemType,
+            out string tokenId,
+            out URN instanceUrn)
         {
             tokenId = "0";
+            instanceUrn = default;
 
-            switch (itemType)
+            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> ownedCopies;
+
+            if (itemType == "wearable")
             {
-                case "wearable" when wearableStorage.TryGetLatestOwnedNft(itemUrn, out var wearableEntry):
-                    tokenId = wearableEntry.TokenId;
-                    return true;
-                case "emote" when emoteStorage.TryGetLatestOwnedNft(itemUrn, out var emoteEntry):
-                    tokenId = emoteEntry.TokenId;
-                    return true;
-                default:
+                if (!wearableStorage.TryGetOwnedNftRegistry(itemBaseUrn, out ownedCopies))
                     return false;
             }
+            else
+            {
+                if (!emoteStorage.TryGetOwnedNftRegistry(itemBaseUrn, out ownedCopies))
+                    return false;
+            }
+
+            NftBlockchainOperationEntry? bestCandidate = null;
+
+            foreach (var entry in ownedCopies.Values)
+            {
+                // IMPORTANT: entry.Urn here is the *instance* URN
+                var entryUrn = new URN(entry.Urn);
+
+                if (!equippedItemsContext.IsSpecificInstanceEquipped(entryUrn) &&
+                    !PendingGiftsCache.Contains(entryUrn))
+                {
+                    if (bestCandidate == null || entry.TransferredAt > bestCandidate.Value.TransferredAt)
+                        bestCandidate = entry;
+                }
+            }
+
+            if (bestCandidate != null)
+            {
+                tokenId = bestCandidate.Value.TokenId;
+                instanceUrn = new URN(bestCandidate.Value.Urn);
+                return true;
+            }
+
+            return false;
+        }
+        
+        /// <summary>
+        /// Finds the newest, unequipped NFT entry from a collection of owned copies.
+        /// </summary>
+        /// <param name="ownedCopies">The dictionary of all owned instances for a single item type.</param>
+        /// <param name="bestEntry">The best unequipped entry found.</param>
+        /// <returns>True if an unequipped copy was found.</returns>
+        private bool TryFindBestUnequippedNft(
+            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> ownedCopies,
+            out NftBlockchainOperationEntry bestEntry)
+        {
+            bestEntry = default;
+            bool foundCandidate = false;
+
+            // Loop through all owned copies of the item
+            foreach (var currentEntry in ownedCopies.Values)
+            {
+                // The core logic: check if this specific instance is NOT equipped
+                if (!equippedItemsContext.IsSpecificInstanceEquipped(currentEntry.Urn))
+                {
+                    // It's a valid, giftable candidate. Is it the newest one we've found so far?
+                    if (!foundCandidate || currentEntry.TransferredAt > bestEntry.TransferredAt)
+                    {
+                        bestEntry = currentEntry;
+                        foundCandidate = true;
+                    }
+                }
+            }
+
+            return foundCandidate;
         }
 
         private void HandleSearchChanged(string searchText)
