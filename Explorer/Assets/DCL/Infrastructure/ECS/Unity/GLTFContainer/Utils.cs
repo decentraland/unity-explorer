@@ -11,9 +11,13 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
-        public static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, string assetHash)
+        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, out GltfContainerAsset gltfContainerAsset)
         {
-            GameObject asset = assetBundleData.GetAsset<GameObject>(assetHash);
+            if (!assetBundleData.TryGetAsset(out GameObject asset, assetHash))
+            {
+                gltfContainerAsset = null;
+                return false;
+            }
 
             var container = new GameObject($"{asset.name}");
 
@@ -82,10 +86,11 @@ namespace ECS.Unity.GLTFContainer
                 }
             }
 
-            return result;
+            gltfContainerAsset = result;
+            return true;
         }
 
-               // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
+        // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
         // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local scene development
 
 #region Helper Collider Methods
