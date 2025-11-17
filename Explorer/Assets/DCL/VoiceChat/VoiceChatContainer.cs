@@ -1,4 +1,5 @@
 using DCL.Chat.EventBus;
+using DCL.Chat.ChatServices;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -11,6 +12,7 @@ using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
+using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -36,7 +38,9 @@ namespace DCL.VoiceChat
             IRealmData realmData,
             IDecentralandUrlsSource urlsSource,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            IEventBus eventBus,
+            CurrentChannelService currentChannelService)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
@@ -50,7 +54,7 @@ namespace DCL.VoiceChat
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
             VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService,
                 CommunityVoiceChatCallStatusService, participantsStateService,
-                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus);
+                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus, eventBus, currentChannelService);
         }
 
         public void Dispose()

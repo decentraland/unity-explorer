@@ -391,20 +391,7 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
-            OnStartCallAsync().Forget();
-        }
-
-        private async UniTaskVoid OnStartCallAsync()
-        {
-            try
-            {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-                chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
-                await UniTask.Delay(500);
-                chatEventBus.StartCallInCurrentConversation();
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
+            voiceChatOrchestrator.StartCallWithUserId(inputData.UserId);
         }
 
         private void OnChatButtonClicked()

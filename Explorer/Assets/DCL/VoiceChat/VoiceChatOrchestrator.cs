@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Chat.ChatViewModels;
+using DCL.Chat.ChatServices;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.NotificationsBus.NotificationTypes;
@@ -12,6 +15,7 @@ using System;
 using System.Threading;
 using Utility;
 using DCL.NotificationsBus;
+using DCL.Chat;
 
 namespace DCL.VoiceChat
 {
@@ -24,9 +28,15 @@ namespace DCL.VoiceChat
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IEventBus eventBus;
+        private readonly CurrentChannelService currentChannelService;
 
         private readonly IDisposable? privateStatusSubscription;
         private readonly IDisposable? communityStatusSubscription;
+        private readonly IDisposable? currentChannelSubscription;
+
+        private UniTaskCompletionSource? channelChangedSource;
+        private ChatChannel.ChannelId? pendingChannelTarget;
 
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
@@ -57,13 +67,15 @@ namespace DCL.VoiceChat
             IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
-            SceneVoiceChatTrackerService sceneVoiceChatTrackerService, ISharedSpaceManager sharedSpaceManager, IChatEventBus chatEventBus)
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService, ISharedSpaceManager sharedSpaceManager, IChatEventBus chatEventBus, IEventBus eventBus, CurrentChannelService currentChannelService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.eventBus = eventBus;
+            this.currentChannelService = currentChannelService;
             ParticipantsStateService = participantsStateService;
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
@@ -76,6 +88,7 @@ namespace DCL.VoiceChat
 
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
+            currentChannelSubscription = currentChannelService.CurrentChannelProperty.Subscribe(OnCurrentChannelChanged);
         }
 
         public void Dispose()
@@ -84,6 +97,11 @@ namespace DCL.VoiceChat
             sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
             sceneVoiceChatTrackerService.ActiveVoiceChatStoppedInScene -= OnActiveVoiceChatStoppedInScene;
 
+            channelChangedSource?.TrySetCanceled();
+            channelChangedSource = null;
+            pendingChannelTarget = null;
+
+            currentChannelSubscription?.Dispose();
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
@@ -118,6 +136,9 @@ namespace DCL.VoiceChat
         public void StartCall(string callId, VoiceChatType callType)
         {
             joinCallCts = joinCallCts.SafeRestart();
+            channelChangedSource?.TrySetCanceled();
+            channelChangedSource = null;
+            pendingChannelTarget = null;
 
             if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
             {
@@ -140,6 +161,73 @@ namespace DCL.VoiceChat
                     SetActiveCallService(callType);
                     communityVoiceChatCallStatusService.StartCall(callId);
                 }
+            }
+        }
+
+        public void StartCallWithUserId(string userId)
+        {
+            StartCallWithUserIdAsync(userId, joinCallCts.Token).Forget();
+        }
+
+        private void OnCurrentChannelChanged(ChatChannel channel)
+        {
+            if (channelChangedSource != null && 
+                pendingChannelTarget != null &&
+                channel?.Id.Equals(pendingChannelTarget.Value) == true)
+            {
+                channelChangedSource.TrySetResult();
+            }
+        }
+
+        private async UniTaskVoid StartCallWithUserIdAsync(string userId, CancellationToken ct)
+        {
+            try
+            {
+                channelChangedSource?.TrySetCanceled();
+                channelChangedSource = null;
+                pendingChannelTarget = null;
+
+                var targetChannelId = new ChatChannel.ChannelId(userId);
+                
+                if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
+                {
+                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                    chatEventBus.OpenPrivateConversationUsingUserId(userId);
+                    StartCall(userId, VoiceChatType.PRIVATE);
+                    return;
+                }
+
+                channelChangedSource = new UniTaskCompletionSource();
+                pendingChannelTarget = targetChannelId;
+
+                if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
+                {
+                    channelChangedSource.TrySetResult();
+                }
+
+                try
+                {
+                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                    chatEventBus.OpenPrivateConversationUsingUserId(userId);
+
+                    int winningTaskIndex = await UniTask.WhenAny(
+                        channelChangedSource.Task,
+                        UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct));
+
+                    if (winningTaskIndex == 0)
+                        StartCall(userId, VoiceChatType.PRIVATE);
+                }
+                finally
+                {
+                    channelChangedSource = null;
+                    pendingChannelTarget = null;
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception)
+            {
+                channelChangedSource = null;
+                pendingChannelTarget = null;
             }
         }
 
