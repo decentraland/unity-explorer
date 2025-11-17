@@ -249,7 +249,7 @@ using Utility;
 
             if (globalWorld != null)
             {
-                RemoveUnfinishedScenes();
+                RemoveUnfinishedScenes(globalWorld.EcsWorld);
 
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
 
@@ -274,9 +274,9 @@ using Utility;
 
             World world = globalWorld.EcsWorld;
 
-            RemoveUnfinishedScenes();
+            RemoveUnfinishedScenes(world);
 
-            InvalidateScenePartitions();
+            InvalidateScenePartitions(world);
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
@@ -300,12 +300,8 @@ using Utility;
             GC.Collect();
         }
 
-        private void InvalidateScenePartitions()
+        private void InvalidateScenePartitions(World world)
         {
-            if (globalWorld == null) return;
-
-            World? world = globalWorld!.EcsWorld;
-
             world.Query(in INVALIDATE_PARTITIONS,
                 (ref PartitionComponent partitionComponent) =>
                 {
@@ -330,12 +326,8 @@ using Utility;
             return false;
         }
 
-        private void RemoveUnfinishedScenes()
+        private void RemoveUnfinishedScenes(World world)
         {
-            if (globalWorld == null) return;
-
-            var world = globalWorld!.EcsWorld;
-
             // See https://github.com/decentraland/unity-explorer/issues/4935
             // The scene load process it is disrupted due to internet issues remaining in an invalid state
             // We need to remove them and reload them, otherwise they will keep in an inconsistent state forever
