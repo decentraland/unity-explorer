@@ -27,7 +27,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using Unity.Mathematics;
-using UnityEngine.Networking;
+using UnityEngine;
 using Utility;
 
  namespace Global.Dynamic
@@ -42,6 +42,9 @@ using Utility;
         private static readonly QueryDescription CLEAR_UNFINISHED_QUERY = new QueryDescription()
                                                                          .WithAll<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLoadingState>()
                                                                          .WithNone<DeleteEntityIntention, ISceneFacade>();
+
+        private static readonly QueryDescription INVALIDATE_PARTITIONS = new QueryDescription()
+           .WithAll<PartitionComponent, ISceneFacade>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -274,6 +277,8 @@ using Utility;
 
             RemoveUnfinishedScenes();
 
+            InvalidateScenePartitions();
+
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
             // release pooled entities
@@ -294,6 +299,16 @@ using Utility;
 
             // Collect garbage, good moment to do it
             GC.Collect();
+        }
+
+        private void InvalidateScenePartitions()
+        {
+            globalWorld.EcsWorld.Query(in INVALIDATE_PARTITIONS,
+                (ref PartitionComponent partitionComponent) =>
+                {
+                    Debug.Log("INVALIDATING PARTITIONS");
+                    partitionComponent.Bucket = byte.MaxValue;
+                });
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)

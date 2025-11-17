@@ -109,6 +109,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
             {
+                //TODO: Remove before merge
+                if (sceneEntityDefinition.id.Equals("bafkreichelc5ssrjivd3jmolg5yi3qgxcrvir6kh4z4hgolvzmkn6rlupi"))
+                {
+                    sceneEntityDefinition.assetBundleManifestVersion.assets.mac.version = "v2001";
+                    sceneEntityDefinition.assetBundleManifestVersion.assets.windows.version = "v2001";
+                }
+
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
