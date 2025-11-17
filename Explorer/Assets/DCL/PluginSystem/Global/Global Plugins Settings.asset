@@ -55,6 +55,7 @@ MonoBehaviour:
   - rid: 6478896861045588059
   - rid: 6169970366055448665
   - rid: 3821626543930605662
+  - rid: 3821626840059215872
   references:
     version: 2
     RefIds:
@@ -583,6 +584,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 3821626840059215872
+      type: {class: AvatarLocomotionOverridesGlobalPlugin/Settings, ns: DCL.SDKComponents.AvatarLocomotion, asm: DCL.Plugins}
+      data:
+        MaxMovementSpeed: 500
+        MaxJumpHeight: 200
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
