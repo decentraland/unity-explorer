@@ -72,6 +72,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -115,13 +116,15 @@ namespace DCL.AuthenticationScreenFlow
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
             SentryTransactionManager sentryTransactionManager,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IProfileRepository profileRepository)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
+            this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreen = splashScreen;
             this.characterPreviewEventBus = characterPreviewEventBus;
@@ -615,7 +618,10 @@ namespace DCL.AuthenticationScreenFlow
                 throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
 
             Profile defaultProfile = BuildDefaultProfile(identity.Address.ToString());
-            Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
+            await profileRepository.SetAsync(defaultProfile, ct);
+
+            Profile? publishedProfile = await profileRepository.GetAsync(defaultProfile.UserId, defaultProfile.Version, ct,
+                getFromCacheIfPossible: false);
 
             if (publishedProfile == null)
                 throw new ProfileNotFoundException();
@@ -647,7 +653,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.RealName = string.Empty;
             profile.Hobbies = string.Empty;
             profile.TutorialStep = 0;
-            profile.Version = 0;
+            profile.Version = 1;
             profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
             profile.IsDirty = true;
 
