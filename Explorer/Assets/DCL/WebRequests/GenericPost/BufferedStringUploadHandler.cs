@@ -115,6 +115,7 @@ namespace DCL.WebRequests
                             WriteChar('t');
                             break;
                         default:
+
                             if (c < 32)
                             {
                                 // Unicode escape for control characters
@@ -143,33 +144,14 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Writes a single character as UTF-8 bytes without allocations.
         /// </summary>
-        private void WriteCharUtf8(char c)
+        private unsafe void WriteCharUtf8(char c)
         {
-            if (c < 0x80)
+            Span<byte> tempBuffer = stackalloc byte[4];
+            int bytesWritten = Encoding.UTF8.GetBytes(stackalloc char[] { c }, tempBuffer);
+
+            fixed (byte* bp = tempBuffer)
             {
-                // ASCII range - single byte
-                WriteChar(c);
-            }
-            else if (c < 0x800)
-            {
-                // 2-byte sequence
-                buffer.Add((byte)(0xC0 | (c >> 6)));
-                buffer.Add((byte)(0x80 | (c & 0x3F)));
-            }
-            else if (c >= 0xD800 && c <= 0xDFFF)
-            {
-                // Surrogate pair - would need next char for proper encoding
-                // For simplicity, replace with replacement character
-                buffer.Add(0xEF);
-                buffer.Add(0xBF);
-                buffer.Add(0xBD);
-            }
-            else
-            {
-                // 3-byte sequence
-                buffer.Add((byte)(0xE0 | (c >> 12)));
-                buffer.Add((byte)(0x80 | ((c >> 6) & 0x3F)));
-                buffer.Add((byte)(0x80 | (c & 0x3F)));
+                buffer.AddRange(bp, bytesWritten);
             }
         }
 
