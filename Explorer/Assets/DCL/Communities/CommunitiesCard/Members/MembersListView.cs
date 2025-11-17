@@ -31,7 +31,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
-        private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "You are about to transfer the [{0}] community ownership to [{1}]. Once done will have Moderator permissions. This action cannot be reversed by you. Do you wish to proceed?";
+        private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transfer Community Ownership";
+        private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "You are about to transfer the [{0}] community ownership to [{1}]. Once done will have Moderator permissions. This action cannot be reversed by you. Do you wish to proceed?";
         private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
         private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
         private const string TRANSFER_OWNERSHIP_CANCEL_TEXT = "CANCEL";
@@ -144,6 +145,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;
             transferOwnershipContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && communityData?.role == CommunityMemberRole.owner;
+            transferOwnershipContextMenuElement!.Interactable = profile.HasClaimedName;
             kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
             banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
 
@@ -170,11 +172,13 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowTransferOwnershipConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(TRANSFER_OWNERSHIP_TEXT_FORMAT, communityName, profile.Name),
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
+                                                                                         TRANSFER_OWNERSHIP_TEXT_FORMAT,
                                                                                          TRANSFER_OWNERSHIP_CANCEL_TEXT,
                                                                                          TRANSFER_OWNERSHIP_CONFIRM_TEXT,
                                                                                          transferOwnershipSprite,
                                                                                          false, false,
+                                                                                         subText: string.Format(TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT, communityName, profile.Name),
                                                                                          userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
