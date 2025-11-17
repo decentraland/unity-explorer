@@ -247,7 +247,7 @@ namespace DCL.Profiles
 
                 // Even if it's a single request, but it's already in a batch wait for it
 
-                if (TryGetExistingRequest(id, out ProfilesBatchRequest.Input request))
+                while (TryGetExistingRequest(id, out ProfilesBatchRequest.Input request))
                     await request.Cs.Task.AttachExternalCancellation(ct);
 
                 if (getFromCacheIfPossible)
