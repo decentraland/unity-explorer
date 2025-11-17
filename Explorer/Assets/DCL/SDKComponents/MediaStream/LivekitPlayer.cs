@@ -20,9 +20,9 @@ namespace DCL.SDKComponents.MediaStream
             actionOnGet: static source => source.gameObject.SetActive(true),
             actionOnRelease: static source =>
             {
-                source.Stop();
-                source.Free();
-                source.gameObject.SetActive(false);
+                source?.Stop();
+                source?.Free();
+                source?.gameObject.SetActive(false);
             });
 
         private readonly IRoom room;
