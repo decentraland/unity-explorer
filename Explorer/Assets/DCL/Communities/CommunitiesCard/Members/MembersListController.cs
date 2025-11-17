@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string UNBAN_USER_ERROR_TEXT = "There was an error unbanning the user. Please try again.";
         private const string REMOVE_MODERATOR_ERROR_TEXT = "There was an error removing moderator from user. Please try again.";
         private const string ADD_MODERATOR_ERROR_TEXT = "There was an error adding moderator to user. Please try again.";
+        private const string TRANSFER_OWNERSHIP_ERROR_TEXT = "There was an error transfering ownership. Please try again.";
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
@@ -101,6 +102,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.BlockUserRequested += BlockUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
+            this.view.TransferOwnershipRequested += OnTransferOwnership;
             this.view.KickUserRequested += OnKickUser;
             this.view.BanUserRequested += OnBanUser;
 
@@ -129,6 +131,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.BlockUserRequested -= BlockUserClickedAsync;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
+            view.TransferOwnershipRequested -= OnTransferOwnership;
             view.KickUserRequested -= OnKickUser;
             view.BanUserRequested -= OnBanUser;
 
@@ -241,6 +244,43 @@ namespace DCL.Communities.CommunitiesCard.Members
                 List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].Items;
                 profile.Role = CommunityMemberRole.none;
                 memberList.Add(profile);
+
+                MembersSorter.SortMembersList(memberList);
+
+                RefreshGrid(true);
+            }
+        }
+
+        private void OnTransferOwnership(ICommunityMemberData profile)
+        {
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            TransferOwnershipAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid TransferOwnershipAsync(CancellationToken token)
+            {
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.Address, communityData?.id, CommunityMemberRole.owner, token)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(TRANSFER_OWNERSHIP_ERROR_TEXT));
+                    return;
+                }
+
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
+
+                foreach (ICommunityMemberData member in memberList)
+                {
+                    if (member.Role == CommunityMemberRole.owner)
+                        member.Role = CommunityMemberRole.moderator;
+
+                    if (member.Address.Equals(profile.Address))
+                        member.Role = CommunityMemberRole.owner;
+                }
 
                 MembersSorter.SortMembersList(memberList);
 
