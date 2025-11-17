@@ -241,7 +241,8 @@ namespace DCL.Chat
 
         private void OnMvcViewClosed(ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent evt)
         {
-            chatStateMachine.PopState();
+            if (chatStateMachine.IsHidden)
+                chatStateMachine.PopState();
         }
 
         private void OnHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent evt)
