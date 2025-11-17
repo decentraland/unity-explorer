@@ -142,8 +142,14 @@ namespace DCL.SDKComponents.MediaStream
             // doesn't need to dispose the stream, because it's responsibility of the owning room
             currentStream = null;
             playerState = PlayerState.STOPPED;
-            audioSource.Stop();
-            audioSource.Free();
+
+            //audioSource is never null during regular execution, but the check is required as when closing the game in a scene
+            //with a running livekit stream, the audioSource (being a monobehaviour) might be already destroyed when disposing the player
+            if (audioSource != null)
+            {
+                audioSource.Stop();
+                audioSource.Free();
+            }
         }
 
         public Texture? LastTexture()
