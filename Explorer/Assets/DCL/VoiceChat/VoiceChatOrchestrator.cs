@@ -167,12 +167,8 @@ namespace DCL.VoiceChat
 
         private void OnCurrentChannelChanged(ChatChannel channel)
         {
-            if (channelChangedSource != null && 
-                pendingChannelTarget != null &&
-                channel?.Id.Equals(pendingChannelTarget.Value) == true)
-            {
+            if (channelChangedSource != null && pendingChannelTarget != null && channel.Id.Equals(pendingChannelTarget.Value))
                 channelChangedSource.TrySetResult();
-            }
         }
 
         private async UniTaskVoid StartCallWithUserIdAsync(string userId, CancellationToken ct)
@@ -184,10 +180,11 @@ namespace DCL.VoiceChat
                 pendingChannelTarget = null;
 
                 var targetChannelId = new ChatChannel.ChannelId(userId);
-                
+
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+
                 if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
                 {
-                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                     chatEventBus.OpenPrivateConversationUsingUserId(userId);
                     StartCall(userId, VoiceChatType.PRIVATE);
                     return;
@@ -197,13 +194,10 @@ namespace DCL.VoiceChat
                 pendingChannelTarget = targetChannelId;
 
                 if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
-                {
                     channelChangedSource.TrySetResult();
-                }
 
                 try
                 {
-                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                     chatEventBus.OpenPrivateConversationUsingUserId(userId);
 
                     int winningTaskIndex = await UniTask.WhenAny(
