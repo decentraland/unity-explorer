@@ -391,7 +391,14 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
-            voiceChatOrchestrator.StartCallWithUserId(inputData.UserId);
+            OnStartCallButtonClickedAsync().Forget();
+            return;
+
+            async UniTaskVoid OnStartCallButtonClickedAsync()
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
+            }
         }
 
         private void OnChatButtonClicked()

@@ -160,7 +160,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void StartCallWithUserId(string userId)
+        public void StartPrivateCallWithUserId(string userId)
         {
             StartCallWithUserIdAsync(userId, joinCallCts.Token).Forget();
         }
@@ -180,9 +180,6 @@ namespace DCL.VoiceChat
                 pendingChannelTarget = null;
 
                 var targetChannelId = new ChatChannel.ChannelId(userId);
-
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-
                 if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
                 {
                     chatEventBus.OpenPrivateConversationUsingUserId(userId);
