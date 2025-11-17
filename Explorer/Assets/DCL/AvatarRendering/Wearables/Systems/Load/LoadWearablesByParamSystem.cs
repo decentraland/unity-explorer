@@ -170,10 +170,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
                 wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
             else
-            {
-                ReportHub.LogError(GetReportData(), $"Couldn't find manifest version data for wearable '{elementDTO.Metadata.id}'. Falling back to asset bundle manifest check.");
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
-            }
 
             // Process individual data (this part needs to remain sequential per element for thread safety)
             foreach (ElementIndividualDataDto individualData in element.IndividualData)
