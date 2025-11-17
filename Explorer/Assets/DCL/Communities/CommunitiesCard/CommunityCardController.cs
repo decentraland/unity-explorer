@@ -156,6 +156,7 @@ namespace DCL.Communities.CommunitiesCard
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
@@ -211,6 +212,7 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityUserRequestToJoinAcceptedNotification joinAcceptedNotification => joinAcceptedNotification.Metadata.CommunityId,
                                      CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
                                      CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
+                                     CommunityOwnershipTransferredNotification ownershipTransferredNotification => ownershipTransferredNotification.Metadata.CommunityId,
                                      _ => string.Empty
                                  };
 
