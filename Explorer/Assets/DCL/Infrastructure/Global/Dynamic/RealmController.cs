@@ -303,10 +303,13 @@ using Utility;
 
         private void InvalidateScenePartitions()
         {
-            globalWorld.EcsWorld.Query(in INVALIDATE_PARTITIONS,
+            if (globalWorld == null) return;
+
+            World? world = globalWorld!.EcsWorld;
+
+            world.Query(in INVALIDATE_PARTITIONS,
                 (ref PartitionComponent partitionComponent) =>
                 {
-                    Debug.Log("INVALIDATING PARTITIONS");
                     partitionComponent.Bucket = byte.MaxValue;
                 });
         }
