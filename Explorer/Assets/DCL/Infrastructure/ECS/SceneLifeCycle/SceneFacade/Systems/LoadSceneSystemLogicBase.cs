@@ -8,15 +8,16 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SceneRunner.Scene;
 using DCL.Utility;
+using DCL.Utility.Exceptions;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -63,7 +64,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, new AllowEverythingJsApiPermissionsProvider(), partition, ct);
 
             await UniTask.SwitchToMainThread();
 
@@ -130,8 +131,16 @@ namespace ECS.SceneLifeCycle.Systems
 
             var target = intention.DefinitionComponent.Definition.metadata;
 
-            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
-                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            try
+            {
+                await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
+                                          .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            }
+            catch (UnityWebRequestException ex)
+            {
+                if (ex.ResponseCode == WebRequestUtils.NOT_FOUND)
+                    throw new ManifestNotFoundException($"Scene manifest not found for scene {sceneID} from {sceneJsonUrl}: {ex.Message}");
+            }
 
             intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
 

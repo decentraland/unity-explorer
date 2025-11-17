@@ -19,10 +19,10 @@ namespace DCL.Backpack.AvatarSection.Outfits
             bus.SendCommand(new BackpackUnEquipAllWearablesCommand());
 
             if (!string.IsNullOrEmpty(outfit.bodyShape))
-                bus.SendCommand(new BackpackEquipWearableCommand(new URN(outfit.bodyShape).Shorten()));
+                bus.SendCommand(new BackpackEquipWearableCommand(new URN(outfit.bodyShape).Shorten(), true));
 
             foreach (string wearableId in outfit.wearables)
-                bus.SendCommand(new BackpackEquipWearableCommand(new URN(wearableId).Shorten()));
+                bus.SendCommand(new BackpackEquipWearableCommand(new URN(wearableId).Shorten(), true));
 
             bus.SendCommand(new BackpackChangeColorCommand(outfit.hair.color,
                 WearableCategories.Categories.HAIR));

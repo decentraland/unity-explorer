@@ -6,6 +6,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
 using Microsoft.ClearScript;
 using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -29,10 +30,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         private readonly SceneShortInfo sceneShortInfo;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
 
-        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo)
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider)
         {
             this.sceneShortInfo = sceneShortInfo;
+            this.permissionsProvider = permissionsProvider;
         }
 
         public void Dispose() { }
@@ -50,6 +53,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             bool isLocalSceneDevelopment
         )
         {
+            if (!permissionsProvider.CanInvokeFetchAPI()) return default(ISimpleFetchApi.Response);
+
             try
             {
                 // if we're in LocalSceneDevelopment mode to allow connecting to unsafe websocket server to the client
