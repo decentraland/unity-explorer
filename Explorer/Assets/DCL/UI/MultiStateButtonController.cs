@@ -31,6 +31,11 @@ namespace DCL.UI
             SetButtonGraphic(isOn);
         }
 
+        public void SetButtonInteractable(bool isInteractable)
+        {
+            view.button.interactable = isInteractable;
+        }
+
         private void ButtonClicked()
         {
             isButtonOn = !isButtonOn;

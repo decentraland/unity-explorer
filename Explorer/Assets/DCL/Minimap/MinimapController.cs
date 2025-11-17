@@ -72,6 +72,7 @@ namespace DCL.Minimap
         private readonly bool includeBannedUsersFromScene;
 
         private GenericContextMenu? contextMenu;
+        private MultiStateButtonController favoriteButton;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
@@ -79,6 +80,7 @@ namespace DCL.Minimap
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
         private CancellationTokenSource showBannedTooltipCts;
+        private CancellationTokenSource? favoriteCancellationToken = new ();
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -164,6 +166,8 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+            favoriteButton = new MultiStateButtonController(viewInstance.favoriteButton, true);
+            favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -178,7 +182,7 @@ namespace DCL.Minimap
 
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
-
+            
             contextMenu = new GenericContextMenu()
                           // Add title control to prevent incorrect layout height when the context menu has a single control
                           // May be removed if a new control is added
@@ -201,6 +205,26 @@ namespace DCL.Minimap
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
                       .Forget();
+        }
+
+        private void OnFavoriteButtonClicked(bool value)
+        {
+            favoriteCancellationToken = favoriteCancellationToken.SafeRestart();
+            SetAsFavoriteAsync(favoriteCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid SetAsFavoriteAsync(CancellationToken ct)
+            {
+                try
+                {
+                    PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(previousParcelPosition, favoriteCancellationToken.Token);
+                    if (placeInfo == null)
+                        return;
+                    await placesAPIService.SetPlaceFavoriteAsync(placeInfo!.id, value, ct);
+                    favoriteButton.SetButtonState(value);
+                }
+                catch (Exception _) { }
+            }
         }
 
         private void CopyJumpInLink()
@@ -300,6 +324,31 @@ namespace DCL.Minimap
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
+
+            ForceUpdateFavoriteButton();
+        }
+
+        private void ForceUpdateFavoriteButton()
+        {
+            // Using the same cancellation token as GetPlaceInfoAsync() because it will also update favorite button, and we 
+            // want to prioritize data fetched from that method, since position might have changes by then.
+            placesApiCts.SafeCancelAndDispose();
+            placesApiCts = new CancellationTokenSource();
+            ForceUpdateFavoriteButton().Forget();
+
+            async UniTaskVoid ForceUpdateFavoriteButton()
+            {
+                try
+                {
+                    PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(previousParcelPosition, placesApiCts.Token, true);
+                    favoriteButton.SetButtonState(placeInfo?.user_favorite ?? false);
+                }
+                catch (NotAPlaceException _)
+                {
+                    favoriteButton.SetButtonState(false);
+                }
+                catch (Exception _) { }
+            };
         }
 
         private void GetPlaceInfoAsync(Vector3 playerPosition)
@@ -328,17 +377,23 @@ namespace DCL.Minimap
                 try
                 {
                     if (realmData.ScenesAreFixed)
+                    {
                         viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                        favoriteButton.SetButtonState(false);
+                    }
                     else
                     {
                         PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, placesApiCts.Token);
                         viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
+                        favoriteButton.SetButtonState(placeInfo?.user_favorite ?? false);
                     }
+                    
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {
                     viewInstance!.placeNameText.text = "Unknown place";
                     ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
+                    favoriteButton.SetButtonState(false);
                 }
                 catch (Exception) { viewInstance!.placeNameText.text = "Unknown place"; }
                 finally { viewInstance!.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
