@@ -6,6 +6,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.Abstract;
+using Unity.Mathematics;
 
 namespace DCL.SDKComponents.AvatarLocomotion.Systems
 {
@@ -14,15 +15,34 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
     [UpdateBefore(typeof(CalculateCharacterVelocitySystem))]
     public partial class ApplyAvatarLocomotionOverridesSystem : BaseUnityLoopSystem
     {
-        public ApplyAvatarLocomotionOverridesSystem(World world) : base(world)
+        private readonly AvatarLocomotionOverridesGlobalPlugin.Settings settings;
+
+        public ApplyAvatarLocomotionOverridesSystem(World world, AvatarLocomotionOverridesGlobalPlugin.Settings settings) : base(world)
         {
+            this.settings = settings;
         }
 
         protected override void Update(float t) =>
             ApplyOverridesQuery(World);
 
         [Query]
-        public void ApplyOverrides(Entity entity, ref OverridableCharacterControllerSettings settings, in AvatarLocomotionOverrides locomotionOverrides) =>
-            settings.ApplyOverrides(locomotionOverrides);
+        public void ApplyOverrides(Entity entity, ref OverridableCharacterControllerSettings settings, in AvatarLocomotionOverrides locomotionOverrides)
+        {
+            var clampedOverrides = ClampOverrides(locomotionOverrides);
+            settings.ApplyOverrides(clampedOverrides);
+        }
+
+        private AvatarLocomotionOverrides ClampOverrides(in AvatarLocomotionOverrides locomotionOverrides)
+        {
+            var clampedOverrides = locomotionOverrides;
+
+            clampedOverrides.WalkSpeed = math.clamp(locomotionOverrides.WalkSpeed, 0, settings.MaxMovementSpeed);
+            clampedOverrides.JogSpeed = math.clamp(locomotionOverrides.JogSpeed, 0, settings.MaxMovementSpeed);
+            clampedOverrides.RunSpeed = math.clamp(locomotionOverrides.RunSpeed, 0, settings.MaxMovementSpeed);
+            clampedOverrides.JumpHeight = math.clamp(locomotionOverrides.JumpHeight, 0, settings.MaxJumpHeight);
+            clampedOverrides.RunJumpHeight = math.clamp(locomotionOverrides.RunJumpHeight, 0, settings.MaxJumpHeight);
+
+            return clampedOverrides;
+        }
     }
 }
