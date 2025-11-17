@@ -176,6 +176,34 @@ jobs:
           fail-on-empty: true
           use-actions-summary: true
 
+      # C# Lint: Roslyn + .editorconfig
+      - name: Install .NET SDK (for analyzer lint)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Locate Assembly-CSharp.csproj
+        id: find-csproj
+        run: |
+          # If not present, generate ,csproj using Unity Editor in batchmode.
+          csprojFile="Explorer/Assembly-CSharp.csproj"
+          if [ ! -f "$csprojFile" ]; then
+            echo "CSProj not found, generating using Unity..."
+            xvfb-run -a unity-editor -batchmode -quit -projectPath Explorer -executeMethod UnityEditor.SyncVS.SyncSolution
+          fi
+          if [ ! -f "$csprojFile" ]; then
+            echo "Failed to locate Assembly-CSharp.csproj"
+            exit 1
+          fi
+          echo "csproj=$csprojFile" >> $GITHUB_OUTPUT
+          echo "Found: $csprojFile"
+
+      - name: Restore Roslyn dependencies
+        run: dotnet restore "${{ steps.find-csproj.outputs.csproj }}"
+
+      - name: Run Roslyn Analyzer via dotnet build
+        run: dotnet build --warnaserror "${{ steps.find-csproj.outputs.csproj }}"
+
       # Upload artifact
       - uses: actions/upload-artifact@v4
         if: always()
