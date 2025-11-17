@@ -39,7 +39,6 @@ namespace DCL.VoiceChat
             IDecentralandUrlsSource urlsSource,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            IEventBus eventBus,
             CurrentChannelService currentChannelService)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
@@ -54,7 +53,7 @@ namespace DCL.VoiceChat
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
             VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService,
                 CommunityVoiceChatCallStatusService, participantsStateService,
-                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus, eventBus, currentChannelService);
+                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus, currentChannelService);
         }
 
         public void Dispose()

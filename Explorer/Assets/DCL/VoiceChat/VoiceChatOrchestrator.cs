@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
-using DCL.Chat.ChatViewModels;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Diagnostics;
@@ -15,7 +14,6 @@ using System;
 using System.Threading;
 using Utility;
 using DCL.NotificationsBus;
-using DCL.Chat;
 
 namespace DCL.VoiceChat
 {
@@ -28,7 +26,6 @@ namespace DCL.VoiceChat
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
-        private readonly IEventBus eventBus;
         private readonly CurrentChannelService currentChannelService;
 
         private readonly IDisposable? privateStatusSubscription;
@@ -67,14 +64,13 @@ namespace DCL.VoiceChat
             IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
-            SceneVoiceChatTrackerService sceneVoiceChatTrackerService, ISharedSpaceManager sharedSpaceManager, IChatEventBus chatEventBus, IEventBus eventBus, CurrentChannelService currentChannelService)
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService, ISharedSpaceManager sharedSpaceManager, IChatEventBus chatEventBus, CurrentChannelService currentChannelService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
-            this.eventBus = eventBus;
             this.currentChannelService = currentChannelService;
             ParticipantsStateService = participantsStateService;
 

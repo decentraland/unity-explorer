@@ -580,7 +580,6 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
                 chatEventBus,
-                eventBus,
                 currentChannelService
             );
 
