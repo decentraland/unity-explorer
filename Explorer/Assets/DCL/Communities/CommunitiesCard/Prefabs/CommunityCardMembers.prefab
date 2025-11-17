@@ -10938,6 +10938,7 @@ MonoBehaviour:
   <requestsNotificationIndicator>k__BackingField: {fileID: 7103909968235319130}
   <emptyStateParent>k__BackingField: {fileID: 3571767360986160040}
   contextMenuSettings: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
+  <transferOwnershipSprite>k__BackingField: {fileID: 21300000, guid: 313ca44b243e24135aa5d2c6674da600, type: 3}
   <kickSprite>k__BackingField: {fileID: 21300000, guid: 313ca44b243e24135aa5d2c6674da600, type: 3}
   <banSprite>k__BackingField: {fileID: 21300000, guid: 16f3bc32e2ad743e3b764015ec422c9e, type: 3}
 --- !u!114 &1835664481025031270

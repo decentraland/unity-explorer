@@ -32,6 +32,8 @@ MonoBehaviour:
   <RemoveModeratorText>k__BackingField: Demote Moderator
   <AddModeratorSprite>k__BackingField: {fileID: 21300000, guid: aa635ee59944245afb570e44c2caeac7, type: 3}
   <AddModeratorText>k__BackingField: Promote Moderator
+  <TransferOwnershipSprite>k__BackingField: {fileID: 21300000, guid: e568dcbc864c24ab1a9b731a66e362cb, type: 3}
+  <TransferOwnershipText>k__BackingField: Transfer Ownership
   <KickUserSprite>k__BackingField: {fileID: 21300000, guid: 63ca55af13b6147d9a3b2fb88a9e1c2f, type: 3}
   <KickUserText>k__BackingField: Remove Member
   <BanUserSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
