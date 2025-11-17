@@ -150,6 +150,7 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+            communitiesDataProvider.CommunityOwnershipTransferred += OnCommunityOwnershipTransferred;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
@@ -182,6 +183,7 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
+            communitiesDataProvider.CommunityOwnershipTransferred -= OnCommunityOwnershipTransferred;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -302,6 +304,14 @@ namespace DCL.Communities.CommunitiesCard
 
                 CloseController();
             }
+        }
+
+        private void OnCommunityOwnershipTransferred(string communityId)
+        {
+            if (!communityId.Equals(communityData.id)) return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(communityId);
         }
 
         private void CloseController() =>

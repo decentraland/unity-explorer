@@ -662,6 +662,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
             OnUserRemovedFromCommunity(communityId);
 
+        private void OnCommunityOwnershipTransferred(string _) =>
+            ReloadBrowser();
+
         private void SubscribeDataProviderEvents()
         {
             dataProvider.CommunityCreated += OnCommunityCreated;
@@ -675,6 +678,7 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityLeft += OnCommunityLeft;
             dataProvider.CommunityUserRemoved += OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+            dataProvider.CommunityOwnershipTransferred += OnCommunityOwnershipTransferred;
         }
 
         private void UnsubscribeDataProviderEvents()
@@ -690,6 +694,7 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityLeft -= OnCommunityLeft;
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
+            dataProvider.CommunityOwnershipTransferred -= OnCommunityOwnershipTransferred;
         }
 
         private void OnJoinRequestReceived(INotification notification)

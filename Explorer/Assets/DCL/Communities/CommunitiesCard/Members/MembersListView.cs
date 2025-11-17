@@ -144,7 +144,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
             addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;
-            transferOwnershipContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && communityData?.role == CommunityMemberRole.owner;
+            transferOwnershipContextMenuElement!.Enabled = communityData?.role == CommunityMemberRole.owner && profile.Role is CommunityMemberRole.member or CommunityMemberRole.moderator;
             transferOwnershipContextMenuElement!.Interactable = profile.HasClaimedName;
             kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
             banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;

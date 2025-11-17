@@ -271,20 +271,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
-
-                foreach (ICommunityMemberData member in memberList)
-                {
-                    if (member.Role == CommunityMemberRole.owner)
-                        member.Role = CommunityMemberRole.moderator;
-
-                    if (member.Address.Equals(profile.Address))
-                        member.Role = CommunityMemberRole.owner;
-                }
-
-                MembersSorter.SortMembersList(memberList);
-
-                RefreshGrid(true);
+                view.Close();
             }
         }
 
