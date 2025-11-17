@@ -1,8 +1,10 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
+using DCL.Utility.Types;
 using SceneRuntime.Factory.JsSource;
 using System.Threading;
+using DownloadedCodeContent = UnityEngine.Networking.DownloadHandler;
 
 namespace SceneRuntime.Factory.WebSceneSource
 {
@@ -15,8 +17,16 @@ namespace SceneRuntime.Factory.WebSceneSource
             this.codeContentResolver = codeContentResolver;
         }
 
-        public async UniTask<DownloadedOrCachedData> SceneSourceCodeAsync(URLAddress path,
-            CancellationToken ct) =>
-            new (await codeContentResolver.GetCodeContent(path, ct));
+        public async UniTask<Result<DownloadedOrCachedData>> SceneSourceCodeAsync(URLAddress path,
+            CancellationToken ct)
+        {
+            Result<DownloadedCodeContent> result = await codeContentResolver.GetCodeContent(path, ct);
+
+            if (result.Success)
+                return Result<DownloadedOrCachedData>.SuccessResult(
+                    new DownloadedOrCachedData(result.Value));
+            else
+                return Result<DownloadedOrCachedData>.ErrorResult(result.ErrorMessage ?? "null");
+        }
     }
 }

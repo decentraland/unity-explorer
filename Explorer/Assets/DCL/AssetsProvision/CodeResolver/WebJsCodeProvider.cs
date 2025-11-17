@@ -1,10 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
 using System.Threading;
-using UnityEngine.Networking;
+using DownloadedCodeContent = UnityEngine.Networking.DownloadHandler;
 
 namespace DCL.AssetsProvision.CodeResolver
 {
@@ -17,7 +18,7 @@ namespace DCL.AssetsProvision.CodeResolver
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<DownloadHandler> GetJsCodeAsync(URLAddress url,
+        public async UniTask<Result<DownloadedCodeContent>> GetJsCodeAsync(URLAddress url,
             CancellationToken cancellationToken = default)
         {
             var request = webRequestController.GetAsync(new CommonArguments(url), cancellationToken,
@@ -28,9 +29,11 @@ namespace DCL.AssetsProvision.CodeResolver
             if (contentType != null
                 && contentType.Contains("charset", StringComparison.InvariantCultureIgnoreCase)
                 && !contentType.Contains("utf-8", StringComparison.InvariantCultureIgnoreCase))
-                throw new NotImplementedException($"Can't handle content type {contentType}");
+                return Result<DownloadedCodeContent>.ErrorResult(
+                    $"Can't handle content type {contentType}");
 
-            return await request.ExposeDownloadHandlerAsync();
+            return Result<DownloadedCodeContent>.SuccessResult(
+                await request.ExposeDownloadHandlerAsync());
         }
     }
 }

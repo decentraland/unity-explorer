@@ -1,11 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using System.IO;
 
 namespace SceneRuntime.Factory
 {
     public static class StreamExtensions
     {
-        public static async UniTask ReadReliablyAsync(this Stream stream, byte[] buffer, int offset,
+        public static async UniTask<Result> ReadReliablyAsync(this Stream stream, byte[] buffer, int offset,
             int count)
         {
             while (count > 0)
@@ -13,11 +14,13 @@ namespace SceneRuntime.Factory
                 int read = await stream.ReadAsync(buffer, offset, count);
 
                 if (read <= 0)
-                    throw new EndOfStreamException("Read zero bytes");
+                    return Result.ErrorResult("Read zero bytes");
 
                 offset += read;
                 count -= read;
             }
+
+            return Result.SuccessResult();
         }
     }
 }

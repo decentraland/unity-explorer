@@ -1,9 +1,11 @@
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Buffers;
+using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Networking;
+using PlayerLoopHelper = Cysharp.Threading.Tasks.PlayerLoopHelper;
 
 namespace SceneRuntime.Factory.JsSource
 {
@@ -18,6 +20,10 @@ namespace SceneRuntime.Factory.JsSource
         /// </remarks>
         public DownloadedOrCachedData(DownloadHandler downloadHandler)
         {
+            if (Thread.CurrentThread.ManagedThreadId != PlayerLoopHelper.MainThreadId)
+                throw new InvalidOperationException(
+                    $"{nameof(DownloadedOrCachedData)}.ctor({nameof(DownloadHandler)}) must be called from the main thread");
+
             downloaded = downloadHandler;
             downloadedData = downloadHandler.nativeData;
             cached = default;

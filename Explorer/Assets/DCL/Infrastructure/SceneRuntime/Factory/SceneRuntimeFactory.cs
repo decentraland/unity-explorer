@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization;
+using DCL.Utility.Types;
 using ECS;
 using Microsoft.ClearScript.V8;
 using SceneRuntime.Apis;
@@ -101,15 +102,20 @@ namespace SceneRuntime.Factory
             V8ScriptEngine engine = engineFactory.Create(sceneShortInfo);
             var moduleHub = new SceneModuleHub(engine);
 
-            // TODO: Grab a SlicedOwnedMemory from some pool or something?
-            byte[] buffer = new byte[29000];
+            const int SIZE_OF_THE_LARGEST_MODULE_PLUS_EXTRA = 29000;
+            byte[] buffer = new byte[SIZE_OF_THE_LARGEST_MODULE_PLUS_EXTRA];
             COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
 
             foreach (string moduleName in JS_MODULE_NAMES)
             {
-                int moduleCodeLength = await LoadScriptAsync(
+                Result<int> moduleCodeLengthResult = await LoadScriptAsync(
                     Path.Combine(Application.streamingAssetsPath, "Js/Modules", moduleName), buffer,
                     COMMONJS_HEADER_UTF8.Length);
+
+                if (!moduleCodeLengthResult.Success)
+                    throw new Exception(moduleCodeLengthResult.ErrorMessage);
+
+                int moduleCodeLength = moduleCodeLengthResult.Value;
 
                 if (buffer.AsSpan(COMMONJS_HEADER_UTF8.Length, COMMONJS_HEADER_UTF8.Length)
                           .SequenceEqual(COMMONJS_HEADER_UTF8))
@@ -157,10 +163,13 @@ namespace SceneRuntime.Factory
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
-            int initCodeLength = await LoadScriptAsync(
+            Result<int> initCodeLengthResult = await LoadScriptAsync(
                 Path.Combine(Application.streamingAssetsPath, "Js/Init.js"), buffer, 0);
 
-            engine.ExecuteScriptFromUtf8(buffer.AsSpan(0, initCodeLength));
+            if (!initCodeLengthResult.Success)
+                throw new Exception(initCodeLengthResult.ErrorMessage);
+
+            engine.ExecuteScriptFromUtf8(buffer.AsSpan(0, initCodeLengthResult.Value));
             return new SceneRuntimeImpl(engine);
         }
 
@@ -174,7 +183,14 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
-            using DownloadedOrCachedData sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
+
+            Result<DownloadedOrCachedData> sourceCodeResult = await webJsSources.SceneSourceCodeAsync(
+                path, ct);
+
+            if (!sourceCodeResult.Success)
+                throw new Exception(sourceCodeResult.ErrorMessage);
+
+            using DownloadedOrCachedData sourceCode = sourceCodeResult.Value;
             return await CreateBySourceCodeAsync(sourceCode, sceneShortInfo, ct, instantiationBehavior);
 
             // DownloadHandler.Dispose is being called on a background thread at this point. Unity does
@@ -190,18 +206,22 @@ namespace SceneRuntime.Factory
             }
         }
 
-        private static async UniTask<int> LoadScriptAsync(string path, byte[] buffer, int offset)
+        private static async UniTask<Result<int>> LoadScriptAsync(string path, byte[] buffer, int offset)
         {
             await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
                 FileShare.ReadWrite);
 
             if (stream.Length > buffer.Length)
-                throw new IOException(
+                Result<int>.ErrorResult(
                     $"File \"{path}\" is larger than the buffer ({buffer.Length} bytes)");
 
             int count = (int)stream.Length;
-            await stream.ReadReliablyAsync(buffer, offset, count);
-            return count;
+            Result readResult = await stream.ReadReliablyAsync(buffer, offset, count);
+
+            if (!readResult.Success)
+                return Result<int>.ErrorResult(readResult.ErrorMessage ?? "null");
+            else
+                return Result<int>.SuccessResult(count);
         }
     }
 }
