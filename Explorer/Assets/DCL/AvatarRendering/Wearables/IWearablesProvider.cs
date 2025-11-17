@@ -11,17 +11,20 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
-            SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
-            string? category = null, CollectionType collectionType = CollectionType.All,
+        UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
+            int pageNumber,
+            CancellationToken ct,
+            SortingField sortingField = SortingField.Date,
+            OrderBy orderBy = OrderBy.Descending,
+            string? category = null,
+            CollectionType collectionType = CollectionType.All,
+            bool smartWearablesOnly = false,
             string? name = null,
             List<ITrimmedWearable>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false);
 
-        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
-            BodyShape bodyShape,
-            CancellationToken ct);
+        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers, BodyShape bodyShape, CancellationToken ct);
 
         public enum SortingField
         {

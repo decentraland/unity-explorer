@@ -34,6 +34,7 @@ namespace DCL.AvatarRendering.Wearables
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
         private const string TRIMMED = "trimmed";
+        private const string IS_SMART_WEARABLE = "isSmartWearable";
 
         private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -48,10 +49,17 @@ namespace DCL.AvatarRendering.Wearables
             this.world = world;
         }
 
-        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
-            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
-            string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            string? name = null, List<ITrimmedWearable>? results = null, CommonLoadingArguments? loadingArguments = null,
+        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
+            int pageNumber,
+            CancellationToken ct,
+            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
+            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
+            string? category = null,
+            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            bool smartWearablesOnly = false,
+            string? name = null,
+            List<ITrimmedWearable>? results = null,
+            CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
             requestParameters.Clear();
@@ -73,6 +81,9 @@ namespace DCL.AvatarRendering.Wearables
 
             if ((collectionType & IWearablesProvider.CollectionType.ThirdParty) != 0)
                 requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
+
+            if (smartWearablesOnly)
+                requestParameters.Add((IS_SMART_WEARABLE, "true"));
 
             if (!string.IsNullOrEmpty(name))
                 requestParameters.Add((SEARCH, name));

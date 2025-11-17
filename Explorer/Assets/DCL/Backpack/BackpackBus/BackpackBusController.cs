@@ -26,7 +26,6 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly URN[] urnRequest = new URN[1];
         private readonly CancellationTokenSource fetchWearableCts = new ();
 
         private int currentEmoteSlot = -1;
@@ -103,45 +102,21 @@ namespace DCL.Backpack.BackpackBus
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
                 SelectWearable(wearable);
             else
-                FetchWearableByPointerAndExecuteAsync(command.Id, SelectWearable).Forget();
+                WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, equippedWearables, SelectWearable, fetchWearableCts.Token).Forget();
         }
 
         private void SelectWearable(IWearable wearable) =>
             backpackEventBus.SendWearableSelect(wearable);
 
-        private async UniTaskVoid FetchWearableByPointerAndExecuteAsync(string pointer, Action<IWearable> onWearableFetched)
-        {
-            try
-            {
-                urnRequest[0] = new URN(pointer);
-
-                BodyShape currenBodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
-
-                var results = await wearablesProvider.RequestPointersAsync(urnRequest, currenBodyShape, fetchWearableCts.Token);
-
-                if (results != null)
-                    foreach (var result in results)
-                        if (result.GetUrn() == pointer)
-                        {
-                            onWearableFetched(result);
-                            return;
-                        }
-
-                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Couldn't fetch wearable for pointer: {pointer}");
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.WEARABLE)); }
-        }
-
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
-                EquipWearable(wearable);
+                EquipWearable(wearable, command);
             else
-                FetchWearableByPointerAndExecuteAsync(command.Id, EquipWearable).Forget();
+                WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token).Forget();
         }
 
-        private void EquipWearable(IWearable wearable)
+        private void EquipWearable(IWearable wearable, BackpackEquipWearableCommand command)
         {
             string? category = null;
 
@@ -165,7 +140,7 @@ namespace DCL.Backpack.BackpackBus
             if (wearableToUnequip != null)
                 backpackEventBus.SendUnEquipWearable(wearableToUnequip);
 
-            backpackEventBus.SendEquipWearable(wearable);
+            backpackEventBus.SendEquipWearable(wearable, command.IsManuallyEquipped);
 
             if (wearable.Type == WearableType.BodyShape)
                 UnEquipIncompatibleWearables(wearable);

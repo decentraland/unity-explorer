@@ -9,6 +9,7 @@ using DCL.Clipboard;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly ISystemClipboard systemClipboard;
 
         public RestrictedActionsAPIImplementation(
@@ -29,17 +31,22 @@ namespace CrdtEcsBridge.RestrictedActions
             ISceneStateProvider sceneStateProvider,
             IGlobalWorldActions globalWorldActions,
             ISceneData sceneData,
+            IJsApiPermissionsProvider permissionsProvider,
             ISystemClipboard systemClipboard)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorldActions = globalWorldActions;
             this.sceneData = sceneData;
+            this.permissionsProvider = permissionsProvider;
             this.systemClipboard = systemClipboard;
         }
 
         public bool TryOpenExternalUrl(string url)
         {
+            if (!permissionsProvider.CanOpenExternalUrl())
+                return false;
+
             if (!sceneStateProvider.IsCurrent)
                 return false;
 
@@ -56,7 +63,7 @@ namespace CrdtEcsBridge.RestrictedActions
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
             Vector3? newAbsoluteAvatarTarget = avatarTarget != null ? sceneData.Geometry.BaseParcelPosition + avatarTarget.Value : null;
 
-            if (!IsPositionValid(newAbsolutePosition))
+            if (!IsPositionValid(newAbsolutePosition) && !sceneData.IsPortableExperience())
             {
                 ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Position is out of scene");
                 return;

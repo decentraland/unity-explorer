@@ -112,7 +112,7 @@ namespace DCL.Backpack
             forceRender.Clear();
         }
 
-        private void EquipInSlot(IWearable equippedWearable)
+        private void EquipInSlot(IWearable equippedWearable, bool isManuallyEquipped)
         {
             if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView))
                 return;

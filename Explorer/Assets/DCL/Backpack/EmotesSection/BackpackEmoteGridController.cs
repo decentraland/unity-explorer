@@ -307,10 +307,10 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void UnEquipItem(string itemId) =>
+        private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
@@ -363,7 +363,7 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(string itemId) =>
+        private void SelectItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId));
 
         private void OnUnequip(int slot, IEmote? emote)
@@ -385,7 +385,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.text = slot.ToString();
         }
 
-        private void OnWearableEquipped(IWearable wearable)
+        private void OnWearableEquipped(IWearable wearable, bool isManuallyEquipped)
         {
             if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 

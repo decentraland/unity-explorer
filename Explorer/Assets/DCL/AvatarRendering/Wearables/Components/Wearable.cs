@@ -25,8 +25,6 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable : IWearable
     {
-        public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
         StreamableLoadingResult<WearableDTO> IAvatarAttachment<WearableDTO>.Model

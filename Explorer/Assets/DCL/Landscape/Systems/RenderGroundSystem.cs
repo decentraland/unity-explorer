@@ -19,7 +19,7 @@ using ClipVolume = DCL.Landscape.Utils.ClipVolume;
 
 namespace DCL.Landscape.Systems
 {
-    using Landscape = Global.Dynamic.Landscapes.Landscape;
+    using Landscape = global::Global.Dynamic.Landscapes.Landscape;
 
     /// <summary>Renders ground and grass, but not trees. Trees are drawn using GPU Instancer Pro. See
     /// <see cref="TreeData"/> for more.</summary>
