@@ -38,6 +38,7 @@ namespace DCL.Backpack.Gifting.Cache
         {
             string dataToSave = string.Join(';', pendingFullUrns);
             PlayerPrefs.SetString(PREFS_KEY, dataToSave);
+            PlayerPrefs.Save();
         }
 
         public static void Add(URN fullUrn)
