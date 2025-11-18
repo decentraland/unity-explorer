@@ -46,7 +46,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     if (identity == null)
                         return new GetUserDataResponse(null);
 
-                    Profile? profile = await profileRepository.GetAsync(identity.Address, ct);
+                    Profile? profile = await profileRepository.GetAsync(identity.Address, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
 
                     if (profile == null)
                         return new GetUserDataResponse(null);
