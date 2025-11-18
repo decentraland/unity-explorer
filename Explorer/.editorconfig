@@ -391,6 +391,8 @@ resharper_can_use_global_alias = true
 # Modifiers
 resharper_default_private_modifier = explicit
 resharper_default_internal_modifier = explicit
+# Remove required modifiers in interfaces
+resharper_require_accessibility_modifiers_for_interface_members = false
 #resharper_modifiers_order =
 
 # Arguments
