@@ -384,8 +384,7 @@ namespace DCL.Passport
                          .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
                          .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                                  parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
-                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+                        parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
             {
@@ -394,6 +393,8 @@ namespace DCL.Passport
                         new ButtonContextMenuControlSettings(viewInstance.GiftText,
                             viewInstance.GiftSprite, GiftUserClicked), true));
             }
+
+            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
             
             if (includeCommunities)
             {
