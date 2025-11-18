@@ -287,9 +287,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public bool IsUrlDomainAllowed(string url) => true;
             public bool IsSdk7() => true;
             public bool IsPortableExperience() => false;
-            public string GetSDKVersion() => null;
-            public bool IsSDKVersionOrHigher(string minVersion) => false;
-            public bool IsSDKVersion(string version) => false;
+
             public void Dispose() { }
         }
     }

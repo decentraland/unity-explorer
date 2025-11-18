@@ -1,7 +1,6 @@
 ﻿using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
 using System;
-using System.Collections.Generic;
 using UnityEngine.Pool;
 using UnityEngine;
 
@@ -12,7 +11,6 @@ namespace DCL.SDKComponents.Tween.Components
         private readonly IObjectPool<Vector3Tweener> vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
         private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
         private readonly IObjectPool<Vector2Tweener> vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
-        private readonly IObjectPool<SequenceTweener> sequenceTweenerPool = new ObjectPool<SequenceTweener>(() => new SequenceTweener());
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds, Transform? transform = null, Vector2? textureStart = null)
         {
@@ -100,26 +98,6 @@ namespace DCL.SDKComponents.Tween.Components
             }
 
             sdkTweenComponent.CustomTweener = null;
-        }
-
-        public ITweener GetSequenceTweener(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform)
-        {
-            SequenceTweener sequenceTweener = sequenceTweenerPool.Get();
-            sequenceTweener.Initialize(firstTween, additionalTweens, loopType, transform);
-            return sequenceTweener;
-        }
-
-        public void ReleaseSequenceTweenerFrom(SDKTweenSequenceComponent sdkTweenSequenceComponent)
-        {
-            if (sdkTweenSequenceComponent.SequenceTweener == null)
-                return;
-
-            if (sdkTweenSequenceComponent.SequenceTweener is SequenceTweener sequenceTweener)
-            {
-                sequenceTweenerPool.Release(sequenceTweener);
-            }
-
-            sdkTweenSequenceComponent.SequenceTweener = null;
         }
     }
 }

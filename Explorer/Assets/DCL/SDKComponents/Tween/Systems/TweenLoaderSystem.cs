@@ -10,17 +10,12 @@ using ECS.Groups;
 
 namespace DCL.SDKComponents.Tween
 {
-    /// <summary>
-    /// Handles the loading of PBTween ONLY (when PBTweenSequence runs in SDK Runtime)
-    /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        public TweenLoaderSystem(World world) : base(world)
-        {
-        }
+        public TweenLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
