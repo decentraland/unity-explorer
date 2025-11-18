@@ -16,8 +16,6 @@ namespace DCL.SDKComponents.MediaStream
         public VideoTextureConsumer CreateVideoConsumer();
 
         public bool TryAddConsumer(Entity consumerEntity, CRDTEntity videoPlayerCrdtEntity, [NotNullWhen(true)] out TextureData? resultData);
-
-        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMaxDistance, out MediaPlayerComponent component);
     }
 
     public class MockMediaFactory : IMediaFactory

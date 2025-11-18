@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.MediaStream
             VideoTextureConsumer consumer = CreateVideoConsumer();
             MediaPlayerComponent mediaPlayer = CreateMediaPlayerComponent(url,
                 false, MediaPlayerComponent.DEFAULT_VOLUME,
-                false, null);
+                false, null, null);
 
             return new VideoTextureData(consumer, mediaPlayer);
         }
@@ -119,7 +119,7 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Create media player with budgeting
         /// </summary>
-        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMaxDistance, out MediaPlayerComponent component)
+        public bool TryCreateMediaPlayer(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMinDistance, float? spatialMaxDistance, out MediaPlayerComponent component)
         {
             if (!frameBudget.TrySpendBudget())
             {
@@ -127,12 +127,12 @@ namespace DCL.SDKComponents.MediaStream
                 return false;
             }
 
-            component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio, spatialMaxDistance);
+            component = CreateMediaPlayerComponent(url, hasVolume, volume, isSpatialAudio, spatialMinDistance, spatialMaxDistance);
             return true;
         }
 
         [SuppressMessage("ReSharper", "RedundantAssignment")]
-        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMaxDistance)
+        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool isSpatialAudio, float? spatialMinDistance, float? spatialMaxDistance)
         {
             bool isValidLocalPath = false;
             bool isValidStreamUrl = false;
@@ -183,7 +183,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
-            component.UpdateSpatialAudio(isSpatialAudio, spatialMaxDistance);
+            component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
 
             return component;
         }

@@ -267,7 +267,7 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public void UpdateSpatialAudio(bool isSpatial, float maxDistance)
+        public void UpdateSpatialAudio(bool isSpatial, float minDistance, float maxDistance)
         {
             Match(avPro =>
                 {
@@ -278,7 +278,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (avPro.AvProMediaPlayer.AudioSource != null)
                     {
                         avPro.AvProMediaPlayer.AudioSource.spatialBlend = isSpatial ? 1f : 0f;
-                        avPro.AvProMediaPlayer.AudioSource.minDistance = 0f;
+                        avPro.AvProMediaPlayer.AudioSource.minDistance = minDistance;
                         avPro.AvProMediaPlayer.AudioSource.maxDistance = maxDistance;
                     }
                 },

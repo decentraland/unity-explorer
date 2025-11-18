@@ -12,6 +12,7 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_VOLUME = 1f;
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
+        public const float DEFAULT_SPATIAL_MIN_DISTANCE = 0f;
         public const float DEFAULT_SPATIAL_MAX_DISTANCE = 60f;
 
         private float lastVideoTime;
@@ -115,7 +116,9 @@ namespace DCL.SDKComponents.MediaStream
             Cts.SafeCancelAndDispose();
         }
 
-        public void UpdateSpatialAudio(bool isSpatial, float? maxDistance) =>
-            MediaPlayer.UpdateSpatialAudio(isSpatial, maxDistance ?? DEFAULT_SPATIAL_MAX_DISTANCE);
+        public void UpdateSpatialAudio(bool isSpatial, float? minDistance, float? maxDistance) =>
+            MediaPlayer.UpdateSpatialAudio(isSpatial,
+                minDistance ?? DEFAULT_SPATIAL_MIN_DISTANCE,
+                maxDistance ?? DEFAULT_SPATIAL_MAX_DISTANCE);
     }
 }

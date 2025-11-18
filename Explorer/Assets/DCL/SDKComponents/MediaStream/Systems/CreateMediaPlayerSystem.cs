@@ -44,7 +44,9 @@ namespace DCL.SDKComponents.MediaStream
             bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasSpatial: true, Spatial: true };
 
             if (mediaFactory.TryCreateMediaPlayer(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume,
-                    isSpatialAudio, sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
+                    isSpatialAudio,
+                    sdkComponent.HasSpatialMinDistance ? sdkComponent.SpatialMinDistance : null,
+                    sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
                     out MediaPlayerComponent component))
                 World.Add(entity, component);
         }
@@ -66,7 +68,9 @@ namespace DCL.SDKComponents.MediaStream
                 bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasSpatial: true, Spatial: true };
 
                 if (!mediaFactory.TryCreateMediaPlayer(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume,
-                        isSpatialAudio, sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
+                        isSpatialAudio,
+                        sdkComponent.HasSpatialMinDistance ? sdkComponent.SpatialMinDistance : null,
+                        sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
                         out MediaPlayerComponent mediaPlayerComponent))
                     return;
 
