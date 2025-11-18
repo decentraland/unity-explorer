@@ -16,6 +16,15 @@ namespace DCL.WebRequests
             if (arguments.WWWForm != null)
                 return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.WWWForm));
 
+            if (arguments.UploadHandler != null)
+            {
+                var request = new UnityWebRequest(commonArguments.URL, UnityWebRequest.kHttpVerbPOST);
+                request.uploadHandler = arguments.UploadHandler;
+                request.SetRequestHeader("Content-Type", arguments.ContentType);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                return new GenericPostRequest(request);
+            }
+
             return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType));
         }
 
