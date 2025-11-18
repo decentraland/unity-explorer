@@ -6,7 +6,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityOwnershipTransferredNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Community Ownership Transferred";
-        private const string NOTIFICATION_TITLE = "The <b>{0}</b> Community has been transferred to you by its owner.";
+        private const string NOTIFICATION_TITLE = "Ownership of the <b>{0}</b> Community has been transferred to you by its previous owner.";
 
         [JsonProperty("metadata")]
         public CommunityOwnershipTransferredNotificationMetadata Metadata { get; set; }
