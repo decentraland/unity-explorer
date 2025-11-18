@@ -159,23 +159,23 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
 				return false;
 
-			DisplayPlacesInfoPanelAsync().Forget();
+			DisplayPlacesInfoPanelAsync(CurrentCoordinates).Forget();
 			return true;
 		}
 
-		private async UniTask DisplayPlacesInfoPanelAsync()
+		internal async UniTask DisplayPlacesInfoPanelAsync(Vector2Int? coords)
 		{
-			if (!CurrentCoordinates.HasValue)
+			if (!coords.HasValue)
 				return;
 
 			try
 			{
 				placesCts = placesCts.SafeRestart();
-				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(CurrentCoordinates.Value, placesCts.Token) 
-				                                  ?? new PlacesData.PlaceInfo(CurrentCoordinates.Value);
+				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(coords.Value, placesCts.Token) 
+				                                  ?? new PlacesData.PlaceInfo(coords.Value);
 				if (placesCts.IsCancellationRequested)
 					return;
-				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, CurrentCoordinates.Value).Forget();
+				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, coords.Value).Forget();
 			}
 			catch (OperationCanceledException _) { }
 			catch (Exception e)

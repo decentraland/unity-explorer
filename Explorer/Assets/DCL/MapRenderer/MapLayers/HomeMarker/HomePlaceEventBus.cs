@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
@@ -17,5 +18,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			Controller.SetMarker(null);
 		}
+
+		public void DisplayPlacesInfoPanel(Vector2Int coords) => Controller.DisplayPlacesInfoPanelAsync(coords).Forget();
 	}
 }
