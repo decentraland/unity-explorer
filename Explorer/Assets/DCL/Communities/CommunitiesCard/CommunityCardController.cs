@@ -78,7 +78,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IProfileRepository profileRepository;
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
@@ -118,7 +117,6 @@ namespace DCL.Communities.CommunitiesCard
             IProfileRepository profileRepository,
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IProfileRepository profileRepository,
             IInputBlock inputBlock)
             : base(viewFactory)
         {
@@ -141,7 +139,6 @@ namespace DCL.Communities.CommunitiesCard
             this.profileRepository = profileRepository;
             this.galleryEventBus = galleryEventBus;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
 

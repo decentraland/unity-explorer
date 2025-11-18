@@ -1091,8 +1091,7 @@ namespace Global.Dynamic
                     profilesRepository,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
-                    voiceChatContainer.VoiceChatOrchestrator,
-                    profileRepository));
+                    voiceChatContainer.VoiceChatOrchestrator));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
