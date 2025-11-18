@@ -154,6 +154,9 @@ namespace DCL.Profiles
             }
             catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND })
             {
+                // if (profileCache.TryGet(id, out Profile cachedProfile) && cachedProfile.Version >= version)
+                // return cachedProfile;
+
                 // Report to console every time
                 // Report to Sentry only once per session (protect from spamming)
                 ReportHub.LogError(new ReportData(ReportCategory.PROFILE, new ReportDebounce(SentryStaticDebouncer.Instance)),

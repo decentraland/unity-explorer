@@ -10,7 +10,6 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
@@ -42,7 +41,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IAppArgs appArgs;
-        private readonly IProfileRepository profileRepository;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -63,8 +61,7 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioClipConfig backgroundMusic,
             Arch.Core.World world,
-            IAppArgs appArgs,
-            IProfileRepository profileRepository
+            IAppArgs appArgs
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -83,7 +80,6 @@ namespace DCL.PluginSystem.Global
             this.backgroundMusic = backgroundMusic;
             this.world = world;
             this.appArgs = appArgs;
-            this.profileRepository = profileRepository;
         }
 
         public void Dispose() { }
@@ -93,7 +89,7 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs, profileRepository);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs);
             mvcManager.RegisterController(authenticationScreenController);
         }
 

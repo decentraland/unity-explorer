@@ -138,19 +138,29 @@ namespace DCL.Profiles.Self
             newProfile.UserNameColor = NameColorHelper.GetNameColor(newProfile.DisplayName);
 
             OwnProfile = newProfile;
+            profileCache.Set(newProfile.UserId, newProfile);
 
             if (!updateAvatarInWorld)
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+
+                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
                     getFromCacheIfPossible: false);
+
+                if (savedProfile != null)
+                {
+                    profileCache.Set(savedProfile.UserId, savedProfile);
+                    copyOfOwnProfile?.Dispose();
+                    copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
+                }
+
+                return savedProfile;
             }
 
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
             // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
-            profileCache.Set(newProfile.UserId, newProfile);
             UpdateAvatarInWorld(newProfile);
 
             try
