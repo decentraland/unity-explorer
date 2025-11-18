@@ -13,6 +13,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
     [TestFixture("https://peer-ec1.decentraland.org/lambdas/")]
     [TestFixture("https://peer-ec2.decentraland.org/lambdas/")]
     [TestFixture("https://peer-ap1.decentraland.org/lambdas/")]
+    [TestFixture("https://asset-bundle-registry.decentraland.today/")]
     public class ProfilesPerformanceTest : PerformanceBenchmark
     {
         private static readonly object[] TEST_CASES_SOURCE =
