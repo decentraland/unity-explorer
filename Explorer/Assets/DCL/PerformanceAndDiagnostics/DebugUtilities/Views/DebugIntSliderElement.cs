@@ -2,10 +2,9 @@
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugIntSliderElement : DebugElementBase<DebugIntSliderElement, DebugIntSliderDef>
+    [UxmlElement]
+    public partial class DebugIntSliderElement : DebugElementBase<DebugIntSliderElement, DebugIntSliderDef>
     {
-        public new class UxmlFactory : UxmlFactory<DebugIntSliderElement, UxmlTraits> { }
-
         protected override void ConnectBindings()
         {
             SliderInt sliderInt = this.Q<SliderInt>();
