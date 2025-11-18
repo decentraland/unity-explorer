@@ -32,7 +32,8 @@ namespace DCL.SDKComponents.MediaStream
         public OpenMediaPromise? OpenMediaPromise;
 
         public bool IsSpatial => MediaPlayer.IsSpatial;
-        public float SpatialMaxDistance => MediaPlayer.SpatialMaxDistance ?? DEFAULT_SPATIAL_MAX_DISTANCE;
+        public float SpatialMaxDistance => MediaPlayer.SpatialMaxDistance;
+        public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
 
         public MediaPlayerComponent(MultiMediaPlayer mediaPlayer, bool isFromContentServer) : this()
         {

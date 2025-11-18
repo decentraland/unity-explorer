@@ -84,7 +84,12 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),
             static _ => false);
 
-        public float? SpatialMaxDistance => Match(static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance,
+        public float SpatialMaxDistance => Match(
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE,
+            static _ => 0f);
+
+        public float SpatialMinDistance => Match(
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.minDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE,
             static _ => 0f);
 
         public void Dispose(MediaAddress address)

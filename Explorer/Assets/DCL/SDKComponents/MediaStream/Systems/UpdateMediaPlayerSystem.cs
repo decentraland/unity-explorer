@@ -89,7 +89,8 @@ namespace DCL.SDKComponents.MediaStream
                 if ((sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial)
                     || (sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(sdkComponent.SpatialMaxDistance, component.SpatialMaxDistance))
                     // In case the sdk component has no spatial max distance, then it should reset to its default value
-                    || (!sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(component.SpatialMaxDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE)))
+                    || (!sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(component.SpatialMaxDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE))
+                    || (!sdkComponent.HasSpatialMinDistance && !Mathf.Approximately(component.SpatialMinDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE)))
                     component.UpdateSpatialAudio(sdkComponent.Spatial,
                         sdkComponent.HasSpatialMinDistance ? sdkComponent.SpatialMinDistance : null,
                         sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
@@ -131,7 +132,8 @@ namespace DCL.SDKComponents.MediaStream
                 if ((sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial)
                     || (sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(sdkComponent.SpatialMaxDistance, component.SpatialMaxDistance))
                     // In case the sdk component has no spatial max distance, then it should reset to its default value
-                    || (!sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(component.SpatialMaxDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE)))
+                    || (!sdkComponent.HasSpatialMaxDistance && !Mathf.Approximately(component.SpatialMaxDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE))
+                    || (!sdkComponent.HasSpatialMinDistance && !Mathf.Approximately(component.SpatialMinDistance, MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE)))
                     component.UpdateSpatialAudio(sdkComponent.Spatial,
                         sdkComponent.HasSpatialMinDistance ? sdkComponent.SpatialMinDistance : null,
                         sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
