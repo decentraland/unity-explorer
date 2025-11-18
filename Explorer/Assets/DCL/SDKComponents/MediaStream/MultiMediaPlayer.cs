@@ -63,6 +63,11 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        public bool IsBuffering => Match(
+            static avPro => avPro.AvProMediaPlayer.Control.IsBuffering(),
+            static _ => false
+        );
+
         public bool HasControl => Match(
             static avPro => avPro.AvProMediaPlayer.Control != null,
             static _ => false

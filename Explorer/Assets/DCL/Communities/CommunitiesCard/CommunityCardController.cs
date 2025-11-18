@@ -72,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
@@ -109,7 +109,7 @@ namespace DCL.Communities.CommunitiesCard
             IChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
-            LambdasProfilesProvider lambdasProfilesProvider,
+            IProfileRepository profileRepository,
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator)
             : base(viewFactory)
@@ -130,7 +130,7 @@ namespace DCL.Communities.CommunitiesCard
             this.chatEventBus = chatEventBus;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
             this.galleryEventBus = galleryEventBus;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailLoader = new ThumbnailLoader(null);
@@ -347,7 +347,7 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 clipboard,
                 webBrowser,
-                lambdasProfilesProvider);
+                profileRepository);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
