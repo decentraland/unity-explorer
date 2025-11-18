@@ -252,7 +252,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (content.file.EndsWith(".glb")) // Wearables cannot be ".gltf"
             {
-                var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
+                // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
+                var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);
+                var promise = RawGltfPromise.Create(world, getGltf, partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
             else if (content.file.EndsWith(".png")) // Facial Feature Wearables documentation specifies PNG format
@@ -277,22 +279,32 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             switch (wearable.Type)
             {
                 case WearableType.FacialFeature:
-                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetAsset<Texture>(), result.Asset));
+                {
+                    if (result.Asset.TryGetAsset(out Texture texture))
+                        return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(texture, result.Asset));
+
+                    return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, new ArgumentException($"Failed to create facial feature asset for {wearable} from the AB"));
+                }
                 default:
-                    return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
+                    if (result.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAsset))
+                        return new StreamableLoadingResult<AttachmentAssetBase>(regularAsset);
+
+                    return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, new ArgumentException($"Failed to create wearable asset for {wearable} from the AB"));
+
             }
         }
 
         // Raw GLTF Wearable
-        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<GLTFData> result, IWearable wearable)
+        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<GLTFData> result)
         {
-            if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
+            if (result.Succeeded && result.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAsset))
+                return new StreamableLoadingResult<AttachmentAssetBase>(regularAsset);
 
-            return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
+            return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
         }
 
         // Raw Facial Feature Wearable
-        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<TextureData> result, IWearable wearable)
+        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<TextureData> result)
         {
             if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
 
@@ -300,9 +312,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.EnsureTexture2D()), result.Asset));
         }
 
-        public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
+        public static bool TryToConvertToRegularAsset(this StreamableLoadingResult<AssetBundleData> result, out AttachmentRegularAsset regularAssetResult)
         {
-            GameObject go = result.Asset!.GetAsset<GameObject>();
+            if (!result.Asset.TryGetAsset(out GameObject go))
+            {
+                regularAssetResult = null;
+                return false;
+            }
 
             // collect all renderers
             List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
@@ -312,10 +328,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return true;
         }
 
-        public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
+        //GLTFs should never fail
+        public static bool TryToConvertToRegularAsset(this StreamableLoadingResult<GLTFData> result, out AttachmentRegularAsset regularAssetResult)
         {
             GameObject go = result.Asset!.Root;
 
@@ -327,7 +345,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return true;
         }
 
         public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)

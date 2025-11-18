@@ -91,9 +91,9 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                if (result.Succeeded)
+                if (result.Succeeded && result.Asset.TryGetAsset(out GameObject go))
                 {
-                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetAsset<GameObject>(),
+                    GameObject? instantiatedLOD = Object.Instantiate(go,
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
 
@@ -104,7 +104,7 @@ namespace DCL.LOD.Systems
                 }
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
+                    ReportHub.LogWarning(GetReportData(), $"LOD AB request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     sceneLODInfo.AddFailedLOD();
                 }
 
