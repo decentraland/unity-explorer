@@ -33,6 +33,7 @@ using System;
 using System.Runtime.CompilerServices;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -91,6 +92,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         protected override void Update(float t)
         {
+            AvatarStateMachineEventHandlerInitializationQuery(World);
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMovementQuery(World);
@@ -103,6 +105,14 @@ namespace DCL.AvatarRendering.Emotes.Play
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
             CleanUpQuery(World);
+        }
+
+        [Query]
+        [None(typeof(AvatarStateMachineEventHandler))]
+        private void AvatarStateMachineEventHandlerInitialization(Entity entity, IAvatarView avatarView)
+        {
+            if(avatarView.AvatarAnimator)
+                World.Add(entity, new AvatarStateMachineEventHandler(entity, avatarView.AvatarAnimator));
         }
 
         [Query]
@@ -216,15 +226,14 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             avatarView.RestoreArmatureName();
 
-            avatarView.GetTransform().localPosition = Vector3.zero;
-            avatarView.GetTransform().localRotation = Quaternion.identity;
-
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "RESET EmoteComponent User: " + ((AvatarBase)avatarView).name);
             emoteComponent.Reset();
 
+            // Cancels walking to the initiator of a social emote
             if(World.Has<MoveBeforePlayingSocialEmoteIntent>(entity))
                 World.Remove<MoveBeforePlayingSocialEmoteIntent>(entity);
 
+            // Cancels interpolating to start position in a social emote outcome animation
             if(World.Has<MoveToOutcomeStartPositionIntent>(entity))
                 World.Remove<MoveToOutcomeStartPositionIntent>(entity);
         }
@@ -267,54 +276,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-        private void PrepareToAdjustReceiverBeforeOutcomeAnimation(string initiatorWalletAddress)
-        {
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress)!;
-
-            // Since the avatar is reacting, the emote is already available
-            IEmote emote;
-            URN emoteUrn = interaction.Emote.GetUrn().Shorten();
-            emoteStorage.TryGetElement(emoteUrn, out emote);
-
-            Vector3 targetAvatarHipRelativePosition = Vector3.zero;
-
-            // All social emotes should have this info, this protection is added just to prevent old test emotes from failing
-            if(emote.AssetResults[BodyShape.MALE]!.Value.Asset!.SocialEmoteOutcomeAnimationStartPoses != null)
-                targetAvatarHipRelativePosition = emote.AssetResults[BodyShape.MALE]!.Value.Asset!.SocialEmoteOutcomeAnimationStartPoses[interaction.OutcomeIndex].Position;
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>target hip: " + targetAvatarHipRelativePosition.ToString("F6") + "</color>");
-
-            AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
-            AvatarBase initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
-
-            Vector3 originalAvatarPosition = receiverAvatar.GetTransform().position;
-            Vector3 originalHipRelativePosition = Vector3.Scale(receiverAvatar.HipAnchorPoint.localPosition, receiverAvatar.HipAnchorPoint.parent.localScale);
-            Vector3 targetAvatarPosition = initiatorAvatar.GetTransform().position
-                                           + initiatorAvatar.GetTransform().rotation * new Vector3(targetAvatarHipRelativePosition.x, 0.0f, targetAvatarHipRelativePosition.z)
-                                           // Small adjustment to make current position of the hips in the current animation with the future position of the hips
-                                           - receiverAvatar.GetTransform().rotation * new Vector3(originalHipRelativePosition.x, 0.0f, originalHipRelativePosition.y);
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>Movement: {originalAvatarPosition.ToString("F3")} -> {targetAvatarPosition.ToString("F3")}</color>");
-
-            GizmoDrawer.Instance.DrawWireSphere(3, targetAvatarPosition, 0.2f, Color.magenta);
-
-//              targetAvatarPosition = targetAvatarPosition + (targetAvatarPosition - moveIntent.InitiatorWorldPosition);
-
-            // Adjustment interpolation
-            World.Add(interaction.ReceiverEntity, new MoveToOutcomeStartPositionIntent(
-                originalAvatarPosition,
-                receiverAvatar.GetTransform().rotation,
-                targetAvatarPosition,
-                initiatorAvatar.GetTransform().rotation,
-                new TriggerEmoteReactingToSocialEmoteIntent(emoteUrn, interaction.OutcomeIndex, initiatorWalletAddress, interaction.Id),
-                initiatorAvatar.GetTransform().position));
-        }
-
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
-            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent, CharacterTransform characterTransform)
+            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent, CharacterTransform characterTransform, AvatarStateMachineEventHandler avatarStateMachineEventHandler)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -465,6 +431,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                         World.Add(entity, new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity));
                     }
 
+                    if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                        avatarStateMachineEventHandler.EmoteStateExiting = OnEmoteStateExiting; // Setting and not subscribing because it could play the emote more than once and we can't know if it is the first for this client
+
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AFTER PLAY USER: hash " + emoteComponent.GetHashCode() + " " + emoteIntent.WalletAddress + " " + emoteComponent.EmoteUrn + " " + emoteComponent.Metadata?.name ?? string.Empty);
 
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -477,7 +446,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
-// TODO
+
+// TODO: Use state machine events instead of a query
         private struct RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent
         {
             public readonly Entity InitiatorEntity;
@@ -493,7 +463,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void RotateReceiverAvatarToCoincideWithInitiatorAvatar(Entity entity, ref IAvatarView avatarView, RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent animationInfo)
         {
             // It waits for the Emote state to execute
-            if (avatarView.AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash != AnimationHashes.EMOTE)
+            if (avatarView.GetAnimatorCurrentStateTag() != AnimationHashes.EMOTE)
                 return;
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation of reacting avatar as initiator");
@@ -560,6 +530,119 @@ namespace DCL.AvatarRendering.Emotes.Play
                 EmotePromise.Create(World,
                     EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
                     PartitionComponent.TOP_PRIORITY);
+        }
+
+        private void ResetAvatarAndControllerTransforms(Entity entity, IAvatarView avatarView, Vector3 newCharacterForward)
+        {
+            GizmoDrawer.Instance.DrawWireCube(0, avatarView.GetTransform().position, 0.2f * Vector3.one, Color.coral);
+
+            Vector3 hipsWorldPosition = ((AvatarBase)avatarView).HipAnchorPoint.position;
+            hipsWorldPosition.y = avatarView.GetTransform().position.y;
+
+            ref CharacterController characterController = ref World.TryGetRef<CharacterController>(entity, out bool isLocal);
+            ref CharacterRigidTransform characterRigidTransform = ref World.TryGetRef<CharacterRigidTransform>(entity, out bool _);
+
+            if(isLocal)
+                Debug.DrawRay(characterController.transform.position + characterController.center, newCharacterForward, Color.red, 3.0f);
+            else
+                Debug.DrawRay(hipsWorldPosition, newCharacterForward, Color.magenta, 3.0f);
+
+            if (isLocal)
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Local controller transform reset " + ((AvatarBase)avatarView).name);
+                //characterController.enabled = false;
+  //avatarView.AvatarAnimator.applyRootMotion = false;
+                characterController.transform.position = hipsWorldPosition;
+                characterRigidTransform.MoveVelocity.Velocity = Vector3.zero;
+                characterRigidTransform.LookDirection = newCharacterForward;
+                //characterController.transform.forward = emoteComponent.LastHipsForward;
+                //characterController.transform.rotation = Quaternion.LookRotation(emoteComponent.LastHipsForward);
+//avatarView.AvatarAnimator.applyRootMotion = true;
+                //characterController.enabled = true;
+            }
+            else
+            {
+                // Although the position of the remote avatar will be overriden with incoming position messages, the animation may finish
+                // before those messages arrive so we have to update the position as if they already arrived or the avatar will make a weird movement
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Remote controller transform reset " + ((AvatarBase)avatarView).name);
+                ref CharacterTransform characterTransform = ref World.Get<CharacterTransform>(entity);
+                characterTransform.Transform.position = hipsWorldPosition;
+                characterTransform.Transform.forward = newCharacterForward;
+            }
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Avatar transform reset");
+
+            avatarView.GetTransform().localPosition = Vector3.zero;
+            avatarView.GetTransform().localRotation = Quaternion.identity;
+
+            if (isLocal)
+                World.Add(entity, new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward));
+
+            if(isLocal)
+                Debug.DrawRay(characterController.transform.position + characterController.center, avatarView.GetTransform().forward, Color.cyan, 3.0f);
+            else
+                Debug.DrawRay(hipsWorldPosition, avatarView.GetTransform().forward, Color.blue, 3.0f);
+        }
+
+        private void PrepareToAdjustReceiverBeforeOutcomeAnimation(string initiatorWalletAddress)
+        {
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress)!;
+
+            // Since the avatar is reacting, the emote is already available
+            IEmote emote;
+            URN emoteUrn = interaction.Emote.GetUrn().Shorten();
+            emoteStorage.TryGetElement(emoteUrn, out emote);
+
+            Vector3 targetAvatarHipRelativePosition = Vector3.zero;
+
+            IReadOnlyList<EmoteOutcomeAnimationPose>? socialEmoteOutcomeAnimationStartPoses = emote.AssetResults[BodyShape.MALE]!.Value.Asset!.SocialEmoteOutcomeAnimationStartPoses;
+
+            if(socialEmoteOutcomeAnimationStartPoses != null && socialEmoteOutcomeAnimationStartPoses.Count > 0) // All social emotes should have this info, this protection is added just to prevent old test emotes from failing
+                targetAvatarHipRelativePosition = socialEmoteOutcomeAnimationStartPoses[interaction.OutcomeIndex].Position;
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>target hip: " + targetAvatarHipRelativePosition.ToString("F6") + "</color>");
+
+            AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
+            AvatarBase initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
+
+            // Calculates the pose of the receiver avatar when the outcome animation starts, to be used as target in the interpolation
+            Vector3 originalAvatarPosition = receiverAvatar.GetTransform().position;
+            Vector3 originalHipRelativePosition = Vector3.Scale(receiverAvatar.HipAnchorPoint.localPosition, receiverAvatar.HipAnchorPoint.parent.localScale);
+            Vector3 targetAvatarPosition = initiatorAvatar.GetTransform().position
+                                           + initiatorAvatar.GetTransform().rotation * new Vector3(targetAvatarHipRelativePosition.x, 0.0f, targetAvatarHipRelativePosition.z)
+                                           // Small adjustment to make current position of the hips in the current animation with the future position of the hips
+                                           - receiverAvatar.GetTransform().rotation * new Vector3(originalHipRelativePosition.x, 0.0f, originalHipRelativePosition.y);
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>Movement: {originalAvatarPosition.ToString("F3")} -> {targetAvatarPosition.ToString("F3")}</color>");
+
+            GizmoDrawer.Instance.DrawWireSphere(3, targetAvatarPosition, 0.2f, Color.magenta);
+
+            // Adjustment interpolation
+            World.Add(interaction.ReceiverEntity, new MoveToOutcomeStartPositionIntent(
+                originalAvatarPosition,
+                receiverAvatar.GetTransform().rotation,
+                targetAvatarPosition,
+                initiatorAvatar.GetTransform().rotation,
+                new TriggerEmoteReactingToSocialEmoteIntent(emoteUrn, interaction.OutcomeIndex, initiatorWalletAddress, interaction.Id),
+                initiatorAvatar.GetTransform().position));
+        }
+
+        private void OnEmoteStateExiting(Entity entity, AvatarStateMachineEventHandler avatarStateMachineEventHandler)
+        {
+            avatarStateMachineEventHandler.EmoteStateExiting = null;
+
+            IAvatarView avatarView = World.Get<IAvatarView>(entity);
+            CharacterEmoteComponent emoteComponent = World.Get<CharacterEmoteComponent>(entity);
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=cyan>EXITING EMOTE STATE " + ((AvatarBase)avatarView).name + " </color>");
+
+            Vector3 newCharacterForward = ((AvatarBase)avatarView).HipAnchorPoint.forward;
+            newCharacterForward.y = 0.0f;
+            newCharacterForward.Normalize();
+
+            ResetAvatarAndControllerTransforms(entity, avatarView, newCharacterForward);
+
+            World.Remove<AvatarStateMachineEventHandler>(entity);
         }
     }
 }

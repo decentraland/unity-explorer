@@ -49,11 +49,6 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
- /*       public CharacterEmoteComponent()
-        {
-            Reset();
-        }
-*/
         public void Reset()
         {
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "-emote Reset- " + EmoteUrn);
@@ -68,7 +63,7 @@ namespace DCL.AvatarRendering.Emotes
             HasOutcomeAnimationStarted = false;
             TargetAvatarWalletAddress = string.Empty;
             SocialEmoteInteractionId = 0;
-            // These fields are not reset, on purpose
+            // These fields are not reset, on purpose (old code depends on it)
             //        CurrentEmoteReference = null;
             //        CurrentAnimationTag = 0;
         }
