@@ -176,33 +176,39 @@ jobs:
           fail-on-empty: true
           use-actions-summary: true
 
-      # C# Lint: Roslyn + .editorconfig
-      - name: Install .NET SDK (for analyzer lint)
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Locate Assembly-CSharp.csproj
-        id: find-csproj
+      # C# Linting using JetBrains ReSharper CLI
+      - name: Download ReSharper Command Line Tools
         run: |
-          # If not present, generate ,csproj using Unity Editor in batchmode.
-          csprojFile="Explorer/Assembly-CSharp.csproj"
-          if [ ! -f "$csprojFile" ]; then
-            echo "CSProj not found, generating using Unity..."
-            xvfb-run -a unity-editor -batchmode -quit -projectPath Explorer -executeMethod UnityEditor.SyncVS.SyncSolution
-          fi
-          if [ ! -f "$csprojFile" ]; then
-            echo "Failed to locate Assembly-CSharp.csproj"
-            exit 1
-          fi
-          echo "csproj=$csprojFile" >> $GITHUB_OUTPUT
-          echo "Found: $csprojFile"
+          wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
+          unzip -q rsharp.zip -d rsharp
+          chmod +x rsharp/*.sh
 
-      - name: Restore Roslyn dependencies
-        run: dotnet restore "${{ steps.find-csproj.outputs.csproj }}"
+      - name: Run ReSharperCodeStyle (.editorconfig enforcement)
+        run: |
+          rsharp/ReSharperCodeStyle.sh Explorer.sln \
+            --profile=Default \
+            --verbosity=INFO \
+            --properties:Configuration=Debug \
+            --disable-settings-layers:SolutionPersonal \
+            --output=CodeStyleReport.xml
 
-      - name: Run Roslyn Analyzer via dotnet build
-        run: dotnet build --warnaserror "${{ steps.find-csproj.outputs.csproj }}"
+      - name: Run ReSharper InspectCode (static analysis)
+        run: |
+          rsharp/inspectcode.sh Explorer.sln \
+            --no-build \
+            --verbosity=INFO \
+            --properties:Configuration=Debug \
+            --disable-settings-layers:SolutionPersonal \
+            --output=InspectCodeReport.xml
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: csharp-lint-reports
+          path: |
+            CodeStyleReport.xml
+            InspectCodeReport.xml
+
 
       # Upload artifact
       - uses: actions/upload-artifact@v4
