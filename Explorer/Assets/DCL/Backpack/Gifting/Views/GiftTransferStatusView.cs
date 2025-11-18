@@ -12,36 +12,27 @@ namespace DCL.Backpack.Gifting.Views
 
         [Header("UI State Elements")]
         [SerializeField] private GameObject statusGroup;
-
-        [SerializeField] private GameObject successContainer;
         
         [Header("Header")]
         [field: SerializeField] public Button BackButton { get; private set; }
 
-        [Header("Success Elements")]
-        [SerializeField] private Button successOkButton;
-
         [field: SerializeField] public Image ItemBackground { get; private set; }
         [field: SerializeField] public Image ItemCategory { get; private set; }
         [field: SerializeField] public Image ItemCategoryBackground { get; private set; }
-        [field: SerializeField] public Button CloseButton { get; private set; }   // optional “X”
+        [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public TMP_Text TitleLabel { get; private set; }
-        [field: SerializeField] public Image RecipientAvatar { get; private set; } // optional
+        [field: SerializeField] public Image RecipientAvatar { get; private set; }
         [field: SerializeField] public TMP_Text RecipientName { get; private set; }
 
         [Header("Item")]
         [field: SerializeField] public Image ItemThumbnail { get; private set; }
-
         [field: SerializeField] public TMP_Text ItemName { get; private set; }
 
         [Header("Status")]
         [field: SerializeField] public TMP_Text StatusText { get; private set; }
 
-        [field: SerializeField]
-        public GameObject? LongRunningHint { get; private set; }
+        [field: SerializeField] public GameObject? LongRunningHint { get; private set; }
 
         public GameObject StatusContainer => statusGroup;
-        public GameObject SuccessContainer => successContainer;
-        public Button SuccessOkButton => successOkButton;
     }
 }

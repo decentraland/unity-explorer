@@ -12,6 +12,9 @@ namespace DCL.Backpack.Gifting.Views
         public Button CloseButton { get; private set; }
 
         [field: SerializeField]
+        public Button OkButton { get; private set; }
+
+        [field: SerializeField]
         public Image RecipientThumbnail { get; private set; }
 
         [field: SerializeField]

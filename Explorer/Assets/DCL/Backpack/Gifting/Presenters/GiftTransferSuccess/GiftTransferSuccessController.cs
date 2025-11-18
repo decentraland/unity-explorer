@@ -1,7 +1,5 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
 using MVC;
 using Utility;
@@ -32,14 +30,13 @@ namespace DCL.Backpack.Gifting.Presenters
             if (inputData.UserThumbnail != null)
                 viewInstance.RecipientThumbnail.sprite = inputData.UserThumbnail;
 
-            PlayAnimationAndAutoCloseAsync().Forget();
+            PlayAnimationAsync().Forget();
         }
 
-        private async UniTaskVoid PlayAnimationAndAutoCloseAsync()
+        private async UniTaskVoid PlayAnimationAsync()
         {
             lifeCts = new CancellationTokenSource();
             await PlayShowAnimationAsync(lifeCts.Token);
-            AutoCloseAfterDelayAsync(lifeCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -47,47 +44,39 @@ namespace DCL.Backpack.Gifting.Presenters
             lifeCts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             if (viewInstance == null)
-                return UniTask.Never(ct);
-
-            return viewInstance.CloseButton.OnClickAsync(ct);
-        }
-
-        public async UniTask PlayShowAnimationAsync(CancellationToken ct)
-        {
-            await viewInstance.BackgroundRaysAnimation.ShowAnimationAsync(ct);
-
-            // if (config.Sound != null)
-            //     UIAudioEventsBus.Instance.SendPlayAudioEvent(config.Sound);
-        }
-
-        public async UniTask PlayHideAnimationAsync(CancellationToken ct)
-        {
-            await viewInstance.BackgroundRaysAnimation.HideAnimationAsync(ct);
-        }
-
-        private async UniTaskVoid AutoCloseAfterDelayAsync(CancellationToken ct)
-        {
-            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: ct);
-                await PlayHideAnimationAsync(ct);
-                SignalClose();
+                await UniTask.Never(ct);
+                return;
             }
-            catch (OperationCanceledException)
+
+            var closeTasks = new[]
             {
-                /* swallow */
+                viewInstance.OkButton.OnClickAsync(ct), viewInstance.CloseButton.OnClickAsync(ct)
+            };
+
+            await UniTask.WhenAny(closeTasks);
+
+            await PlayHideAnimationAsync(ct);
+        }
+
+        private async UniTask PlayShowAnimationAsync(CancellationToken ct)
+        {
+            if (viewInstance !=  null)
+            {
+                await viewInstance.BackgroundRaysAnimation.ShowAnimationAsync(ct);
+
+                // if (config.Sound != null)
+                //     UIAudioEventsBus.Instance.SendPlayAudioEvent(config.Sound);
             }
         }
 
-        private void SignalClose()
+        private async UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
-            if (viewInstance == null) return;
-
-            if (viewInstance.CloseButton != null && viewInstance.CloseButton.interactable)
-                viewInstance.CloseButton.onClick.Invoke();
+            if (viewInstance != null)
+                await viewInstance.BackgroundRaysAnimation.HideAnimationAsync(ct);
         }
     }
 }

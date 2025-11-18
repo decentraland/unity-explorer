@@ -20,7 +20,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private enum State { Waiting, Success, Failed }
 
         private State currentState;
-        
+
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
@@ -28,7 +28,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
         private readonly GiftTransferResponseCommand  giftTransferResponseCommand;
         private readonly GiftTransferSignCommand  giftTransferSignCommand;
-        
+
         private IDisposable? subProgress;
         private IDisposable? subSucceeded;
         private IDisposable? subFailed;
@@ -36,7 +36,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private CancellationTokenSource? lifeCts;
         private CancellationTokenSource? delayCts;
-        
+
         private string urn = string.Empty;
         private const string SUPPORT_URL = "https://docs.decentraland.org/player/support/";
 
@@ -74,15 +74,15 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 viewInstance.RecipientName.text = inputData.recipientName;
-                
+
                 if (inputData.userThumbnail != null)
                     viewInstance.RecipientAvatar.sprite = inputData.userThumbnail;
-                
+
                 viewInstance.ItemName.text = inputData.giftDisplayName;
-                
+
                 if (inputData.giftThumbnail != null)
                     viewInstance.ItemThumbnail.sprite = inputData.giftThumbnail;
-                
+
                 viewInstance.ItemCategory.sprite = inputData.style.categoryIcon;
                 viewInstance.ItemCategoryBackground.color = inputData.style.flapColor;
                 viewInstance.ItemBackground.sprite = inputData.style.rarityBackground;
@@ -90,7 +90,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 SetViewState(State.Waiting);
                 SetPhase(GiftTransferPhase.WaitingForWallet, "A browser window should open for you to confirm the transaction.");
             }
-            
+
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);
             subSucceeded = eventBus.Subscribe<GiftTransferSucceeded>(OnSuccess);
             subFailed = eventBus.Subscribe<GiftTransferFailed>(OnFailure);
@@ -116,23 +116,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 return;
             }
 
-            var closeTasks = new[]
-            {
-                viewInstance.CloseButton.OnClickAsync(ct), viewInstance.SuccessOkButton.OnClickAsync(ct)
-            };
-
-            await UniTask.WhenAny(closeTasks);
-
-            if (currentState == State.Success)
-                OpenSuccessScreenAfterCloseAsync(ct).Forget();
-        }
-
-        private async UniTaskVoid OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
-        {
-            await UniTask.Yield(cancellationToken: ct);
-
-            var successParams = new GiftTransferSuccessParams(inputData.recipientName, inputData.userThumbnail);
-            await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
+            await viewInstance.CloseButton.OnClickAsync(ct);
         }
 
         private void OnProgress(GiftTransferProgress e)
@@ -166,8 +150,17 @@ namespace DCL.Backpack.Gifting.Presenters
         private void OnSuccess(GiftTransferSucceeded e)
         {
             if (e.Urn != urn) return;
+
+            currentState = State.Success;
             delayCts.SafeCancelAndDispose();
-            SetViewState(State.Success);
+            RequestClose();
+            OpenSuccessScreenAfterCloseAsync(CancellationToken.None).Forget();
+        }
+
+        private async UniTaskVoid OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
+        {
+            var successParams = new GiftTransferSuccessParams(inputData.recipientName, inputData.userThumbnail);
+            await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
         }
 
         private void OnFailure(GiftTransferFailed e)
@@ -190,17 +183,6 @@ namespace DCL.Backpack.Gifting.Presenters
                 case State.Waiting:
                     viewInstance.TitleLabel.text = "Sending Gift to";
                     viewInstance.StatusContainer.SetActive(true);
-                    viewInstance.SuccessContainer.SetActive(false);
-
-                    if (viewInstance.LongRunningHint != null)
-                        viewInstance.LongRunningHint.gameObject.SetActive(false);
-
-                    break;
-                case State.Success:
-                    viewInstance.TitleLabel.text = "Gift Sent to";
-                    viewInstance.StatusContainer.SetActive(false);
-                    viewInstance.LongRunningHint?.gameObject.SetActive(false);
-                    viewInstance.SuccessContainer.SetActive(true);
 
                     if (viewInstance.LongRunningHint != null)
                         viewInstance.LongRunningHint.gameObject.SetActive(false);
@@ -208,7 +190,7 @@ namespace DCL.Backpack.Gifting.Presenters
                     break;
             }
         }
-        
+
         private void SetPhase(GiftTransferPhase phase, string? msg)
         {
             if (viewInstance == null || currentState != State.Waiting) return;
