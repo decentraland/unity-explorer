@@ -10,7 +10,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
 using System;
-using System.Globalization;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -76,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             profileTag.gameObject.SetActive(!announcementInfo.authorHasClaimedName);
             verifiedMark.SetActive(announcementInfo.authorHasClaimedName);
             officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(announcementInfo.authorAddress));
-            postDate.text = FormatDateString(announcementInfo.createdAt);
+            postDate.text = TimestampUtilities.GetRelativeTimeForPosts(announcementInfo.createdAt);
 
             if (currentProfileThumbnailUrl != announcementInfo.authorProfilePictureUrl)
             {
@@ -90,31 +89,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             deleteAnnouncementButton.gameObject.SetActive(allowDeletion);
 
             RefreshCardHeight();
-        }
-
-        private static string FormatDateString(string createdAtDateString)
-        {
-            DateTime announcementDateTime = DateTime.Parse(createdAtDateString, null, DateTimeStyles.RoundtripKind);
-            TimeSpan timeDifference = DateTime.UtcNow - announcementDateTime;
-
-            if (timeDifference.TotalMinutes < 1)
-                return "Now";
-
-            switch (timeDifference.TotalHours)
-            {
-                case < 1:
-                {
-                    int minutes = (int)Math.Floor(timeDifference.TotalMinutes);
-                    return $"{minutes}m";
-                }
-                case < 24:
-                {
-                    int hours = (int)Math.Floor(timeDifference.TotalHours);
-                    return $"{hours}h";
-                }
-                default:
-                    return announcementDateTime.ToString(announcementDateTime.Year == DateTime.UtcNow.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture);
-            }
         }
 
         private void RefreshCardHeight()
