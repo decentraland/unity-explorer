@@ -179,10 +179,14 @@ jobs:
       # C# Linting using JetBrains ReSharper CLI
       - name: Generate .sln files
         run: |
-          xvfb-run -a unity-editor \
-            -batchmode -quit \
-            -projectPath Explorer \
-            -executeMethod UnityEditor.SyncVS.SyncSolution
+          docker run --rm \
+            -v ${{ github.workspace }}/Explorer:/project \
+            -w /project \
+            ${{ steps.img.outputs.ghcr }} \
+            xvfb-run -a unity-editor \
+              -batchmode -quit \
+              -projectPath /project \
+              -executeMethod UnityEditor.SyncVS.SyncSolution
 
       - name: Download ReSharper Command Line Tools
         run: |
