@@ -1,4 +1,4 @@
-Shader "Hidden/FlipTexture"
+Shader "Flipping/FlipperLinearToGammaShader"
 {
     Properties
     {

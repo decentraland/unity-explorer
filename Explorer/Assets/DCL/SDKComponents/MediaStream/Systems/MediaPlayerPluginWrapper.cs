@@ -8,6 +8,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -18,18 +19,21 @@ namespace DCL.SDKComponents.MediaStream
         private readonly float audioFadeSpeed;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly MediaFactoryBuilder mediaFactory;
+        private readonly Material flipMaterial;
 
         public MediaPlayerPluginWrapper(
             IPerformanceBudget frameTimeBudget,
             IExposedCameraData exposedCameraData,
             float audioFadeSpeed,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            MediaFactoryBuilder mediaFactory)
+            MediaFactoryBuilder mediaFactory,
+            Material flipMaterial)
         {
             this.exposedCameraData = exposedCameraData;
             this.audioFadeSpeed = audioFadeSpeed;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.mediaFactory = mediaFactory;
+            this.flipMaterial = flipMaterial;
 
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.frameTimeBudget = frameTimeBudget;
@@ -43,7 +47,7 @@ namespace DCL.SDKComponents.MediaStream
             MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, mediaFactory);
-            sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed));
+            sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed, flipMaterial));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
                 UpdateMediaPlayerPrioritizationSystem.InjectToWorld(ref builder, exposedCameraData, videoPrioritizationSettings);

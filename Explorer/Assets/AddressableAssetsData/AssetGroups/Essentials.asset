@@ -230,6 +230,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d08e60223593f4abe8863c64316f3476
+    m_Address: FlipLinearToGammaMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d9a7adc162dc338449107a4654a26d50
     m_Address: WorldAudioContainer
     m_ReadOnly: 0
