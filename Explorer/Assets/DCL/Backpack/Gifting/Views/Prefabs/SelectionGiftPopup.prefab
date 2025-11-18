@@ -914,7 +914,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 20}
+  m_SizeDelta: {x: 0, y: 18}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &6744775773019475066
 CanvasRenderer:
@@ -937,7 +937,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.29803923}
+  m_Color: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -979,10 +979,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
-  m_MinWidth: 20
-  m_MinHeight: 20
-  m_PreferredWidth: 20
-  m_PreferredHeight: 20
+  m_MinWidth: 18
+  m_MinHeight: 18
+  m_PreferredWidth: 18
+  m_PreferredHeight: 18
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -2581,11 +2581,11 @@ MonoBehaviour:
   mArrangeType: 0
   mFixedRowOrColumnCount: 5
   mPadding:
-    m_Left: 20
-    m_Right: 20
+    m_Left: 10
+    m_Right: 10
     m_Top: 17
     m_Bottom: 0
-  mItemPadding: {x: 20, y: 20}
+  mItemPadding: {x: 22.5, y: 22}
   mItemSize: {x: 120, y: 120}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
@@ -4686,11 +4686,11 @@ MonoBehaviour:
   mArrangeType: 0
   mFixedRowOrColumnCount: 5
   mPadding:
-    m_Left: 20
-    m_Right: 20
+    m_Left: 10
+    m_Right: 10
     m_Top: 17
     m_Bottom: 0
-  mItemPadding: {x: 20, y: 20}
+  mItemPadding: {x: 22.5, y: 22}
   mItemSize: {x: 120, y: 120}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
@@ -5160,7 +5160,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: 10
+  m_Spacing: 6
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
