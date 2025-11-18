@@ -177,17 +177,6 @@ jobs:
           use-actions-summary: true
 
       # C# Linting using JetBrains ReSharper CLI
-      - name: Generate .sln files
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/Explorer:/project \
-            -w /project \
-            ${{ steps.img.outputs.ghcr }} \
-            xvfb-run -a unity-editor \
-              -batchmode -quit \
-              -projectPath /project \
-              -executeMethod UnityEditor.SyncVS.SyncSolution
-
       - name: Download ReSharper Command Line Tools
         run: |
           wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
