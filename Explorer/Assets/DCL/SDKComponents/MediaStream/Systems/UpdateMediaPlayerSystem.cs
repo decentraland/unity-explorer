@@ -177,8 +177,10 @@ namespace DCL.SDKComponents.MediaStream
             if (!assignedTexture.Texture.HasEqualResolution(to: avText))
                 assignedTexture.Resize(avText.width, avText.height);
 
+            Material flipMaterial = new Material(Shader.Find("Hidden/FlipTexture"));
+
             if (playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1)))
-                Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
+                Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
             else
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
 
