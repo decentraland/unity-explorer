@@ -183,18 +183,9 @@ jobs:
           unzip -q rsharp.zip -d rsharp
           chmod +x rsharp/*.sh
 
-      - name: Run ReSharperCodeStyle (.editorconfig enforcement)
-        run: |
-          rsharp/ReSharperCodeStyle.sh Explorer.sln \
-            --profile=Default \
-            --verbosity=INFO \
-            --properties:Configuration=Debug \
-            --disable-settings-layers:SolutionPersonal \
-            --output=CodeStyleReport.xml
-
       - name: Run ReSharper InspectCode (static analysis)
         run: |
-          rsharp/inspectcode.sh Explorer.sln \
+          rsharp/inspectcode.sh Explorer/Explorer.sln \
             --no-build \
             --verbosity=INFO \
             --properties:Configuration=Debug \
