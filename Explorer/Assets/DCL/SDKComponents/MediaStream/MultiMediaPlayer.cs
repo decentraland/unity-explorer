@@ -277,11 +277,12 @@ namespace DCL.SDKComponents.MediaStream
         {
             Match(avPro =>
                 {
-                    if (avPro.AvProMediaPlayer.AudioSource == null) return;
-                    avPro.AvProMediaPlayer.AudioSource.spatialBlend = isSpatial ? 1f : 0f;
-                    avPro.AvProMediaPlayer.AudioSource.minDistance = minDistance;
-                    avPro.AvProMediaPlayer.AudioSource.maxDistance = maxDistance;
-                    avPro.AvProMediaPlayer.AudioSource.rolloffMode = AudioRolloffMode.Linear;
+                    AudioSource audioSource = avPro.AvProMediaPlayer.AudioSource;
+                    if (audioSource == null) return;
+                    audioSource.spatialBlend = isSpatial ? 1f : 0f;
+                    audioSource.minDistance = minDistance;
+                    audioSource.maxDistance = maxDistance;
+                    audioSource.rolloffMode = AudioRolloffMode.Linear;
                 },
                 static _ => { });
         }
