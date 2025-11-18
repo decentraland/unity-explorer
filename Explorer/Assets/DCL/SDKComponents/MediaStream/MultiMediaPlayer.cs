@@ -22,6 +22,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             this.AvProMediaPlayer = avProMediaPlayer;
             this.MediaPlayerCustomPool = mediaPlayerCustomPool;
+
+            if (AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
+                AvProMediaPlayer.SetAudioSource(audioSource);
         }
     }
 
@@ -78,14 +81,7 @@ namespace DCL.SDKComponents.MediaStream
             static _ => new Vector2(1, -1)
         );
 
-        public bool IsSpatial => Match(static avPro =>
-            {
-                if (avPro.AvProMediaPlayer.AudioSource == null)
-                    if (avPro.AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
-                        avPro.AvProMediaPlayer.SetAudioSource(audioSource);
-
-                return Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f);
-            },
+        public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),
             static _ => false);
 
         public float? SpatialMaxDistance => Match(static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance,
@@ -271,16 +267,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             Match(avPro =>
                 {
-                    if (avPro.AvProMediaPlayer.AudioSource == null)
-                        if (avPro.AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
-                            avPro.AvProMediaPlayer.SetAudioSource(audioSource);
-
-                    if (avPro.AvProMediaPlayer.AudioSource != null)
-                    {
-                        avPro.AvProMediaPlayer.AudioSource.spatialBlend = isSpatial ? 1f : 0f;
-                        avPro.AvProMediaPlayer.AudioSource.minDistance = minDistance;
-                        avPro.AvProMediaPlayer.AudioSource.maxDistance = maxDistance;
-                    }
+                    if (avPro.AvProMediaPlayer.AudioSource == null) return;
+                    avPro.AvProMediaPlayer.AudioSource.spatialBlend = isSpatial ? 1f : 0f;
+                    avPro.AvProMediaPlayer.AudioSource.minDistance = minDistance;
+                    avPro.AvProMediaPlayer.AudioSource.maxDistance = maxDistance;
+                    avPro.AvProMediaPlayer.AudioSource.rolloffMode = AudioRolloffMode.Linear;
                 },
                 static _ => { });
         }
