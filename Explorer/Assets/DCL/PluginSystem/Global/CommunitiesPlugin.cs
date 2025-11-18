@@ -60,7 +60,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly IProfileRepository profileRepository;
         private readonly GalleryEventBus galleryEventBus;
 
         private CommunityCardController? communityCardController;
@@ -91,8 +90,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
-            IVoiceChatOrchestrator voiceChatOrchestrator,
-            IProfileRepository profileRepository)
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -115,7 +113,6 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.profileRepository = profileRepository;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(realmNavigator);
@@ -160,7 +157,6 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 galleryEventBus,
                 voiceChatOrchestrator,
-                profileRepository,
                 inputBlock);
 
             mvcManager.RegisterController(communityCardController);
