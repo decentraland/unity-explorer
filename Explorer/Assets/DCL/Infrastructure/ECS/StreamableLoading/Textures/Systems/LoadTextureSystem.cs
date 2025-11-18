@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.SDKComponents.MediaStream;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -25,18 +26,17 @@ namespace ECS.StreamableLoading.Textures
         private const int AVATAR_TEXTURE_REQUEST_DELAY_MS = 5000;
 
         private readonly IWebRequestController webRequestController;
-        private readonly IAvatarTextureUrlProvider avatarTextureUrlProvider;
+        private readonly IProfileRepository profileRepository;
 
         internal LoadTextureSystem(World world, IStreamableCache<TextureData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<TextureData> diskCache,
-            // A replacement of IProfileRepository to avoid cyclic dependencies
-            IAvatarTextureUrlProvider avatarTextureUrlProvider)
+            IProfileRepository profileRepository)
             : base(
                 world, cache,
                 new DiskCacheOptions<TextureData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
             this.webRequestController = webRequestController;
-            this.avatarTextureUrlProvider = avatarTextureUrlProvider;
+            this.profileRepository = profileRepository;
         }
 
         protected override async UniTask<StreamableLoadingResult<TextureData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -47,12 +47,12 @@ namespace ECS.StreamableLoading.Textures
 
             if (intention.IsAvatarTexture)
             {
-                URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.AvatarTextureUserId!, ct);
+                Profile? profile = await profileRepository.GetAsync(intention.AvatarTextureUserId!, ct);
 
-                if (url == null)
+                if (profile == null)
                     throw new Exception($"No profile found for {intention.AvatarTextureUserId}");
 
-                result = await TryResolveAvatarTextureAsync(url.Value, intention, ct);
+                result = await TryResolveAvatarTextureAsync(profile.Avatar.FaceSnapshotUrl, intention, ct);
             }
             else
                 // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
