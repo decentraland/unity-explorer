@@ -1,4 +1,5 @@
-﻿using MVC;
+﻿using DCL.UI;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,6 +34,7 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: SerializeField] public GameObject? LongRunningHint { get; private set; }
 
+        [field: SerializeField] public TMP_Text_ClickeableLink MarketplaceLink { get; private set; }
         public GameObject StatusContainer => statusGroup;
     }
 }

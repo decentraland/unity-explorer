@@ -240,17 +240,24 @@ namespace DCL.Backpack.Gifting.Presenters
             if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
                 style = new GiftItemStyleSnapshot(null, null, Color.white);
 
+            var recipientProfile = await profileRepository.GetAsync(inputData.userAddress, CancellationToken.None);
+
+            string? userNameColorHex = "000000";
+            if (recipientProfile != null)
+                userNameColorHex = ColorUtility.ToHtmlStringRGB(recipientProfile.UserNameColor);
+            
             var transferParams = new GiftTransferParams(
                 inputData.userAddress,
                 inputData.userName,
                 headerPresenter.CurrentRecipientAvatarSprite,
-                selectedUrn,     // base URN
+                selectedUrn,
                 giftDisplayName,
                 giftThumb,
                 style,
                 itemType,
                 tokenId,
-                instanceUrn.ToString()  // <-- NEW FIELD
+                instanceUrn.ToString(),
+                userNameColorHex
             );
 
             await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams));

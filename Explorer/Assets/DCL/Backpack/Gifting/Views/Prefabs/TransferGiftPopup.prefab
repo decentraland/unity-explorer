@@ -702,6 +702,7 @@ GameObject:
   - component: {fileID: 5653213903050577899}
   - component: {fileID: 541096970620867604}
   - component: {fileID: 2196919511123842252}
+  - component: {fileID: 1730596450638387133}
   m_Layer: 5
   m_Name: ProgressLabel
   m_TagString: Untagged
@@ -750,14 +751,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
   m_text: Sending your gift is taking longer than expected. You can close this window
-    and check delivery status <color=#FF0000><b><u>here</color></b></u>.
+    and check delivery status <color=#FF0000><b><u><link>here</link></color></b></u>.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -860,6 +861,18 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &1730596450638387133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308053854789690585}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa79a46ad7d14748b3e248214931267e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.TMP_Text_ClickeableLink
 --- !u!1 &1404888950671078384
 GameObject:
   m_ObjectHideFlags: 0
@@ -3293,6 +3306,7 @@ MonoBehaviour:
   <ItemName>k__BackingField: {fileID: 7865957034155884212}
   <StatusText>k__BackingField: {fileID: 4688712374253637142}
   <LongRunningHint>k__BackingField: {fileID: 2488044873213763018}
+  <MarketplaceLink>k__BackingField: {fileID: 1730596450638387133}
 --- !u!1 &7205345437401894166
 GameObject:
   m_ObjectHideFlags: 0

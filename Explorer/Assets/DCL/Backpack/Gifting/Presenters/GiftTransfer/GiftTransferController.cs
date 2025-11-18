@@ -5,6 +5,7 @@ using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
 using MVC;
 using Utility;
@@ -24,6 +25,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferProgressCommand giftTransferProgressCommand;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
         private readonly GiftTransferResponseCommand  giftTransferResponseCommand;
@@ -38,12 +40,12 @@ namespace DCL.Backpack.Gifting.Presenters
         private CancellationTokenSource? delayCts;
 
         private string urn = string.Empty;
-        private const string SUPPORT_URL = "https://docs.decentraland.org/player/support/";
-
+        
         public GiftTransferController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IEventBus eventBus,
             IMVCManager mvcManager,
+            IDecentralandUrlsSource decentralandUrlsSource,
             GiftTransferProgressCommand giftTransferProgressCommand,
             GiftTransferRequestCommand giftTransferRequestCommand,
             GiftTransferResponseCommand  giftTransferResponseCommand,
@@ -54,6 +56,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.webBrowser = webBrowser;
             this.eventBus = eventBus;
             this.mvcManager = mvcManager;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferProgressCommand = giftTransferProgressCommand;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
             this.giftTransferResponseCommand = giftTransferResponseCommand;
@@ -73,7 +76,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (viewInstance != null)
             {
-                viewInstance.RecipientName.text = inputData.recipientName;
+                viewInstance.MarketplaceLink.OnLinkClicked += OnMarketplaceActivityLinkClicked;
+                viewInstance.RecipientName.text = $"<color=#{inputData.userNameColorHex}> {inputData.recipientName}</color>";
 
                 if (inputData.userThumbnail != null)
                     viewInstance.RecipientAvatar.sprite = inputData.userThumbnail;
@@ -99,8 +103,16 @@ namespace DCL.Backpack.Gifting.Presenters
             giftTransferRequestCommand.ExecuteAsync(inputData, lifeCts.Token).Forget();
         }
 
+        private void OnMarketplaceActivityLinkClicked(string _)
+        {
+            LinkCallback(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink));
+        }
+
         protected override void OnViewClose()
         {
+            if (viewInstance != null)
+                viewInstance.MarketplaceLink.OnLinkClicked -= OnMarketplaceActivityLinkClicked;
+            
             subProgress?.Dispose();
             subSucceeded?.Dispose();
             subFailed?.Dispose();
@@ -116,7 +128,12 @@ namespace DCL.Backpack.Gifting.Presenters
                 return;
             }
 
-            await viewInstance.CloseButton.OnClickAsync(ct);
+            var closeTasks = new[]
+            {
+                viewInstance.BackButton.OnClickAsync(ct), viewInstance.CloseButton.OnClickAsync(ct)
+            };
+
+            await UniTask.WhenAny(closeTasks);
         }
 
         private void OnProgress(GiftTransferProgress e)
@@ -159,7 +176,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private async UniTaskVoid OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
         {
-            var successParams = new GiftTransferSuccessParams(inputData.recipientName, inputData.userThumbnail);
+            var successParams = new GiftTransferSuccessParams(inputData.recipientName, inputData.userThumbnail, inputData.userNameColorHex);
             await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
         }
 
@@ -213,7 +230,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 false,
                 null,
                 "Your gift wasn't delivered. Please try again of contact Support.",
-                linkText: $"<link=\"{SUPPORT_URL}\">Contact Support</link>",
+                linkText: $"<link=\"{decentralandUrlsSource.Url(DecentralandUrl.Support)}\">Contact Support</link>",
                 onLinkClickCallback: LinkCallback
             );
 

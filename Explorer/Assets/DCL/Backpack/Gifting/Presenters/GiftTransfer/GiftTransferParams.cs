@@ -14,6 +14,7 @@ namespace DCL.Backpack.Gifting.Views
         public readonly string itemType;
         public readonly string tokenId;
         public readonly string instanceUrn;
+        public readonly string userNameColorHex;
 
         public GiftTransferParams(string recipientAddress,
             string recipientName,
@@ -24,7 +25,8 @@ namespace DCL.Backpack.Gifting.Views
             GiftItemStyleSnapshot style,
             string itemType,
             string tokenId,
-            string instanceUrn)
+            string instanceUrn,
+            string userNameColorHex)
         {
             this.recipientAddress = recipientAddress;
             this.recipientName = recipientName;
@@ -36,6 +38,7 @@ namespace DCL.Backpack.Gifting.Views
             this.itemType = itemType;
             this.tokenId = tokenId;
             this.instanceUrn = instanceUrn;
+            this.userNameColorHex = userNameColorHex;
         }
     }
 }

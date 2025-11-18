@@ -20,6 +20,7 @@ using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Browser;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
@@ -50,6 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IEthereumApi ethereumApi;
         private readonly ISelfProfile selfProfile;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -70,7 +72,8 @@ namespace DCL.PluginSystem.Global
             IEventBus eventBus,
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -89,6 +92,7 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
             this.selfProfile = selfProfile;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public void Dispose()
@@ -153,6 +157,7 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 eventBus,
                 mvcManager,
+                decentralandUrlsSource,
                 giftTransferProgressCommand,
                 giftTransferRequestCommand,
                 giftTransferResponseCommand,

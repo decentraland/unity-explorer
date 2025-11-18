@@ -1,7 +1,6 @@
 ﻿using System;
 using DCL.UI;
 using MVC;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 

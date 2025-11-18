@@ -25,7 +25,7 @@ namespace DCL.Backpack.Gifting.Presenters
         protected override void OnViewShow()
         {
             if (viewInstance.GiftSentText != null)
-                viewInstance.GiftSentText.text = $"Gift Sent to {inputData.RecipientName}!";
+                viewInstance.GiftSentText.text = $"Gift Sent to <color=#{inputData.UserNameColorHex}> {inputData.RecipientName}</color>!";
 
             if (inputData.UserThumbnail != null)
                 viewInstance.RecipientThumbnail.sprite = inputData.UserThumbnail;
