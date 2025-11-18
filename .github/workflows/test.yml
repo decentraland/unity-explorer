@@ -190,7 +190,7 @@ jobs:
             --verbosity=INFO \
             --properties:Configuration=Debug \
             --disable-settings-layers:SolutionPersonal \
-            --output=InspectCodeReport.xml
+            --output=InspectCodeReport.json
 
       - name: Upload lint reports
         uses: actions/upload-artifact@v4
