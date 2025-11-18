@@ -193,7 +193,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
             var active = tabsManager.ActivePresenter;
             string? itemName = active?.GetItemNameByUrn(selectedUrn);
-            footerPresenter?.UpdateState(itemName);
+            footerPresenter?.UpdateState(itemName, inputData.userName);
         }
 
         private void OnLoadingStateChanged(bool isLoading)

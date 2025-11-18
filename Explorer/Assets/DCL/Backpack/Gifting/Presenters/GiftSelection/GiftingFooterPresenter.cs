@@ -10,7 +10,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private readonly GiftingFooterView view;
 
-        private const string DEFAULT_INFO_MESSAGE = "Select an item from your inventory to give it as a gift.";
+        private const string DEFAULT_INFO_MESSAGE = "Gifting an item cannot be undone.";
         
         public GiftingFooterPresenter(GiftingFooterView view)
         {
@@ -29,7 +29,8 @@ namespace DCL.Backpack.Gifting.Presenters
         ///     Updates the entire footer state based on the selected item.
         /// </summary>
         /// <param name="selectedItemName">The name of the item, or null if nothing is selected.</param>
-        public void UpdateState(string? selectedItemName)
+        /// <param name="recipient"></param>
+        public void UpdateState(string? selectedItemName, string? recipient = null)
         {
             bool isItemSelected = !string.IsNullOrEmpty(selectedItemName);
 
@@ -39,7 +40,7 @@ namespace DCL.Backpack.Gifting.Presenters
             // Show/hide and set the info message text
             view.InfoMessageContainer.SetActive(true); // Let's always show it
             view.InfoMessageLabel.text = isItemSelected
-                ? $"You are going to send {selectedItemName}"
+                ? $"You are about to send <b>{selectedItemName}</b> to <b>{recipient}</b>"
                 : DEFAULT_INFO_MESSAGE;
         }
 
