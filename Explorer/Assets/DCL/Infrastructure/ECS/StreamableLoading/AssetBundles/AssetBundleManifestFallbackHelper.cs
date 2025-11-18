@@ -38,8 +38,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 //Needed to use the Time.realtimeSinceStartup on the intention creation
                 await UniTask.SwitchToMainThread();
 
-                SentrySdk.AddBreadcrumb("AssetBundleManifestFallbackHelper: AB Manifest Fallback requested");
-                ReportHub.LogException(new Exception($"AB manifest version missing for entity: {entityDefinition.id}"), ReportCategory.ASSET_BUNDLES);
+                SentrySdk.AddBreadcrumb($"AB manifest version missing for entity: {entityDefinition.id}");
+                ReportHub.LogException(new Exception("AssetBundleManifestFallbackHelper: AB Manifest Fallback requested"), ReportCategory.ASSET_BUNDLES);
 
                 var promise = AssetBundleManifestPromise.Create(world,
                     GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
