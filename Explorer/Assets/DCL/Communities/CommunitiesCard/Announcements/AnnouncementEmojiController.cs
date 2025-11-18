@@ -2,6 +2,7 @@
 using DCL.Audio;
 using DCL.Chat;
 using DCL.Emoji;
+using DCL.Input.Utils;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
@@ -141,7 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             if (!context.control.IsPressed())
                 return;
 
-            var clickPosition = GetPointerPosition(context);
+            var clickPosition = DCLInputUtilities.GetPointerPosition(context);
             bool isClickedInsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
             if (!isClickedInsideEmojiPanel)
                 SetEmojiPanelVisibility(false);
@@ -169,15 +170,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 await UniTask.NextFrame(ct);
                 suggestionPanelController.SetPanelVisibility(false);
             }
-        }
-
-        private static Vector2 GetPointerPosition(InputAction.CallbackContext context)
-        {
-            if (context.control is Pointer pCtrl) return pCtrl.position.ReadValue();
-            if (Pointer.current != null) return Pointer.current.position.ReadValue();
-            if (Mouse.current != null) return Mouse.current.position.ReadValue();
-            if (Touchscreen.current?.primaryTouch != null) return Touchscreen.current.primaryTouch.position.ReadValue();
-            return Vector2.zero;
         }
 
         private void SetEmojiPanelVisibility(bool isVisible)
