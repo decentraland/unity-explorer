@@ -62,6 +62,7 @@ namespace DCL.VoiceChat
     public interface IVoiceChatOrchestratorActions
     {
         void StartCall(string callId, VoiceChatType callType);
+        void StartPrivateCallWithUserId(string userId);
         void HangUp();
         void HandleConnectionError();
         void HandleConnectionEnded();
