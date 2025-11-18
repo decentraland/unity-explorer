@@ -6,6 +6,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 
 namespace DCL.SDKComponents.AvatarLocomotion.Systems
@@ -16,14 +17,27 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
     public partial class ApplyAvatarLocomotionOverridesSystem : BaseUnityLoopSystem
     {
         private readonly AvatarLocomotionOverridesGlobalPlugin.Settings settings;
+        private readonly IScenesCache scenesCache;
 
-        public ApplyAvatarLocomotionOverridesSystem(World world, AvatarLocomotionOverridesGlobalPlugin.Settings settings) : base(world)
+        public ApplyAvatarLocomotionOverridesSystem(World world, AvatarLocomotionOverridesGlobalPlugin.Settings settings, IScenesCache scenesCache) : base(world)
         {
             this.settings = settings;
+            this.scenesCache = scenesCache;
         }
 
-        protected override void Update(float t) =>
+        protected override void Update(float t)
+        {
+            // If there is no current scene, we need to clear the overrides
+            // Normally it's the current scene that does it (see PropagateAvatarLocomotionOverridesSystem)
+            if (scenesCache.CurrentScene.Value == null) ClearOverridesQuery(World);
+
             ApplyOverridesQuery(World);
+        }
+
+        [Query]
+        [All(typeof(AvatarLocomotionOverrides))]
+        public void ClearOverrides(Entity entity) =>
+            World.Set(entity, AvatarLocomotionOverrides.NO_OVERRIDES);
 
         [Query]
         public void ApplyOverrides(Entity entity, ref OverridableCharacterControllerSettings settings, in AvatarLocomotionOverrides locomotionOverrides)

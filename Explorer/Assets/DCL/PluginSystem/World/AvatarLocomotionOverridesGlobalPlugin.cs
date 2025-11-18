@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
     {
         private readonly IScenesCache scenesCache;
 
-        public Settings settings;
+        private Settings? settings;
 
         public AvatarLocomotionOverridesGlobalPlugin(IScenesCache scenesCache)
         {
@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             SetupAvatarLocomotionOverridesSystem.InjectToWorld(ref builder);
-            ApplyAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, settings);
+            ApplyAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, settings, scenesCache);
             ClearAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, scenesCache);
         }
 
