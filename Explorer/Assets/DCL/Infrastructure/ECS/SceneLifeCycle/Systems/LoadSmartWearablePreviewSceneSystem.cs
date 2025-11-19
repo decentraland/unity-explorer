@@ -61,25 +61,11 @@ namespace ECS.SceneLifeCycle.Systems
             string url = URLBuilder.Combine(ipfs.CatalystBaseUrl, URLSubdirectory.FromString("preview-wearables")).Value;
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
-
-            PreviewWearablesResponse response;
-            try
-            {
-                response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, suppressErrors: true)
+            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, ignoreErrorCodes: new HashSet<long> { 404 })
                                                      .CreateFromJson<PreviewWearablesResponse>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-            }
-            catch
-            {
-                return;
-            }
 
-            if (ct.IsCancellationRequested) return;
 
-            if (!response.ok)
-            {
-                ReportHub.LogError(GetReportCategory(), "The request to the /preview-wearables endpoint failed");
-                return;
-            }
+            if (ct.IsCancellationRequested || !response.ok) return;
 
             // If no wearables are returned, it just means we are not previewing a wearable, no need to log an error
             if (response.data.Count == 0)  return;
