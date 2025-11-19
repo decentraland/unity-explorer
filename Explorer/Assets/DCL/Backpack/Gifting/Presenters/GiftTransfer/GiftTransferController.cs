@@ -18,17 +18,6 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        private const string WAITING_FOR_WALLET_MESSAGE = "A browser window should open for you to confirm the transaction.";
-        private const string PREPARING_GIFT_TITLE = "Preparing Gift for";
-        private const string DEFAULT_STATUS_MESSAGE = "Processing...";
-        private const string ERROR_DIALOG_TITLE = "Something went wrong";
-        private const string ERROR_DIALOG_CANCEL_TEXT = "CLOSE";
-        private const string ERROR_DIALOG_CONFIRM_TEXT = "TRY AGAIN";
-        private const string ERROR_DIALOG_DESCRIPTION = "Your gift wasn't delivered. Please try again or contact Support.";
-        private const string ERROR_DIALOG_SUPPORT_LINK_FORMAT = "<link=\"{0}\"><color=#D5A5E2>Contact Support</color></link>";
-        private const string RECIPIENT_NAME_RICH_TEXT_FORMAT = "<color=#{0}>{1}</color>";
-        private const string RETRY_LOG_MESSAGE = "User clicked RETRY.";
-
         private enum State { Waiting, Success, Failed }
 
         private State currentState;
@@ -81,7 +70,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.MarketplaceLink.OnLinkClicked += OnMarketplaceActivityLinkClicked;
 
                 viewInstance.RecipientName.text = string.Format(
-                    RECIPIENT_NAME_RICH_TEXT_FORMAT,
+                    GiftingTextIds.ColoredTextFormat,
                     inputData.userNameColorHex,
                     inputData.recipientName
                 );
@@ -99,7 +88,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.ItemBackground.sprite = inputData.style.rarityBackground;
 
                 SetViewState(State.Waiting);
-                SetPhase(GiftTransferPhase.WaitingForWallet, WAITING_FOR_WALLET_MESSAGE);
+                SetPhase(GiftTransferPhase.WaitingForWallet, GiftingTextIds.WaitingForWalletMessage);
             }
 
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);
@@ -205,7 +194,7 @@ namespace DCL.Backpack.Gifting.Presenters
             switch (newState)
             {
                 case State.Waiting:
-                    viewInstance.TitleLabel.text = PREPARING_GIFT_TITLE;
+                    viewInstance.TitleLabel.text = GiftingTextIds.PreparingGiftTitle;
                     viewInstance.StatusContainer.SetActive(true);
 
                     if (viewInstance.LongRunningHint != null)
@@ -218,7 +207,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private void SetPhase(GiftTransferPhase phase, string? msg)
         {
             if (viewInstance == null || currentState != State.Waiting) return;
-            viewInstance.StatusText.text = msg ?? DEFAULT_STATUS_MESSAGE;
+            viewInstance.StatusText.text = msg ?? GiftingTextIds.DefaultStatusMessage;
         }
 
         private void RequestClose()
@@ -229,17 +218,17 @@ namespace DCL.Backpack.Gifting.Presenters
         private async UniTaskVoid ShowErrorPopupAsync(CancellationToken ct)
         {
             string supportUrl = decentralandUrlsSource.Url(DecentralandUrl.Support);
-            string supportLink = string.Format(ERROR_DIALOG_SUPPORT_LINK_FORMAT, supportUrl);
+            string supportLink = string.Format(GiftingTextIds.ErrorDialogSupportLinkFormat, supportUrl);
 
             var dialogParams = new ConfirmationDialogParameter(
-                ERROR_DIALOG_TITLE,
-                ERROR_DIALOG_CANCEL_TEXT,
-                ERROR_DIALOG_CONFIRM_TEXT,
+                GiftingTextIds.ErrorDialogTitle,
+                GiftingTextIds.ErrorDialogCancelText,
+                GiftingTextIds.ErrorDialogConfirmText,
                 viewInstance?.WarningIcon,
                 false,
                 false,
                 null,
-                ERROR_DIALOG_DESCRIPTION,
+                GiftingTextIds.ErrorDialogDescription,
                 linkText: supportLink,
                 onLinkClickCallback: LinkCallback
             );
@@ -250,7 +239,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (result == ConfirmationResult.CONFIRM)
             {
-                ReportHub.Log(ReportCategory.GIFTING, RETRY_LOG_MESSAGE);
+                ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RetryLogMessage);
                 await mvcManager.ShowAsync(IssueCommand(inputData), ct);
             }
         }

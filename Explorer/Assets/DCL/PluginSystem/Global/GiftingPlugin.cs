@@ -142,12 +142,18 @@ namespace DCL.PluginSystem.Global
                 wearableCatalog,
                 equippedWearables);
 
+            var componentFactory = new GiftSelectionComponentFactory(profileRepository,
+                profileRepositoryWrapper,
+                inputBlock,
+                gridFactory);
+
             giftSelectionController = new GiftSelectionController(
                 GiftSelectionController
                     .CreateLazily(giftSelectionPopupPrefab, null),
-                profileRepositoryWrapper,
+                componentFactory,
+                pendingTransferService,
+                equippedStatusProvider,
                 profileRepository,
-                inputBlock,
                 gridFactory,
                 mvcManager,
                 wearableStorage,

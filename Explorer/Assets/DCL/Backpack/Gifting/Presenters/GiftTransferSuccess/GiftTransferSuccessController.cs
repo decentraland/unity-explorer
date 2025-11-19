@@ -9,8 +9,6 @@ namespace DCL.Backpack.Gifting.Presenters
     public sealed class GiftTransferSuccessController
         : ControllerBase<GiftTransferSuccessView, GiftTransferSuccessParams>
     {
-        private const string GIFT_SENT_TEXT_FORMAT = "Gift Sent to <color=#{0}>{1}</color>!";
-        
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
         private CancellationTokenSource? lifeCts;
@@ -30,7 +28,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 viewInstance.GiftSentText.text = string.Format(
-                    GIFT_SENT_TEXT_FORMAT,
+                    GiftingTextIds.GiftSentTextFormat,
                     inputData.UserNameColorHex,
                     inputData.RecipientName
                 );

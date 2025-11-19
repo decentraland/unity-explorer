@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 
 namespace DCL.Backpack.Gifting.Services.PendingTransfers
 {
@@ -7,6 +9,10 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         void AddPending(string fullUrn);
         bool IsPending(string fullUrn);
         int GetPendingCount(string baseUrn);
-        void Prune(IEnumerable<string> actualOwnedUrns);
+
+        void Prune(IReadOnlyDictionary<URN, NftBlockchainOperationEntry> wearableRegistry,
+            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> emoteRegistry);
+
+        void LogPendingTransfers();
     }
 }

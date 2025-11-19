@@ -9,9 +9,6 @@ namespace DCL.Backpack.Gifting.Presenters
         public event Action OnSendGift;
 
         private readonly GiftingFooterView view;
-
-        private const string DEFAULT_INFO_MESSAGE = "Gifting an item cannot be undone.";
-        private const string SELECTED_ITEM_INFO_MESSAGE_FORMAT = "You are about to send <b>{0}</b> to <b>{1}</b>";
         
         public GiftingFooterPresenter(GiftingFooterView view)
         {
@@ -33,8 +30,8 @@ namespace DCL.Backpack.Gifting.Presenters
             view.SendGiftButton.interactable = isItemSelected;
             view.InfoMessageContainer.SetActive(true);
             view.InfoMessageLabel.text = isItemSelected
-                ? string.Format(SELECTED_ITEM_INFO_MESSAGE_FORMAT, selectedItemName, recipient)
-                : DEFAULT_INFO_MESSAGE;
+                ? string.Format(GiftingTextIds.SelectedItemInfoMessageFormat, selectedItemName, recipient)
+                : GiftingTextIds.DefaultInfoMessage;
         }
 
         public void Dispose()

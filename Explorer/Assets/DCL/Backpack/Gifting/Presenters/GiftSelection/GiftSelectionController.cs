@@ -9,6 +9,8 @@ using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
 using DCL.Input;
@@ -26,11 +28,12 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
+        private readonly GiftSelectionComponentFactory componentFactory;
+        private readonly IPendingTransferService pendingTransferService;
+        private readonly IAvatarEquippedStatusProvider  equippedStatusProvider;
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
-        private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
@@ -48,63 +51,50 @@ namespace DCL.Backpack.Gifting.Presenters
         private EquippedItemContext equippedItemsContext;
 
         public GiftSelectionController(ViewFactoryMethod viewFactory,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
+            GiftSelectionComponentFactory componentFactory,
+            IPendingTransferService pendingTransferService,
+            IAvatarEquippedStatusProvider  equippedStatusProvider,
             IProfileRepository profileRepository,
-            IInputBlock inputBlock,
             IGiftingGridPresenterFactory gridFactory,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
             ISelfProfile selfProfile) : base(viewFactory)
         {
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
-            this.profileRepository = profileRepository;
-            this.inputBlock  = inputBlock;
+            this.componentFactory = componentFactory;
+            this.pendingTransferService = pendingTransferService;
+            this.equippedStatusProvider = equippedStatusProvider;
             this.gridFactory = gridFactory;
+            this.profileRepository = profileRepository;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
             this.selfProfile = selfProfile;
         }
-        
+
         #region MVC
 
-        
+
         protected override void OnViewInstantiated()
         {
-            if (viewInstance != null)
-            {
-                var wearablesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.WearablesGrid?.Grid);
-                var emotesAdapter = new SuperScrollGridAdapter<EmoteViewModel>(viewInstance.EmotesGrid?.Grid);
-                
-                headerPresenter = new GiftingHeaderPresenter(viewInstance.HeaderView,
-                    profileRepository,
-                    profileRepositoryWrapper,
-                    inputBlock);
+            if (viewInstance == null) return;
 
-                footerPresenter = new GiftingFooterPresenter(viewInstance!.FooterView);
+            var wearablesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.WearablesGrid?.Grid);
+            var emotesAdapter = new SuperScrollGridAdapter<EmoteViewModel>(viewInstance.EmotesGrid?.Grid);
 
-                wearablesGridPresenter = gridFactory.CreateWearablesPresenter(viewInstance?.WearablesGrid, wearablesAdapter);
-                emotesGridPresenter = gridFactory.CreateEmotesPresenter(viewInstance?.EmotesGrid, emotesAdapter);
-                giftingErrorsController = new GiftingErrorsController(viewInstance!.ErrorNotification);
-                
-                tabsManager = new GiftingTabsManager(viewInstance,
-                    wearablesGridPresenter,
-                    emotesGridPresenter);
+            headerPresenter = componentFactory.CreateHeader(viewInstance.HeaderView);
+            footerPresenter = componentFactory.CreateFooter(viewInstance.FooterView);
+            giftingErrorsController = componentFactory.CreateErrorController(viewInstance);
 
-                tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
-                tabsManager.OnSectionActivated   += HandleSectionActivated;
-            }
-        }
+            wearablesGridPresenter = gridFactory.CreateWearablesPresenter(viewInstance?.WearablesGrid, wearablesAdapter);
+            emotesGridPresenter = gridFactory.CreateEmotesPresenter(viewInstance?.EmotesGrid, emotesAdapter);
 
-        private void HandleSectionDeactivated(GiftingSection section, IGiftingGridPresenter _)
-        {
-            headerPresenter?.ClearSearchImmediate();
-        }
+            tabsManager = componentFactory.CreateTabs(viewInstance,
+                wearablesGridPresenter,
+                emotesGridPresenter);
 
-        private void HandleSectionActivated(GiftingSection section, IGiftingGridPresenter presenter)
-        {
-            //presenter.ForceSearch(string.Empty);
+            tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
+            tabsManager.OnSectionActivated   += HandleSectionActivated;
         }
 
         protected override async void OnViewShow()
@@ -112,8 +102,12 @@ namespace DCL.Backpack.Gifting.Presenters
             lifeCts = new CancellationTokenSource();
             viewInstance!.ErrorNotification.Hide(true);
 
+            //await equippedStatusProvider.InitializeAsync(lifeCts.Token);
             await CreateEquippedContextAsync(lifeCts.Token);
             if (lifeCts.IsCancellationRequested) return;
+
+            // pendingTransferService.Prune( wearableStorage.AllOwnedNftRegistry,
+            //     emoteStorage.AllOwnedNftRegistry);
 
             PendingGiftsCache.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
 
@@ -127,7 +121,7 @@ namespace DCL.Backpack.Gifting.Presenters
             headerPresenter?.SetupAsync(inputData.userAddress,
                 inputData.userName,
                 lifeCts.Token).Forget();
-            
+
             footerPresenter?.SetInitialState();
 
             if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
@@ -146,6 +140,59 @@ namespace DCL.Backpack.Gifting.Presenters
             }
 
             tabsManager.Initialize();
+
+            // lifeCts = new CancellationTokenSource();
+            // giftingErrorsController?.Hide(true);
+            //
+            // try
+            // {
+            //     // 1. Initialize Equipped Status
+            //     await equippedStatusProvider.InitializeAsync(lifeCts.Token);
+            //     if (lifeCts.IsCancellationRequested) return;
+            //
+            //     // 2. Prune Pending Transfers (using injected storage data)
+            //     pendingTransferService.Prune(
+            //         wearableStorage.AllOwnedNftRegistry,
+            //         emoteStorage.AllOwnedNftRegistry);
+            //
+            //     // 3. Setup UI
+            //     headerPresenter?.ClearSearchImmediate();
+            //
+            //     // Note: Presenters now have dependencies injected, no need for manual PrepareForLoading
+            //     tabsManager?.ActivePresenter?.Deactivate();
+            //
+            //     headerPresenter?.SetupAsync(inputData.userAddress, inputData.userName, lifeCts.Token).Forget();
+            //     footerPresenter?.SetInitialState();
+            //
+            //     // 4. Wire Events
+            //     if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
+            //     if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
+            //
+            //     // Note: Events on grid presenters are handled inside TabsManager or we iterate them here if needed
+            //     // Ideally TabsManager exposes "OnActiveSelectionChanged" to avoid iterating specific presenters.
+            //     // For now, keeping your logic:
+            //     if (tabsManager?.ActivePresenter != null)
+            //     {
+            //         // You might need to subscribe to all presenters created in factory
+            //         // Or better, expose an event on TabsManager that aggregates them.
+            //     }
+            //
+            //     tabsManager?.Initialize();
+            // }
+            // catch (Exception e)
+            // {
+            //     ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+            // }
+        }
+
+        private void HandleSectionDeactivated(GiftingSection section, IGiftingGridPresenter _)
+        {
+            headerPresenter?.ClearSearchImmediate();
+        }
+
+        private void HandleSectionActivated(GiftingSection section, IGiftingGridPresenter presenter)
+        {
+            //presenter.ForceSearch(string.Empty);
         }
 
         private async UniTask CreateEquippedContextAsync(CancellationToken ct)
