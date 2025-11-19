@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunityCreation;
@@ -11,6 +12,8 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Friends;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -75,12 +78,14 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IProfileRepository profileRepository;
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly IInputBlock inputBlock;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
         private EventListController? eventListController;
+        private AnnouncementsSectionController? announcementsSectionController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
@@ -111,7 +116,8 @@ namespace DCL.Communities.CommunitiesCard
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             GalleryEventBus galleryEventBus,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -133,6 +139,7 @@ namespace DCL.Communities.CommunitiesCard
             this.profileRepository = profileRepository;
             this.galleryEventBus = galleryEventBus;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -144,6 +151,7 @@ namespace DCL.Communities.CommunitiesCard
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
@@ -184,6 +192,7 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController?.Dispose();
             eventListController?.Dispose();
             communityCardVoiceChatController?.Dispose();
+            announcementsSectionController?.Dispose();
         }
 
         private void OnOpenCommunityCardFromNotification(object[] parameters)
@@ -196,6 +205,7 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityUserRequestToJoinNotification joinRequestNotification => joinRequestNotification.Metadata.CommunityId,
                                      CommunityUserRequestToJoinAcceptedNotification joinAcceptedNotification => joinAcceptedNotification.Metadata.CommunityId,
                                      CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
+                                     CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
                                      _ => string.Empty
                                  };
 
@@ -359,6 +369,16 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
+            if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+            {
+                announcementsSectionController = new AnnouncementsSectionController(
+                    viewInstance.AnnouncementsSectionView,
+                    communitiesDataProvider,
+                    profileRepositoryWrapper,
+                    web3IdentityCache,
+                    profileRepository);
+            }
+
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
@@ -373,8 +393,11 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
-        protected override void OnViewShow() =>
+        protected override void OnViewShow()
+        {
+            DisableShortcutsInput();
             SetDefaultsAndLoadData(inputData.CommunityId);
+        }
 
         private void SetDefaultsAndLoadData(string communityId)
         {
@@ -391,7 +414,11 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                viewInstance.MembersListView.SetLoadingStateActive(true);
+                if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                    viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
+                else
+                    viewInstance.MembersListView.SetLoadingStateActive(true);
+
 
                 if (spriteCache == null)
                 {
@@ -480,6 +507,7 @@ namespace DCL.Communities.CommunitiesCard
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
             spriteCache = null;
 
+            RestoreInput();
             ResetSubControllers();
             viewInstance!.ResetToggle(false);
         }
@@ -490,6 +518,7 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController?.Reset();
             eventListController?.Reset();
             communityCardVoiceChatController?.Reset();
+            announcementsSectionController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
@@ -512,6 +541,9 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
+                    break;
+                case CommunityCardView.Sections.ANNOUNCEMENTS:
+                    announcementsSectionController!.ShowAnnouncements(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
         }
@@ -691,6 +723,12 @@ namespace DCL.Communities.CommunitiesCard
                 CloseController();
             }
         }
+
+        private void DisableShortcutsInput() =>
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        private void RestoreInput() =>
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));

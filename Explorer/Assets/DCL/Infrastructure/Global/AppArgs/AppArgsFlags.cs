@@ -48,6 +48,8 @@
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
+        public const string COMMUNITIES_ANNOUNCEMENTS = "include-communities-announcements";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

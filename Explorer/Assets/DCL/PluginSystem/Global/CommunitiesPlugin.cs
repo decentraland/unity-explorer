@@ -156,7 +156,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileRepository,
                 galleryEventBus,
-                voiceChatOrchestrator);
+                voiceChatOrchestrator,
+                inputBlock);
 
             mvcManager.RegisterController(communityCardController);
 
