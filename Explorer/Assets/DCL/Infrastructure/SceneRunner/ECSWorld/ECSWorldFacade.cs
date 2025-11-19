@@ -70,10 +70,6 @@ namespace SceneRunner.ECSWorld
 
         public void Dispose()
         {
-            //No need to dispose if we are quitting. Pools and assets may be destroyed by Unity, creating unnecessarily null-refs on exit
-            if (UnityObjectUtils.IsQuitting)
-                return;
-
             Query finalizeSDKComponentsQuery = EcsWorld.Query(new QueryDescription().WithAll<CRDTEntity>());
 
             Profiler.BeginSample("FinalizeSDKComponents");
