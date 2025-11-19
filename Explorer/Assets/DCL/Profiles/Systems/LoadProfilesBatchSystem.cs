@@ -44,7 +44,7 @@ namespace DCL.Profiles
 
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
 
-        private static readonly ThreadSafeListPool<GetProfileJsonRootDto> BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
+        private static readonly ThreadSafeListPool<Profile> BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
 
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
@@ -110,15 +110,15 @@ namespace DCL.Profiles
 
             uploadHandler.WriteString("]}");
 
-            using PooledObject<List<GetProfileJsonRootDto>> __ = BATCH_POOL.Get(out List<GetProfileJsonRootDto> batch);
+            using PooledObject<List<Profile>> __ = BATCH_POOL.Get(out List<Profile> batch);
 
-            Result<List<GetProfileJsonRootDto>> result = await webRequestController.PostAsync(
-                                                                                        intention.CommonArguments.URL,
-                                                                                        GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
-                                                                                        ct,
-                                                                                        ReportCategory.PROFILE)
-                                                                                   .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                                                                   .SuppressToResultAsync(ReportCategory.PROFILE);
+            Result<List<Profile>> result = await webRequestController.PostAsync(
+                                                                          intention.CommonArguments.URL,
+                                                                          GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
+                                                                          ct,
+                                                                          ReportCategory.PROFILE)
+                                                                     .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
+                                                                     .SuppressToResultAsync(ReportCategory.PROFILE);
 
             // Keep processing on the thread pool
 
@@ -126,17 +126,11 @@ namespace DCL.Profiles
             {
                 int successfullyResolved = 0;
 
-                foreach (GetProfileJsonRootDto dto in result.Value)
+                foreach (Profile dto in result.Value)
                 {
-                    ProfileJsonDto? profileDto = dto.FirstProfileDto();
-
-                    if (profileDto == null) continue;
-
-                    intention.Ids.Remove(profileDto.userId);
-                    profileRepository.ResolveProfile(profileDto.userId, profileDto);
+                    intention.Ids.Remove(dto.UserId);
+                    profileRepository.ResolveProfile(dto.UserId, dto);
                     successfullyResolved++;
-
-                    dto.Dispose();
                 }
 
                 if (successfullyResolved > 1)

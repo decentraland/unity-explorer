@@ -29,7 +29,7 @@ namespace DCL.Profiles.Tests
         private IProfileCache profileCache;
 
         // 19 profiles
-        private List<GetProfileJsonRootDto> dtos;
+        private List<Profile> dtos;
 
         [SetUp]
         public void SetUp()
@@ -38,7 +38,7 @@ namespace DCL.Profiles.Tests
             profileCache = Substitute.For<IProfileCache>();
             repository = new RealmProfileRepository(webRequestController, Substitute.For<IRealmData>(), profileCache, ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()));
 
-            dtos = JsonConvert.DeserializeObject<List<GetProfileJsonRootDto>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
+            dtos = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace DCL.Profiles.Tests
             for (int i = 0; i < dtos.Count; i++)
             {
                 Action? callback = onProfilesResolved[i] = Substitute.For<Action>();
-                tasks[i] = repository.GetAsync(dtos[i].FirstProfileDto()!.userId, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
+                tasks[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
             }
 
             // Not resolved yet
@@ -60,8 +60,8 @@ namespace DCL.Profiles.Tests
             // Created a pending batch
             AssertBatch(1, dtos.Count);
 
-            foreach (ProfileJsonDto? profileJsonDto in dtos.Select(d => d.FirstProfileDto()))
-                repository.ResolveProfile(profileJsonDto!.userId, profileJsonDto);
+            foreach (Profile profileJsonDto in dtos)
+                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto);
 
             await UniTask.WhenAll(tasks).Timeout(TimeSpan.FromSeconds(1));
 
@@ -72,14 +72,14 @@ namespace DCL.Profiles.Tests
         [Test]
         public async Task ResolveProfilesByBatch()
         {
-            string[] ids = dtos.Select(d => d.FirstProfileDto()!.userId).ToArray();
+            string[] ids = dtos.Select(d => d.UserId).ToArray();
             UniTask<List<Profile>> task = repository.GetAsync(ids, CancellationToken.None, LAMBDAS);
 
             // Created a pending batch
             AssertBatch(1, dtos.Count);
 
-            foreach (ProfileJsonDto profileJsonDto in dtos.Select(d => d.FirstProfileDto()!))
-                repository.ResolveProfile(profileJsonDto.userId, profileJsonDto);
+            foreach (Profile? profileJsonDto in dtos)
+                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto);
 
             List<Profile>? profiles = await task;
 
@@ -96,14 +96,14 @@ namespace DCL.Profiles.Tests
             var tasks1 = new UniTask[FIRST_IT];
 
             for (int i = 0; i < FIRST_IT; i++)
-                tasks1[i] = repository.GetAsync(dtos[i].FirstProfileDto()!.userId, 0, URLDomain.FromString("http://test1"), cts.Token).SuppressCancellationThrow();
+                tasks1[i] = repository.GetAsync(dtos[i].UserId, 0, URLDomain.FromString("http://test1"), cts.Token).SuppressCancellationThrow();
 
             const int SECOND_IT = 10;
 
             var tasks2 = new UniTask[SECOND_IT];
 
             for (int i = FIRST_IT; i < SECOND_IT + FIRST_IT; i++)
-                tasks2[i - FIRST_IT] = repository.GetAsync(dtos[i].FirstProfileDto()!.userId, 0, URLDomain.FromString("http://test2"), cts.Token).SuppressCancellationThrow();
+                tasks2[i - FIRST_IT] = repository.GetAsync(dtos[i].UserId, 0, URLDomain.FromString("http://test2"), cts.Token).SuppressCancellationThrow();
 
             ProfilesBatchRequest[] batches = AssertBatch(2, FIRST_IT + SECOND_IT);
 
@@ -125,16 +125,14 @@ namespace DCL.Profiles.Tests
             for (int i = 0; i < 2; i++)
             {
                 Action? callback = onProfilesResolved[i] = Substitute.For<Action>();
-                tasks[i] = repository.GetAsync(dtos[i].FirstProfileDto()!.userId, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
+                tasks[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
             }
 
-            var second = GetProfileJsonRootDto.Create();
-            second.avatars ??= new List<ProfileJsonDto>();
-            second.avatars.Add(dtos[0].FirstProfileDto()!);
+            Profile? second = dtos[0];
 
             // Second profile to retrieve via Single Get
-            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<GetProfileJsonRootDto, GenericGetRequest>, GetProfileJsonRootDto>
-                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<GetProfileJsonRootDto, GenericGetRequest>>())!
+            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
                                 .Returns(UniTask.FromResult(second));
 
             // Not resolved yet
@@ -145,10 +143,10 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, 2);
 
             // The first profile to resolve
-            repository.ResolveProfile(dtos[0].FirstProfileDto()!.userId, dtos[0].FirstProfileDto()!);
+            repository.ResolveProfile(dtos[0].UserId, dtos[0]);
 
             // The second profile to force through Single GET
-            repository.ResolveProfile(dtos[1].FirstProfileDto()!.userId, null);
+            repository.ResolveProfile(dtos[1].UserId, null);
 
             await UniTask.WhenAll(tasks).Timeout(TimeSpan.FromSeconds(1));
 
@@ -179,17 +177,13 @@ namespace DCL.Profiles.Tests
         {
             Action onProfileResolved = Substitute.For<Action>();
 
-            string userId = dtos[0].FirstProfileDto()!.userId;
-
-            var cached = Profile.Create();
-            dtos[0].FirstProfileDto()!.CopyTo(cached);
-
-            cached.Version = 10;
+            string userId = dtos[0].UserId;
 
             profileCache.TryGet(userId, out Arg.Any<Profile>())
                         .Returns(c =>
                          {
-                             c[1] = cached;
+                             dtos[0].Version = 10;
+                             c[1] = dtos[0];
                              return true;
                          });
 
@@ -202,9 +196,9 @@ namespace DCL.Profiles.Tests
             onProfileResolved.DidNotReceiveWithAnyArgs();
 
             // Newer version
-            dtos[0].FirstProfileDto()!.version = 20;
+            dtos[0].Version = 20;
 
-            repository.ResolveProfile(userId, dtos[0].FirstProfileDto()!);
+            repository.ResolveProfile(userId, dtos[0]);
 
             await task;
 
@@ -216,19 +210,17 @@ namespace DCL.Profiles.Tests
         {
             Action onProfileResolved = Substitute.For<Action>();
 
-            string userId = dtos[0].FirstProfileDto()!.userId;
-
-            var cached = Profile.Create();
-            dtos[0].FirstProfileDto()!.CopyTo(cached);
-            cached.Version = 10;
+            string userId = dtos[0].UserId;
 
             profileCache.TryGet(userId, out Arg.Any<Profile>())
                         .Returns(c =>
                          {
-                             c[1] = cached;
+                             dtos[0].Version = 10;
+                             c[1] = dtos[0];
                              return true;
                          });
 
+            // Lower version
             UniTask<Profile?> task = repository.GetAsync(userId, 9, LAMBDAS, CancellationToken.None);
 
             // Didn't create a pending batch
@@ -250,7 +242,7 @@ namespace DCL.Profiles.Tests
             var tasks1 = new UniTask[FIRST_IT];
 
             for (int i = 0; i < FIRST_IT; i++)
-                tasks1[i] = repository.GetAsync(dtos[i].FirstProfileDto()!.userId, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
+                tasks1[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
 
             // Make tasks ongoing
 
@@ -265,7 +257,7 @@ namespace DCL.Profiles.Tests
             var tasks2 = new UniTask[SECOND_IT];
 
             for (int i = 0; i < SECOND_IT; i++)
-                tasks2[i] = repository.GetAsync(dtos[i].FirstProfileDto()!.userId, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
+                tasks2[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
 
             // 5 of them are the same so they should be added to the ongoing Batch
             // 7 are new so they are added to the new batch

@@ -33,7 +33,7 @@ namespace DCL.Profiles
         public Color HairColor { get; internal set; }
         public Color SkinColor { get; internal set; }
 
-        internal Avatar() { }
+        public Avatar() { }
 
         public Avatar(BodyShape bodyShape, HashSet<URN> wearables, Color eyesColor, Color hairColor, Color skinColor)
         {

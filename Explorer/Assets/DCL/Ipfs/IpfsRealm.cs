@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -82,15 +83,15 @@ namespace DCL.Ipfs
         public override int GetHashCode() =>
             ContentBaseUrl.GetHashCode();
 
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
-            var form = NewForm(entity, contentFiles);
+            WWWForm form = NewForm(entity, serializerSettings, contentFiles);
             return SendFormAsync(form, ct);
         }
 
-        private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, JsonSerializerSettings? serializerSettings, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
-            string entityJson = JsonUtility.ToJson(entity);
+            string entityJson = JsonConvert.SerializeObject(entity, Formatting.None, serializerSettings);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
             string entityId = GetFileHash(entityFile);
             using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);

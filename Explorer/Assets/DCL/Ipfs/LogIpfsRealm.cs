@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -89,7 +90,7 @@ namespace DCL.Ipfs
             }
         }
 
-        public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine("IpfsRealm PublishAsync requested");
@@ -98,7 +99,8 @@ namespace DCL.Ipfs
             ReportHub
                 .WithReport(ReportCategory.REALM)
                 .Log(sb.ToString());
-            await origin.PublishAsync(entity, ct, contentFiles);
+
+            await origin.PublishAsync(entity, ct, serializerSettings, contentFiles);
         }
 
         public string GetFileHash(byte[] file)

@@ -67,7 +67,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
             try
             {
-                await realm.Ipfs.PublishAsync(outfitsEntity, ct, new Dictionary<string, byte[]>());
+                await realm.Ipfs.PublishAsync(outfitsEntity, ct);
             }
             catch (Exception e)
             {

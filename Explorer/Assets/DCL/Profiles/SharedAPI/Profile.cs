@@ -4,6 +4,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.ThreadSafePool;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;

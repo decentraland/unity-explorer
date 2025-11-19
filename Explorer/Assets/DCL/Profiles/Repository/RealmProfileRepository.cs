@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
@@ -12,16 +11,17 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine;
-using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
+using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
 namespace DCL.Profiles
 {
-    public partial class RealmProfileRepository : IBatchedProfileRepository
+    public class RealmProfileRepository : IBatchedProfileRepository
     {
-        public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
+        public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter() } };
 
         private readonly int batchMaxSize;
 
@@ -85,8 +85,9 @@ namespace DCL.Profiles
             string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
             string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
 
-            using GetProfileJsonRootDto profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
+            SERIALIZER_SETTINGS.Context = new StreamingContext(0, new ProfileConverter.SerializationContext(faceHash, bodyHash));
+
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile, bodyHash, faceHash);
 
             files.Clear();
             files[bodyHash] = bodySnapshotTextureFile;
@@ -94,23 +95,14 @@ namespace DCL.Profiles
 
             try
             {
-                await ipfs.PublishAsync(entity, ct, files);
+                await ipfs.PublishAsync(entity, ct, SERIALIZER_SETTINGS, files);
                 profileCache.Set(profile.UserId, profile);
             }
             finally { files.Clear(); }
         }
 
-        private static GetProfileJsonRootDto NewProfileJsonRootDto(Profile profile, string bodyHash, string faceHash)
-        {
-            var profileDto = GetProfileJsonRootDto.Create();
-            profileDto.CopyFrom(profile);
-            profileDto.avatars[0]!.avatar.snapshots.body = bodyHash;
-            profileDto.avatars[0]!.avatar.snapshots.face256 = faceHash;
-            return profileDto;
-        }
-
-        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, GetProfileJsonRootDto profileJsonRootDto, string bodyHash, string faceHash) =>
-            new (string.Empty, profileJsonRootDto)
+        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, string bodyHash, string faceHash) =>
+            new (string.Empty, profile)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = new ContentDefinition[]
@@ -296,21 +288,15 @@ namespace DCL.Profiles
         /// <summary>
         ///     Should be called from the background thread
         /// </summary>
-        public Profile? ResolveProfile(string userId, ProfileJsonDto? profileDTO)
+        public Profile? ResolveProfile(string userId, Profile? profile)
         {
-            Profile? profile = null;
-
-            if (profileDTO != null)
+            if (profile != null)
             {
                 // Reusing the profile in cache does not allow other systems to properly update.
                 // It impacts on the object state and does not allow to make comparisons on change.
                 // For example the multiplayer system, whenever a remote profile update comes in,
                 // it compares the version of the profile to check if it has changed. By overriding the version here,
                 // the check always fails. So its necessary to get a new instance each time
-                profile = Profile.Create();
-                profileDTO.CopyTo(profile);
-                profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
-
                 profileCache.Set(userId, profile);
             }
             else
@@ -335,15 +321,13 @@ namespace DCL.Profiles
                 // Suppress logging errors here as we have very custom errors handling below
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
 
-                using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
+                var profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
                     serializerSettings: SERIALIZER_SETTINGS);
 
-                ProfileJsonDto? profileDto = root?.FirstProfileDto();
-
                 profilesDebug.AddNonAggregated();
 
-                return ResolveProfile(id, profileDto);
+                return ResolveProfile(id, profile);
             }
             catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND })
             {
