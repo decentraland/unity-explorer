@@ -17,6 +17,8 @@ using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Browser;
 using DCL.Input;
@@ -36,6 +38,8 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly IPendingTransferService pendingTransferService;
+        private readonly IAvatarEquippedStatusProvider equippedStatusProvider;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
@@ -45,7 +49,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedWearables equippedWearables;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IVerifiedEthereumApi webAuthenticator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
@@ -58,6 +61,8 @@ namespace DCL.PluginSystem.Global
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
+            IPendingTransferService pendingTransferService,
+            IAvatarEquippedStatusProvider equippedStatusProvider,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
@@ -67,7 +72,6 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
-            IVerifiedEthereumApi webAuthenticator,
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
             IWebBrowser webBrowser,
@@ -86,7 +90,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
-            this.webAuthenticator = webAuthenticator;
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus =  eventBus;
             this.webBrowser = webBrowser;
@@ -118,18 +121,17 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             var giftTransferService = new Web3GiftTransferService(ethereumApi);
-            // var giftTransferService = new MockGiftTransferService();
 
             var wearableCatalog = new WearableStylingCatalog(rarityColors,
                 rarityBackgrounds,
                 categoryIcons);
 
-            var sendGiftCommand = new SendGiftCommand(giftTransferService, mvcManager);
-            var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus, web3IdentityCache, giftTransferService);
-            var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider, eventBus);
-            var giftTransferProgressCommand = new GiftTransferProgressCommand();
-            var giftTransferResponseCommand = new GiftTransferResponseCommand();
-            var giftTransferSignCommand = new GiftTransferSignCommand();
+            var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus,
+                web3IdentityCache,
+                giftTransferService);
+
+            var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
+                eventBus);
 
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
@@ -141,7 +143,8 @@ namespace DCL.PluginSystem.Global
                 equippedWearables);
 
             giftSelectionController = new GiftSelectionController(
-                GiftSelectionController.CreateLazily(giftSelectionPopupPrefab, null),
+                GiftSelectionController
+                    .CreateLazily(giftSelectionPopupPrefab, null),
                 profileRepositoryWrapper,
                 profileRepository,
                 inputBlock,
@@ -151,21 +154,20 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 selfProfile
             );
-            
+
             giftTransferStatusController = new GiftTransferController(
-                GiftTransferController.CreateLazily(giftTransferPopupPrefab, null),
+                GiftTransferController
+                    .CreateLazily(giftTransferPopupPrefab, null),
                 webBrowser,
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferProgressCommand,
-                giftTransferRequestCommand,
-                giftTransferResponseCommand,
-                giftTransferSignCommand
+                giftTransferRequestCommand
             );
 
-            giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController.CreateLazily(giftTransferSuccessPopupPrefab,
-                null));
+            giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController
+                .CreateLazily(giftTransferSuccessPopupPrefab,
+                    null));
 
             mvcManager.RegisterController(giftSelectionController);
             mvcManager.RegisterController(giftTransferStatusController);
@@ -187,6 +189,17 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public AssetReferenceGameObject GiftTransferPopupSuccessPrefab;
 
+            [Header("Localization / Constants")]
+            [SerializeField] public string GiftTransferPopupStatusTitle = "Preparing Gift for";
+
+            [SerializeField] public string GiftTransferPopupStatusWaitingMessage = "A browser window should open for you to confirm the transaction.";
+            [SerializeField] public string GiftTransferPopupStatusProcessingMessage = "Processing...";
+
+            [SerializeField] public string GiftTransferErrorPopupTitle = "Something went wrong";
+            [SerializeField] public string GiftTransferErrorPopupAdditionalUrlTitle = "Your gift wasn't delivered. Please try again of contact Support.";
+            [SerializeField] public string GiftTransferErrorPopupCloseButtonText = "CLOSE";
+            [SerializeField] public string GiftTransferErrorPopupConfirmButtonText = "TRY AGAIN";
+            
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }
 

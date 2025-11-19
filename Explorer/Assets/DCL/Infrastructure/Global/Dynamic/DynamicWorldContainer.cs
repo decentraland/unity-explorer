@@ -109,6 +109,9 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -335,6 +338,10 @@ namespace Global.Dynamic
             var selfProfile = new SelfProfile(profileRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
+            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
+            IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
+            IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
+            
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
 
@@ -856,6 +863,8 @@ namespace Global.Dynamic
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
+                    pendingTransferService,
+                    equippedStatusProvider,
                     profileRepositoryWrapper,
                     profileRepository,
                     staticContainer.InputBlock,
@@ -865,7 +874,6 @@ namespace Global.Dynamic
                     equippedWearables,
                     emoteProvider,
                     identityCache,
-                    bootstrapContainer.VerifiedEthereumApi,
                     thumbnailProvider,
                     eventBus,
                     webBrowser,

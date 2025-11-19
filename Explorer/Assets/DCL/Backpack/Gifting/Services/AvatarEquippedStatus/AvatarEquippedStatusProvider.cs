@@ -1,16 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles.Self;
 
 namespace DCL.Backpack.Gifting.Services.SnapshotEquipped
 {
-    public class SnapshotEquippedService : ISnapshotEquippedService
+    public class AvatarEquippedStatusProvider : IAvatarEquippedStatusProvider
     {
         private readonly ISelfProfile selfProfile;
         private readonly HashSet<string> equippedUrns = new ();
 
-        public SnapshotEquippedService(ISelfProfile selfProfile)
+        public AvatarEquippedStatusProvider(ISelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
         }
@@ -42,6 +44,14 @@ namespace DCL.Backpack.Gifting.Services.SnapshotEquipped
             }
 
             return false;
+        }
+
+        public void LogEquippedStatus()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== Currently Equipped (Snapshot) ===");
+            foreach (string? urn in equippedUrns) sb.AppendLine(urn);
+            ReportHub.Log(ReportCategory.GIFTING, sb.ToString());
         }
     }
 }

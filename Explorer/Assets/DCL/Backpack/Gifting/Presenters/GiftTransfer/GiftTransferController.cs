@@ -18,6 +18,17 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
+        private const string WAITING_FOR_WALLET_MESSAGE = "A browser window should open for you to confirm the transaction.";
+        private const string PREPARING_GIFT_TITLE = "Preparing Gift for";
+        private const string DEFAULT_STATUS_MESSAGE = "Processing...";
+        private const string ERROR_DIALOG_TITLE = "Something went wrong";
+        private const string ERROR_DIALOG_CANCEL_TEXT = "CLOSE";
+        private const string ERROR_DIALOG_CONFIRM_TEXT = "TRY AGAIN";
+        private const string ERROR_DIALOG_DESCRIPTION = "Your gift wasn't delivered. Please try again or contact Support.";
+        private const string ERROR_DIALOG_SUPPORT_LINK_FORMAT = "<link=\"{0}\"><color=#D5A5E2>Contact Support</color></link>";
+        private const string RECIPIENT_NAME_RICH_TEXT_FORMAT = "<color=#{0}>{1}</color>";
+        private const string RETRY_LOG_MESSAGE = "User clicked RETRY.";
+
         private enum State { Waiting, Success, Failed }
 
         private State currentState;
@@ -26,11 +37,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly GiftTransferProgressCommand giftTransferProgressCommand;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
-        private readonly GiftTransferResponseCommand  giftTransferResponseCommand;
-        private readonly GiftTransferSignCommand  giftTransferSignCommand;
-
+        
         private IDisposable? subProgress;
         private IDisposable? subSucceeded;
         private IDisposable? subFailed;
@@ -40,16 +48,13 @@ namespace DCL.Backpack.Gifting.Presenters
         private CancellationTokenSource? delayCts;
 
         private string urn = string.Empty;
-        
+
         public GiftTransferController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
-            GiftTransferProgressCommand giftTransferProgressCommand,
-            GiftTransferRequestCommand giftTransferRequestCommand,
-            GiftTransferResponseCommand  giftTransferResponseCommand,
-            GiftTransferSignCommand  giftTransferSignCommand
+            GiftTransferRequestCommand giftTransferRequestCommand
         )
             : base(viewFactory)
         {
@@ -57,10 +62,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.eventBus = eventBus;
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.giftTransferProgressCommand = giftTransferProgressCommand;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
-            this.giftTransferResponseCommand = giftTransferResponseCommand;
-            this.giftTransferSignCommand = giftTransferSignCommand;
         }
 
         protected override void OnViewInstantiated()
@@ -77,7 +79,12 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 viewInstance.MarketplaceLink.OnLinkClicked += OnMarketplaceActivityLinkClicked;
-                viewInstance.RecipientName.text = $"<color=#{inputData.userNameColorHex}>{inputData.recipientName}</color>";
+
+                viewInstance.RecipientName.text = string.Format(
+                    RECIPIENT_NAME_RICH_TEXT_FORMAT,
+                    inputData.userNameColorHex,
+                    inputData.recipientName
+                );
 
                 if (inputData.userThumbnail != null)
                     viewInstance.RecipientAvatar.sprite = inputData.userThumbnail;
@@ -92,7 +99,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.ItemBackground.sprite = inputData.style.rarityBackground;
 
                 SetViewState(State.Waiting);
-                SetPhase(GiftTransferPhase.WaitingForWallet, "A browser window should open for you to confirm the transaction.");
+                SetPhase(GiftTransferPhase.WaitingForWallet, WAITING_FOR_WALLET_MESSAGE);
             }
 
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);
@@ -198,7 +205,7 @@ namespace DCL.Backpack.Gifting.Presenters
             switch (newState)
             {
                 case State.Waiting:
-                    viewInstance.TitleLabel.text = "Preparing Gift for";
+                    viewInstance.TitleLabel.text = PREPARING_GIFT_TITLE;
                     viewInstance.StatusContainer.SetActive(true);
 
                     if (viewInstance.LongRunningHint != null)
@@ -211,7 +218,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private void SetPhase(GiftTransferPhase phase, string? msg)
         {
             if (viewInstance == null || currentState != State.Waiting) return;
-            viewInstance.StatusText.text = msg ?? "Processing...";
+            viewInstance.StatusText.text = msg ?? DEFAULT_STATUS_MESSAGE;
         }
 
         private void RequestClose()
@@ -221,16 +228,19 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private async UniTaskVoid ShowErrorPopupAsync(CancellationToken ct)
         {
+            string supportUrl = decentralandUrlsSource.Url(DecentralandUrl.Support);
+            string supportLink = string.Format(ERROR_DIALOG_SUPPORT_LINK_FORMAT, supportUrl);
+
             var dialogParams = new ConfirmationDialogParameter(
-                "Something went wrong",
-                "CLOSE",
-                "TRY AGAIN",
+                ERROR_DIALOG_TITLE,
+                ERROR_DIALOG_CANCEL_TEXT,
+                ERROR_DIALOG_CONFIRM_TEXT,
                 viewInstance?.WarningIcon,
                 false,
                 false,
                 null,
-                "Your gift wasn't delivered. Please try again of contact Support.",
-                linkText: $"<link=\"{decentralandUrlsSource.Url(DecentralandUrl.Support)}\"><color=#D5A5E2>Contact Support</color></link>",
+                ERROR_DIALOG_DESCRIPTION,
+                linkText: supportLink,
                 onLinkClickCallback: LinkCallback
             );
 
@@ -240,7 +250,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
             if (result == ConfirmationResult.CONFIRM)
             {
-                ReportHub.Log(ReportCategory.GIFTING, "User clicked RETRY.");
+                ReportHub.Log(ReportCategory.GIFTING, RETRY_LOG_MESSAGE);
                 await mvcManager.ShowAsync(IssueCommand(inputData), ct);
             }
         }

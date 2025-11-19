@@ -9,12 +9,15 @@ namespace DCL.Backpack.Gifting.Presenters
     public sealed class GiftTransferSuccessController
         : ControllerBase<GiftTransferSuccessView, GiftTransferSuccessParams>
     {
+        private const string GIFT_SENT_TEXT_FORMAT = "Gift Sent to <color=#{0}>{1}</color>!";
+        
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
+        
         private CancellationTokenSource? lifeCts;
 
         public GiftTransferSuccessController(ViewFactoryMethod viewFactory) : base(viewFactory)
         {
+            
         }
 
         protected override void OnViewInstantiated()
@@ -24,13 +27,20 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override void OnViewShow()
         {
-            if (viewInstance.GiftSentText != null)
-                viewInstance.GiftSentText.text = $"Gift Sent to <color=#{inputData.UserNameColorHex}> {inputData.RecipientName}</color>!";
+            if (viewInstance != null)
+            {
+                viewInstance.GiftSentText.text = string.Format(
+                    GIFT_SENT_TEXT_FORMAT,
+                    inputData.UserNameColorHex,
+                    inputData.RecipientName
+                );
 
-            if (inputData.UserThumbnail != null)
-                viewInstance.RecipientThumbnail.sprite = inputData.UserThumbnail;
+                if (inputData.UserThumbnail != null)
+                    viewInstance.RecipientThumbnail.sprite = inputData.UserThumbnail;
+            }
 
-            PlayAnimationAsync().Forget();
+            PlayAnimationAsync()
+                .Forget();
         }
 
         private async UniTaskVoid PlayAnimationAsync()

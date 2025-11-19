@@ -15,7 +15,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         private readonly IEventBus eventBus;
         private readonly IGiftTransferService giftTransferService;
         private readonly IWeb3IdentityCache  web3IdentityCache;
-
+        
         public GiftTransferRequestCommand(IEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
             IGiftTransferService giftTransferService)

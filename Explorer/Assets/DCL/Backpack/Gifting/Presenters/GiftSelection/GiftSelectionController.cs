@@ -235,8 +235,8 @@ namespace DCL.Backpack.Gifting.Presenters
                 return;
             }
 
-            string giftDisplayName = activePresenter.GetItemNameByUrn(selectedUrn) ?? "Item";
-            var giftThumb = activePresenter.GetThumbnailByUrn(selectedUrn);
+            string giftDisplayName = activePresenter?.GetItemNameByUrn(selectedUrn) ?? "Item";
+            var giftThumb = activePresenter?.GetThumbnailByUrn(selectedUrn);
             if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
                 style = new GiftItemStyleSnapshot(null, null, Color.white);
 
@@ -249,7 +249,7 @@ namespace DCL.Backpack.Gifting.Presenters
             var transferParams = new GiftTransferParams(
                 inputData.userAddress,
                 inputData.userName,
-                headerPresenter.CurrentRecipientAvatarSprite,
+                headerPresenter?.CurrentRecipientAvatarSprite,
                 selectedUrn,
                 giftDisplayName,
                 giftThumb,

@@ -11,6 +11,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly GiftingFooterView view;
 
         private const string DEFAULT_INFO_MESSAGE = "Gifting an item cannot be undone.";
+        private const string SELECTED_ITEM_INFO_MESSAGE_FORMAT = "You are about to send <b>{0}</b> to <b>{1}</b>";
         
         public GiftingFooterPresenter(GiftingFooterView view)
         {
@@ -25,41 +26,15 @@ namespace DCL.Backpack.Gifting.Presenters
             UpdateState(null);
         }
 
-        /// <summary>
-        ///     Updates the entire footer state based on the selected item.
-        /// </summary>
-        /// <param name="selectedItemName">The name of the item, or null if nothing is selected.</param>
-        /// <param name="recipient"></param>
         public void UpdateState(string? selectedItemName, string? recipient = null)
         {
             bool isItemSelected = !string.IsNullOrEmpty(selectedItemName);
 
-            // Enable/disable the send button
             view.SendGiftButton.interactable = isItemSelected;
-
-            // Show/hide and set the info message text
-            view.InfoMessageContainer.SetActive(true); // Let's always show it
+            view.InfoMessageContainer.SetActive(true);
             view.InfoMessageLabel.text = isItemSelected
-                ? $"You are about to send <b>{selectedItemName}</b> to <b>{recipient}</b>"
+                ? string.Format(SELECTED_ITEM_INFO_MESSAGE_FORMAT, selectedItemName, recipient)
                 : DEFAULT_INFO_MESSAGE;
-        }
-
-        public void SetInfoMessage(string message)
-        {
-            view.SendGiftButton.interactable = false;
-
-            view.InfoMessageLabel.text = DEFAULT_INFO_MESSAGE;
-            view.InfoMessageContainer.SetActive(true); 
-        }
-
-        public void SetSendEnabled(bool enabled)
-        {
-            view.SendGiftButton.interactable = enabled;
-        }
-
-        public void SetSendButtonInteractable(bool isInteractable)
-        {
-            view.SendGiftButton.interactable = isInteractable;
         }
 
         public void Dispose()
