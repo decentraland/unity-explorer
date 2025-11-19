@@ -23,6 +23,8 @@ namespace ECS.SceneLifeCycle.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadSmartWearablePreviewSceneSystem : BaseUnityLoopSystem
     {
+        private static readonly ISet<long> IGNORE_ERROR_CODES = new HashSet<long> { 404 };
+
         private readonly IWebRequestController webRequestController;
 
         public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController) : base(world)
@@ -61,7 +63,7 @@ namespace ECS.SceneLifeCycle.Systems
             string url = URLBuilder.Combine(ipfs.CatalystBaseUrl, URLSubdirectory.FromString("preview-wearables")).Value;
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
-            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, ignoreErrorCodes: new HashSet<long> { 404 })
+            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, ignoreErrorCodes: IGNORE_ERROR_CODES)
                                                      .CreateFromJson<PreviewWearablesResponse>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
 
