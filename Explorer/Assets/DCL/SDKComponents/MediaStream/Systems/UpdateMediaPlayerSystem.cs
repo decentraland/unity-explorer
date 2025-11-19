@@ -28,6 +28,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
         private readonly float audioFadeSpeed;
+        private readonly Material flipMaterial;
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -35,7 +36,8 @@ namespace DCL.SDKComponents.MediaStream
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
             MediaFactory mediaFactory,
-            float audioFadeSpeed
+            float audioFadeSpeed,
+            Material flipMaterial
         ) : base(world)
         {
             this.sceneData = sceneData;
@@ -43,6 +45,7 @@ namespace DCL.SDKComponents.MediaStream
             this.frameTimeBudget = frameTimeBudget;
             this.mediaFactory = mediaFactory;
             this.audioFadeSpeed = audioFadeSpeed;
+            this.flipMaterial = flipMaterial;
         }
 
         protected override void Update(float t)
@@ -178,7 +181,7 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Resize(avText.width, avText.height);
 
             if (playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1)))
-                Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
+                Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
             else
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
 
