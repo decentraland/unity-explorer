@@ -113,7 +113,7 @@ namespace DCL.Interaction.Systems
 
             if (socialEmoteInteraction is { AreInteracting: false } &&
                 (string.IsNullOrEmpty(socialEmoteInteraction.TargetWalletAddress) || // Is not a directed emote
-                    socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address.OriginalFormat)) // Is a directed emote and the target is the local player
+                    socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
                 Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
                 Vector3 playerPosition = Vector3.zero;

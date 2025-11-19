@@ -152,13 +152,13 @@ namespace DCL.AvatarRendering.Emotes
                     // Stores the audio clips of the outcomes
                     string? outcomeAudioHash = null;
 
-                    for (int i = 0; i < emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length; ++i)
+                    for (int i = 0; i < emote.Model.Asset!.metadata.data!.outcomes!.Length; ++i)
                     {
                         ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> outcome " + i);
 
-                        if (emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio != null)
+                        if (emote.Model.Asset!.metadata.data!.outcomes![i].audio != null)
                         {
-                            outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.socialEmoteData!.outcomes![i].audio);
+                            outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.outcomes![i].audio);
 
                             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contained in? " + promise.LoadingIntention.CommonArguments.URL.Value);
                             string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
@@ -199,9 +199,9 @@ namespace DCL.AvatarRendering.Emotes
                     }
 
                     // Stores the audio clip of the start animation
-                    if (emote.Model.Asset!.metadata.socialEmoteData!.startAnimation!.audio != null)
+                    if (emote.Model.Asset!.metadata.data!.startAnimation!.audio != null)
                     {
-                        string? audioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.socialEmoteData!.startAnimation!.audio);
+                        string? audioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.startAnimation!.audio);
                         string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
                         // If the current result corresponds to the start animation...
