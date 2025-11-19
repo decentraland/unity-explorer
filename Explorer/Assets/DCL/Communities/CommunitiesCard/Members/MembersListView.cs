@@ -341,7 +341,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 loadingObject.HideLoading();
         }
 
-        public void SetResultsLoadingMoreActive(bool isActive) =>
+        public void SetLoadingMoreBadgeActive(bool isActive) =>
             resultsLoadingMoreSpinner.SetActive(isActive);
 
         [Serializable]

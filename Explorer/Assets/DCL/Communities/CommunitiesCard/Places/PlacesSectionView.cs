@@ -80,7 +80,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 loadingObject.HideLoading();
         }
 
-        public void SetResultsLoadingMoreActive(bool isActive) { }
+        public void SetLoadingMoreBadgeActive(bool isActive) { }
 
         public void SetCanModify(bool canModify)
         {

@@ -119,6 +119,6 @@ namespace DCL.Communities.CommunitiesCard.Events
             SetEmptyStateActive(!active);
         }
 
-        public void SetResultsLoadingMoreActive(bool isActive) { }
+        public void SetLoadingMoreBadgeActive(bool isActive) { }
     }
 }
