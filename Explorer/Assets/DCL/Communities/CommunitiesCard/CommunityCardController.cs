@@ -157,6 +157,7 @@ namespace DCL.Communities.CommunitiesCard
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
         }
 
         public override void Dispose()
@@ -251,6 +252,18 @@ namespace DCL.Communities.CommunitiesCard
             if (communityId == string.Empty || communityId != communityData.id) return;
 
             CloseController();
+        }
+
+        private void OnCommunityTransferredToMe(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden || notification is not CommunityOwnershipTransferredNotification transferredNotification)
+                return;
+
+            if (communityData.id != transferredNotification.Metadata.CommunityId)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(transferredNotification.Metadata.CommunityId);
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
