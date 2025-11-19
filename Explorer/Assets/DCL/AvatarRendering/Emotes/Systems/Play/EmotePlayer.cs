@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteInUse != null)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Stopping emoteInUse " + emoteInUse.avatarClip.name + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Stopping emoteInUse " + emoteInUse.avatarClip?.name??"" + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
                 Stop(emoteInUse);
             }
             else
@@ -245,7 +245,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing mecanim emote: " + emoteReferences.avatarClip.name + " " + ((AvatarBase)view).name);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing mecanim emote: " + emoteReferences.avatarClip?.name?? "" + " " + ((AvatarBase)view).name);
 
             // Avatar
             AnimationClip? avatarClip;
