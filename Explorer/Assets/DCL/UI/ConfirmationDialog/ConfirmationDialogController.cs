@@ -22,6 +22,8 @@ namespace DCL.UI.ConfirmationDialog
         {
             viewInstance!.Configure(inputData, profileRepositoryWrapper);
 
+            viewInstance.ActivateAdditionalUrl(!string.IsNullOrEmpty(inputData.LinkText));
+            
             if (!string.IsNullOrEmpty(inputData.LinkText) && inputData.OnLinkClickCallback != null)
             {
                 viewInstance.SetAdditionalUrlText(inputData.LinkText);

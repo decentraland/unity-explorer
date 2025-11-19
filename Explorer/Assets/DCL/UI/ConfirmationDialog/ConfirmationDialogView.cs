@@ -86,6 +86,11 @@ namespace DCL.UI.ConfirmationDialog
             additonalUrlText.gameObject.SetActive(!string.IsNullOrEmpty(text));
         }
 
+        public void ActivateAdditionalUrl(bool activate)
+        {
+            additonalUrlText.gameObject.SetActive(activate);
+        }
+
         public void HookLinkClickEvent(Action<string> onLinkClicked)
         {
             additionalUrlTextLinkHandler.OnLinkClicked += onLinkClicked;

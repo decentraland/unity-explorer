@@ -77,7 +77,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 viewInstance.MarketplaceLink.OnLinkClicked += OnMarketplaceActivityLinkClicked;
-                viewInstance.RecipientName.text = $"<color=#{inputData.userNameColorHex}> {inputData.recipientName}</color>";
+                viewInstance.RecipientName.text = $"<color=#{inputData.userNameColorHex}>{inputData.recipientName}</color>";
 
                 if (inputData.userThumbnail != null)
                     viewInstance.RecipientAvatar.sprite = inputData.userThumbnail;
@@ -198,7 +198,7 @@ namespace DCL.Backpack.Gifting.Presenters
             switch (newState)
             {
                 case State.Waiting:
-                    viewInstance.TitleLabel.text = "Sending Gift to";
+                    viewInstance.TitleLabel.text = "Preparing Gift for";
                     viewInstance.StatusContainer.SetActive(true);
 
                     if (viewInstance.LongRunningHint != null)
@@ -224,13 +224,13 @@ namespace DCL.Backpack.Gifting.Presenters
             var dialogParams = new ConfirmationDialogParameter(
                 "Something went wrong",
                 "CLOSE",
-                "RETRY",
+                "TRY AGAIN",
                 viewInstance?.WarningIcon,
                 false,
                 false,
                 null,
                 "Your gift wasn't delivered. Please try again of contact Support.",
-                linkText: $"<link=\"{decentralandUrlsSource.Url(DecentralandUrl.Support)}\">Contact Support</link>",
+                linkText: $"<link=\"{decentralandUrlsSource.Url(DecentralandUrl.Support)}\"><color=#D5A5E2>Contact Support</color></link>",
                 onLinkClickCallback: LinkCallback
             );
 

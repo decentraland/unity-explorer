@@ -29,7 +29,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         {
             eventBus.Publish(new GiftingEvents.GiftTransferProgress(data.giftUrn,
                 GiftingEvents.GiftTransferPhase.Authorizing,
-                "Opening wallet to authorize…"
+                "A browser window should open for you to confirm this transfer."
             ));
 
             var identity = web3IdentityCache.Identity;

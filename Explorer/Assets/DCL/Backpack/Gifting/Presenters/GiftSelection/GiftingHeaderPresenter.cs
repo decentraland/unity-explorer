@@ -75,7 +75,7 @@ namespace DCL.Backpack.Gifting.Presenters
             // Set the main title text
             var userNameColor = profile.UserNameColor;
             string? userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
-            view.Title.text = $"Send a Gift to <color=#{userNameColorHex}> {profile.Name}</color>";
+            view.Title.text = $"Send a Gift to <color=#{userNameColorHex}>{profile.Name}</color>";
 
             // Use the existing ProfilePictureView's setup logic
             // Note: The 'Setup' method is obsolete, but we follow the existing pattern for now.
