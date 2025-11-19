@@ -548,7 +548,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             FetchNewDataAsync(ct).Forget();
 
-            if (community.privacy == CommunityPrivacy.@private)
+            if (community.privacy == CommunityPrivacy.@private && communityData?.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
                 FetchRequestsToJoinAsync(ct).Forget();
 
             return;
