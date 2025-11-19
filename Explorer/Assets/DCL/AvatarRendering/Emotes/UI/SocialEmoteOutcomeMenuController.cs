@@ -36,7 +36,7 @@ namespace DCL.SocialEmotes.UI
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(inputData.InteractingUserWalletAddress);
 
             // Checks if the current emote has an outcome for the given index
-            int outcomeCount = interaction!.Emote.Model.Asset!.metadata.socialEmoteData!.outcomes!.Length;
+            int outcomeCount = interaction!.Emote.Model.Asset!.metadata.data!.outcomes!.Length;
 
             if (outcomeIndex >= outcomeCount)
                 return;
@@ -44,7 +44,7 @@ namespace DCL.SocialEmotes.UI
             if (interaction is { AreInteracting: false })
             {
                 // Random outcome?
-                if (outcomeIndex == 0 && interaction!.Emote.Model.Asset!.metadata.socialEmoteData!.randomizeOutcomes)
+                if (outcomeIndex == 0 && interaction!.Emote.Model.Asset!.metadata.data!.randomizeOutcomes)
                 {
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
@@ -113,9 +113,9 @@ namespace DCL.SocialEmotes.UI
             {
                 viewInstance!.ResetChoices();
 
-                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Emote.Model.Asset!.metadata.socialEmoteData!.outcomes!;
+                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Emote.Model.Asset!.metadata.data!.outcomes!;
 
-                if (interaction.Emote.Model.Asset!.metadata.socialEmoteData!.randomizeOutcomes)
+                if (interaction.Emote.Model.Asset!.metadata.data!.randomizeOutcomes)
                 {
                     // When outcomes are randomized, it only shows one option
                     viewInstance.AddChoice(viewInstance.RandomizedOutcomeText);
