@@ -52,6 +52,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private NotificationIndicatorView requestsNotificationIndicator { get; set; } = null!;
         [field: SerializeField] private GameObject emptyStateParent { get; set; } = null!;
+        [field: SerializeField] private GameObject resultsLoadingMoreSpinner { get; set; } = null!;
 
         [field: Header("Assets")]
         [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
@@ -339,6 +340,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             else
                 loadingObject.HideLoading();
         }
+
+        public void SetResultsLoadingMoreActive(bool isActive) =>
+            resultsLoadingMoreSpinner.SetActive(isActive);
 
         [Serializable]
         public struct MemberListSectionMapping

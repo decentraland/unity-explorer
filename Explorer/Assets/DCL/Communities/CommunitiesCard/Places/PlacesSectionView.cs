@@ -80,6 +80,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                 loadingObject.HideLoading();
         }
 
+        public void SetResultsLoadingMoreActive(bool isActive) { }
+
         public void SetCanModify(bool canModify)
         {
             this.canModify = canModify;
