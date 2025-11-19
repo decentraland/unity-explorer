@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes
         [Serializable]
         public class EmoteMetadataDto : MetadataBase
         {
-            public bool IsSocialEmote => data?.startAnimation != null;
+            public bool IsSocialEmote => data?.outcomes != null;
 
             // emotes DTO fetched from builder-API use the normal 'data' property
             // emotes DTO fetched from realm use 'emoteDataADR74' property...
