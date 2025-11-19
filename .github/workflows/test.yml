@@ -179,7 +179,7 @@ jobs:
       # C# Linting using JetBrains ReSharper CLI
 
       - name: Install Unity
-        uses: game-ci/unity-installer@v3
+        uses: kuler90/setup-unity@v1
         with:
           version: ${{ steps.unity-version.outputs.version }}
           components: linux-mono # minimal, no need for IL2CPP to generate .sln
