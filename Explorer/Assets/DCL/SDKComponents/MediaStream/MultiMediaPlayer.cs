@@ -275,16 +275,17 @@ namespace DCL.SDKComponents.MediaStream
 
         public void UpdateSpatialAudio(bool isSpatial, float minDistance, float maxDistance)
         {
-            Match(avPro =>
+            Match((isSpatial, minDistance, maxDistance),
+                static (args, avPro) =>
                 {
                     AudioSource audioSource = avPro.AvProMediaPlayer.AudioSource;
                     if (audioSource == null) return;
-                    audioSource.spatialBlend = isSpatial ? 1f : 0f;
-                    audioSource.minDistance = minDistance;
-                    audioSource.maxDistance = maxDistance;
+                    audioSource.spatialBlend = args.isSpatial ? 1f : 0f;
+                    audioSource.minDistance = args.minDistance;
+                    audioSource.maxDistance = args.maxDistance;
                     audioSource.rolloffMode = AudioRolloffMode.Linear;
                 },
-                static _ => { });
+                static (_, _) => { });
         }
     }
 }
