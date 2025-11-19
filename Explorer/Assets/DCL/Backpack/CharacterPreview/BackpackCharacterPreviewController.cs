@@ -110,7 +110,7 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
-        private void OnWearableEquipped(IWearable i)
+        private void OnWearableEquipped(IWearable i, bool isManuallyEquipped)
         {
             previewAvatarModel.Wearables ??= new List<URN>();
 

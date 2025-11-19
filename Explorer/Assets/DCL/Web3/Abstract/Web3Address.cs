@@ -5,6 +5,9 @@ namespace DCL.Web3
 {
     public readonly struct Web3Address
     {
+        // ETH wallet address constants
+        public const int ETH_ADDRESS_LENGTH = 42; // "0x" + 40 hex characters
+
         public readonly string OriginalFormat;
         private readonly string address;
 
