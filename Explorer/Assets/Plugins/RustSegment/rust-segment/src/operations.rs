@@ -1,3 +1,4 @@
+use anyhow::Result;
 use segment::message::{Identify, Track, User};
 use serde_json::Value;
 use std::ffi::{c_char, CStr};
@@ -8,11 +9,11 @@ pub fn new_track(
     event_name: &str,
     properties_json: &str,
     context_json: &str,
-) -> Option<Track> {
-    let properties_json: Value = as_option(serde_json::from_str(properties_json))?;
-    let context_json: Value = as_option(serde_json::from_str(context_json))?;
+) -> Result<Track> {
+    let properties_json: Value = serde_json::from_str(properties_json)?;
+    let context_json: Value = serde_json::from_str(context_json)?;
 
-    Some(Track {
+    Ok(Track {
         user,
         event: event_name.to_string(),
         properties: properties_json,
@@ -22,11 +23,11 @@ pub fn new_track(
     })
 }
 
-pub fn new_identify(user: User, traits_json: &str, context_json: &str) -> Option<Identify> {
-    let traits_json: Value = as_option(serde_json::from_str(traits_json))?;
-    let context_json: Value = as_option(serde_json::from_str(context_json))?;
+pub fn new_identify(user: User, traits_json: &str, context_json: &str) -> Result<Identify> {
+    let traits_json: Value = serde_json::from_str(traits_json)?;
+    let context_json: Value = serde_json::from_str(context_json)?;
 
-    Some(Identify {
+    Ok(Identify {
         user,
         traits: traits_json,
         context: Some(context_json),
@@ -67,11 +68,4 @@ pub unsafe fn user_from(used_id: *const c_char, anon_id: *const c_char) -> Optio
 pub unsafe fn as_str<'a>(chars: *const c_char) -> &'a str {
     let c_str = unsafe { CStr::from_ptr(chars) };
     c_str.to_str().unwrap()
-}
-
-fn as_option<T, E>(result: Result<T, E>) -> Option<T> {
-    match result {
-        Ok(value) => Some(value),
-        Err(_) => None,
-    }
 }

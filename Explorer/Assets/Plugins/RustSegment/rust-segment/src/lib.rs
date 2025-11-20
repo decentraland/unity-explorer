@@ -1,9 +1,9 @@
+use lazy_static::lazy_static;
+use std::os::raw::c_char;
+
 pub mod cabi;
 pub mod operations;
-pub mod queue_batcher;
 pub mod server;
-
-use lazy_static::lazy_static;
 
 pub type OperationHandleId = u64;
 
@@ -13,15 +13,15 @@ pub const INVALID_OPERATION_HANDLE_ID: OperationHandleId = 0;
 #[derive(Debug)]
 pub enum Response {
     Success = 0,
-    FailInitializedWrongKey = 1,
-    ErrorMessageTooLarge = 2,
-    ErrorDeserialize = 3,
-    ErrorNetwork = 4,
-    ErrorUtf8Decode = 5,
+    // Errors are propagated vie the error callback
+    Error = 1,
 }
 
 /// # SAFTEY: The "C" callback must be threadsafe and not block
 pub type FfiCallbackFn = unsafe extern "C" fn(OperationHandleId, Response);
+
+/// # SAFTEY: The "C" callback must be threadsafe and not block
+pub type FfiErrorCallbackFn = unsafe extern "C" fn(msg: *const c_char);
 
 lazy_static! {
     pub static ref SEGMENT_SERVER: server::Server = server::Server::default();

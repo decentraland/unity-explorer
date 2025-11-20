@@ -3,7 +3,8 @@ use std::ffi::c_char;
 use crate::{
     operations::{as_str, user_from},
     server::SegmentServer,
-    FfiCallbackFn, OperationHandleId, INVALID_OPERATION_HANDLE_ID, SEGMENT_SERVER,
+    FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, INVALID_OPERATION_HANDLE_ID,
+    SEGMENT_SERVER,
 };
 
 /// # Safety
@@ -11,11 +12,21 @@ use crate::{
 /// The foreign language must only provide valid pointers
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_initialize(
+    queue_file_path: *const c_char,
+    queue_count_limit: u32,
     segment_write_key: *const c_char,
     callback_fn: FfiCallbackFn,
+    error_fn: FfiErrorCallbackFn,
 ) -> bool {
+    let queue_file_path = as_str(queue_file_path).to_string();
     let write_key = as_str(segment_write_key).to_string();
-    SEGMENT_SERVER.initialize(write_key, callback_fn)
+    SEGMENT_SERVER.initialize(
+        queue_file_path,
+        queue_count_limit,
+        write_key,
+        callback_fn,
+        error_fn,
+    )
 }
 
 /// # Safety
@@ -131,11 +142,6 @@ pub extern "C" fn segment_server_flush() -> OperationHandleId {
         let operation = SegmentServer::flush(segment, id);
         SEGMENT_SERVER.async_runtime.spawn(operation);
     })
-}
-
-#[no_mangle]
-pub extern "C" fn segment_server_unflushed_batches_count() -> u64 {
-    SEGMENT_SERVER.unflushed_batches_count()
 }
 
 #[no_mangle]
