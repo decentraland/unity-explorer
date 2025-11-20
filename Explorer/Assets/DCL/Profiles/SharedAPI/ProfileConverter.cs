@@ -133,7 +133,7 @@ namespace DCL.Profiles
         private void DeserializeAvatar(JToken jObject, ref Profile profile)
         {
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
-            Avatar avatar = profile.Avatar ?? new Avatar();
+            Avatar avatar = profile.Avatar ??= new Avatar();
 
             avatar.EyesColor = DeserializeColor(jObject["eyes"]?["color"], Color.black);
             avatar.HairColor = DeserializeColor(jObject["hair"]?["color"], Color.black);
