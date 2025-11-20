@@ -228,16 +228,14 @@ namespace DCL.VoiceChat.Services
                         // Cancellation requested, exit the retry loop
                         break;
                     }
-                    catch (WebSocketException webSocketException)
+                    catch (WebSocketException e)
                     {
                         retryAttempt++;
 
-                        SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
-                                                + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", ReportCategory.VOICE_CHAT, level: BreadcrumbLevel.Info);
+                        SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
+                                                + $"ErrorCode: {e.ErrorCode.ToString()}", ReportCategory.VOICE_CHAT, level: BreadcrumbLevel.Info);
 
-                        ReportHub.LogException(webSocketException, ReportCategory.VOICE_CHAT);
-
-                        var webSocketErrorCode = (WebSocketError)webSocketException.ErrorCode;
+                        var webSocketErrorCode = (WebSocketError)e.ErrorCode;
 
                         if (webSocketErrorCode is WebSocketError.Faulted
                             or WebSocketError.ConnectionClosedPrematurely
@@ -246,13 +244,15 @@ namespace DCL.VoiceChat.Services
                         {
                             if (!await TryRetryAsync(retryAttempt, ct))
                             {
-                                isServiceDisabled = true;
+                                ReportHub.LogException(e, ReportCategory.VOICE_CHAT);
                                 break;
                             }
+
+                            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "WebSocketException occurred while getting private voice chat updates, retrying..");
                         }
                         else
                         {
-                            isServiceDisabled = true;
+                            ReportHub.LogException(e, ReportCategory.VOICE_CHAT);
                             break;
                         }
                     }
@@ -260,10 +260,11 @@ namespace DCL.VoiceChat.Services
                     {
                         retryAttempt++;
 
-                        ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"{TAG} Failed to open private voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}");
+                        ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to open private voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}");
 
                         if (!await TryRetryAsync(retryAttempt, ct))
                         {
+                            ReportHub.LogException(e, ReportCategory.VOICE_CHAT);
                             isServiceDisabled = true;
                             break;
                         }
