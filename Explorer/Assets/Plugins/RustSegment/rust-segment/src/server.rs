@@ -5,7 +5,8 @@ use std::sync::{
 };
 
 use segment::{
-    message::{BatchMessage, User}, Client, HttpClient
+    message::{BatchMessage, User},
+    Client, HttpClient,
 };
 use tokio::sync::Mutex;
 
@@ -128,7 +129,7 @@ impl SegmentServer {
     fn new(writer_key: String, callback_fn: FfiCallbackFn) -> Self {
         let client = HttpClient::default();
         let queue_batcher = QueueBatcher::new(client, writer_key.clone());
-        
+
         let direct_client = HttpClient::default();
 
         let context = Context {
@@ -163,7 +164,7 @@ impl SegmentServer {
                 let result = guard.segment_client.send(key, m.into()).await;
                 let response = SegmentServer::result_as_response_code(result);
                 guard.call_callback(id, response);
-            },
+            }
             None => {
                 instance.call_callback(id, Response::ErrorDeserialize).await;
             }
