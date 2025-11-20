@@ -1,7 +1,5 @@
-use segment::{message::BatchMessage, Client, HttpClient, Result};
+use segment::{message::BatchMessage, Batcher, Client, HttpClient, Result};
 use std::collections::VecDeque;
-
-use crate::batcher::Batcher;
 
 #[derive(Clone, Debug)]
 pub struct QueueBatcher {
