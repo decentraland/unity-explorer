@@ -152,66 +152,39 @@ namespace DCL.Web3.Authenticators
             }
 
             // Wallet signing methods
-            if (string.Equals(request.method, "personal_sign")) { return await HandlePersonalSignAsync(request); }
+            if (string.Equals(request.method, "personal_sign"))
+            {
+                // personal_sign params: [message, address]
+                var message = request.@params[0].ToString();
+                string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(message);
 
-            if (string.Equals(request.method, "eth_signTypedData_v4")) { return await HandleSignTypedDataV4Async(request); }
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = signature,
+                };
+            }
 
-            // Transaction methods
-            if (string.Equals(request.method, "eth_sendTransaction")) { return await HandleSendTransactionAsync(request); }
+            if (string.Equals(request.method, "eth_signTypedData_v4"))
+            {
+                // eth_signTypedData_v4 params: [address, typedData]
+                var typedDataJson = request.@params[1].ToString();
+                string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = signature,
+                };
+            }
 
             // Balance query
-            if (string.Equals(request.method, "eth_getBalance")) { return await HandleGetBalanceAsync(request); }
-
-            // All other RPC methods - delegate to low-level RPC
-            return await SendRpcRequestAsync(request);
-        }
-
-        private async UniTask<EthApiResponse> HandlePersonalSignAsync(EthApiRequest request)
-        {
-            // personal_sign params: [message, address]
-            var message = request.@params[0].ToString();
-            string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(message);
-
-            return new EthApiResponse
+            if (string.Equals(request.method, "eth_getBalance"))
             {
-                id = request.id,
-                jsonrpc = "2.0",
-                result = signature,
-            };
-        }
-
-        private async UniTask<EthApiResponse> HandleSignTypedDataV4Async(EthApiRequest request)
-        {
-            // eth_signTypedData_v4 params: [address, typedData]
-            var typedDataJson = request.@params[1].ToString();
-            string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
-
-            return new EthApiResponse
-            {
-                id = request.id,
-                jsonrpc = "2.0",
-                result = signature,
-            };
-        }
-
-        private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request)
-        {
-            if (ThirdWebManager.Instance.ActiveWallet == null)
-                throw new Web3Exception("No active wallet connected");
-
-            // For now, delegate complex transaction handling to RPC
-            // eth_sendTransaction needs to be signed by the wallet, so we use RPC which will use the wallet internally
-            return await SendRpcRequestAsync(request);
-        }
-
-        private async UniTask<EthApiResponse> HandleGetBalanceAsync(EthApiRequest request)
-        {
-            // eth_getBalance params: [address, blockParameter]
-            var address = request.@params[0].ToString();
-
-            // If querying current wallet's balance, use wallet API
-            if (ThirdWebManager.Instance.ActiveWallet != null)
-            {
+                // eth_getBalance params: [address, blockParameter]
+                var address = request.@params[0].ToString();
                 string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
                 if (string.Equals(address, walletAddress, StringComparison.OrdinalIgnoreCase))
@@ -229,7 +202,14 @@ namespace DCL.Web3.Authenticators
                 }
             }
 
-            // For other addresses, use RPC
+            // Transaction methods
+            if (string.Equals(request.method, "eth_sendTransaction"))
+            {
+                // eth_sendTransaction needs to be signed by the wallet, so we use RPC which will use the wallet internally
+                return await SendRpcRequestAsync(request);
+            }
+
+            // All other RPC methods - delegate to low-level RPC
             return await SendRpcRequestAsync(request);
         }
 
@@ -278,9 +258,8 @@ namespace DCL.Web3.Authenticators
             };
         }
 
-        private string GetRpcUrl(int chainId) =>
-
-            // Use Thirdweb's RPC endpoints
+        // Use Thirdweb's RPC endpoints
+        private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback)
