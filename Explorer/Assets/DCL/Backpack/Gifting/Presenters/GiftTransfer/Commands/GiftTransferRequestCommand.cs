@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Views;
 using DCL.Web3.Identities;
 using Utility;
@@ -15,21 +16,24 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         private readonly IEventBus eventBus;
         private readonly IGiftTransferService giftTransferService;
         private readonly IWeb3IdentityCache  web3IdentityCache;
+        private readonly IPendingTransferService pendingTransferService;
         
         public GiftTransferRequestCommand(IEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
-            IGiftTransferService giftTransferService)
+            IGiftTransferService giftTransferService,
+            IPendingTransferService pendingTransferService)
         {
             this.eventBus = eventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.giftTransferService = giftTransferService;
+            this.pendingTransferService = pendingTransferService;
         }
 
         public async UniTaskVoid ExecuteAsync(GiftTransferParams data, CancellationToken ct)
         {
             eventBus.Publish(new GiftingEvents.GiftTransferProgress(data.giftUrn,
                 GiftingEvents.GiftTransferPhase.Authorizing,
-                "A browser window should open for you to confirm this transfer."
+                GiftingTextIds.WaitingForWalletMessage
             ));
 
             var identity = web3IdentityCache.Identity;
@@ -55,16 +59,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 
             if (result.IsSuccess)
             {
-                // data.giftUrn = BASE URN (no tokenId)
-                // data.tokenId = the on-chain token to transfer
-
-                var baseUrn = new URN(data.giftUrn);
-                string fullUrnString = $"{baseUrn}:{data.tokenId}";
-                var fullUrn = new URN(fullUrnString);
-
-                var instanceUrn = new URN(data.instanceUrn);
-
-                PendingGiftsCache.Add(instanceUrn);
+                pendingTransferService.AddPending(data.instanceUrn);
 
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
                 eventBus.Publish(new GiftingEvents.OnSuccessfulGift(
