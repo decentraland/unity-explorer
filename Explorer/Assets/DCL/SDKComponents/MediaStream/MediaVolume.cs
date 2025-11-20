@@ -17,21 +17,17 @@ namespace DCL.SDKComponents.MediaStream
             //the volume control for the video and audio streams, as it doesn’t allow to route audio
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
             //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             this.volumeBus = volumeBus;
             this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
             this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
             MasterVolumePercentage = volumeBus.GetSerializedMasterVolume();
             WorldVolumePercentage = volumeBus.GetSerializedWorldVolume();
-#endif
         }
 
         public void Dispose()
         {
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
             volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
-#endif
         }
 
         private void OnWorldVolumeChanged(float volume) => WorldVolumePercentage = volume;

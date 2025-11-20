@@ -28,6 +28,9 @@ namespace DCL.UI.ProfileElements
             public WithColor SetProfile(ProfileThumbnailViewModel thumbnail) =>
                 new (thumbnail, ProfileColor);
 
+            public WithColor SetLoading(Color color) =>
+                new (ReadyToLoad(), color);
+
             public bool Equals(WithColor other) =>
                 Thumbnail.Equals(other.Thumbnail) && ProfileColor.Equals(other.ProfileColor);
 

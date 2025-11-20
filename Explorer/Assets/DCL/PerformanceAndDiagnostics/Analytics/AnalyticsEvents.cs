@@ -12,6 +12,7 @@
             public const string SYSTEM_INFO_REPORT = "system_info_report";
             public const string INITIAL_LOADING = "initial_loading";
             public const string PERFORMANCE_REPORT = "performance_report";
+            public const string PLUGINS_INIT = "plugins_init";
             public const string ERROR = "error";
             public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
@@ -126,6 +127,13 @@
             public const string TRANSLATE_MESSAGE_MANUALLY = "translate_message_manually";
             public const string SEE_ORIGINAL_MESSAGE = "see_original_message";
             public const string SWITCH_AUTOTRANSLATE = "switch_autotranslate";
+        }
+
+        public static class Outfits
+        {
+            public const string SAVE_OUTFIT = "save_outfit";
+            public const string EQUIP_OUTFIT = "equip_outfit";
+            public const string OUTFIT_CLICK_NAME = "outfit_click_name";
         }
     }
 }

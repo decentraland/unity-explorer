@@ -24,6 +24,7 @@ namespace DCL.CharacterCamera
         public ThirdPersonCameraShoulder Shoulder;
         public readonly Camera Camera;
         public bool IsDirty;
+        public bool IsTransitioningToFirstPerson;
 
         public CameraComponent(Camera camera) : this()
         {

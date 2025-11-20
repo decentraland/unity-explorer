@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
 namespace DCL.Landscape
@@ -14,5 +15,8 @@ namespace DCL.Landscape
         public int ParcelSize { get; }
         public TerrainModel? TerrainModel { get; }
         public TreeData? Trees { get; }
+        public IReadOnlyList<Transform> Cliffs { get; }
+
+        public int GetChunkSize();
     }
 }

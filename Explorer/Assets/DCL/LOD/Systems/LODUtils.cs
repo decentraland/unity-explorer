@@ -9,7 +9,9 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Linq;
 using DCL.LOD.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -18,6 +20,7 @@ namespace DCL.LOD.Systems
     public static class LODUtils
     {
         public static readonly URLSubdirectory LOD_EMBEDDED_SUBDIRECTORIES = URLSubdirectory.FromString("lods");
+        public static byte LODZeroBucketThreshold;
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         private static string LOD_SHADER = "DCL/Scene_TexArray";
@@ -69,5 +72,8 @@ namespace DCL.LOD.Systems
             if (!sceneDefinitionComponent.IsSDK7 && sceneLODInfo.HasLOD(0))
                 SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
+
+        public static bool ShouldGoToTheBridge(IPartitionComponent partitionComponent) =>
+            !partitionComponent.IsBehind && partitionComponent.Bucket <= LODZeroBucketThreshold;
     }
 }

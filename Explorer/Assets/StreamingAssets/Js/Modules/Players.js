@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/players.proto
+
 module.exports.getPlayerData = async function (message) {
     return UnityPlayers.PlayerData(message.userId);
 }

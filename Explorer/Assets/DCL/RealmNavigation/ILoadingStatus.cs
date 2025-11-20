@@ -10,5 +10,7 @@ namespace DCL.RealmNavigation
         void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad);
 
         float SetCurrentStage(LoadingStatus.LoadingStage stage);
+
+        bool IsLoadingScreenOn();
     }
 }

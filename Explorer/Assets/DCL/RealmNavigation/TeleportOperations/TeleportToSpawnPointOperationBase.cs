@@ -4,14 +4,15 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Utility.Exceptions;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Microsoft.ClearScript;
+using System;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -47,8 +48,9 @@ namespace DCL.RealmNavigation.TeleportOperations
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
+            // See https://github.com/decentraland/unity-explorer/issues/6124 we should teleport the player even if the scene cannot be loaded due to a missing manifest
             // We need to prevent the error propagation, otherwise the load state remains invalid which provokes issues like the incapability of typing another command in the chat
-            if (res.Error is { Exception: ScriptEngineException })
+            if (res.Error is { Exception: ScriptEngineException } or { Exception: ManifestNotFoundException })
             {
                 ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Error on teleport to spawn point {parcel}: {res.Error.Value.Exception}");
                 return EnumResult<TaskError>.SuccessResult();
@@ -64,20 +66,31 @@ namespace DCL.RealmNavigation.TeleportOperations
         )
         {
             bool isWorld = realmController.RealmData.IsWorld();
-            Result<WaitForSceneReadiness?> waitForSceneReadiness;
+            WaitForSceneReadiness? waitForSceneReadiness;
 
-            if (isWorld)
-                waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct).SuppressToResultAsync(reportCategory);
-            else
-                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct).SuppressToResultAsync(reportCategory);
-
-            if (!waitForSceneReadiness.Success)
-                return waitForSceneReadiness.AsEnumResult(TaskError.MessageError);
+            try
+            {
+                if (isWorld)
+                    waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
+                else
+                    waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
+            }
+            catch (OperationCanceledException) { return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled); }
+            catch (TimeoutException e)
+            {
+                ReportHub.LogException(e, reportCategory);
+                return EnumResult<TaskError>.ErrorResult(TaskError.Timeout, e.Message);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, reportCategory);
+                return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, e.Message, e);
+            }
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             realmController.GlobalWorld.EcsWorld.Add(cameraEntity.Object, cameraSamplingData);
-            return await waitForSceneReadiness.Value.ToUniTask();
+            return await waitForSceneReadiness.ToUniTask();
         }
 
         private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(

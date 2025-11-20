@@ -23,6 +23,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string ownerName;
             public int membersCount;
             public CommunityPrivacy privacy;
+            public CommunityVisibility visibility;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
             [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
@@ -40,6 +41,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 string name,
                 string description,
                 CommunityPrivacy privacy,
+                CommunityVisibility visibility,
                 CommunityMemberRole role,
                 string ownerAddress,
                 int membersCount,
@@ -50,6 +52,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 this.name = name;
                 this.description = description;
                 this.privacy = privacy;
+                this.visibility = visibility;
                 this.role = role;
                 this.ownerAddress = ownerAddress;
                 this.membersCount = membersCount;

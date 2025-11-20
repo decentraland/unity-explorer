@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DCL.AvatarRendering.Wearables.Components;
 using UnityEngine;
 
@@ -16,5 +17,10 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         void SetEyesColor(Color newColor);
 
         void SetBodyshapeColor(Color newColor);
+
+        IReadOnlyCollection<string> ForceRenderCategories { get; }
+        void SetForceRender(IReadOnlyCollection<string> categories);
+
+        void Clear();
     }
 }
