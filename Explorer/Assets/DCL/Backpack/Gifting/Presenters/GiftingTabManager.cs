@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Views;
 using DCL.UI;
@@ -180,32 +179,47 @@ namespace DCL.Backpack.Gifting.Presenters
         }
     }
 
+    /// <summary>
+    ///     Represents the "Control" surface of a grid presenter.
+    ///     Used by the TabsManager and Controller to orchestrate the UI.
+    ///     Non-generic so different types of grids (Wearables/Emotes) can be treated polymorphically.
+    /// </summary>
     public interface IGiftingGridPresenter
     {
-        void PrepareForLoading(EquippedItemContext context);
+        // Lifecycle
         void Activate();
         void Deactivate();
-        void SetSearchText(string text);
+
+        // UI References (For Tabs Animation)
         RectTransform GetRectTransform();
         CanvasGroup GetCanvasGroup();
+
+        // Interaction / Search
+        void SetSearchText(string text);
+        void ForceSearch(string? searchText);
+
+        // Selection State
+        string? SelectedUrn { get; }
         event Action<string?> OnSelectionChanged;
         event Action<bool> OnLoadingStateChanged;
+
+        // Data Access needed by Controller (Strings/Sprites are type-agnostic)
         int CurrentItemCount { get; }
-        string? SelectedUrn { get; }
         string? GetItemNameByUrn(string urn);
-        void ForceSearch(string? searchText);
         Sprite? GetThumbnailByUrn(string urn);
         bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style);
     }
 
-    // Generic interface for the Adapter, inheriting the base
-    public interface IGiftingGridPresenter<TViewModel> : IGiftingGridPresenter where TViewModel : IGiftableItemViewModel
+    /// <summary>
+    ///     Represents the "Data" surface of a grid presenter.
+    ///     Used by the SuperScrollGridAdapter to bind specific ViewModels to cells.
+    ///     Generic because the Adapter needs to know the exact struct type for performance.
+    /// </summary>
+    public interface IGiftingGridPresenter<out TViewModel> : IGiftingGridPresenter
+        where TViewModel : IGiftableItemViewModel
     {
         int ItemCount { get; }
         TViewModel GetViewModel(int itemIndex);
         void RequestThumbnailLoad(int itemIndex);
-        string? GetItemNameByUrn(string urn);
-        void ForceSearch(string? searchText);
-        Sprite? GetThumbnailByUrn(string urn);
     }
 }

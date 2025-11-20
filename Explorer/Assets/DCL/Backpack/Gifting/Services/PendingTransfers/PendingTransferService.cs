@@ -45,41 +45,21 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             return count;
         }
 
-        public void Prune(IReadOnlyDictionary<URN, NftBlockchainOperationEntry> wearableRegistry,
-            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> emoteRegistry)
+        public void Prune(
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
         {
             var toRemove = new List<string>();
 
-            foreach (string? pending in pendingFullUrns)
+            foreach (string? pendingUrn in pendingFullUrns)
             {
-                // Check if we still own this specific instance
-                bool stillOwned = false;
+                // Check if we still own this specific pending item
+                bool stillOwned = IsUrnInRegistry(pendingUrn, wearableRegistry) ||
+                                  IsUrnInRegistry(pendingUrn, emoteRegistry);
 
-                foreach (var kvp in wearableRegistry)
-            {
-                    if (kvp.Value.Urn == pending)
-                    {
-                        stillOwned = true;
-                        break;
-                    }
-                }
-
+                // If it's not in our owned registry anymore, the transfer finished (or failed/gone)
                 if (!stillOwned)
-                {
-                    foreach (var kvp in emoteRegistry)
-                    {
-                        if (kvp.Value.Urn == pending)
-                        {
-                            stillOwned = true;
-                            break;
-                        }
-                    }
-                }
-
-                // If we don't own it anymore, the transfer is
-                // done (or failed/gone), remove from pending
-                if (!stillOwned)
-                    toRemove.Add(pending);
+                    toRemove.Add(pendingUrn);
             }
 
             if (toRemove.Count > 0)
@@ -88,6 +68,22 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 persistence.SavePendingUrns(pendingFullUrns);
                 ReportHub.Log(ReportCategory.GIFTING, $"Pruned {toRemove.Count} confirmed gifts.");
             }
+        }
+
+        private bool IsUrnInRegistry(string pendingFullUrn, IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> registry)
+        {
+            // We don't know the BaseURN easily from the string without parsing, 
+            // so we have to iterate the values (Instances). 
+            // This is still fast enough for the occasional Prune call.
+            foreach (var instances in registry.Values)
+            {
+                foreach (var entry in instances.Values)
+                {
+                    if (entry.Urn == pendingFullUrn) return true;
+                }
+            }
+
+            return false;
         }
 
         public void LogPendingTransfers()

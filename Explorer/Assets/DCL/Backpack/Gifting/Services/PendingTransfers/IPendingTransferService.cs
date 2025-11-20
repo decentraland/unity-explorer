@@ -10,8 +10,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         bool IsPending(string fullUrn);
         int GetPendingCount(string baseUrn);
 
-        void Prune(IReadOnlyDictionary<URN, NftBlockchainOperationEntry> wearableRegistry,
-            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> emoteRegistry);
+        void Prune(
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry);
 
         void LogPendingTransfers();
     }

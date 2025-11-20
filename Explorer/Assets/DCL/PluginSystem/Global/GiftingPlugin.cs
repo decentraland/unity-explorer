@@ -84,6 +84,8 @@ namespace DCL.PluginSystem.Global
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.pendingTransferService = pendingTransferService;
+            this.equippedStatusProvider = equippedStatusProvider;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
@@ -141,10 +143,10 @@ namespace DCL.PluginSystem.Global
                 wearablesProvider,
                 emoteProvider,
                 web3IdentityCache,
-                settings.EmbeddedEmotesAsURN(),
                 loadThumbnailCommand,
                 wearableCatalog,
-                equippedWearables);
+                pendingTransferService,
+                equippedStatusProvider);
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
                 profileRepositoryWrapper,
@@ -158,11 +160,9 @@ namespace DCL.PluginSystem.Global
                 pendingTransferService,
                 equippedStatusProvider,
                 profileRepository,
-                gridFactory,
                 mvcManager,
                 wearableStorage,
-                emoteStorage,
-                selfProfile
+                emoteStorage
             );
 
             giftTransferStatusController = new GiftTransferController(

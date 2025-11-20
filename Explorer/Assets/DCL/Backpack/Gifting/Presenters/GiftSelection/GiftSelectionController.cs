@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -34,9 +35,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IAvatarEquippedStatusProvider  equippedStatusProvider;
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
-        private readonly IGiftingGridPresenterFactory gridFactory;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
         
         private GiftingHeaderPresenter? headerPresenter;
         private GiftingFooterPresenter? footerPresenter;
@@ -48,141 +47,96 @@ namespace DCL.Backpack.Gifting.Presenters
         private GiftingErrorsController? giftingErrorsController;
 
         private CancellationTokenSource? lifeCts;
-        private EquippedItemContext equippedItemsContext;
 
         public GiftSelectionController(ViewFactoryMethod viewFactory,
             GiftSelectionComponentFactory componentFactory,
             IPendingTransferService pendingTransferService,
             IAvatarEquippedStatusProvider  equippedStatusProvider,
             IProfileRepository profileRepository,
-            IGiftingGridPresenterFactory gridFactory,
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
-            IEmoteStorage emoteStorage,
-            ISelfProfile selfProfile) : base(viewFactory)
+            IEmoteStorage emoteStorage) : base(viewFactory)
         {
             this.componentFactory = componentFactory;
             this.pendingTransferService = pendingTransferService;
             this.equippedStatusProvider = equippedStatusProvider;
-            this.gridFactory = gridFactory;
             this.profileRepository = profileRepository;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
-            this.selfProfile = selfProfile;
         }
 
         #region MVC
-
-
+        
         protected override void OnViewInstantiated()
         {
             if (viewInstance == null) return;
-
-            var wearablesAdapter = new SuperScrollGridAdapter<WearableViewModel>(viewInstance.WearablesGrid?.Grid);
-            var emotesAdapter = new SuperScrollGridAdapter<EmoteViewModel>(viewInstance.EmotesGrid?.Grid);
 
             headerPresenter = componentFactory.CreateHeader(viewInstance.HeaderView);
             footerPresenter = componentFactory.CreateFooter(viewInstance.FooterView);
             giftingErrorsController = componentFactory.CreateErrorController(viewInstance);
 
-            wearablesGridPresenter = gridFactory.CreateWearablesPresenter(viewInstance?.WearablesGrid, wearablesAdapter);
-            emotesGridPresenter = gridFactory.CreateEmotesPresenter(viewInstance?.EmotesGrid, emotesAdapter);
-
+            // Create presenters and capture references
             tabsManager = componentFactory.CreateTabs(viewInstance,
-                wearablesGridPresenter,
-                emotesGridPresenter);
+                out var wPresenter,
+                out var ePresenter);
 
-            tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
-            tabsManager.OnSectionActivated   += HandleSectionActivated;
+            wearablesGridPresenter = wPresenter;
+            emotesGridPresenter = ePresenter;
         }
 
         protected override async void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
-            viewInstance!.ErrorNotification.Hide(true);
+            giftingErrorsController?.Hide(true);
 
-            //await equippedStatusProvider.InitializeAsync(lifeCts.Token);
-            await CreateEquippedContextAsync(lifeCts.Token);
-            if (lifeCts.IsCancellationRequested) return;
-
-            // pendingTransferService.Prune( wearableStorage.AllOwnedNftRegistry,
-            //     emoteStorage.AllOwnedNftRegistry);
-
-            PendingGiftsCache.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
-
-            wearablesGridPresenter?.PrepareForLoading(equippedItemsContext);
-            emotesGridPresenter?.PrepareForLoading(equippedItemsContext);
-
-            headerPresenter?.ClearSearchImmediate();
-            wearablesGridPresenter?.Deactivate();
-            emotesGridPresenter?.Deactivate();
-
-            headerPresenter?.SetupAsync(inputData.userAddress,
-                inputData.userName,
-                lifeCts.Token).Forget();
-
-            footerPresenter?.SetInitialState();
-
-            if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
-            if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
-
-            if (wearablesGridPresenter != null)
+            try
             {
-                wearablesGridPresenter.OnSelectionChanged += OnSelectionChanged;
-                wearablesGridPresenter.OnLoadingStateChanged += OnLoadingStateChanged;
-            }
+                // 1. Initialize Data
+                await equippedStatusProvider.InitializeAsync(lifeCts.Token);
+                if (lifeCts.IsCancellationRequested) return;
 
-            if (emotesGridPresenter != null)
+                pendingTransferService.Prune(
+                    wearableStorage.AllOwnedNftRegistry,
+                    emoteStorage.AllOwnedNftRegistry);
+
+                // 2. Reset UI
+                headerPresenter?.ClearSearchImmediate();
+                wearablesGridPresenter?.Deactivate();
+                emotesGridPresenter?.Deactivate();
+                footerPresenter?.SetInitialState();
+
+                headerPresenter?.SetupAsync(inputData.userAddress, inputData.userName, lifeCts.Token).Forget();
+
+                // 3. Subscribe Events
+                if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
+                if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
+
+                if (wearablesGridPresenter != null)
+                {
+                    wearablesGridPresenter.OnSelectionChanged += OnSelectionChanged;
+                    wearablesGridPresenter.OnLoadingStateChanged += OnLoadingStateChanged;
+                }
+
+                if (emotesGridPresenter != null)
+                {
+                    emotesGridPresenter.OnSelectionChanged += OnSelectionChanged;
+                    emotesGridPresenter.OnLoadingStateChanged += OnLoadingStateChanged;
+                }
+
+                if (tabsManager != null)
+                {
+                    tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
+                    tabsManager.OnSectionActivated += HandleSectionActivated;
+
+                    // 4. Start UI
+                    tabsManager.Initialize();
+                }
+            }
+            catch (Exception e)
             {
-                emotesGridPresenter.OnSelectionChanged += OnSelectionChanged;
-                emotesGridPresenter.OnLoadingStateChanged += OnLoadingStateChanged;
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
             }
-
-            tabsManager.Initialize();
-
-            // lifeCts = new CancellationTokenSource();
-            // giftingErrorsController?.Hide(true);
-            //
-            // try
-            // {
-            //     // 1. Initialize Equipped Status
-            //     await equippedStatusProvider.InitializeAsync(lifeCts.Token);
-            //     if (lifeCts.IsCancellationRequested) return;
-            //
-            //     // 2. Prune Pending Transfers (using injected storage data)
-            //     pendingTransferService.Prune(
-            //         wearableStorage.AllOwnedNftRegistry,
-            //         emoteStorage.AllOwnedNftRegistry);
-            //
-            //     // 3. Setup UI
-            //     headerPresenter?.ClearSearchImmediate();
-            //
-            //     // Note: Presenters now have dependencies injected, no need for manual PrepareForLoading
-            //     tabsManager?.ActivePresenter?.Deactivate();
-            //
-            //     headerPresenter?.SetupAsync(inputData.userAddress, inputData.userName, lifeCts.Token).Forget();
-            //     footerPresenter?.SetInitialState();
-            //
-            //     // 4. Wire Events
-            //     if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
-            //     if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
-            //
-            //     // Note: Events on grid presenters are handled inside TabsManager or we iterate them here if needed
-            //     // Ideally TabsManager exposes "OnActiveSelectionChanged" to avoid iterating specific presenters.
-            //     // For now, keeping your logic:
-            //     if (tabsManager?.ActivePresenter != null)
-            //     {
-            //         // You might need to subscribe to all presenters created in factory
-            //         // Or better, expose an event on TabsManager that aggregates them.
-            //     }
-            //
-            //     tabsManager?.Initialize();
-            // }
-            // catch (Exception e)
-            // {
-            //     ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
-            // }
         }
 
         private void HandleSectionDeactivated(GiftingSection section, IGiftingGridPresenter _)
@@ -193,14 +147,6 @@ namespace DCL.Backpack.Gifting.Presenters
         private void HandleSectionActivated(GiftingSection section, IGiftingGridPresenter presenter)
         {
             //presenter.ForceSearch(string.Empty);
-        }
-
-        private async UniTask CreateEquippedContextAsync(CancellationToken ct)
-        {
-            equippedItemsContext = new EquippedItemContext();
-            var profile = await selfProfile.ProfileAsync(ct);
-            if (profile != null)
-                equippedItemsContext.Populate(profile.Avatar);
         }
 
         protected override void OnViewClose()
@@ -220,13 +166,16 @@ namespace DCL.Backpack.Gifting.Presenters
                 emotesGridPresenter.OnLoadingStateChanged -= OnLoadingStateChanged;
             }
 
+            if (tabsManager != null)
+            {
+                tabsManager.OnSectionDeactivated -= HandleSectionDeactivated;
+                tabsManager.OnSectionActivated -= HandleSectionActivated;
+            }
+
             wearablesGridPresenter?.Deactivate();
             emotesGridPresenter?.Deactivate();
 
-            tabsManager.OnSectionDeactivated -= HandleSectionDeactivated;
-            tabsManager.OnSectionActivated -= HandleSectionActivated;
-            
-            giftingErrorsController!.Hide(true);
+            giftingErrorsController?.Hide(true);
             lifeCts.SafeCancelAndDispose();
         }
 
@@ -321,6 +270,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
             IReadOnlyDictionary<URN, NftBlockchainOperationEntry> ownedCopies;
 
+            // 1. Get the dictionary of instances (TokenID -> Entry) for this specific Base URN
             if (itemType == "wearable")
             {
                 if (!wearableStorage.TryGetOwnedNftRegistry(itemBaseUrn, out ownedCopies))
@@ -336,12 +286,14 @@ namespace DCL.Backpack.Gifting.Presenters
 
             foreach (var entry in ownedCopies.Values)
             {
-                // IMPORTANT: entry.Urn here is the *instance* URN
-                var entryUrn = new URN(entry.Urn);
+                // entry.Urn is the Full URN (e.g. urn:...:tokenId)
+                string fullUrnString = entry.Urn;
 
-                if (!equippedItemsContext.IsSpecificInstanceEquipped(entryUrn) &&
-                    !PendingGiftsCache.Contains(entryUrn))
+                // Check dependencies: Is it currently on avatar? Is it currently pending?
+                if (!equippedStatusProvider.IsEquipped(fullUrnString) &&
+                    !pendingTransferService.IsPending(fullUrnString))
                 {
+                    // Pick the most recently transferred/acquired one
                     if (bestCandidate == null || entry.TransferredAt > bestCandidate.Value.TransferredAt)
                         bestCandidate = entry;
                 }
@@ -355,37 +307,6 @@ namespace DCL.Backpack.Gifting.Presenters
             }
 
             return false;
-        }
-        
-        /// <summary>
-        /// Finds the newest, unequipped NFT entry from a collection of owned copies.
-        /// </summary>
-        /// <param name="ownedCopies">The dictionary of all owned instances for a single item type.</param>
-        /// <param name="bestEntry">The best unequipped entry found.</param>
-        /// <returns>True if an unequipped copy was found.</returns>
-        private bool TryFindBestUnequippedNft(
-            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> ownedCopies,
-            out NftBlockchainOperationEntry bestEntry)
-        {
-            bestEntry = default;
-            bool foundCandidate = false;
-
-            // Loop through all owned copies of the item
-            foreach (var currentEntry in ownedCopies.Values)
-            {
-                // The core logic: check if this specific instance is NOT equipped
-                if (!equippedItemsContext.IsSpecificInstanceEquipped(currentEntry.Urn))
-                {
-                    // It's a valid, giftable candidate. Is it the newest one we've found so far?
-                    if (!foundCandidate || currentEntry.TransferredAt > bestEntry.TransferredAt)
-                    {
-                        bestEntry = currentEntry;
-                        foundCandidate = true;
-                    }
-                }
-            }
-
-            return foundCandidate;
         }
 
         private void HandleSearchChanged(string searchText)

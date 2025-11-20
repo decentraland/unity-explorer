@@ -17,6 +17,8 @@ namespace DCL.Passport
         public GiftingErrorsController(WarningNotificationView errorNotification)
         {
             this.errorNotification = errorNotification;
+            showErrorCts  = new CancellationTokenSource();
+            errorNotification.Hide(true);
         }
 
         public void Show(string message = "")

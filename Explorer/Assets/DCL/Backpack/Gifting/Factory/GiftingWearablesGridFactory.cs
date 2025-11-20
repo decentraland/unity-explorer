@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using CommunicationData.URLHelpers;
+﻿using System.Collections.Generic;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.Grid;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
 using DCL.Web3.Identities;
@@ -24,57 +23,65 @@ namespace DCL.Backpack.Gifting.Factory
 
     public sealed class GiftingGridPresenterFactory : IGiftingGridPresenterFactory
     {
+        private readonly IEventBus eventBus;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IReadOnlyCollection<URN> embeddedEmotes;
-        private readonly IEventBus eventBus;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
-        private readonly IEquippedWearables equippedWearables;
+
+        // New Dependencies
+        private readonly IPendingTransferService pendingTransferService;
+        private readonly IAvatarEquippedStatusProvider equippedStatusProvider;
 
         public GiftingGridPresenterFactory(
             IEventBus eventBus,
             IWearablesProvider wearablesProvider,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
-            IReadOnlyCollection<URN> embeddedEmotes,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IWearableStylingCatalog wearableStylingCatalog,
-            IEquippedWearables equippedWearables)
+            IPendingTransferService pendingTransferService,
+            IAvatarEquippedStatusProvider equippedStatusProvider)
         {
+            this.eventBus = eventBus;
             this.wearablesProvider = wearablesProvider;
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
-            this.embeddedEmotes = embeddedEmotes;
-            this.eventBus = eventBus;
             this.loadThumbnailCommand = loadThumbnailCommand;
-            this.wearableStylingCatalog  = wearableStylingCatalog;
-            this.equippedWearables = equippedWearables;
+            this.wearableStylingCatalog = wearableStylingCatalog;
+            this.pendingTransferService = pendingTransferService;
+            this.equippedStatusProvider = equippedStatusProvider;
         }
         
         public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
         {
             adapter.UseWearableStyling(wearableStylingCatalog);
-            return new WearableGridPresenter(view,
+
+            return new WearableGridPresenter(
+                view,
                 adapter,
-                wearablesProvider,
                 eventBus,
                 loadThumbnailCommand,
-                wearableStylingCatalog,
-                equippedWearables);
+                equippedStatusProvider,
+                pendingTransferService,
+                wearablesProvider,
+                wearableStylingCatalog);
         }
 
         public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<EmoteViewModel> adapter)
         {
             adapter.UseWearableStyling(wearableStylingCatalog);
-            return new EmoteGridPresenter(view,
+
+            return new EmoteGridPresenter(
+                view,
                 adapter,
-                emoteProvider,
-                web3IdentityCache,
-                embeddedEmotes,
                 eventBus,
                 loadThumbnailCommand,
+                equippedStatusProvider,
+                pendingTransferService,
+                emoteProvider,
+                web3IdentityCache,
                 wearableStylingCatalog);
         }
     }

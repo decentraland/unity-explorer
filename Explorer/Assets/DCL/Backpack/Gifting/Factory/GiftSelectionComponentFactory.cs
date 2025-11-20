@@ -11,28 +11,26 @@ namespace DCL.Backpack.Gifting.Factory
 {
     public class GiftSelectionComponentFactory
     {
-        private readonly IProfileRepository profileRepo;
-        private readonly ProfileRepositoryWrapper profileRepoWrapper;
+        private readonly IProfileRepository profileRepository;
+        private readonly ProfileRepositoryWrapper profileWrapper;
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
 
-        public GiftSelectionComponentFactory(IProfileRepository profileRepo,
-            ProfileRepositoryWrapper profileRepoWrapper,
+        public GiftSelectionComponentFactory(
+            IProfileRepository profileRepository,
+            ProfileRepositoryWrapper profileWrapper,
             IInputBlock inputBlock,
             IGiftingGridPresenterFactory gridFactory)
         {
-            this.profileRepo = profileRepo;
-            this.profileRepoWrapper = profileRepoWrapper;
+            this.profileRepository = profileRepository;
+            this.profileWrapper = profileWrapper;
             this.inputBlock = inputBlock;
             this.gridFactory = gridFactory;
         }
 
         public GiftingHeaderPresenter CreateHeader(GiftingHeaderView view)
         {
-            return new GiftingHeaderPresenter(view,
-                profileRepo,
-                profileRepoWrapper,
-                inputBlock);
+            return new GiftingHeaderPresenter(view, profileRepository, profileWrapper, inputBlock);
         }
 
         public GiftingFooterPresenter CreateFooter(GiftingFooterView view)
@@ -45,24 +43,22 @@ namespace DCL.Backpack.Gifting.Factory
             return new GiftingErrorsController(view.ErrorNotification);
         }
 
+        // FIX: This method now uses 'out' parameters to return the presenters
+        // so the Controller can subscribe to their events.
         public GiftingTabsManager CreateTabs(GiftingView view,
-            IGiftingGridPresenter wearables,
-            IGiftingGridPresenter emotes)
+            out IGiftingGridPresenter wearablesPresenter,
+            out IGiftingGridPresenter emotesPresenter)
         {
-            return new GiftingTabsManager(view, wearables, emotes);
-        }
+            // 1. Create Adapters
+            var wAdapter = new SuperScrollGridAdapter<WearableViewModel>(view.WearablesGrid?.Grid);
+            var eAdapter = new SuperScrollGridAdapter<EmoteViewModel>(view.EmotesGrid?.Grid);
 
-        // public GiftingTabsManager CreateTabs(GiftingView view,
-        //     out IGiftingGridPresenter wearables, 
-        //     out IGiftingGridPresenter emotes)
-        // {
-        //     var wAdapter = new SuperScrollGridAdapter<WearableViewModel>(view.WearablesGrid?.Grid);
-        //     var eAdapter = new SuperScrollGridAdapter<EmoteViewModel>(view.EmotesGrid?.Grid);
-        //
-        //     wearables = gridFactory.CreateWearablesPresenter(view.WearablesGrid, wAdapter);
-        //     emotes = gridFactory.CreateEmotesPresenter(view.EmotesGrid, eAdapter);
-        //
-        //     return new GiftingTabsManager(view, wearables, emotes);
-        // }
+            // 2. Create Presenters via Grid Factory
+            wearablesPresenter = gridFactory.CreateWearablesPresenter(view.WearablesGrid, wAdapter);
+            emotesPresenter = gridFactory.CreateEmotesPresenter(view.EmotesGrid, eAdapter);
+
+            // 3. Return Manager
+            return new GiftingTabsManager(view, wearablesPresenter, emotesPresenter);
+        }
     }
 }

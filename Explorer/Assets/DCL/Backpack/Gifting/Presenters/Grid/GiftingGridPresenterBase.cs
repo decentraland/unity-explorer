@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
@@ -21,6 +20,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
     {
         private const int SEARCH_DEBOUNCE_MS = 500;
 
+        // Dependencies
         protected readonly GiftingGridView view;
         protected readonly SuperScrollGridAdapter<TViewModel> adapter;
         protected readonly IEventBus eventBus;
@@ -28,6 +28,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected readonly IAvatarEquippedStatusProvider equippedStatusProvider;
         protected readonly IPendingTransferService pendingTransferService;
 
+        // State
         protected readonly Dictionary<string, TViewModel> viewModelsByUrn = new();
         protected readonly List<string> viewModelUrnOrder = new();
         protected int currentPage  ;
@@ -37,11 +38,14 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected bool canLoadNextPage = true;
         protected int pendingThumbnailLoads  ;
 
+        // Async
         protected CancellationTokenSource? lifeCts;
         protected CancellationTokenSource? fetchCts;
         protected CancellationTokenSource? searchCts;
         private IDisposable? thumbnailLoadedSubscription;
+        private IDisposable? giftSuccessfulSubscription;
 
+        // Events
         public event Action<string?>? OnSelectionChanged;
         public event Action<bool>? OnLoadingStateChanged;
 
@@ -71,6 +75,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         {
             lifeCts = new CancellationTokenSource();
             thumbnailLoadedSubscription = eventBus.Subscribe<GiftingEvents.ThumbnailLoadedEvent>(OnThumbnailLoaded);
+            giftSuccessfulSubscription = eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnGiftSuccessful); 
             adapter.OnNearEndOfScroll += OnNearEndOfScroll;
             adapter.OnItemSelected += OnItemSelected;
 
@@ -79,9 +84,14 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             RequestNextPageAsync(lifeCts.Token).Forget();
         }
 
+        private void OnGiftSuccessful(GiftingEvents.OnSuccessfulGift obj)
+        {
+        }
+
         public void Deactivate()
         {
             thumbnailLoadedSubscription?.Dispose();
+            giftSuccessfulSubscription?.Dispose();
             adapter.OnNearEndOfScroll -= OnNearEndOfScroll;
             adapter.OnItemSelected -= OnItemSelected;
 
@@ -113,7 +123,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 ClearData();
                 adapter.RefreshData();
 
-                // Await here to catch exceptions inside the try block
                 await RequestNextPageAsync(ct);
             }
             catch (OperationCanceledException)
@@ -138,7 +147,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             {
                 OnLoadingStateChanged?.Invoke(true);
 
-                // Abstract call to get data
                 (var items, int total) = await FetchDataAsync(currentPage, currentSearch, localCt);
 
                 totalCount = total;
@@ -148,7 +156,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     string urn = item.Urn;
                     if (viewModelsByUrn.ContainsKey(urn)) continue;
 
-                    // Common Logic
                     int totalOwned = GetItemAmount(item);
                     int pendingCount = pendingTransferService.GetPendingCount(urn);
                     int displayAmount = totalOwned - pendingCount;
@@ -161,7 +168,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     viewModelUrnOrder.Add(urn);
                     viewModelsByUrn[urn] = CreateViewModel(item, displayAmount, isEquipped, isGiftable);
                 }
-
+                
                 UpdateEmptyState(currentPage == 1 && viewModelUrnOrder.Count == 0);
 
                 await UniTask.Yield(PlayerLoopTiming.Update, localCt);
@@ -177,11 +184,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     OnAllLoadsFinished();
             }
         }
-
-        protected abstract UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int page, string search, CancellationToken ct);
-        protected abstract TViewModel CreateViewModel(IGiftable item, int amount, bool isEquipped, bool isGiftable);
-        protected abstract int GetItemAmount(IGiftable item);
-        protected abstract void UpdateEmptyState(bool isEmpty);
 
         private void OnNearEndOfScroll()
         {
@@ -204,7 +206,10 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             pendingThumbnailLoads++;
+
+            // FIX: Use Abstract method to update state without casting
             viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
+            
             loadThumbnailCommand.ExecuteAsync(vm.Giftable, urn, lifeCts!.Token).Forget();
         }
 
@@ -213,9 +218,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (viewModelsByUrn.TryGetValue(evt.Urn, out var vm))
             {
                 var final = evt.Success ? ThumbnailState.Loaded : ThumbnailState.Error;
-                // Note: TViewModel needs a way to update state. 
-                // Ideally IGiftableItemViewModel has a 'WithState' or we use the abstract CreateViewModel again.
-                // For now assuming TViewModel is struct and we replace it.
                 viewModelsByUrn[evt.Urn] = UpdateViewModelState(vm, final, evt.Sprite);
 
                 int index = viewModelUrnOrder.IndexOf(evt.Urn);
@@ -225,8 +227,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 if (pendingThumbnailLoads == 0) OnAllLoadsFinished();
             }
         }
-
-        protected abstract TViewModel UpdateViewModelState(TViewModel vm, ThumbnailState state, Sprite? sprite);
 
         private void OnAllLoadsFinished()
         {
@@ -247,6 +247,10 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             OnSelectionChanged?.Invoke(null);
             pendingThumbnailLoads = 0;
             canLoadNextPage = true;
+
+            // FIX: Ensure "No Results" is hidden when data is cleared/reset
+            view.NoResultsContainer.SetActive(false);
+            view.RegularResultsContainer.SetActive(true);
         }
 
         private void HardClear()
@@ -256,12 +260,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             adapter.RefreshAllShownItem();
         }
 
-        // Interface impl
-        public void PrepareForLoading(EquippedItemContext context)
-        {
-            /* No-op, we use injected service now */
-        }
-
+        // Interface Implementation
         public TViewModel GetViewModel(int itemIndex)
         {
             return viewModelsByUrn[viewModelUrnOrder[itemIndex]];
@@ -292,6 +291,12 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             return view.GetComponent<CanvasGroup>();
         }
 
+        // Abstract Requirements
+        protected abstract UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int page, string search, CancellationToken ct);
+        protected abstract TViewModel CreateViewModel(IGiftable item, int amount, bool isEquipped, bool isGiftable);
+        protected abstract int GetItemAmount(IGiftable item);
+        protected abstract void UpdateEmptyState(bool isEmpty);
+        protected abstract TViewModel UpdateViewModelState(TViewModel vm, ThumbnailState state, Sprite? sprite);
         public abstract bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style);
     }
 }
