@@ -118,6 +118,7 @@ using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
+using DCL.Web3.Authenticators;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -879,7 +880,8 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.VerifiedEthereumApi,
                     selfProfile,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource,
+                    bootstrapContainer.Web3Authenticator),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),

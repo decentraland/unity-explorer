@@ -27,6 +27,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
+        private readonly Action OnCancelTransfer;
         
         private IDisposable? subProgress;
         private IDisposable? subSucceeded;
@@ -43,7 +44,8 @@ namespace DCL.Backpack.Gifting.Presenters
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
-            GiftTransferRequestCommand giftTransferRequestCommand
+            GiftTransferRequestCommand giftTransferRequestCommand,
+            Action OnCancelTransfer
         )
             : base(viewFactory)
         {
@@ -52,6 +54,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
+            this.OnCancelTransfer = OnCancelTransfer;
         }
 
         protected override void OnViewInstantiated()

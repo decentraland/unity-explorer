@@ -1,4 +1,5 @@
-﻿using DCL.Web3.Authenticators;
+﻿using System;
+using DCL.Web3.Authenticators;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -14,5 +15,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             core.SetVerificationListener(callback);
+
+        public void CancelCurrentWeb3Operation()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

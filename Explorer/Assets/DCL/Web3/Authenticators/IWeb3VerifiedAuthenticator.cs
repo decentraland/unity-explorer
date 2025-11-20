@@ -7,5 +7,7 @@ namespace DCL.Web3.Authenticators
         public delegate void VerificationDelegate(int code, DateTime expiration, string requestID);
 
         void SetVerificationListener(VerificationDelegate? callback);
+
+        void CancelCurrentWeb3Operation();
     }
 }

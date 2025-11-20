@@ -204,7 +204,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             pendingThumbnailLoads++;
-            //viewModelsByUrn[urn] = (TViewModel)vm.WithState(ThumbnailState.Loading); // Cast might need interface adjustment or abstract method
+            viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
             loadThumbnailCommand.ExecuteAsync(vm.Giftable, urn, lifeCts!.Token).Forget();
         }
 

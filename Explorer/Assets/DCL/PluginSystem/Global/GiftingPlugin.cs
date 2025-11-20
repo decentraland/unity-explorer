@@ -27,6 +27,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -55,6 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEthereumApi ethereumApi;
         private readonly ISelfProfile selfProfile;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IWeb3VerifiedAuthenticator dappWeb3Authenticator;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -77,7 +79,8 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
             ISelfProfile selfProfile,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IWeb3VerifiedAuthenticator dappWeb3Authenticator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -96,6 +99,7 @@ namespace DCL.PluginSystem.Global
             this.ethereumApi = ethereumApi;
             this.selfProfile = selfProfile;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.dappWeb3Authenticator = dappWeb3Authenticator;
         }
 
         public void Dispose()
@@ -119,7 +123,7 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
-
+            
             var giftTransferService = new Web3GiftTransferService(ethereumApi);
 
             var wearableCatalog = new WearableStylingCatalog(rarityColors,
@@ -168,7 +172,8 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand
+                giftTransferRequestCommand,
+                dappWeb3Authenticator.CancelCurrentWeb3Operation
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController

@@ -80,6 +80,11 @@ namespace DCL.Web3.Authenticators
             public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
                 originAuth.SetVerificationListener(callback);
 
+            public void CancelCurrentWeb3Operation()
+            {
+                originAuth.CancelCurrentWeb3Operation();
+            }
+
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {
                 public bool ShouldWaitForCodeVerificationFromServer => false;
