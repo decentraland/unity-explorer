@@ -156,10 +156,8 @@ impl SegmentServer {
         let event_queue: CombinedAnalyticsEventQueue = match event_queue {
             CombinedAnalyticsEventQueueNewResult::Persistent(e) => e,
             CombinedAnalyticsEventQueueNewResult::FallbackToInMemory(e, err) => {
-                let error_message = format!(
-                    "Cannot create persistent queue, fallback to in memory queue: {}",
-                    err
-                );
+                let error_message =
+                    format!("Cannot create persistent queue, fallback to in memory queue: {err}");
                 error_fn(&error_message);
                 e
             }
@@ -185,7 +183,7 @@ impl SegmentServer {
             callback_fn: Box::new(move |id, response| unsafe {
                 callback_fn(id, response);
             }),
-            error_fn: error_fn,
+            error_fn,
         };
 
         Self {

@@ -36,6 +36,11 @@ pub fn new_identify(user: User, traits_json: &str, context_json: &str) -> Result
     })
 }
 
+///
+/// # Safety
+///
+/// Caller must provide valid pointer to a c style str
+///
 pub unsafe fn user_from(used_id: *const c_char, anon_id: *const c_char) -> Option<User> {
     if used_id.is_null() && anon_id.is_null() {
         return None;
@@ -65,6 +70,11 @@ pub unsafe fn user_from(used_id: *const c_char, anon_id: *const c_char) -> Optio
     })
 }
 
+///
+/// # Safety
+///
+/// Caller must provide valid pointer to a c style str
+///
 pub unsafe fn as_str<'a>(chars: *const c_char) -> &'a str {
     let c_str = unsafe { CStr::from_ptr(chars) };
     c_str.to_str().unwrap()
