@@ -8,7 +8,7 @@ namespace SceneRuntime.Factory.WebSceneSource
 {
     public interface IWebJsSources
     {
-        public UniTask<Result<SlicedOwnedMemory<byte>>> SceneSourceCodeAsync(URLAddress path,
-            CancellationToken ct);
+        public UniTask<Result<SlicedOwnedMemory<byte>>> SceneSourceCodeAsync(
+            URLAddress path, CancellationToken ct);
     }
 }

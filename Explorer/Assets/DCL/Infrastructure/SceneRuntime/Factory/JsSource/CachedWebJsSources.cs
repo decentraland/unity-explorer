@@ -7,7 +7,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace SceneRuntime.Factory.JsSource
 {
@@ -23,8 +22,8 @@ namespace SceneRuntime.Factory.JsSource
             this.diskCache = diskCache;
         }
 
-        public async UniTask<Result<SlicedOwnedMemory<byte>>> SceneSourceCodeAsync(URLAddress path,
-            CancellationToken ct)
+        public async UniTask<Result<SlicedOwnedMemory<byte>>>
+            SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
             if (path.Value.StartsWith("file://", StringComparison.Ordinal))
                 return await origin.SceneSourceCodeAsync(path, ct);
@@ -33,28 +32,27 @@ namespace SceneRuntime.Factory.JsSource
             var getResult = await diskCache.ContentAsync(key, EXTENSION, ct);
 
             if (getResult is { Success: true, Value: not null })
-                return Result<SlicedOwnedMemory<byte>>.SuccessResult(getResult.Value.Value);
+                return Result<SlicedOwnedMemory<byte>>.SuccessResult(
+                    getResult.Value.Value);
             else
             {
-                Result<SlicedOwnedMemory<byte>> sourceCodeResult = await origin.SceneSourceCodeAsync(
-                    path, ct);
+                Result<SlicedOwnedMemory<byte>> sourceCodeResult
+                    = await origin.SceneSourceCodeAsync(path, ct);
 
                 if (sourceCodeResult.Success)
                 {
-                    var memoryIterator = SerializeMemoryIterator<SlicedOwnedMemory<byte>>.New(
-                        sourceCodeResult.Value,
+                    var memoryIterator = SerializeMemoryIterator<
+                        SlicedOwnedMemory<byte>>.New(sourceCodeResult.Value,
                         static (source, currentIndex, buffer) =>
-                        {
-                            Memory<byte> memory = source.Memory;
-                            int start = currentIndex * buffer.Length;
-                            int length = Mathf.Min(buffer.Length, memory.Length - start);
-                            memory.Slice(start , length).CopyTo(buffer);
-                            return length;
-                        },
+                            SerializeMemoryIterator.ReadNextData(currentIndex,
+                                source.Memory.Span, buffer),
                         static (source, currentIndex, bufferSize) =>
-                            currentIndex * bufferSize < source.Memory.Length);
+                            SerializeMemoryIterator.CanReadNextData(
+                                currentIndex, source.Memory.Length,
+                                bufferSize));
 
-                    var putResult = await diskCache.PutAsync(key, EXTENSION, memoryIterator, ct);
+                    var putResult = await diskCache.PutAsync(key, EXTENSION,
+                        memoryIterator, ct);
 
                     if (!putResult.Success)
                         ReportHub.LogWarning(ReportCategory.SCENE_LOADING,

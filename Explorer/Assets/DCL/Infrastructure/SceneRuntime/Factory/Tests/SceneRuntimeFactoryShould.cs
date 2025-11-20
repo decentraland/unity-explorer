@@ -56,8 +56,8 @@ namespace SceneRuntime.Factory.Tests
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
-                using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(
-                    sourceCode, new SceneShortInfo(), CancellationToken.None);
+                using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
+                    new SceneShortInfo(), CancellationToken.None);
 
                 sourceCode.Dispose();
                 sceneRuntime.ExecuteSceneJson();

@@ -7,8 +7,8 @@ namespace SceneRuntime.Factory
 {
     public static class StreamExtensions
     {
-        public static async UniTask<Result> ReadReliablyAsync(this Stream stream, byte[] buffer, int offset,
-            int count)
+        public static async UniTask<Result> ReadReliablyAsync(
+            this Stream stream, byte[] buffer, int offset, int count)
         {
             while (count > 0)
             {
@@ -24,7 +24,8 @@ namespace SceneRuntime.Factory
             return Result.SuccessResult();
         }
 
-        public static async UniTask<Result> ReadReliablyAsync(this Stream stream, Memory<byte> buffer)
+        public static async UniTask<Result> ReadReliablyAsync(
+            this Stream stream, Memory<byte> buffer)
         {
             while (buffer.Length > 0)
             {

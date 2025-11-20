@@ -16,7 +16,9 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
 
         public void Cache(string path, ReadOnlySpan<byte> sourceCode)
         {
-            using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var stream = new FileStream(path, FileMode.Create,
+                FileAccess.Write, FileShare.None);
+
             stream.Write(sourceCode);
         }
 

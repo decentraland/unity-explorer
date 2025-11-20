@@ -15,7 +15,8 @@ namespace SceneRuntime.ModuleHub
             this.engine = engine;
         }
 
-        public void LoadAndCompileJsModule(string moduleName, ReadOnlySpan<byte> code)
+        public void LoadAndCompileJsModule(string moduleName,
+            ReadOnlySpan<byte> code)
         {
             V8Script script = engine.CompileScriptFromUtf8(code);
             string modulePath = $"system/{moduleName}";
@@ -26,10 +27,12 @@ namespace SceneRuntime.ModuleHub
 
             // "system/foo"
             if (!string.IsNullOrEmpty(extension))
-                jsNodulesCompiledScripts.Add(modulePath[..^extension.Length], script);
+                jsNodulesCompiledScripts.Add(modulePath[..^extension.Length],
+                    script);
 
-            // We added a "system/" prefix to all our modules, but protobufjs, a third party library, is
-            // not aware of that and is looking for buffer and long in the wrong place.
+            // We added a "system/" prefix to all our modules, but protobufjs,
+            // a third party library, is not aware of that and is looking for
+            // buffer and long in the wrong place.
             if (moduleName == "buffer.js")
                 jsNodulesCompiledScripts.Add("buffer", script);
             else if (moduleName == "long.js")

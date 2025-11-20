@@ -18,29 +18,30 @@ namespace SceneRuntime.Factory.WebSceneSource
             this.codeContentResolver = codeContentResolver;
         }
 
-        public async UniTask<Result<SlicedOwnedMemory<byte>>> SceneSourceCodeAsync(URLAddress path,
-            CancellationToken ct)
+        public async UniTask<Result<SlicedOwnedMemory<byte>>>
+            SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
-            Result<DownloadedCodeContent> downloadedCodeContentResult
+            Result<DownloadedCodeContent> result
                 = await codeContentResolver.GetCodeContent(path, ct);
 
-            if (downloadedCodeContentResult.Success)
+            if (result.Success)
             {
-                using DownloadedCodeContent downloadedCodeContent = downloadedCodeContentResult.Value;
-                NativeArray<byte>.ReadOnly nativeData = downloadedCodeContent.nativeData;
+                using DownloadedCodeContent content = result.Value;
+                NativeArray<byte>.ReadOnly data = content.nativeData;
 
                 await UniTask.SwitchToThreadPool();
 
-                var sourceCode = new SlicedOwnedMemory<byte>(nativeData.Length);
-                nativeData.AsReadOnlySpan().CopyTo(sourceCode.Memory.Span);
+                var sourceCode = new SlicedOwnedMemory<byte>(data.Length);
+                data.AsReadOnlySpan().CopyTo(sourceCode.Memory.Span);
 
                 await UniTask.SwitchToMainThread();
 
-                return Result<SlicedOwnedMemory<byte>>.SuccessResult(sourceCode);
+                return Result<SlicedOwnedMemory<byte>>.SuccessResult(
+                    sourceCode);
             }
             else
                 return Result<SlicedOwnedMemory<byte>>.ErrorResult(
-                    downloadedCodeContentResult.ErrorMessage ?? "null");
+                    result.ErrorMessage ?? "null");
         }
     }
 }
