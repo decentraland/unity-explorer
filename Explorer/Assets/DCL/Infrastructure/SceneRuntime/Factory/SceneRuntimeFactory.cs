@@ -4,10 +4,10 @@ using DCL.Diagnostics;
 using DCL.Optimization;
 using DCL.Utility.Types;
 using ECS;
+using ECS.StreamableLoading.Cache.Disk;
 using Microsoft.ClearScript.V8;
 using SceneRuntime.Apis;
 using SceneRuntime.Factory.JsSceneSourceCode;
-using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
 using SceneRuntime.ModuleHub;
@@ -80,16 +80,14 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
-            DownloadedOrCachedData sourceCode,
-            SceneShortInfo sceneShortInfo,
-            CancellationToken ct,
+            SlicedOwnedMemory<byte> sourceCode, SceneShortInfo sceneShortInfo, CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
 
             jsSourcesCache.Cache(
                 $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
-                sourceCode
+                sourceCode.Memory.Span
             );
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
@@ -102,74 +100,79 @@ namespace SceneRuntime.Factory
             V8ScriptEngine engine = engineFactory.Create(sceneShortInfo);
             var moduleHub = new SceneModuleHub(engine);
 
-            const int SIZE_OF_THE_LARGEST_MODULE_PLUS_EXTRA = 29000;
-            byte[] buffer = new byte[SIZE_OF_THE_LARGEST_MODULE_PLUS_EXTRA];
-            COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
+            // Look at StreamingAssets/Js, find the largest file in there, add a kilobyte on top, round
+            // up, and that's the magic number.
+            const int OUR_CODE_BUFFER_SIZE = 29000;
+
+            using var ourCodeBuffer = new SlicedOwnedMemory<byte>(OUR_CODE_BUFFER_SIZE);
+            COMMONJS_HEADER_UTF8.CopyTo(ourCodeBuffer.Memory);
 
             foreach (string moduleName in JS_MODULE_NAMES)
             {
                 Result<int> moduleCodeLengthResult = await LoadScriptAsync(
-                    Path.Combine(Application.streamingAssetsPath, "Js/Modules", moduleName), buffer,
-                    COMMONJS_HEADER_UTF8.Length);
+                    Path.Combine(Application.streamingAssetsPath, "Js/Modules", moduleName),
+                    ourCodeBuffer.Memory.Slice(COMMONJS_HEADER_UTF8.Length));
 
                 if (!moduleCodeLengthResult.Success)
                     throw new Exception(moduleCodeLengthResult.ErrorMessage);
 
-                int moduleCodeLength = moduleCodeLengthResult.Value;
-
-                if (buffer.AsSpan(COMMONJS_HEADER_UTF8.Length, COMMONJS_HEADER_UTF8.Length)
+                if (ourCodeBuffer.Memory.Span
+                          .Slice(COMMONJS_HEADER_UTF8.Length, COMMONJS_HEADER_UTF8.Length)
                           .SequenceEqual(COMMONJS_HEADER_UTF8))
                 {
-                    moduleHub.LoadAndCompileJsModule(moduleName,
-                        buffer.AsSpan(COMMONJS_HEADER_UTF8.Length, moduleCodeLength));
+                    moduleHub.LoadAndCompileJsModule(moduleName, ourCodeBuffer.Memory.Span.Slice(
+                        COMMONJS_HEADER_UTF8.Length, moduleCodeLengthResult.Value));
                 }
                 else
                 {
-                    moduleCodeLength += COMMONJS_HEADER_UTF8.Length;
-                    COMMONJS_FOOTER_UTF8.CopyTo(buffer, moduleCodeLength);
-                    moduleCodeLength += COMMONJS_FOOTER_UTF8.Length;
+                    COMMONJS_FOOTER_UTF8.CopyTo(ourCodeBuffer.Memory.Slice(
+                        COMMONJS_HEADER_UTF8.Length + moduleCodeLengthResult.Value));
 
-                    moduleHub.LoadAndCompileJsModule(moduleName, buffer.AsSpan(0, moduleCodeLength));
+                    moduleHub.LoadAndCompileJsModule(moduleName, ourCodeBuffer.Memory.Span.Slice(0,
+                        COMMONJS_HEADER_UTF8.Length + moduleCodeLengthResult.Value
+                                                    + COMMONJS_FOOTER_UTF8.Length));
                 }
             }
 
             V8Script sceneScript;
 
-            if (sourceCode.Length >= COMMONJS_HEADER_UTF8.Length
-                && sourceCode.AsReadOnlySpan()
+            if (sourceCode.Memory.Length >= COMMONJS_HEADER_UTF8.Length
+                && sourceCode.Memory.Span
                              .Slice(0, COMMONJS_HEADER_UTF8.Length)
                              .SequenceEqual(COMMONJS_HEADER_UTF8))
-                sceneScript = engine.CompileScriptFromUtf8(sourceCode);
+                sceneScript = engine.CompileScriptFromUtf8(sourceCode.Memory.Span);
             else
             {
                 ReportHub.LogWarning(ReportCategory.SCENE_FACTORY,
                     $"The code of the scene \"{sceneShortInfo.Name}\" at parcel {sceneShortInfo.BaseParcel} does not include the CommonJS module wrapper. This is suboptimal.");
 
-                int wrappedCodeLength = COMMONJS_HEADER_UTF8.Length + sourceCode.Length
-                                                                   + COMMONJS_FOOTER_UTF8.Length;
+                using var wrappedCode = new SlicedOwnedMemory<byte>(COMMONJS_HEADER_UTF8.Length
+                                                                    + sourceCode.Memory.Length
+                                                                    + COMMONJS_FOOTER_UTF8.Length);
 
-                if (buffer.Length < wrappedCodeLength)
-                {
-                    buffer = new byte[wrappedCodeLength];
-                    COMMONJS_HEADER_UTF8.CopyTo(buffer, 0);
-                }
+                COMMONJS_HEADER_UTF8.CopyTo(wrappedCode.Memory);
 
-                sourceCode.AsReadOnlySpan().CopyTo(buffer.AsSpan(COMMONJS_HEADER_UTF8.Length));
-                COMMONJS_FOOTER_UTF8.CopyTo(buffer, COMMONJS_HEADER_UTF8.Length + sourceCode.Length);
+                sourceCode.Memory.Span.CopyTo(
+                    wrappedCode.Memory.Span.Slice(COMMONJS_HEADER_UTF8.Length));
 
-                sceneScript = engine.CompileScriptFromUtf8(buffer.AsSpan(0, wrappedCodeLength));
+                COMMONJS_FOOTER_UTF8.CopyTo(
+                    wrappedCode.Memory.Span.Slice(COMMONJS_HEADER_UTF8.Length + sourceCode.Memory.Length));
+
+                sceneScript = engine.CompileScriptFromUtf8(wrappedCode.Memory.Span);
             }
 
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
             Result<int> initCodeLengthResult = await LoadScriptAsync(
-                Path.Combine(Application.streamingAssetsPath, "Js/Init.js"), buffer, 0);
+                Path.Combine(Application.streamingAssetsPath, "Js/Init.js"), ourCodeBuffer.Memory);
 
             if (!initCodeLengthResult.Success)
                 throw new Exception(initCodeLengthResult.ErrorMessage);
 
-            engine.ExecuteScriptFromUtf8(buffer.AsSpan(0, initCodeLengthResult.Value));
+            engine.ExecuteScriptFromUtf8(
+                ourCodeBuffer.Memory.Span.Slice(0, initCodeLengthResult.Value));
+
             return new SceneRuntimeImpl(engine);
         }
 
@@ -184,13 +187,13 @@ namespace SceneRuntime.Factory
         {
             await EnsureCalledOnMainThreadAsync();
 
-            Result<DownloadedOrCachedData> sourceCodeResult = await webJsSources.SceneSourceCodeAsync(
+            Result<SlicedOwnedMemory<byte>> sourceCodeResult = await webJsSources.SceneSourceCodeAsync(
                 path, ct);
 
             if (!sourceCodeResult.Success)
                 throw new Exception(sourceCodeResult.ErrorMessage);
 
-            using DownloadedOrCachedData sourceCode = sourceCodeResult.Value;
+            using SlicedOwnedMemory<byte> sourceCode = sourceCodeResult.Value;
             return await CreateBySourceCodeAsync(sourceCode, sceneShortInfo, ct, instantiationBehavior);
 
             // DownloadHandler.Dispose is being called on a background thread at this point. Unity does
@@ -206,7 +209,7 @@ namespace SceneRuntime.Factory
             }
         }
 
-        private static async UniTask<Result<int>> LoadScriptAsync(string path, byte[] buffer, int offset)
+        private static async UniTask<Result<int>> LoadScriptAsync(string path, Memory<byte> buffer)
         {
             await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
                 FileShare.ReadWrite);
@@ -216,7 +219,7 @@ namespace SceneRuntime.Factory
                     $"File \"{path}\" is larger than the buffer ({buffer.Length} bytes)");
 
             int count = (int)stream.Length;
-            Result readResult = await stream.ReadReliablyAsync(buffer, offset, count);
+            Result readResult = await stream.ReadReliablyAsync(buffer.Slice(0, count));
 
             if (!readResult.Success)
                 return Result<int>.ErrorResult(readResult.ErrorMessage ?? "null");

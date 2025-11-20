@@ -2,8 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Utility.Types;
-using SceneRuntime.Factory.JsSource;
+using ECS.StreamableLoading.Cache.Disk;
 using System.Threading;
+using Unity.Collections;
 using DownloadedCodeContent = UnityEngine.Networking.DownloadHandler;
 
 namespace SceneRuntime.Factory.WebSceneSource
@@ -17,16 +18,29 @@ namespace SceneRuntime.Factory.WebSceneSource
             this.codeContentResolver = codeContentResolver;
         }
 
-        public async UniTask<Result<DownloadedOrCachedData>> SceneSourceCodeAsync(URLAddress path,
+        public async UniTask<Result<SlicedOwnedMemory<byte>>> SceneSourceCodeAsync(URLAddress path,
             CancellationToken ct)
         {
-            Result<DownloadedCodeContent> result = await codeContentResolver.GetCodeContent(path, ct);
+            Result<DownloadedCodeContent> downloadedCodeContentResult
+                = await codeContentResolver.GetCodeContent(path, ct);
 
-            if (result.Success)
-                return Result<DownloadedOrCachedData>.SuccessResult(
-                    new DownloadedOrCachedData(result.Value));
+            if (downloadedCodeContentResult.Success)
+            {
+                using DownloadedCodeContent downloadedCodeContent = downloadedCodeContentResult.Value;
+                NativeArray<byte>.ReadOnly nativeData = downloadedCodeContent.nativeData;
+
+                await UniTask.SwitchToThreadPool();
+
+                var sourceCode = new SlicedOwnedMemory<byte>(nativeData.Length);
+                nativeData.AsReadOnlySpan().CopyTo(sourceCode.Memory.Span);
+
+                await UniTask.SwitchToMainThread();
+
+                return Result<SlicedOwnedMemory<byte>>.SuccessResult(sourceCode);
+            }
             else
-                return Result<DownloadedOrCachedData>.ErrorResult(result.ErrorMessage ?? "null");
+                return Result<SlicedOwnedMemory<byte>>.ErrorResult(
+                    downloadedCodeContentResult.ErrorMessage ?? "null");
         }
     }
 }
