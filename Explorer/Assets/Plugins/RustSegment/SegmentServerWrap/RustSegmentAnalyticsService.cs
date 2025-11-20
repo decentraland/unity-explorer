@@ -6,6 +6,7 @@ using Segment.Analytics;
 using Segment.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine.Device;
 using UnityEngine.Pool;
 
@@ -46,8 +47,11 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
+            string path = System.IO.Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
+            const int DEFAULT_LIMIT = 500;
+            using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
-            bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);
+            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, Callback, ErrorCallback);
 
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
@@ -169,8 +173,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public static ulong UnflushedCount() =>
-            NativeMethods.SegmentServerUnFlushedBatchesCount();
+        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
+        private static void ErrorCallback(IntPtr msg)
+        {
+            string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+
+            ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
+        }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
@@ -184,10 +193,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
                 if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogError(
-                        ReportCategory.ANALYTICS,
-                        $"Segment operation {operationId} {type} failed with: {response}"
-                    );
+                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
 
                 current.CleanMemory(operationId);
             }

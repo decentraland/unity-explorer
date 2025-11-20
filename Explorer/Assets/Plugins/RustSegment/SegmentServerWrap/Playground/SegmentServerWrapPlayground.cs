@@ -8,7 +8,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
         [SerializeField] private bool fillMode;
-        [SerializeField] private long unFlushedBatches;
 
         private RustSegmentAnalyticsService service = null!;
 
@@ -22,8 +21,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         {
             if (fillMode)
                 Track();
-
-            unFlushedBatches = (long) NativeMethods.SegmentServerUnFlushedBatchesCount();
         }
 
         [ContextMenu(nameof(Initialize))]
