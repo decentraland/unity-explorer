@@ -147,7 +147,9 @@ namespace DCL.PluginSystem.Global
                 loadThumbnailCommand,
                 wearableCatalog,
                 pendingTransferService,
-                equippedStatusProvider);
+                equippedStatusProvider,
+                wearableStorage,
+                emoteStorage);
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
                 profileRepositoryWrapper,
@@ -174,6 +176,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 decentralandUrlsSource,
                 giftTransferRequestCommand,
+                dappWeb3Authenticator,
                 dappWeb3Authenticator.CancelCurrentWeb3Operation
             );
 

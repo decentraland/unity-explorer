@@ -15,12 +15,23 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         {
             this.persistence = persistence;
             pendingFullUrns = persistence.LoadPendingUrns();
+
+            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingFullUrns.Count} items from disk.");
+            foreach (string? urn in pendingFullUrns)
+                ReportHub.Log(ReportCategory.GIFTING, $"  - Loaded Pending: {urn}");
         }
 
         public void AddPending(string fullUrn)
         {
             if (pendingFullUrns.Add(fullUrn))
+            {
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Adding new pending item: {fullUrn}");
                 persistence.SavePendingUrns(pendingFullUrns);
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Item already exists in pending: {fullUrn}");
+            }
         }
 
         public bool IsPending(string fullUrn)
@@ -42,6 +53,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 }
             }
 
+            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] GetPendingCount for {baseUrn}: {count}");
             return count;
         }
 
@@ -49,6 +61,12 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
         {
+            if (pendingFullUrns.Count > 0 && wearableRegistry.Count == 0 && emoteRegistry.Count == 0)
+            {
+                ReportHub.Log(ReportCategory.GIFTING, "[PendingTransferService] Prune skipped: Inventory registries are empty. Waiting for load.");
+                return;
+            }
+            
             var toRemove = new List<string>();
 
             foreach (string? pendingUrn in pendingFullUrns)
@@ -59,7 +77,14 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
 
                 // If it's not in our owned registry anymore, the transfer finished (or failed/gone)
                 if (!stillOwned)
+                {
+                    ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Pruning {pendingUrn} - User no longer owns it (Transfer likely confirmed).");
                     toRemove.Add(pendingUrn);
+                }
+                else
+                {
+                    ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Keeping {pendingUrn} - User still owns it in local registry.");
+                }
             }
 
             if (toRemove.Count > 0)
@@ -67,6 +92,10 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 foreach (string? item in toRemove) pendingFullUrns.Remove(item);
                 persistence.SavePendingUrns(pendingFullUrns);
                 ReportHub.Log(ReportCategory.GIFTING, $"Pruned {toRemove.Count} confirmed gifts.");
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.GIFTING, "[PendingTransferService] Nothing to prune.");
             }
         }
 

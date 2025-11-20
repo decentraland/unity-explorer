@@ -6,6 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using DCL.Diagnostics;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
@@ -83,6 +84,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
+            ReportHub.Log(ReportCategory.UNSPECIFIED, "Transfer - SetOwnedNft");
             lock (lockObject)
             {
                 if (!AllOwnedNftRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))

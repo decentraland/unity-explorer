@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
+using DCL.Web3.Authenticators;
 using MVC;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
@@ -27,6 +28,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
+        private readonly IWeb3VerifiedAuthenticator authenticator;
         private readonly Action OnCancelTransfer;
         
         private IDisposable? subProgress;
@@ -45,6 +47,7 @@ namespace DCL.Backpack.Gifting.Presenters
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
             GiftTransferRequestCommand giftTransferRequestCommand,
+            IWeb3VerifiedAuthenticator authenticator,
             Action OnCancelTransfer
         )
             : base(viewFactory)
@@ -55,6 +58,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
             this.OnCancelTransfer = OnCancelTransfer;
+            this.authenticator  = authenticator;
         }
 
         protected override void OnViewInstantiated()

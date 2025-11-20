@@ -2,6 +2,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
@@ -33,8 +34,17 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IPendingTransferService pendingTransferService,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache identityCache,
-            IWearableStylingCatalog stylingCatalog)
-            : base(view, adapter, eventBus, loadThumbnailCommand, equippedStatusProvider, pendingTransferService)
+            IWearableStylingCatalog stylingCatalog,
+            IWearableStorage wearableStorage,
+            IEmoteStorage  emoteStorage)
+            : base(view,
+                adapter,
+                eventBus,
+                loadThumbnailCommand,
+                equippedStatusProvider,
+                pendingTransferService,
+                wearableStorage,
+                emoteStorage)
         {
             this.emoteProvider = emoteProvider;
             this.identityCache = identityCache;
@@ -43,7 +53,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             adapter.UseWearableStyling(stylingCatalog);
         }
 
-        protected override async UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int page, string search, CancellationToken ct)
+        protected override async UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int pageItemCount, int page, string search, CancellationToken ct)
         {
             ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Emotes] Request Page {page} search='{search}'");
 
@@ -51,7 +61,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
 
             var requestOptions = new IEmoteProvider.OwnedEmotesRequestOptions(
                 pageNum: page,
-                pageSize: 16, // Matches PAGE_SIZE
+                pageSize: pageItemCount,
                 collectionId: null,
                 orderOperation: currentOrder,
                 name: search,

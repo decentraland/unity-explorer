@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters;
@@ -29,6 +30,8 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IEmoteStorage emoteStorage;
 
         // New Dependencies
         private readonly IPendingTransferService pendingTransferService;
@@ -42,7 +45,9 @@ namespace DCL.Backpack.Gifting.Factory
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IWearableStylingCatalog wearableStylingCatalog,
             IPendingTransferService pendingTransferService,
-            IAvatarEquippedStatusProvider equippedStatusProvider)
+            IAvatarEquippedStatusProvider equippedStatusProvider,
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage)
         {
             this.eventBus = eventBus;
             this.wearablesProvider = wearablesProvider;
@@ -52,6 +57,8 @@ namespace DCL.Backpack.Gifting.Factory
             this.wearableStylingCatalog = wearableStylingCatalog;
             this.pendingTransferService = pendingTransferService;
             this.equippedStatusProvider = equippedStatusProvider;
+            this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
         }
         
         public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
@@ -66,7 +73,9 @@ namespace DCL.Backpack.Gifting.Factory
                 equippedStatusProvider,
                 pendingTransferService,
                 wearablesProvider,
-                wearableStylingCatalog);
+                wearableStylingCatalog,
+                wearableStorage,
+                emoteStorage);
         }
 
         public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<EmoteViewModel> adapter)
@@ -82,7 +91,9 @@ namespace DCL.Backpack.Gifting.Factory
                 pendingTransferService,
                 emoteProvider,
                 web3IdentityCache,
-                wearableStylingCatalog);
+                wearableStylingCatalog,
+                wearableStorage,
+                emoteStorage);
         }
     }
 }

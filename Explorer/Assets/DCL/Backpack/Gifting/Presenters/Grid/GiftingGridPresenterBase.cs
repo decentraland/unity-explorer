@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
@@ -19,6 +21,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         where TViewModel : IGiftableItemViewModel
     {
         private const int SEARCH_DEBOUNCE_MS = 500;
+        private const int CURRENT_PAGE_SIZE = 16;
 
         // Dependencies
         protected readonly GiftingGridView view;
@@ -27,6 +30,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         protected readonly IAvatarEquippedStatusProvider equippedStatusProvider;
         protected readonly IPendingTransferService pendingTransferService;
+        protected readonly IWearableStorage wearableStorage;
+        protected readonly IEmoteStorage emoteStorage;
 
         // State
         protected readonly Dictionary<string, TViewModel> viewModelsByUrn = new();
@@ -59,7 +64,9 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IAvatarEquippedStatusProvider equippedStatusProvider,
-            IPendingTransferService pendingTransferService)
+            IPendingTransferService pendingTransferService,
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage)
         {
             this.view = view;
             this.adapter = adapter;
@@ -67,6 +74,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             this.loadThumbnailCommand = loadThumbnailCommand;
             this.equippedStatusProvider = equippedStatusProvider;
             this.pendingTransferService = pendingTransferService;
+            this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
 
             adapter.SetDataProvider(this);
         }
@@ -147,8 +156,12 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             {
                 OnLoadingStateChanged?.Invoke(true);
 
-                (var items, int total) = await FetchDataAsync(currentPage, currentSearch, localCt);
+                (var items, int total) =
+                    await FetchDataAsync(CURRENT_PAGE_SIZE, currentPage, currentSearch, localCt);
 
+                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry,
+                    emoteStorage.AllOwnedNftRegistry);
+                
                 totalCount = total;
 
                 foreach (var item in items)
@@ -187,7 +200,9 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
 
         private void OnNearEndOfScroll()
         {
-            if (canLoadNextPage && !isLoading && ItemCount < totalCount)
+            if (!canLoadNextPage || isLoading) return;
+
+            if (currentPage * CURRENT_PAGE_SIZE < totalCount)
                 RequestNextPageAsync(lifeCts!.Token).Forget();
         }
 
@@ -231,8 +246,10 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         private void OnAllLoadsFinished()
         {
             if (lifeCts?.IsCancellationRequested == true) return;
+
             canLoadNextPage = true;
-            if (adapter.IsNearEnd && !isLoading && ItemCount < totalCount)
+
+            if (adapter.IsNearEnd && !isLoading && currentPage * CURRENT_PAGE_SIZE < totalCount)
                 RequestNextPageAsync(lifeCts!.Token).Forget();
         }
 
@@ -292,7 +309,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         }
 
         // Abstract Requirements
-        protected abstract UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int page, string search, CancellationToken ct);
+        protected abstract UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
         protected abstract TViewModel CreateViewModel(IGiftable item, int amount, bool isEquipped, bool isGiftable);
         protected abstract int GetItemAmount(IGiftable item);
         protected abstract void UpdateEmptyState(bool isEmpty);

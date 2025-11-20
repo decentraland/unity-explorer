@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid;
@@ -34,8 +36,16 @@ namespace DCL.Backpack.Gifting.Presenters
             IAvatarEquippedStatusProvider equippedStatusProvider,
             IPendingTransferService pendingTransferService,
             IWearablesProvider wearablesProvider,
-            IWearableStylingCatalog stylingCatalog)
-            : base(view, adapter, eventBus, loadThumbnailCommand, equippedStatusProvider, pendingTransferService)
+            IWearableStylingCatalog stylingCatalog,
+            IWearableStorage wearableStorage,
+            IEmoteStorage  emoteStorage)
+            : base(view,
+                adapter,
+                eventBus,
+                loadThumbnailCommand,
+                equippedStatusProvider,
+                pendingTransferService,
+                wearableStorage, emoteStorage)
         {
             this.wearablesProvider = wearablesProvider;
             this.stylingCatalog = stylingCatalog;
@@ -43,14 +53,14 @@ namespace DCL.Backpack.Gifting.Presenters
             adapter.UseWearableStyling(stylingCatalog);
         }
 
-        protected override async UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int page, string search, CancellationToken ct)
+        protected override async UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int itemPageCount, int page, string search, CancellationToken ct)
         {
             resultsBuffer.Clear();
 
             ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] Requesting Page {page} search: '{search}'");
 
             (var wearables, int total) = await wearablesProvider.GetAsync(
-                pageSize: 16, // Matches CURRENT_PAGE_SIZE
+                pageSize: itemPageCount,
                 pageNumber: page,
                 ct: ct,
                 sortingField: currentSort.OrderByOperation.ToSortingField(),

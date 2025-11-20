@@ -6,19 +6,13 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Factory;
-using DCL.Backpack.Gifting.Models;
-using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
-using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using UnityEngine;
 using Utility;
@@ -95,10 +89,6 @@ namespace DCL.Backpack.Gifting.Presenters
                 // 1. Initialize Data
                 await equippedStatusProvider.InitializeAsync(lifeCts.Token);
                 if (lifeCts.IsCancellationRequested) return;
-
-                pendingTransferService.Prune(
-                    wearableStorage.AllOwnedNftRegistry,
-                    emoteStorage.AllOwnedNftRegistry);
 
                 // 2. Reset UI
                 headerPresenter?.ClearSearchImmediate();

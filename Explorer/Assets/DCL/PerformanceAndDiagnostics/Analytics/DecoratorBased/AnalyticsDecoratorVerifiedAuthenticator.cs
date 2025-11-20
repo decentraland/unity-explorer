@@ -18,7 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void CancelCurrentWeb3Operation()
         {
-            throw new NotImplementedException();
+            core.CancelCurrentWeb3Operation();
         }
     }
 }
