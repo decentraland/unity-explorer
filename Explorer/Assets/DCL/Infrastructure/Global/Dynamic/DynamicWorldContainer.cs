@@ -561,6 +561,8 @@ namespace Global.Dynamic
 
             IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
+            IEventBus eventBus = new EventBus(true);
+            var currentChannelService = new CurrentChannelService();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
             var voiceChatContainer = new VoiceChatContainer(
@@ -574,7 +576,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
-                chatEventBus
+                chatEventBus,
+                currentChannelService
             );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -627,7 +630,6 @@ namespace Global.Dynamic
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
-            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -788,7 +790,8 @@ namespace Global.Dynamic
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    chatSharedAreaEventBus),
+                    chatSharedAreaEventBus,
+                    currentChannelService),
                 new ExplorePanelPlugin(
                     eventBus,
                     featureFlags,

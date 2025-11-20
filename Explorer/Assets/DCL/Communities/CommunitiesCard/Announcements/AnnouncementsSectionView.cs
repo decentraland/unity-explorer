@@ -47,6 +47,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 loadingObject.HideLoading();
         }
 
+        public void SetLoadingMoreBadgeActive(bool isActive) { }
+
         public void InitList() =>
             loopList.InitListView(0, GetLoopListItemByIndex);
 

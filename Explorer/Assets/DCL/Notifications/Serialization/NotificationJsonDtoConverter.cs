@@ -36,6 +36,7 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE = "community_request_to_join_accepted";
         private const string COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE = "community_deleted_content_violation";
         private const string COMMUNITY_POST_ADDED_TYPE = "community_post_added";
+        private const string COMMUNITY_OWNERSHIP_TRANSFERRED_TYPE = "community_ownership_transferred";
         private const string USER_BANNED_FROM_SCENE_TYPE = "user_banned_from_scene";
         private const string USER_UNBANNED_FROM_SCENE_TYPE = "user_unbanned_from_scene";
 
@@ -108,6 +109,7 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE => new CommunityUserRequestToJoinAcceptedNotification(),
                     COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
                     COMMUNITY_POST_ADDED_TYPE => CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? new CommunityPostAddedNotification() : null,
+                    COMMUNITY_OWNERSHIP_TRANSFERRED_TYPE => new CommunityOwnershipTransferredNotification(),
                     USER_BANNED_FROM_SCENE_TYPE => new UserBannedFromSceneNotification(),
                     USER_UNBANNED_FROM_SCENE_TYPE => new UserUnbannedFromSceneNotification(),
                     _ => null,
