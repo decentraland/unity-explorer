@@ -53,12 +53,8 @@ namespace DCL.CharacterMotion.Systems
 
             var targetRotation = Quaternion.LookRotation(rigidTransform.LookDirection);
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation before: " + characterTransform.rotation);
-
             if (!stunComponent.IsStunned)
                 characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation: " + characterTransform.rotation);
 
             // If we are on a platform we save our local rotation
             PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward, scenesCache.CurrentScene);

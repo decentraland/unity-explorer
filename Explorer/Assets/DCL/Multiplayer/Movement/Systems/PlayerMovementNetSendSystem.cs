@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
-            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
+            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity) || World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
@@ -89,6 +89,10 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, justTeleported);
             }
+
+            if(World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity))
+                // Note: It can't be removed at this point because there may send another message instantly which would not be marked as instant
+                World.Get<PlayerTeleportIntent.JustTeleportedLocally>(entity).IsConsumed = true;
 
             return;
 
@@ -154,6 +158,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 movementKind = input.Kind,
             };
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=green>SENT " + playerMovement.LastSentMessage.timestamp.ToString("F6") + " Instant? " + playerMovement.LastSentMessage.isInstant + " position: " + playerMovement.Character.transform.position.ToString("F6") + "</color>");
 
             messageBus.Send(playerMovement.LastSentMessage);
 

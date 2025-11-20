@@ -17,6 +17,7 @@ using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Movement;
 using DCL.Profiles;
 using DCL.SocialEmotes;
 using DCL.UI.EphemeralNotifications;
@@ -92,6 +93,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         protected override void Update(float t)
         {
+            RemoveConsumedFilterMessagesByIsInstantIntentQuery(World);
             AvatarStateMachineEventHandlerInitializationQuery(World);
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
@@ -458,6 +460,18 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
+        // It just removes the intent once it has been consumed in PlayerMovementNetSendSystem
+        [Query]
+        [All(typeof(PlayerTeleportIntent.JustTeleportedLocally))]
+        private void RemoveConsumedFilterMessagesByIsInstantIntent(Entity entity, ref PlayerTeleportIntent.JustTeleportedLocally intent)
+        {
+            if (intent.IsConsumed)
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOVE TELEPORT");
+                World.Remove<PlayerTeleportIntent.JustTeleportedLocally>(entity);
+            }
+        }
+
         [Query]
         [All(typeof(RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent))]
         private void RotateReceiverAvatarToCoincideWithInitiatorAvatar(Entity entity, ref IAvatarView avatarView, RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent animationInfo)
@@ -550,15 +564,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (isLocal)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Local controller transform reset " + ((AvatarBase)avatarView).name);
-                //characterController.enabled = false;
-  //avatarView.AvatarAnimator.applyRootMotion = false;
                 characterController.transform.position = hipsWorldPosition;
                 characterRigidTransform.MoveVelocity.Velocity = Vector3.zero;
                 characterRigidTransform.LookDirection = newCharacterForward;
-                //characterController.transform.forward = emoteComponent.LastHipsForward;
-                //characterController.transform.rotation = Quaternion.LookRotation(emoteComponent.LastHipsForward);
-//avatarView.AvatarAnimator.applyRootMotion = true;
-                //characterController.enabled = true;
             }
             else
             {
@@ -576,7 +584,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.GetTransform().localRotation = Quaternion.identity;
 
             if (isLocal)
+            {
                 World.Add(entity, new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward));
+                // With this intent the next network movement message is marked as instant which will be used in the other clients to avoid
+                // a problem that made the remote avatar move to a previous position (the old position of the CharacterController) before moving
+                // to the current position, due to interpolation
+                World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
+            }
 
             if(isLocal)
                 Debug.DrawRay(characterController.transform.position + characterController.center, avatarView.GetTransform().forward, Color.cyan, 3.0f);
