@@ -31,6 +31,7 @@ namespace DCL.SceneLoadingScreens
 
             if (!featureFlagChecked)
             {
+                //TODO: remove all processing related to LOADING_SCREEN_TIPS feature flag when TEMPORAL_LOADING_SCREEN_TIPS is fully live
                 tipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.LOADING_SCREEN_TIPS, "tips", out tipsJson);
                 temporalTipsParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.TEMPORAL_LOADING_SCREEN_TIPS, "tips", out temporalTipsJson);
                 featureFlagChecked = true;
