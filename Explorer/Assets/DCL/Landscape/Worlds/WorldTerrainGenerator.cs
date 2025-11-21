@@ -2,6 +2,7 @@
 using DCL.Landscape.Settings;
 using DCL.Utilities;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -26,23 +27,25 @@ namespace DCL.Landscape
         private Transform rootGo;
         public bool IsInitialized { get; private set; }
         public bool IsTerrainShown { get; private set; }
-
+        private LandscapeData landscapeData;
         public TerrainModel? TerrainModel { get; private set; }
         public Texture2D? OccupancyMap { get; private set; }
         public NativeArray<byte> OccupancyMapData { get; private set; }
         public int OccupancyMapSize { get; private set; }
         public int OccupancyFloor { get; private set; }
         public float MaxHeight { get; private set; }
+        public IReadOnlyList<Transform> Cliffs { get; private set; }
 
         public void Dispose()
         {
             // If we destroy rootGo here it causes issues on application exit
         }
 
-        public async UniTask InitializeAsync(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
+        public async UniTask InitializeAsync(TerrainGenerationData terrainGenData,
+            int[] treeRendererKeys, LandscapeData landscapeData)
         {
             this.terrainGenData = terrainGenData;
-
+            this.landscapeData = landscapeData;
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
@@ -50,6 +53,9 @@ namespace DCL.Landscape
             await Trees.LoadAsync($"{Application.streamingAssetsPath}/WorldsTrees.bin");
             IsInitialized = true;
         }
+
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
 
         public void SwitchVisibility(bool isVisible)
         {
@@ -74,7 +80,7 @@ namespace DCL.Landscape
 
             factory.CreateOcean(rootGo);
 
-            boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
+            Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
 
             if (processReport != null) processReport.SetProgress(0.5f);
@@ -94,6 +100,11 @@ namespace DCL.Landscape
                 OccupancyMapSize, OccupancyFloor, MaxHeight);
 
             Trees.Instantiate();
+
+            if (landscapeData.RenderTrees)
+                Trees.Show();
+            else
+                Trees.Hide();
 
             processReport?.SetProgress(1f);
 

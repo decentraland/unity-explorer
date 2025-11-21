@@ -28,6 +28,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private static readonly Vector2 RAISE_HAND_TOOLTIP_NORMAL_POSITION = new Vector2(199, -66);
 
         public event Action? EndStreamButtonCLicked;
+        public event Action? RaiseHandTooltipButtonCLicked;
 
         [field: SerializeField]
         public TMP_Text CommunityName { get; private set; } = null!;
@@ -64,6 +65,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public RectTransform RaiseHandTooltip { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button RaiseHandTooltipButton { get; private set; } = null!;
 
         [field: SerializeField]
         public TMP_Text RaiseHandTooltipText { get; private set; } = null!;
@@ -109,6 +113,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Start()
         {
+            RaiseHandTooltipButton.onClick.AddListener(ClickedRaiseHandTooltip);
             EndStreamButton.onClick.AddListener(() =>
             {
                 endStreamButtonConfirmationDialogCts = endStreamButtonConfirmationDialogCts.SafeRestart();
@@ -129,6 +134,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     EndStreamButtonCLicked?.Invoke();
                 }
             });
+        }
+
+        private void ClickedRaiseHandTooltip()
+        {
+            RaiseHandTooltipButtonCLicked?.Invoke();
         }
 
         public void ConfigureRaisedHandTooltip(int raisedHandCount)
@@ -153,8 +163,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             RaiseHandTooltipText.text = string.Format(TOOLTIP_CONTENT, playerName);
             RaiseHandTooltip.gameObject.SetActive(true);
+            RaiseHandTooltipButton.enabled = true;
             await UniTask.Delay(5000, cancellationToken: ct);
             RaiseHandTooltip.gameObject.SetActive(false);
+            RaiseHandTooltipButton.enabled = false;
         }
 
         public void SetCollapsedState(bool isCollapsed)

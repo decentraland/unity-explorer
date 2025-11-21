@@ -23,10 +23,11 @@ namespace ECS.StreamableLoading.Textures
         {
             if (result.Succeeded)
             {
-                Texture2D sprite = result.Asset?.GetMainAsset<Texture2D>()!;
-
-                return new StreamableLoadingResult<SpriteData>.WithFallback(new SpriteData(result.Asset!, Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
-                    VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)));
+                if (result.Asset!.TryGetAsset(out Texture2D sprite))
+                {
+                    return new StreamableLoadingResult<SpriteData>.WithFallback(new SpriteData(result.Asset!, Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
+                        VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)));
+                }
             }
 
             return new StreamableLoadingResult<SpriteData>.WithFallback(fallback);

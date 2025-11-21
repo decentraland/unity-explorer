@@ -5,6 +5,7 @@ using RichTypes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
@@ -25,6 +26,9 @@ namespace DCL.SceneLoadingScreens
 
         [field: SerializeField]
         public LocalizeStringEvent ProgressLabel { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text LoadingPercentageText { get; private set; } = null!;
 
         [field: SerializeField]
         public Button ShowNextButton { get; private set; } = null!;

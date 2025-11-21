@@ -12,7 +12,7 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class StreamingCommunityResultCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action<string>? MainButtonClicked;
+        public event Action<string, bool>? MainButtonClicked;
 
         [SerializeField] private RectTransform hoverOverlay = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
@@ -40,6 +40,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private string? currentCommunityId;
+        private bool isMember;
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -50,7 +51,7 @@ namespace DCL.Communities.CommunitiesBrowser
             mainButton.onClick.AddListener(() =>
             {
                 if (currentCommunityId != null)
-                    MainButtonClicked?.Invoke(currentCommunityId);
+                    MainButtonClicked?.Invoke(currentCommunityId, isMember);
             });
         }
 
@@ -62,11 +63,12 @@ namespace DCL.Communities.CommunitiesBrowser
             mainButton.onClick.RemoveAllListeners();
         }
 
-        public void SetCommunityId(string id) =>
+        public void SetCommunityData(string id, string title, bool isMember)
+        {
+            this.isMember = isMember;
             currentCommunityId = id;
-
-        public void SetTitle(string title) =>
             communityTitle.text = title;
+        }
 
         public void ConfigureListeningTooltip()
         {

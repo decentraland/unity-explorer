@@ -15,7 +15,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
 
-        private PlayerBannedScenesController playerBannedScenesController;
+        private PlayerBannedScenesController? playerBannedScenesController;
 
         public BannedUsersPlugin(
             IRoomHub roomHub,
@@ -42,6 +42,6 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public void Dispose() =>
-            playerBannedScenesController.Dispose();
+            playerBannedScenesController?.Dispose();
     }
 }

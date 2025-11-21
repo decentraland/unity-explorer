@@ -38,11 +38,13 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -65,6 +67,7 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
+using Runtime.Wearables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -77,6 +80,7 @@ namespace DCL.PluginSystem.Global
     public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IEventBus eventBus;
+        private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
@@ -106,7 +110,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
@@ -149,8 +152,10 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
+        private readonly SmartWearableCache smartWearableCache;
 
         public ExplorePanelPlugin(IEventBus eventBus,
+            FeatureFlagsConfiguration featureFlags,
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
@@ -171,7 +176,6 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
             CharacterPreviewEventBus characterPreviewEventBus,
@@ -207,9 +211,11 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            SmartWearableCache smartWearableCache)
         {
             this.eventBus = eventBus;
+            this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -229,7 +235,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
-            this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
@@ -267,6 +272,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
             this.passportBridge = passportBridge;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose()
@@ -288,7 +294,10 @@ namespace DCL.PluginSystem.Global
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
+            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
+            
             backpackSubPlugin = new BackpackSubPlugin(
+                featureFlags,
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,
@@ -299,7 +308,6 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
-                forceRender,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -313,7 +321,14 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inWorldWarningNotificationView,
                 thumbnailProvider,
-                profileChangesBus
+                profileChangesBus,
+                outfitsRepository,
+                realmData,
+                webRequestController,
+                nftNamesProvider,
+                eventBus,
+                smartWearableCache,
+                mvcManager
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -393,7 +408,8 @@ namespace DCL.PluginSystem.Global
                 upscalingController,
                 isTranslationChatEnabled,
                 assetsProvisioner,
-                eventBus);
+                eventBus,
+                appArgs);
 
             await settingsController.InitializeAsync();
 
@@ -451,7 +467,7 @@ namespace DCL.PluginSystem.Global
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                     communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager);
 

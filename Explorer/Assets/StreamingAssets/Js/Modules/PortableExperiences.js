@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/portable_experiences.proto
+
 module.exports.spawn = async function(message) {
     console.log('JSMODULE: spawn');
     const response = await UnityPortableExperiencesApi.Spawn(message.pid, message.ens);
@@ -18,6 +21,7 @@ module.exports.exit = async function() {
 
 module.exports.getPortableExperiencesLoaded = async function(message) {
     console.log('JSMODULE: getPortableExperiencesLoaded');
-    const pex = UnityPortableExperiencesApi.GetLoadedPortableExperiences();
-    return pex;
+    return {
+        loaded: JSON.parse(UnityPortableExperiencesApi.GetLoadedPortableExperiences())
+    };
 }

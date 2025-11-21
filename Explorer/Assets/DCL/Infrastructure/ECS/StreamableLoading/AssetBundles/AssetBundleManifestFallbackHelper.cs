@@ -14,9 +14,16 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public class AssetBundleManifestFallbackHelper
     {
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct)
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
         {
+            if (isLSD)
+            {
+                entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+                return;
+            }
+
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
+            //Also used for the PX escape
             if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
             {
                 //Needed to use the Time.realtimeSinceStartup on the intention creation
