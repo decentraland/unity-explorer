@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use segment::message::{Identify, Track, User};
 use serde_json::Value;
 use std::ffi::{c_char, CStr};
@@ -10,8 +10,8 @@ pub fn new_track(
     properties_json: &str,
     context_json: &str,
 ) -> Result<Track> {
-    let properties_json: Value = serde_json::from_str(properties_json)?;
-    let context_json: Value = serde_json::from_str(context_json)?;
+    let properties_json: Value = serde_json::from_str(properties_json).context("Cannot parse properties")?;
+    let context_json: Value = serde_json::from_str(context_json).context("Cannot parse context")?;
 
     Ok(Track {
         user,
@@ -24,8 +24,8 @@ pub fn new_track(
 }
 
 pub fn new_identify(user: User, traits_json: &str, context_json: &str) -> Result<Identify> {
-    let traits_json: Value = serde_json::from_str(traits_json)?;
-    let context_json: Value = serde_json::from_str(context_json)?;
+    let traits_json: Value = serde_json::from_str(traits_json).context("Cannot parse traits")?;
+    let context_json: Value = serde_json::from_str(context_json).context("Cannot parse context")?;
 
     Ok(Identify {
         user,
@@ -78,4 +78,21 @@ pub unsafe fn user_from(used_id: *const c_char, anon_id: *const c_char) -> Optio
 pub unsafe fn as_str<'a>(chars: *const c_char) -> &'a str {
     let c_str = unsafe { CStr::from_ptr(chars) };
     c_str.to_str().unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_track() {
+        let user = User::UserId {
+            user_id: "0x7ba641833a2925d71046351f97a92235dc777616".to_owned(),
+        };
+        let event_name = "move_to_parcel";
+        let properties_json = r#"{"scene_hash": null,"old_parcel": "(NaN, NaN)","is_empty_scene": ,"new_parcel": "(1, -1)"}"#;
+        let context_json = r#"{}"#;
+        let result: Result<Track> = new_track(user, event_name, properties_json, context_json);
+        assert!(result.is_err(), "Serialization should fail due wrong properties_json");
+    }
 }
