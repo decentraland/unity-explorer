@@ -320,12 +320,12 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             if (userIds.Value.Count > 0)
             {
-                List<Profile> getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
+                List<Profile.CompactInfo> getAvatarsDetailsResult = await profileRepository.GetCompactAsync(userIds.Value, ct);
 
                 if (getAvatarsDetailsResult.Count == 0)
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 else
-                    foreach (Profile? profile in getAvatarsDetailsResult)
+                    foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
                     {
                         userNames.Add(profile.UserId, profile.Name);
                         break;

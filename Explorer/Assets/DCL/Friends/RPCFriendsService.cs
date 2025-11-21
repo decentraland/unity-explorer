@@ -100,7 +100,7 @@ namespace DCL.Friends
                                     request.Id,
                                     DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
                                     ToClientFriendProfile(request.Friend),
-                                    myProfile!,
+                                    myProfile!.Compact,
                                     request.HasMessage ? request.Message : string.Empty);
 
                                 eventBus.BroadcastFriendRequestReceived(fr);
@@ -394,7 +394,7 @@ namespace DCL.Friends
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
                             ToClientFriendProfile(rr.Friend),
-                            myProfile!,
+                            myProfile!.Compact,
                             rr.Message);
 
                         receivedFriendRequestsBuffer.Add(fr);
@@ -441,7 +441,7 @@ namespace DCL.Friends
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
-                            myProfile!,
+                            myProfile!.Compact,
                             ToClientFriendProfile(rr.Friend),
                             rr.Message);
 
@@ -554,7 +554,7 @@ namespace DCL.Friends
 
             var fr = new FriendRequest(response.Id,
                 DateTimeOffset.FromUnixTimeMilliseconds(response.CreatedAt).DateTime,
-                myProfile!,
+                myProfile!.Compact,
                 ToClientFriendProfile(response.Friend),
                 messageBody);
 

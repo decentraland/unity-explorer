@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using System;
 using Newtonsoft.Json;
 
@@ -25,7 +26,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public CommunityVisibility visibility;
             public CommunityMemberRole role;
-            public FriendInCommunity[] friends;
+            [JsonConverter(typeof(CommunitiesDTOConverters.FriendsInCommunityConverter))]
+            public Profile.CompactInfo[] friends;
             [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
@@ -76,15 +78,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 if (membersCount > 0)
                     membersCount--;
             }
-        }
-
-        [Serializable]
-        public struct FriendInCommunity
-        {
-            public string address;
-            public string name;
-            public string profilePictureUrl;
-            public bool hasClaimedName;
         }
 
         public CommunityData[] results;

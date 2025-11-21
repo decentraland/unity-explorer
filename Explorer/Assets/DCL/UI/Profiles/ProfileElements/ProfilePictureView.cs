@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using MVC;
@@ -121,6 +122,14 @@ namespace DCL.UI.ProfileElements
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
             LoadThumbnailAsync(faceSnapshotUrl, false).Forget();
+        }
+
+        [Obsolete("Use " + nameof(Bind) + " instead.")]
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, in Profile.CompactInfo profile)
+        {
+            profileRepositoryWrapper = profileDataProvider;
+            SetBackgroundColor(profile.UserNameColor);
+            LoadThumbnailAsync(profile.FaceSnapshotUrl, false).Forget();
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]

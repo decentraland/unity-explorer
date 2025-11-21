@@ -48,7 +48,7 @@ namespace DCL.Friends.UI.PushNotifications
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.UserId));
-            ProfilePictureView.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FaceSnapshotUrl, friendProfile.UserId);
+            ProfilePictureView.Setup(profileDataProvider, friendProfile);
         }
 
         internal async UniTask ShowToastAsync(CancellationToken ct)

@@ -12,7 +12,7 @@ namespace DCL.UI.SuggestionPanel
         {
             SuggestionId = data.ProfileData.DisplayName;
             simpleUserNameElement.Setup(data.ProfileData);
-            profilePictureView.Setup(data.ProfileDataProvider, data.ProfileData.UserNameColor, data.ProfileData.Avatar.FaceSnapshotUrl, data.ProfileData.UserId);
+            profilePictureView.Setup(data.ProfileDataProvider, data.ProfileData);
         }
     }
 }

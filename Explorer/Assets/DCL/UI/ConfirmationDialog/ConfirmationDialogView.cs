@@ -71,7 +71,7 @@ namespace DCL.UI.ConfirmationDialog
             if (!hasProfileImage) return;
 
             profilePictureView.SetDefaultThumbnail();
-            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.UserNameColor, dialogData.UserInfo.FaceSnapshotUrl);
+            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo);
         }
 
         public void Reset()

@@ -42,8 +42,8 @@ namespace DCL.Profiles
 
         public string MentionName => compact.MentionName;
 
-        public static implicit operator CompactInfo(Profile profile) =>
-            profile.compact;
+        // public static implicit operator CompactInfo(Profile profile) =>
+        //     profile.compact;
 
         /// <summary>
         ///     A small slice of the profile info used when the full information is not required <br />

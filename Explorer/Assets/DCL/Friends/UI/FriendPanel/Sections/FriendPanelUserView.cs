@@ -77,7 +77,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.UserId));
-            ProfilePicture.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FaceSnapshotUrl, friendProfile.UserId);
+            ProfilePicture.Setup(profileDataProvider, friendProfile);
         }
 
         public void ConfigureThumbnailClickData(Action thumbnailContextMenuAction) =>

@@ -21,7 +21,7 @@ namespace DCL.Profiles
             return false;
         }
 
-        public bool TryGetCompact(string id, [MaybeNullWhen(false)] out Profile.CompactInfo profile)
+        public bool TryGetCompact(string id, out Profile.CompactInfo profile)
         {
             if (TryGet(id, ProfileTier.Kind.Full, out ProfileTier tiered) && tiered.IsCompact(out profile!))
                 return true;

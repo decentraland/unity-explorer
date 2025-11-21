@@ -14,6 +14,43 @@ namespace DCL.Communities.CommunitiesDataProvider
     public static class CommunitiesDTOConverters
     {
         [Preserve]
+        public class FriendsInCommunityConverter : JsonConverter<Profile.CompactInfo[]>
+        {
+            public override bool CanWrite => false;
+
+            public override void WriteJson(JsonWriter writer, Profile.CompactInfo[]? value, JsonSerializer serializer) =>
+                throw new NotImplementedException();
+
+            public override Profile.CompactInfo[]? ReadJson(JsonReader reader, Type objectType, Profile.CompactInfo[]? existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                if (reader.TokenType == JsonToken.Null)
+                    return Array.Empty<Profile.CompactInfo>();
+
+                var array = JArray.Load(reader);
+
+                var profiles = new Profile.CompactInfo[array.Count];
+
+                for (int i = 0; i < array.Count; i++)
+                {
+                    var token = array[i] as JObject;
+                    if (token == null) continue;
+
+                    profiles[i] = ReadElement(token);
+                }
+
+                return profiles;
+
+                Profile.CompactInfo ReadElement(JObject token) =>
+                    new (
+                        token["address"]!.Value<string>()!,
+                        token["name"]!.Value<string>()!,
+                        token["hasClaimedName"]!.Value<bool>(),
+                        token["profilePictureUrl"]!.Value<string>()!
+                    );
+            }
+        }
+
+        [Preserve]
         public class GetCommunityMembersResponseMemberDataConverter : JsonConverter<GetCommunityMembersResponse.MemberData>
         {
             public override bool CanWrite => false;

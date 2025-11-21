@@ -82,14 +82,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.profilePictureView.SetBackgroundColor(userColor);
             view.profilePictureView.SetLoadingState(true);
 
-            Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
+            Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(visiblePerson.userAddress, ct);
 
             if (profile is not null)
             {
-                view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
-                view.verifiedMark.SetActive(profile.HasClaimedName);
+                view.userNameTag.gameObject.SetActive(!profile.Value.HasClaimedName);
+                view.verifiedMark.SetActive(profile.Value.HasClaimedName);
                 view.officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(visiblePerson.userAddress));
-                await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
+                await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Value.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else
             {

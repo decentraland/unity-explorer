@@ -93,7 +93,7 @@ namespace DCL.UI.Controls
             if (settings.showProfilePicture)
             {
                 ProfilePictureView.gameObject.SetActive(true);
-                ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData.UserNameColor, settings.userData.FaceSnapshotUrl);
+                ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData);
             }
             else
                 ProfilePictureView.gameObject.SetActive(false);

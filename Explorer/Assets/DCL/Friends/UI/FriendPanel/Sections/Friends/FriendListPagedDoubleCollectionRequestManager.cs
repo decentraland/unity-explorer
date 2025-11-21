@@ -126,13 +126,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
                 // TODO: we should avoid requesting the profile.. instead the service should emit a Profile.CompactInfo
-                Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
+                Profile.CompactInfo? newFriendProfile = await profileRepository.GetCompactAsync(friendId, ct);
 
                 if (newFriendProfile != null)
                 {
-                    if (!offlineFriends.Contains(newFriendProfile) && !onlineFriends.Contains(newFriendProfile))
+                    if (!offlineFriends.Contains(newFriendProfile.Value) && !onlineFriends.Contains(newFriendProfile.Value))
                     {
-                        AddNewFriendProfile(newFriendProfile, friendsConnectivityStatusTracker.GetFriendStatus(newFriendProfile.UserId));
+                        AddNewFriendProfile(newFriendProfile.Value, friendsConnectivityStatusTracker.GetFriendStatus(newFriendProfile.Value.UserId));
                         RefreshLoopList();
                     }
                 }

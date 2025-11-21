@@ -164,17 +164,19 @@ namespace DCL.Friends.UI.Requests
 
             async UniTask LoadUserAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user, CancellationToken ct)
             {
-                Profile? profile = await profileRepository.GetAsync(user, ct);
+                Profile.CompactInfo? compactInfo = await profileRepository.GetCompactAsync(user, ct);
 
-                if (profile == null) return;
+                if (compactInfo == null) return;
+
+                Profile.CompactInfo profile = compactInfo.Value;
 
                 config.UserName.text = profile.Name;
                 config.UserName.color = profile.UserNameColor;
                 config.UserNameVerification.SetActive(profile.HasClaimedName);
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
-                config.UserNameHash.text = $"#{user.ToString()[^4..]}";
+                config.UserNameHash.text = compactInfo.Value.WalletId;
 
-                await config.UserThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, user, ct);
+                await config.UserThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FaceSnapshotUrl, user, ct);
             }
         }
 
