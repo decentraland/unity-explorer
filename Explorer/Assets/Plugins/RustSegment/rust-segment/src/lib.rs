@@ -42,13 +42,7 @@ mod tests {
         let write_key = std::env::var("SEGMENT_WRITE_KEY").unwrap();
         let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();
 
-        SEGMENT_SERVER.initialize(
-            persistent_path,
-            100,
-            write_key,
-            test_callback,
-            error_callback,
-        );
+        SEGMENT_SERVER.initialize(persistent_path, 100, write_key, test_callback, None);
         SEGMENT_SERVER.try_execute(&|segment, id| {
             let operation = SegmentServer::enqueue_track(
                 segment,
@@ -68,9 +62,5 @@ mod tests {
 
     unsafe extern "C" fn test_callback(id: OperationHandleId, response: Response) {
         info!("id: {id}, response: {response:?}");
-    }
-
-    unsafe extern "C" fn error_callback(_: *const c_char) {
-        // ignore
     }
 }

@@ -7,6 +7,7 @@ use std::{
         Arc,
     },
 };
+use tokio::sync::Mutex;
 
 use segment::{
     message::{BatchMessage, User},
@@ -16,7 +17,6 @@ use segment::{
     },
     Client, HttpClient,
 };
-use tokio::sync::Mutex;
 
 use crate::{operations, FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, Response};
 use segment::queue::queued_batcher::QueuedBatcher;
@@ -24,7 +24,7 @@ use segment::queue::queued_batcher::QueuedBatcher;
 pub struct Context {
     pub batcher: QueuedBatcher,
     pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
-    pub daemon: AnalyticsEventSendDaemon<segment::HttpClient>,
+    pub daemon: Arc<Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     pub segment_client: segment::HttpClient,
     pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
@@ -67,7 +67,7 @@ impl Server {
         queue_count_limit: u32,
         writer_key: String,
         callback_fn: FfiCallbackFn,
-        error_fn: FfiErrorCallbackFn,
+        error_fn: Option<FfiErrorCallbackFn>,
     ) -> bool {
         let state_lock = self.state.lock();
         if state_lock.is_err() {
@@ -85,6 +85,7 @@ impl Server {
                     writer_key,
                     callback_fn,
                     error_fn,
+                    &self.async_runtime,
                 );
                 *state = ServerState::Ready(Arc::new(server));
                 true
@@ -141,13 +142,16 @@ impl SegmentServer {
         queue_count_limit: u32,
         writer_key: String,
         callback_fn: FfiCallbackFn,
-        error_fn: FfiErrorCallbackFn,
+        error_fn: Option<FfiErrorCallbackFn>,
+        async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
         let error_fn = Box::new(move |message: &str| {
-            if let Ok(cstr) = CString::new(message) {
-                unsafe {
-                    error_fn(cstr.as_ptr());
-                }
+            if let Some(cb) = error_fn {
+                if let Ok(cstr) = CString::new(message) {
+                    unsafe {
+                        cb(cstr.as_ptr());
+                    }
+                };
             };
         });
 
@@ -162,16 +166,21 @@ impl SegmentServer {
                 e
             }
         };
-        let event_queue = Arc::new(tokio::sync::Mutex::new(event_queue));
+        let event_queue = Arc::new(Mutex::new(event_queue));
 
         let queue_batcher = QueuedBatcher::new(event_queue.clone(), None);
 
         let client = HttpClient::default();
-        let mut send_daemon =
+        let send_daemon =
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
+        let send_daemon = Arc::new(Mutex::new(send_daemon));
 
-        send_daemon.start(error_fn.clone());
-
+        let moved_error_fn = error_fn.clone();
+        let moved_send_daemon = send_daemon.clone();
+        async_runtime.spawn(async move {
+            let mut guard = moved_send_daemon.lock().await;
+            guard.start(moved_error_fn);
+        });
         let direct_client = HttpClient::default();
 
         let context = Context {

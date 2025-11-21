@@ -15,7 +15,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
     /// <summary>
     ///     This implementation is thread-safe
     /// </summary>
-    public class RustSegmentAnalyticsService : IAnalyticsService
+    public class RustSegmentAnalyticsService : IAnalyticsService, IDisposable
     {
         private enum Operation
         {
@@ -60,13 +60,19 @@ namespace Plugins.RustSegment.SegmentServerWrap
             current = this;
         }
 
-        ~RustSegmentAnalyticsService()
+        public void Dispose()
         {
             current = null;
             bool result = NativeMethods.SegmentServerDispose();
 
             if (result == false)
                 throw new Exception("Rust Segment dispose failed");
+        }
+
+        ~RustSegmentAnalyticsService()
+        {
+            if (current == this)
+                Dispose();
         }
 
         public void Identify(string? userId, JsonObject? traits = null)

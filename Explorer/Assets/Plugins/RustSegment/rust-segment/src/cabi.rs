@@ -16,17 +16,43 @@ pub unsafe extern "C" fn segment_server_initialize(
     queue_count_limit: u32,
     segment_write_key: *const c_char,
     callback_fn: FfiCallbackFn,
-    error_fn: FfiErrorCallbackFn,
+    error_fn: Option<FfiErrorCallbackFn>,
 ) -> bool {
-    let queue_file_path = as_str(queue_file_path).to_string();
-    let write_key = as_str(segment_write_key).to_string();
-    SEGMENT_SERVER.initialize(
-        queue_file_path,
-        queue_count_limit,
-        write_key,
-        callback_fn,
-        error_fn,
-    )
+    std::panic::catch_unwind(|| {
+        // SAFETY: caller must guarantee valid pointers
+        let queue_file_path = as_str(queue_file_path).to_string();
+        let write_key = as_str(segment_write_key).to_string();
+
+        SEGMENT_SERVER.initialize(
+            queue_file_path,
+            queue_count_limit,
+            write_key,
+            callback_fn,
+            error_fn,
+        )
+    })
+    .unwrap_or_else(|err| {
+        fn panic_message(err: Box<dyn std::any::Any + Send>) -> String {
+            if let Some(s) = err.downcast_ref::<&str>() {
+                (*s).to_string()
+            } else if let Some(s) = err.downcast_ref::<String>() {
+                s.clone()
+            } else {
+                "Unknown panic payload".to_string()
+            }
+        }
+
+        if let Some(cb) = error_fn {
+            let msg = std::ffi::CString::new(format!(
+                "SegmentServer: panic inside segment_server_initialize: {}",
+                panic_message(err)
+            ))
+            .unwrap();
+            unsafe { cb(msg.as_ptr()) };
+        }
+
+        false
+    })
 }
 
 /// # Safety
