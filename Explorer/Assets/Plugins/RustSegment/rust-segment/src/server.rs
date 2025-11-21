@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use core::str;
 use std::{
     ffi::CString,
@@ -21,7 +21,7 @@ use segment::{
 use crate::{operations, FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, Response};
 use segment::queue::queued_batcher::QueuedBatcher;
 
-pub struct Context {
+pub struct AppContext {
     pub batcher: QueuedBatcher,
     pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
     pub daemon: Arc<Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
@@ -32,7 +32,7 @@ pub struct Context {
 }
 
 pub struct SegmentServer {
-    context: Arc<Mutex<Context>>,
+    context: Arc<Mutex<AppContext>>,
     next_id: AtomicU64,
 }
 
@@ -183,7 +183,7 @@ impl SegmentServer {
         });
         let direct_client = HttpClient::default();
 
-        let context = Context {
+        let context = AppContext {
             batcher: queue_batcher,
             queue: event_queue,
             daemon: send_daemon,
@@ -209,25 +209,27 @@ impl SegmentServer {
         properties_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_track(user, event_name, properties_json, context_json);
+        let msg = operations::new_track(user.clone(), event_name, properties_json, context_json)
+            .with_context(|| format!("Cannot create new track: id - {id}, user - {user}, event_name - {event_name}, properties_json - {properties_json}, context_json - {context_json}"));
         match msg {
             Ok(m) => {
                 let context = instance.context.lock().await;
                 let key = context.write_key.clone();
                 match context.segment_client.send(key, m.into()).await {
                     Ok(()) => {
-                        context.call_callback(id, Response::Success);
+                        context.report_success(id);
                     }
                     Err(e) => {
-                        context.report_error(e.to_string());
-                        context.call_callback(id, Response::Error);
+                        context.report_error(Some(id), e.to_string());
                     }
                 }
             }
             Err(e) => {
-                let context = instance.context.lock().await;
-                context.report_error(e.to_string());
-                context.call_callback(id, Response::Error);
+                instance
+                    .context
+                    .lock()
+                    .await
+                    .report_error(Some(id), e.to_string());
             }
         }
     }
@@ -240,7 +242,10 @@ impl SegmentServer {
         properties_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_track(user, event_name, properties_json, context_json);
+        let msg = operations::new_track(user.clone(), event_name, properties_json, context_json)
+            .with_context(|| {
+                format!("Failed new_track: {user}, {event_name}, {properties_json}, {context_json}")
+            });
         instance.try_enqueue(id, msg).await;
     }
 
@@ -251,20 +256,19 @@ impl SegmentServer {
         traits_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_identify(user, traits_json, context_json);
+        let msg = operations::new_identify(user.clone(), traits_json, context_json)
+            .with_context(|| format!("Failed new_track: {user}, {traits_json}, {context_json}"));
         instance.try_enqueue(id, msg).await;
     }
 
     pub async fn enqueue(&self, id: OperationHandleId, msg: impl Into<BatchMessage>) {
         if let Err(e) = self.enqueue_internal(msg).await {
-            let context = self.context.lock().await;
-            context.call_callback(id, Response::Error);
-            context.report_error(e.to_string());
-        } else {
             self.context
                 .lock()
                 .await
-                .call_callback(id, Response::Success);
+                .report_error(Some(id), format!("Cannot enqueue: {}", e.to_string()));
+        } else {
+            self.context.lock().await.report_success(id);
         }
     }
 
@@ -275,14 +279,12 @@ impl SegmentServer {
                 // if something returned then it has not been enqued
                 if let Some(msg) = option {
                     context.batcher.flush().await?;
-                    if let Err(e) = context.batcher.push(msg) {
-                        Err(anyhow!("Cannot push message even after flush: {e}"))
-                    } else {
-                        Ok(())
-                    }
-                } else {
-                    Ok(())
+                    context
+                        .batcher
+                        .push(msg)
+                        .context("Cannot push message even after flush:")?;
                 }
+                Ok(())
             }
             Err(e) => Err(anyhow!("Cannot push message to batcher: {e}")),
         }
@@ -292,10 +294,9 @@ impl SegmentServer {
         let mut context = instance.context.lock().await;
 
         if let Err(e) = context.batcher.flush().await {
-            context.call_callback(id, Response::Error);
-            context.report_error(e.to_string());
+            context.report_error(Some(id), format!("Cannot flush: {}", e.to_string()));
         } else {
-            context.call_callback(id, Response::Success);
+            context.report_success(id);
         }
     }
 
@@ -307,18 +308,31 @@ impl SegmentServer {
         match msg {
             Ok(m) => self.enqueue(id, m).await,
             Err(e) => {
-                self.context.lock().await.report_error(e.to_string());
+                self.context
+                    .lock()
+                    .await
+                    .report_error(Some(id), e.to_string());
             }
         }
     }
 }
 
-impl Context {
-    pub fn call_callback(&self, id: OperationHandleId, code: Response) {
-        self.callback_fn.as_ref()(id, code);
+impl AppContext {
+    pub fn report_success(&self, id: OperationHandleId) {
+        self.callback_fn.as_ref()(id, Response::Success);
     }
 
-    pub fn report_error(&self, message: String) {
+    pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
+        let message = match id {
+            Some(id) => {
+                format!("Operation {} failed: {}", id, message)
+            }
+            None => message,
+        };
         self.error_fn.as_ref()(message.as_str());
+
+        if let Some(id) = id {
+            self.callback_fn.as_ref()(id, Response::Error);
+        };
     }
 }
