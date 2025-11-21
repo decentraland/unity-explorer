@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;

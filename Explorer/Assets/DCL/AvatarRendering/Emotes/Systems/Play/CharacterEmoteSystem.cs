@@ -25,19 +25,19 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Animations;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
-using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -92,6 +92,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
+            CancelEmotesOnMovePlayerToInvokedQuery(World);
             CancelEmotesByMovementQuery(World);
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
@@ -100,6 +101,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
+            DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
         }
 
@@ -110,11 +112,31 @@ namespace DCL.AvatarRendering.Emotes.Play
             StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
         }
 
+        /// <summary>
+        /// Stops emote playback whenever the teleport intent is present on the entity.
+        /// Doesn't handle movePlayerTo calls.
+        /// </summary>
+        [Query]
+        [All(typeof(PlayerTeleportIntent))]
+        [None(typeof(CharacterEmoteIntent), typeof(MovePlayerToInfo))]
+        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        {
+            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+        }
+
+        /// <summary>
+        /// Stops emote playback when movePlayerTo is invoked.<br/>
+        /// Will not cancel a scene emote that was triggered the same frame movePlayerTo was invoked.
+        /// </summary>
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        private void CancelEmotesOnMovePlayerToInvoked(Entity entity, in MovePlayerToInfo movePlayerTo, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
+            if (World.TryGet(entity, out CharacterWaitingSceneEmoteLoading waitingEmote) &&
+                movePlayerTo.FrameCount == waitingEmote.FrameCount)
+                return;
+
             StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
         }
 
@@ -160,21 +182,38 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-        // when moving or jumping we detect the emote cancellation, and we take care of getting rid of the emote props and sounds
+        /// <summary>
+        /// Cancel the emote whenever:
+        /// - Moving horizontally
+        /// - OR moving up
+        /// - OR falling, which can only be true if the character is NOT grounded
+        ///
+        /// The falling flag is computed that way because it's possible to accumulate large vertical speed after teleporting
+        /// even if the character is actually grounded and not moving down
+        ///
+        /// The JustTeleport tag check is needed because the grounded flag is set to false while we are in that 'just teleported' state.
+        /// </summary>
         // Note: Applies only to local avatar
         [Query]
-        [None(typeof(CharacterEmoteIntent))]
+        [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported))]
         private void CancelEmotesByMovement(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView, in Profile profile)
         {
             const float XZ_CUTOFF_LIMIT = 0.01f;
-            const float VERTICAL_CUTOFF_LIMIT = 0.2f;
+            // The seemingly strange 0.447f value is because we were previously only using the squared threshold, and it was 0.2f
+            // The value 0.447^2 is approximately 0.2f
+            const float VERTICAL_CUTOFF_LIMIT = 0.447f;
 
-            float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
-            float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
+            float horizontalSpeedSq = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
+            float verticalSpeed = rigidTransform.GravityVelocity.y;
 
-            bool canEmoteBeCancelled = velocity > XZ_CUTOFF_LIMIT || verticalVelocity > VERTICAL_CUTOFF_LIMIT;
+            bool shouldCancelEmote = horizontalSpeedSq > XZ_CUTOFF_LIMIT ||
+                                     // If going up (v speed > 0), cancel the emote
+                                     // Otherwise, we only cancel the emote if not grounded
+                                     // This is because we always have some vertical velocity, even when grounded
+                                     // See ApplyGravity.Execute(), all code paths ultimately add to CharacterRigidTransform.GravityVelocity
+                                     (Mathf.Abs(verticalSpeed) > VERTICAL_CUTOFF_LIMIT && (verticalSpeed > 0 || !rigidTransform.IsGrounded));
 
-            if (!canEmoteBeCancelled) return;
+            if (!shouldCancelEmote) return;
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Cancel velocity: " + velocity.ToString("F6") + " " + profile.UserId);
 
@@ -214,6 +253,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             avatarView.RestoreArmatureName();
 
+            // See https://github.com/decentraland/unity-explorer/issues/4198
+            // Some emotes changes the armature rotation, we need to restore it
+            avatarView.ResetArmatureInclination();
+
             bool hasToMoveReceiverToOriginalPosition = emoteComponent.IsReactingToSocialEmote;
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "RESET EmoteComponent User: " + ((AvatarBase)avatarView).name);
@@ -233,6 +276,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Remove<MoveToInitiatorIntent>(entity);
                 }
             }
+
            // ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "EmoteComponent set in world");
   //          World.Set(entity, emoteComponent);
         }
@@ -458,16 +502,23 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
+        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
+        {
+            characterController.enabled = !emoteComponent.IsPlayingEmote;
+        }
+
+        [Query]
+        private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)
+        {
+            if (emote.CurrentEmoteReference && emote.CurrentEmoteReference.legacy)
+                avatarView.AvatarAnimator.enabled = false;
+        }
+
+        [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
-        }
-
-        [Query]
-        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
-        {
-            characterController.enabled = !emoteComponent.IsPlayingEmote;
         }
 
         private void CreateEmotePromise(URN urn, BodyShape bodyShape)

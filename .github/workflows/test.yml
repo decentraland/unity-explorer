@@ -25,7 +25,7 @@ env:
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
   UNITY_IMAGE_FLAVOR: linux-il2cpp
-  UNITY_IMAGE_VERSION: 3.1.0
+  UNITY_IMAGE_VERSION: 3.2.0
   GHCR_IMAGE_NAME: unityci-editor
   
 concurrency:

@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,14 +26,32 @@ namespace DCL.Profiles
             return UniTask.CompletedTask;
         }
 
-        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true)
+        public UniTask<List<Profile>> GetAsync(IReadOnlyList<string> ids, CancellationToken ct, URLDomain? fromCatalyst = null)
+        {
+            var results = new List<Profile>(ids.Count);
+
+            foreach (string id in ids)
+            {
+                var key = new Key(id, 0);
+
+                if (!profiles.ContainsKey(key))
+                    profiles[key] = NewRandomProfile();
+
+                results.Add(profiles[key]);
+            }
+
+            return UniTask.FromResult(results);
+        }
+
+        public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
+            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null)
         {
             var key = new Key(id, version);
 
             if (profiles.ContainsKey(key) == false)
                 profiles[key] = NewRandomProfile();
 
-            return profiles[key];
+            return UniTask.FromResult(profiles[key])!;
         }
 
         private static Profile NewRandomProfile() =>

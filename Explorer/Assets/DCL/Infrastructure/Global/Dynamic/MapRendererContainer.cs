@@ -14,6 +14,7 @@ using UnityEngine.AddressableAssets;
 using DCL.EventsApi;
 using DCL.Multiplayer.Connectivity;
 using DCL.MapRenderer.MapLayers;
+using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 
@@ -45,6 +46,7 @@ namespace Global.Dynamic
             IRealmData realmData,
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider,
+            IWeb3IdentityCache web3IdentityCache,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -63,7 +65,8 @@ namespace Global.Dynamic
                     mapPinsEventBus,
                     teleportBusController,
                     navmapBus,
-                    onlineUsersProvider));
+                    onlineUsersProvider,
+                    web3IdentityCache));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

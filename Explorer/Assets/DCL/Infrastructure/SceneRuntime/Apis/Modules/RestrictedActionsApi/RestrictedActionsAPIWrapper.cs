@@ -69,6 +69,10 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         }
 
         [UsedImplicitly]
+        public void CopyToClipboard(string text) =>
+            api.TryCopyToClipboard(text);
+
+        [UsedImplicitly]
         public bool OpenNftDialog(string urn) =>
             api.TryOpenNftDialog(urn);
 

@@ -308,6 +308,7 @@ namespace DCL.Diagnostics
 
         public const string IN_WORLD_CAMERA = nameof(IN_WORLD_CAMERA);
 
+        public const string SOCIAL = nameof(SOCIAL);
         public const string FRIENDS = nameof(FRIENDS);
 
         public const string DISK_CACHE = nameof(DISK_CACHE);
@@ -339,7 +340,11 @@ namespace DCL.Diagnostics
 
         public const string TRANSLATE = nameof(TRANSLATE);
 
+        public const string OUTFITS = nameof(OUTFITS);
+
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
+
+        public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
 
         // TODO: Remove this category along with all the Log calls
         public const string EMOTE_DEBUG = nameof(EMOTE_DEBUG);

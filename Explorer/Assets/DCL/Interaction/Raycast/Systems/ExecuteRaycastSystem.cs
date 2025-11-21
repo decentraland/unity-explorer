@@ -36,6 +36,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         private readonly IReleasablePerformanceBudget budget;
         private readonly IEntityCollidersSceneCache collidersSceneCache;
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly byte raycastBucketThreshold;
@@ -55,6 +56,7 @@ namespace DCL.Interaction.Raycast.Systems
             IComponentPool<ECSComponents.RaycastHit> raycastHitPool,
             IComponentPool<PBRaycastResult> raycastComponentPool,
             IEntityCollidersSceneCache collidersSceneCache,
+            IEntityCollidersGlobalCache collidersGlobalCache,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider) : base(world)
@@ -65,6 +67,7 @@ namespace DCL.Interaction.Raycast.Systems
             this.raycastHitPool = raycastHitPool;
             this.raycastComponentPool = raycastComponentPool;
             this.collidersSceneCache = collidersSceneCache;
+            this.collidersGlobalCache = collidersGlobalCache;
             this.entitiesMap = entitiesMap;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
@@ -206,7 +209,7 @@ namespace DCL.Interaction.Raycast.Systems
             Vector3 rayDirection)
         {
             RaycastHit? closestQualifiedHit = null;
-            CRDTEntity foundEntity = -1;
+            CRDTEntity? foundEntity = null;
 
             for (var i = 0; i < hits.Length; i++)
             {
@@ -216,7 +219,7 @@ namespace DCL.Interaction.Raycast.Systems
 
                 if (closestQualifiedHit == null || hit.distance < closestQualifiedHit.Value.distance)
                 {
-                    if (TryGetQualifiedEntity(collider, collisionMask, out CRDTEntity entity))
+                    if (DoesHitColliderQualify(collider, collisionMask, out CRDTEntity? entity))
                     {
                         foundEntity = entity;
                         closestQualifiedHit = hit;
@@ -242,7 +245,7 @@ namespace DCL.Interaction.Raycast.Systems
 
                 Collider collider = hit.collider;
 
-                if (!TryGetQualifiedEntity(collider, collisionMask, out CRDTEntity foundEntity)) continue;
+                if (!DoesHitColliderQualify(collider, collisionMask, out CRDTEntity? foundEntity)) continue;
 
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
                 sdkHit.FillSDKRaycastHit(scenePos, hit, hit.collider.name, foundEntity, globalOrigin, rayDirection);
@@ -250,29 +253,40 @@ namespace DCL.Interaction.Raycast.Systems
             }
         }
 
-        private bool TryGetQualifiedEntity(Collider collider, ColliderLayer collisionMask, out CRDTEntity foundEntity)
+        private bool DoesHitColliderQualify(Collider collider, ColliderLayer collisionMask, out CRDTEntity? foundEntity)
         {
-            foundEntity = -1;
+            foundEntity = null;
 
-            // Player is always qualified
+            // 1. Player is always qualified
             if (RaycastUtils.IsPlayer(collider))
             {
                 foundEntity = SpecialEntitiesID.PLAYER_ENTITY;
                 return true;
             }
 
-            // If the collider is not a character, we need to check if it's in the collision mask
-            if (!collidersSceneCache.TryGetEntity(collider, out ColliderSceneEntityInfo entityInfo))
+            // 2. If the collider is not a character, we need to check if it's in the collision mask
+            if (!sceneData.IsPortableExperience())
+            {
+                if (collidersSceneCache.TryGetEntity(collider, out ColliderSceneEntityInfo entityInfo))
+                {
+                    bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(entityInfo.SDKLayer, collisionMask);
 
-                // Can't do anything without collider info, just skip
-                return false;
+                    if (!isQualified) return false;
 
-            bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(entityInfo.SDKLayer, collisionMask);
+                    foundEntity = entityInfo.SDKEntity;
+                    return true;
+                }
+            }
+            else if (collidersGlobalCache.TryGetSceneEntity(collider, out GlobalColliderSceneEntityInfo globalEntityInfo))
+            {
+                // Check global cache for 'scene-agnostic' check
+                bool isQualified = RaycastUtils.IsSDKLayerInCollisionMask(globalEntityInfo.ColliderSceneEntityInfo.SDKLayer, collisionMask);
+                if (!isQualified) return false;
+                // 'foundEntity' has to be null here because we shouldn't inform of an entity ID from another scene
+                return true;
+            }
 
-            if (!isQualified) return false;
-
-            foundEntity = entityInfo.SDKEntity;
-            return true;
+            return false;
         }
 
         private struct RaycastData
@@ -293,7 +307,8 @@ namespace DCL.Interaction.Raycast.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ClearRaycastIntents(ref CRDTEntity crdtEntity, ref PBRaycast raycast)
+        [All(typeof(PBRaycast))]
+        private void ClearRaycastIntents(in CRDTEntity crdtEntity)
         {
             emptyRaycastResult.Hits.Clear();
             ecsToCRDTWriter.PutMessage(emptyRaycastResult, crdtEntity);

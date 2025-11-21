@@ -1,4 +1,5 @@
-﻿using DCL.Profiles;
+﻿using DCL.FeatureFlags;
+using DCL.Profiles;
 using System;
 using System.Threading;
 
@@ -36,6 +37,7 @@ namespace DCL.UI.ProfileElements
             Element.UserNameHashtagText.text = profile.WalletId;
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
+            Element.OfficialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId));
         }
 
         public void Dispose()

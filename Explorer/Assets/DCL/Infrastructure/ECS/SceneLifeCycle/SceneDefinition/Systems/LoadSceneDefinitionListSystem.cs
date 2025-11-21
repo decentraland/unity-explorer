@@ -37,6 +37,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly bool isLocalSceneDevelopment;
 
         // cache
         private readonly StringBuilder bodyBuilder = new ();
@@ -45,11 +46,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly ProfilerMarker deserializationSampler;
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
+        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment,
             IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
 
@@ -109,7 +111,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             {
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct);
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

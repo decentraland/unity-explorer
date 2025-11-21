@@ -95,6 +95,7 @@ namespace DCL.PluginSystem.Global
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly CurrentChannelService? externalCurrentChannelService;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
@@ -136,7 +137,8 @@ namespace DCL.PluginSystem.Global
             ITranslationSettings translationSettings,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ChatSharedAreaEventBus chatSharedAreaEventBus)
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -174,6 +176,7 @@ namespace DCL.PluginSystem.Global
             this.translationSettings = translationSettings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.externalCurrentChannelService = externalCurrentChannelService;
 
             pluginCts = new CancellationTokenSource();
             eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
@@ -183,8 +186,7 @@ namespace DCL.PluginSystem.Global
         {
             chatStorage?.Dispose();
             pluginScope.Dispose();
-            pluginCts.Cancel();
-            pluginCts.Dispose();
+            pluginCts.SafeCancelAndDispose();
             fallbackFontsProvider.Dispose();
         }
 
@@ -242,7 +244,7 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 communityDataService);
 
-            var currentChannelService = new CurrentChannelService();
+            var currentChannelService = externalCurrentChannelService ?? new CurrentChannelService();
 
             var chatUserStateService = new PrivateConversationUserStateService(
                 currentChannelService,

@@ -45,11 +45,6 @@ namespace DCL.SDKComponents.MediaStream
             static _ => 0f
         );
 
-        public bool MediaOpened => Match(
-            static avPro => avPro.AvProMediaPlayer.MediaOpened,
-            static livekitPlayer => livekitPlayer.MediaOpened
-        );
-
         public bool IsFinished => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
             static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
@@ -65,6 +60,11 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        public bool IsBuffering => Match(
+            static avPro => avPro.AvProMediaPlayer.Control.IsBuffering(),
+            static _ => false
+        );
+
         public bool HasControl => Match(
             static avPro => avPro.AvProMediaPlayer.Control != null,
             static _ => false
@@ -74,6 +74,7 @@ namespace DCL.SDKComponents.MediaStream
             static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
             static _ => true
         );
+
         public Vector2 GetTexureScale => Match(static avPro =>
             {
                 float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
@@ -256,14 +257,6 @@ namespace DCL.SDKComponents.MediaStream
                 static avPro => avPro.AvProMediaPlayer.Control.GetLastError(),
                 static _ => ErrorCode.None
             );
-        }
-
-        public void EnsurePlaying()
-        {
-            if (IsLivekitPlayer(out var livekitPlayer))
-                livekitPlayer!.EnsurePlaying();
-
-            // AvPro doesn't require ensure
         }
     }
 }
