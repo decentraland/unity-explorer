@@ -215,7 +215,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!shouldCancelEmote) return;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Cancel velocity: " + velocity.ToString("F6") + " " + profile.UserId);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Cancel velocity: " + horizontalSpeedSq.ToString("F6") + " " + profile.UserId);
 
             URN emoteUrn = emoteComponent.EmoteUrn;
 
