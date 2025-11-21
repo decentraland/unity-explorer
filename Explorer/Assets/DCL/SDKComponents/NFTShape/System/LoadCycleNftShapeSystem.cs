@@ -121,11 +121,11 @@ namespace DCL.SDKComponents.NFTShape.System
             nftRenderer.Apply(anyTexture.Texture);
 
             // No need to check if video texture really, but there is no other way to get the VideoTextureData..
-            if (anyTexture.IsVideoTextureData(out VideoTextureData? videoTextureData))
+            if (anyTexture.IsVideoTextureData(out VideoTextureData videoTextureData))
                 nftLoadingComponent.VideoPlayerEntity = World.Create(anyTexture,
                     new CustomMediaStream(MediaPlayerComponent.DEFAULT_VOLUME, true),
-                    videoTextureData!.Value.Consumer,
-                    videoTextureData.Value.MediaPlayer);
+                    videoTextureData!.Consumer,
+                    videoTextureData.MediaPlayer);
         }
     }
 }

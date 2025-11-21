@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utility;
@@ -168,16 +169,16 @@ namespace DCL.Chat.ChatServices
                 friendIds.Clear();
                 foreach (var friend in allFriends)
                 {
-                    friendIds.Add(friend.Address);
+                    friendIds.Add(friend.UserId);
                 }
             }
 
             isFriendCacheInitialized = true;
         }
 
-        private async UniTask<List<FriendProfile>> GetAllFriendsAsync(CancellationToken ct)
+        private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
         {
-            var allFriends = new List<FriendProfile>();
+            var allFriends = new List<Profile.CompactInfo>();
             if (!friendsService.Configured) return allFriends;
 
             int pageNum = 0;
@@ -318,7 +319,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouUnblockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Address);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId);
 
         private void OnYouBlockedByUser(string userId)
         {
@@ -328,7 +329,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouBlockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Address);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId);
 
         /// <summary>
         /// Determines if a given user should be considered "online"

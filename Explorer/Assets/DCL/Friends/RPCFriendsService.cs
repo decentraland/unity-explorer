@@ -42,7 +42,7 @@ namespace DCL.Friends
 
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
-        private readonly List<FriendProfile> friendProfileBuffer = new ();
+        private readonly List<Profile.CompactInfo> friendProfileBuffer = new ();
         private readonly List<BlockedProfile> blockedProfileBuffer = new ();
 
         public RPCFriendsService(
@@ -100,7 +100,7 @@ namespace DCL.Friends
                                     request.Id,
                                     DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
                                     ToClientFriendProfile(request.Friend),
-                                    ToClientFriendProfile(myProfile!),
+                                    myProfile!,
                                     request.HasMessage ? request.Message : string.Empty);
 
                                 eventBus.BroadcastFriendRequestReceived(fr);
@@ -282,7 +282,7 @@ namespace DCL.Friends
             foreach (Decentraland.SocialService.V2.FriendProfile? profile in response.Friends)
                 friendsCache.Add(profile.Address);
 
-            IEnumerable<FriendProfile> profiles = ToClientFriendProfiles(response.Friends);
+            IEnumerable<Profile.CompactInfo> profiles = ToClientFriendProfiles(response.Friends);
 
             return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
         }
@@ -310,7 +310,7 @@ namespace DCL.Friends
                                                                                .AttachExternalCancellation(ct)
                                                                                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            IEnumerable<FriendProfile> profiles = ToClientFriendProfiles(response.Friends);
+            IEnumerable<Profile.CompactInfo> profiles = ToClientFriendProfiles(response.Friends);
 
             return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
         }
@@ -394,7 +394,7 @@ namespace DCL.Friends
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
                             ToClientFriendProfile(rr.Friend),
-                            ToClientFriendProfile(myProfile!),
+                            myProfile!,
                             rr.Message);
 
                         receivedFriendRequestsBuffer.Add(fr);
@@ -441,7 +441,7 @@ namespace DCL.Friends
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
-                            ToClientFriendProfile(myProfile!),
+                            myProfile!,
                             ToClientFriendProfile(rr.Friend),
                             rr.Message);
 
@@ -554,7 +554,7 @@ namespace DCL.Friends
 
             var fr = new FriendRequest(response.Id,
                 DateTimeOffset.FromUnixTimeMilliseconds(response.CreatedAt).DateTime,
-                ToClientFriendProfile(myProfile!),
+                myProfile!,
                 ToClientFriendProfile(response.Friend),
                 messageBody);
 
@@ -579,7 +579,7 @@ namespace DCL.Friends
                    };
         }
 
-        private IEnumerable<FriendProfile> ToClientFriendProfiles(
+        private IReadOnlyList<Profile.CompactInfo> ToClientFriendProfiles(
             RepeatedField<Decentraland.SocialService.V2.FriendProfile> friends)
         {
             friendProfileBuffer.Clear();
@@ -601,36 +601,17 @@ namespace DCL.Friends
             return blockedProfileBuffer;
         }
 
-        private FriendProfile ToClientFriendProfile(Decentraland.SocialService.V2.FriendProfile profile)
-        {
-            var fp = new FriendProfile(new Web3Address(profile.Address),
-                profile.Name,
-                profile.HasClaimedName,
-                URLAddress.FromString(profile.ProfilePictureUrl),
-                NameColorHelper.GetNameColor(profile.Name));
-
-            return fp;
-        }
+        [Obsolete(IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE)]
+        private Profile.CompactInfo ToClientFriendProfile(Decentraland.SocialService.V2.FriendProfile profile) =>
+            new (profile.Name, profile.Address, profile.HasClaimedName, profile.ProfilePictureUrl);
 
         private BlockedProfile ToClientBlockedProfile(BlockedUserProfile profile)
         {
             var fp = new BlockedProfile(new Web3Address(profile.Address),
                 profile.Name,
                 profile.HasClaimedName,
-                URLAddress.FromString(profile.ProfilePictureUrl),
-                DateTimeOffset.FromUnixTimeMilliseconds(profile.BlockedAt).DateTime,
-                NameColorHelper.GetNameColor(profile.Name));
-
-            return fp;
-        }
-
-        private FriendProfile ToClientFriendProfile(Profile profile)
-        {
-            var fp = new FriendProfile(new Web3Address(profile.UserId),
-                profile.Name,
-                profile.HasClaimedName,
-                profile.Avatar.FaceSnapshotUrl,
-                NameColorHelper.GetNameColor(profile.Name));
+                profile.ProfilePictureUrl,
+                DateTimeOffset.FromUnixTimeMilliseconds(profile.BlockedAt).DateTime);
 
             return fp;
         }

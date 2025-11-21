@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
@@ -71,7 +72,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         protected override int GetCollectionsDataCount() =>
             blockedProfiles.Count;
 
-        protected override FriendProfile GetCollectionElement(int index) =>
+        protected override Profile.CompactInfo GetCollectionElement(int index) =>
             blockedProfiles[index];
 
         protected override void CustomiseElement(BlockedUserView elementView, int index)

@@ -811,7 +811,7 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
         private void BlockUserClicked()
@@ -867,8 +867,8 @@ namespace DCL.Passport
                     bool friendExists = i < mutualFriendsResult.Friends.Count;
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
-                    FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FaceSnapshotUrl, mutualFriend.Address);
                 }
             }
         }

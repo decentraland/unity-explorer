@@ -37,9 +37,9 @@ namespace DCL.Chat.History
         /// <param name="sentTimestamp">The UTC time when the message was sent, in OLE automation format.</param>
         public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride, double sentTimestamp)
         {
-            Profile? ownProfile = null;
+            Profile.CompactInfo? ownProfile = null;
             if (web3IdentityCache.Identity != null)
-                ownProfile = profileCache.Get(web3IdentityCache.Identity.Address);
+                ownProfile = profileCache.GetCompact(web3IdentityCache.Identity.Address);
 
             if (isSentByLocalUser)
             {
@@ -60,7 +60,7 @@ namespace DCL.Chat.History
 
             // Using profileCache for immediate access ensures chat messages maintain the correct chronological order
             // since async profile fetching times are unpredictable.
-            Profile? profile = profileCache.Get(senderWalletAddress);
+            Profile.CompactInfo? profile = profileCache.GetCompact(senderWalletAddress);
 
             if (string.IsNullOrEmpty(usernameOverride))
                 usernameOverride = profile?.ValidatedName ?? string.Empty;
@@ -68,7 +68,7 @@ namespace DCL.Chat.History
             bool isMention = false;
 
             if (ownProfile != null)
-                isMention = IsMention(message, ownProfile.MentionName);
+                isMention = IsMention(message, ownProfile.Value.MentionName);
 
             return new ChatMessage(message,
                 usernameOverride,
@@ -80,12 +80,12 @@ namespace DCL.Chat.History
                 false
             );
 
-            string GetUserHash(Profile? profile)
+            string GetUserHash(Profile.CompactInfo? profile)
             {
                 string userHash;
 
                 if (profile != null)
-                    userHash = profile.WalletId ?? string.Empty;
+                    userHash = profile.Value.WalletId ?? string.Empty;
                 else
                     userHash = LOADING_PROFILE_TEXT;
 

@@ -136,7 +136,6 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.Version++;
-            newProfile.UserNameColor = NameColorHelper.GetNameColor(newProfile.DisplayName);
 
             OwnProfile = newProfile;
 

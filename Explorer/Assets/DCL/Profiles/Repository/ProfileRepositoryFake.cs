@@ -26,32 +26,15 @@ namespace DCL.Profiles
             return UniTask.CompletedTask;
         }
 
-        public UniTask<List<Profile>> GetAsync(IReadOnlyList<string> ids, CancellationToken ct, URLDomain? fromCatalyst = null)
-        {
-            var results = new List<Profile>(ids.Count);
-
-            foreach (string id in ids)
-            {
-                var key = new Key(id, 0);
-
-                if (!profiles.ContainsKey(key))
-                    profiles[key] = NewRandomProfile();
-
-                results.Add(profiles[key]);
-            }
-
-            return UniTask.FromResult(results);
-        }
-
-        public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null)
+        public UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool delayBatchResolution,
+            bool getFromCacheIfPossible, IProfileRepository.BatchBehaviour batchBehaviour, ProfileTier.Kind tier, IPartitionComponent? partition = null)
         {
             var key = new Key(id, version);
 
             if (profiles.ContainsKey(key) == false)
                 profiles[key] = NewRandomProfile();
 
-            return UniTask.FromResult(profiles[key])!;
+            return UniTask.FromResult<ProfileTier?>(profiles[key])!;
         }
 
         private static Profile NewRandomProfile() =>

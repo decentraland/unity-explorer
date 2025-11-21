@@ -48,9 +48,9 @@ namespace MVC
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private CancellationTokenSource cancellationTokenSource;
-        private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
+        private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
         private CommunityPlayerEntryContextMenu? communityPlayerEntryContextMenu;
-        private ChatOptionsContextMenuController chatOptionsContextMenuController;
+        private ChatOptionsContextMenuController? chatOptionsContextMenuController;
         private CommunityContextMenuController communityContextMenuController;
 
         public MVCManagerMenusAccessFacade(
@@ -130,9 +130,9 @@ namespace MVC
         public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
             Action onHide = null, Action onShow = null)
         {
-            Profile profile = profileCache.GetByUserName(userName);
+            ProfileTier? profile = profileCache.GetByUserName(userName);
             if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, onShow, closeMenuTask);
+            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask);
         }
 
         public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
@@ -141,7 +141,8 @@ namespace MVC
             await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
         }
 
-        private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
+        private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
+            Action onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
             genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);

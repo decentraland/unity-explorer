@@ -244,8 +244,8 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
-                string selfUrl = urlMediaAddress!.Value.Url;
-                string otherUrl = other!.Value.Url;
+                string selfUrl = urlMediaAddress.Url;
+                string otherUrl = other!.Url;
 
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;

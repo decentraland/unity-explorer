@@ -34,8 +34,8 @@ namespace DCL.Profiles.Tests
         [TestCase(0.5f, false)]
         public async Task RespectHeartbeat(float delay, bool created)
         {
-            var batch = ProfilesBatchRequest.Create(LAMBDAS);
-            batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<Profile?>(), PartitionComponent.TOP_PRIORITY);
+            var batch = ProfilesBatchRequest.Create(LAMBDAS, ProfileTier.Kind.Full);
+            batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), PartitionComponent.TOP_PRIORITY);
 
             repository.ConsumePendingBatch().Returns(new[] { batch });
 
@@ -81,8 +81,8 @@ namespace DCL.Profiles.Tests
 
             for (int i = 0; i < 5; i++)
             {
-                var batch = ProfilesBatchRequest.Create(lambdas[i] = URLDomain.FromString($"https://test-lambda{i}"));
-                batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<Profile?>(), PartitionComponent.TOP_PRIORITY);
+                var batch = ProfilesBatchRequest.Create(lambdas[i] = URLDomain.FromString($"https://test-lambda{i}"), ProfileTier.Kind.Full);
+                batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), PartitionComponent.TOP_PRIORITY);
                 batches[i] = batch;
             }
 
@@ -106,9 +106,9 @@ namespace DCL.Profiles.Tests
         [Test]
         public void PickLowestPartitionFromBatch()
         {
-            var batch = ProfilesBatchRequest.Create(LAMBDAS);
+            var batch = ProfilesBatchRequest.Create(LAMBDAS, ProfileTier.Kind.Full);
 
-            for (byte i = 0; i < 5; i++) { batch.PendingRequests[$"test_id{i}"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<Profile?>(), new PartitionComponent { Bucket = i }); }
+            for (byte i = 0; i < 5; i++) { batch.PendingRequests[$"test_id{i}"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), new PartitionComponent { Bucket = i }); }
 
             repository.ConsumePendingBatch().Returns(new[] { batch });
 

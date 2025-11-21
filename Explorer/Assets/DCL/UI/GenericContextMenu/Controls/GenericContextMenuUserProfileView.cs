@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
+using DCL.Profiles;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
@@ -87,12 +88,12 @@ namespace DCL.UI.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor, settings.showWalletSection, OfficialWalletsHelper.Instance.IsOfficialWallet(settings.userData.userAddress));
+            ConfigureUserNameAndTag(settings.userData, settings.showWalletSection, OfficialWalletsHelper.Instance.IsOfficialWallet(settings.userData.UserId));
 
             if (settings.showProfilePicture)
             {
                 ProfilePictureView.gameObject.SetActive(true);
-                ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData.userColor, settings.userData.userThumbnailAddress);
+                ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData.UserNameColor, settings.userData.FaceSnapshotUrl);
             }
             else
                 ProfilePictureView.gameObject.SetActive(false);
@@ -112,7 +113,7 @@ namespace DCL.UI.Controls
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.userName : settings.userData.userAddress);
+            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.Name : settings.userData.UserId);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
@@ -124,11 +125,11 @@ namespace DCL.UI.Controls
             }
         }
 
-        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor, bool showWalletSection, bool isOfficial)
+        private void ConfigureUserNameAndTag(Profile.CompactInfo userData, bool showWalletSection, bool isOfficial)
         {
-            UserName.text = userName;
-            UserName.color = userColor;
-            UserNameTag.text = $"#{userAddress[^4..]}";
+            UserName.text = userData.Name;
+            UserName.color = userData.UserNameColor;
+            UserNameTag.text = userData.WalletId;
 
             if (!showWalletSection)
             {
@@ -137,12 +138,12 @@ namespace DCL.UI.Controls
             else
             {
                 userAddressRectTransform.gameObject.SetActive(true);
-                UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
+                UserAddress.text = $"{userData.UserId[..5]}...{userData.UserId[^5..]}";
             }
 
-            UserNameTag.gameObject.SetActive(!hasClaimedName);
-            ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
-            ClaimedNameBadgeSeparator.gameObject.SetActive(hasClaimedName);
+            UserNameTag.gameObject.SetActive(!userData.HasClaimedName);
+            ClaimedNameBadge.gameObject.SetActive(userData.HasClaimedName);
+            ClaimedNameBadgeSeparator.gameObject.SetActive(userData.HasClaimedName);
             OfficialBadge.SetActive(isOfficial);
 
             CopyAddressToast.Hide(true);

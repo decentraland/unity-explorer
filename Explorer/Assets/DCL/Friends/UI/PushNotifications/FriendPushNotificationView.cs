@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.FeatureFlags;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -38,16 +39,16 @@ namespace DCL.Friends.UI.PushNotifications
             PanelCanvasGroup.alpha = 0f;
         }
 
-        internal void ConfigureForFriend(FriendProfile friendProfile, ProfileRepositoryWrapper profileDataProvider)
+        internal void ConfigureForFriend(Profile.CompactInfo friendProfile, ProfileRepositoryWrapper profileDataProvider)
         {
             Color userColor = friendProfile.UserNameColor;
             UserNameText.color = userColor;
             UserNameText.text = friendProfile.Name;
-            UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
+            UserAddressText.text = friendProfile.WalletId;
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
-            OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.Address));
-            ProfilePictureView.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
+            OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.UserId));
+            ProfilePictureView.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FaceSnapshotUrl, friendProfile.UserId);
         }
 
         internal async UniTask ShowToastAsync(CancellationToken ct)

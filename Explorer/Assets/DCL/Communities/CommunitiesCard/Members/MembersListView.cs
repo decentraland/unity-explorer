@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
@@ -68,7 +69,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<ICommunityMemberData>? ElementUnbanButtonClicked;
         public event Action<ICommunityMemberData, InviteRequestIntention>? ElementManageRequestClicked;
 
-        public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
+        public event Action<Profile.CompactInfo, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
@@ -140,7 +141,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
             // Disable all buttons and leave only the unfriend one, as part of the UI/UX decision. The old passed value was:
             // status == UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED ? UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED : status
-            userProfileContextMenuControlSettings!.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
 
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
@@ -206,7 +207,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                          KICK_MEMBER_CONFIRM_TEXT,
                                                                                          kickSprite,
                                                                                          false, false,
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
+                                                                                         userInfo: profile.Profile),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -229,7 +230,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          banSprite,
                                                                                          false, false,
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
+                                                                                         userInfo: profile.Profile),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

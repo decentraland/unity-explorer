@@ -15,13 +15,14 @@ using System.Runtime.Serialization;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Assertions;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
 namespace DCL.Profiles
 {
     public class RealmProfileRepository : IBatchedProfileRepository
     {
-        public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter() } };
+        public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
         private readonly int batchMaxSize;
 
@@ -133,19 +134,19 @@ namespace DCL.Profiles
             }
         }
 
-        private void Resolve(string userId, Profile? profile)
+        private void Resolve(string userId, ProfileTier? profile)
         {
-            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<Profile?> continuation))
+            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?> continuation))
                 continuation.TrySetResult(profile);
         }
 
         private void ResolveException(string userId, Exception ex)
         {
-            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<Profile?> continuation))
+            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?> continuation))
                 continuation.TrySetException(ex);
         }
 
-        private bool TryRemoveOngoingRequest(string userId, out UniTaskCompletionSource<Profile?> ongoingRequest)
+        private bool TryRemoveOngoingRequest(string userId, out UniTaskCompletionSource<ProfileTier?> ongoingRequest)
         {
             lock (ongoingBatches)
             {
@@ -173,8 +174,8 @@ namespace DCL.Profiles
             return false;
         }
 
-        private UniTaskCompletionSource<Profile?> AddToBatch(string userId, URLDomain? fromCatalyst,
-            List<ProfilesBatchRequest> requests, IPartitionComponent partition)
+        private UniTaskCompletionSource<ProfileTier?> AddToBatch(string userId, URLDomain? fromCatalyst,
+            List<ProfilesBatchRequest> requests, ProfileTier.Kind tier, IPartitionComponent partition)
         {
             fromCatalyst ??= realm.Ipfs.LambdasBaseUrl;
 
@@ -182,54 +183,47 @@ namespace DCL.Profiles
 
             lock (requests)
             {
-                foreach (ProfilesBatchRequest profilesBatch in requests)
+                // Find the batch with the same lambda URL and the same and or higher tier
+                for (int i = 0; i < requests.Count; i++)
                 {
+                    ProfilesBatchRequest profilesBatch = requests[i];
+
                     if (profilesBatch.LambdasUrl.Value == fromCatalyst.Value.Value)
                     {
+                        // If there is an existing batch with a lower tier, it should be promoted to make sure we request a given profile only once
+                        if (profilesBatch.Tier < tier)
+                        {
+                            profilesBatch.Tier = tier;
+                            requests[i] = profilesBatch;
+                        }
+
                         batch = profilesBatch;
                         break;
                     }
                 }
 
                 if (batch == null)
-                    requests.Add((batch = ProfilesBatchRequest.Create(fromCatalyst.Value)).Value);
+                    requests.Add((batch = ProfilesBatchRequest.Create(fromCatalyst.Value, tier)).Value);
 
                 if (batch.Value.PendingRequests.TryGetValue(userId, out ProfilesBatchRequest.Input request))
                     return request.Cs;
 
-                var cs = new UniTaskCompletionSource<Profile?>();
+                var cs = new UniTaskCompletionSource<ProfileTier?>();
 
                 batch.Value.PendingRequests.Add(userId, new ProfilesBatchRequest.Input(cs, partition));
                 return cs;
             }
         }
 
-        public async UniTask<List<Profile>> GetAsync(IReadOnlyList<string> ids, CancellationToken ct, URLDomain? fromCatalyst = null)
-        {
-            // Tolerate or fix this allocation?
-            var results = new List<Profile>(ids.Count);
-
-            // Pool is inside WhenAll
-            await UniTask.WhenAll(ids.Select(WaitForProfileAsync));
-
-            async UniTask WaitForProfileAsync(string id)
-            {
-                Result<Profile?> profile = await GetAsync(id, 0, fromCatalyst, ct, false, true)
-                   .SuppressToResultAsync();
-
-                if (profile is { Success: true, Value: not null })
-                    results.Add(profile.Value);
-            }
-
-            return results;
-        }
-
-        private async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
+        public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
             bool delayBatchResolution,
-            bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
+            bool getFromCacheIfPossible,
+            IProfileRepository.BatchBehaviour batchBehaviour,
+            ProfileTier.Kind tier,
             IPartitionComponent? partition = null)
         {
+            Assert.IsTrue(version == 0 || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
+
             try
             {
                 if (string.IsNullOrEmpty(id)) return null;
@@ -243,7 +237,7 @@ namespace DCL.Profiles
                     await request.Cs.Task.AttachExternalCancellation(ct);
 
                 if (getFromCacheIfPossible)
-                    if (TryProfileFromCache(id, version, out Profile? profileInCache))
+                    if (TryProfileFromCache(id, version, tier, out ProfileTier profileInCache))
                         return profileInCache;
 
                 partition ??= PartitionComponent.TOP_PRIORITY;
@@ -253,7 +247,7 @@ namespace DCL.Profiles
                 {
                     case IProfileRepository.BatchBehaviour.DEFAULT:
                         // Batching is allowed
-                        Profile? result = await AddToBatch(id, fromCatalyst, pendingBatches, partition).Task!.AttachExternalCancellation<Profile>(ct);
+                        ProfileTier? result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
 
                         // Not found profiles (Catalyst replication delays) will be processed individually by GET
                         // ⚠️ The following produces potentially a very long-living task ⚠️
@@ -268,11 +262,11 @@ namespace DCL.Profiles
             }
             finally { await UniTask.SwitchToMainThread(); }
 
-            UniTask<Profile?> EnforceSingleGetAsync()
+            UniTask<ProfileTier?> EnforceSingleGetAsync()
             {
                 // Add directly to the ongoing batch as it's dispatch immediately
                 // It's needed if the same profile is requested again (Single or in the batch) so it will wait for the existing request
-                AddToBatch(id, fromCatalyst, ongoingBatches, partition);
+                AddToBatch(id, fromCatalyst, ongoingBatches, tier, partition);
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
@@ -280,15 +274,10 @@ namespace DCL.Profiles
             }
         }
 
-        public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
-            IPartitionComponent? partition = null) =>
-            GetAsync(id, version, fromCatalyst, ct, true, getFromCacheIfPossible, batchBehaviour, partition);
-
         /// <summary>
         ///     Should be called from the background thread
         /// </summary>
-        public Profile? ResolveProfile(string userId, Profile? profile)
+        public ProfileTier? ResolveProfile(string userId, ProfileTier? profile)
         {
             if (profile != null)
             {
@@ -297,7 +286,7 @@ namespace DCL.Profiles
                 // For example the multiplayer system, whenever a remote profile update comes in,
                 // it compares the version of the profile to check if it has changed. By overriding the version here,
                 // the check always fails. So its necessary to get a new instance each time
-                profileCache.Set(userId, profile);
+                profileCache.Set(userId, profile.Value);
             }
             else
                 profilesDebug.AddMissing(userId);
@@ -309,10 +298,11 @@ namespace DCL.Profiles
         }
 
         /// <summary>
-        ///     Enforces single get without prioritization and batching
+        ///     Enforces single get without prioritization and batching.
+        ///     GET supports full profiles only and should be never used to retrieve compact ones
         /// </summary>
         /// <returns></returns>
-        private async UniTask<Profile?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
+        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
         {
             try
             {
@@ -381,12 +371,7 @@ namespace DCL.Profiles
             return urlBuilder.Build();
         }
 
-        private bool TryProfileFromCache(string id, int version, out Profile? profile)
-        {
-            if (!profileCache.TryGet(id, out profile))
-                return false;
-
-            return profile.Version >= version;
-        }
+        private bool TryProfileFromCache(string id, int version, ProfileTier.Kind tier, out ProfileTier profile) =>
+            profileCache.TryGet(id, tier, out profile) && profile.Version >= version;
     }
 }

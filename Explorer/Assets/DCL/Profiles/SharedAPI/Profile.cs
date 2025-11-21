@@ -4,7 +4,6 @@ using DCL.ECSComponents;
 using DCL.Optimization.ThreadSafePool;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -12,7 +11,7 @@ using UnityEngine;
 
 namespace DCL.Profiles
 {
-    public class Profile : IDirtyMarker, IDisposable
+    public partial class Profile : IDirtyMarker, IDisposable
     {
         public static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
 
@@ -24,75 +23,7 @@ namespace DCL.Profiles
         internal List<string>? interests;
         internal List<LinkJsonDto>? links;
 
-        private string userId;
-        private string name;
-        private string mentionName;
-        private bool hasClaimedName;
-
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
-
-        /// <summary>
-        /// Is the complete wallet address of the user
-        /// </summary>
-        public string UserId
-        {
-            get => userId;
-
-            set
-            {
-                userId = value;
-                GenerateAndValidateName();
-            }
-        }
-
-        public string Name
-        {
-            get => name;
-            set
-            {
-                name = value;
-                GenerateAndValidateName();
-            }
-        }
-
-        /// <summary>
-        ///     The color calculated for this username
-        /// </summary>
-        public Color UserNameColor { get; set; } = Color.white;
-
-        /// <summary>
-        ///     The name of the user after passing character validation, without the # part
-        ///     For users with claimed names would be the same as DisplayName
-        /// </summary>
-        public string ValidatedName { get; private set; }
-
-        /// <summary>
-        ///     The # part of the name for users without claimed name, will be null for users with a claimed name, includes the # character at the beginning
-        /// </summary>
-        public string? WalletId { get; private set; }
-
-        /// <summary>
-        ///     The name of the user after passing character validation, including the
-        ///     Wallet Id (if the user doesnt have a claimed name)
-        /// </summary>
-        public string DisplayName { get; private set; }
-        public string UnclaimedName { get; internal set; }
-
-        /// <summary>
-        /// The Display Name with @ before it. Cached here to avoid re-allocations.
-        /// </summary>
-        public string MentionName => mentionName;
-
-        public bool HasClaimedName
-        {
-            get => hasClaimedName;
-
-            set
-            {
-                hasClaimedName = value;
-                GenerateAndValidateName();
-            }
-        }
 
         public bool HasConnectedWeb3 { get; set; }
         public string? Description { get; set; }
@@ -126,12 +57,18 @@ namespace DCL.Profiles
             set => links = value;
         }
 
-        public Profile() { }
+        private CompactInfo compact;
+
+        public CompactInfo Compact => compact;
+
+        public Profile()
+        {
+            compact = new CompactInfo();
+        }
 
         public Profile(string userId, string name, Avatar avatar)
         {
-            UserId = userId;
-            Name = name;
+            compact = new CompactInfo(userId, name);
             Avatar = avatar;
         }
 
@@ -147,32 +84,30 @@ namespace DCL.Profiles
         public static Profile Create(string userId, string name, Avatar avatar)
         {
             Profile profile = Create();
-            profile.UserId = userId;
-            profile.Name = name;
+            profile.GetCompact().UserId = userId;
+            profile.GetCompact().Name = name;
             profile.Avatar = avatar;
             return profile;
         }
 
         public void Clear()
         {
+            Compact.Clear();
             blocked?.Clear();
             interests?.Clear();
             links?.Clear();
             Birthdate = null;
             Avatar.Clear();
-            Country = default(string?);
-            Email = default(string?);
-            Gender = default(string?);
-            Description = default(string?);
-            Hobbies = default(string?);
+            Country = null;
+            Email = null;
+            Gender = null;
+            Description = null;
+            Hobbies = null;
             Language = default(string?);
             Profession = default(string?);
             Pronouns = default(string?);
             Version = default(int);
-            HasClaimedName = default(bool);
             EmploymentStatus = default(string?);
-            UserId = "";
-            Name = "";
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
             ProfilePicture = null;
@@ -199,32 +134,6 @@ namespace DCL.Profiles
                 avatar
             );
 
-        private void GenerateAndValidateName()
-        {
-            ValidatedName = string.Empty;
-            DisplayName = string.Empty;
-            WalletId = null;
-
-            if (string.IsNullOrEmpty(Name)) return;
-
-            string result = string.Empty;
-            MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
-
-            foreach (Match match in matches)
-                result += match.Value;
-
-            ValidatedName = result;
-            DisplayName = result;
-
-            if (!HasClaimedName && !string.IsNullOrEmpty(UserId) && UserId.Length > 4)
-            {
-                WalletId = $"#{UserId[^4..]}";
-                DisplayName = $"{result}{WalletId}";
-            }
-
-            mentionName = "@" + DisplayName;
-        }
-
         public void ClearLinks()
         {
             if (Links == null)
@@ -237,9 +146,7 @@ namespace DCL.Profiles
         {
             if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
 
-            return UserId == profile.UserId
-                   && Name == profile.Name
-                   && HasClaimedName == profile.HasClaimedName
+            return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
                    && Description == profile.Description
                    && TutorialStep == profile.TutorialStep

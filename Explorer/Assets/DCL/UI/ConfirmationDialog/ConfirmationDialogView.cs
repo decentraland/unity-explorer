@@ -49,7 +49,7 @@ namespace DCL.UI.ConfirmationDialog
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
 
-            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
+            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.UserId);
 
             profilePictureView.gameObject.SetActive(hasProfileImage);
             profileActionIcon.sprite = dialogData.Image;
@@ -71,7 +71,7 @@ namespace DCL.UI.ConfirmationDialog
             if (!hasProfileImage) return;
 
             profilePictureView.SetDefaultThumbnail();
-            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
+            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.UserNameColor, dialogData.UserInfo.FaceSnapshotUrl);
         }
 
         public void Reset()

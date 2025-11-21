@@ -44,7 +44,8 @@ namespace DCL.Profiles
 
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
 
-        private static readonly ThreadSafeListPool<Profile> BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
+        private static readonly ThreadSafeListPool<Profile> FULL_PROFILE_BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
+        private static readonly ThreadSafeListPool<Profile.CompactInfo> COMPACT_PROFILE_BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
 
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
@@ -110,39 +111,70 @@ namespace DCL.Profiles
 
             uploadHandler.WriteString("]}");
 
-            using PooledObject<List<Profile>> __ = BATCH_POOL.Get(out List<Profile> batch);
+            int pointersCount = intention.Ids.Count;
 
-            Result<List<Profile>> result = await webRequestController.PostAsync(
-                                                                          intention.CommonArguments.URL,
-                                                                          GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
-                                                                          ct,
-                                                                          ReportCategory.PROFILE)
-                                                                     .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                                                     .SuppressToResultAsync(ReportCategory.PROFILE);
-
-            // Keep processing on the thread pool
-
-            if (result is { Success: true })
+            switch (intention.Tier)
             {
-                int successfullyResolved = 0;
-
-                foreach (Profile dto in result.Value)
+                case ProfileTier.Kind.Compact:
                 {
-                    intention.Ids.Remove(dto.UserId);
-                    profileRepository.ResolveProfile(dto.UserId, dto);
-                    successfullyResolved++;
-                }
+                    using PooledObject<List<Profile.CompactInfo>> __ = COMPACT_PROFILE_BATCH_POOL.Get(out List<Profile.CompactInfo> batch);
 
-                if (successfullyResolved > 1)
-                    profilesDebug.AddAggregated(successfullyResolved);
-                else
-                    profilesDebug.AddNonCombined(successfullyResolved);
+                    Result<List<Profile.CompactInfo>> result = await ExecuteRequest(batch);
+
+                    // Keep processing on the thread pool
+
+                    if (result is { Success: true })
+                    {
+                        foreach (Profile.CompactInfo dto in result.Value)
+                        {
+                            intention.Ids.Remove(dto.UserId);
+                            profileRepository.ResolveProfile(dto.UserId, dto);
+                        }
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    using PooledObject<List<Profile>> __ = FULL_PROFILE_BATCH_POOL.Get(out List<Profile> batch);
+
+                    Result<List<Profile>> result = await ExecuteRequest(batch);
+
+                    // Keep processing on the thread pool
+
+                    if (result is { Success: true })
+                    {
+                        foreach (Profile dto in result.Value)
+                        {
+                            intention.Ids.Remove(dto.UserId);
+                            profileRepository.ResolveProfile(dto.UserId, dto);
+                        }
+                    }
+
+                    break;
+                }
             }
+
+            int successfullyResolved = pointersCount - intention.Ids.Count;
+
+            if (successfullyResolved > 1)
+                profilesDebug.AddAggregated(successfullyResolved);
+            else
+                profilesDebug.AddNonCombined(successfullyResolved);
 
             foreach (string unresolvedId in intention.Ids)
                 profileRepository.ResolveProfile(unresolvedId, null);
 
             return new StreamableLoadingResult<ProfilesBatchResult>(new ProfilesBatchResult());
+
+            UniTask<Result<List<T>>> ExecuteRequest<T>(List<T> batch) =>
+                webRequestController.PostAsync(
+                                         intention.CommonArguments.URL,
+                                         GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
+                                         ct,
+                                         ReportCategory.PROFILE)
+                                    .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
+                                    .SuppressToResultAsync(ReportCategory.PROFILE);
         }
     }
 }

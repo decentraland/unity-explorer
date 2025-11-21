@@ -1,17 +1,38 @@
 using DCL.Optimization.PerformanceBudgeting;
-using Decentraland.SocialService.V3;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.Profiles
 {
     public interface IProfileCache
     {
-        Profile? Get(string id);
+        public ProfileTier? Get(string id);
 
-        bool TryGet(string id, out Profile profile);
+        public Profile.CompactInfo? GetCompact(string id) =>
+            Get(id).ToCompact();
 
-        Profile? GetByUserName(string userName);
+        public bool TryGet(string id, ProfileTier.Kind tier, out ProfileTier profile);
 
-        void Set(string id, Profile profile);
+        public bool TryGet(string id, [MaybeNullWhen(false)] out Profile profile)
+        {
+            if (TryGet(id, ProfileTier.Kind.Full, out ProfileTier tiered) && tiered.IsFull(out profile!))
+                return true;
+
+            profile = null;
+            return false;
+        }
+
+        public bool TryGetCompact(string id, [MaybeNullWhen(false)] out Profile.CompactInfo profile)
+        {
+            if (TryGet(id, ProfileTier.Kind.Full, out ProfileTier tiered) && tiered.IsCompact(out profile!))
+                return true;
+
+            profile = default(Profile.CompactInfo);
+            return false;
+        }
+
+        public ProfileTier? GetByUserName(string userName);
+
+        public void Set(string id, ProfileTier profile);
 
         void Remove(string id);
 

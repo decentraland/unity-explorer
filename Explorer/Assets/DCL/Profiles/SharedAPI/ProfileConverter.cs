@@ -77,18 +77,19 @@ namespace DCL.Profiles
         {
             if (jObject == null) return;
 
-            profile.HasClaimedName = jObject["hasClaimedName"]?.Value<bool>() ?? false;
+            profile.GetCompact() = ProfileCompactInfoConverter.ReadJson(jObject);
+
             profile.Description = jObject["description"]?.Value<string>() ?? "";
             profile.TutorialStep = jObject["tutorialStep"]?.Value<int>() ?? 0;
-            profile.Name = jObject["name"]?.Value<string>() ?? "";
-            profile.UserId = jObject["userId"]?.Value<string>() ?? "";
             profile.Email = jObject["email"]?.Value<string>() ?? "";
 
             // profile.ethAddress = jObject["ethAddress"]?.Value<string>() ?? ""; NOT USED
             profile.Version = jObject["version"]?.Value<int>() ?? 0;
-            profile.UnclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "";
             profile.HasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
+
             DeserializeAvatar(jObject["avatar"]!, ref profile);
+            profile.GetCompact().FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
+
             profile.Country = jObject["country"]?.Value<string>() ?? "";
             profile.Gender = jObject["gender"]?.Value<string>() ?? "";
             profile.Pronouns = jObject["pronouns"]?.Value<string>() ?? "";
@@ -106,8 +107,6 @@ namespace DCL.Profiles
             DeserializeLinks(jObject["links"]!, ref profile.links);
             DeserializeArrayToCollection(jObject["blocked"], ref profile.blocked, static s => s);
             DeserializeArrayToCollection(jObject["interests"], ref profile.interests, static s => s);
-
-            profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
         }
 
         private void DeserializeLinks(JToken? root, ref List<LinkJsonDto>? list)

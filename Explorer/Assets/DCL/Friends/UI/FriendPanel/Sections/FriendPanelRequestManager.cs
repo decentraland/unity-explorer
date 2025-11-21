@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
@@ -10,7 +11,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly int elementsMissingThreshold;
 
-        public event Action<FriendProfile>? ElementClicked;
+        public event Action<Profile.CompactInfo>? ElementClicked;
 
         protected FriendPanelRequestManager(ProfileRepositoryWrapper profileDataProvider,
             LoopListView2 loopListView,
@@ -20,7 +21,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.elementsMissingThreshold = elementsMissingThreshold;
         }
 
-        protected abstract FriendProfile GetCollectionElement(int index);
+        protected abstract Profile.CompactInfo GetCollectionElement(int index);
 
         protected override int GetListViewElementsCount() =>
             GetCollectionsDataCount();
@@ -31,14 +32,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            FriendProfile friendProfile = GetCollectionElement(index);
+            Profile.CompactInfo friendProfile = GetCollectionElement(index);
             view.Configure(friendProfile, profileRepositoryWrapper);
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
             CustomiseElement(view, index);
-            view.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
+            view.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.UserId]);
 
             if (index >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
                 FetchNewDataAsync(loopListView).Forget();

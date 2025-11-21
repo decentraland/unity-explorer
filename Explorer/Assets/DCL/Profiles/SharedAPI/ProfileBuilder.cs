@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Web3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,7 +73,7 @@ namespace DCL.Profiles
             relationship = profile.RelationshipStatus;
             sexualOrientation = profile.SexualOrientation;
             tutorialStep = profile.TutorialStep;
-            unclaimedName = profile.UnclaimedName;
+            unclaimedName = profile.Compact.UnclaimedName;
             userId = profile.UserId;
             hasClaimedName = profile.HasClaimedName;
             hasConnectedWeb3 = profile.HasConnectedWeb3;
@@ -142,7 +141,7 @@ namespace DCL.Profiles
         {
             var profile = Profile.Create();
             profile.RealName = realName ?? "";
-            profile.UserId = userId!;
+            profile.GetCompact().UserId = userId!;
             profile.Version = version;
             profile.blocked = blocked;
             profile.interests = interests;
@@ -154,7 +153,7 @@ namespace DCL.Profiles
             profile.Gender = gender ?? "";
             profile.Hobbies = hobbies ?? "";
             profile.Language = language ?? "";
-            profile.Name = name ?? "";
+            profile.GetCompact().Name = name ?? "";
             profile.Profession = profession ?? "";
             profile.Pronouns = pronouns ?? "";
             profile.Version = version;
@@ -162,10 +161,10 @@ namespace DCL.Profiles
             profile.RelationshipStatus = relationship ?? "";
             profile.SexualOrientation = sexualOrientation ?? "";
             profile.TutorialStep = tutorialStep;
-            profile.UnclaimedName = unclaimedName ?? "";
-            profile.HasClaimedName = hasClaimedName;
+            profile.GetCompact().UnclaimedName = unclaimedName ?? "";
+            profile.GetCompact().HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
-            profile.UserNameColor = userNameColor;
+            profile.GetCompact().UserNameColor = userNameColor;
 
             var avatar = new Avatar();
             profile.Avatar = avatar;

@@ -17,12 +17,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
-        private readonly List<FriendProfile> friends = new ();
+        private readonly List<Profile.CompactInfo> friends = new ();
         private readonly CancellationTokenSource addFriendProfileCts = new ();
 
-        public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
-        public event Action<FriendProfile>? JumpInClicked;
-        public event Action<FriendProfile>? ChatClicked;
+        public event Action<Profile.CompactInfo, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action<Profile.CompactInfo>? JumpInClicked;
+        public event Action<Profile.CompactInfo>? ChatClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -58,7 +58,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             addFriendProfileCts.SafeCancelAndDispose();
         }
 
-        private void AddNewFriendProfile(FriendProfile friendProfile)
+        private void AddNewFriendProfile(Profile.CompactInfo friendProfile)
         {
             friends.Add(friendProfile);
             FriendsSorter.SortFriendList(friends);
@@ -70,12 +70,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
-                // TODO: we should avoid requesting the profile.. instead the service should emit a FriendProfile
+                // TODO: we should avoid requesting the profile.. instead the service should emit a Profile.CompactInfo
                 Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
 
                 if (newFriendProfile != null)
                 {
-                    AddNewFriendProfile(newFriendProfile.ToFriendProfile());
+                    AddNewFriendProfile(newFriendProfile);
                     RefreshLoopList();
                 }
                 else
@@ -89,21 +89,22 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void RemoveFriend(string userid)
         {
             thumbnailContextMenuActions.Remove(userid);
-            if (friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid)) > 0)
+
+            if (friends.RemoveAll(friendProfile => friendProfile.UserId.ToString().Equals(userid)) > 0)
                 RefreshLoopList();
         }
 
         protected override int GetCollectionsDataCount() =>
             friends.Count;
 
-        protected override FriendProfile GetCollectionElement(int index) =>
+        protected override Profile.CompactInfo GetCollectionElement(int index) =>
             friends[index];
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             using PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
 
-            foreach (FriendProfile friend in result.Friends)
+            foreach (Profile.CompactInfo friend in result.Friends)
             {
                 if (friends.Contains(friend)) continue;
                 friends.Add(friend);
