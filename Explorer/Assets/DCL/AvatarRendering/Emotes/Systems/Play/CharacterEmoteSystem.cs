@@ -114,13 +114,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesOnMovePlayerToInvoked(Entity entity, in MovePlayerToInfo movePlayerTo, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        private void CancelEmotesOnMovePlayerToInvoked(Entity entity, in MovePlayerToInfo movePlayerTo, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
             if (World.TryGet(entity, out CharacterWaitingSceneEmoteLoading waitingEmote) &&
                 movePlayerTo.FrameCount == waitingEmote.FrameCount)
                 return;
 
-            StopEmote(ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
