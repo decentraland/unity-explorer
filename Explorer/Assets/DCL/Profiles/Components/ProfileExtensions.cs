@@ -66,8 +66,19 @@ namespace DCL.Profiles
                     {
                         foreach (URN urn in profile?.Avatar?.Emotes ?? Array.Empty<URN>())
                             if (urn.Shorten() == uniqueUrn)
+                            {
                                 uniqueUrn = urn;
+                                break;
+                            }
                     }
+
+                    // 11-21-2025
+                    // HOTFIX for #5992
+                    // Backend won't correctly equip the emote if we send the actual off-chain URN
+                    // It will only work if we send the item ID, which is at the end of the string, after the last colon character
+                    string urnString = uniqueUrn.ToString();
+                    int separatorIndex = urnString.LastIndexOf(':');
+                    if (separatorIndex >= 0) uniqueUrn = urnString[(separatorIndex + 1)..];
 
                     uniqueEmotes[i] = uniqueUrn;
                 }
