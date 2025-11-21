@@ -111,8 +111,8 @@ namespace SceneRunner.Tests
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
-                DecentralandEnvironment.Org,
                 Substitute.For<DCL.Clipboard.ISystemClipboard>(),
+                DecentralandEnvironment.Org,
                 ApplicationParametersParser.TEST_INSTANCE
             );
         }

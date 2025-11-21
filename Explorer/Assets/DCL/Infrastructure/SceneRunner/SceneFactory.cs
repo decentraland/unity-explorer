@@ -201,9 +201,21 @@ namespace SceneRunner
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, appArgs);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
-                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, systemClipboard);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(
+                    deps,
+                    sceneRuntime,
+                    sharedPoolsProvider,
+                    crdtSerializer,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData!,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
+                    engineAPIMutexOwner,
+                    systemClipboard,
+                    appArgs
+                );
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -230,9 +242,21 @@ namespace SceneRunner
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
-                    crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, systemClipboard);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(
+                    deps,
+                    sceneRuntime,
+                    sharedPoolsProvider,
+                    crdtSerializer,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData!,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
+                    engineAPIMutexOwner,
+                    systemClipboard,
+                    appArgs
+                );
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -257,10 +281,7 @@ namespace SceneRunner
                 );
             }
 
-            try
-            {
-                sceneRuntime.ExecuteSceneJson();
-            }
+            try { sceneRuntime.ExecuteSceneJson(); }
             catch (Exception e)
             {
                 await ReportExceptionAsync(e, runtimeDeps, deps.ExceptionsHandler);
@@ -281,7 +302,7 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T: IDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)

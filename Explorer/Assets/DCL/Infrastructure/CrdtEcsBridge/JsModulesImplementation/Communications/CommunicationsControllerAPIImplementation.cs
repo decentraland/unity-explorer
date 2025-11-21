@@ -12,11 +12,17 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
-        public CommunicationsControllerAPIImplementation(ISceneData sceneData,
-            ISceneCommunicationPipe messagePipesHub, IJsOperations jsOperations, IAppArgs appArgs)
-            : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array, appArgs)
-        {
-        }
+        public CommunicationsControllerAPIImplementation(
+            ISceneData sceneData,
+            ISceneCommunicationPipe messagePipesHub,
+            IJsOperations jsOperations,
+            IAppArgs appArgs
+        ) : base(
+            sceneData,
+            messagePipesHub,
+            jsOperations,
+            ISceneCommunicationPipe.MsgType.Uint8Array, appArgs
+        ) { }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
