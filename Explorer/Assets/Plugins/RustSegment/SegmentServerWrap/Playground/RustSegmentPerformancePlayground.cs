@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -33,7 +33,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 
         private async UniTaskVoid TrackAsync(CancellationToken token)
         {
-            var message = new JsonObject { { "mode", "rust" } };
+            var message = new JObject { { "mode", "rust" } };
 
             while (token.IsCancellationRequested == false)
             {
@@ -68,7 +68,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             const int COUNT = 15;
 
             for (var i = 0; i < COUNT; i++)
-                CurrentService().Track("FLUSH_TEST", new JsonObject { { "mode", "rust" } });
+                CurrentService().Track("FLUSH_TEST", new JObject { { "mode", "rust" } });
         }
 
         [ContextMenu(nameof(MeasureFlush))]

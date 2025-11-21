@@ -43,7 +43,8 @@
         "Segment.Analytics.CSharp.dll",
         "Serialization.NET.dll",
         "Coroutine.NET.dll",
-        "Sentry.dll"
+        "Sentry.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

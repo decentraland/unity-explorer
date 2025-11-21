@@ -1,9 +1,8 @@
 using AOT;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
-using Segment.Analytics;
-using Segment.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -75,7 +74,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 Dispose();
         }
 
-        public void Identify(string? userId, JsonObject? traits = null)
+        public void Identify(string? userId, JObject? traits = null)
         {
             lock (afterClean)
             {
@@ -99,7 +98,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public void Track(string eventName, JsonObject? properties = null)
+        public void Track(string eventName, JObject? properties = null)
         {
             lock (afterClean)
             {
@@ -130,7 +129,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        public void InstantTrackAndFlush(string eventName, JObject? properties = null)
         {
             lock (afterClean)
             {
@@ -161,7 +160,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public void AddPlugin(EventPlugin plugin)
+        public void AddPlugin(IAnalyticsPlugin plugin)
         {
             contextSource.Register(plugin);
         }
