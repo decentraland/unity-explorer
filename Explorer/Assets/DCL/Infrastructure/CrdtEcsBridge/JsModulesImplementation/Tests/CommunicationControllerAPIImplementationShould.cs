@@ -35,7 +35,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             sceneCommunicationPipe = new TestSceneCommunicationPipe();
 
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE" });
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE", metadata = new SceneMetadata { authoritativeMultiplayer = false } });
 
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
@@ -245,7 +245,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             // RES_CRDT_STATE: Format is [type byte] + [1 byte: address length] + [address bytes] + [raw CRDT messages]
             string testAddress = "0x123";
-            byte[] addressBytes = System.Text.Encoding.UTF8.GetBytes(testAddress);
+            byte[] addressBytes = Encoding.UTF8.GetBytes(testAddress);
             byte addressLength = (byte)addressBytes.Length;
 
             var resMessage = new byte[1 + 1 + addressLength + crdtDataLength];

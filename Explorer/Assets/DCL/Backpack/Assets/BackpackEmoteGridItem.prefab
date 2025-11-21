@@ -32,11 +32,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7150489433940370041}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 17.8, y: 14.3}
-  m_SizeDelta: {x: 22.0485, y: 15.8256}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -8, y: -6}
+  m_SizeDelta: {x: 8, y: 15}
+  m_Pivot: {x: 1, y: 1}
 --- !u!222 &5317681409627806208
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -99,7 +99,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -305,6 +305,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1516561254018689797 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 710708144762118524, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1877216464682181992 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 493759110962425617, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
@@ -354,6 +359,7 @@ MonoBehaviour:
   <EquipButton>k__BackingField: {fileID: 5665178272263481625}
   <UnEquipButton>k__BackingField: {fileID: 7903757533396073920}
   <EquippedIcon>k__BackingField: {fileID: 1877216464682181992}
+  <NewTag>k__BackingField: {fileID: 1516561254018689797}
   <CategoryImage>k__BackingField: {fileID: 1245937801371786677}
   <WearableThumbnail>k__BackingField: {fileID: 1117224063652898579}
   <RarityBackground>k__BackingField: {fileID: 4476560434392169801}
@@ -363,6 +369,7 @@ MonoBehaviour:
   <IsEquipped>k__BackingField: 0
   incompatibleWithBodyShapeContainer: {fileID: 3374162131891453127}
   incompatibleWithBodyShapeHoverContainer: {fileID: 4228669688390808703}
+  <SmartWearableBadgeContainer>k__BackingField: {fileID: 0}
   <EquipWearableAudio>k__BackingField: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
   <UnEquipWearableAudio>k__BackingField: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
   <HoverAudio>k__BackingField: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}

@@ -1,14 +1,15 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace DCL.Profiles
 {
     public class DefaultProfileCache : IProfileCache
     {
-        private readonly Dictionary<string, Profile> profiles = new ();
-        private readonly Dictionary<string, string> userNameToIdMap = new ();
+        private readonly ConcurrentDictionary<string, Profile> profiles = new (StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, string> userNameToIdMap = new ();
 
         public Profile? Get(string id) =>
             profiles.ContainsKey(id) ? profiles[id] : null;
@@ -47,11 +48,11 @@ namespace DCL.Profiles
         {
             if (profiles.TryGetValue(id, out Profile existingProfile))
             {
-                userNameToIdMap.Remove(existingProfile.DisplayName);
+                userNameToIdMap.TryRemove(existingProfile.DisplayName, out _);
                 existingProfile.Dispose();
             }
 
-            profiles.Remove(id);
+            profiles.TryRemove(id, out _);
 
             UpdateProfilingCounter();
         }

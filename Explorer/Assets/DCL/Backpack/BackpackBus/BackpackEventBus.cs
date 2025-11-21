@@ -13,7 +13,7 @@ namespace DCL.Backpack.BackpackBus
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable>? SelectWearableEvent;
-        public event Action<IWearable>? EquipWearableEvent;
+        public event Action<IWearable, bool>? EquipWearableEvent;
         public event Action<IWearable>? UnEquipWearableEvent;
         public event Action<int, IEmote, bool>? EquipEmoteEvent;
         public event Action<int, IEmote?>? UnEquipEmoteEvent;
@@ -23,6 +23,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackSections>? ChangedBackpackSectionEvent;
         public event Action? DeactivateEvent;
         public event Action? UnEquipAllEvent;
+        public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string>? ChangeColorEvent;
         public event Action? PublishProfileEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
@@ -30,14 +31,19 @@ namespace DCL.Backpack.BackpackBus
         public void SendWearableSelect(IWearable equipWearable) =>
             SelectWearableEvent?.Invoke(equipWearable);
 
-        public void SendEquipWearable(IWearable equipWearable) =>
-            EquipWearableEvent?.Invoke(equipWearable);
+        public void SendEquipWearable(IWearable equipWearable, bool isManuallyEquipped) =>
+            EquipWearableEvent?.Invoke(equipWearable, isManuallyEquipped);
 
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             UnEquipWearableEvent?.Invoke(unEquipWearable);
 
         public void SendUnEquipAll() =>
             UnEquipAllEvent?.Invoke();
+
+        public void SendUnEquipAllWearables()
+        {
+            UnEquipAllWearablesEvent?.Invoke();
+        }
 
         public void SendChangeColor(Color newColor, string category) =>
             ChangeColorEvent?.Invoke(newColor, category);

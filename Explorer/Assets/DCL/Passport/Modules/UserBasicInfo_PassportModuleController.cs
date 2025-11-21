@@ -97,7 +97,8 @@ namespace DCL.Passport.Modules
 
                     if (isNameEditorEnabled)
                     {
-                        using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);
+                        using var names =
+                            await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);
                         view.ClaimNameButton.gameObject.SetActive(names.TotalAmount <= 0);
                     }
                     else

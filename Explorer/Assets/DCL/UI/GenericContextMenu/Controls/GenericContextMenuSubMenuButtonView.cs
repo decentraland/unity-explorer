@@ -107,6 +107,9 @@ namespace DCL.UI.Controls
 
         public override void RegisterCloseListener(Action listener) {}
 
+        public override void SetAsInteractable(bool isInteractable) =>
+            ButtonComponent.interactable = isInteractable;
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             isHovering = true;

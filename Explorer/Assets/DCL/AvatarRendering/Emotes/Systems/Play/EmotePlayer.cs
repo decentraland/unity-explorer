@@ -91,15 +91,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!legacyAnimationsEnabled)
                     return false;
 
-                // Animator gets re-enabled later when its properties get manipulated in AvatarBase
-                view.AvatarAnimator.enabled = false;
-
                 PlayLegacyEmote(view.AvatarAnimator.gameObject, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
             }
             else
-            {
                 PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
-            }
 
             if (audioAsset != null)
             {
@@ -118,7 +113,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
-        private bool IsValid(GameObject mainAsset) => mainAsset.GetComponent<Animator>()
+        private bool IsValid(GameObject mainAsset) =>
+            mainAsset.GetComponent<Animator>()
             || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
@@ -131,10 +127,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // Check for Animator first (Mecanim emotes)
             animatorComp = mainGameObject.GetComponent<Animator>();
-            if (animatorComp)
-            {
-                animationClips = animatorComp.runtimeAnimatorController.animationClips;
-            }
+
+            if (animatorComp) { animationClips = animatorComp.runtimeAnimatorController.animationClips; }
             else
             {
                 // Legacy emotes - there's always only one Animation component
@@ -144,11 +138,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                 Array.Clear(LEGACY_ANIMATION_CLIPS, 0, LEGACY_ANIMATION_CLIPS.Length);
 
                 int clipCount = 0;
+
                 foreach (AnimationState state in animationComp)
                 {
                     if (state.clip != null && clipCount < LEGACY_ANIMATION_CLIPS.Length)
                         LEGACY_ANIMATION_CLIPS[clipCount++] = state.clip;
                 }
+
                 animationClips = LEGACY_ANIMATION_CLIPS;
             }
 
@@ -201,8 +197,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void PlayLegacyEmote(GameObject avatarAnimatorGameObject, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
             Animation animationComp;
+
             if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
                 animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
+
             animationComp.playAutomatically = false;
             animationComp.Stop();
 
@@ -230,6 +228,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
                 emoteComponent.EmoteLoop = isLooping;
+
+                // See https://github.com/decentraland/unity-explorer/issues/4198
+                // Some emotes changes the armature rotation, we need to restore it
+                view.ResetArmatureInclination();
             }
 
             // Create a clean slate for the animator before setting the play trigger

@@ -11,6 +11,7 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using Global.Versioning;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -28,7 +29,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            bool hasDebugFlag,
+            IAppArgs appArgs,
             CancellationToken ct
         );
 
@@ -47,7 +48,7 @@ namespace Global.Dynamic
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
         UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct);

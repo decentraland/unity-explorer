@@ -396,6 +396,18 @@ MonoBehaviour:
       Severity: 0
     - Category: PROFILE
       Severity: 0
+    - Category: OUTFITS
+      Severity: 0
+    - Category: OUTFITS
+      Severity: 4
+    - Category: OUTFITS
+      Severity: 1
+    - Category: SOCIAL
+      Severity: 4
+    - Category: SOCIAL
+      Severity: 1
+    - Category: SOCIAL
+      Severity: 0
     - Category: DCL_CAST
       Severity: 0
     - Category: DCL_CAST
@@ -760,6 +772,10 @@ MonoBehaviour:
       Severity: 1
     - Category: ASSET_BUNDLES
       Severity: 0
+    - Category: SOCIAL
+      Severity: 4
+    - Category: SOCIAL
+      Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

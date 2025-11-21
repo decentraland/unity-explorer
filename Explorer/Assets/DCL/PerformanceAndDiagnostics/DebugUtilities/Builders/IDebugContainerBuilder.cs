@@ -34,6 +34,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName MEMORY = "Memory".AsWidgetName();
             public static readonly WidgetName CURRENT_SCENE = "Current scene".AsWidgetName();
             public static readonly WidgetName REALM = "Realm".AsWidgetName();
+            public static readonly WidgetName PROFILES = "Profiles".AsWidgetName();
             public static readonly WidgetName ANALYTICS = "Analytics".AsWidgetName();
             public static readonly WidgetName GPU_INSTANCING = "GPU Instancing".AsWidgetName();
             public static readonly WidgetName MEMORY_LIMITS = "Memory Limits".AsWidgetName();

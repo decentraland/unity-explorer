@@ -18,6 +18,7 @@ using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.Clipboard;
 using ECS;
 using MVC;
 using MVC.PopupsController.PopupCloser;
@@ -47,8 +48,10 @@ namespace Global.Tests.PlayMode
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
+            var appArgs = new ApplicationParametersParser();
+
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
-            FeaturesRegistry.Initialize(new FeaturesRegistry(new ApplicationParametersParser(), false));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
@@ -96,10 +99,9 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                new ObjectProxy<IProfileRepository>(),
                 DecentralandEnvironment.Org,
                 ct,
-                hasDebugFlag: false,
+                appArgs,
                 enableGPUInstancing: false
             );
 
@@ -127,7 +129,8 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
                 DecentralandEnvironment.Org,
-                ApplicationParametersParser.TEST_INSTANCE
+                ApplicationParametersParser.TEST_INSTANCE,
+                Substitute.For<ISystemClipboard>()
             );
 
             return (staticContainer, sceneSharedContainer);

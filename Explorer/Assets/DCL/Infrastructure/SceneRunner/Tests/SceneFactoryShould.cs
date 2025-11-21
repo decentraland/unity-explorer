@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.SkyBox;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -71,10 +72,12 @@ namespace SceneRunner.Tests
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
+                Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
-                ApplicationParametersParser.TEST_INSTANCE
+                ApplicationParametersParser.TEST_INSTANCE,
+                Substitute.For<DCL.Clipboard.ISystemClipboard>()
             );
         }
 

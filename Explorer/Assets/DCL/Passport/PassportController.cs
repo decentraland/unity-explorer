@@ -368,8 +368,6 @@ namespace DCL.Passport
             viewInstance.JumpInButton.onClick.AddListener(OnJumpToFriendButtonClicked);
             viewInstance.ChatButton.onClick.AddListener(OnChatButtonClicked);
 
-            viewInstance.CallButton.gameObject.SetActive(isCallEnabled);
-
             if (isCallEnabled)
                 viewInstance.CallButton.onClick.AddListener(OnStartCallButtonClicked);
 
@@ -393,20 +391,14 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
-            OnStartCallAsync().Forget();
-        }
+            OnStartCallButtonClickedAsync().Forget();
+            return;
 
-        private async UniTaskVoid OnStartCallAsync()
-        {
-            try
+            async UniTaskVoid OnStartCallButtonClickedAsync()
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-                chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
-                await UniTask.Delay(500);
-                chatEventBus.StartCallInCurrentConversation();
+                voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
             }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
         }
 
         private void OnChatButtonClicked()
@@ -548,7 +540,7 @@ namespace DCL.Passport
                     characterPreviewController!.OnBeforeShow();
 
                 // Load user profile
-                Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
+                Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct, batchBehaviour: IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
 
                 if (profile == null)
                     return;
@@ -757,9 +749,10 @@ namespace DCL.Passport
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
                     // Dont show any interaction for our own user
                     if (ownProfile?.UserId == inputData.UserId) return;
+
+                    viewInstance!.CallButton.gameObject.SetActive(isCallEnabled);
 
                     FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
 
@@ -887,6 +880,7 @@ namespace DCL.Passport
             viewInstance.CancelFriendButton.gameObject.SetActive(false);
             viewInstance.RemoveFriendButton.gameObject.SetActive(false);
             viewInstance.UnblockFriendButton.gameObject.SetActive(false);
+            viewInstance.CallButton.gameObject.SetActive(false);
         }
 
         private void RemoveFriend()

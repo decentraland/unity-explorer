@@ -71,14 +71,14 @@
       "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git#feat/user-video-streaming",
+      "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "20f30c6d65320459e048db6c4b8832037d2d16f4"
+      "hash": "0eb62e91c3fde06536cc126a57dcbf78d570ef8c"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -92,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "e1f81406edc9df5d67e713f0cb7b66036d097dee"
+      "hash": "881241610636aefab264592ff274f7860141f4ad"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -161,7 +161,7 @@
       "dependencies": {}
     },
     "com.unity.addressables": {
-      "version": "2.7.2",
+      "version": "2.7.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -171,7 +171,7 @@
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.scriptablebuildpipeline": "2.4.1",
+        "com.unity.scriptablebuildpipeline": "2.4.3",
         "com.unity.modules.unitywebrequestassetbundle": "1.0.0"
       },
       "url": "https://packages.unity.com"
@@ -187,7 +187,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.24",
+      "version": "1.8.25",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -221,11 +221,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collections": {
-      "version": "2.5.7",
+      "version": "2.6.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.8.19",
+        "com.unity.burst": "1.8.23",
         "com.unity.mathematics": "1.3.2",
         "com.unity.test-framework": "1.4.6",
         "com.unity.nuget.mono-cecil": "1.11.5",
@@ -256,11 +256,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.23",
+      "version": "2.0.25",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.test-framework": "1.1.9"
+        "com.unity.test-framework": "1.1.31"
       },
       "url": "https://packages.unity.com"
     },
@@ -274,11 +274,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.localization": {
-      "version": "1.5.4",
+      "version": "1.5.8",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.addressables": "1.22.2",
+        "com.unity.addressables": "1.25.0",
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       },
       "url": "https://packages.unity.com"
@@ -394,7 +394,7 @@
       }
     },
     "com.unity.scriptablebuildpipeline": {
-      "version": "2.4.1",
+      "version": "2.4.3",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -430,7 +430,7 @@
       }
     },
     "com.unity.test-framework.performance": {
-      "version": "3.1.0",
+      "version": "3.2.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -488,11 +488,11 @@
       "hash": "dd23d7ffc0deb432c8442979b60e40c1e2d3f007"
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#2.1.3",
+      "version": "https://github.com/getsentry/unity.git#2.4.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "813f81a6bc5233c2fe9e07c9b901f6e9ee09159b"
+      "hash": "0d89de3f508ea316df4cef40d3739691c51b6af8"
     },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
@@ -502,13 +502,13 @@
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
     "org.decentraland.clearscript": {
-      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package",
+      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#unity",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "e81de1896f07f77ba5a363a3e76c19faf42d1e52"
+      "hash": "1ee65c8dfec5402cca38dda85e94a1edfde6d882"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

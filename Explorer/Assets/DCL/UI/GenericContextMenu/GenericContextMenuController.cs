@@ -172,6 +172,7 @@ namespace DCL.UI
                 if (!config.Enabled) continue;
 
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i, container.transform);
+                component.SetAsInteractable(config.Interactable);
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
                 {

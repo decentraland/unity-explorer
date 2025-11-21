@@ -21,5 +21,7 @@ namespace DCL.UI.Controls
         public override void RegisterCloseListener(Action listener)
         {
         }
+
+        public override void SetAsInteractable(bool isInteractable) { }
     }
 }

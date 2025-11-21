@@ -20,9 +20,9 @@ namespace DCL.SDKComponents.MediaStream
             actionOnGet: static source => source.gameObject.SetActive(true),
             actionOnRelease: static source =>
             {
-                source.Stop();
-                source.Free();
-                source.gameObject.SetActive(false);
+                source?.Stop();
+                source?.Free();
+                source?.gameObject.SetActive(false);
             });
 
         private readonly IRoom room;
@@ -33,10 +33,17 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
-        public bool MediaOpened => currentStream != null;
+        public bool MediaOpened =>
+            // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
+            IsVideoOpened || isAudioOpened;
+
         public float Volume { get; private set; }
 
         public PlayerState State => playerState;
+
+        public bool IsVideoOpened => currentStream != null && currentStream.Value.video.Resource.Has;
+
+        private bool isAudioOpened => currentStream != null && currentStream.Value.audio.Resource.Has;
 
         public LivekitPlayer(IRoom streamingRoom)
         {
@@ -44,10 +51,26 @@ namespace DCL.SDKComponents.MediaStream
             audioSource = OBJECT_POOL.Get();
         }
 
-        public void EnsurePlaying()
+        public void EnsureVideoIsPlaying()
         {
-            if (this is { MediaOpened: false, State: PlayerState.PLAYING, playingAddress: { } address })
-                OpenMedia(address);
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (IsVideoOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
+        }
+
+        public void EnsureAudioIsPlaying()
+        {
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (isAudioOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -119,18 +142,20 @@ namespace DCL.SDKComponents.MediaStream
             // doesn't need to dispose the stream, because it's responsibility of the owning room
             currentStream = null;
             playerState = PlayerState.STOPPED;
-            audioSource.Stop();
-            audioSource.Free();
+
+            //audioSource is never null during regular execution, but the check is required as when closing the game in a scene
+            //with a running livekit stream, the audioSource (being a monobehaviour) might be already destroyed when disposing the player
+            if (audioSource != null)
+            {
+                audioSource.Stop();
+                audioSource.Free();
+            }
         }
 
         public Texture? LastTexture()
         {
             if (playerState is not PlayerState.PLAYING)
                 return null;
-
-            // retry to fetch the stream if it's not presented yet
-            if (playingAddress != null && currentStream?.video == null)
-                OpenMedia(playingAddress.Value);
 
             return currentStream?.video.Resource.Has ?? false
                 ? currentStream?.video.Resource.Value.DecodeLastFrame()

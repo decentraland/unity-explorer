@@ -16,10 +16,9 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Interaction.Utility;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MediaStream;
-using DCL.Time;
+using DCL.SkyBox;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS;
@@ -27,7 +26,6 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using Global.AppArgs;
 using MVC;
-using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -39,6 +37,7 @@ using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
@@ -65,8 +64,8 @@ namespace SceneRunner
         public readonly SceneEcsExecutor EcsExecutor;
         internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
         private readonly ISystemsUpdateGate systemsUpdateGate;
-        internal readonly IWorldTimeProvider worldTimeProvider;
         private readonly ISceneData sceneData;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
 
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
@@ -97,7 +96,6 @@ namespace SceneRunner
             IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
             ISystemsUpdateGate systemsUpdateGate,
-            IWorldTimeProvider worldTimeProvider,
             ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies)
         {
             CRDTProtocol = crdtProtocol;
@@ -117,24 +115,22 @@ namespace SceneRunner
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.systemGroupThrottler = systemGroupThrottler;
             this.systemsUpdateGate = systemsUpdateGate;
-            this.worldTimeProvider = worldTimeProvider;
             this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
         }
 
         public SceneInstanceDependencies(
-            IDecentralandUrlsSource decentralandUrlsSource,
             ISDKComponentsRegistry sdkComponentsRegistry,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneData sceneData,
+            IJsApiPermissionsProvider permissionsProvider,
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
-            ISceneEntityFactory entityFactory,
-            IWebRequestController webRequestController)
+            ISceneEntityFactory entityFactory)
         {
             this.sceneData = sceneData;
+            this.permissionsProvider = permissionsProvider;
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
             CRDTProtocol = new CRDTProtocol();
-            worldTimeProvider = new WorldTimeProvider(decentralandUrlsSource, webRequestController);
             SceneStateProvider = new SceneStateProvider();
             systemGroupThrottler = new SystemGroupsUpdateGate();
             systemsUpdateGate = new SystemsPriorityComponentsGate();
@@ -149,8 +145,8 @@ namespace SceneRunner
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
-                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                worldTimeProvider, systemGroupThrottler, systemsUpdateGate);
+                ExceptionsHandler, EntityCollidersCache, entityCollidersGlobalCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
+                systemGroupThrottler, systemsUpdateGate);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
@@ -177,7 +173,6 @@ namespace SceneRunner
             systemGroupThrottler.Dispose();
             systemsUpdateGate.Dispose();
             EntityCollidersCache.Dispose();
-            worldTimeProvider.Dispose();
             ecsMultiThreadSync.Dispose();
             ExceptionsHandler.Dispose();
         }
@@ -233,15 +228,18 @@ namespace SceneRunner
                 IRealmData realmData,
                 ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
-                IAppArgs appArgs)
+                SkyboxSettingsAsset skyboxSettings,
+                DCL.Clipboard.ISystemClipboard systemClipboard,
+                IAppArgs appArgs
+                )
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData),
-                    new RuntimeImplementation(jsOperations, syncDeps.sceneData, syncDeps.worldTimeProvider, realmData, webRequestController),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard),
+                    new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings),
                     new SceneApiImplementation(syncDeps.sceneData),
-                    new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations),
-                    new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo)),
-                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, appArgs),
+                    new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),
+                    new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo, syncDeps.permissionsProvider)),
+                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations),
                     syncDeps,
                     sceneRuntime) { }
 
@@ -301,9 +299,10 @@ namespace SceneRunner
             public WithRuntimeJsAndSDKObservablesEngineAPI
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
-                IWebRequestController webRequestController, MultiThreadSync.Owner syncOwner, IAppArgs appArgs)
-                : base(
-                    new SDKObservableEventsEngineAPIImplementation(
+                IWebRequestController webRequestController,  IAppArgs appArgs,
+                 SkyboxSettingsAsset skyboxSettings, MultiThreadSync.Owner syncOwner,
+                DCL.Clipboard.ISystemClipboard systemClipboard)
+                : base(new SDKObservableEventsEngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
                         syncDeps.CRDTProtocol,
@@ -314,8 +313,7 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMultiThreadSync,
-                        syncOwner
-                    ),
+                        syncOwner,
                     syncDeps,
                     sceneRuntime,
                     sceneRuntime,

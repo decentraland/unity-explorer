@@ -121,6 +121,10 @@ namespace Global.AppArgs
                 output[AppArgsFlags.REALM] = realmParamValue;
             }
 
+            // Patch for WinOS sometimes affecting the 'skip-auth-screen' parameter in deep links putting a '/' at the end
+            if (output.TryGetValue(AppArgsFlags.SKIP_AUTH_SCREEN, out string? value) && value?.EndsWith('/') == true)
+                output[AppArgsFlags.SKIP_AUTH_SCREEN] = value[..^1];
+
             return output;
         }
 
