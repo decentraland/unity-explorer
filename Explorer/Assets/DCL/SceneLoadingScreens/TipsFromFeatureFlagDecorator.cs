@@ -79,7 +79,7 @@ namespace DCL.SceneLoadingScreens
                 {
                     if (string.IsNullOrEmpty(startDate) && string.IsNullOrEmpty(endDate)) return true;
 
-                    return DateTime.UtcNow.Date >= ProcessedStartDate.Date && DateTime.UtcNow.Date <= ProcessedEndDate.Date;
+                    return DateTime.UtcNow >= ProcessedStartDate && DateTime.UtcNow <= ProcessedEndDate;
                 }
 
                 [OnDeserialized]
