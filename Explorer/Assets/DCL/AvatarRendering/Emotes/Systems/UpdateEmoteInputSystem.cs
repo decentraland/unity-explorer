@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
@@ -11,6 +12,7 @@ using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {

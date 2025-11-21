@@ -1,6 +1,8 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using MVC;
@@ -49,15 +51,19 @@ namespace DCL.SocialEmotes.UI
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
 
-                TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent = new TriggerEmoteReactingToSocialEmoteIntent()
-                    {
-                        TriggeredEmoteUrn = interaction.Emote.DTO.Metadata.id,
-                        OutcomeIndex = outcomeIndex,
-                        InitiatorWalletAddress = interaction.InitiatorWalletAddress,
-                        InteractionId = interaction.Id
-                    };
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>MOVING --> TO INITIATOR</color>");
+                Transform initiatorTransform = world.Get<CharacterTransform>(interaction.InitiatorEntity).Transform;
 
-                world.Add(playerEntity, triggerEmoteIntent);
+                world.Add(playerEntity, new MoveBeforePlayingSocialEmoteIntent(
+                    initiatorTransform.position,
+                    initiatorTransform.rotation,
+                    interaction.InitiatorEntity,
+                    new TriggerEmoteReactingToSocialEmoteIntent(
+                        interaction.Emote.DTO.Metadata.id,
+                        outcomeIndex,
+                        interaction.InitiatorWalletAddress,
+                        interaction.Id))
+                );
             }
         }
 

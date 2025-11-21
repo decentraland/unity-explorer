@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteInUse != null)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Stopping emoteInUse " + emoteInUse.avatarClip.name + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Stopping emoteInUse " + emoteInUse.avatarClip?.name??"" + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
                 Stop(emoteInUse);
             }
             else
@@ -247,7 +247,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing mecanim emote: " + emoteReferences.avatarClip.name + " " + ((AvatarBase)view).name);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing mecanim emote: " + emoteReferences.avatarClip?.name?? "" + " " + ((AvatarBase)view).name);
 
             // Avatar
             AnimationClip? avatarClip;
@@ -299,6 +299,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
+            // This flag makes the animator choose a different transition to Emote, which does not have an interpolation between animations
+            view.SetAnimatorBool(AnimationHashes.IS_SOCIAL_EMOTE_OUTCOME, emoteComponent.IsReactingToSocialEmote);
 
             // Prop
             AnimationClip? propClip = null;

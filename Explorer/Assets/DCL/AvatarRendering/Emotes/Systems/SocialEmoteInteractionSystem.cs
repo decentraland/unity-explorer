@@ -3,14 +3,19 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SocialEmotes;
+using DCL.Utilities;
 using ECS.Abstract;
 using UnityEngine;
+using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
@@ -19,37 +24,19 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
     [LogCategory(ReportCategory.EMOTE)]
     public partial class SocialEmoteInteractionSystem : BaseUnityLoopSystem
     {
-        public SocialEmoteInteractionSystem(World world) : base(world)
+        IEmotesMessageBus messageBus;
+
+        public SocialEmoteInteractionSystem(World world, IEmotesMessageBus messageBus) : base(world)
         {
+            this.messageBus = messageBus;
         }
 
         protected override void Update(float t)
         {
-            MoveToSocialEmoteInteractionInitiatorTransformQuery(World);
             PlayInitiatorOutcomeAnimationQuery(World);
-            MoveReceiverWhileOutcomeAnimationQuery(World);
-        }
-
-        /// <summary>
-        /// Moves the avatar of the player to the position and rotation of the avatar that initiated the social emote interaction.
-        /// The avatar in the other clients will move due to the interpolation systems in other place.
-        /// </summary>
-        [Query]
-        [All(typeof(MoveToInitiatorIntent))]
-        private void MoveToSocialEmoteInteractionInitiatorTransform(in Profile profile, ref CharacterController characterController, ref CharacterRigidTransform characterRigidTransform)
-        {
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
-
-            if (interaction is { AreInteracting: true })
-            {
-                characterRigidTransform.LookDirection = interaction.InitiatorRotation * Vector3.forward;
-
-                // It has to be disabled, otherwise position will be overriden
-                characterController.enabled = false;
-                characterController.transform.position = interaction.InitiatorPosition;
-                characterController.transform.rotation = interaction.InitiatorRotation;
-                characterController.enabled = true;
-            }
+            AdjustReceiverBeforeOutcomeAnimationQuery(World);
+            WalkToInitiatorPositionBeforePlayingOutcomeAnimationQuery(World);
+            ForceAvatarToLookAtPositionQuery(World);
         }
 
         /// <summary>
@@ -65,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (socialEmoteInteraction is { AreInteracting: true } &&
                 socialEmoteInteraction.InitiatorWalletAddress == profile.UserId && !emoteComponent.HasOutcomeAnimationStarted)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "EMOTEINTENT " + profile.UserId);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "CharacterEmoteIntent Initiator outcome animation " + profile.UserId);
 
                 World.Add(entity, new CharacterEmoteIntent()
                 {
@@ -83,25 +70,97 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         }
 
         /// <summary>
-        /// Moves the avatar of the receiver of the interaction to the position and rotation of the avatar of the initiator.
+        /// Moves the avatar of the receiver of the interaction to the position and rotation it will have when animation begins.
         /// </summary>
         [Query]
-        [All(typeof(IAvatarView))]
-        [None(typeof(CharacterEmoteIntent), typeof(MoveToInitiatorIntent))]
-        private void MoveReceiverWhileOutcomeAnimation(Entity entity, Profile profile, CharacterTransform transform)
+        [All(typeof(MoveToOutcomeStartPositionIntent))]
+        private void AdjustReceiverBeforeOutcomeAnimation(Entity entity, IAvatarView avatarView, MoveToOutcomeStartPositionIntent moveIntent)
         {
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            const float INTERPOLATION_DURATION = 0.4f;
+            float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / INTERPOLATION_DURATION;
 
-            if (socialEmoteInteraction is { AreInteracting: true } &&
-                socialEmoteInteraction.ReceiverWalletAddress == profile.UserId)
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Emote tag?: {avatarView.AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == AnimationHashes.EMOTE} Speed: {avatarView.AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND).ToString("F6")}</color>");
+
+            // Since the outcome emote has already started to play, the avatar is moving its position, but we need to create the illusion of the avatar not moving at all
+            Vector3 currentHipToOriginalPosition = moveIntent.OriginalAvatarPosition - ((AvatarBase)avatarView).HipAnchorPoint.position;
+            Vector3 originalPositionWithCurrentOffset = avatarView.GetTransform().position + new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
+            avatarView.GetTransform().position = Vector3.Lerp(originalPositionWithCurrentOffset, moveIntent.InitiatorWorldPosition, interpolation);
+
+            Debug.DrawRay(avatarView.GetTransform().position, UnityEngine.Vector3.up, Color.yellow, 3.0f);
+            GizmoDrawer.Instance.DrawWireSphere(5, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
+            Debug.DrawRay(moveIntent.OriginalAvatarPosition, UnityEngine.Vector3.up, Color.red, 3.0f);
+            GizmoDrawer.Instance.DrawWireSphere(0, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
+            Debug.DrawRay(moveIntent.TargetAvatarPosition, UnityEngine.Vector3.up, Color.green, 3.0f);
+            GizmoDrawer.Instance.DrawWireSphere(1, moveIntent.TargetAvatarPosition, 0.2f, Color.green);
+            Debug.DrawRay(moveIntent.InitiatorWorldPosition, UnityEngine.Vector3.up, Color.cyan, 3.0f);
+            GizmoDrawer.Instance.DrawWireSphere(2, moveIntent.InitiatorWorldPosition, 0.2f, Color.cyan);
+
+            if (interpolation >= 1.0f)
             {
-                MoveToInitiatorIntent newIntent = new MoveToInitiatorIntent()
-                {
-                    OriginalPosition = transform.Position,
-                    OriginalRotation = transform.Rotation
-                };
-                World.Add(entity, newIntent);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>INTERPOLATION FINISHED</color>");
+                World.Remove<MoveToOutcomeStartPositionIntent>(entity);
             }
+        }
+
+        // Executed locally only
+        /// <summary>
+        /// Makes the receiver's character walk to the position of the initiator.
+        /// </summary>
+        [Query]
+        [All(typeof(MoveBeforePlayingSocialEmoteIntent))]
+        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform,
+            ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, ref CharacterAnimationComponent animationComponent,
+            ref MoveBeforePlayingSocialEmoteIntent moveIntent)
+        {
+            bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < 2.0f;
+
+            if (isCloseEnoughToInitiator ||
+                movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
+                jumpInputComponent.IsPressed)  // If player jumps, the process is canceled
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
+
+                // The avatar has to stop walking, otherwise it will spend some time to blend
+                animationComponent.States.MovementBlendValue = 0.0f;
+                movementInput.IgnoreCamera = false;
+
+                if (isCloseEnoughToInitiator)
+                {
+                    // Emote playing
+                    World.Add(entity, moveIntent.TriggerEmoteIntent);
+                }
+
+                World.Remove<MoveBeforePlayingSocialEmoteIntent>(entity);
+            }
+            else
+            {
+                movementInput.Kind = MovementKind.RUN;
+                movementInput.Axes = Vector2.up;
+                // The avatar can walk freely towards the initiator without taking the camera's orientation into consideration
+                movementInput.IgnoreCamera = true;
+
+                // Both avatars look at each other
+                if (!moveIntent.AreAvatarsLookingAtEachOther)
+                {
+                    // Rotates the initiator
+                    moveIntent.AreAvatarsLookingAtEachOther = true;
+                    World.Add(moveIntent.InitiatorEntityId, new LookAtPositionIntention(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress, characterTransform.Position));
+                    messageBus.SendLookAtPositionMessage(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress, characterTransform.Position.x, characterTransform.Position.y, characterTransform.Position.z);
+                }
+
+                // Rotates the receiver
+                World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
+            }
+        }
+
+        [Query]
+        [All(typeof(LookAtPositionIntention))]
+        private void ForceAvatarToLookAtPosition(Entity entity, IAvatarView avatarView, LookAtPositionIntention lookAtPositionIntention)
+        {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward before: " + avatarView.GetTransform().forward);
+            avatarView.GetTransform().forward = (lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position).normalized;
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward after: " + avatarView.GetTransform().forward);
+            World.Remove<LookAtPositionIntention>(entity);
         }
     }
 }

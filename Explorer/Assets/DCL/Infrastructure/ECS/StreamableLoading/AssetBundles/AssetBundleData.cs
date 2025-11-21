@@ -17,12 +17,16 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly string AssetBundleName;
 
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
+        // Note: The order of the outcomes is the same as the order in which they appear in the Emote DTO metadata
+        public readonly AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? SocialEmoteOutcomeAnimationStartPoses;
+
+        private readonly string description;
 
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
         private readonly AssetBundleData[] Dependencies;
 
-        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "", AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? socialEmoteOutcomeAnimationStartPoses = null)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             InitialSceneStateMetadata = initialSceneState;
@@ -37,6 +41,7 @@ namespace ECS.StreamableLoading.AssetBundles
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
 
+            SocialEmoteOutcomeAnimationStartPoses = socialEmoteOutcomeAnimationStartPoses;
             UnloadAB();
         }
 

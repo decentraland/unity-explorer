@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
@@ -33,6 +34,7 @@ namespace DCL.Multiplayer.Emotes
         private uint nextIncrementalId = 1;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<LookAtPositionIntention> lookAtPositionIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MutexSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
@@ -47,6 +49,15 @@ namespace DCL.Multiplayer.Emotes
 
             this.messagePipesHub.IslandPipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
+
+            this.messagePipesHub.IslandPipe().Subscribe<LookAtPosition>(Packet.MessageOneofCase.LookAtPosition, OnLookAtPositionMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<LookAtPosition>(Packet.MessageOneofCase.LookAtPosition, OnLookAtPositionMessageReceived);
+        }
+
+        private void OnLookAtPositionMessageReceived(ReceivedMessage<LookAtPosition> lookAtPositionMessage)
+        {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=green>RECEIVED Look at: " + new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ).ToString("F6") + " ADDRESS: " + lookAtPositionMessage.Payload.TargetAvatarWalletAddress + "</color>");
+            lookAtPositionIntentions.Add(new LookAtPositionIntention(lookAtPositionMessage.Payload.TargetAvatarWalletAddress, new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ)));
         }
 
         public void Dispose()
@@ -57,6 +68,35 @@ namespace DCL.Multiplayer.Emotes
 
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
+
+        public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
+            new (sync, lookAtPositionIntentions);
+
+        public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
+        {
+            if (cancellationTokenSource.IsCancellationRequested)
+                throw new Exception("EmoteMessagesBus is disposed");
+
+            float timestamp = Time.unscaledTime;
+
+            MessageWrap<LookAtPosition> lookAtPositionMessageIsland = messagePipesHub.IslandPipe().NewMessage<LookAtPosition>();
+            lookAtPositionMessageIsland.Payload.Timestamp = timestamp;
+            lookAtPositionMessageIsland.Payload.PositionX = worldPositionX;
+            lookAtPositionMessageIsland.Payload.PositionY = worldPositionY;
+            lookAtPositionMessageIsland.Payload.PositionZ = worldPositionZ;
+            lookAtPositionMessageIsland.Payload.TargetAvatarWalletAddress = walletAddress;
+            lookAtPositionMessageIsland.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+
+            MessageWrap<LookAtPosition> lookAtPositionMessageScene = messagePipesHub.ScenePipe().NewMessage<LookAtPosition>();
+            lookAtPositionMessageScene.Payload.Timestamp = timestamp;
+            lookAtPositionMessageScene.Payload.PositionX = worldPositionX;
+            lookAtPositionMessageScene.Payload.PositionY = worldPositionY;
+            lookAtPositionMessageScene.Payload.PositionZ = worldPositionZ;
+            lookAtPositionMessageScene.Payload.TargetAvatarWalletAddress = walletAddress;
+            lookAtPositionMessageScene.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=green>SENT LOOK AT POSITION x:" + worldPositionX.ToString("F6") + " y:" + worldPositionY.ToString("F6") + " z:" + worldPositionZ.ToString("F6") + " ADDRESS: " + walletAddress + "</color>");
+        }
 
         public void Send(URN emote, bool isRepeating, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId)
         {
@@ -139,6 +179,11 @@ namespace DCL.Multiplayer.Emotes
         public void SaveForRetry(RemoteEmoteIntention intention)
         {
             emoteIntentions.Add(intention);
+        }
+
+        public void SaveForRetry(LookAtPositionIntention intention)
+        {
+            lookAtPositionIntentions.Add(intention);
         }
     }
 }

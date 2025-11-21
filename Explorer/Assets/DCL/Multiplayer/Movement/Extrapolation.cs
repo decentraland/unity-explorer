@@ -1,4 +1,5 @@
 ﻿using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -23,6 +24,8 @@ namespace DCL.Multiplayer.Movement
                     newPosition.y = 0;
                     ext.Velocity.y = 0;
                 }
+
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, ":: New position: " + newPosition.ToString("F6"));
 
                 transComp.Transform.position = newPosition;
             }

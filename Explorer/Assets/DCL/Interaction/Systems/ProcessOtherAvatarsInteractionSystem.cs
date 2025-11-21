@@ -120,7 +120,7 @@ namespace DCL.Interaction.Systems
                 World.Query(in new QueryDescription().WithAll<CharacterTransform, PlayerComponent>(),
                 (ref CharacterTransform characterTransform) => playerPosition = characterTransform.Position);
 
-                const float MAX_SQR_DISTANCE_TO_INTERACT = 2.0f * 2.0f; // TODO: Move to a proper place
+                const float MAX_SQR_DISTANCE_TO_INTERACT = 5.0f * 5.0f; // TODO: Move to a proper place
                 float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
 
                 if (socialEmoteOutcomeMenuController.State == ControllerState.ViewHidden)
