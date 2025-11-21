@@ -14,6 +14,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Factory;
+using DCL.Backpack.Gifting.Notifications;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Services;
@@ -26,6 +27,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -57,9 +59,13 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3VerifiedAuthenticator dappWeb3Authenticator;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
+        private GiftReceivedPopupController giftReceivedPopupController;
+        private GiftNotificationOpenerController giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -80,7 +86,8 @@ namespace DCL.PluginSystem.Global
             IEthereumApi ethereumApi,
             ISelfProfile selfProfile,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3VerifiedAuthenticator dappWeb3Authenticator)
+            IWeb3VerifiedAuthenticator dappWeb3Authenticator,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -102,11 +109,14 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.dappWeb3Authenticator = dappWeb3Authenticator;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose()
         {
             giftSelectionController?.Dispose();
+            giftReceivedPopupController?.Dispose();
+            giftNotificationOpenerController?.Dispose();
         }
 
         public async UniTask InitializeAsync(GiftingSettings settings, CancellationToken ct)
@@ -119,6 +129,9 @@ namespace DCL.PluginSystem.Global
 
             var giftTransferSuccessPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftTransferPopupSuccessPrefab, ct))
                 .Value.GetComponent<GiftTransferSuccessView>();
+
+            var giftReceivedView = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftReceivedPopupPrefab, ct))
+                .Value.GetComponent<GiftReceivedPopupView>();
 
             var (rarityColors, categoryIcons, rarityBackgrounds, rarityInfoPanelBackgroundsMapping) = await UniTask
                 .WhenAll(assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
@@ -140,6 +153,18 @@ namespace DCL.PluginSystem.Global
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
                 eventBus);
 
+            giftReceivedPopupController = new GiftReceivedPopupController(
+                GiftReceivedPopupController.CreateLazily(giftReceivedView, null),
+                profileRepository,
+                wearableCatalog,
+                wearableStorage,
+                emoteStorage,
+                thumbnailProvider,
+                sharedSpaceManager
+            );
+
+            giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
+            
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
                 emoteProvider,
@@ -187,6 +212,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftSelectionController);
             mvcManager.RegisterController(giftTransferStatusController);
             mvcManager.RegisterController(giftTransferSuccessController);
+            mvcManager.RegisterController(giftReceivedPopupController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -203,6 +229,10 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject GiftTransferPopupSuccessPrefab;
+
+            [field: Header("Notifications")]
+            [field: SerializeField]
+            public AssetReferenceGameObject GiftReceivedPopupPrefab;
 
             [Header("Localization / Constants")]
             [SerializeField] public string GiftTransferPopupStatusTitle = "Preparing Gift for";

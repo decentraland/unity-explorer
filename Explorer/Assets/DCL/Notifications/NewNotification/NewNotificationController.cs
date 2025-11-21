@@ -10,6 +10,8 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
+using DCL.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -65,6 +67,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
+            viewInstance.GiftNotificationView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
@@ -127,6 +130,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.INTERNAL_DEFAULT_SUCCESS:
                         await ProcessArrivedNotificationAsync(notification, false);
                         break;
+                    case NotificationType.GIFT_RECEIVED:
+                        await ProcessGiftNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -134,6 +140,41 @@ namespace DCL.Notifications.NewNotification
             }
 
             isDisplaying = false;
+        }
+
+        private async UniTask ProcessGiftNotificationAsync(INotification notification)
+        {
+            var giftNotification = (GiftReceivedNotification)notification;
+
+            // Reuse the Default View but customize it for Gifting
+            var view = viewInstance.NotificationView;
+
+            // HEADER: "Gift Received"
+            view.HeaderText.text = notification.GetHeader();
+
+            // TITLE: "PlayerName sent you a Gift!"
+            var userColor = NameColorHelper.GetNameColor(giftNotification.Metadata.Sender.Name);
+            string hexColor = ColorUtility.ToHtmlStringRGB(userColor);
+            view.TitleText.text = $"<color=#{hexColor}>{giftNotification.Metadata.Sender.Name}</color> sent you a Gift!";
+
+            // BACKGROUND: Set the Purple Sprite from Figma
+            // if (viewInstance.GiftNotificationBackground != null)
+            //     view.NotificationImageBackground.sprite = viewInstance.GiftNotificationBackground;
+
+            // ICON: Set the Item Image
+            // Note: You need a reference to your ImageController here, similar to how 'thumbnailImageController' is used in the class
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+
+            // TYPE ICON: The little gift box icon
+            view.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            // Store data for Click Event
+            view.NotificationType = notification.Type;
+            view.Notification = notification;
+
+            // Animate
+            await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
         }
 
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)

@@ -29,6 +29,7 @@ namespace DCL.Notifications.NotificationsMenu
         private const int PIXELS_PER_UNIT = 50;
         private const int DEFAULT_NOTIFICATION_INDEX = 0;
         private const int FRIENDS_NOTIFICATION_INDEX = 1;
+        private const int GIFT_NOTIFICATION_INDEX = 2;
 
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
@@ -190,6 +191,10 @@ namespace DCL.Notifications.NotificationsMenu
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[FRIENDS_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<FriendsNotificationView>();
                     break;
+                case NotificationType.GIFT_RECEIVED:
+                    listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[GIFT_NOTIFICATION_INDEX].mItemPrefab.name);
+                    notificationView = listItem!.GetComponent<GiftNotificationView>();
+                    break;
                 default:
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[DEFAULT_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<NotificationView>();
@@ -259,6 +264,12 @@ namespace DCL.Notifications.NotificationsMenu
                     FriendsNotificationView friendNotificationView2 = (FriendsNotificationView)notificationView;
                     friendNotificationView2.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
                     friendNotificationView2.TimeText.gameObject.SetActive(true);
+                    break;
+                case GiftReceivedNotification giftNotification:
+                    var giftView = (GiftNotificationView)notificationView;
+                    giftView.Configure(giftNotification);
+                    // Set rarity background
+                    giftView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(giftNotification.Metadata.Item.GiftRarity);
                     break;
             }
         }

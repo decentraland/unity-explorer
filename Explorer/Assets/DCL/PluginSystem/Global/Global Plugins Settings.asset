@@ -98,6 +98,21 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GiftReceivedPopupPrefab:
+          m_AssetGUID: f87c3e77ea2e0ec45b0ddef98bfeb066
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftTransferPopupStatusTitle: Preparing Gift for
+        GiftTransferPopupStatusWaitingMessage: A browser window should open for you
+          to confirm the transaction.
+        GiftTransferPopupStatusProcessingMessage: Processing...
+        GiftTransferErrorPopupTitle: Something went wrong
+        GiftTransferErrorPopupAdditionalUrlTitle: Your gift wasn't delivered. Please
+          try again of contact Support.
+        GiftTransferErrorPopupCloseButtonText: CLOSE
+        GiftTransferErrorPopupConfirmButtonText: TRY AGAIN
         <BackpackSettings>k__BackingField:
           <CategoryIconsMapping>k__BackingField:
             m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
@@ -159,7 +174,6 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
-          <WarningIcon>k__BackingField: {fileID: 0}
         <EmbeddedEmotes>k__BackingField:
         - urn:decentraland:off-chain:base-emotes:wave
         - urn:decentraland:off-chain:base-emotes:fistpump
@@ -343,7 +357,6 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
-          <WarningIcon>k__BackingField: {fileID: 21300000, guid: 11e03d479a3801e41a24b633f4079326, type: 3}
         <EmbeddedEmotes>k__BackingField:
         - urn:decentraland:off-chain:base-emotes:wave
         - urn:decentraland:off-chain:base-emotes:fistpump

@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using MVC;
 
 namespace DCL.UI.SharedSpaceManager
@@ -43,6 +44,12 @@ namespace DCL.UI.SharedSpaceManager
         /// <returns>The async task.</returns>
         UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!, params PanelsSharingSpace[] panelsToIgnore);
 
+        /// <summary>
+        ///     Directly opens the backpack
+        /// </summary>
+        /// <returns></returns>
+        UniTask OpenBackpack();
+        
         /// <summary>
         ///     <inheritdoc cref="ShowAsync{TParams}" /> <br />
         ///     A shortcut to <see cref="ShowAsync{TParams}" /> to pass a default value of <see cref="ControllerNoData" /> without specifying it, it will not work if the panel actually requires a non-<see cref="ControllerNoData" /> parameter

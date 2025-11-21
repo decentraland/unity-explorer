@@ -133,6 +133,8 @@ MonoBehaviour:
   <BadgeNotificationViewCanvasGroup>k__BackingField: {fileID: 513534390762832864}
   <FriendsNotificationView>k__BackingField: {fileID: 9131548034538180758}
   <FriendsNotificationViewCanvasGroup>k__BackingField: {fileID: 930355507606330530}
+  <GiftNotificationView>k__BackingField: {fileID: -1656700590733285125, guid: 50d4a05181ab9ff4a844d89c194fca98, type: 3}
+  <GiftNotificationCanvasGroup>k__BackingField: {fileID: 2183384421184382549, guid: 50d4a05181ab9ff4a844d89c194fca98, type: 3}
   <MarketplaceCreditsNotificationView>k__BackingField: {fileID: 1416931554497110128}
   <MarketplaceCreditsNotificationAnimator>k__BackingField: {fileID: 1858343191492222238}
   <MarketplaceCreditsNotificationViewCanvasGroup>k__BackingField: {fileID: 3133150909833576535}

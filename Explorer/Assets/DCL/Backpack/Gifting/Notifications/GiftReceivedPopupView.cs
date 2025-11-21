@@ -1,0 +1,31 @@
+﻿using DCL.Backpack.Gifting.Views;
+using DCL.RewardPanel;
+using DCL.UI.ProfileElements;
+using MVC;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DCL.Backpack.Gifting.Notifications
+{
+    public class GiftReceivedPopupView : ViewBase, IView
+    {
+        [field: Header("Labels")]
+        [field: SerializeField] public TMP_Text SubTitleText { get; private set; } // "GIFT OPENED"
+
+        [field: SerializeField] public TMP_Text TitleText { get; private set; }    // "FROM {PLAYERNAME}"
+        [field: SerializeField] public TMP_Text ItemNameText { get; private set; } // "Asset Name"
+
+        [field: Header("Item Container")]
+        [field: SerializeField] public GiftOpenedItemView GiftItemView { get; private set; }
+
+        [field: Header("Buttons")]
+        [field: SerializeField] public Button OpenBackpackButton { get; private set; }
+
+        [field: SerializeField] public Button CloseButton { get; private set; }
+        [field: SerializeField] public Button BackgroundOverlayButton { get; private set; }
+
+        [field: SerializeField]
+        public GiftTransferBackgroundAnimation BackgroundRaysAnimation { get; private set; }
+    }
+}

@@ -275,6 +275,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f87c3e77ea2e0ec45b0ddef98bfeb066
+    m_Address: Assets/DCL/Backpack/Gifting/Notifications/Prefab/GiftReceivedPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa9a67059d8a204408ce435cc8827612
     m_Address: Assets/DCL/VoiceChat/VoiceChatMicrophoneAudioSource.prefab
     m_ReadOnly: 0

@@ -52,16 +52,16 @@ namespace DCL.NotificationsBus.NotificationTypes
     public struct GiftItemMetadata
     {
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string GiftName { get; set; }
 
         [JsonProperty("imageUrl")]
         public string ImageUrl { get; set; }
 
         [JsonProperty("category")]
-        public string Category { get; set; }
+        public string GiftCategory { get; set; }
 
         [JsonProperty("rarity")]
-        public string Rarity { get; set; }
+        public string GiftRarity { get; set; }
 
         [JsonProperty("tokenId")]
         public string TokenId { get; set; }
