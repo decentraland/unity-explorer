@@ -722,12 +722,12 @@ MonoBehaviour:
     m_ProcessWorldSpaceInput: 0
     m_InteractionLayers:
       serializedVersion: 2
-      m_Bits: 4294967291
+      m_Bits: 3960406771
     m_MaxInteractionDistance: Infinity
     m_DefaultEventCameraIsMainCamera: 1
     m_EventCameras: []
-    m_PanelInputRedirection: 1
-    m_AutoCreatePanelComponents: 0
+    m_PanelInputRedirection: 0
+    m_AutoCreatePanelComponents: 1
 --- !u!4 &1843495472
 Transform:
   m_ObjectHideFlags: 0

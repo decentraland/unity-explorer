@@ -49,7 +49,8 @@ namespace DCL.PluginSystem.World
                 exposedCameraData,
                 settings.FadeSpeed,
                 settings.VideoPrioritizationSettings,
-                mediaFactory
+                mediaFactory,
+                settings.FlipMaterial
             );
 
             return UniTask.CompletedTask;
@@ -59,6 +60,8 @@ namespace DCL.PluginSystem.World
         public class MediaPlayerPluginSettings : IDCLPluginSettings
         {
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
+
+            [field: SerializeField] public Material FlipMaterial { get; private set; }
 
             public VideoPrioritizationSettings VideoPrioritizationSettings;
         }

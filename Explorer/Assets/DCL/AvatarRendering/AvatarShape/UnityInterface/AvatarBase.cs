@@ -165,6 +165,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.ResetTrigger(hash);
         }
 
+        public void ResetArmatureInclination()
+        {
+            Vector3 angles = ArmatureObject.eulerAngles;
+            angles.x = 90;
+            ArmatureObject.eulerAngles = angles;
+        }
+
         /// <summary>
         /// Replaces the name of the Armature object with the name it had originally.
         /// The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
@@ -288,6 +295,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         int GetAnimatorCurrentStateTag();
 
         void ResetAnimatorTrigger(int hash);
+
+        void ResetArmatureInclination();
 
         /// <summary>
         /// Replaces the name of the Armature object with the name it had originally.

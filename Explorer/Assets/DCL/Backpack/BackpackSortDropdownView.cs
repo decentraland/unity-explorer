@@ -1,4 +1,3 @@
-using DCL.Audio;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +36,9 @@ namespace DCL.Backpack
         internal Toggle collectiblesOnly { get; private set; }
 
         [field: SerializeField]
+        internal Toggle smartWearablesOnly { get; private set; }
+
+        [field: SerializeField]
         internal Button sortDropdownButton { get; private set; }
 
         private void Start()
@@ -55,6 +57,11 @@ namespace DCL.Backpack
                 SortContentDeselectable.SelectElement();
                 CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
+        }
+
+        public void Activate (bool activate)
+        {
+            sortDropdownButton.interactable = activate;
         }
     }
 }

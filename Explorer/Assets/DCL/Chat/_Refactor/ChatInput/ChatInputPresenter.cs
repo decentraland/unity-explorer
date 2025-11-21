@@ -125,8 +125,7 @@ namespace DCL.Chat.ChatInput
         public void Dispose()
         {
             scope.Dispose();
-            cts.Cancel();
-            cts.Dispose();
+            cts.SafeCancelAndDispose();
             fsm.Dispose();
         }
     }

@@ -17,7 +17,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
     {
         public UniTask<ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct);
 
-        public UniTask<GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct);
+        public UniTask<GetWorldTimeResponse> GetWorldTimeAsync();
 
         public CurrentSceneEntityResponse GetSceneInformation();
 

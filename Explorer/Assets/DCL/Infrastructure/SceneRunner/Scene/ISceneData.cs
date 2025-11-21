@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -13,11 +14,14 @@ namespace SceneRunner.Scene
         ///     SceneLoadingConcluded is TRUE when the scene has been repositioned to its rightful place away from MORDOR
         /// </summary>
         bool SceneLoadingConcluded { get; set; }
+        IInitialSceneState InitialSceneStateInfo { get; }
 
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
+
         ISceneContent SceneContent { get; }
+
         SceneEntityDefinition SceneEntityDefinition { get; }
 
         /// <summary>
@@ -29,6 +33,14 @@ namespace SceneRunner.Scene
         ///     Main.crdt file that should be applied first before launching the scene
         /// </summary>
         StaticSceneMessages StaticSceneMessages { get; }
+
+        /// <summary>
+        ///     Whether this scene was loaded from a wearable which is part of a collection preview.
+        /// </summary>
+        /// <remarks>
+        ///     This has been introduced to fully support the --self-preview-builder-collections command line arg.
+        /// </remarks>
+        bool IsWearableBuilderCollectionPreview => false;
 
         bool HasRequiredPermission(string permission);
 
@@ -65,6 +77,23 @@ namespace SceneRunner.Scene
 
         bool IsPortableExperience();
 
+        /// <summary>
+        ///     Gets the specific SDK version (e.g., "7.5.6") from package.json, or null if not available
+        /// </summary>
+        string GetSDKVersion();
+
+        /// <summary>
+        ///     Checks if the scene's SDK version is the specified version or higher
+        /// </summary>
+        /// <param name="minVersion">Minimum version to check (e.g., "7.5.0")</param>
+        /// <returns>True if scene SDK version >= minVersion, false if version unknown or less than minVersion</returns>
+        bool IsSDKVersionOrHigher(string minVersion);
+
+        /// <summary>
+        ///     Checks if the scene's SDK version matches a specific version
+        /// </summary>
+        bool IsSDKVersion(string version);
+
         class Fake : ISceneData
         {
             public bool SceneLoadingConcluded
@@ -73,6 +102,7 @@ namespace SceneRunner.Scene
                 set { }
             }
 
+            public IInitialSceneState InitialSceneStateInfo { get; } = new FakeInitialSceneState();
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 
@@ -122,6 +152,25 @@ namespace SceneRunner.Scene
 
             public bool IsPortableExperience() =>
                 false;
+
+            public string GetSDKVersion() =>
+                null;
+
+            public bool IsSDKVersionOrHigher(string minVersion) =>
+                false;
+
+            public bool IsSDKVersion(string version) =>
+                false;
+        }
+
+        public class FakeInitialSceneState : IInitialSceneState
+        {
+            public void Dispose()
+            {
+            }
+
+            public HashSet<string> ISSAssets { get; } = new HashSet<string>();
         }
     }
+
 }

@@ -1,3 +1,4 @@
+using System;
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -15,6 +16,9 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using DCL.SceneRunner.Scene;
+using DCL.Utility;
+using ECS.StreamableLoading.InitialSceneState;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -37,7 +41,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world = World.Create();
             playerEntity = world.Create();
             mockMessageBus = new MockEmotesMessageBus();
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
 
             // camera entity for camera global actions
             world.Create(new CameraComponent());
@@ -149,7 +153,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void CreatePromiseForLocalSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData { SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "localSceneTest") };
@@ -170,7 +174,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void NotCreatePromiseForLocalSceneSceneEmoteInvalidSrc()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false); // local development, no remote ABs
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false, false); // local development, no remote ABs
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData();
@@ -193,7 +197,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void CreatePromiseForRealmSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = true });
 
             var sceneId = "remoteSceneId";
@@ -215,7 +219,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void ShouldNotTriggerSceneEmoteIfAvatarNotVisible()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = false });
 
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };
@@ -237,14 +241,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 SentEmotes.Add((urn, loopCyclePassed));
             }
 
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new System.NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new System.NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new System.NotImplementedException();
+            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
+            public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
+            public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
         }
 
         private class MockSceneData : ISceneData
         {
             public bool SceneLoadingConcluded { get; set; } = true;
+
+            public IInitialSceneState InitialSceneStateInfo { get; } = new ISceneData.FakeInitialSceneState();
             public SceneShortInfo SceneShortInfo { get; set; } = new (Vector2Int.zero, "mockScene");
             public IReadOnlyList<Vector2Int> Parcels { get; set; } = new List<Vector2Int>();
             public ISceneContent SceneContent => new SceneNonHashedContent(URLDomain.FromString("file://mock/"));
@@ -281,6 +287,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public bool IsUrlDomainAllowed(string url) => true;
             public bool IsSdk7() => true;
             public bool IsPortableExperience() => false;
+            public string GetSDKVersion() => null;
+            public bool IsSDKVersionOrHigher(string minVersion) => false;
+            public bool IsSDKVersion(string version) => false;
+            public void Dispose() { }
         }
     }
 }

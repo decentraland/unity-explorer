@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.FeatureFlags;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -16,6 +17,7 @@ namespace DCL.Friends.UI.PushNotifications
         [field: SerializeField] public TMP_Text UserNameText { get; private set; }
         [field: SerializeField] public TMP_Text UserAddressText { get; private set; }
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
+        [field: SerializeField] public GameObject OfficialIcon { get; private set; }
         [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; }
 
         [field:Header("Toast Animation")]
@@ -44,6 +46,7 @@ namespace DCL.Friends.UI.PushNotifications
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
+            OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.Address));
             ProfilePictureView.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 

@@ -15,13 +15,13 @@ namespace Global.Dynamic
 
         public TerrainGenerator GenesisTerrain { get; private init; }
 
-        private WorldTerrainGenerator worldsTerrain { get; init; }
+        public WorldTerrainGenerator WorldsTerrain { get; private init; }
 
         private bool landscapeEnabled { get; init; }
 
         public LandscapePlugin CreatePlugin(StaticContainer staticContainer, BootstrapContainer bootstrapContainer, MapRendererContainer mapRendererContainer,
             IDebugContainerBuilder debugBuilder) =>
-            new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
+            new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, WorldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, staticContainer.LandscapeParcelData, staticContainer.LandscapeParcelController, landscapeEnabled,
                 bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone), (Landscape)Landscape);
@@ -35,7 +35,7 @@ namespace Global.Dynamic
             {
                 Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape),
                 GenesisTerrain = genesisTerrain,
-                worldsTerrain = worldsTerrain,
+                WorldsTerrain = worldsTerrain,
                 landscapeEnabled = enableLandscape,
             };
         }

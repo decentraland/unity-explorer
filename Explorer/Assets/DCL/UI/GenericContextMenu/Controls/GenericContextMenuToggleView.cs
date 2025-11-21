@@ -30,5 +30,8 @@ namespace DCL.UI.Controls
 
         public override void RegisterCloseListener(Action listener) =>
             ToggleComponent.Toggle.onValueChanged.AddListener(_ => listener());
+
+        public override void SetAsInteractable(bool isInteractable) =>
+            ToggleComponent.Toggle.interactable = isInteractable;
     }
 }

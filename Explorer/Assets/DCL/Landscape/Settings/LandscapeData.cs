@@ -11,17 +11,11 @@ namespace DCL.Landscape.Settings
     {
         public Action<float>? OnDetailDistanceChanged;
 
-        public bool showSatelliteView;
-        public bool drawTerrain;
-        public bool drawTerrainDetails;
         public Transform mapChunk;
         public TerrainGenerationData terrainData;
         public TerrainGenerationData worldsTerrainData;
 
         [field: SerializeField] public GPUIProfile TreesProfile { get; private set; } = null!;
-
-        [Obsolete]
-        public const bool LOAD_TREES_FROM_STREAMINGASSETS = true;
 
         [SerializeField] private float detailDistanceValue = 200;
         public float DetailDistance
@@ -52,6 +46,9 @@ namespace DCL.Landscape.Settings
         }
 
         public bool RenderGround { get; set; } = true;
+        public bool RenderTrees { get; set; } = true;
+        public bool RenderGrass { get; set; } = true;
+        public bool ShowSatelliteFloor { get; set; } = true;
         [field: SerializeField] public Material? GroundMaterial { get; private set; }
         [field: SerializeField] public int GroundInstanceCapacity { get; set; }
         [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }

@@ -15,6 +15,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Global.Dynamic;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -27,6 +28,7 @@ using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.ModuleControllers;
+using DCL.Settings.Utils;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -54,6 +56,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
+using DCL.UI.ErrorPopup;
 using DCL.Utility;
 using DCL.Utility.Types;
 using System.Collections.Generic;
@@ -90,7 +93,6 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-
         private ProvidedInstance<SplashScreen> splashScreen;
 
         private void Awake()
@@ -137,6 +139,7 @@ namespace Global.Dynamic
                 decentralandEnvironment = env;
         }
 
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
@@ -162,6 +165,9 @@ namespace Global.Dynamic
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
+
+            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
+                WindowModeUtils.ApplyWindowedMode();
 
             World world = World.Create();
 
@@ -212,8 +218,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                bool hasDebugFlag = applicationParametersParser.HasDebugFlag();
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, hasDebugFlag, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -273,7 +278,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
@@ -281,9 +286,8 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
-
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct);
+                await LoadStartingRealmAsync(ct);
+                await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -300,6 +304,39 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
+            }
+
+            return;
+
+            async UniTask LoadStartingRealmAsync(CancellationToken ct)
+            {
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadStartingRealmAsync(ct);
+                    else
+                        ExitUtils.Exit();
+                }
+            }
+
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
+            {
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
+                catch (TimeoutException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadUserFlowAsync(playerEntity, ct);
+                    else
+                        throw;
+                }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadUserFlowAsync(playerEntity, ct);
+                    else
+                        ExitUtils.Exit();
+                }
             }
         }
 
@@ -387,7 +424,7 @@ namespace Global.Dynamic
                 LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
 
             dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
-            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand(), ct).Forget();
             return true;
         }
 
@@ -568,6 +605,20 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(UntrustedRealmConfirmationController.IssueCommand(args), ct);
 
             return controller.SelectedOption;
+        }
+
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
+        {
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Load Error",
+                description: "A loading error was encountered. Please reload to try again.",
+                iconType: ErrorPopupWithRetryController.IconType.ERROR);
+
+            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
+
+            return input.SelectedOption;
         }
 
         [Serializable]

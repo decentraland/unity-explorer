@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -10,16 +10,18 @@ using Utility;
 
 namespace DCL.UI.ProfileElements
 {
+    /// <summary>
+    ///     Profile of the current user
+    /// </summary>
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
-        private const int MAX_PICTURE_ATTEMPTS = 10;
-        private const int ATTEMPT_PICTURE_DELAY_MS = 30000;
         private const string GUEST_NAME = "Guest";
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+
+        private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> thumbnail = new (ProfileThumbnailViewModel.WithColor.Default());
 
         private CancellationTokenSource? loadProfileCts;
 
@@ -28,14 +30,12 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            ProfileChangesBus profileChangesBus,
-            ProfileRepositoryWrapper profileDataProvider
+            ProfileChangesBus profileChangesBus
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.profileChangesBus = profileChangesBus;
-            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public override void Dispose()
@@ -54,6 +54,8 @@ namespace DCL.UI.ProfileElements
 
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
+
+            viewInstance!.ProfilePictureView.Bind(thumbnail);
         }
 
         protected override void OnBeforeViewShow()
@@ -82,13 +84,15 @@ namespace DCL.UI.ProfileElements
             LoadAsync(loadProfileCts.Token).Forget();
         }
 
-        private async UniTask LoadAsync(CancellationToken ct, int attempts = 1)
+        private async UniTask LoadAsync(CancellationToken ct)
         {
             if (identityCache.Identity == null) return;
 
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity.Address, ct);
 
             if (profile == null) return;
+
+            thumbnail.UpdateValue(thumbnail.Value.SetLoading(profile.UserNameColor));
 
             if (viewInstance!.NameLabel != null)
                 viewInstance.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
@@ -97,25 +101,7 @@ namespace DCL.UI.ProfileElements
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
 
-            try
-            {
-                await viewInstance!.ProfilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct,
-
-                    // We need to get the error so we can retry
-                    rethrowError: true);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
-                // It is incremental, as the time to process it varies depending on the traffic
-                await UniTask.Delay(ATTEMPT_PICTURE_DELAY_MS * attempts, cancellationToken: ct);
-
-                if (attempts <= MAX_PICTURE_ATTEMPTS)
-                    await LoadAsync(ct, attempts + 1);
-                else
-                    ReportHub.LogException(e, ReportCategory.PROFILE);
-            }
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, identityCache.Identity.Address, profile.Avatar.FaceSnapshotUrl, ct);
         }
     }
 }

@@ -80,6 +80,8 @@ MonoBehaviour:
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
   <skyboxButton>k__BackingField: {fileID: 5031247465953263118}
   <SkyboxMenuView>k__BackingField: {fileID: 8821864330962428420}
+  <SmartWearablesButton>k__BackingField: {fileID: 2427338098510598414}
+  <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
   <sidebarSettingsButton>k__BackingField: {fileID: 1441228183698799381}
   <sidebarSettingsWidget>k__BackingField: {fileID: 2506691189012929090}
   <autoHideToggle>k__BackingField: {fileID: 6705180925666095888}
@@ -2213,6 +2215,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c445fb9b7035494ba43c3fc672a920f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &736300087059758624 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3038230061795091596, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e5c38d507004bf49d3a9b1c9cc0b2bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &865329829398820406 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3178538336644050074, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
@@ -2233,6 +2246,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2427338098510598414 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 122028199520734114, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03bc8dc52cfe497f9933d219f4940373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &3554301536170617574 stripped

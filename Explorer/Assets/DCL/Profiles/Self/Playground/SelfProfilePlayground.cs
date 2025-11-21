@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Web3.Identities;
@@ -52,14 +53,14 @@ namespace DCL.Profiles.Self.Playground
                                 )
                             )
                         ),
-                        new DefaultProfileCache())
+                        new DefaultProfileCache(),
+                        ProfilesDebug.Create(new NullDebugContainerBuilder()))
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
                 new WearableStorage(),
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
-                new List<string>(),
                 null,
                 new DefaultProfileCache(),
                 world,

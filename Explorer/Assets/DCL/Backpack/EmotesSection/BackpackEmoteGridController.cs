@@ -50,6 +50,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IReadOnlyCollection<URN> embeddedEmoteIds;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
+        private readonly IEmoteStorage emoteStorage;
         private readonly bool builderEmotesPreview;
 
         private CancellationTokenSource? loadElementsCancellationToken;
@@ -75,7 +76,8 @@ namespace DCL.Backpack.EmotesSection
             IReadOnlyCollection<URN> embeddedEmoteIds,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IEmoteStorage emoteStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -91,6 +93,7 @@ namespace DCL.Backpack.EmotesSection
             this.embeddedEmoteIds = embeddedEmoteIds;
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
+            this.emoteStorage = emoteStorage;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
@@ -165,6 +168,8 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
+                // TODO: request base emotes collection instead of pointers:
+                // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
                 if (onChainEmotesOnly)
                     emotes = customOwnedEmotes;
                 else
@@ -269,6 +274,17 @@ namespace DCL.Backpack.EmotesSection
                 BackpackEmoteGridItemView backpackItemView = loadingResults[i]!;
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
+
+                if (emoteStorage.TryGetLatestTransferredAt(emotes[i].GetUrn(), out DateTime latestTransferredAt))
+                {
+                    TimeSpan timeSinceTransfer = DateTime.UtcNow - latestTransferredAt;
+                    backpackItemView.NewTag.SetActive(timeSinceTransfer.TotalHours <= 24);
+                }
+                else
+                {
+                    backpackItemView.NewTag.SetActive(false);
+                }
+
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.OnEquip += EquipItem;
@@ -291,10 +307,10 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void UnEquipItem(string itemId) =>
+        private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
@@ -347,7 +363,7 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(string itemId) =>
+        private void SelectItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId));
 
         private void OnUnequip(int slot, IEmote? emote)
@@ -369,7 +385,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.text = slot.ToString();
         }
 
-        private void OnWearableEquipped(IWearable wearable)
+        private void OnWearableEquipped(IWearable wearable, bool isManuallyEquipped)
         {
             if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 

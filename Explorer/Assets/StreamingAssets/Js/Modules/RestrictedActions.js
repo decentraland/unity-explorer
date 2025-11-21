@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/restricted_actions.proto
+
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
@@ -67,4 +70,9 @@ module.exports.triggerSceneEmote = async function(message) {
     return {
         success: isSuccess
     };
+}
+
+module.exports.copyToClipboard = async function(message) {
+    UnityRestrictedActionsApi.CopyToClipboard(message.text)
+    return {};
 }

@@ -17,7 +17,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsController analytics;
 
         public event Action<IWearable> SelectWearableEvent;
-        public event Action<IWearable> EquipWearableEvent;
+        public event Action<IWearable, bool> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
         public event Action<int, IEmote, bool> EquipEmoteEvent;
         public event Action<int, IEmote> UnEquipEmoteEvent;
@@ -26,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?> FilterEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
+        public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string> ChangeColorEvent;
         public event Action UnEquipAllEvent;
         public event Action PublishProfileEvent;
@@ -52,6 +53,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.UnEquipAllEvent += OnUnEquipAll;
             core.PublishProfileEvent += OnPublishProfile;
             core.DeactivateEvent += OnDeactivate;
+            core.UnEquipAllWearablesEvent += OnUnEquipAllWearables;
         }
 
         ~BackpackEventBusAnalyticsDecorator()
@@ -72,6 +74,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.UnEquipAllEvent -= OnUnEquipAll;
             core.PublishProfileEvent -= OnPublishProfile;
             core.DeactivateEvent -= OnDeactivate;
+            core.UnEquipAllWearablesEvent -= OnUnEquipAllWearables;
         }
 
         private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
@@ -92,7 +95,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         private void OnSelectWearable(IWearable wearable) => SelectWearableEvent?.Invoke(wearable);
-        private void OnEquipWearable(IWearable wearable) => EquipWearableEvent?.Invoke(wearable);
+        private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped) => EquipWearableEvent?.Invoke(wearable, isManuallyEquipped);
         private void OnUnEquipWearable(IWearable wearable) => UnEquipWearableEvent?.Invoke(wearable);
         private void OnUnEquipEmote(int slot, IEmote emote) => UnEquipEmoteEvent?.Invoke(slot, emote);
         private void OnEmoteSlotSelect(int slot) => EmoteSlotSelectEvent?.Invoke(slot);
@@ -102,11 +105,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void OnChangedBackpackSection(BackpackSections section) => ChangedBackpackSectionEvent?.Invoke(section);
         private void OnChangeColor(Color color, string category) => ChangeColorEvent?.Invoke(color, category);
         private void OnUnEquipAll() => UnEquipAllEvent?.Invoke();
+
+        private void OnUnEquipAllWearables()
+        {
+            UnEquipAllWearablesEvent?.Invoke();
+        }
+
         private void OnPublishProfile() => PublishProfileEvent?.Invoke();
         private void OnDeactivate() => DeactivateEvent?.Invoke();
 
         public void SendUnEquipAll() =>
             core.SendUnEquipAll();
+
+        public void SendUnEquipAllWearables()
+        {
+            core.SendUnEquipAllWearables();
+        }
+
 
         public void SendChangeColor(Color newColor, string category) =>
             core.SendChangeColor(newColor, category);
@@ -141,8 +156,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             core.SendUnEquipWearable(unEquipWearable);
 
-        public void SendEquipWearable(IWearable equipWearable) =>
-            core.SendEquipWearable(equipWearable);
+        public void SendEquipWearable(IWearable equipWearable, bool isManuallyEquipped) =>
+            core.SendEquipWearable(equipWearable, isManuallyEquipped);
 
         public void SendWearableSelect(IWearable equipWearable) =>
             core.SendWearableSelect(equipWearable);
