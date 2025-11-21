@@ -1,4 +1,6 @@
-﻿namespace DCL.Backpack.Gifting.Tests
+﻿using DCL.Diagnostics;
+
+namespace DCL.Backpack.Gifting.Tests
 {
     using UnityEngine;
     using NotificationsBus;
@@ -28,7 +30,7 @@
 
         private readonly string[] categories =
         {
-            "wearable", "emote", "smart_wearable"
+            "wearable", "emote"
         };
 
         [ContextMenu("Trigger Gift Notification")]
@@ -64,7 +66,7 @@
                 {
                     Sender = new GiftProfile
                     {
-                        Address = FIXED_WALLET, Name = randomSenderName, ProfileImageUrl = "", HasClaimedName = isClaimedName
+                        Address = FIXED_WALLET, Name = "Mirko", ProfileImageUrl = "", HasClaimedName = isClaimedName
                     },
                     Receiver = new GiftProfile
                     {
@@ -75,7 +77,7 @@
             };
 
             // 4. Send to Bus
-            Debug.Log($"[TestGift] Sending notification from {randomSenderName} sending {randomItemName} ({randomRarity})");
+            ReportHub.Log(ReportCategory.GIFTING, $"[TestGift] Sending notification from {randomSenderName} sending {randomItemName} ({randomRarity})");
             NotificationsBusController.Instance.AddNotification(notification);
         }
     }

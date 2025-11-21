@@ -470,7 +470,7 @@ CanvasGroup:
   m_GameObject: {fileID: 6223365042532447166}
   m_Enabled: 1
   m_Alpha: 1
-  m_Interactable: 0
+  m_Interactable: 1
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &9011204465709776926
@@ -504,7 +504,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb875c498cde4681932583d18d4c482c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Notifications::DCL.Notifications.NotificationEntry.GiftNotificationView
-  <NormalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
+  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.011764706}
   <HoveredColor>k__BackingField: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
   <Background>k__BackingField: {fileID: 4784162353075265790}
   <MainButton>k__BackingField: {fileID: 1974615107952363819}

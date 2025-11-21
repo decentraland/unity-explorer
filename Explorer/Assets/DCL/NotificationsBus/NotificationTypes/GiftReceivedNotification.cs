@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using DCL.Diagnostics;
 
 namespace DCL.NotificationsBus.NotificationTypes
 {
@@ -11,6 +12,16 @@ namespace DCL.NotificationsBus.NotificationTypes
 
         [JsonProperty("metadata")]
         public GiftReceivedNotificationMetadata Metadata { get; set; }
+
+        public GiftReceivedNotification()
+        {
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.GIFT_RECEIVED, GiftReceivedClick);
+        }
+
+        private void GiftReceivedClick(object[] parameters)
+        {
+            ReportHub.Log(ReportCategory.GIFTING, "Gift received notification clicked");
+        }
 
         public override string GetHeader()
         {
