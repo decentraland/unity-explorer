@@ -218,10 +218,6 @@ namespace SceneRuntime.Factory
 
             return await CreateBySourceCodeAsync(sourceCode, sceneShortInfo,
                 ct, instantiationBehavior);
-
-            // DownloadHandler.Dispose is being called on a background thread
-            // at this point. Unity does not seem to mind, but if that changes,
-            // this comment will help you.
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()

@@ -46,10 +46,13 @@ namespace SceneRuntime.Tests
 
         internal static SlicedOwnedMemory<byte> CreateCode(string code)
         {
-            byte[] codeBytes = Encoding.UTF8.GetBytes(code);
-            var codeMemory = new SlicedOwnedMemory<byte>(codeBytes.Length);
-            codeBytes.CopyTo(codeMemory.Memory);
-            return codeMemory;
+            int byteCount = Encoding.UTF8.GetByteCount(code);
+            var buffer = new SlicedOwnedMemory<byte>(byteCount);
+
+            int written = Encoding.UTF8.GetBytes(code.AsSpan(),
+                buffer.Memory.Span);
+
+            return buffer;
         }
 
         [UnityTest]

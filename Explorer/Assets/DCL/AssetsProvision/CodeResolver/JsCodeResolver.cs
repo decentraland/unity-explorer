@@ -21,8 +21,8 @@ namespace DCL.AssetsProvision.CodeResolver
             };
         }
 
-        public UniTask<Result<DownloadedCodeContent>> GetCodeContent(URLAddress contentUrl,
-            CancellationToken ct) =>
+        public UniTask<Result<DownloadedCodeContent>> GetCodeContent(
+            URLAddress contentUrl, CancellationToken ct) =>
             providers[AssetSource.WEB].GetJsCodeAsync(contentUrl, ct);
     }
 }
