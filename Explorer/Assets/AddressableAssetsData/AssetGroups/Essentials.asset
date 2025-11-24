@@ -215,6 +215,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c16a7c2b7d6b642a4822df00f8bd5f71
+    m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopupWithRetry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7939fa59480e654a8537b6fc2f007e3
     m_Address: MediaPlayer
     m_ReadOnly: 0
@@ -222,6 +227,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9870b17ce36346458f07a63c096a16a
     m_Address: FaillingLODCubePivot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d08e60223593f4abe8863c64316f3476
+    m_Address: FlipLinearToGammaMaterial.mat
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -14,5 +14,7 @@ namespace DCL.UI.Controls
         public abstract void UnregisterListeners();
 
         public abstract void RegisterCloseListener(Action listener);
+
+        public abstract void SetAsInteractable(bool isInteractable);
     }
 }

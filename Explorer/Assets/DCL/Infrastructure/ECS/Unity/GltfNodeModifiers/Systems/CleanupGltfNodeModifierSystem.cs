@@ -79,10 +79,6 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
         private void RunCleanup(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            //Material destruction during quit could lead to a NRE
-            if (UnityObjectUtils.IsQuitting)
-                return;
-
             CleanupAllGltfNodeEntities(containerEntity, ref nodeModifiers);
             ResetOriginalMaterials(nodeModifiers);
             DictionaryPool<Renderer, Material>.Release(nodeModifiers.OriginalMaterials);
@@ -96,6 +92,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private static void ResetOriginalMaterials(Components.GltfNodeModifiers nodeModifiers)
         {
+            //No need to dispose if we are quitting. Pools and assets may be destroyed by Unity, creating unnecessarily null-refs on exit
+            if (UnityObjectUtils.IsQuitting)
+                return;
+
             foreach (var rendererMaterialKeyValuePair in nodeModifiers.OriginalMaterials)
             {
                 rendererMaterialKeyValuePair.Key.sharedMaterial = rendererMaterialKeyValuePair.Value;

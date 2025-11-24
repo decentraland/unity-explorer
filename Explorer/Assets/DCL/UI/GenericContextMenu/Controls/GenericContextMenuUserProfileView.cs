@@ -76,6 +76,8 @@ namespace DCL.UI.Controls
             CancelFriendButton.onClick.AddListener(new UnityAction(listener));
         }
 
+        public override void SetAsInteractable(bool isInteractable) { }
+
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
             profileRepositoryWrapper = profileDataProvider;
