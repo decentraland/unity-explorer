@@ -19,6 +19,12 @@ namespace DCL.UI.Controls
             RegisterListener(settings.callback, settings.data);
         }
 
+        public override bool IsInteractable
+        {
+            get => ButtonComponent.interactable;
+            set => ButtonComponent.interactable = value;
+        }
+
         public override void UnregisterListeners() =>
             ButtonComponent.onClick.RemoveAllListeners();
 
@@ -27,8 +33,5 @@ namespace DCL.UI.Controls
 
         public override void RegisterCloseListener(Action listener) =>
             ButtonComponent.onClick.AddListener(new UnityAction(listener));
-
-        public override void SetAsInteractable(bool isInteractable) =>
-            ButtonComponent.interactable = isInteractable;
     }
 }
