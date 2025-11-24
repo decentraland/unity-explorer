@@ -12,7 +12,6 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private int cachedFrameNumber = -1;
         private bool cachedIsLoadingScreenOn;
-        private bool cachedIsWithinBudget;
 
         public FrameTimeCapBudget(float budgetCapInMS, IBudgetProfiler profiler, Func<bool> isLoadingScreenOn) : this(
             TimeSpan.FromMilliseconds(budgetCapInMS),
@@ -43,14 +42,13 @@ namespace DCL.Optimization.PerformanceBudgeting
             if (cachedFrameNumber != currentFrame)
             {
                 cachedIsLoadingScreenOn = isLoadingScreenOn.Invoke();
-                cachedIsWithinBudget = profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;
                 cachedFrameNumber = currentFrame;
             }
 
             if (cachedIsLoadingScreenOn)
                 return true;
 
-            return cachedIsWithinBudget;
+            return profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;
         }
 
 
