@@ -8,6 +8,7 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using System;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -57,8 +58,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
             // Create a new container root. It will be cached and pooled
-            GltfContainerAsset result = Utils.CreateGltfObject(assetBundleData, assetIntention.Hash);
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, out GltfContainerAsset result))
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            else
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(), new ArgumentException($"Failed to load {assetIntention.Hash} from AB")));
+
         }
 
 

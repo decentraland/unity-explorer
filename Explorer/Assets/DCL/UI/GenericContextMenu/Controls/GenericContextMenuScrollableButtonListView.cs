@@ -74,5 +74,11 @@ namespace DCL.UI.Controls
             foreach (GenericContextMenuSimpleButtonView button in buttonViews)
                 button.ButtonComponent.onClick.AddListener(new UnityAction(listener));
         }
+
+        public override void SetAsInteractable(bool isInteractable)
+        {
+            foreach (GenericContextMenuSimpleButtonView button in buttonViews)
+                button.SetAsInteractable(isInteractable);
+        }
     }
 }

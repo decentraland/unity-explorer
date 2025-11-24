@@ -71,6 +71,7 @@ namespace DCL.PluginSystem.World
                     sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
                     raycastResultPool,
                     sceneDeps.EntityCollidersSceneCache,
+                    sceneDeps.EntityCollidersGlobalCache,
                     sceneDeps.EntitiesMap,
                     sceneDeps.EcsToCRDTWriter,
                     sceneDeps.SceneStateProvider

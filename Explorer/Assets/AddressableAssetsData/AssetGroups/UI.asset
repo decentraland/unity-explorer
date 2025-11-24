@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: UI
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
+  - m_GUID: 000fc6d94dca3b64594f10aae8994ed7
+    m_Address: Assets/DCL/SmartWearables/Assets/SmartWearablePopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 022077403db6945e58f0023757b0155f
     m_Address: Assets/DCL/ApplicationsGuards/ApplicationLivekitGuard/LivekitDownGuardPopup.prefab
     m_ReadOnly: 0
@@ -655,11 +660,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cd3edf52c6206d44a9855feccaef9467
-    m_Address: HomeMarkerObject
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d20747763091b4fc5a2d5b6d1ba0ea7d
     m_Address: HideCategory
     m_ReadOnly: 0
@@ -682,11 +682,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: dcc6085d51c3e443f82d4d58e0087519
     m_Address: Assets/DCL/Friends/Prefabs/FriendRequest.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dd40e574a59d9b348a7c02ca96be6ae9
-    m_Address: Assets/DCL/Backpack/AvatarSection/Outfits/Slots/OutfitSlot.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

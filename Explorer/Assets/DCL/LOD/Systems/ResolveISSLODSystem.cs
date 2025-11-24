@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -111,8 +112,13 @@ namespace DCL.LOD.Systems
             {
                 if (Result.Succeeded)
                 {
-                    GltfContainerAsset asset = Utils.CreateGltfObject(Result.Asset, creationHelper.AssetHash);
-                    PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
+                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                    else
+                    {
+                        ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
+                        creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                    }
                 }
                 World.Destroy(entity);
             }

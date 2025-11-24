@@ -4797,10 +4797,6 @@ PrefabInstance:
       propertyPath: m_text
       value: Menu
       objectReference: {fileID: 0}
-    - target: {fileID: 2980772642015697568, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
-      propertyPath: <ButtonPressedAudio>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 3234167463776278794, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
       propertyPath: m_SizeDelta.x
       value: 38.05
@@ -4895,11 +4891,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8674408317473313024, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 20
+      value: 52
       objectReference: {fileID: 0}
     - target: {fileID: 8674408317473313024, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 1.5
+      value: -40
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

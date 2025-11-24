@@ -30,5 +30,8 @@ namespace DCL.UI.Controls
 
         public override void RegisterCloseListener(Action listener) =>
             RegisterListener(listener);
+
+        public override void SetAsInteractable(bool isInteractable) =>
+            ButtonComponent.interactable = isInteractable;
     }
 }

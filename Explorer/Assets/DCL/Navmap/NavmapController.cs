@@ -160,6 +160,10 @@ namespace DCL.Navmap
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
 
+            fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
+            FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
+            return;
+
             async UniTaskVoid FetchPlaceAndShowAsync(CancellationToken ct)
             {
                 PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(clickedParcel.Parcel, ct, true);
@@ -168,9 +172,6 @@ namespace DCL.Navmap
 
                 navmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token, true, clickedParcel.Parcel).Forget();
             }
-
-            fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
-            FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
         }
 
         public void Activate()

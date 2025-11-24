@@ -67,6 +67,7 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
+using Runtime.Wearables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -152,6 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
+        private readonly SmartWearableCache smartWearableCache;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -211,7 +213,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
             IChatEventBus chatEventBus,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            SmartWearableCache smartWearableCache)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -272,6 +275,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose()
@@ -325,7 +329,9 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 webRequestController,
                 nftNamesProvider,
-                eventBus
+                eventBus,
+                smartWearableCache,
+                mvcManager
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -464,7 +470,7 @@ namespace DCL.PluginSystem.Global
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                     communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager);
 
