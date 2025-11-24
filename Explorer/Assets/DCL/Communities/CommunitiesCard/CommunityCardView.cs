@@ -66,6 +66,7 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? CancelRequestToJoinCommunity;
         public event Action? AcceptInvite;
         public event Action? RejectInvite;
+        public event Action? CopyCommunityLinkRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
@@ -132,6 +133,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
+        private GenericContextMenuElement? copyLinkSeparatorContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
         private Sections? currentSection;
@@ -186,10 +188,17 @@ namespace DCL.Communities.CommunitiesCard
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
                          .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
+                         .AddControl(new GenericContextMenuElement(
+                              new ButtonContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkText, contextMenuSettings.CopyCommunityLinkSprite, OnCopyCommunityLinkRequested)))
+                         .AddControl(copyLinkSeparatorContextMenuElement = new GenericContextMenuElement(
+                              new SeparatorContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested,
                                   textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
+
+        private void OnCopyCommunityLinkRequested() =>
+            CopyCommunityLinkRequested?.Invoke();
 
         private void OnDeleteCommunityRequested()
         {
@@ -319,7 +328,6 @@ namespace DCL.Communities.CommunitiesCard
         {
             openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
-            openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             requestToJoinButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.none);
@@ -337,7 +345,6 @@ namespace DCL.Communities.CommunitiesCard
 
             openChatButton.gameObject.SetActive(false);
             openWizardButton.gameObject.SetActive(false);
-            openContextMenuButton.gameObject.SetActive(false);
             joinedButton.gameObject.SetActive(false);
             joinButton.gameObject.SetActive(false);
             requestToJoinButton.gameObject.SetActive(false);
@@ -369,6 +376,7 @@ namespace DCL.Communities.CommunitiesCard
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
+            copyLinkSeparatorContextMenuElement!.Enabled = deleteCommunityContextMenuElement.Enabled;
 
             ConfigureInteractionButtons(communityData);
 
