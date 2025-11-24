@@ -132,6 +132,9 @@ namespace DCL.Communities.CommunitiesCard
 
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
+        private GenericContextMenuElement? communityNotificationsContextMenuElement;
+        private ToggleWithIconContextMenuControlSettings? communityNotificationsContextMenuControlSettings;
+        private GenericContextMenuElement? communityNotificationsSeparatorContextMenuElement;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? copyLinkSeparatorContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
@@ -186,6 +189,10 @@ namespace DCL.Communities.CommunitiesCard
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+                         .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
+                              communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
+                         .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
+                              new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
                          .AddControl(new GenericContextMenuElement(
@@ -237,6 +244,11 @@ namespace DCL.Communities.CommunitiesCard
         private void OnDisable()
         {
             confirmationDialogCts.SafeCancelAndDispose();
+        }
+
+        private void OnToggleCommunityNotifications(bool isEnabled)
+        {
+
         }
 
         private void ShowLeaveConfirmationDialog()
@@ -374,9 +386,12 @@ namespace DCL.Communities.CommunitiesCard
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, CommunityThumbnail, defaultCommunityImage, cancellationToken, true).Forget();
 
+            communityNotificationsContextMenuElement!.Enabled = communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member;
+            communityNotificationsContextMenuControlSettings!.SetInitialValue(communityData.isSubscribedToNotifications);
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
             copyLinkSeparatorContextMenuElement!.Enabled = deleteCommunityContextMenuElement.Enabled;
+            communityNotificationsSeparatorContextMenuElement!.Enabled = communityNotificationsContextMenuElement!.Enabled && (deleteCommunityContextMenuElement!.Enabled || leaveCommunityContextMenuElement!.Enabled);
 
             ConfigureInteractionButtons(communityData);
 
