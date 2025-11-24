@@ -38,11 +38,11 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        private static readonly byte[] COMMONJS_HEADER_UTF8
+        public static readonly byte[] COMMONJS_HEADER_UTF8
             = Encoding.UTF8.GetBytes(
             "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {");
 
-        private static readonly byte[] COMMONJS_FOOTER_UTF8
+        public static readonly byte[] COMMONJS_FOOTER_UTF8
             = Encoding.UTF8.GetBytes(
             "\n}).call(this, exports, require, module, __filename, __dirname); })");
 
@@ -147,36 +147,8 @@ namespace SceneRuntime.Factory
                 }
             }
 
-            V8Script sceneScript;
-
-            if (sourceCode.Memory.Length >= COMMONJS_HEADER_UTF8.Length
-                && sourceCode.Memory.Span
-                             .Slice(0, COMMONJS_HEADER_UTF8.Length)
-                             .SequenceEqual(COMMONJS_HEADER_UTF8))
-                sceneScript = engine.CompileScriptFromUtf8(
-                    sourceCode.Memory.Span);
-            else
-            {
-                ReportHub.LogWarning(ReportCategory.SCENE_FACTORY,
-                    $"The code of the scene \"{sceneShortInfo.Name}\" at parcel {sceneShortInfo.BaseParcel} does not include the CommonJS module wrapper. This is suboptimal.");
-
-                using var wrappedCode = new SlicedOwnedMemory<byte>(
-                    COMMONJS_HEADER_UTF8.Length + sourceCode.Memory.Length
-                                                + COMMONJS_FOOTER_UTF8.Length);
-
-                COMMONJS_HEADER_UTF8.CopyTo(wrappedCode.Memory);
-
-                sourceCode.Memory.Span.CopyTo(
-                    wrappedCode.Memory.Span.Slice(
-                        COMMONJS_HEADER_UTF8.Length));
-
-                COMMONJS_FOOTER_UTF8.CopyTo(
-                    wrappedCode.Memory.Span.Slice(COMMONJS_HEADER_UTF8.Length
-                                                  + sourceCode.Memory.Length));
-
-                sceneScript = engine.CompileScriptFromUtf8(
-                    wrappedCode.Memory.Span);
-            }
+            V8Script sceneScript = engine.CompileScriptFromUtf8(
+                sourceCode.Memory.Span);
 
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript,
                 sceneShortInfo);
