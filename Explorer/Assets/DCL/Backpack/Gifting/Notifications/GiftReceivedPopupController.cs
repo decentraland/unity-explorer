@@ -64,15 +64,16 @@ namespace DCL.Backpack.Gifting.Notifications
             viewInstance.ItemNameText.text = metadata.Item.GiftName;
 
             SetupItemVisualsAsync(metadata, CancellationToken.None).Forget();
-
             SetupSenderProfileAsync(metadata, CancellationToken.None).Forget();
 
+            // Fade in background
             PlayAnimationAsync()
                 .Forget();
         }
 
         protected override void OnViewClose()
         {
+            // Fade out background and then close
             lifeCts.SafeCancelAndDispose();
         }
 

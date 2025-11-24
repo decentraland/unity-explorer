@@ -10,6 +10,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -85,6 +86,7 @@ namespace DCL.Notifications.NewNotification
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
+            ReportHub.Log(ReportCategory.GIFTING, "ClickedNotification");
             StopAnimation();
             NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
@@ -147,11 +149,8 @@ namespace DCL.Notifications.NewNotification
             var giftNotification = (GiftReceivedNotification)notification;
             var giftView = viewInstance.GiftToastView;
 
-            // A. Configure Text
             giftView.Configure(giftNotification);
 
-            // B. Set the Icon (The Gift Box)
-            // We get the icon defined in the ScriptableObject for GIFT_RECEIVED
             var defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
             var icon = defaultThumbnail.Thumbnail;
 
@@ -160,7 +159,6 @@ namespace DCL.Notifications.NewNotification
                 giftToastImageController.SetImage(icon);
             }
 
-            // C. Animate using the Animator (Pill Slide In)
             await AnimateGiftNotificationAsync();
         }
 
@@ -170,22 +168,17 @@ namespace DCL.Notifications.NewNotification
 
             try
             {
-                // Play Sound
                 viewInstance.GiftToastView.PlayNotificationAudio();
 
-                // Trigger "Show" in Animator
                 viewInstance.GiftToastAnimator.SetTrigger(SHOW_TRIGGER);
 
-                // Wait
                 await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
             finally
             {
-                // Trigger "Hide" in Animator
                 viewInstance.GiftToastAnimator.SetTrigger(HIDE_TRIGGER);
 
-                // Wait for hide animation to finish roughly before processing next queue item
                 await UniTask.Delay(TimeSpan.FromSeconds(ANIMATION_DURATION));
             }
         }
