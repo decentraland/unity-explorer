@@ -210,12 +210,22 @@ namespace DCL.Notifications.NotificationsMenu
 
             DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notificationData.Type);
 
-            if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
-                notificationView.NotificationImage.SetImage(thumbnailSprite, true);
-            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
-                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
-            else
+            if (notificationData.Type == NotificationType.GIFT_RECEIVED)
+            {
                 notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+            }
+            else if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out var thumbnailSprite))
+            {
+                notificationView.NotificationImage.SetImage(thumbnailSprite, true);
+            }
+            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
+            {
+                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
+            }
+            else
+            {
+                notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+            }
 
             return listItem;
         }

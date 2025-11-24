@@ -56,25 +56,12 @@ namespace DCL.Notifications.NotificationEntry
             Notification = notification;
             NotificationType = notification.Type;
 
-            // 1. Format the Name Color
-            // We get the color based on the name (Gold for guest, etc)
             var userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             string hexColor = ColorUtility.ToHtmlStringRGB(userColor);
 
-            // 2. Set the Title Text (Matches your Figma Design)
-            // Output: "PlayerName sent you a Gift!"
-            TitleText.text = $"<color=#{hexColor}>{notification.Metadata.Sender.Name}</color> sent you a Gift!";
-
-            // 3. Set the Time
-            // Usually TimestampUtilities.GetRelativeTime(notification.Timestamp)
+            HeaderText.text = $"<color=#{hexColor}>{notification.Metadata.Sender.Name}</color> Sent You A Gift!";
+            
             TimeText.text = "Just now";
-
-            // 4. Set the Icon Background (The Rarity Color)
-            // Ensure you have the NftTypeIconSO reference injected or passed in
-            // NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(notification.Metadata.Item.GiftRarity);
-
-            // 5. Set the Image (The Item Thumbnail)
-            // NotificationImage.SetImage(notification.Metadata.Item.ImageUrl);
         }
 
         private void OnPointerClick()

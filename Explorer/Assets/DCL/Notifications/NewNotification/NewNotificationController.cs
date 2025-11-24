@@ -10,8 +10,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
-using DCL.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -36,6 +34,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController friendsThumbnailImageController;
         private ImageController marketplaceCreditsThumbnailImageController;
         private ImageController communityThumbnailImageController;
+        private ImageController giftToastImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -67,7 +66,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
-            viewInstance.GiftNotificationView.NotificationClicked += ClickedNotification;
+            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, webRequestController);
+            viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
@@ -145,38 +145,51 @@ namespace DCL.Notifications.NewNotification
         private async UniTask ProcessGiftNotificationAsync(INotification notification)
         {
             var giftNotification = (GiftReceivedNotification)notification;
+            var giftView = viewInstance.GiftToastView;
 
-            // Reuse the Default View but customize it for Gifting
-            var view = viewInstance.NotificationView;
+            // A. Configure Text
+            giftView.Configure(giftNotification);
 
-            // HEADER: "Gift Received"
-            view.HeaderText.text = notification.GetHeader();
+            // B. Set the Icon (The Gift Box)
+            // We get the icon defined in the ScriptableObject for GIFT_RECEIVED
+            var defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+            var icon = defaultThumbnail.Thumbnail;
 
-            // TITLE: "PlayerName sent you a Gift!"
-            var userColor = NameColorHelper.GetNameColor(giftNotification.Metadata.Sender.Name);
-            string hexColor = ColorUtility.ToHtmlStringRGB(userColor);
-            view.TitleText.text = $"<color=#{hexColor}>{giftNotification.Metadata.Sender.Name}</color> sent you a Gift!";
+            if (icon != null)
+            {
+                giftToastImageController.SetImage(icon);
+            }
 
-            // BACKGROUND: Set the Purple Sprite from Figma
-            // if (viewInstance.GiftNotificationBackground != null)
-            //     view.NotificationImageBackground.sprite = viewInstance.GiftNotificationBackground;
-
-            // ICON: Set the Item Image
-            // Note: You need a reference to your ImageController here, similar to how 'thumbnailImageController' is used in the class
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
-
-            // TYPE ICON: The little gift box icon
-            view.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
-
-            // Store data for Click Event
-            view.NotificationType = notification.Type;
-            view.Notification = notification;
-
-            // Animate
-            await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
+            // C. Animate using the Animator (Pill Slide In)
+            await AnimateGiftNotificationAsync();
         }
 
+        private async UniTask AnimateGiftNotificationAsync()
+        {
+            if (viewInstance == null) return;
+
+            try
+            {
+                // Play Sound
+                viewInstance.GiftToastView.PlayNotificationAudio();
+
+                // Trigger "Show" in Animator
+                viewInstance.GiftToastAnimator.SetTrigger(SHOW_TRIGGER);
+
+                // Wait
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                // Trigger "Hide" in Animator
+                viewInstance.GiftToastAnimator.SetTrigger(HIDE_TRIGGER);
+
+                // Wait for hide animation to finish roughly before processing next queue item
+                await UniTask.Delay(TimeSpan.FromSeconds(ANIMATION_DURATION));
+            }
+        }
+        
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
         {
             viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();
