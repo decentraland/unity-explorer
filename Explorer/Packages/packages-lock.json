@@ -80,6 +80,13 @@
       },
       "hash": "57d3e3176d31337f81d66beaabc5bba084bb6112"
     },
+    "com.decentraland.renum": {
+      "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d39a0d38580af74a07ff44f4a5c41a059438a220"
+    },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
       "depth": 0,
@@ -122,11 +129,13 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages#chore/renum-auto-reference",
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "edbcee6d16ad36e648060f0bd2eea7ea4a8a473c"
+      "dependencies": {
+        "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum"
+      },
+      "hash": "bad0a5c9cc068c1d6a0fbcb9ee6f4f9b9e3ebab1"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
