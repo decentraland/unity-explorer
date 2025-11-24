@@ -102,13 +102,16 @@ namespace DCL.UI.Controls
             }
         }
 
+        public override bool IsInteractable
+        {
+            get => ButtonComponent.interactable;
+            set => ButtonComponent.interactable = value;
+        }
+
         public override void UnregisterListeners() =>
             ButtonComponent.onClick.RemoveAllListeners();
 
         public override void RegisterCloseListener(Action listener) {}
-
-        public override void SetAsInteractable(bool isInteractable) =>
-            ButtonComponent.interactable = isInteractable;
 
         public void OnPointerEnter(PointerEventData eventData)
         {

@@ -22,6 +22,12 @@ namespace DCL.UI.Controls
             RegisterListener(settings.callback);
         }
 
+        public override bool IsInteractable
+        {
+            get => ToggleComponent.Toggle.interactable;
+            set => ToggleComponent.Toggle.interactable = value;
+        }
+
         public override void UnregisterListeners() =>
             ToggleComponent.Toggle.onValueChanged.RemoveAllListeners();
 
@@ -29,8 +35,5 @@ namespace DCL.UI.Controls
             ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>(listener));
 
         public override void RegisterCloseListener(Action listener) { }
-
-        public override void SetAsInteractable(bool isInteractable) =>
-            ToggleComponent.Toggle.interactable = isInteractable;
     }
 }
