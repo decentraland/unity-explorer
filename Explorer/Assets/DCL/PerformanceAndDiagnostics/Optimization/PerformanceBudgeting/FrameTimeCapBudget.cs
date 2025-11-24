@@ -1,7 +1,6 @@
 using DCL.Profiling;
 using System;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
