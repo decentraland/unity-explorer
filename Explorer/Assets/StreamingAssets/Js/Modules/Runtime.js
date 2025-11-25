@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/runtime.proto
+
 module.exports.getRealm = async function (message) {
     return await UnityRuntime.GetRealm();
 }

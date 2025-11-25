@@ -27,8 +27,9 @@ namespace DCL.UserInAppInitializationFlow
 
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerAvatarLoading);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
             Profile? profile = await selfProfile.ProfileAsync(ct);
+            args.Report.SetProgress(finalizationProgress);
 
             // Add the profile into the player entity so it will create the avatar in world
 
@@ -42,6 +43,8 @@ namespace DCL.UserInAppInitializationFlow
 
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately
+
+            finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerAvatarLoading);
             await UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
             args.Report.SetProgress(finalizationProgress);
         }

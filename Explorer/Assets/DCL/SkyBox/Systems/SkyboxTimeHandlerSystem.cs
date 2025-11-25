@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
                 ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
 
                 if (hasComponent)
-                    SetSDKsettings(ref sdkSkyboxTime);
+                    SetSDKSettings(ref sdkSkyboxTime);
                 else
                     ResetSDKControlled();
             }
@@ -55,12 +55,12 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
             if (!sdkSkyboxTime.IsDirty) return;
 
-            SetSDKsettings(ref sdkSkyboxTime);
+            SetSDKSettings(ref sdkSkyboxTime);
 
             sdkSkyboxTime.IsDirty = false;
         }
 
-        private void SetSDKsettings(ref PBSkyboxTime sdkSkyboxTime)
+        private void SetSDKSettings(ref PBSkyboxTime sdkSkyboxTime)
         {
             skyboxSettings.CurrentSDKControlledScene = sceneInfo.BaseParcel;
             skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);

@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using Microsoft.ClearScript.V8.SplitProxy;
+using Microsoft.ClearScript.JavaScript;
+using Microsoft.ClearScript.V8.FastProxy;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
@@ -9,26 +10,29 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8HostObject
+    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8FastHostObject
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
+        private readonly string threadName;
 
-        private readonly InvokeHostObject crdtSendToRenderer;
-        private readonly InvokeHostObject crdtGetState;
-        private readonly InvokeHostObject sendBatch;
+        private static readonly V8FastHostObjectOperations<EngineApiWrapper> OPERATIONS = new();
+        protected virtual IV8FastHostObjectOperations operations => OPERATIONS;
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => operations;
 
-        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
+        static EngineApiWrapper()
+        {
+            OPERATIONS.Configure(static configuration => Configure(configuration));
+        }
+
+        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
-
-            crdtSendToRenderer = CrdtSendToRenderer;
-            crdtGetState = CrdtGetState;
-            sendBatch = SendBatch;
+            threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
         }
 
         protected override void DisposeInternal()
@@ -37,20 +41,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             lastInput.ReleaseAndDispose();
         }
 
-        private void CrdtSendToRenderer(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
-        {
-            Uint8Array data = args[0].GetUint8Array();
-            result.SetHostObject(CrdtSendToRenderer(data));
-        }
-
-        private ScriptableByteArray CrdtSendToRenderer(Uint8Array data)
+        private ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
             if (disposeCts.IsCancellationRequested)
                 return ScriptableByteArray.EMPTY;
 
             try
             {
-                Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
+                Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
                 instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 
@@ -71,9 +69,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
         }
 
-        private void CrdtGetState(ReadOnlySpan<V8Value.Decoded> args, V8Value result) =>
-            result.SetHostObject(CrdtGetState());
-
         private ScriptableByteArray CrdtGetState()
         {
             if (disposeCts.IsCancellationRequested)
@@ -92,29 +87,22 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
         }
 
-        private void SendBatch(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
-        {
-            result.SetHostObject(SendBatch());
-        }
-
         protected virtual ScriptableSDKObservableEventArray? SendBatch() => null;
 
-        void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst) =>
-            GetNamedProperty(name, value, out isConst);
-
-        protected virtual void GetNamedProperty(StdString name, V8Value value, out bool isConst)
+        protected static void Configure<T>(V8FastHostObjectConfiguration<T> configuration)
+            where T: EngineApiWrapper
         {
-            isConst = true;
+            configuration.AddMethodGetter(nameof(CrdtGetState),
+                static (T self, in V8FastArgs _, in V8FastResult result) =>
+                    result.Set(self.CrdtGetState()));
 
-            if (name.Equals(nameof(CrdtSendToRenderer)))
-                value.SetHostObject(crdtSendToRenderer);
-            else if (name.Equals(nameof(CrdtGetState)))
-                value.SetHostObject(crdtGetState);
-            else if (name.Equals(nameof(SendBatch)))
-                value.SetHostObject(sendBatch);
-            else
-                throw new NotImplementedException(
-                    $"Named property {name.ToString()} is not implemented");
+            configuration.AddMethodGetter(nameof(CrdtSendToRenderer),
+                static (T self, in V8FastArgs args, in V8FastResult result) =>
+                    result.Set(self.CrdtSendToRenderer(args.Get<ITypedArray<byte>>(0))));
+
+            configuration.AddMethodGetter(nameof(SendBatch),
+                static (T self, in V8FastArgs _, in V8FastResult result) =>
+                    result.Set(self.SendBatch()));
         }
     }
 }

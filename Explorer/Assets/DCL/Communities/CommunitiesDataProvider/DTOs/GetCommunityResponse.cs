@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string description;
             public string ownerAddress;
             public CommunityPrivacy privacy;
+            public CommunityVisibility visibility;
             public CommunityMemberRole role;
             public int membersCount;
             public VoiceChatStatus voiceChatStatus;

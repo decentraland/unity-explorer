@@ -13,6 +13,7 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -42,7 +43,7 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents | MapLayer.HomeMarker;
         private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
         private const string RELOAD_SCENE_TEXT = "RELOAD SCENE";
         private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new ()
@@ -70,6 +71,7 @@ namespace DCL.Minimap
         private readonly IRoomHub roomHub;
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -78,6 +80,7 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
+        private ToggleContextMenuControlSettings homeToggleSettings;
         private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -103,8 +106,9 @@ namespace DCL.Minimap
             ReloadSceneChatCommand reloadSceneCommand,
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
-            bool includeBannedUsersFromScene
-        ) : base(() => minimapView)
+            bool includeBannedUsersFromScene,
+            HomePlaceEventBus homePlaceEventBus) 
+                : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -123,6 +127,7 @@ namespace DCL.Minimap
             this.roomHub = roomHub;
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
+            this.homePlaceEventBus = homePlaceEventBus;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -184,8 +189,11 @@ namespace DCL.Minimap
                           // May be removed if a new control is added
                          .AddControl(new TextContextMenuControlSettings("Scene's Options"))
                          .AddControl(new SeparatorContextMenuControlSettings())
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
+                         .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
+            SetInitialHomeToggleValue();
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
 
             if (includeBannedUsersFromScene)
@@ -196,11 +204,30 @@ namespace DCL.Minimap
             }
         }
 
+        private void SetInitialHomeToggleValue()
+        {
+            bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+            homeToggleSettings.SetInitialValue(isHome);
+        }
+
         private void ShowContextMenu()
         {
+            SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
                       .Forget();
+        }
+
+        private void SetAsHomeToggledAsync(bool value)
+        {
+            if (value)
+                homePlaceEventBus.SetAsHome(previousParcelPosition);
+            else
+                homePlaceEventBus.UnsetHome();
+            
+            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
+            // gaining focus again.
+            OnFocus();
         }
 
         private void CopyJumpInLink()
@@ -279,12 +306,12 @@ namespace DCL.Minimap
 
                 //Once the render target image is ready to be shown, we enable the minimap
                 viewInstance.SetCanvasActive(true);
-                GetPlaceInfoAsync(position);
+                UpdatePlaceDisplayAsync(position);
             }
             else
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
-                GetPlaceInfoAsync(position);
+                UpdatePlaceDisplayAsync(position);
             }
         }
 
@@ -302,7 +329,7 @@ namespace DCL.Minimap
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
         }
 
-        private void GetPlaceInfoAsync(Vector3 playerPosition)
+        private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = playerPosition.ToParcel();
 
@@ -312,36 +339,45 @@ namespace DCL.Minimap
             previousParcelPosition = playerParcelPosition;
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RetrieveParcelInfoAsync().Forget();
-
+            RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
+            
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
             // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+        }
+        
+        private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
+    
+            if (realmData.ScenesAreFixed)
+                viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+            else
+                viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
+    
+            viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
+        }
 
-            return;
+        private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(Vector2Int parcelPosition, CancellationToken ct)
+        {
+            await realmData.WaitConfiguredAsync();
 
-            async UniTaskVoid RetrieveParcelInfoAsync()
+            try
             {
-                await realmData.WaitConfiguredAsync();
-
-                try
-                {
-                    if (realmData.ScenesAreFixed)
-                        viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-                    else
-                    {
-                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, placesApiCts.Token);
-                        viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
-                    }
-                }
-                catch (NotAPlaceException notAPlaceException)
-                {
-                    viewInstance!.placeNameText.text = "Unknown place";
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
-                }
-                catch (Exception) { viewInstance!.placeNameText.text = "Unknown place"; }
-                finally { viewInstance!.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
+                if (realmData.ScenesAreFixed)
+                    return null;
+        
+                return await placesAPIService.GetPlaceAsync(parcelPosition, ct);
+            }
+            catch (NotAPlaceException notAPlaceException)
+            {
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
@@ -382,7 +418,7 @@ namespace DCL.Minimap
         private bool CanInteractWithContextualButton(bool isGenesisModeActivated) =>
             !isGenesisModeActivated &&
             (!realmData.IsLocalSceneDevelopment ||
-             (realmData.IsLocalSceneDevelopment && scenesCache.CurrentScene != null));
+             (realmData.IsLocalSceneDevelopment && scenesCache.CurrentScene.Value != null));
 
         private string GetContextualButtonText(bool isGenesisModeActivated)
         {

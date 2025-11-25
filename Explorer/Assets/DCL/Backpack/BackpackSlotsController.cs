@@ -46,6 +46,7 @@ namespace DCL.Backpack
             this.backpackEventBus.FilterEvent += OnFilterEvent;
             this.backpackEventBus.ForceRenderEvent += SetForceRender;
             this.backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            this.backpackEventBus.UnEquipAllWearablesEvent += UnEquipAll;
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
@@ -111,7 +112,7 @@ namespace DCL.Backpack
             forceRender.Clear();
         }
 
-        private void EquipInSlot(IWearable equippedWearable)
+        private void EquipInSlot(IWearable equippedWearable, bool isManuallyEquipped)
         {
             if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView))
                 return;
@@ -202,6 +203,7 @@ namespace DCL.Backpack
             backpackEventBus.EquipWearableEvent -= EquipInSlot;
             backpackEventBus.UnEquipWearableEvent -= UnEquipInSlot;
             this.backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAll;
 
             foreach (var avatarSlotView in avatarSlots.Values)
                 avatarSlotView.Item1.OnSlotButtonPressed -= OnSlotButtonPressed;

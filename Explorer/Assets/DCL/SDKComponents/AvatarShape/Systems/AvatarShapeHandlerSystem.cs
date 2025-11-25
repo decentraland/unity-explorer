@@ -255,10 +255,15 @@ namespace ECS.Unity.AvatarShape.Systems
         public void FinalizeComponents(in Query query) =>
             FinalizeComponentsQuery(World);
 
-        public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
+        private void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
-            // Need to remove parenting, since it may unintenionally deleted when
-            globalWorld.Get<CharacterTransform>(globalEntity).Transform.SetParent(null);
+            if (globalEntity == Entity.Null) return;
+
+            Transform transform = globalWorld.Get<CharacterTransform>(globalEntity).Transform;
+
+            if (transform)
+                // Need to remove parenting, since it may unintenionally deleted when
+                transform.SetParent(null);
 
             // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
             // AvatarCleanUpSystem.Update() and BEFORE the DestroyEntitiesSystem.Update(), probably has to do with

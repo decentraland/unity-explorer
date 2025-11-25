@@ -94,6 +94,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
 
+                result.Asset.ToggleAnimationState(true);
+
                 component.State = LoadingState.Finished;
                 eventsBuffer.Add(entity, component);
 

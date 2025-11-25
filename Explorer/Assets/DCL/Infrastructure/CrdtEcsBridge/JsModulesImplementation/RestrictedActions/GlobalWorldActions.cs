@@ -11,12 +11,14 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility.Arch;
+using Utility.Multithreading;
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -33,20 +35,23 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly IEmotesMessageBus messageBus;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
+        private readonly bool isBuilderCollectionPreview;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles)
+        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles, bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.messageBus = messageBus;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
         {
             // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
+            world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)
@@ -82,7 +87,12 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
-            if (localSceneDevelopment && !useRemoteAssetBundles)
+            world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
+
+            bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
+                                      (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
+
+            if (loadFromLocalScene)
             {
                 // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
                 // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
@@ -98,6 +108,8 @@ namespace CrdtEcsBridge.RestrictedActions
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
                     hash, loop, ct);
             }
+
+            world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
         }
 
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)

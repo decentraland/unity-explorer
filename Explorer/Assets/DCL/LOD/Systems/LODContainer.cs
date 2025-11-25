@@ -54,7 +54,6 @@ namespace DCL.LOD.Systems
         }
 
         public static async UniTask<(LODContainer? container, bool success)> CreateAsync(IAssetsProvisioner assetsProvisioner,
-            IDecentralandUrlsSource decentralandUrlsSource,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             RealmData realmData,
@@ -103,7 +102,8 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     textureArrayContainerFactory, c.lodSettingsAsset.Value,
-                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, decentralandUrlsSource, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
+                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS,
+                    staticContainer.GltfContainerAssetsCache);
 
                 return UniTask.CompletedTask;
             });

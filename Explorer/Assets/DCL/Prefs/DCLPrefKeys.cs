@@ -62,7 +62,11 @@ namespace DCL.Prefs
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
         public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
-        
+
         public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
+
+        public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
+
+        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
     }
 }

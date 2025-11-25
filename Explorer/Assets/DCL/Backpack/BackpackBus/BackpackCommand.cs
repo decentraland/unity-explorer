@@ -45,10 +45,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackEquipWearableCommand
     {
         public readonly string Id;
+        public readonly bool IsManuallyEquipped; // True when the wearable is equipped 'manually' from the user in the backpack UI
 
-        public BackpackEquipWearableCommand(string id)
+        public BackpackEquipWearableCommand(string id, bool isManuallyEquipped)
         {
             Id = id;
+            IsManuallyEquipped = isManuallyEquipped;
         }
     }
 
@@ -121,6 +123,9 @@ namespace DCL.Backpack.BackpackBus
     }
 
     public readonly struct BackpackUnEquipAllCommand { }
-
     public readonly struct BackpackPublishProfileCommand { }
+
+    public readonly struct BackpackUnEquipAllWearablesCommand
+    {
+    }
 }

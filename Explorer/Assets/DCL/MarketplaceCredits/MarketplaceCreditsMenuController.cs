@@ -6,6 +6,7 @@ using DCL.MarketplaceCredits.Sections;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Prefs;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
@@ -341,7 +342,7 @@ namespace DCL.MarketplaceCredits
 
                 SetSidebarButtonState(creditsProgramProgressResponse);
 
-                if (!creditsProgramProgressResponse.HasUserStartedProgram())
+                if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
                     await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
@@ -357,6 +358,24 @@ namespace DCL.MarketplaceCredits
                 const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private static bool TrySetAsShownThisWeek(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        {
+            if (string.IsNullOrEmpty(creditsProgramProgressResponse.currentWeek.startDate))
+                return false;
+
+            string isoString = DCLPlayerPrefs.GetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, DateTime.MinValue.ToString("o"));
+
+            if (DateTime.TryParse(isoString, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime lastShownWeek)
+                && DateTime.TryParse(creditsProgramProgressResponse.currentWeek.startDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime currentSeasonStart)
+                && currentSeasonStart > lastShownWeek)
+            {
+                DCLPlayerPrefs.SetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, creditsProgramProgressResponse.currentWeek.startDate);
+                return true;
+            }
+
+            return false;
         }
 
         public void SetSidebarButtonAnimationAsAlert(bool isOn) =>

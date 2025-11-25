@@ -144,7 +144,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
         }
 

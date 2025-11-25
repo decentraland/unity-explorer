@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Backpack.AvatarSection.Outfits.Analytics;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Profiles.Tables;
@@ -35,6 +36,8 @@ namespace DCL.PluginSystem.Global
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
         private AutoTranslateAnalytics? autoTranslateAnalytics;
+        private OutfitsAnalytics outfitsAnalytics;
+        private HomeMarkerAnalytics homeMarkerAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
         public AnalyticsPlugin(
@@ -79,6 +82,8 @@ namespace DCL.PluginSystem.Global
             walkedDistanceAnalytics.Initialize();
 
             autoTranslateAnalytics = new AutoTranslateAnalytics(analytics, eventBus, translationSettings);
+            outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
+            homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
 
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);

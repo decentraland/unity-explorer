@@ -1,4 +1,5 @@
 ﻿using DCL.ChangeRealmPrompt;
+using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
@@ -6,7 +7,9 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Utility;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
@@ -18,6 +21,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private ISceneStateProvider sceneStateProvider;
         private IGlobalWorldActions globalWorldActions;
         private ISceneData sceneData;
+        private ISystemClipboard systemClipboard;
 
         [SetUp]
         public void SetUp()
@@ -34,11 +38,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new Vector2Int(0, 1),
                 new Vector2Int(0, 2),
             });
+            systemClipboard = Substitute.For<ISystemClipboard>();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
                 mvcManager,
                 sceneStateProvider,
                 globalWorldActions,
-                sceneData);
+                sceneData,
+                new AllowEverythingJsApiPermissionsProvider(),
+                systemClipboard);
         }
 
         [Test]
@@ -118,6 +125,91 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("ethereum", "0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
+        }
+
+        [Test]
+        public void CopyToClipboard()
+        {
+            // Arrange
+            const string TEST_TEXT = "Ia Ia! Cthulhu Ftaghn!";
+
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard(TEST_TEXT);
+
+            // Assert
+            systemClipboard.Received(1).Set(TEST_TEXT);
+        }
+
+        [Test]
+        public void CopyToClipboard_DoesNotCopy_WhenSceneIsNotCurrent()
+        {
+            // Arrange
+            const string TEST_TEXT = "This should not be copied";
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard(TEST_TEXT);
+
+            // Assert
+            systemClipboard.DidNotReceive().Set(Arg.Any<string>());
+        }
+
+        [Test]
+        public void MovePlayerTo_RejectsPositionOutsideScene_ForRegularScene()
+        {
+            // Arrange
+            sceneData.IsPortableExperience().Returns(false);
+            // Position that maps to parcel (10, 10) which is not in the scene parcels (0,0), (0,1), (0,2)
+            Vector3 positionOutsideScene = new Vector3(160, 0, 160); // Parcel (10, 10)
+            Vector3 relativePosition = positionOutsideScene - sceneData.Geometry.BaseParcelPosition;
+
+            // Act
+            LogAssert.Expect(LogType.Error, "MovePlayerTo: Position is out of scene");
+            restrictedActionsAPIImplementation.TryMovePlayerTo(relativePosition, null, null);
+
+            // Assert
+            // Should not call MoveAndRotatePlayer because position is invalid
+            globalWorldActions.DidNotReceive().MoveAndRotatePlayer(Arg.Any<Vector3>(), Arg.Any<Vector3?>(), Arg.Any<Vector3?>());
+        }
+
+        [Test]
+        public void MovePlayerTo_AllowsPositionOutsideScene_ForPortableExperience()
+        {
+            // Arrange
+            sceneData.IsPortableExperience().Returns(true);
+            // Position that maps to parcel (10, 10) which is not in the scene parcels (0,0), (0,1), (0,2)
+            Vector3 positionOutsideScene = new Vector3(160, 0, 160); // Parcel (10, 10)
+            Vector3 relativePosition = positionOutsideScene - sceneData.Geometry.BaseParcelPosition;
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerTo(relativePosition, null, null);
+
+            // Assert
+            // Portable Experiences should allow positions outside their scene boundaries
+            globalWorldActions.Received(1).MoveAndRotatePlayer(
+                positionOutsideScene,
+                null,
+                null);
+        }
+
+        [Test]
+        public void MovePlayerTo_AllowsPositionInsideScene_ForRegularScene()
+        {
+            // Arrange
+            sceneData.IsPortableExperience().Returns(false);
+            // Position that maps to parcel (0, 1) which IS in the scene parcels
+            Vector3 positionInsideScene = new Vector3(0, 0, 16); // Parcel (0, 1)
+            Vector3 relativePosition = positionInsideScene - sceneData.Geometry.BaseParcelPosition;
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerTo(relativePosition, null, null);
+
+            // Assert
+            // Regular scenes should allow positions within their scene boundaries
+            globalWorldActions.Received(1).MoveAndRotatePlayer(
+                positionInsideScene,
+                null,
+                null);
         }
     }
 }
