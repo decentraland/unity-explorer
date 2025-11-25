@@ -34,7 +34,6 @@ namespace DCL.UI.Controls
         private void RegisterListener(Action<bool> listener) =>
             ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>(listener));
 
-        public override void RegisterCloseListener(Action listener) =>
-            ToggleComponent.Toggle.onValueChanged.AddListener(_ => listener());
+        public override void RegisterCloseListener(Action listener) { }
     }
 }
