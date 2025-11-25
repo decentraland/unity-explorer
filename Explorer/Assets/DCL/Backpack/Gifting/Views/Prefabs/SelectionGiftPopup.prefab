@@ -2584,7 +2584,7 @@ MonoBehaviour:
     m_Left: 10
     m_Right: 10
     m_Top: 17
-    m_Bottom: 0
+    m_Bottom: 10
   mItemPadding: {x: 22.5, y: 22}
   mItemSize: {x: 120, y: 120}
   mItemRecycleDistance: {x: 50, y: 50}
@@ -4689,7 +4689,7 @@ MonoBehaviour:
     m_Left: 10
     m_Right: 10
     m_Top: 17
-    m_Bottom: 0
+    m_Bottom: 10
   mItemPadding: {x: 22.5, y: 22}
   mItemSize: {x: 120, y: 120}
   mItemRecycleDistance: {x: 50, y: 50}

@@ -167,10 +167,14 @@ namespace DCL.Backpack.Gifting.Notifications
             var profile = await profileRepository.GetAsync(senderAddress, ct);
 
             string name = profile != null ? profile.Name : metadata.Sender.Name;
-            var nameColor = profile != null ? profile.UserNameColor : Color.white;
+            var nameColor = profile?.UserNameColor ?? Color.white;
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
 
-            viewInstance!.TitleText.text = $"FROM <color=#{hexColor}>{name}</color>";
+            viewInstance!.TitleText.text = string.Format(
+                GiftingTextIds.GiftReceivedFromFormat,
+                hexColor,
+                name
+            );
         }
 
         private void OpenBackpackAndClose()

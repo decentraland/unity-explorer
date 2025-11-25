@@ -29,6 +29,9 @@
         public const string GiftReceivedTitleFormat =
             "<color=#{0}>{1}</color> Sent You A Gift!";
 
+        public const string GiftReceivedFromFormat =
+            "FROM <color=#{0}>{1}</color>";
+        
         // Error dialog
         public const string ErrorDialogTitle =
             "Something went wrong";

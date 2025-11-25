@@ -23,8 +23,7 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStylingCatalog stylingCatalog;
-
-        // Reusable buffer for the provider to avoid allocations
+        
         private readonly List<IWearable> resultsBuffer = new();
         private readonly BackpackGridSort currentSort = new(NftOrderByOperation.Date, false);
 
@@ -76,10 +75,8 @@ namespace DCL.Backpack.Gifting.Presenters
             // Map to IGiftable. We create a new list because resultsBuffer is cleared every request.
             var giftables = new List<IGiftable>(wearables.Count);
             foreach (var w in wearables)
-            {
                 giftables.Add(new WearableGiftable(w));
-            }
-
+            
             return (giftables, total);
         }
 
