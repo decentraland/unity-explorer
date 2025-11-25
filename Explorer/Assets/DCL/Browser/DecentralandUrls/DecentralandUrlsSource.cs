@@ -77,7 +77,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
-                // DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
+                //DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
                 DecentralandUrl.AuthSignatureWebApp => "https://auth-git-feat-gifting-changes-decentraland1.vercel.app/auth/requests/",
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
                 DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
