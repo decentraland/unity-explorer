@@ -695,7 +695,7 @@ MonoBehaviour:
   <MainButton>k__BackingField: {fileID: 5935869984882440088}
   <TitleText>k__BackingField: {fileID: 8574490625238887243}
   <NotificationImage>k__BackingField: {fileID: 3530641881717013220}
-  <NotificationAudio>k__BackingField: {fileID: 11400000, guid: 2f888b1c3f73f7641ad9f8712a8faacb, type: 2}
+  <NotificationAudio>k__BackingField: {fileID: 11400000, guid: 3a90f7c9ee7b62d44b5f16f25341cb94, type: 2}
   <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
   <HoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
 --- !u!225 &6290331481271032038

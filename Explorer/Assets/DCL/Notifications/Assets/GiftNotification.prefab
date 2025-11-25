@@ -1312,7 +1312,6 @@ MonoBehaviour:
   <NotificationTypeImage>k__BackingField: {fileID: 2445410349030607296}
   <NotificationImage>k__BackingField: {fileID: 7256400807390002670}
   <NotificationImageBackground>k__BackingField: {fileID: 5547385199967951698}
-  <RequestNotificationAudio>k__BackingField: {fileID: 11400000, guid: b6493777141cb4794b18ce0545cc47d3, type: 2}
   <AcceptedNotificationAudio>k__BackingField: {fileID: 11400000, guid: b8c021e5ddb204814adf04f0793f36d3, type: 2}
 --- !u!114 &3180689763869468969
 MonoBehaviour:

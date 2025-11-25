@@ -872,7 +872,7 @@ namespace Global.Dynamic
                     pendingTransferService,
                     equippedStatusProvider,
                     profileRepositoryWrapper,
-                    profileRepository,
+                    profilesRepository,
                     staticContainer.InputBlock,
                     wearablesProvider,
                     wearableCatalog,
