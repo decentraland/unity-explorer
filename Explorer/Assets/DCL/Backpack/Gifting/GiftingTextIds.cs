@@ -22,10 +22,12 @@
 
         public const string DefaultStatusMessage =
             "Processing...";
-
-        // Success
+        
         public const string GiftSentTextFormat =
             "Gift Sent to <color=#{0}>{1}</color>!";
+
+        public const string GiftReceivedTitleFormat =
+            "<color=#{0}>{1}</color> Sent You A Gift!";
 
         // Error dialog
         public const string ErrorDialogTitle =

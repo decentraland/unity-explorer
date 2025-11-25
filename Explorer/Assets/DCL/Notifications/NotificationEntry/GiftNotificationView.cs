@@ -1,5 +1,6 @@
 ﻿using System;
 using DCL.Audio;
+using DCL.Backpack.Gifting;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.Utilities;
@@ -12,8 +13,6 @@ namespace DCL.Notifications.NotificationEntry
 {
     public class GiftNotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, INotificationView
     {
-        private const string GIFT_SENT_FROM_NAME_TEMPLATE = "<color=#{0}>{1} <color=#ECEBED>{2}";
-
         public event Action<NotificationType, INotification>? NotificationClicked;
         public NotificationType NotificationType { get; set; }
         public INotification Notification { get; set; }
@@ -59,9 +58,13 @@ namespace DCL.Notifications.NotificationEntry
             var userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             string hexColor = ColorUtility.ToHtmlStringRGB(userColor);
 
-            HeaderText.text = $"<color=#{hexColor}>{notification.Metadata.Sender.Name}</color> Sent You A Gift!";
+            HeaderText.text = string.Format(
+                GiftingTextIds.GiftReceivedTitleFormat,
+                hexColor,
+                name
+            );
 
-            TimeText.text = Backpack.Gifting.GiftingTextId.JustNowMessage;
+            TimeText.text = GiftingTextIds.JustNowMessage;
         }
 
         private void OnPointerClick()
