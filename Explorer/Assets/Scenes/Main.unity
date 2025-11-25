@@ -395,7 +395,7 @@ MonoBehaviour:
     useRemoteAssetsBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
-  decentralandEnvironment: 0
+  decentralandEnvironment: 1
   debugSettings:
     showSplash: 1
     showAuthentication: 1
@@ -409,7 +409,9 @@ MonoBehaviour:
     emotesToAddToUserProfile: []
     overrideConnectionQuality: 0
     connectionQuality: 2
-    appParameters: []
+    appParameters:
+    - --realm
+    - https://peer-ue-2.decentraland.zone
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
