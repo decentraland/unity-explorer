@@ -590,6 +590,10 @@ MonoBehaviour:
       Severity: 4
     - Category: SOCIAL
       Severity: 1
+    - Category: JAVASCRIPT
+      Severity: 3
+    - Category: JAVASCRIPT
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

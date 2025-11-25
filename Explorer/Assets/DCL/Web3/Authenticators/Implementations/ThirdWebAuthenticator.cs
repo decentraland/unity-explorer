@@ -49,6 +49,8 @@ namespace DCL.Web3.Authenticators
                 var walletOptions = new ThirdWebManager.WalletOptions(
                     ThirdWebManager.WalletProvider.InAppWallet,
                     EnvChainsUtils.GetChainIdAsInt(environment),
+
+                    // new BigInteger(11155111),
                     new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.JWT, jwtOrPayload: jwt)
                 );
 
@@ -105,51 +107,14 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await ThirdWebManager.Instance.DisconnectWallet();
 
+        private BigInteger chainId => EnvChainsUtils.Sepolia;
+
+        //GetChainIdAsInt(environment);
+
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
         {
             if (!whitelistMethods.Contains(request.method))
                 throw new Web3Exception($"The method is not allowed: {request.method}");
-
-            // Local methods (no network call)
-            if (string.Equals(request.method, "eth_accounts")
-                || string.Equals(request.method, "eth_requestAccounts"))
-            {
-                string[] accounts = Array.Empty<string>();
-
-                if (identityCache.Identity != null)
-                    accounts = new string[] { identityCache.EnsuredIdentity().Address };
-
-                return new EthApiResponse
-                {
-                    id = request.id,
-                    jsonrpc = "2.0",
-                    result = accounts,
-                };
-            }
-
-            if (string.Equals(request.method, "eth_chainId"))
-            {
-                string chainId = EnvChainsUtils.GetChainId(environment);
-
-                return new EthApiResponse
-                {
-                    id = request.id,
-                    jsonrpc = "2.0",
-                    result = chainId,
-                };
-            }
-
-            if (string.Equals(request.method, "net_version"))
-            {
-                string netVersion = EnvChainsUtils.GetNetVersion(environment);
-
-                return new EthApiResponse
-                {
-                    id = request.id,
-                    jsonrpc = "2.0",
-                    result = netVersion,
-                };
-            }
 
             // Wallet signing methods
             if (string.Equals(request.method, "personal_sign"))
@@ -165,7 +130,6 @@ namespace DCL.Web3.Authenticators
                     result = signature,
                 };
             }
-
             if (string.Equals(request.method, "eth_signTypedData_v4"))
             {
                 // eth_signTypedData_v4 params: [address, typedData]
@@ -179,8 +143,6 @@ namespace DCL.Web3.Authenticators
                     result = signature,
                 };
             }
-
-            // Balance query
             if (string.Equals(request.method, "eth_getBalance"))
             {
                 // eth_getBalance params: [address, blockParameter]
@@ -189,9 +151,7 @@ namespace DCL.Web3.Authenticators
 
                 if (string.Equals(address, walletAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    BigInteger balance = await ThirdWebManager.Instance.ActiveWallet.GetBalance(
-                        EnvChainsUtils.GetChainIdAsInt(environment)
-                    );
+                    BigInteger balance = await ThirdWebManager.Instance.ActiveWallet.GetBalance(chainId);
 
                     return new EthApiResponse
                     {
@@ -201,25 +161,78 @@ namespace DCL.Web3.Authenticators
                     };
                 }
             }
-
-            // Transaction methods
             if (string.Equals(request.method, "eth_sendTransaction"))
-            {
-                // eth_sendTransaction needs to be signed by the wallet, so we use RPC which will use the wallet internally
-                return await SendRpcRequestAsync(request);
-            }
+                return await HandleSendTransactionAsync(request);
 
-            // All other RPC methods - delegate to low-level RPC
+            // All other RPC methods are read-only (off-chain) - delegate to low-level RPC calls
             return await SendRpcRequestAsync(request);
         }
 
+        private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request)
+        {
+            if (ThirdWebManager.Instance.ActiveWallet == null)
+                throw new Web3Exception("No active wallet connected");
+
+            // eth_sendTransaction params: [transactionObject]
+            Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
+
+            string? to = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
+            string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
+            string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
+
+            if (string.IsNullOrEmpty(to))
+                throw new Web3Exception("eth_sendTransaction requires 'to' address");
+
+            // Parse value
+            BigInteger weiValue = ParseHexToBigInteger(value);
+
+            // For simple ETH transfers (no data), use Transfer method
+            // if (string.IsNullOrEmpty(data) || data == "0x")
+            // {
+            //     var txReceipt = await ThirdWebManager.Instance.ActiveWallet.Transfer(
+            //         chainId,
+            //         to,
+            //         weiValue
+            //     );
+            //
+            //     return new EthApiResponse
+            //     {
+            //         id = request.id,
+            //         jsonrpc = "2.0",
+            //         result = txReceipt.TransactionHash,
+            //     };
+            // }
+
+            // For contract interactions with data
+            ThirdwebContract? contract = await ThirdwebContract.Create(ThirdWebManager.Instance.Client, to, chainId);
+            ThirdwebTransaction? transaction = await ThirdwebContract.Prepare(ThirdWebManager.Instance.ActiveWallet, contract, data, weiValue);
+            string? txHash = await ThirdwebTransaction.Send(transaction);
+
+            return new EthApiResponse
+            {
+                id = request.id,
+                jsonrpc = "2.0",
+                result = txHash,
+            };
+        }
+
+        private static BigInteger ParseHexToBigInteger(string hexValue)
+        {
+            if (string.IsNullOrEmpty(hexValue) || hexValue == "0x" || hexValue == "0x0")
+                return BigInteger.Zero;
+
+            string hex = hexValue.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? hexValue[2..]
+                : hexValue;
+
+            return BigInteger.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+        }
+
+        // Use ThirdwebClient's RPC endpoint for low-level calls
         private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request)
         {
-            // Use ThirdwebClient's RPC endpoint for low-level calls
-            var chainId = (int)EnvChainsUtils.GetChainIdAsInt(environment);
-            string rpcUrl = GetRpcUrl(chainId);
+            string rpcUrl = GetRpcUrl((int)chainId);
 
-            // Create RPC request JSON
             var rpcRequest = new
             {
                 jsonrpc = "2.0",
