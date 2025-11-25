@@ -69,7 +69,7 @@ namespace DCL.SocialService
                     await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
                     await openStreamFunc().AttachExternalCancellation(ct);
                 }
-                catch (OperationCanceledException) { }
+                catch (OperationCanceledException) { break; }
                 catch (WebSocketException e)
                 {
                     retryAttempt++;
@@ -83,50 +83,31 @@ namespace DCL.SocialService
                         or WebSocketError.ConnectionClosedPrematurely
                         or WebSocketError.NativeError
                         or WebSocketError.HeaderError)
-                    {
-                        if (!await TryRetryAsync(retryAttempt, ct))
-                        {
-                            ReportHub.LogException(e, reportCategory);
-                            break;
-                        }
-
-                        ReportHub.LogWarning(reportCategory, "WebSocketException occurred while trying to keep rpc connection open, retrying..");
-                    }
+                        ReportHub.LogWarning(new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)),
+                            $"WebSocketException {webSocketErrorCode} occurred while trying to keep rpc connection open, retrying..");
                     else
-                    {
-                        ReportHub.LogException(e, reportCategory);
-                        break;
-                    }
+                        ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
+
+                    try { await WaitNextRetry(retryAttempt, ct); }
+                    catch (OperationCanceledException) { break; }
                 }
                 catch (Exception e)
                 {
-                    if (!await TryRetryAsync(retryAttempt, ct))
-                    {
-                        ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
-                        break;
-                    }
+                    ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
 
-                    ReportHub.LogWarning(reportCategory, $"Error occurred while trying to keep rpc connection open, retrying\n: {e.Message}");
+                    try { await WaitNextRetry(retryAttempt, ct); }
+                    catch (OperationCanceledException) { break; }
                 }
             }
         }
 
-        private async UniTask<bool> TryRetryAsync(int retryAttempt, CancellationToken ct)
+        private async UniTask WaitNextRetry(int retryAttempt, CancellationToken ct)
         {
-            if (retryAttempt >= maxRetries)
-            {
-                ReportHub.LogError(new ReportData(reportCategory), $"Stopping attempts after {maxRetries} retries. Service will be disabled");
-                return false;
-            }
-
             // Calculate exponential backoff delay
             int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
             ReportHub.Log(reportCategory, $"Retrying connection in {delaySeconds} seconds...");
 
-            try { await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct); }
-            catch (OperationCanceledException) { return false; }
-
-            return true;
+            await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
         }
     }
 }
