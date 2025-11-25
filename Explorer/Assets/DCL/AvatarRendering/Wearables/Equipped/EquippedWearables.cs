@@ -65,6 +65,12 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             foreach (string category in categories) { forceRenderCategories.Add(category); }
         }
 
+        public void Clear()
+        {
+            wearables.Clear();
+            forceRenderCategories.Clear();
+        }
+
         public IReadOnlyDictionary<string, IWearable?> Items() =>
             wearables;
     }

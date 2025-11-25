@@ -13,6 +13,7 @@ namespace DCL.UI
 {
     public class SpriteCache : ISpriteCache
     {
+        // TODO unify with `RetryPolicy` of `WebRequestController`
         private struct RequestAttempts
         {
             public const int MAX_ATTEMPTS = 5;
@@ -59,10 +60,7 @@ namespace DCL.UI
         public Sprite? GetCachedSprite(string imageUrl) =>
             cachedSprites.GetValueOrDefault(imageUrl);
 
-        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, CancellationToken ct) =>
-            await GetSpriteAsync(imageUrl, false, ct);
-
-        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, bool useKtx, CancellationToken ct)
+        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, bool useKtx, RetryPolicy? retryPolicy, CancellationToken ct)
         {
             Sprite? sprite = GetCachedSprite(imageUrl);
 
@@ -76,7 +74,7 @@ namespace DCL.UI
             UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
 
             if (currentSpriteTasks.TryAdd(imageUrl, spriteTaskCompletionSource))
-                DownloadSpriteAsync(imageUrl, useKtx, spriteTaskCompletionSource, ct).Forget();
+                DownloadSpriteAsync(imageUrl, useKtx, retryPolicy, spriteTaskCompletionSource, ct).Forget();
 
             return await spriteTaskCompletionSource.Task;
         }
@@ -108,7 +106,7 @@ namespace DCL.UI
             currentSpriteTasks.Clear();
         }
 
-        private async UniTaskVoid DownloadSpriteAsync(string imageUrl, bool useKtx, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
+        private async UniTaskVoid DownloadSpriteAsync(string imageUrl, bool useKtx, RetryPolicy? retryPolicy, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
             if (URLAddress.EMPTY.Equals(imageUrl)
                 || IsUnsolvable(imageUrl)
@@ -122,7 +120,7 @@ namespace DCL.UI
             try
             {
                 var ownedTexture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(imageUrl)),
+                    new CommonArguments(URLAddress.FromString(imageUrl), retryPolicy),
                     new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,

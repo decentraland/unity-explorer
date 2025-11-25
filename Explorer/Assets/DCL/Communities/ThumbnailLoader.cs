@@ -35,7 +35,7 @@ namespace DCL.Communities
             try
             {
                 if (!string.IsNullOrEmpty(thumbnailUrl))
-                    loadedSprite = await Cache!.GetSpriteAsync(thumbnailUrl, useKtx, ct);
+                    loadedSprite = await Cache!.GetSpriteAsync(thumbnailUrl, useKtx, ct: ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }

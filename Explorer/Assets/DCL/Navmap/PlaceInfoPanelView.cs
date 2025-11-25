@@ -34,13 +34,13 @@ namespace DCL.Navmap
         public MultiStateButtonView FavoriteButton { get; private set; }
 
         [field: SerializeField]
+        public MultiStateButtonView HomeButton { get; private set; }
+
+        [field: SerializeField]
         public Button ShareButton { get; private set; }
 
         [field: SerializeField]
         public RectTransform SharePivot { get; private set; }
-
-        [field: SerializeField]
-        public Button SetAsHomeButton { get; private set; }
 
         [field: SerializeField]
         public GameObject LiveEventContainer { get; private set; }

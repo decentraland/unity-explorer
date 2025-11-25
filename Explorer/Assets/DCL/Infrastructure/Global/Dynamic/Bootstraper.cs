@@ -55,7 +55,6 @@ namespace Global.Dynamic
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
-        private readonly ObjectProxy<IProfileRepository> profileRepositoryProxy = new ();
 
         private URLDomain? startingRealm;
         private Vector2Int startingParcel;
@@ -126,7 +125,6 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
-                profileRepositoryProxy,
                 bootstrapContainer.Environment,
                 ct,
                 appArgs
@@ -185,9 +183,6 @@ namespace Global.Dynamic
                 dclVersion,
                 realmUrls,
                 ct);
-
-            if (tuple.container != null)
-                profileRepositoryProxy.SetObject(tuple.container.ProfileRepository);
 
             return tuple;
         }
@@ -285,7 +280,7 @@ namespace Global.Dynamic
 
         public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 
