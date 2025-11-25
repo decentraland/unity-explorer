@@ -91,7 +91,8 @@ namespace DCL.VoiceChat.Services
         public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
-            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new StartPrivateVoiceChatPayload
             {
@@ -112,7 +113,8 @@ namespace DCL.VoiceChat.Services
         public async UniTask<AcceptPrivateVoiceChatResponse> AcceptPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
-            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new AcceptPrivateVoiceChatPayload
             {
@@ -130,7 +132,8 @@ namespace DCL.VoiceChat.Services
         public async UniTask<RejectPrivateVoiceChatResponse> RejectPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
-            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new RejectPrivateVoiceChatPayload
             {
@@ -148,7 +151,8 @@ namespace DCL.VoiceChat.Services
         public async UniTask<EndPrivateVoiceChatResponse> EndPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
-            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new EndPrivateVoiceChatPayload
             {
@@ -166,7 +170,8 @@ namespace DCL.VoiceChat.Services
         public async UniTask<GetIncomingPrivateVoiceChatRequestResponse> GetIncomingPrivateVoiceChatRequestAsync(CancellationToken ct)
         {
             ThrowIfServiceDisabled();
-            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()!
                                                                                          .CallUnaryProcedure<GetIncomingPrivateVoiceChatRequestResponse>(GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST, new Empty())
