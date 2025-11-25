@@ -29,6 +29,7 @@ namespace DCL.RewardPanel
             RaysGameObject.transform.rotation = Quaternion.identity;
             PanelContent.transform.localScale = Vector3.zero;
             RaysGameObject.transform.DORotate(new Vector3(0, 0, -360), 5f, RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).ToUniTask(cancellationToken: cts.Token);
+            PanelCanvasGroup.alpha = 0;
             await PanelCanvasGroup.DOFade(1, FADE_ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
             await PanelContent.transform.DOScale(Vector3.one, SCALE_ANIMATION_DURATION).SetEase(Ease.OutBounce).ToUniTask(cancellationToken: ct);
         }
@@ -37,8 +38,8 @@ namespace DCL.RewardPanel
         {
             cts.SafeCancelAndDispose();
 
-            PanelContent.transform.DOScale(Vector3.zero, SCALE_ANIMATION_DURATION / 2);
             await PanelCanvasGroup.DOFade(0, FADE_ANIMATION_DURATION / 2).ToUniTask(cancellationToken: ct);
+            PanelContent.transform.DOScale(Vector3.zero, SCALE_ANIMATION_DURATION / 2);
         }
     }
 }

@@ -1,5 +1,8 @@
-﻿using DCL.Backpack.Gifting.Views;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Views;
 using DCL.RewardPanel;
+using DG.Tweening;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -9,6 +12,9 @@ namespace DCL.Backpack.Gifting.Notifications
 {
     public class GiftReceivedPopupView : ViewBase, IView
     {
+        [field: Header("Canvas Group")]
+        [field: SerializeField] public CanvasGroup MainCanvasGroup { get; private set; }
+        
         [field: Header("Labels")]
         [field: SerializeField] public TMP_Text SubTitleText { get; private set; }
 
@@ -26,5 +32,39 @@ namespace DCL.Backpack.Gifting.Notifications
 
         [field: SerializeField]
         public GiftTransferBackgroundAnimation BackgroundRaysAnimation { get; private set; }
+
+        public async UniTask AnimateFadeIn(float duration, CancellationToken ct)
+        {
+            if (MainCanvasGroup == null) return;
+
+            MainCanvasGroup.alpha = 0f;
+            MainCanvasGroup.interactable = true;
+            MainCanvasGroup.blocksRaycasts = true;
+
+            MainCanvasGroup.DOKill();
+
+            await MainCanvasGroup.DOFade(1f, duration)
+                .SetEase(Ease.OutQuad)
+                .ToUniTask(cancellationToken: ct);
+        }
+
+        public async UniTask AnimateFadeOut(float duration, CancellationToken ct)
+        {
+            if (MainCanvasGroup == null) return;
+
+            MainCanvasGroup.interactable = false;
+            MainCanvasGroup.blocksRaycasts = false;
+
+            MainCanvasGroup.DOKill();
+
+            await MainCanvasGroup.DOFade(0f, duration)
+                .SetEase(Ease.InQuad)
+                .ToUniTask(cancellationToken: ct);
+        }
+
+        public void Cleanup()
+        {
+            MainCanvasGroup.DOKill();
+        }
     }
 }

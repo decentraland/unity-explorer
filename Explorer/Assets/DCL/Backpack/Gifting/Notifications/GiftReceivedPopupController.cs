@@ -49,11 +49,11 @@ namespace DCL.Backpack.Gifting.Notifications
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.CloseButton.onClick.AddListener(Close);
-            if (viewInstance.BackgroundOverlayButton != null)
-                viewInstance.BackgroundOverlayButton.onClick.AddListener(Close);
-
-            viewInstance.OpenBackpackButton.onClick.AddListener(OpenBackpackAndClose);
+            // viewInstance!.CloseButton.onClick.AddListener(Close);
+            // if (viewInstance.BackgroundOverlayButton != null)
+            //     viewInstance.BackgroundOverlayButton.onClick.AddListener(Close);
+            //
+            // viewInstance.OpenBackpackButton.onClick.AddListener(OpenBackpackAndClose);
         }
 
         protected override void OnViewShow()
@@ -65,8 +65,7 @@ namespace DCL.Backpack.Gifting.Notifications
 
             SetupItemVisualsAsync(metadata, CancellationToken.None).Forget();
             SetupSenderProfileAsync(metadata, CancellationToken.None).Forget();
-
-            // Fade in background
+            
             PlayAnimationAsync()
                 .Forget();
         }
@@ -141,6 +140,7 @@ namespace DCL.Backpack.Gifting.Notifications
         {
             lifeCts = new CancellationTokenSource();
             await PlayShowAnimationAsync(lifeCts.Token);
+            
         }
 
         private async UniTask PlayShowAnimationAsync(CancellationToken ct)
@@ -187,28 +187,20 @@ namespace DCL.Backpack.Gifting.Notifications
         {
             if (viewInstance == null) return;
 
-            // 1. Listen to ALL exit points
             var closeBtn = viewInstance.CloseButton.OnClickAsync(ct);
             var backpackBtn = viewInstance.OpenBackpackButton.OnClickAsync(ct);
             var bgBtn = viewInstance.BackgroundOverlayButton != null
                 ? viewInstance.BackgroundOverlayButton.OnClickAsync(ct)
                 : UniTask.Never(ct);
 
-            // 2. Wait for first action
-            int result = await UniTask.WhenAny(closeBtn, backpackBtn, bgBtn);
+            int result = await
+                UniTask.WhenAny(closeBtn, backpackBtn, bgBtn);
 
-            // 3. Handle Backpack Action
-            if (result == 1) // Backpack Button Index
-            {
+            if (result == 1)
                 await sharedSpaceManager.OpenBackpack();
-                ReportHub.Log(ReportCategory.GIFTING, "Opening backpack");
-            }
 
-            // 4. Cleanup
+            await PlayHideAnimationAsync(CancellationToken.None);
             lifeCts.SafeCancelAndDispose();
-            await PlayHideAnimationAsync(ct);
-
-            // 5. Method exits, MVC Controller closes, ready for next Open call.
         }
     }
 
