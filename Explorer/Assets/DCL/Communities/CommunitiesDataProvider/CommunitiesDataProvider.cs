@@ -28,6 +28,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, bool> CommunityInviteRequestCancelled;
         public event Action<string, bool> CommunityInviteRequestAccepted;
         public event Action<string, bool> CommunityInviteRequestRejected;
+        public event Action<string> CommunityOwnershipTransferred;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -309,6 +310,9 @@ namespace DCL.Communities.CommunitiesDataProvider
             var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (result.Success && newRole == CommunityMemberRole.owner)
+                CommunityOwnershipTransferred?.Invoke(communityId);
 
             return result.Success;
         }

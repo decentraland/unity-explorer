@@ -14,6 +14,8 @@ namespace DCL.UI.Controls
             TextComponent.text = settings.Text;
         }
 
+        public override bool IsInteractable { get; set; }
+
         public override void UnregisterListeners()
         {
         }

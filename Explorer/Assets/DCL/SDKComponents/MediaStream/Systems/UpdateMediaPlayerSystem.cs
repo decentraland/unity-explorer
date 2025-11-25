@@ -181,7 +181,14 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Resize(avText.width, avText.height);
 
             if (playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1)))
-                Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
+            {
+                //Regular blit or blit with material are called based on the source color space, we blit with material only
+                //in case we are in linear and need to convert the colorspace as well as target assigned texture is always in gamma
+                if (avText.isDataSRGB)
+                    Graphics.Blit(avText, assignedTexture.Texture, new Vector2(1, -1), new Vector2(0, 1));
+                else
+                    Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
+            }
             else
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
 
