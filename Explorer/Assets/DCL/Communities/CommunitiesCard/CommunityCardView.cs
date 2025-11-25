@@ -193,8 +193,6 @@ namespace DCL.Communities.CommunitiesCard
                               communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
                          .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
                               new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
-                         .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
-                              new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
                          .AddControl(new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkText, contextMenuSettings.CopyCommunityLinkSprite, OnCopyCommunityLinkRequested)))
                          .AddControl(copyLinkSeparatorContextMenuElement = new GenericContextMenuElement(
@@ -392,9 +390,8 @@ namespace DCL.Communities.CommunitiesCard
             communityNotificationsContextMenuControlSettings!.SetInitialValue(communityData.isSubscribedToNotifications);
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
-            copyLinkSeparatorContextMenuElement!.Enabled = deleteCommunityContextMenuElement.Enabled;
-            communityNotificationsSeparatorContextMenuElement!.Enabled = communityNotificationsContextMenuElement!.Enabled && (deleteCommunityContextMenuElement!.Enabled || leaveCommunityContextMenuElement!.Enabled);
             copyLinkSeparatorContextMenuElement!.Enabled = deleteCommunityContextMenuElement.Enabled || leaveCommunityContextMenuElement.Enabled;
+            communityNotificationsSeparatorContextMenuElement!.Enabled = communityNotificationsContextMenuElement!.Enabled && (deleteCommunityContextMenuElement!.Enabled || leaveCommunityContextMenuElement!.Enabled);
 
             ConfigureInteractionButtons(communityData);
 
