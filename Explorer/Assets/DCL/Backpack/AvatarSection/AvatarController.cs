@@ -46,6 +46,7 @@ namespace DCL.Backpack
             rectTransform = view.GetComponent<RectTransform>();
 
             view.marketplaceButton.onClick.AddListener(OnOpenMarketplace);
+            view.vrmExportButton.onClick.AddListener(OnVrmExport);
 
             slotsController = new BackpackSlotsController(slotViews,
                 backpackCommandBus,
@@ -64,6 +65,11 @@ namespace DCL.Backpack
                 tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
             
             tabsManager.InitializeAndEnable();
+        }
+
+        private void OnVrmExport()
+        {
+            
         }
 
         private void OnOpenMarketplace()

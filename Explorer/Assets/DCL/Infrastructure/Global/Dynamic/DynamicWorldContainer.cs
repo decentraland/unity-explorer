@@ -946,7 +946,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
                     mvcManager,
-                    thumbnailProvider)
+                    thumbnailProvider),
+                new VRMExportPlugin(assetsProvisioner, wearableCatalog),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

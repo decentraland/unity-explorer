@@ -1,0 +1,28 @@
+{
+    "name": "DCL.VRM",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:5eabe9a3d4dd19d42a16208ea5411062",
+        "GUID:d0ec51c740809fd4680d3ea27279dca7",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:543b8f091a5947a3880b7f2bca2358bd",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a",
+        "GUID:05dd262a0c0a2f841b8252c8c3815582",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:8d76e605759c3f64a957d63ef96ada7c",
+        "GUID:da3e51d19d51a544fa14d43fee843098",
+        "GUID:3acaaf1301d842f498099c27ba260121",
+        "GUID:b7aa47b240b57de44a4b2021c143c9bf"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

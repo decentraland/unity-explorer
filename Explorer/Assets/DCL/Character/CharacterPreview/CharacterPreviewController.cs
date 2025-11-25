@@ -19,6 +19,7 @@ using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.AvatarRendering.Export;
 using UnityEngine;
 using Utility;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -136,6 +137,10 @@ namespace DCL.CharacterPreview
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HeadIKRig.weight = 1f;
             }
+
+            // Triggering export for test purposes
+            var exportIntention = new ExportAvatarIntention(ExportMode.DebugLog);
+            world.Add(avatarEntity, exportIntention);
 
             return;
 
