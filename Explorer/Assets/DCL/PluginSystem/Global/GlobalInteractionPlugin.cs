@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaAction6, playerInput.ActionButton6 },
                 { InputAction.IaAny, playerInput.Any },
                 { InputAction.IaWalk, playerInput.Walk },
-                { InputAction.IaSprint, playerInput.Sprint },
+                { InputAction.IaModifier, playerInput.Sprint },
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
