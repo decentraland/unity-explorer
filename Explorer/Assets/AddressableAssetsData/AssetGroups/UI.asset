@@ -670,6 +670,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd3edf52c6206d44a9855feccaef9467
+    m_Address: HomeMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d20747763091b4fc5a2d5b6d1ba0ea7d
     m_Address: HideCategory
     m_ReadOnly: 0

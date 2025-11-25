@@ -109,6 +109,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
@@ -310,12 +311,6 @@ namespace Global.Dynamic
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
-            IProfileCache profileCache = new DefaultProfileCache();
-
-            var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
-            );
-
             GalleryEventBus galleryEventBus = new GalleryEventBus();
 
             static IMultiPool MultiPoolFactory() =>
@@ -336,7 +331,10 @@ namespace Global.Dynamic
             ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
-            var selfProfile = new SelfProfile(profileRepository, identityCache, equippedWearables, wearableCatalog,
+            IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
+            IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
+
+            var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
@@ -455,7 +453,7 @@ namespace Global.Dynamic
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
             bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
 
-            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
+            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
@@ -480,7 +478,9 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
-
+            HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
+            IEventBus eventBus = new EventBus(true);
+            
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -497,6 +497,8 @@ namespace Global.Dynamic
                         sharedNavmapCommandBus,
                         onlineUsersProvider,
                         identityCache,
+                        homePlaceEventBus,
+                        eventBus,
                         ct
                     );
 
@@ -565,13 +567,15 @@ namespace Global.Dynamic
                 reloadSceneChatCommand,
                 roomHub,
                 staticContainer.LoadingStatus,
-                includeBannedUsersFromScene
+                includeBannedUsersFromScene,
+                homePlaceEventBus
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
 
             IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
+            var currentChannelService = new CurrentChannelService();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
             var voiceChatContainer = new VoiceChatContainer(
@@ -585,7 +589,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 sharedSpaceManager,
-                chatEventBus
+                chatEventBus,
+                currentChannelService
             );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -633,12 +638,11 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache, remoteMetadata);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
-            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -668,7 +672,7 @@ namespace Global.Dynamic
                 onlineUsersProvider,
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
-                profileRepository,
+                profilesRepository,
                 sharedSpaceManager,
                 communityVoiceChatContextMenuSettingsSo,
                 voiceChatContainer.VoiceChatOrchestrator,
@@ -687,8 +691,6 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
-            var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
@@ -705,7 +707,7 @@ namespace Global.Dynamic
                     chatRoom,
                     roomHub,
                     roomsStatus,
-                    profileRepository,
+                    profilesRepository,
                     profileBroadcast,
                     debugBuilder,
                     staticContainer.LoadingStatus,
@@ -723,6 +725,7 @@ namespace Global.Dynamic
                     sceneThroughputBunch,
                     voiceChatRoom
                 ),
+                staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
@@ -748,11 +751,11 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     includeBannedUsersFromScene),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
-                new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
+                new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
                     assetsProvisioner, mvcManager, mainUIView,
-                    notificationsRequestController, identityCache, profileRepository,
+                    notificationsRequestController, identityCache, profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
@@ -800,7 +803,8 @@ namespace Global.Dynamic
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    chatSharedAreaEventBus),
+                    chatSharedAreaEventBus,
+                    currentChannelService),
                 new ExplorePanelPlugin(
                     eventBus,
                     featureFlags,
@@ -816,7 +820,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     wearableCatalog,
                     characterPreviewFactory,
-                    profileRepository,
+                    profilesRepository,
                     dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     selfProfile,
@@ -860,6 +864,7 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     passportBridge,
                     chatEventBus,
+                    homePlaceEventBus,
                     staticContainer.SmartWearableCache
                 ),
                 new GiftingPlugin(assetsProvisioner,
@@ -930,7 +935,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     dclCursor,
-                    profileRepository,
+                    profilesRepository,
                     characterPreviewFactory,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     characterPreviewEventBus,
@@ -1024,7 +1029,7 @@ namespace Global.Dynamic
                     mvcManager,
                     assetsProvisioner,
                     identityCache,
-                    profileRepository,
+                    profilesRepository,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     selfProfile,
@@ -1065,7 +1070,7 @@ namespace Global.Dynamic
                     clipboard,
                     bootstrapContainer.DecentralandUrlsSource,
                     webBrowser,
-                    profileRepository,
+                    profilesRepository,
                     realmNavigator,
                     assetsProvisioner,
                     wearableCatalog,
@@ -1121,7 +1126,7 @@ namespace Global.Dynamic
                     galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
-                    lambdasProfilesProvider,
+                    profilesRepository,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator));
@@ -1171,7 +1176,7 @@ namespace Global.Dynamic
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment,
-                profileRepository,
+                profilesRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
@@ -1187,7 +1192,7 @@ namespace Global.Dynamic
                 realmContainer.RealmController,
                 globalWorldFactory,
                 globalPlugins,
-                profileRepository,
+                profilesRepository,
                 initializationFlowContainer.InitializationFlow,
                 chatMessagesBus,
                 messagePipesHub,

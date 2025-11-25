@@ -99,7 +99,6 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                new ObjectProxy<IProfileRepository>(),
                 DecentralandEnvironment.Org,
                 ct,
                 appArgs,

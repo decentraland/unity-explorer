@@ -130,6 +130,7 @@ namespace DCL.Communities.CommunitiesBrowser
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
         }
 
         public void Dispose()
@@ -675,6 +676,7 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityLeft += OnCommunityLeft;
             dataProvider.CommunityUserRemoved += OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+            dataProvider.CommunityOwnershipTransferred += OnCommunityUpdated;
         }
 
         private void UnsubscribeDataProviderEvents()
@@ -690,6 +692,7 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityLeft -= OnCommunityLeft;
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
+            dataProvider.CommunityOwnershipTransferred -= OnCommunityUpdated;
         }
 
         private void OnJoinRequestReceived(INotification notification)
@@ -726,6 +729,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityDeleted(INotification notification) =>
             RefreshAfterDeletion();
+
+        private void OnCommunityTransferredToMe(INotification notification)
+        {
+            if (!isSectionActivated)
+                return;
+
+            ReloadBrowser();
+        }
 
         private void RefreshAfterDeletion()
         {

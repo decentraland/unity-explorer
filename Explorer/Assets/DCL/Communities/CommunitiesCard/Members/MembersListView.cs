@@ -32,8 +32,13 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
+        private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transfer Community Ownership";
+        private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "You are about to transfer the [{0}] community ownership to [{1}]. Once done will have Moderator permissions. This action cannot be reversed by you. Do you wish to proceed?";
+        private const string TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK = "Community ownership can be only transferred to people who has a Claimed Name.";
         private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
         private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
+        private const string TRANSFER_OWNERSHIP_CANCEL_TEXT = "CANCEL";
+        private const string TRANSFER_OWNERSHIP_CONFIRM_TEXT = "TRANSFER";
         private const string KICK_MEMBER_CANCEL_TEXT = "CANCEL";
         private const string KICK_MEMBER_CONFIRM_TEXT = "KICK";
         private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
@@ -49,9 +54,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private NotificationIndicatorView requestsNotificationIndicator { get; set; } = null!;
         [field: SerializeField] private GameObject emptyStateParent { get; set; } = null!;
+        [field: SerializeField] private GameObject resultsLoadingMoreSpinner { get; set; } = null!;
 
         [field: Header("Assets")]
         [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [field: SerializeField] private Sprite transferOwnershipSprite { get; set; } = null!;
         [field: SerializeField] private Sprite kickSprite { get; set; } = null!;
         [field: SerializeField] private Sprite banSprite { get; set; } = null!;
 
@@ -70,11 +77,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<ICommunityMemberData>? BlockUserRequested;
         public event Action<ICommunityMemberData>? RemoveModeratorRequested;
         public event Action<ICommunityMemberData>? AddModeratorRequested;
+        public event Action<ICommunityMemberData>? TransferOwnershipRequested;
         public event Action<ICommunityMemberData>? KickUserRequested;
         public event Action<ICommunityMemberData>? BanUserRequested;
 
-        private float scrollViewMaxHeight;
-        private float scrollViewHeight;
         private MemberListSections currentSection;
         private CancellationTokenSource confirmationDialogCts = new ();
         private SectionFetchData<ICommunityMemberData> membersData = null!;
@@ -85,6 +91,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private GenericContextMenuElement? removeModeratorContextMenuElement;
         private GenericContextMenuElement? addModeratorContextMenuElement;
         private GenericContextMenuElement? blockUserContextMenuElement;
+        private GenericContextMenuElement? transferOwnershipContextMenuElement;
         private GenericContextMenuElement? kickUserContextMenuElement;
         private GenericContextMenuElement? banUserContextMenuElement;
         private GenericContextMenuElement? communityOptionsSeparatorContextMenuElement;
@@ -100,9 +107,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void Awake()
         {
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
-            scrollViewHeight = scrollViewRect.sizeDelta.y;
-            scrollViewMaxHeight = scrollViewHeight + sectionButtons.sizeDelta.y;
-
+            
             foreach (var sectionMapping in memberListSectionsElements)
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
 
@@ -114,7 +119,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)))
                 .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))));
 
-
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextMenuGiftButton =
                     new GenericContextMenuElement(
@@ -125,6 +129,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenu.AddControl(communityOptionsSeparatorContextMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                 .AddControl(removeModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.RemoveModeratorText, contextMenuSettings.RemoveModeratorSprite, () => RemoveModeratorRequested?.Invoke(lastClickedProfileCtx!))))
                 .AddControl(addModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.AddModeratorText, contextMenuSettings.AddModeratorSprite, () => AddModeratorRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(transferOwnershipContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.TransferOwnershipText, contextMenuSettings.TransferOwnershipSprite, () => ShowTransferOwnershipConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
                 .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickUserText, contextMenuSettings.KickUserSprite, () => ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
                 .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
         }
@@ -144,8 +149,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             lastClickedProfileCtx = profile;
             contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
-            // Disable all buttons and leave only the unfriend one, as part of the UI/UX decision. The old passed value was:
-            // status == UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED ? UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED : status
+
             userProfileContextMenuControlSettings!.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
 
@@ -160,10 +164,19 @@ namespace DCL.Communities.CommunitiesCard.Members
                 contextMenuGiftButton!.Enabled = !isOwnProfile && !isBlocked;
             }
             
+            transferOwnershipContextMenuElement!.Enabled = communityData?.role == CommunityMemberRole.owner && profile.Role is CommunityMemberRole.member or CommunityMemberRole.moderator;
+            transferOwnershipContextMenuElement!.Interactable = profile.HasClaimedName;
+            if (!transferOwnershipContextMenuElement!.Interactable)
+                transferOwnershipContextMenuElement!.NonInteractableFeedback = TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK;
+
             kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
             banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
-
-            communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
+            
+            communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled ||
+                                                                   addModeratorContextMenuElement.Enabled ||
+                                                                   transferOwnershipContextMenuElement.Enabled ||
+                                                                   kickUserContextMenuElement.Enabled ||
+                                                                   banUserContextMenuElement.Enabled;
 
             if (invitationButtonHandler == null)
             {
@@ -174,8 +187,33 @@ namespace DCL.Communities.CommunitiesCard.Members
             invitationButtonHandler.SetUserToInvite(profile.Address);
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
-                           actionOnHide: () => elementView.CanUnHover = true,
-                           closeTask: panelTask), contextMenuCts.Token);
+                actionOnHide: () => elementView.CanUnHover = true,
+                closeTask: panelTask), contextMenuCts.Token);
+        }
+
+        private void ShowTransferOwnershipConfirmationDialog(ICommunityMemberData profile, string communityName)
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowTransferOwnershipConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowTransferOwnershipConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
+                            TRANSFER_OWNERSHIP_TEXT_FORMAT,
+                            TRANSFER_OWNERSHIP_CANCEL_TEXT,
+                            TRANSFER_OWNERSHIP_CONFIRM_TEXT,
+                            transferOwnershipSprite,
+                            false, false,
+                            subText: string.Format(TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT, communityName, profile.Name),
+                            userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
+                        ct)
+                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                TransferOwnershipRequested?.Invoke(profile);
+            }
         }
 
         private void ShowKickConfirmationDialog(ICommunityMemberData profile, string communityName)
@@ -246,7 +284,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public void SetSectionButtonsActive(bool isActive)
         {
             sectionButtons.gameObject.SetActive(isActive);
-            scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
+            scrollViewRect.offsetMax = new Vector2(scrollViewRect.offsetMax.x, isActive ? -sectionButtons.sizeDelta.y : 0);
         }
 
         public void InitGrid()
@@ -328,6 +366,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             else
                 loadingObject.HideLoading();
         }
+
+        public void SetLoadingMoreBadgeActive(bool isActive) =>
+            resultsLoadingMoreSpinner.SetActive(isActive);
 
         [Serializable]
         public struct MemberListSectionMapping

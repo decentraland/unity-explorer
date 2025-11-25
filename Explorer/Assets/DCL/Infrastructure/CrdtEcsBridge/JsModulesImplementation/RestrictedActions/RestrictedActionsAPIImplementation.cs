@@ -160,6 +160,10 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
+            //Avoid teleports below ground level
+            if(floorPosition.y < 0)
+                return false;
+
             var parcelToCheck = floorPosition.ToParcel();
 
             foreach (Vector2Int sceneParcel in sceneData.Parcels)

@@ -80,7 +80,7 @@ namespace DCL.Settings.ModuleControllers
             if (appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE) && isInitialSetup)
                 return;
 
-            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
+            Resolution targetResolution = index < 0 || index >= possibleResolutions.Count ? WindowModeUtils.GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
             FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE));
             Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
