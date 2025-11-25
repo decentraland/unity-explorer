@@ -66,6 +66,7 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? CancelRequestToJoinCommunity;
         public event Action? AcceptInvite;
         public event Action? RejectInvite;
+        public event Action<bool>? NotificationsToggleChanged;
         public event Action? CopyCommunityLinkRequested;
 
         [field: Header("References")]
@@ -204,6 +205,9 @@ namespace DCL.Communities.CommunitiesCard
                                   textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
 
+        private void OnToggleCommunityNotifications(bool isEnabled) =>
+            NotificationsToggleChanged?.Invoke(isEnabled);
+
         private void OnCopyCommunityLinkRequested() =>
             CopyCommunityLinkRequested?.Invoke();
 
@@ -244,11 +248,6 @@ namespace DCL.Communities.CommunitiesCard
         private void OnDisable()
         {
             confirmationDialogCts.SafeCancelAndDispose();
-        }
-
-        private void OnToggleCommunityNotifications(bool isEnabled)
-        {
-
         }
 
         private void ShowLeaveConfirmationDialog()

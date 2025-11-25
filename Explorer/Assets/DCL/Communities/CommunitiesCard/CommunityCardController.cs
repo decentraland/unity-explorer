@@ -176,6 +176,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.AcceptInvite -= AcceptCommunityInvitation;
                 viewInstance.RejectInvite -= RejectCommunityInvitation;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
+                viewInstance.NotificationsToggleChanged -= OnNotificationsToggleChanged;
                 viewInstance.CopyCommunityLinkRequested -= OnCopyCommunityLinkRequested;
             }
 
@@ -351,6 +352,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.AcceptInvite += AcceptCommunityInvitation;
             viewInstance.RejectInvite += RejectCommunityInvitation;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
+            viewInstance.NotificationsToggleChanged += OnNotificationsToggleChanged;
             viewInstance.CopyCommunityLinkRequested += OnCopyCommunityLinkRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
@@ -742,6 +744,11 @@ namespace DCL.Communities.CommunitiesCard
 
                 CloseController();
             }
+        }
+
+        private void OnNotificationsToggleChanged(bool isEnabled)
+        {
+            // TODO (santi): Implement this!
         }
 
         private void OnCopyCommunityLinkRequested()
