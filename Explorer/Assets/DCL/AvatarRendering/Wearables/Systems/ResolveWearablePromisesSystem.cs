@@ -2,12 +2,12 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -166,8 +166,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
-            // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl && component.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed) return false;
+            if (!dtoHasContentDownloadUrl)
+            {
+                AssetBundleManifestVersion? assetBundleManifestVersion = component.DTO.assetBundleManifestVersion;
+
+                // If the manifest version is null, we bail out and wait till it's loaded (this method will be called again)
+                if (assetBundleManifestVersion == null) return true;
+
+                // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
+                if (assetBundleManifestVersion.assetBundleManifestRequestFailed) return false;
+            }
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {

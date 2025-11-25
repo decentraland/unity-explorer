@@ -9,6 +9,7 @@ using DCL.Clipboard;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly ISystemClipboard systemClipboard;
 
         public RestrictedActionsAPIImplementation(
@@ -29,17 +31,22 @@ namespace CrdtEcsBridge.RestrictedActions
             ISceneStateProvider sceneStateProvider,
             IGlobalWorldActions globalWorldActions,
             ISceneData sceneData,
+            IJsApiPermissionsProvider permissionsProvider,
             ISystemClipboard systemClipboard)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorldActions = globalWorldActions;
             this.sceneData = sceneData;
+            this.permissionsProvider = permissionsProvider;
             this.systemClipboard = systemClipboard;
         }
 
         public bool TryOpenExternalUrl(string url)
         {
+            if (!permissionsProvider.CanOpenExternalUrl())
+                return false;
+
             if (!sceneStateProvider.IsCurrent)
                 return false;
 
@@ -153,6 +160,10 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
+            //Avoid teleports below ground level
+            if(floorPosition.y < 0)
+                return false;
+
             var parcelToCheck = floorPosition.ToParcel();
 
             foreach (Vector2Int sceneParcel in sceneData.Parcels)

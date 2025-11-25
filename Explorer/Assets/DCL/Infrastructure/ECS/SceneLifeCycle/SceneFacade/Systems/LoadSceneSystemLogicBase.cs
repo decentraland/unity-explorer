@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
+using SceneRuntime.ScenePermissions;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -63,7 +64,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, new AllowEverythingJsApiPermissionsProvider(), partition, ct);
 
             await UniTask.SwitchToMainThread();
 

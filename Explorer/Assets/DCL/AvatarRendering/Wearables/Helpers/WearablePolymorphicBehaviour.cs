@@ -252,7 +252,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (content.file.EndsWith(".glb")) // Wearables cannot be ".gltf"
             {
-                var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
+                // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
+                var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);
+                var promise = RawGltfPromise.Create(world, getGltf, partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
             else if (content.file.EndsWith(".png")) // Facial Feature Wearables documentation specifies PNG format

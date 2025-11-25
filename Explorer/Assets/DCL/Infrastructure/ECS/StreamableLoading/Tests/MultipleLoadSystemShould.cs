@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Profiles;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache.Disk;
@@ -25,7 +26,7 @@ namespace ECS.StreamableLoading.Tests
             var world = World.Create();
 
             var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT, IDiskCache<TextureData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
+                Substitute.For<IProfileRepository>());
             var promises = new List<Promise>(REQUESTS_COUNT);
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewPromise(world));
 
