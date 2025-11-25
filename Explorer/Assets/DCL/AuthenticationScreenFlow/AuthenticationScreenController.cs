@@ -224,6 +224,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
+            // AUTO-LOGIN DISABLED: Always show login screen
+            /*
             if (storedIdentity is { IsExpired: false }
 
                 // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
@@ -284,6 +286,7 @@ namespace DCL.AuthenticationScreenFlow
                 }
             }
             else
+            */
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 SwitchState(ViewState.Login);
