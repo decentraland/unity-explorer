@@ -25,16 +25,12 @@ namespace ECS.StreamableLoading.AssetBundles
         public List<string> dependencies;
         public string mainAsset;
 
-        // Note: The order of the outcomes is the same as the order in which they appear in the Emote DTO metadata
-        public List<SocialEmoteOutcomeAnimationPose>? socialEmoteOutcomeAnimationStartPoses;
-
         public void Clear()
         {
             timestamp = -1;
             version = "1.0";
             dependencies.Clear();
             mainAsset = "";
-            socialEmoteOutcomeAnimationStartPoses?.Clear();
         }
     }
 }
