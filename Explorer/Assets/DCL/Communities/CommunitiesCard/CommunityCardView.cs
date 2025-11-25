@@ -199,6 +199,8 @@ namespace DCL.Communities.CommunitiesCard
                               new ButtonContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkText, contextMenuSettings.CopyCommunityLinkSprite, OnCopyCommunityLinkRequested)))
                          .AddControl(copyLinkSeparatorContextMenuElement = new GenericContextMenuElement(
                               new SeparatorContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
+                         .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
+                              new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested,
                                   textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
@@ -392,6 +394,7 @@ namespace DCL.Communities.CommunitiesCard
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
             copyLinkSeparatorContextMenuElement!.Enabled = deleteCommunityContextMenuElement.Enabled;
             communityNotificationsSeparatorContextMenuElement!.Enabled = communityNotificationsContextMenuElement!.Enabled && (deleteCommunityContextMenuElement!.Enabled || leaveCommunityContextMenuElement!.Enabled);
+            copyLinkSeparatorContextMenuElement!.Enabled = deleteCommunityContextMenuElement.Enabled || leaveCommunityContextMenuElement.Enabled;
 
             ConfigureInteractionButtons(communityData);
 
