@@ -1338,6 +1338,7 @@ MonoBehaviour:
   <RecipientThumbnail>k__BackingField: {fileID: 3358941814580417901}
   <GiftSentText>k__BackingField: {fileID: 3235714324396133903}
   <BackgroundRaysAnimation>k__BackingField: {fileID: 3346201945169502144}
+  <Sound>k__BackingField: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
 --- !u!225 &5465836592218767537
 CanvasGroup:
   m_ObjectHideFlags: 0

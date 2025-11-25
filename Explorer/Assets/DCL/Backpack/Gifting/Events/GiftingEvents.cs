@@ -116,5 +116,37 @@ namespace DCL.Backpack.Gifting.Events
                 ItemType = itemType;
             }
         }
+
+        public readonly struct OnCanceledGift
+        {
+            public readonly string ItemUrn;
+            public readonly string SenderAddress;
+            public readonly string ReceiverAddress;
+            public readonly string ItemType;
+
+            public OnCanceledGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
+            {
+                ItemUrn = itemUrn;
+                SenderAddress = senderAddress;
+                ReceiverAddress = receiverAddress;
+                ItemType = itemType;
+            }
+        }
+
+        public readonly struct OnSentGift
+        {
+            public readonly string ItemUrn;
+            public readonly string SenderAddress;
+            public readonly string ReceiverAddress;
+            public readonly string ItemType;
+
+            public OnSentGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
+            {
+                ItemUrn = itemUrn;
+                SenderAddress = senderAddress;
+                ReceiverAddress = receiverAddress;
+                ItemType = itemType;
+            }
+        }
     }
 }

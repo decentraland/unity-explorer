@@ -1,4 +1,5 @@
-﻿using DCL.RewardPanel;
+﻿using DCL.Audio;
+using DCL.RewardPanel;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -22,5 +23,8 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: SerializeField]
         public GiftTransferBackgroundAnimation BackgroundRaysAnimation { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig Sound { get; set; }
     }
 }

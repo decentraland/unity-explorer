@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -149,8 +150,8 @@ namespace DCL.Backpack.Gifting.Notifications
             {
                 await viewInstance.BackgroundRaysAnimation.ShowAnimationAsync(ct);
 
-                // if (config.Sound != null)
-                //     UIAudioEventsBus.Instance.SendPlayAudioEvent(config.Sound);
+                if (viewInstance.Sound != null)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.Sound);
             }
         }
 

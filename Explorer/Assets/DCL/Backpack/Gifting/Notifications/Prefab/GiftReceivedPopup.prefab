@@ -2147,6 +2147,7 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 1295797673858850807}
   <BackgroundOverlayButton>k__BackingField: {fileID: 3818101583891139926}
   <BackgroundRaysAnimation>k__BackingField: {fileID: 3346201945169502144}
+  <Sound>k__BackingField: {fileID: 11400000, guid: b8c021e5ddb204814adf04f0793f36d3, type: 2}
 --- !u!223 &1975820729051496160
 Canvas:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
 using DCL.RewardPanel;
 using DG.Tweening;
@@ -33,38 +34,7 @@ namespace DCL.Backpack.Gifting.Notifications
         [field: SerializeField]
         public GiftTransferBackgroundAnimation BackgroundRaysAnimation { get; private set; }
 
-        public async UniTask AnimateFadeIn(float duration, CancellationToken ct)
-        {
-            if (MainCanvasGroup == null) return;
-
-            MainCanvasGroup.alpha = 0f;
-            MainCanvasGroup.interactable = true;
-            MainCanvasGroup.blocksRaycasts = true;
-
-            MainCanvasGroup.DOKill();
-
-            await MainCanvasGroup.DOFade(1f, duration)
-                .SetEase(Ease.OutQuad)
-                .ToUniTask(cancellationToken: ct);
-        }
-
-        public async UniTask AnimateFadeOut(float duration, CancellationToken ct)
-        {
-            if (MainCanvasGroup == null) return;
-
-            MainCanvasGroup.interactable = false;
-            MainCanvasGroup.blocksRaycasts = false;
-
-            MainCanvasGroup.DOKill();
-
-            await MainCanvasGroup.DOFade(0f, duration)
-                .SetEase(Ease.InQuad)
-                .ToUniTask(cancellationToken: ct);
-        }
-
-        public void Cleanup()
-        {
-            MainCanvasGroup.DOKill();
-        }
+        [field: SerializeField]
+        public AudioClipConfig Sound { get; set; }
     }
 }

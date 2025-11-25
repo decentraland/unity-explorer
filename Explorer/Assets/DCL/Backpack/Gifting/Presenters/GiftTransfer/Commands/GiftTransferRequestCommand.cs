@@ -45,6 +45,9 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 
             string senderAddress = identity.Address.ToString();
 
+            // Track SendGift
+            eventBus.Publish(new GiftingEvents.OnSentGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+            
             var result = await giftTransferService
                 .RequestTransferAsync(senderAddress,
                     data.giftUrn,
@@ -54,6 +57,9 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             if (ct.IsCancellationRequested)
             {
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, "Gifting was cancelled."));
+
+                // Track gift canceled
+                eventBus.Publish(new GiftingEvents.OnCanceledGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
                 return;
             }
 
@@ -62,12 +68,15 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
                 pendingTransferService.AddPending(data.instanceUrn);
 
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
-                eventBus.Publish(new GiftingEvents.OnSuccessfulGift(
-                    data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+
+                // Track gift successful
+                eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
             }
             else
             {
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, result.ErrorMessage));
+
+                // Track gift failed
                 eventBus.Publish(new GiftingEvents.OnFailedGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
             }
         }

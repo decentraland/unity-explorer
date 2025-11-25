@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
 using MVC;
 using Utility;
@@ -75,8 +76,8 @@ namespace DCL.Backpack.Gifting.Presenters
             {
                 await viewInstance.BackgroundRaysAnimation.ShowAnimationAsync(ct);
 
-                // if (config.Sound != null)
-                //     UIAudioEventsBus.Instance.SendPlayAudioEvent(config.Sound);
+                if (viewInstance.Sound != null)
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.Sound);
             }
         }
 

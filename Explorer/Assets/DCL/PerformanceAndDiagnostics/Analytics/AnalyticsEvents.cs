@@ -138,8 +138,10 @@
 
         public static class Gifts
         {
+            public const string SENT_GIFT = "sent_gift";
             public const string SUCCESSFULL_GIFT = "successful_gift";
             public const string FAILED_GIFT = "failed_gift";
+            public const string CANCELED_GIFT = "canceled_gift";
         }
     }
 }

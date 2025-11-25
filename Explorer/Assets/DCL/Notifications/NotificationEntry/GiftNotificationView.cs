@@ -29,15 +29,9 @@ namespace DCL.Notifications.NotificationEntry
         [field: SerializeField] public Image NotificationTypeImage { get; set; }
         [field: SerializeField] public ImageView NotificationImage { get; set; }
         [field: SerializeField] public Image NotificationImageBackground { get; set; }
-        [field: SerializeField] public AudioClipConfig RequestNotificationAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig AcceptedNotificationAudio { get; private set; }
 
-        public void PlayRequestNotificationAudio()
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(RequestNotificationAudio);
-        }
-
-        public void PlayAcceptedNotificationAudio()
+        private void PlayAcceptedNotificationAudio()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(AcceptedNotificationAudio);
         }
@@ -48,6 +42,7 @@ namespace DCL.Notifications.NotificationEntry
 
             MainButton.onClick.RemoveAllListeners();
             MainButton.onClick.AddListener(OnPointerClick);
+            
         }
 
         public void Configure(GiftReceivedNotification notification)
