@@ -60,8 +60,8 @@ namespace DCL.Notifications.NotificationEntry
             string hexColor = ColorUtility.ToHtmlStringRGB(userColor);
 
             HeaderText.text = $"<color=#{hexColor}>{notification.Metadata.Sender.Name}</color> Sent You A Gift!";
-            
-            TimeText.text = "Just now";
+
+            TimeText.text = Backpack.Gifting.GiftingTextId.JustNowMessage;
         }
 
         private void OnPointerClick()

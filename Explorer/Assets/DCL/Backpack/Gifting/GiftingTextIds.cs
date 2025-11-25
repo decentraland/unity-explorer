@@ -45,5 +45,8 @@
 
         public const string RetryLogMessage =
             "User clicked RETRY.";
+
+        public const string JustNowMessage =
+            "Just now.";
     }
 }

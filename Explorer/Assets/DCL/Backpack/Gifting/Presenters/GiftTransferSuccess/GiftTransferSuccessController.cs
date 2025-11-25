@@ -66,8 +66,7 @@ namespace DCL.Backpack.Gifting.Presenters
             };
 
             await UniTask.WhenAny(closeTasks);
-
-            await PlayHideAnimationAsync(ct);
+            await PlayHideAnimationAsync(CancellationToken.None);
         }
 
         private async UniTask PlayShowAnimationAsync(CancellationToken ct)
