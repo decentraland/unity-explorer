@@ -37,7 +37,8 @@ namespace DCL.PluginSystem.World
             {
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
-            });
+            },
+                maxSize: 2048);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -61,7 +62,9 @@ namespace DCL.PluginSystem.World
         {
             //The scene container, which is only modified by the client, starts in a position that cannot be seen by the player. Once it finished loading
             //in GatherGLTFAssetSystem.cs, it will be moved to the correct position.
-            var sceneRootContainerTransform = GetNewTransform(position: MordorConstants.SCENE_MORDOR_POSITION);
+            //If the static scene is supported, the transition between LOD and scene is seamless.
+            var sceneRootContainerTransform = GetNewTransform(position: sharedDependencies.SceneData.SceneEntityDefinition.SupportInitialSceneState() ?
+                sharedDependencies.SceneData.Geometry.BaseParcelPosition : MordorConstants.SCENE_MORDOR_POSITION);
             sceneRootContainerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_Container";
             builder.World.Add(persistentEntities.SceneContainer, new TransformComponent(sceneRootContainerTransform));
 

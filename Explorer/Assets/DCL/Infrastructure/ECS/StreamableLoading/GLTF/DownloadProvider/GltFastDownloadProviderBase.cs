@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -13,7 +14,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
@@ -39,6 +40,10 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         public void Dispose()
         {
             acquiredBudget.Release();
+        }
+
+        public virtual void SetContentMappings(ContentDefinition[] contentMappings)
+        {
         }
 
         protected static string GetUrl(Uri uri) =>
@@ -98,7 +103,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             if (promiseResult.Result is { Succeeded: false })
                 throw new Exception(GetTextureErrorMessage(promiseResult));
 
-            return new TextureDownloadResult(promiseResult.Result?.Asset)
+            return new TextureDownloadResult(promiseResult.Result?.Asset!.EnsureTexture2D())
             {
                 Error = promiseResult.Result?.Exception?.Message,
                 Success = (bool)promiseResult.Result?.Succeeded,

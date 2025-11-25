@@ -1,14 +1,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using System.Web;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities
 {
@@ -25,7 +25,7 @@ namespace DCL.Communities
         {
             this.realmNavigator = realmNavigator;
 
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENTS_STARTED, EventStartSoonClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENTS_STARTED, EventStartSoonClicked);
         }
 
         public void Dispose() =>

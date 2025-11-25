@@ -8,7 +8,6 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -39,6 +38,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
                 if (decodedMessage.Length == 0)
                     return;
+
+                // TODO: If the room is connected but the scene is not connected **yet** the message will be skipped and forgotten
 
                 if (!sceneRoom.IsSceneConnected(message.Payload.SceneId)) return;
 

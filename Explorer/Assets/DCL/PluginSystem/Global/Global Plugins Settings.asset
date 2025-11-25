@@ -52,6 +52,10 @@ MonoBehaviour:
   - rid: 6144113899072913496
   - rid: 648265872610426982
   - rid: 657752310186246267
+  - rid: 6478896861045588059
+  - rid: 6169970366055448665
+  - rid: 2008243996523495520
+  - rid: 3821626543930605662
   references:
     version: 2
     RefIds:
@@ -227,28 +231,35 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
+          <DeleteOutfitIcon>k__BackingField:
+            m_AssetGUID: 0e0dc1c6390d85440bdf622928e144f5
+            m_SubObjectName: ModalDeleteImg_Addressable
+            m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+              Culture=neutral, PublicKeyToken=null
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 1
         <EmbeddedEmotes>k__BackingField:
-        - wave
-        - fistpump
-        - dance
-        - raiseHand
-        - clap
-        - money
-        - kiss
-        - shrug
-        - headexplode
-        - cry
-        - dab
-        - disco
-        - dontsee
-        - hammer
-        - handsair
-        - hohoho
-        - robot
-        - snowfall
-        - tektonik
-        - tik
-        - confettipopper
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
@@ -257,7 +268,6 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
-        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
         <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
@@ -266,6 +276,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <QualitySettingsAsset>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
+        <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         <ControlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
         <ChatSettingsAsset>k__BackingField: {fileID: 11400000, guid: a358ab6eb8d31ca488364e13b54f5f9c, type: 2}
         <CategoryMappingSO>k__BackingField:
@@ -314,6 +325,10 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
+    - rid: 2008243996523495520
+      type: {class: ProfilesContainer/ProfilesPlugin/Settings, ns: DCL.Profiles, asm: DCL.Plugins}
+      data:
+        <batchHeartbeatMs>k__BackingField: 100
     - rid: 2168772563850493955
       type: {class: FriendsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -371,6 +386,12 @@ MonoBehaviour:
       data:
         <ErrorPopup>k__BackingField:
           m_AssetGUID: 0fce4c1a785b1495bbf861787a9a3224
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <ErrorPopupWithRetry>k__BackingField:
+          m_AssetGUID: c16a7c2b7d6b642a4822df00f8bd5f71
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -433,12 +454,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        DebugRoomIndicator:
-          m_AssetGUID: a39f0a305be6be143aabcbf7ebb59d62
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -458,20 +473,12 @@ MonoBehaviour:
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
-        <MicrophoneAudioFilter>k__BackingField:
-          m_AssetGUID: fa9a67059d8a204408ce435cc8827612
+        <VoiceChatConfigurations>k__BackingField:
+          m_AssetGUID: 5918cd70698040249a590ac41e1dfeb9
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <CombinedAudioSource>k__BackingField:
-          m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <VoiceChatConfiguration>k__BackingField: {fileID: 11400000, guid: 96f7b8dc6c27e3047a1b56bcf3779c47, type: 2}
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -550,6 +557,33 @@ MonoBehaviour:
         <SettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         ControlsPanelPrefab:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 3821626543930605662
+      type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
+      data:
+        AuthorizationPopup:
+          m_AssetGUID: 000fc6d94dca3b64594f10aae8994ed7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityBackgrounds:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        RarityColors:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        CategoryIcons:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -677,6 +711,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GenericContextMenuToggleWithTitleIconAndCheckPrefab:
+          m_AssetGUID: de88bd0dde8feda4393664330ac8afb4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         GenericContextMenuSubMenuButtonPrefab:
           m_AssetGUID: 497073cedbc8540c2b17104cfee96158
           m_SubObjectName: 
@@ -704,12 +744,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        nametagView:
-          m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         celShadingMaterial:
           m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
           m_SubObjectName: 
@@ -722,15 +756,9 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        startFadeDistanceDithering: 2
-        endFadeDistanceDithering: 0.8
+        startFadeDistanceDithering: 0.42
+        endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100
-        <ChatBubbleConfiguration>k__BackingField:
-          m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
           m_SubObjectName: 
@@ -739,6 +767,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <AvatarRandomizerSettingsRef>k__BackingField:
           m_AssetGUID: e18034962a56eac40ab5df62e159c314
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NametagHolder>k__BackingField:
+          m_AssetGUID: 3df1198e2008a4f0abdf407103681813
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -793,6 +827,24 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 6169970366055448665
+      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
+      data:
+        <MediaPlayerPrefab>k__BackingField:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 6478896861045588059
+      type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        UiDocumentPrefab:
+          m_AssetGUID: 6ade66d1c3c0b42f389ff610295b9c13
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6697045322133929986
       type: {class: EmotePlugin/EmoteSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -825,6 +877,7 @@ MonoBehaviour:
       data:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <SkyboxSettings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
@@ -935,6 +988,32 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <FallbackFonts>k__BackingField:
+        - m_AssetGUID: 404f87890895f5f4bb7f733c75373620
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 65718726e8675f3438790051aed58b6a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 1801d33e8e688a74ea5dd704a91cfac1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 4cc5b9c92b8be214dbbd4f1f502110de
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        - m_AssetGUID: 82f86e6c95d775f4e8488447b6885323
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
         <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}

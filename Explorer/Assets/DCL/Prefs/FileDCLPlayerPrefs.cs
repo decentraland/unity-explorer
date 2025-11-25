@@ -20,8 +20,12 @@ namespace DCL.Prefs
 
         private bool dataChanged;
 
+        public static int PrefsInstanceNumber { get; private set; }
+
         public FileDCLPlayerPrefs()
         {
+            PrefsInstanceNumber = -1;
+
             for (var i = 0; i < CONCURRENT_CLIENTS; i++)
                 try
                 {
@@ -31,6 +35,9 @@ namespace DCL.Prefs
                     // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
                     fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                     fileStream.Lock(0, 0);
+
+                    // Store the instance number that was successfully locked
+                    PrefsInstanceNumber = i;
 
                     // We use this to migrate existing keys, but only for the first running instance
                     if (i == 0)

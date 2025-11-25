@@ -1,4 +1,6 @@
-﻿// engine module
+﻿// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/environment_api.proto
+
 const showDeprecated = () => console.log('JSMODULE: EnvionmentApi is DEPRECATED.');
 
 module.exports.areUnsafeRequestAllowed = async function(messages) {

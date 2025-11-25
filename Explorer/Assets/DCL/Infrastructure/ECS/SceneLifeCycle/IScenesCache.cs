@@ -1,6 +1,6 @@
 ﻿using DCL.Optimization.Pools;
+using DCL.Utilities;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,8 +8,8 @@ namespace ECS.SceneLifeCycle
 {
     public interface IScenesCache
     {
-        event Action<ISceneFacade?>? OnCurrentSceneChanged;
-        ISceneFacade? CurrentScene { get; }
+        IReadonlyReactiveProperty<Vector2Int> CurrentParcel { get; }
+        IReadonlyReactiveProperty<ISceneFacade?> CurrentScene { get;}
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
 
@@ -38,30 +38,23 @@ namespace ECS.SceneLifeCycle
         void ClearScenes(bool clearPortableExperiences = false);
 
         void SetCurrentScene(ISceneFacade? sceneFacade);
+
+        void UpdateCurrentParcel(Vector2Int currentParcel);
     }
 
     public class ScenesCache : IScenesCache
     {
-        private ISceneFacade? currentScene;
-
+        private readonly ReactiveProperty<ISceneFacade?> currentScene = new ReactiveProperty<ISceneFacade?>(null);
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
         private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
+        private readonly ReactiveProperty<Vector2Int> currentParcel = new (Vector2Int.zero);
 
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
-        public event Action<ISceneFacade?>? OnCurrentSceneChanged;
-        public ISceneFacade? CurrentScene
-        {
-            get => currentScene;
-            private set
-            {
-                if (currentScene == value) return;
-                currentScene = value;
-                OnCurrentSceneChanged?.Invoke(currentScene);
-            }
-        }
+        public IReadonlyReactiveProperty<Vector2Int> CurrentParcel => currentParcel;
+        public IReadonlyReactiveProperty<ISceneFacade?> CurrentScene => currentScene;
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
@@ -122,7 +115,6 @@ namespace ECS.SceneLifeCycle
                     return true;
                 }
             }
-
             return false;
         }
 
@@ -144,8 +136,12 @@ namespace ECS.SceneLifeCycle
 
         public void SetCurrentScene(ISceneFacade? sceneFacade)
         {
-            if (CurrentScene != sceneFacade)
-                CurrentScene = sceneFacade;
+            currentScene.UpdateValue(sceneFacade);
+        }
+
+        public void UpdateCurrentParcel(Vector2Int newParcel)
+        {
+            currentParcel.UpdateValue(newParcel);
         }
     }
 }

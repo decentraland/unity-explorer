@@ -1,6 +1,5 @@
 using DCL.UI;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Utilities;
 using MVC;
 using SuperScrollView;
@@ -119,5 +118,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             SetEmptyStateActive(!active);
         }
+
+        public void SetLoadingMoreBadgeActive(bool isActive) { }
     }
 }

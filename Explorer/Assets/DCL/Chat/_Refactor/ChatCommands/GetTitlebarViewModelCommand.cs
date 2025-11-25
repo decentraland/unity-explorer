@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using DCL.Chat.ChatServices;
+using DCL.FeatureFlags;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
@@ -61,7 +62,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             Sprite thumbnail = await getCommunityThumbnailCommand
-                .ExecuteAsync(communityData.thumbnails?.raw, ct);
+                .ExecuteAsync(communityData.thumbnailUrl, ct);
 
             var viewModel = new ChatTitlebarViewModel
             {
@@ -69,7 +70,7 @@ namespace DCL.Chat.ChatCommands
                 ProfileColor = Color.gray
             };
 
-            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false));
+            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false, true));
 
             return viewModel;
         }
@@ -78,7 +79,7 @@ namespace DCL.Chat.ChatCommands
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null; // TODO can't be null
-            
+
             if (profile == null)
             {
                 var item = new ChatTitlebarViewModel
@@ -95,10 +96,11 @@ namespace DCL.Chat.ChatCommands
             var userStatus = await getUserChatStatusCommand.ExecuteAsync(profile.UserId, ct);
             if (ct.IsCancellationRequested) return null;
 
+            var isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId);
             var viewModel = new ChatTitlebarViewModel
             {
                 ViewMode = TitlebarViewMode.DirectMessage, Id = profile.UserId, Username = profile.Name, HasClaimedName = profile.HasClaimedName,
-                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus == PrivateConversationUserStateService.ChatUserState.CONNECTED,
+                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus.IsConsideredOnline, IsOfficial = isOfficial,
             };
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);

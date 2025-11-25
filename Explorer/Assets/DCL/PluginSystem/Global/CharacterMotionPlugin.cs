@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Systems;
@@ -10,8 +9,8 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
@@ -27,6 +26,7 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILandscape landscape;
+        private readonly IScenesCache scenesCache;
 
         private CharacterControllerSettings settings;
 
@@ -35,13 +35,15 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            ILandscape landscape)
+            ILandscape landscape,
+            IScenesCache scenesCache)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.landscape = landscape;
+            this.scenesCache = scenesCache;
         }
 
         public void Dispose()
@@ -72,13 +74,14 @@ namespace DCL.PluginSystem.Global
                 new HandsIKComponent(),
                 new HeadIKComponent { IsEnabled = true });
 
-            InterpolateCharacterSystem.InjectToWorld(ref builder);
+            InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
-            RotateCharacterSystem.InjectToWorld(ref builder);
+            RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
+            CharacterPlatformUpdateSceneTickSystem.InjectToWorld(ref builder, scenesCache);
             StunCharacterSystem.InjectToWorld(ref builder);
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);

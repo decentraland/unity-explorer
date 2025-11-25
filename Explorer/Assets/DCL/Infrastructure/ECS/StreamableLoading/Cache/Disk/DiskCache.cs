@@ -1,12 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Hashing;
+using DCL.Utility.Types;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.IO;
 using System.Threading;
 using Utility.Multithreading;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Disk
 {

@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
+using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
@@ -55,7 +56,6 @@ namespace DCL.Input.Systems
 
         public override void Initialize()
         {
-            shortcuts.OpenChat.performed += OnShortcutUnlock;
             shortcuts.OpenChatCommandLine.performed += OnShortcutUnlock;
             shortcuts.Backpack.performed += OnShortcutUnlock;
             shortcuts.Map.performed += OnShortcutUnlock;
@@ -65,7 +65,6 @@ namespace DCL.Input.Systems
 
         protected override void OnDispose()
         {
-            shortcuts.OpenChat.performed -= OnShortcutUnlock;
             shortcuts.OpenChatCommandLine.performed -= OnShortcutUnlock;
             shortcuts.Backpack.performed -= OnShortcutUnlock;
             shortcuts.Map.performed -= OnShortcutUnlock;
@@ -83,6 +82,7 @@ namespace DCL.Input.Systems
             GetSDKInteractionStateQuery(World);
             CheckExternalCameraLockQuery(World);
             UpdateCursorQuery(World);
+            UpdateCursorLockStateFromIntentionQuery(World);
         }
 
         [Query]
@@ -115,6 +115,42 @@ namespace DCL.Input.Systems
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults, exposedCameraData);
             UpdateCursorVisualState(ref cursorComponent, raycastResults, exposedCameraData);
             UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
+        }
+
+        [Query]
+        private void UpdateCursorLockStateFromIntention(in Entity entity,
+            ref CursorComponent cursorComponent,
+            ref PointerLockIntention intention)
+        {
+            if (intention.Locked)
+            {
+                if (cursorComponent.CursorState == CursorState.Locked)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
+                // Keep the intention as pending if the cursor is over any UI
+                if (cursorComponent.IsOverUI)
+                    return;
+
+                // In editor sometimes the pointer is still visible even if its locked.
+                // This is because how the editor window focusing works (it needs a click on the game window).
+                // In the build it works 100%
+                UpdateState(ref cursorComponent, CursorState.Locked);
+            }
+            else
+            {
+                if (cursorComponent.CursorState == CursorState.Free)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
+                UpdateState(ref cursorComponent, CursorState.Free);
+            }
+
+            World.Remove<PointerLockIntention>(entity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

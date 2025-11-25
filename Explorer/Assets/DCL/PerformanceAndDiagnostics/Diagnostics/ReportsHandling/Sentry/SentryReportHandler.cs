@@ -35,7 +35,9 @@ namespace DCL.Diagnostics.Sentry
 
             if (!IsValidConfiguration(options))
             {
+#if !UNITY_EDITOR
                 Debug.LogWarning($"Cannot initialize Sentry due invalid configuration: {options.Dsn}");
+#endif
                 return;
             }
 
@@ -56,6 +58,9 @@ namespace DCL.Diagnostics.Sentry
         {
             scope.SetTag("current_scene.base_parcel", sceneInfo.BaseParcel.ToString());
             scope.SetTag("current_scene.name", sceneInfo.Name);
+
+            if (!string.IsNullOrEmpty(sceneInfo.SdkVersion))
+                scope.SetTag("current_scene.sdk_version", sceneInfo.SdkVersion);
         }
 
         public void AddRealmInfoToScope(Scope scope, string baseCatalystUrl, string baseContentUrl, string baseLambdaUrl)
@@ -185,6 +190,9 @@ namespace DCL.Diagnostics.Sentry
             {
                 scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
                 scope.SetTag("scene.name", data.SceneShortInfo.Name);
+
+                if (!string.IsNullOrEmpty(data.SceneShortInfo.SdkVersion))
+                    scope.SetTag("scene.sdk_version", data.SceneShortInfo.SdkVersion);
             }
 
             internal class Pool : ThreadSafeObjectPool<PerReportScope>

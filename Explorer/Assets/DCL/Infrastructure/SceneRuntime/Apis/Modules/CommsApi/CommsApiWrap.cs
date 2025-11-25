@@ -1,9 +1,8 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
-using Microsoft.ClearScript.V8.SplitProxy;
+using Microsoft.ClearScript.V8.FastProxy;
 using Newtonsoft.Json;
-using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.IO;
@@ -12,23 +11,32 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
 {
-    public class CommsApiWrap : JsApiWrapper, IV8HostObject
+    public sealed class CommsApiWrap : JsApiWrapper, IV8FastHostObject
     {
         private readonly IRoomHub roomHub;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
-        private readonly InvokeHostObject getActiveVideoStreams;
+        private static readonly V8FastHostObjectOperations<CommsApiWrap> OPERATIONS = new();
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
 
         private readonly StringBuilder stringBuilder;
         private readonly StringWriter stringWriter;
         private readonly JsonWriter writer;
 
+        static CommsApiWrap()
+        {
+            OPERATIONS.Configure(static configuration =>
+            {
+                configuration.AddMethodGetter(nameof(GetActiveVideoStreams),
+                    static (CommsApiWrap self, in V8FastArgs _, in V8FastResult result) =>
+                        result.Set(self.GetActiveVideoStreams()));
+            });
+        }
+
         public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.roomHub = roomHub;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
-            getActiveVideoStreams = GetActiveVideoStreams;
-
             stringBuilder = new StringBuilder();
             stringWriter = new StringWriter(stringBuilder);
             writer = new JsonTextWriter(stringWriter);
@@ -41,69 +49,61 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             writer.Close();
         }
 
-        private void GetActiveVideoStreams(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
-        {
-            string response = EMPTY_RESPONSE;
-
-            try { response = GetActiveVideoStreams(); }
-            catch (Exception e) { sceneExceptionsHandler.OnEngineException(e); }
-
-            result.SetString(response);
-        }
-
         private string GetActiveVideoStreams()
         {
-            lock (this)
+            try
             {
-                stringBuilder.Clear();
-
-                writer.WriteStartObject();
-                writer.WritePropertyName("streams");
-                writer.WriteStartArray();
-
-                var participants = roomHub.StreamingRoom().Participants;
-                (string identity, TrackPublication publication)? asCurrent = null;
-
-                // See: https://github.com/decentraland/unity-explorer/issues/3796
-                lock (participants)
+                lock (this)
                 {
-                    foreach ((string remoteParticipantIdentity, _) in participants.RemoteParticipantIdentities())
+                    stringBuilder.Clear();
+
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("streams");
+                    writer.WriteStartArray();
+
+                    var participants = roomHub.StreamingRoom().Participants;
+                    (string identity, TrackPublication publication)? asCurrent = null;
+
+                    // See: https://github.com/decentraland/unity-explorer/issues/3796
+                    lock (participants)
                     {
-                        var participant = participants.RemoteParticipant(remoteParticipantIdentity);
+                        foreach ((string remoteParticipantIdentity, _) in participants.RemoteParticipantIdentities())
+                        {
+                            var participant = participants.RemoteParticipant(remoteParticipantIdentity);
 
-                        if (participant == null)
-                            continue;
+                            if (participant == null)
+                                continue;
 
-                        foreach (var track in participant.Tracks.Values)
-                            if (track.Kind == TrackKind.KindVideo)
+                            foreach (var track in participant.Tracks.Values)
                             {
-                                GetActiveVideoStreamsResponse.WriteTo(writer, remoteParticipantIdentity, track);
-
-                                if (asCurrent == null)
+                                if (track.Kind == TrackKind.KindVideo)
                                 {
-                                    asCurrent = (remoteParticipantIdentity, track);
-                                    GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer, remoteParticipantIdentity, track);
+                                    GetActiveVideoStreamsResponse.WriteTo(writer,
+                                        remoteParticipantIdentity, track);
+
+                                    if (asCurrent == null)
+                                    {
+                                        asCurrent = (remoteParticipantIdentity, track);
+
+                                        GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer,
+                                            remoteParticipantIdentity, track);
+                                    }
                                 }
                             }
+                        }
                     }
+
+                    writer.WriteEndArray();
+                    writer.WriteEndObject();
+
+                    return stringWriter.ToString();
                 }
-
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-
-                return stringWriter.ToString();
             }
-        }
-
-        void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst)
-        {
-            isConst = true;
-
-            if (name.Equals(nameof(GetActiveVideoStreams)))
-                value.SetHostObject(getActiveVideoStreams);
-            else
-                throw new NotImplementedException(
-                    $"Named property {name.ToString()} is not implemented");
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnEngineException(e);
+                return EMPTY_RESPONSE;
+            }
         }
     }
 }

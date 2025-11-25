@@ -8,9 +8,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Groups;
-using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -42,27 +40,18 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            // The Media Player could already been flagged with errors detected on the video promise, those have to be propagated.
-            if (mediaPlayer.State != VideoState.VsError)
-            {
-                VideoState newState = GetCurrentVideoState(mediaPlayer);
-
-                if (mediaPlayer.State != newState)
-                {
-                    mediaPlayer.PreviousCurrentTimeChecked = mediaPlayer.CurrentTime;
-                    mediaPlayer.SetState(newState);
-                }
-            }
-
-            PropagateStateInVideoEvent(in sdkEntity, ref mediaPlayer);
+            VideoState state = GetVideoStateForPropagation(mediaPlayer);
+            PropagateStateInVideoEvent(in sdkEntity, ref mediaPlayer, state);
         }
 
-        private void PropagateStateInVideoEvent(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
+        private void PropagateStateInVideoEvent(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer, VideoState videoState)
         {
-            if (mediaPlayer.LastPropagatedState == mediaPlayer.State && mediaPlayer.LastPropagatedVideoTime.Equals(mediaPlayer.CurrentTime)) return;
+            if (videoState == mediaPlayer.LastPropagatedState
+                && mediaPlayer.LastPropagatedVideoTime.Equals(mediaPlayer.CurrentTime)) return;
 
             mediaPlayer.LastPropagatedState = mediaPlayer.State;
             mediaPlayer.LastPropagatedVideoTime = mediaPlayer.CurrentTime;
+
             ecsToCRDTWriter.AppendMessage<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)>
             (
                 prepareMessage: static (pbVideoEvent, data) =>
@@ -70,7 +59,6 @@ namespace DCL.SDKComponents.MediaStream
                     pbVideoEvent.State = data.mediaPlayer.State;
                     pbVideoEvent.CurrentOffset = data.mediaPlayer.CurrentTime;
                     pbVideoEvent.VideoLength = data.mediaPlayer.Duration;
-
                     pbVideoEvent.Timestamp = data.timestamp;
                     pbVideoEvent.TickNumber = data.timestamp;
                 },
@@ -78,34 +66,16 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private static VideoState GetCurrentVideoState(in MediaPlayerComponent mediaPlayer)
+        private static VideoState GetVideoStateForPropagation(in MediaPlayerComponent mediaPlayer)
         {
-            if (mediaPlayer.MediaAddress.IsEmpty) return VideoState.VsNone;
+            VideoState state = mediaPlayer.State;
 
-            // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
-            var player = mediaPlayer.MediaPlayer;
+            if (state is not (VideoState.VsSeeking or VideoState.VsBuffering)) return state;
 
-            if (player.IsFinished) return VideoState.VsNone;
-            if (player.GetLastError() != ErrorCode.None) return VideoState.VsError;
-            if (player.IsPaused) return VideoState.VsPaused;
-
-            VideoState state = VideoState.VsNone;
-            if (player.IsPlaying)
-            {
-                state = VideoState.VsPlaying;
-
-                if (player.CurrentTime.Equals(mediaPlayer.PreviousCurrentTimeChecked)) // Video is frozen
-                {
-                    state = player.IsSeeking ? VideoState.VsSeeking : VideoState.VsBuffering;
-
-                    // If the seeking/buffering never ends, update state with error so the scene can react
-                    if ((Time.realtimeSinceStartup - mediaPlayer.LastStateChangeTime) > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR
-                        && mediaPlayer.LastPropagatedState != VideoState.VsPaused)
-                    {
-                        state = VideoState.VsError;
-                    }
-                }
-            }
+            // If the seeking/buffering never ends, update state with error so the scene can react
+            if (mediaPlayer.IsFrozen(out float frozenElapsedTime))
+                if (frozenElapsedTime > MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR)
+                    return VideoState.VsError;
 
             return state;
         }

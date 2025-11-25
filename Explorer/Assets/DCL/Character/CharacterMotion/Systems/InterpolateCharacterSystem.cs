@@ -7,6 +7,7 @@ using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 using Utility;
 
@@ -19,13 +20,19 @@ namespace DCL.CharacterMotion.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
+    [UpdateAfter(typeof(TeleportCharacterSystem))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        private const float ALMOST_ZERO = 0.00001f;
+        private const float IS_STUCK_THRESHOLD = 0.00001f;
+
+        private readonly IScenesCache scenesCache;
 
         private int playerJustTeleportedCountDown;
 
-        private InterpolateCharacterSystem(World world) : base(world) { }
+        private InterpolateCharacterSystem(World world, IScenesCache scenesCache) : base(world)
+        {
+            this.scenesCache = scenesCache;
+        }
 
         protected override void Update(float t)
         {
@@ -52,7 +59,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 prevPos = characterTransform.position;
 
             // Force the platform collider to update its position, so slope modifier raycast can work properly
-            if (platformComponent.IsMovingPlatform && platformComponent.PlatformCollider != null)
+            if (platformComponent.PositionChanged && platformComponent.PlatformCollider != null)
             {
                 platformComponent.PlatformCollider.enabled = false;
                 platformComponent.PlatformCollider.enabled = true;
@@ -60,7 +67,7 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            if (platformComponent.IsRotatingPlatform || platformComponent.IsMovingPlatform)
+            if (platformComponent.RotationChanged || platformComponent.PositionChanged)
             {
                 // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
                 characterController.transform.position += rigidTransform.PlatformDelta;
@@ -83,13 +90,10 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
 
             // If we are on a platform we save our local position
-            PlatformSaveLocalPosition.Execute(ref platformComponent, characterTransform.position);
+            PlatformSaveLocalPosition.Execute(ref platformComponent, characterTransform.position, scenesCache.CurrentScene.Value);
 
             // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
-            if (rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= ALMOST_ZERO)
-                rigidTransform.IsStuck = true;
-            else
-                rigidTransform.IsStuck = false;
+            rigidTransform.IsStuck = rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= IS_STUCK_THRESHOLD;
         }
 
         private static Vector3 CalculateGravityDelta(float dt, CharacterRigidTransform rigidTransform, CharacterPlatformComponent platformComponent)
@@ -99,7 +103,7 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 finalGravity = rigidTransform.GravityVelocity * dt;
 
-            if (platformComponent.IsMovingPlatform && rigidTransform.IsGrounded)
+            if (platformComponent.PositionChanged && rigidTransform.IsGrounded)
                 finalGravity.y = 0f;
 
             return finalGravity;

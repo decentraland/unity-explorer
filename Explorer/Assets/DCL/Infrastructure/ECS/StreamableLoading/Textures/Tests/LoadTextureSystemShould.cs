@@ -1,4 +1,5 @@
-﻿using DCL.WebRequests;
+﻿using DCL.Profiles;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
@@ -10,7 +11,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.Textures.Tests
 {
     [TestFixture]
-    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
+    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, TextureData, GetTextureIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
@@ -25,15 +26,13 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override GetTextureIntention CreateWrongTypeIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
-        protected override LoadTextureSystem CreateSystem()
-        {
-            return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
-        }
+        protected override LoadTextureSystem CreateSystem() =>
+            new (world, cache, TestWebRequestController.INSTANCE, IDiskCache<TextureData>.Null.INSTANCE,
+                Substitute.For<IProfileRepository>());
 
-        protected override void AssertSuccess(Texture2DData data)
+        protected override void AssertSuccess(TextureData data)
         {
-            Texture2D asset = data.Asset;
+            Texture2D asset = data.EnsureTexture2D();
 
             Assert.AreEqual(TextureWrapMode.MirrorOnce, asset.wrapMode);
             Assert.AreEqual(FilterMode.Trilinear, asset.filterMode);

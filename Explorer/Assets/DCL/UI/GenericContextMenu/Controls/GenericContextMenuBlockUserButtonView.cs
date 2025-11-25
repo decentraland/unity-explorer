@@ -1,11 +1,11 @@
 using DCL.Profiles;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuBlockUserButtonView : GenericContextMenuComponentBase
     {
@@ -17,6 +17,12 @@ namespace DCL.UI.GenericContextMenu.Controls
             HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
             HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
             RegisterListener(settings.callback, settings.data);
+        }
+
+        public override bool IsInteractable
+        {
+            get => ButtonComponent.interactable;
+            set => ButtonComponent.interactable = value;
         }
 
         public override void UnregisterListeners() =>

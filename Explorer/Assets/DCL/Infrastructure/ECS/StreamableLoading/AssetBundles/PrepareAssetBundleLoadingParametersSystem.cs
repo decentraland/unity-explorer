@@ -3,6 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Utility;
+using ECS.Groups;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 
@@ -11,8 +13,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     Prepares Asset Bundle Parameters for loading Asset Bundle in the scene world
     /// </summary>
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    [UpdateBefore(typeof(LoadAssetBundleSystem))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
@@ -35,6 +36,10 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
+
+            if (sceneData.InitialSceneStateInfo.ISSAssets.Contains(assetBundleIntention.Hash))
+                assetBundleIntention.Hash = GetAssetBundleIntention.BuildInitialSceneStateURL(assetBundleIntention.ParentEntityID);
+
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

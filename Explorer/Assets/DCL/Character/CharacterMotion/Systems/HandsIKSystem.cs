@@ -33,7 +33,7 @@ namespace DCL.CharacterMotion.Systems
             wallDistance = new ElementBinding<float>(0);
             ikWeightSpeed = new ElementBinding<float>(0);
 
-            debugBuilder.TryAddWidget("Locomotion: Hands IK")
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.LOCOMOTION_HANDS_IK)
                        ?.AddToggleField("Enabled", evt => { handsIkSystemIsEnabled = evt.newValue; }, true)
                         .AddFloatField("Wall Distance", wallDistance)
                         .AddFloatField("IK Weight Speed", ikWeightSpeed);

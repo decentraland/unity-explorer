@@ -1,15 +1,17 @@
-﻿using Arch.Core;
+﻿#if UNITY_INCLUDE_TESTS
+
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -17,7 +19,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Rendering.GPUInstancing;
 using UnityEngine;
 using Utility;
 
@@ -53,7 +54,6 @@ namespace DCL.InWorldCamera.Playground
             hud.Screenshot = Texture;
         }
 
-
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
@@ -88,14 +88,13 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
+                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()))
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
                 new WearableStorage(),
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
-                new List<string>(),
                 null,
                 new DefaultProfileCache(),
                 world,
@@ -104,3 +103,5 @@ namespace DCL.InWorldCamera.Playground
         }
     }
 }
+
+#endif

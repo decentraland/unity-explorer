@@ -1,7 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
-using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -41,7 +39,9 @@ namespace DCL.Character.Plugin
 
         private ProvidedInstance<CharacterObject> characterObject;
 
-        public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData, ExposedTransform exposedPlayerTransform)
+        public CharacterContainer(IAssetsProvisioner assetsProvisioner,
+            IExposedCameraData exposedCameraData,
+            ExposedTransform exposedPlayerTransform)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.exposedCameraData = exposedCameraData;

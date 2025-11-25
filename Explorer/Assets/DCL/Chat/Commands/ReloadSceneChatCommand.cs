@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Threading;
 
@@ -41,7 +40,7 @@ namespace DCL.Chat.Commands
             this.teleportController = teleportController;
             this.isLocalSceneDevelopmentMode = isLocalSceneDevelopmentMode;
 
-            this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
+            this.sceneReadyCondition = () => scenesCache.CurrentScene.Value != null && scenesCache.CurrentScene.Value.IsSceneReady();
         }
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
@@ -56,10 +55,7 @@ namespace DCL.Chat.Commands
                 await UniTask.WaitUntil(sceneReadyCondition, cancellationToken: ct);
 
                 if (!isLocalSceneDevelopmentMode && reloadedScene != null)
-                {
-                    WaitForSceneReadiness sceneReadiness = teleportController.TeleportToSceneSpawnPoint(reloadedScene.SceneData.SceneEntityDefinition, ct);
-                    await sceneReadiness.ToUniTask();
-                }
+                    teleportController.StartTeleportToSpawnPoint(reloadedScene.SceneData.SceneEntityDefinition, ct);
 
                 return reloadedScene != null
                     ? "🟢 Current scene has been reloaded"

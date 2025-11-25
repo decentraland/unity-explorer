@@ -31,12 +31,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            view.Configure(GetCollectionElement(index), profileRepositoryWrapper);
+            FriendProfile friendProfile = GetCollectionElement(index);
+            view.Configure(friendProfile, profileRepositoryWrapper);
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
             CustomiseElement(view, index);
+            view.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
 
             if (index >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
                 FetchNewDataAsync(loopListView).Forget();

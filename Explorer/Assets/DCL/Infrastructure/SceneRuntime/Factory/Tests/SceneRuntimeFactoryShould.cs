@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using ECS;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory.WebSceneSource;
@@ -86,7 +87,7 @@ namespace SceneRuntime.Factory.Tests
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert

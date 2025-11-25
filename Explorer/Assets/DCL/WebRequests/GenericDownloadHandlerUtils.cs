@@ -21,8 +21,8 @@ namespace DCL.WebRequests
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
 
         public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
-            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+            WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null, bool suppressErrors = false) =>
+            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, suppressErrors);
 
         public static Adapter<GenericPostRequest, GenericPostArguments> PostAsync(
             this IWebRequestController controller,
@@ -32,7 +32,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
         public static Adapter<GenericDeleteRequest, GenericDeleteArguments> DeleteAsync(
             this IWebRequestController controller,
@@ -42,7 +42,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
         public static Adapter<GenericPutRequest, GenericPutArguments> PutAsync(
             this IWebRequestController controller,
@@ -52,7 +52,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
         public static Adapter<GenericPatchRequest, GenericPatchArguments> PatchAsync(
             this IWebRequestController controller,
@@ -62,7 +62,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
         public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
             this IWebRequestController controller,
@@ -71,7 +71,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null);
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null, false);
 
         /// <summary>
         ///     Adapts existing calls to the required-op flow
@@ -88,6 +88,7 @@ namespace DCL.WebRequests
             private readonly ISet<long>? ignoreErrorCodes;
             private readonly ReportData reportData;
             private readonly WebRequestSignInfo? signInfo;
+            private readonly bool suppressErrors;
 
             public Adapter(
                 IWebRequestController controller,
@@ -97,8 +98,8 @@ namespace DCL.WebRequests
                 ReportData reportData,
                 WebRequestHeadersInfo? headersInfo,
                 WebRequestSignInfo? signInfo,
-                ISet<long>? ignoreErrorCodes
-            )
+                ISet<long>? ignoreErrorCodes,
+                bool suppressErrors)
             {
                 this.commonArguments = commonArguments;
                 this.args = args;
@@ -107,11 +108,12 @@ namespace DCL.WebRequests
                 this.headersInfo = headersInfo;
                 this.signInfo = signInfo;
                 this.ignoreErrorCodes = ignoreErrorCodes;
+                this.suppressErrors = suppressErrors;
                 this.controller = controller;
             }
 
             internal UniTask<TResult> SendAsync<TOp, TResult>(TOp op) where TOp: struct, IWebRequestOp<TRequest, TResult> =>
-                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(commonArguments, args, op, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(commonArguments, args, op, ct, reportData, headersInfo, signInfo, ignoreErrorCodes, suppressErrors);
 
             public UniTask WithNoOpAsync() =>
                 SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
@@ -152,6 +154,13 @@ namespace DCL.WebRequests
                 WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
                 CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
                 SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure));
+
+            public UniTask<T> OverwriteFromNewtonsoftJsonAsync<T>(
+                T targetObject,
+                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
+                JsonSerializerSettings? serializerSettings = null) =>
+                SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, WRJsonParser.Newtonsoft, threadFlags, createCustomExceptionOnFailure, serializerSettings));
 
             /// <summary>
             ///     Executes the web request and does nothing with the result
@@ -260,17 +269,19 @@ namespace DCL.WebRequests
         public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
+            private readonly JsonSerializerSettings? newtonsoftSettings;
             private readonly WRJsonParser jsonParser;
 
             public readonly T Target;
             private readonly WRThreadFlags threadFlags;
 
-            public OverwriteFromJsonAsyncOp(T target, WRJsonParser jsonParser, WRThreadFlags threadFlags, CreateExceptionOnParseFail? createCustomExceptionOnFailure)
+            public OverwriteFromJsonAsyncOp(T target, WRJsonParser jsonParser, WRThreadFlags threadFlags, CreateExceptionOnParseFail? createCustomExceptionOnFailure, JsonSerializerSettings? newtonsoftSettings = null)
             {
                 Target = target;
                 this.jsonParser = jsonParser;
                 this.threadFlags = threadFlags;
                 this.createCustomExceptionOnFailure = createCustomExceptionOnFailure;
+                this.newtonsoftSettings = newtonsoftSettings;
             }
 
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
@@ -300,7 +311,7 @@ namespace DCL.WebRequests
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await UniTask.SwitchToThreadPool();
 
-                        var serializer = JsonSerializer.CreateDefault();
+                        var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
                         unsafe
                         {

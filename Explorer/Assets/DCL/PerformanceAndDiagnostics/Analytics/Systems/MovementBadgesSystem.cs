@@ -28,6 +28,7 @@ namespace DCL.Analytics.Systems
         private readonly IAnalyticsController analytics;
         private readonly ElementBinding<string> totalElevationGainBinding = new (string.Empty);
         private readonly ElementBinding<string> stepsCountBinding = new (string.Empty);
+        private readonly IDebugContainerBuilder? debugContainerBuilder;
 
         private CharacterRigidTransform? rigidTransform;
 
@@ -54,8 +55,10 @@ namespace DCL.Analytics.Systems
             this.playerEntity = playerEntity;
             this.identityCache = identityCache;
             this.walkedDistanceAnalytics = walkedDistanceAnalytics;
+            this.debugContainerBuilder = debugContainerBuilder;
 
             currentIdentity = identityCache?.Identity;
+
 
             debugContainerBuilder
                .TryAddWidget("Badges Tracking")?
@@ -72,7 +75,8 @@ namespace DCL.Analytics.Systems
             walkedDistanceAnalytics.Update(t);
             UpdateHeightAnalytics();
 
-            UpdateDebugInfo();
+            if(debugContainerBuilder is { IsVisible: true })
+                UpdateDebugInfo();
         }
 
         private void HandleIdentityChange()
@@ -132,7 +136,7 @@ namespace DCL.Analytics.Systems
             AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
             var currentPlatform = World.Get<CharacterPlatformComponent>(playerEntity);
 
-            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || currentPlatform.IsMovingPlatform || currentPlatform.IsRotatingPlatform)
+            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded || currentPlatform.PositionChanged || currentPlatform.RotationChanged)
                 return true;
 
             if (World.TryGet(playerEntity, out PlayerTeleportIntent _))

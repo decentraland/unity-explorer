@@ -23,7 +23,7 @@ namespace DCL.Analytics.Systems
         private readonly AnalyticsConfiguration config;
         private readonly IAnalyticsController analytics;
         private readonly ILoadingStatus loadingStatus;
-        private readonly IJsonObjectBuilder jsonObjectBuilder;
+        private readonly JsonObjectBuilder jsonObjectBuilder;
 
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
@@ -39,7 +39,7 @@ namespace DCL.Analytics.Systems
             IRealmData realmData,
             IProfiler profiler,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            IJsonObjectBuilder jsonObjectBuilder) : base(world)
+            JsonObjectBuilder jsonObjectBuilder) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;

@@ -18,6 +18,7 @@ using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.Clipboard;
 using ECS;
 using MVC;
 using MVC.PopupsController.PopupCloser;
@@ -28,8 +29,10 @@ using DCL.Audio;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
@@ -45,8 +48,10 @@ namespace Global.Tests.PlayMode
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            var appArgs = new ApplicationParametersParser();
 
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
@@ -79,7 +84,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, 1000, 1000, false),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), 1000, 1000),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -94,14 +99,16 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                new ObjectProxy<IProfileRepository>(),
+                DecentralandEnvironment.Org,
                 ct,
-                hasDebugFlag: false,
+                appArgs,
                 enableGPUInstancing: false
             );
 
             if (!success)
                 throw new Exception("Cannot create the static container");
+
+            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
 
             await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
@@ -121,7 +128,8 @@ namespace Global.Tests.PlayMode
                 new IMessagePipesHub.Fake(),
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
-                DecentralandEnvironment.Org
+                DecentralandEnvironment.Org,
+                Substitute.For<ISystemClipboard>()
             );
 
             return (staticContainer, sceneSharedContainer);

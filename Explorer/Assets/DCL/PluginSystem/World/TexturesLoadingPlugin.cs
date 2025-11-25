@@ -21,19 +21,19 @@ namespace DCL.PluginSystem.World
     public class TexturesLoadingPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IDiskCache<Texture2DData> diskCache;
-        private readonly IStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
-        private readonly ProfilePictureUrlProvider avatarTextureProvider;
+        private readonly IDiskCache<TextureData> diskCache;
+        private readonly IProfileRepository profileRepository;
+        private readonly IStreamableCache<TextureData, GetTextureIntention> texturesCache;
 
-        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<Texture2DData> diskCache, ILaunchMode launchMode,
-            ObjectProxy<IProfileRepository> profileRepository)
+        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<TextureData> diskCache, ILaunchMode launchMode,
+            IProfileRepository profileRepository)
         {
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
-            avatarTextureProvider = new ProfilePictureUrlProvider(profileRepository);
+            this.profileRepository = profileRepository;
 
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
-                texturesCache = new NoCache<Texture2DData, GetTextureIntention>(true, true);
+                texturesCache = new NoCache<TextureData, GetTextureIntention>(true, true);
             else
             {
                 texturesCache = new TexturesCache<GetTextureIntention>();
@@ -41,36 +41,15 @@ namespace DCL.PluginSystem.World
             }
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
-        {
-            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, avatarTextureProvider);
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
+            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileRepository);
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, avatarTextureProvider);
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileRepository);
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
         void IDisposable.Dispose() { }
-
-        private class ProfilePictureUrlProvider : IAvatarTextureUrlProvider
-        {
-            private readonly ObjectProxy<IProfileRepository> profileRepository;
-
-            public ProfilePictureUrlProvider(ObjectProxy<IProfileRepository> profileRepository)
-            {
-                this.profileRepository = profileRepository;
-            }
-
-            public async UniTask<URLAddress?> GetAsync(string userId, CancellationToken ct)
-            {
-                if (!profileRepository.Configured) return null;
-                Profile? profile = await profileRepository.Object!.GetAsync(userId, ct);
-                return profile?.Avatar.FaceSnapshotUrl;
-            }
-        }
     }
 }

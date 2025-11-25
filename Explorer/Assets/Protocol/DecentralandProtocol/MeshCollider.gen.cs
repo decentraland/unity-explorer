@@ -37,14 +37,14 @@ namespace DCL.ECSComponents {
             "YWRpdXNfdG9wGAEgASgCSACIAQESGgoNcmFkaXVzX2JvdHRvbRgCIAEoAkgB",
             "iAEBQg0KC19yYWRpdXNfdG9wQhAKDl9yYWRpdXNfYm90dG9tGgsKCVBsYW5l",
             "TWVzaBoMCgpTcGhlcmVNZXNoQgYKBG1lc2hCEQoPX2NvbGxpc2lvbl9tYXNr",
-            "KrMCCg1Db2xsaWRlckxheWVyEgsKB0NMX05PTkUQABIOCgpDTF9QT0lOVEVS",
-            "EAESDgoKQ0xfUEhZU0lDUxACEhAKDENMX1JFU0VSVkVEMRAEEhAKDENMX1JF",
-            "U0VSVkVEMhAIEhAKDENMX1JFU0VSVkVEMxAQEhAKDENMX1JFU0VSVkVENBAg",
-            "EhAKDENMX1JFU0VSVkVENRBAEhEKDENMX1JFU0VSVkVENhCAARIPCgpDTF9D",
-            "VVNUT00xEIACEg8KCkNMX0NVU1RPTTIQgAQSDwoKQ0xfQ1VTVE9NMxCACBIP",
-            "CgpDTF9DVVNUT000EIAQEg8KCkNMX0NVU1RPTTUQgCASDwoKQ0xfQ1VTVE9N",
-            "NhCAQBIQCgpDTF9DVVNUT003EICAARIQCgpDTF9DVVNUT004EICAAkIUqgIR",
-            "RENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "KrACCg1Db2xsaWRlckxheWVyEgsKB0NMX05PTkUQABIOCgpDTF9QT0lOVEVS",
+            "EAESDgoKQ0xfUEhZU0lDUxACEg0KCUNMX1BMQVlFUhAEEhAKDENMX1JFU0VS",
+            "VkVEMhAIEhAKDENMX1JFU0VSVkVEMxAQEhAKDENMX1JFU0VSVkVENBAgEhAK",
+            "DENMX1JFU0VSVkVENRBAEhEKDENMX1JFU0VSVkVENhCAARIPCgpDTF9DVVNU",
+            "T00xEIACEg8KCkNMX0NVU1RPTTIQgAQSDwoKQ0xfQ1VTVE9NMxCACBIPCgpD",
+            "TF9DVVNUT000EIAQEg8KCkNMX0NVU1RPTTUQgCASDwoKQ0xfQ1VTVE9NNhCA",
+            "QBIQCgpDTF9DVVNUT003EICAARIQCgpDTF9DVVNUT004EICAAkIUqgIRRENM",
+            "LkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.ColliderLayer), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -74,7 +74,10 @@ namespace DCL.ECSComponents {
     /// collision affecting your player's physics i.e. walls, floor, moving platfroms
     /// </summary>
     [pbr::OriginalName("CL_PHYSICS")] ClPhysics = 2,
-    [pbr::OriginalName("CL_RESERVED1")] ClReserved1 = 4,
+    /// <summary>
+    /// layer corresponding to any player avatar
+    /// </summary>
+    [pbr::OriginalName("CL_PLAYER")] ClPlayer = 4,
     [pbr::OriginalName("CL_RESERVED2")] ClReserved2 = 8,
     [pbr::OriginalName("CL_RESERVED3")] ClReserved3 = 16,
     [pbr::OriginalName("CL_RESERVED4")] ClReserved4 = 32,

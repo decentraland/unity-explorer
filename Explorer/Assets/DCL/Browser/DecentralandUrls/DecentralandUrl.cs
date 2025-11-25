@@ -86,6 +86,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         EmailSubscriptions,
 
         Communities,
+        CommunityThumbnail,
         Members,
 
         DecentralandWorlds,
@@ -93,6 +94,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DecentralandContentOverride,
         DecentralandLambdasOverride,
 
-        LambdasProfiles,
+        ChatTranslate,
+
+        ActiveCommunityVoiceChats,
     }
 }

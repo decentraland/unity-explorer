@@ -1,9 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {
@@ -13,7 +13,9 @@ namespace ECS.SceneLifeCycle.Realm
         ChangeCancelled,
         SameRealm,
         NotReachable,
-        LocalSceneDevelopmentBlocked
+        LocalSceneDevelopmentBlocked,
+        UnauthorizedWorldAccess,
+        Timeout
     }
 
     public static class ChangeRealmErrors
@@ -26,6 +28,7 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.SameRealm => TaskError.MessageError,
                 ChangeRealmError.NotReachable => TaskError.MessageError,
                 ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
+                ChangeRealmError.Timeout => TaskError.Timeout,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
@@ -33,7 +36,7 @@ namespace ECS.SceneLifeCycle.Realm
             e switch
             {
                 TaskError.MessageError => ChangeRealmError.MessageError,
-                TaskError.Timeout => ChangeRealmError.MessageError,
+                TaskError.Timeout => ChangeRealmError.Timeout,
                 TaskError.Cancelled => ChangeRealmError.ChangeCancelled,
                 TaskError.UnexpectedException => ChangeRealmError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
@@ -59,7 +62,8 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool isWorld = false
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);

@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunityCreation;
@@ -11,13 +12,16 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Friends;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI;
@@ -25,6 +29,8 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -34,8 +40,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard
 {
@@ -66,18 +70,22 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly IInputBlock inputBlock;
 
+        private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
         private EventListController? eventListController;
+        private AnnouncementsSectionController? announcementsSectionController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
@@ -101,13 +109,15 @@ namespace DCL.Communities.CommunitiesCard
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
-            LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus)
+            IProfileRepository profileRepository,
+            GalleryEventBus galleryEventBus,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -126,8 +136,10 @@ namespace DCL.Communities.CommunitiesCard
             this.chatEventBus = chatEventBus;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
             this.galleryEventBus = galleryEventBus;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -135,13 +147,17 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+            communitiesDataProvider.CommunityOwnershipTransferred += OnCommunityUpdated;
 
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
         }
 
         public override void Dispose()
@@ -166,6 +182,7 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
+            communitiesDataProvider.CommunityOwnershipTransferred -= OnCommunityUpdated;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -178,6 +195,8 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+            communityCardVoiceChatController?.Dispose();
+            announcementsSectionController?.Dispose();
         }
 
         private void OnOpenCommunityCardFromNotification(object[] parameters)
@@ -190,6 +209,8 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityUserRequestToJoinNotification joinRequestNotification => joinRequestNotification.Metadata.CommunityId,
                                      CommunityUserRequestToJoinAcceptedNotification joinAcceptedNotification => joinAcceptedNotification.Metadata.CommunityId,
                                      CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
+                                     CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
+                                     CommunityOwnershipTransferredNotification ownershipTransferredNotification => ownershipTransferredNotification.Metadata.CommunityId,
                                      _ => string.Empty
                                  };
 
@@ -231,6 +252,18 @@ namespace DCL.Communities.CommunitiesCard
             if (communityId == string.Empty || communityId != communityData.id) return;
 
             CloseController();
+        }
+
+        private void OnCommunityTransferredToMe(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden || notification is not CommunityOwnershipTransferredNotification transferredNotification)
+                return;
+
+            if (communityData.id != transferredNotification.Metadata.CommunityId)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(transferredNotification.Metadata.CommunityId);
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
@@ -277,7 +310,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DELETE_COMMUNITY_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DELETE_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -292,8 +325,8 @@ namespace DCL.Communities.CommunitiesCard
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-                chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
                 CloseController();
             }
             catch (OperationCanceledException) { }
@@ -322,6 +355,8 @@ namespace DCL.Communities.CommunitiesCard
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
+            communityCardVoiceChatController = new CommunityCardVoiceChatPresenter(viewInstance.communityCardVoiceChatView, voiceChatOrchestrator);
+            communityCardVoiceChatController.ClosePanel += OnClosePanel;
             membersListController = new MembersListController(viewInstance.MembersListView,
                 profileRepositoryWrapper,
                 mvcManager,
@@ -339,7 +374,7 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 clipboard,
                 webBrowser,
-                lambdasProfilesProvider);
+                profileRepository);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
@@ -351,11 +386,35 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
+            if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+            {
+                announcementsSectionController = new AnnouncementsSectionController(
+                    viewInstance.AnnouncementsSectionView,
+                    communitiesDataProvider,
+                    profileRepositoryWrapper,
+                    web3IdentityCache,
+                    profileRepository);
+            }
+
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
-        protected override void OnViewShow() =>
+        private void OnClosePanel()
+        {
+            OnClosePanelAsync().Forget();
+            return;
+
+            async UniTaskVoid OnClosePanelAsync()
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            }
+        }
+
+        protected override void OnViewShow()
+        {
+            DisableShortcutsInput();
             SetDefaultsAndLoadData(inputData.CommunityId);
+        }
 
         private void SetDefaultsAndLoadData(string communityId)
         {
@@ -368,9 +427,15 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
+                communityCardVoiceChatController?.Reset();
+
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                viewInstance.MembersListView.SetLoadingStateActive(true);
+                if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                    viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
+                else
+                    viewInstance.MembersListView.SetLoadingStateActive(true);
+
 
                 if (spriteCache == null)
                 {
@@ -388,7 +453,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!getCommunityResult.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -417,6 +482,12 @@ namespace DCL.Communities.CommunitiesCard
                 {
                     viewInstance.ResetToggle(true);
                     eventListController?.ShowEvents(communityData, ct);
+                    communityCardVoiceChatController?.SetPanelStatus(
+                        communityData.voiceChatStatus.isActive,
+                        communityData.role is CommunityMemberRole.moderator or CommunityMemberRole.owner,
+                        communityData.id);
+
+                    communityCardVoiceChatController?.SetListenersCount(communityData.voiceChatStatus.participantCount);
                 }
             }
 
@@ -430,7 +501,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!getUserInviteRequestResult.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT));
                     return false;
                 }
 
@@ -453,6 +524,7 @@ namespace DCL.Communities.CommunitiesCard
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
             spriteCache = null;
 
+            RestoreInput();
             ResetSubControllers();
             viewInstance!.ResetToggle(false);
         }
@@ -462,6 +534,8 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Reset();
             placesSectionController?.Reset();
             eventListController?.Reset();
+            communityCardVoiceChatController?.Reset();
+            announcementsSectionController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
@@ -484,6 +558,9 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
+                    break;
+                case CommunityCardView.Sections.ANNOUNCEMENTS:
+                    announcementsSectionController!.ShowAnnouncements(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
         }
@@ -513,7 +590,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(JOIN_COMMUNITY_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(JOIN_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -545,7 +622,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LEAVE_COMMUNITY_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LEAVE_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -573,7 +650,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
                 }
 
                 communityData.SetPendingInviteOrRequestId(result.Value);
@@ -598,7 +675,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
                 }
 
                 communityData.SetPendingInviteOrRequestId(null);
@@ -623,7 +700,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
                 }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
@@ -657,12 +734,18 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
                 }
 
                 CloseController();
             }
         }
+
+        private void DisableShortcutsInput() =>
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        private void RestoreInput() =>
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));

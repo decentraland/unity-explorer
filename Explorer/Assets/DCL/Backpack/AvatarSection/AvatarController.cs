@@ -1,57 +1,98 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
-using DCL.Input;
+using DCL.CharacterPreview;
 using DCL.UI;
 using System;
+using DCL.Browser;
+using DCL.FeatureFlags;
 using UnityEngine;
 
 namespace DCL.Backpack
 {
     public class AvatarController : ISection, IDisposable
     {
-        private readonly RectTransform rectTransform;
-        private readonly BackpackSlotsController slotsController;
-        private readonly BackpackGridController backpackGridController;
         private readonly AvatarView view;
+        private readonly RectTransform rectTransform;
+        private readonly IWebBrowser webBrowser;
+        private readonly BackpackSlotsController slotsController;
+        private readonly CategoriesPresenter categoriesPresenter;
+        private readonly OutfitsPresenter outfitsPresenter;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
+        private readonly BackpackGridController backpackGridController;
+        private readonly AvatarTabsManager tabsManager;
 
         public AvatarController(AvatarView view,
+            FeatureFlagsConfiguration featureFlags,
+            IWebBrowser webBrowser,
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
             BackpackCommandBus backpackCommandBus,
             IBackpackEventBus backpackEventBus,
-            BackpackGridController backpackGridController,
             BackpackInfoPanelController backpackInfoPanelController,
-            IThumbnailProvider thumbnailProvider,
-            IInputBlock inputBlock)
+            BackpackGridController backpackGridController,
+            CategoriesPresenter categoriesPresenter,
+            OutfitsPresenter outfitsPresenter,
+            IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
+            this.webBrowser = webBrowser;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
-            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus, inputBlock);
-            slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds, thumbnailProvider);
-
+            this.categoriesPresenter = categoriesPresenter;
+            this.outfitsPresenter = outfitsPresenter;
+            
             rectTransform = view.GetComponent<RectTransform>();
+
+            view.marketplaceButton.onClick.AddListener(OnOpenMarketplace);
+
+            slotsController = new BackpackSlotsController(slotViews,
+                backpackCommandBus,
+                backpackEventBus,
+                rarityBackgrounds,
+                thumbnailProvider);
+
+            tabsManager = AvatarTabsManager.CreateFromView(
+                view,
+                categoriesPresenter,
+                outfitsPresenter,
+                (RectTransform) view.transform);
+
+            bool isOutfitsEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED);
+            if (!isOutfitsEnabled)
+                tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
+            
+            tabsManager.InitializeAndEnable();
+        }
+
+        private void OnOpenMarketplace()
+        {
+            webBrowser.OpenUrl("https://market.decentraland.org/");
         }
 
         public void Dispose()
         {
+            tabsManager.Dispose();
             slotsController?.Dispose();
+            categoriesPresenter?.Dispose();
+            outfitsPresenter?.Dispose();
             backpackInfoPanelController?.Dispose();
-            backpackGridController?.Dispose();
+            view.marketplaceButton.onClick.RemoveAllListeners();
         }
 
-        public void RequestInitialWearablesPage() =>
-            backpackGridController.RequestPage(1, true);
-
-        public void Activate() =>
-            backpackGridController.Activate();
+        public void Activate()
+        {
+            tabsManager.Show();
+        }
 
         public void Deactivate()
         {
-            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+            tabsManager.DeactivateAll();
+            
+            backpackCommandBus.SendCommand(new BackpackFilterCommand(string.Empty,
+                AvatarWearableCategoryEnum.Body, string.Empty));
+
             backpackGridController.Deactivate();
         }
 

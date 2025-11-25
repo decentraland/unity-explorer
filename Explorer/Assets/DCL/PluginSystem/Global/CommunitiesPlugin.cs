@@ -22,6 +22,8 @@ using DCL.SocialService;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -49,14 +51,15 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
-        private readonly IEventsApiService eventsApiService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IRPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
 
         private CommunityCardController? communityCardController;
@@ -78,15 +81,16 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService,
+            HttpEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
-            LambdasProfilesProvider lambdasProfilesProvider,
+            IProfileRepository profileRepository,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -105,9 +109,10 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(realmNavigator);
@@ -119,6 +124,7 @@ namespace DCL.PluginSystem.Global
             communityCreationEditionController?.Dispose();
             eventInfoController?.Dispose();
             notificationHandler.Dispose();
+            rpcCommunitiesService.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -148,10 +154,15 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 decentralandUrlsSource,
                 web3IdentityCache,
-                lambdasProfilesProvider,
-                galleryEventBus);
+                profileRepository,
+                galleryEventBus,
+                voiceChatOrchestrator,
+                inputBlock);
 
             mvcManager.RegisterController(communityCardController);
+
+            VoiceChatCommunityCardBridge.SetOpenCommunityCardAction(communityId =>
+                mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId)), ct: ct));
 
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
@@ -163,7 +174,7 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 selfProfile,
                 mvcManager,
-                lambdasProfilesProvider);
+                profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();

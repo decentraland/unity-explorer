@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.FeatureFlags;
+using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -11,7 +12,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {
@@ -30,6 +31,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public TMP_Text UserAddress { get; private set; }
         [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
+        [field: SerializeField] public GameObject OfficialBadge { get; private set; }
         [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
         [field: SerializeField] public Button CopyNameButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; }
@@ -54,6 +56,8 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private CancellationTokenSource copyAnimationCts = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
+
+        public override bool IsInteractable { get; set; }
 
         public override void UnregisterListeners()
         {
@@ -83,7 +87,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor);
+            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor, settings.showWalletSection, OfficialWalletsHelper.Instance.IsOfficialWallet(settings.userData.userAddress));
 
             if (settings.showProfilePicture)
             {
@@ -120,16 +124,26 @@ namespace DCL.UI.GenericContextMenu.Controls
             }
         }
 
-        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor)
+        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor, bool showWalletSection, bool isOfficial)
         {
             UserName.text = userName;
             UserName.color = userColor;
             UserNameTag.text = $"#{userAddress[^4..]}";
-            UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
+
+            if (!showWalletSection)
+            {
+                userAddressRectTransform.gameObject.SetActive(false);
+            }
+            else
+            {
+                userAddressRectTransform.gameObject.SetActive(true);
+                UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
+            }
 
             UserNameTag.gameObject.SetActive(!hasClaimedName);
             ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
             ClaimedNameBadgeSeparator.gameObject.SetActive(hasClaimedName);
+            OfficialBadge.SetActive(isOfficial);
 
             CopyAddressToast.Hide(true);
             CopyNameToast.Hide(true);
@@ -138,10 +152,12 @@ namespace DCL.UI.GenericContextMenu.Controls
         private float CalculateComponentHeight()
         {
             float totalHeight = Math.Max(userNameRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
-                                + Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
                                 + HorizontalLayoutComponent.padding.bottom
                                 + HorizontalLayoutComponent.padding.top
-                                + (ContentVerticalLayout.spacing * 2);
+                                + ContentVerticalLayout.spacing;
+
+            if (userAddressRectTransform.gameObject.activeSelf)
+                totalHeight += Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT) + ContentVerticalLayout.spacing;
 
             if (ProfilePictureView.gameObject.activeSelf)
                 totalHeight += Math.Max(faceFrameRectTransform.rect.height, FACE_FRAME_MIN_HEIGHT);

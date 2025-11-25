@@ -45,10 +45,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackEquipWearableCommand
     {
         public readonly string Id;
+        public readonly bool IsManuallyEquipped; // True when the wearable is equipped 'manually' from the user in the backpack UI
 
-        public BackpackEquipWearableCommand(string id)
+        public BackpackEquipWearableCommand(string id, bool isManuallyEquipped)
         {
             Id = id;
+            IsManuallyEquipped = isManuallyEquipped;
         }
     }
 
@@ -94,24 +96,16 @@ namespace DCL.Backpack.BackpackBus
         }
     }
 
-    public readonly struct BackpackFilterCategoryCommand
+    public readonly struct BackpackFilterCommand
     {
-        public readonly string Category;
-        public readonly AvatarWearableCategoryEnum CategoryEnum;
+        public readonly string? Category;
+        public readonly AvatarWearableCategoryEnum? CategoryEnum;
+        public readonly string? SearchText;
 
-        public BackpackFilterCategoryCommand(string category, AvatarWearableCategoryEnum categoryEnum = AvatarWearableCategoryEnum.Body)
+        public BackpackFilterCommand(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
             Category = category;
             CategoryEnum = categoryEnum;
-        }
-    }
-
-    public readonly struct BackpackSearchCommand
-    {
-        public readonly string SearchText;
-
-        public BackpackSearchCommand(string searchText)
-        {
             SearchText = searchText;
         }
     }
@@ -129,6 +123,9 @@ namespace DCL.Backpack.BackpackBus
     }
 
     public readonly struct BackpackUnEquipAllCommand { }
-
     public readonly struct BackpackPublishProfileCommand { }
+
+    public readonly struct BackpackUnEquipAllWearablesCommand
+    {
+    }
 }

@@ -5,9 +5,10 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles;
+using ECS.Groups;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -18,9 +19,6 @@ using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
-using UnityEngine;
-using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
-using LoadWearablesDTOByPointersSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesDTOByPointersSystem;
 
 namespace DCL.GlobalPartitioning
 {
@@ -29,13 +27,7 @@ namespace DCL.GlobalPartitioning
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
-    [UpdateBefore(typeof(LoadSceneDefinitionListSystem))]
-    [UpdateBefore(typeof(LoadSceneSystem))]
-    [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
-    [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
-    [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
-    [UpdateBefore(typeof(LoadWearablesDTOByPointersSystem))]
-    [UpdateBefore(typeof(LoadWearablesByParamSystem))]
+    [UpdateBefore(typeof(LoadGlobalSystemGroup))]
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS_SCENES_ASSETS;
@@ -53,14 +45,16 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
+                CreateQuery<GetSmartWearableSceneIntention, GetSmartWearableSceneIntention.Result>(),
                 CreateQuery<GetAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
-                CreateQuery<GetTextureIntention, Texture2DData>(),
+                CreateQuery<GetTextureIntention, TextureData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>()
+                CreateQuery<GetGLTFIntention, GLTFData>(),
+                CreateQuery<GetProfilesBatchIntent, ProfilesBatchResult>(),
             };
 
             COMPONENT_HANDLERS_SCENES = new[]

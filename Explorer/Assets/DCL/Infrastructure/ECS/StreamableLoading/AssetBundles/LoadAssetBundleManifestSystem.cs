@@ -3,9 +3,12 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.Platforms;
+using DCL.Utility;
 using DCL.WebRequests;
+using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -18,7 +21,7 @@ using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
     {
@@ -66,8 +69,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
 
-        private const int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
-        private const int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+
 
         private void CheckSceneAbDTO(string version, string hash)
         {
@@ -75,7 +77,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version missing for {hash}");
 
             var intVersion = int.Parse(version.AsSpan().Slice(1));
-            int supportedVersion  = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? AB_MIN_SUPPORTED_VERSION_WINDOWS : AB_MIN_SUPPORTED_VERSION_MAC;
+            int supportedVersion = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_WINDOWS : AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_MAC;
 
             if (intVersion < supportedVersion)
                 ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version {intVersion} is not supported. Minimum supported version is {supportedVersion}, Asset bundle {hash} requires rebuild");

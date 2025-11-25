@@ -530,13 +530,65 @@ MonoBehaviour:
       Severity: 1
     - Category: CHAT_HISTORY
       Severity: 1
+    - Category: SKYBOX
+      Severity: 4
+    - Category: SKYBOX
+      Severity: 1
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 0
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 2
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 4
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 0
     - Category: COMMUNITY_VOICE_CHAT
       Severity: 4
     - Category: COMMUNITY_VOICE_CHAT
       Severity: 1
-    - Category: SKYBOX
+    - Category: VOICE_CHAT
+      Severity: 0
+    - Category: VOICE_CHAT
       Severity: 4
-    - Category: SKYBOX
+    - Category: VOICE_CHAT
+      Severity: 1
+    - Category: CHAT_TRANSLATE
+      Severity: 3
+    - Category: CHAT_TRANSLATE
+      Severity: 2
+    - Category: CHAT_TRANSLATE
+      Severity: 0
+    - Category: CHAT_TRANSLATE
+      Severity: 4
+    - Category: TRANSLATE
+      Severity: 0
+    - Category: TRANSLATE
+      Severity: 4
+    - Category: TRANSLATE
+      Severity: 1
+    - Category: TRANSLATE
+      Severity: 2
+    - Category: TRANSLATE
+      Severity: 3
+    - Category: OUTFITS
+      Severity: 0
+    - Category: OUTFITS
+      Severity: 4
+    - Category: OUTFITS
+      Severity: 1
+    - Category: SOCIAL
+      Severity: 0
+    - Category: SOCIAL
+      Severity: 4
+    - Category: SOCIAL
       Severity: 1
   sentryMatrix:
     entries: []

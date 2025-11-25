@@ -15,14 +15,14 @@ namespace DCL.Interaction.Utility
     public static class RaycastUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsSDKLayerInCollisionMask(ColliderLayer layer, ColliderLayer mask) =>
+        public static bool IsSDKLayerInCollisionMask(ColliderLayer layer, ColliderLayer mask) =>
             (mask & layer) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsPlayer(Collider collider) =>
+        public static bool IsPlayer(Collider collider) =>
             collider.gameObject.layer == PhysicsLayers.CHARACTER_LAYER;
 
-        internal static bool TryCreateRay(this PBRaycast sdkRaycast,
+        public static bool TryCreateRay(this PBRaycast sdkRaycast,
             World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             Vector3 sceneRootPos, in TransformComponent entityTransform, out Ray ray)
         {
@@ -75,13 +75,13 @@ namespace DCL.Interaction.Utility
             target.FillSDKRaycastHit(sceneRootPosition, intent.RaycastHit, string.Empty, crdtEntity, intent.Ray.origin, intent.Ray.direction);
         }
 
-        public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
+        public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity? crdtEntity,
             Vector3 globalOrigin,
             Vector3 direction)
         {
-            target.EntityId = (uint)crdtEntity.Id;
+            if (crdtEntity.HasValue)
+                target.EntityId = (uint)crdtEntity.Value.Id;
 
-            // There is no real value in passing MeshName
             target.MeshName = colliderName;
             target.Length = unityHit.distance;
             target.GlobalOrigin.Set(globalOrigin);

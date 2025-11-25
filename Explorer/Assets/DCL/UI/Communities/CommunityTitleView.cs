@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Controls.Configs;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using System;
 
 namespace DCL.UI.Communities
@@ -15,7 +14,7 @@ namespace DCL.UI.Communities
     /// </summary>
     public class CommunityTitleView : MonoBehaviour
     {
-        public delegate void OpenContextMenuDelegate(GenericContextMenuParameter.GenericContextMenuParameter parameter, Action onClosed, CancellationToken ct);
+        public delegate void OpenContextMenuDelegate(GenericContextMenuParameter parameter, Action onClosed, CancellationToken ct);
         public delegate void ContextMenuOpenedDelegate();
         public delegate void ContextMenuClosedDelegate();
         public delegate void ViewCommunityRequestedDelegate();
@@ -40,11 +39,11 @@ namespace DCL.UI.Communities
         private OpenContextMenuDelegate openContextMenu;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
-        private GenericContextMenuParameter.GenericContextMenu contextMenuConfig;
+        private GenericContextMenu contextMenuConfig;
 
         public async UniTaskVoid SetupAsync(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
         {
-            contextMenuConfig = new GenericContextMenuParameter.GenericContextMenu(contextMenuSettings.Width, contextMenuSettings.Offset, contextMenuSettings.VerticalLayoutPadding, contextMenuSettings.ElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
+            contextMenuConfig = new GenericContextMenu(contextMenuSettings.Width, contextMenuSettings.Offset, contextMenuSettings.VerticalLayoutPadding, contextMenuSettings.ElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
                                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText, contextMenuSettings.ViewCommunitySprite, () => ViewCommunityRequested?.Invoke()));
 
             openContextMenu = openContextMenuAction;
@@ -67,7 +66,7 @@ namespace DCL.UI.Communities
             cts = cts.SafeRestart();
             ContextMenuOpened?.Invoke();
             openTitleButton.OnSelect(null);
-            openContextMenu(new GenericContextMenuParameter.GenericContextMenuParameter(contextMenuConfig, openTitleButton.transform.position), OnContextMenuClosed, cts.Token);
+            openContextMenu(new GenericContextMenuParameter(contextMenuConfig, openTitleButton.transform.position), OnContextMenuClosed, cts.Token);
         }
 
         private void OnContextMenuClosed()

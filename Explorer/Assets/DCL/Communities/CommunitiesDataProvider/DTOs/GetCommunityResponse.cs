@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -6,16 +7,27 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetCommunityResponse
     {
         [Serializable]
+        [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
+        public struct VoiceChatStatus
+        {
+            public bool isActive;
+            public int participantCount;
+            public int moderatorCount;
+        }
+
+        [Serializable]
         public struct CommunityData
         {
             public string id;
-            public CommunityThumbnails? thumbnails;
+            public string thumbnailUrl;
             public string name;
             public string description;
             public string ownerAddress;
             public CommunityPrivacy privacy;
+            public CommunityVisibility visibility;
             public CommunityMemberRole role;
             public int membersCount;
+            public VoiceChatStatus voiceChatStatus;
 
             public string pendingInviteOrRequestId;
             public InviteRequestAction pendingActionType;

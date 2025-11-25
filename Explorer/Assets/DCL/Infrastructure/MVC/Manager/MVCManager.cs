@@ -114,19 +114,16 @@ namespace MVC
 
             // Hide all popups in the stack and clear it
             if (overlayPushInfo.PopupControllers != null)
-                CloseAllPopups(overlayPushInfo.PopupControllers, ct);
+                CloseAllPopups(overlayPushInfo.PopupControllers);
 
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)
-            {
-                overlayPushInfo.FullscreenController.HideViewAsync(ct).Forget();
                 windowsStackManager.PopFullscreen(overlayPushInfo.FullscreenController);
-            }
 
             // Hide the popup closer
             popupCloser.HideAsync(ct).Forget();
 
-            await command.Execute(controller, overlayPushInfo.ControllerOrdering, ct);
+            await UniTask.WhenAny(command.Execute(controller, overlayPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
 
             await controller.HideViewAsync(ct);
         }
@@ -137,7 +134,7 @@ namespace MVC
             // Push a new fullscreen controller
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
 
-            try { await command.Execute(controller, persistentPushInfo.ControllerOrdering, ct); }
+            try { await UniTask.WhenAny(command.Execute(controller, persistentPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct)); }
             finally
             {
                 // If an exception occured in the life cycle of the persistent view, we must remove it from the stack
@@ -150,11 +147,11 @@ namespace MVC
             }
         }
 
-        private void CloseAllPopups(List<(IController, int)> popupControllers, CancellationToken ct)
+        private void CloseAllPopups(List<(IController, int)> popupControllers)
         {
             // Hide all popups in the stack and clear it
             for (int i = popupControllers.Count - 1; i >= 0; i--)
-                popupControllers[i].Item1.HideViewAsync(ct).Forget();
+                windowsStackManager.PopPopup(popupControllers[i].Item1);
 
             popupControllers.Clear();
         }
@@ -165,18 +162,23 @@ namespace MVC
             if (windowsStackManager.CurrentFullscreenController == controller)
                 return;
 
+            //Hide current fullscreen if any so it's safe to push a new one
+            if (windowsStackManager.CurrentFullscreenController != null)
+                windowsStackManager.PopFullscreen(windowsStackManager.CurrentFullscreenController);
+
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 
             try
             {
-                CloseAllPopups(fullscreenPushInfo.PopupControllers, ct);
+                CloseAllPopups(fullscreenPushInfo.PopupControllers);
 
                 // Hide the popup closer
                 popupCloser.HideAsync(ct).Forget();
 
                 await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
-                    fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct));
+                    fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct),
+                    windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
 
                 await controller.HideViewAsync(ct);
             }
@@ -197,7 +199,8 @@ namespace MVC
                 await UniTask.WhenAny(
                     UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
                     WaitForPopupCloserClickAsync(controller, ct),
-                    pushPopupPush.OnClose?.Task ?? UniTask.Never(ct));
+                    pushPopupPush.OnClose?.Task ?? UniTask.Never(ct),
+                    windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
 
                 // "Close" command has been received
                 await controller.HideViewAsync(ct);

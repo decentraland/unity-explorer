@@ -2,8 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Utilities;
 using MVC;
 using System;
@@ -83,7 +82,7 @@ namespace DCL.Communities.EventInfo
 
             ResetScrollPosition();
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(eventData.Image, eventImage, null, cancellationToken).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventData.Image, eventImage, null, cancellationToken, true).Forget();
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);

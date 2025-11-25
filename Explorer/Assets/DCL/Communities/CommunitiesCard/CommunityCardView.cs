@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
@@ -7,9 +8,9 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard
 {
@@ -44,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard
             PHOTOS,
             MEMBERS,
             PLACES,
+            ANNOUNCEMENTS,
         }
 
         [Serializable]
@@ -73,6 +74,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
+        [field: SerializeField] internal CommunityCardVoiceChatView communityCardVoiceChatView { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
 
         [field: Header("Community interactions")]
@@ -94,6 +96,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject privateCommunityIcon { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
+        [field: SerializeField] public GameObject UnlistedMark { get; private set; } = null!;
+        [field: SerializeField] public GameObject UnlistedSeparator { get; private set; } = null!;
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
@@ -101,6 +105,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button membersButton { get; set; } = null!;
         [field: SerializeField] private Button placesButton { get; set; } = null!;
         [field: SerializeField] private Button placesWithSignButton { get; set; } = null!;
+        [field: SerializeField] private Button announcementsButton { get; set; } = null!;
         [field: SerializeField] private Button placesShortcutButton { get; set; } = null!;
         [field: SerializeField] private Button membersTextButton { get; set; } = null!;
 
@@ -109,23 +114,27 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject membersSectionSelection { get; set; } = null!;
         [field: SerializeField] private GameObject placesSectionSelection { get; set; } = null!;
         [field: SerializeField] private GameObject placesWithSignSectionSelection { get; set; } = null!;
+        [field: SerializeField] private GameObject announcementsSelection { get; set; } = null!;
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; } = null!;
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
+        [field: SerializeField] public AnnouncementsSectionView AnnouncementsSectionView { get; private set; } = null!;
 
         [field: Header("Restricted Access")]
         [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsAllowed { get; private set; }
         [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsNotAllowed { get; private set; }
 
-        private readonly UniTask[] closingTasks = new UniTask[3];
+        private readonly UniTask[] closingTasks = new UniTask[6];
+
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
+        private Sections? currentSection;
 
         private void Awake()
         {
@@ -164,6 +173,11 @@ namespace DCL.Communities.CommunitiesCard
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
+
+            bool isAnnouncementsFeatureEnabled = CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled();
+            announcementsButton.gameObject.SetActive(isAnnouncementsFeatureEnabled);
+            if (isAnnouncementsFeatureEnabled)
+                announcementsButton.onClick.AddListener(() => ToggleSection(Sections.ANNOUNCEMENTS));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget,
@@ -243,6 +257,9 @@ namespace DCL.Communities.CommunitiesCard
             closingTasks[0] = closeButton.OnClickAsync(ct);
             closingTasks[1] = backgroundCloseButton.OnClickAsync(ct);
             closingTasks[2] = controllerTask;
+            closingTasks[3] = communityCardVoiceChatView.StartStreamButton.OnClickAsync(ct);
+            closingTasks[4] = communityCardVoiceChatView.ListeningButton.OnClickAsync(ct);
+            closingTasks[5] = communityCardVoiceChatView.JoinStreamButton.OnClickAsync(ct);
 
             return closingTasks;
         }
@@ -253,8 +270,11 @@ namespace DCL.Communities.CommunitiesCard
             backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        public void ResetToggle(bool invokeEvent) =>
-            ToggleSection(Sections.MEMBERS, invokeEvent);
+        public void ResetToggle(bool invokeEvent)
+        {
+            currentSection = null;
+            ToggleSection(CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? Sections.ANNOUNCEMENTS : Sections.MEMBERS, invokeEvent);
+        }
 
         public void SetLoadingState(bool isLoading)
         {
@@ -262,6 +282,11 @@ namespace DCL.Communities.CommunitiesCard
             communityMembersNumber.enabled = !isLoading;
             communityDescription.enabled = !isLoading;
             EventListView.SetLoadingStateActive(isLoading);
+
+            announcementsButton.interactable = !isLoading;
+            membersButton.interactable = !isLoading;
+            placesButton.interactable = !isLoading;
+            photosButton.interactable = !isLoading;
 
             if (isLoading)
                 loadingObject.ShowLoading();
@@ -271,14 +296,20 @@ namespace DCL.Communities.CommunitiesCard
 
         private void ToggleSection(Sections section, bool invokeEvent = true)
         {
+            if (section == currentSection) return;
+
+            currentSection = section;
+
             photosSectionSelection.SetActive(section == Sections.PHOTOS);
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
             placesSectionSelection.SetActive(section == Sections.PLACES);
             placesWithSignSectionSelection.SetActive(section == Sections.PLACES);
+            announcementsSelection.SetActive(section == Sections.ANNOUNCEMENTS);
 
             CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
             PlacesSectionView.SetActive(section == Sections.PLACES);
+            AnnouncementsSectionView.SetActive(section == Sections.ANNOUNCEMENTS);
 
             if (invokeEvent)
                 SectionChanged?.Invoke(section);
@@ -328,12 +359,13 @@ namespace DCL.Communities.CommunitiesCard
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
             communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
+            UnlistedMark.SetActive(communityData.visibility == CommunityVisibility.unlisted);
+            UnlistedSeparator.SetActive(communityData.visibility == CommunityVisibility.unlisted);
 
             publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
             privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
 
-            if (communityData.thumbnails != null)
-                thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, CommunityThumbnail, defaultCommunityImage, cancellationToken, true).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;

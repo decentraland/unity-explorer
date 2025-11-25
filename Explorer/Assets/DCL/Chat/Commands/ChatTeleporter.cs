@@ -2,12 +2,12 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.Chat.Commands
 {
@@ -46,6 +46,7 @@ namespace DCL.Chat.Commands
         public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int? targetPosition, CancellationToken ct)
         {
             string realmAddress;
+            bool isWorld = false;
 
             if (realm.StartsWith("https"))
                 realmAddress = realm;
@@ -60,6 +61,7 @@ namespace DCL.Chat.Commands
                 }
 
                 realmAddress = GetWorldAddress(realm);
+                isWorld = true;
             }
 
             var realmURL = URLDomain.FromString(realmAddress!);
@@ -69,7 +71,7 @@ namespace DCL.Chat.Commands
             if (!environmentValidationResult.Success)
                 return environmentValidationResult.ErrorMessage!;
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition ?? default);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition ?? default, isWorld);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -83,6 +85,8 @@ namespace DCL.Chat.Commands
                        ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
                        ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
                        ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
+                       ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
+                       ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
@@ -102,7 +106,7 @@ namespace DCL.Chat.Commands
             return error.State switch
                    {
                        TaskError.MessageError => $"🔴 Error: {error.Message}",
-                       TaskError.Timeout => "🔴 Error: Timeout",
+                       TaskError.Timeout => "🔴 Error: Timeout. Verify your connection.",
                        TaskError.Cancelled => "🔴 Error: The operation was canceled!",
                        TaskError.UnexpectedException => $"🔴 Error: {error.Message}",
                        _ => throw new ArgumentOutOfRangeException(),

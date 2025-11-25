@@ -44,14 +44,6 @@ namespace DCL.RealmNavigation
             retrieveScene = null;
         }
 
-        public WaitForSceneReadiness TeleportToSceneSpawnPoint(SceneEntityDefinition sceneDef, CancellationToken ct)
-        {
-            Vector2Int parcel = sceneDef.metadata.scene.DecodedBase;
-            var loadReport = AsyncLoadProcessReport.Create(ct);
-            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport));
-            return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
-        }
-
         /// <summary>
         ///     If current scene is still loading it will block the teleport until its assets are resolved or timed out
         /// </summary>
@@ -63,6 +55,9 @@ namespace DCL.RealmNavigation
         /// </summary>
         public UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct) =>
             TeleportAsync(parcel, loadReport, ct, nullifySceneDef: true);
+
+        public void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct) =>
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDataSceneEntityDefinition, Vector2Int.zero, TeleportUtils.PickTargetWithOffset(sceneDataSceneEntityDefinition, sceneDataSceneEntityDefinition.metadata.scene.DecodedBase).targetWorldPosition, ct, isPositionSet: true));
 
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false)
         {

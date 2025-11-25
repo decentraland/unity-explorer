@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SDKComponents.AudioSources;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -219,8 +220,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
-                        typeof(GameObject),
                         hash! + PlatformUtils.GetCurrentPlatform(),
+                        typeof(GameObject),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         cancellationTokenSource: intention.CancellationTokenSource,

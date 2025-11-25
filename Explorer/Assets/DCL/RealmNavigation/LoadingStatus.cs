@@ -17,14 +17,21 @@ namespace DCL.RealmNavigation
             [LoadingStage.UnloadCacheChecking] = 0.05f,
             [LoadingStage.LiveKitStopping] = 0.1f, //Used in Teleport Flow
             [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
-            [LoadingStage.ProfileLoading] = 0.1f,
-            [LoadingStage.PlayerAvatarLoading] = 0.3f,
+            [LoadingStage.OnboardingChecking] = 0.3f,
+            [LoadingStage.ProfileLoading] = 0.4f,
+            [LoadingStage.PlayerAvatarLoading] = 0.5f,
             [LoadingStage.LandscapeLoading] = 0.6f,
-            [LoadingStage.OnboardingChecking] = 0.7f,
             [LoadingStage.PlayerTeleporting] = 0.85f,
             [LoadingStage.GlobalPXsLoading] = 0.99f, //Used in initialization Flow
             [LoadingStage.LivekitRestarting] = 0.99f, //Used in Teleport Flow
             [LoadingStage.Completed] = 1f
+        };
+
+        private static readonly HashSet<LoadingStage> NonLoadingScreenStages = new()
+        {
+            LoadingStage.Completed,
+            LoadingStage.Init,
+            LoadingStage.AuthenticationScreenShowing,
         };
 
 
@@ -33,13 +40,13 @@ namespace DCL.RealmNavigation
             // Initial loading stages, in order
             Init = 0,
             AuthenticationScreenShowing = 1,
-            ProfileLoading = 2,
-            PlayerAvatarLoading = 3,
-            LandscapeLoading = 4,
-            OnboardingChecking = 5,
+            OnboardingChecking = 2,
+            ProfileLoading = 3,
+            PlayerAvatarLoading = 4,
+            LandscapeLoading = 5,
             PlayerTeleporting = 6,
-            GlobalPXsLoading = 8,
-            Completed = 9,
+            GlobalPXsLoading = 7,
+            Completed = 8,
 
             // Others
             UnloadCacheChecking,
@@ -59,5 +66,8 @@ namespace DCL.RealmNavigation
         {
             AssetState.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
         }
+
+        public bool IsLoadingScreenOn() =>
+            !NonLoadingScreenStages.Contains(CurrentStage.Value);
     }
 }

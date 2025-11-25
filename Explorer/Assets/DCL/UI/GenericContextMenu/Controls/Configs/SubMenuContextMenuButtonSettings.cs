@@ -1,9 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenuParameter;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.Controls.Configs
 {
     public class SubMenuContextMenuButtonSettings : IContextMenuControlSettings
     {
@@ -16,11 +15,11 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly bool horizontalLayoutReverseArrangement;
         internal readonly Color textColor;
         internal readonly Color iconColor;
-        internal readonly GenericContextMenuParameter.GenericContextMenu subMenu;
+        internal readonly GenericContextMenu subMenu;
         internal readonly float anchorPadding;
 
         public delegate UniTask<bool> VisibilityResolverDelegate(CancellationToken ct);
-        public delegate UniTask SettingsFillingDelegate(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct);
+        public delegate UniTask SettingsFillingDelegate(GenericContextMenu contextSubMenu, CancellationToken ct);
 
         internal readonly VisibilityResolverDelegate asyncVisibilityResolverDelegate;
         internal readonly SettingsFillingDelegate asyncControlSettingsFillingDelegate;
@@ -34,7 +33,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         /// </summary>
         public SubMenuContextMenuButtonSettings(string buttonText,
             Sprite buttonIcon,
-            GenericContextMenuParameter.GenericContextMenu subMenu,
+            GenericContextMenu subMenu,
             float anchorPadding = 24.5f,
             RectOffset horizontalLayoutPadding = null,
             int horizontalLayoutSpacing = 10,

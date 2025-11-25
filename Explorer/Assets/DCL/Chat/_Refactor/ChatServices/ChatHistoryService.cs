@@ -4,7 +4,9 @@ using DCL.Chat.MessageBus;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+using DCL.Translation.Service;
 
 namespace DCL.Chat.ChatServices
 {
@@ -17,15 +19,22 @@ namespace DCL.Chat.ChatServices
         private readonly IChatHistory chatHistory;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatConfig.ChatConfig chatConfig;
+        private readonly ITranslationService translationService;
         private readonly ChatSettingsAsset chatSettings;
 
-        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig.ChatConfig chatConfig, ChatSettingsAsset chatSettings)
+        public ChatHistoryService(IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
+            ITextFormatter hyperlinkTextFormatter,
+            ChatConfig.ChatConfig chatConfig,
+            ChatSettingsAsset chatSettings,
+            ITranslationService translationService)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.chatConfig = chatConfig;
             this.chatSettings = chatSettings;
             this.chatHistory = chatHistory;
+            this.translationService = translationService;
 
             chatMessagesBus.MessageAdded += OnChatMessageAdded;
         }
@@ -42,17 +51,26 @@ namespace DCL.Chat.ChatServices
             if (type == ChatChannel.ChatChannelType.COMMUNITY && !chatHistory.Channels.ContainsKey(channel))
                 return;
 
-            if (!message.IsSystemMessage && !IsCopyOfSystemMessage(message.Message))
+            var messageToAdd = message;
+            bool isCopyOfSystemMessage = IsCopyOfSystemMessage(message.Message);
+            bool isSystemMessage = message.IsSystemMessage;
+
+            if (!isSystemMessage && !isCopyOfSystemMessage)
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
-                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, message);
-                chatHistory.AddMessage(channel, type, newChatMessage);
+                messageToAdd = ChatMessage.CopyWithNewMessage(formattedText, message);
             }
-            else
 
-                // The system message is formatted apriori
-                chatHistory.AddMessage(channel, type, message);
+            chatHistory.AddMessage(channel, type, messageToAdd);
 
+            if (!messageToAdd.IsSystemMessage && !messageToAdd.IsSentByOwnUser)
+            {
+                translationService.ProcessIncomingMessage(messageToAdd.MessageId,
+                    messageToAdd.SenderWalletAddress,
+                    messageToAdd.Message,
+                    channel.Id);
+            }
+            
             HandleMessageAudioFeedback(message, channel);
         }
 
@@ -74,19 +92,55 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        /// <summary>
-        ///     Determines if a message string is a copy of a system message by checking for status emojis.
-        /// </summary>
-        /// <param name="message">The message content to check.</param>
-        /// <returns>True if the message starts with a known system message emoji.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ReadOnlySpan<char> TrimStartIgnorables(ReadOnlySpan<char> s)
+        {
+            int i = 0;
+            while (i < s.Length)
+            {
+                char ch = s[i];
+
+                // skip whitespace (includes NBSP, newlines)
+                if (char.IsWhiteSpace(ch))
+                {
+                    i++;
+                    continue;
+                }
+
+                // skip format/control-like invisibles (ZWSP, ZWJ, LRM, RLM, BOM, VS16, etc.)
+                var cat = char.GetUnicodeCategory(ch);
+                if (cat == UnicodeCategory.Format || ch == '\uFEFF')
+                {
+                    i++;
+                    continue;
+                }
+
+                break;
+            }
+
+            return s.Slice(i);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsCopyOfSystemMessage(string message)
         {
-            // System messages are identified by starting with one of these status emojis.
-            // We check for these to avoid re-formatting a message that a user has copied and pasted.
-            return message.StartsWith("🟢") ||
-                   message.StartsWith("🔴") ||
-                   message.StartsWith("🟡");
+            // normalize the front edge
+            var s = TrimStartIgnorables(message.AsSpan());
+
+            // compare EXACTLY (ordinal), not culture-aware
+            if (s.StartsWith("🟢".AsSpan(), StringComparison.Ordinal)) return AfterMarkerLooksLikeSystem(s, "🟢");
+            if (s.StartsWith("🔴".AsSpan(), StringComparison.Ordinal)) return AfterMarkerLooksLikeSystem(s, "🔴");
+            if (s.StartsWith("🟡".AsSpan(), StringComparison.Ordinal)) return AfterMarkerLooksLikeSystem(s, "🟡");
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool AfterMarkerLooksLikeSystem(ReadOnlySpan<char> s, string marker)
+        {
+            // Require a space or punctuation right after the marker.
+            var rest = s.Slice(marker.AsSpan().Length);
+            return rest.Length == 0 || char.IsWhiteSpace(rest[0]) || ":-—–,;.!?)]}".AsSpan().IndexOf(rest[0]) >= 0;
         }
     }
 }

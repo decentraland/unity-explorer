@@ -6,22 +6,22 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
-using Utility.Types;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly Dictionary<string, string> userNames = new (StringComparer.OrdinalIgnoreCase);
 
         private string[] communityPlaceIds;
@@ -78,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            LambdasProfilesProvider lambdasProfilesProvider) : base (view, PAGE_SIZE)
+            IProfileRepository profileRepository) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -88,7 +88,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -147,7 +147,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
                 if (!result.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE));
                     return;
                 }
 
@@ -184,7 +184,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             clipboard.Set(GetPlaceCopyLink(place));
 
-            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private static string GetPlaceCopyLink(PlaceInfo place)
@@ -213,7 +213,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
                 }
 
                 placeInfo.user_favorite = favoriteValue;
@@ -237,7 +237,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetDislikeToggle(!dislikeValue);
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -268,7 +268,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -309,7 +309,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.PageNumber--;
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
                 return placesFetchData.TotalToFetch;
             }
 
@@ -320,19 +320,14 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             if (userIds.Value.Count > 0)
             {
-                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
-                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                List<Profile> getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
 
-                if (!getAvatarsDetailsResult.Success)
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
+                if (getAvatarsDetailsResult.Count == 0)
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 else
-                    foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                    foreach (Profile? profile in getAvatarsDetailsResult)
                     {
-                        if (avatarDetails.avatars.Count == 0)
-                            continue;
-
-                        ProfileJsonDto avatar = avatarDetails.avatars[0];
-                        userNames.Add(avatar.userId, avatar.name);
+                        userNames.Add(profile.UserId, profile.Name);
                         break;
                     }
             }

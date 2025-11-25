@@ -9,10 +9,13 @@ using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Renderer;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using ECS.Abstract;
+using ECS.Groups;
+using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
+
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -64,7 +67,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             if (!pbNftShape.IsDirty) return;
 
-            bool sourceChanged = pbNftShape.Urn != loadingComponent.Promise.LoadingIntention.URN;
+            bool sourceChanged = pbNftShape.Urn != loadingComponent.OriginalUrn;
 
             nftShapeRendererComponent.PoolableComponent.Apply(pbNftShape, sourceChanged);
 
@@ -72,10 +75,22 @@ namespace DCL.SDKComponents.NFTShape.System
             if (!sourceChanged) return;
 
             changedNftShapes.Add(entity, nftShapeRendererComponent);
-            loadingComponent.Promise.TryDereference(World);
-            loadingComponent.Promise.ForgetLoading(World);
-            World.Remove<NFTLoadingComponent>(entity);
+            loadingComponent.TypePromise.ForgetLoading(World);
 
+            if (loadingComponent.ImagePromise != null)
+            {
+                var imagePromise = loadingComponent.ImagePromise.Value;
+                imagePromise.TryDereference(World);
+                imagePromise.ForgetLoading(World);
+                // Need to reassign reference, otherwise it becomes outdated due to handling a copy
+                loadingComponent.ImagePromise = imagePromise;
+            }
+
+            // Instead of going through the obscure flow of Media Player initialization simply destroy the previous player
+            if (loadingComponent.VideoPlayerEntity != Entity.Null)
+                World.Add(loadingComponent.VideoPlayerEntity, new DeleteEntityIntention());
+
+            World.Remove<NFTLoadingComponent>(entity);
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)

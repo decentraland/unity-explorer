@@ -1,6 +1,5 @@
-using DCL.UI.GenericContextMenu.Controls;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
-namespace DCL.UI.GenericContextMenu
+namespace DCL.UI
 {
     public class ControlsPoolManager : IDisposable
     {
@@ -32,6 +31,7 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab,
             GenericContextMenuTextView textPrefab,
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
+            GenericContextMenuToggleWithIconAndCheckView toggleWithTitleIconAndCheckPrefab,
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab,
             GenericContextMenuSimpleButtonView simpleButtonPrefab,
             GenericContextMenuScrollableButtonListView buttonListPrefab)
@@ -47,6 +47,7 @@ namespace DCL.UI.GenericContextMenu
             CreateObjectPool(buttonPrefab);
             CreateObjectPool(togglePrefab);
             CreateObjectPool(toggleWithIconPrefab);
+            CreateObjectPool(toggleWithTitleIconAndCheckPrefab);
             CreateObjectPool(() =>
             {
                 GenericContextMenuUserProfileView profileView = Object.Instantiate(userProfilePrefab, controlsParent);
@@ -107,20 +108,21 @@ namespace DCL.UI.GenericContextMenu
         public GenericContextMenuComponentBase GetContextMenuComponent(IContextMenuControlSettings settings, int index, Transform parent)
         {
             GenericContextMenuComponentBase component = settings switch
-                                                        {
-                                                            SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
-                                                            ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
-                                                            SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
-                                                            ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
-                                                            ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
-                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
-                                                            UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
-                                                            ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
-                                                            TextContextMenuControlSettings textSettings => GetText(textSettings),
-                                                            SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
-                                                            ScrollableButtonListControlSettings scrollableButtonList => GetScrollableButtonList(scrollableButtonList),
-                                                            _ => throw new ArgumentOutOfRangeException(),
-                                                        };
+                {
+                    SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
+                    ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
+                    SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
+                    ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
+                    ToggleWithIconAndCheckContextMenuControlSettings toggleWithTitleAndIconSettings => GetToggleWithTitleIcon(toggleWithTitleAndIconSettings),
+                    ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
+                    ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
+                    UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
+                    ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
+                    TextContextMenuControlSettings textSettings => GetText(textSettings),
+                    SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
+                    ScrollableButtonListControlSettings scrollableButtonList => GetScrollableButtonList(scrollableButtonList),
+                    _ => throw new ArgumentOutOfRangeException(),
+                };
 
             component.transform.SetParent(parent);
             component!.transform.SetSiblingIndex(index);
@@ -212,6 +214,14 @@ namespace DCL.UI.GenericContextMenu
         private GenericContextMenuComponentBase GetToggleWithIcon(ToggleWithIconContextMenuControlSettings settings)
         {
             GenericContextMenuToggleWithIconView view = GetPoolFromRegistry<GenericContextMenuToggleWithIconView>().Get();
+            view.Configure(settings, settings.initialValue);
+
+            return view;
+        }
+
+        private GenericContextMenuComponentBase GetToggleWithTitleIcon(ToggleWithIconAndCheckContextMenuControlSettings settings)
+        {
+            var view = GetPoolFromRegistry<GenericContextMenuToggleWithIconAndCheckView>().Get();
             view.Configure(settings, settings.initialValue);
 
             return view;

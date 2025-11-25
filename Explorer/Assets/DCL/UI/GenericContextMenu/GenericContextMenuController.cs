@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu.Controls;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls;
+using DCL.UI.Controls.Configs;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -13,20 +12,20 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.UI.GenericContextMenu
+namespace DCL.UI
 {
-    public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter.GenericContextMenuParameter>
+    public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter>
     {
         private readonly struct DeferredConfig
         {
-            public readonly GenericContextMenuParameter.GenericContextMenu Config;
+            public readonly GenericContextMenu Config;
             public readonly GenericContextMenuSubMenuButtonView ParentComponent;
             public readonly SubMenuContextMenuButtonSettings.SettingsFillingDelegate SettingsFillingDelegate;
             public readonly Rect? OverlapRect;
 
             public bool IsAsynchronous => SettingsFillingDelegate != null;
 
-            public DeferredConfig(GenericContextMenuParameter.GenericContextMenu config, GenericContextMenuSubMenuButtonView parentComponent, SubMenuContextMenuButtonSettings.SettingsFillingDelegate settingsFillingDelegate, Rect? overlapRect)
+            public DeferredConfig(GenericContextMenu config, GenericContextMenuSubMenuButtonView parentComponent, SubMenuContextMenuButtonSettings.SettingsFillingDelegate settingsFillingDelegate, Rect? overlapRect)
             {
                 Config = config;
                 ParentComponent = parentComponent;
@@ -159,7 +158,7 @@ namespace DCL.UI.GenericContextMenu
             }
         }
 
-        private void ConfigureContextMenu(ControlsContainerView container, GenericContextMenuParameter.GenericContextMenu contextMenuConfig, Vector2 anchorPosition, Rect? overlapRect)
+        private void ConfigureContextMenu(ControlsContainerView container, GenericContextMenu contextMenuConfig, Vector2 anchorPosition, Rect? overlapRect)
         {
             float totalHeight = 0;
             bool needsLayoutRebuild = false;
@@ -173,6 +172,7 @@ namespace DCL.UI.GenericContextMenu
                 if (!config.Enabled) continue;
 
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i, container.transform);
+                ConfigureComponentInteractability(component, config);
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
                 {
@@ -202,6 +202,7 @@ namespace DCL.UI.GenericContextMenu
                 totalHeight += component!.RectTransformComponent.rect.height;
             }
 
+            container.HideNonInteractableTooltip();
             container.controlsLayoutGroup.spacing = contextMenuConfig.elementsSpacing;
             container.controlsLayoutGroup.padding = contextMenuConfig.verticalLayoutPadding;
             container.containerRim.SetActive(contextMenuConfig.showRim);
@@ -244,6 +245,22 @@ namespace DCL.UI.GenericContextMenu
             }
         }
 
+        private void ConfigureComponentInteractability(GenericContextMenuComponentBase component, GenericContextMenuElement config)
+        {
+            component.IsInteractable = config.Interactable;
+            component.NonInteractableFeedback = config.NonInteractableFeedback;
+            component.OnPointerDownEvent -= OnMenuComponentPointerDown;
+            component.OnPointerDownEvent += OnMenuComponentPointerDown;
+        }
+
+        private void OnMenuComponentPointerDown(GenericContextMenuComponentBase component)
+        {
+            if (!component.IsInteractable)
+                viewInstance!.ControlsContainer.ShowNonInteractableTooltip(component.RectTransformComponent, component.NonInteractableFeedback);
+            else
+                viewInstance!.ControlsContainer.HideNonInteractableTooltip();
+        }
+
         // TODO: Reuse the existing method AdjustPositionToFitBounds with the proper parameters
         private Vector3 AdjustSubmenuPositionToFitBounds(ControlsContainerView container, float4 boundaryRect)
         {
@@ -277,7 +294,7 @@ namespace DCL.UI.GenericContextMenu
             return adjustedPosition;
         }
 
-        private RectTransform GetSubContainerAnchor(RectTransform rightAnchor, RectTransform leftAnchor, GenericContextMenuParameter.GenericContextMenu contextMenuConfig)
+        private RectTransform GetSubContainerAnchor(RectTransform rightAnchor, RectTransform leftAnchor, GenericContextMenu contextMenuConfig)
         {
             Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(null, rightAnchor.position);
 
@@ -287,7 +304,7 @@ namespace DCL.UI.GenericContextMenu
             return leftAnchor;
         }
 
-        private Vector2 GetSubContainerPosition(bool rightAnchor, GenericContextMenuParameter.GenericContextMenu contextMenuConfig)
+        private Vector2 GetSubContainerPosition(bool rightAnchor, GenericContextMenu contextMenuConfig)
         {
             if (rightAnchor) return contextMenuConfig.offsetFromTarget;
 

@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatViewModels;
+using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ namespace DCL.Chat.ChatViews
         [SerializeField] public ProfilePictureView communityProfilePictureView;
         [SerializeField] private ChatUsernameView usernameElement;
         [SerializeField] private Button buttonOpenProfile;
+        [SerializeField] private RectTransform autoTranslateIndicator;
 
         public Button ButtonOpenProfile => buttonOpenProfile;
 
@@ -23,11 +25,12 @@ namespace DCL.Chat.ChatViews
                 userProfilePictureView.Bind(model.Thumbnail, model.ProfileColor);
                 userProfilePictureView.gameObject.SetActive(true);
                 communityProfilePictureView.gameObject.SetActive(false);
-                
+
                 usernameElement.Setup(
                     model.Username,
                     model.WalletId,
                     model.HasClaimedName,
+                    model.IsOfficial,
                     model.ProfileColor
                 );
             }
@@ -37,14 +40,21 @@ namespace DCL.Chat.ChatViews
                 communityProfilePictureView.Bind(model.Thumbnail, model.ProfileColor);
                 userProfilePictureView.gameObject.SetActive(false);
                 communityProfilePictureView.gameObject.SetActive(true);
-                
+
                 usernameElement.Setup(
                     model.Username,
                     null,
                     false,
+                    false,
                     Color.white
                 );
             }
+        }
+
+        public void SetAutoTranslateIndicator(bool isVisible)
+        {
+            if (autoTranslateIndicator != null)
+                autoTranslateIndicator.gameObject.SetActive(isVisible);
         }
 
         public void SetConnectionStatus(bool isOnline, float greyOutOpacity)

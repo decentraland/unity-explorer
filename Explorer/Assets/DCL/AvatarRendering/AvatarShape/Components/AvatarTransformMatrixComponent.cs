@@ -1,7 +1,7 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.Diagnostics;
+using DCL.Utility.Types;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {

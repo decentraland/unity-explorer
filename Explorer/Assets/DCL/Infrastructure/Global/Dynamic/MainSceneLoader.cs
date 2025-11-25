@@ -4,33 +4,40 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
-using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Global.Dynamic;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.ModuleControllers;
+using DCL.Settings.Utils;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -47,17 +54,16 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.UI;
+using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
+using DCL.UI.ErrorPopup;
+using DCL.Utility;
+using DCL.Utility.Types;
+using System.Collections.Generic;
 using TMPro;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
 using Utility;
-using Utility.Types;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
@@ -87,7 +93,6 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-
         private ProvidedInstance<SplashScreen> splashScreen;
 
         private void Awake()
@@ -134,6 +139,7 @@ namespace Global.Dynamic
                 decentralandEnvironment = env;
         }
 
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
@@ -152,12 +158,16 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
+
+            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
+                WindowModeUtils.ApplyWindowedMode();
 
             World world = World.Create();
 
@@ -173,7 +183,8 @@ namespace Global.Dynamic
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
+            var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
@@ -207,8 +218,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                bool hasDebugFlag = applicationParametersParser.HasDebugFlag();
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, hasDebugFlag, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -221,8 +231,12 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                bootstrap.InitializeFeaturesRegistry();
+
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+
+                OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
@@ -264,7 +278,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
@@ -272,9 +286,8 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
-
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
+                await LoadStartingRealmAsync(ct);
+                await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -292,6 +305,39 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+
+            return;
+
+            async UniTask LoadStartingRealmAsync(CancellationToken ct)
+            {
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadStartingRealmAsync(ct);
+                    else
+                        ExitUtils.Exit();
+                }
+            }
+
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
+            {
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
+                catch (TimeoutException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadUserFlowAsync(playerEntity, ct);
+                    else
+                        throw;
+                }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                        await LoadUserFlowAsync(playerEntity, ct);
+                    else
+                        ExitUtils.Exit();
+                }
+            }
         }
 
         private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
@@ -307,33 +353,34 @@ namespace Global.Dynamic
 
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
-            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
+                new UnitySystemInfoProvider(),
+                new PlatformDriveInfoProvider());
+
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+
             if (!hasMinimumSpecs)
             {
                 DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
                 DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
             }
-            
+
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
-            {
-                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
-            });
-            
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
-                .AssetsProvisioner!
-                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+                                                 .AssetsProvisioner!
+                                                 .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
             ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
-                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+               .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
             var minimumSpecsResults = minimumSpecsGuard.Results;
             var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
@@ -377,7 +424,7 @@ namespace Global.Dynamic
                 LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
 
             dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
-            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand(), ct).Forget();
             return true;
         }
 
@@ -560,6 +607,20 @@ namespace Global.Dynamic
             return controller.SelectedOption;
         }
 
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
+        {
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Load Error",
+                description: "A loading error was encountered. Please reload to try again.",
+                iconType: ErrorPopupWithRetryController.IconType.ERROR);
+
+            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
+
+            return input.SelectedOption;
+        }
+
         [Serializable]
         public struct TrustedRealmApiResponse
         {
@@ -585,9 +646,7 @@ namespace Global.Dynamic
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
-            public SplashScreenRef(string guid) : base(guid)
-            {
-            }
+            public SplashScreenRef(string guid) : base(guid) { }
         }
     }
 }

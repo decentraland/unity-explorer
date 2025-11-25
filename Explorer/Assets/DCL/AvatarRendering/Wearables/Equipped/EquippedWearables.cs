@@ -1,6 +1,6 @@
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,13 +10,16 @@ namespace DCL.AvatarRendering.Wearables.Equipped
     public class EquippedWearables : IEquippedWearables
     {
         private readonly Dictionary<string, IWearable?> wearables = new ();
+        private readonly HashSet<string> forceRenderCategories = new ();
+        public IReadOnlyCollection<string> ForceRenderCategories => forceRenderCategories;
+
         private Color hairColor;
         private Color eyesColor;
         private Color bodyshapeColor;
 
         public EquippedWearables()
         {
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
+            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
                 wearables.Add(category, null);
         }
 
@@ -42,7 +45,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public void UnEquipAll()
         {
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
+            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
                 wearables[category] = null;
         }
 
@@ -54,6 +57,18 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public void SetBodyshapeColor(Color newColor) =>
             bodyshapeColor = newColor;
+
+        public void SetForceRender(IReadOnlyCollection<string> categories)
+        {
+            forceRenderCategories.Clear();
+            foreach (string category in categories) { forceRenderCategories.Add(category); }
+        }
+
+        public void Clear()
+        {
+            wearables.Clear();
+            forceRenderCategories.Clear();
+        }
 
         public IReadOnlyDictionary<string, IWearable?> Items() =>
             wearables;

@@ -8,12 +8,14 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -22,8 +24,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunityCreation
 {
@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -67,6 +67,7 @@ namespace DCL.Communities.CommunityCreation
         private string originalCommunityNameForEdition;
         private string originalCommunityDescriptionForEdition;
         private CommunityPrivacy? originalCommunityPrivacyForEdition;
+        private CommunityVisibility? originalCommunityVisibilityForEdition;
         private readonly List<string> originalCommunityLandsForEdition = new ();
         private readonly List<string> originalCommunityWorldsForEdition = new ();
 
@@ -105,7 +106,7 @@ namespace DCL.Communities.CommunityCreation
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
-            LambdasProfilesProvider lambdasProfilesProvider) : base(viewFactory)
+            IProfileRepository profileRepository) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -113,7 +114,7 @@ namespace DCL.Communities.CommunityCreation
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -244,7 +245,7 @@ namespace DCL.Communities.CommunityCreation
                 bool isInvalidImageByResolution = texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS;
                 if (isInvalidImageByWeight || isInvalidImageByResolution)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
                         isInvalidImageByWeight && isInvalidImageByResolution ?
                             INCOMPATIBLE_IMAGE_GENERAL_ERROR :
                             isInvalidImageByWeight ? INCOMPATIBLE_IMAGE_WEIGHT_ERROR : INCOMPATIBLE_IMAGE_RESOLUTION_ERROR));
@@ -276,7 +277,7 @@ namespace DCL.Communities.CommunityCreation
 
                 if (!placesResult.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
                     return;
                 }
 
@@ -300,7 +301,7 @@ namespace DCL.Communities.CommunityCreation
 
                 if (!worldsResult.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_WORLDS_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_WORLDS_ERROR_MESSAGE));
                     return;
                 }
 
@@ -327,26 +328,25 @@ namespace DCL.Communities.CommunityCreation
                     userIds.Value.Add(communityPlace.OwnerId);
                 }
 
-                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
-                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
 
-                if (getAvatarsDetailsResult.Success)
+                if (getAvatarsDetailsResult.Count > 0)
                 {
                     foreach (var communityPlace in currentCommunityPlaces)
                     {
-                        foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                        foreach (Profile? profile in getAvatarsDetailsResult)
                         {
-                            if (avatarDetails.avatars.Count == 0 || !string.Equals(communityPlace.OwnerId, avatarDetails.avatars[0].userId, StringComparison.CurrentCultureIgnoreCase))
+                            if (!string.Equals(communityPlace.OwnerId, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
                                 continue;
 
-                            communityPlace.OwnerName = avatarDetails.avatars[0].name;
+                            communityPlace.OwnerName = profile.Name;
                             break;
                         }
                     }
                 }
                 else
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 }
             }
 
@@ -395,20 +395,22 @@ namespace DCL.Communities.CommunityCreation
 
             if (!getCommunityResult.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_MESSAGE));
                 return;
             }
 
             originalCommunityNameForEdition = getCommunityResult.Value.data.name;
             originalCommunityDescriptionForEdition = getCommunityResult.Value.data.description;
             originalCommunityPrivacyForEdition = getCommunityResult.Value.data.privacy;
+            originalCommunityVisibilityForEdition = getCommunityResult.Value.data.visibility;
             originalCommunityLandsForEdition.Clear();
             originalCommunityWorldsForEdition.Clear();
 
-            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw, thumbnailLoader);
+            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCommunityPrivacy(getCommunityResult.Value.data.privacy, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
+            viewInstance.SetCommunityVisibility(getCommunityResult.Value.data.visibility, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
 
             // Load community places ids
             var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
@@ -419,7 +421,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!getCommunityPlacesResult.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_PLACES_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_PLACES_ERROR_MESSAGE));
                 return;
             }
 
@@ -434,7 +436,7 @@ namespace DCL.Communities.CommunityCreation
 
                 if (!getPlacesDetailsResult.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_PLACES_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_PLACES_ERROR_MESSAGE));
                     return;
                 }
 
@@ -450,12 +452,11 @@ namespace DCL.Communities.CommunityCreation
                         userIds.Value.Add(communityPlace.owner);
                     }
 
-                    var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
-                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
 
-                    if (!getAvatarsDetailsResult.Success)
+                    if (getAvatarsDetailsResult.Count == 0)
                     {
-                        Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                     }
 
                     foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
@@ -476,17 +477,16 @@ namespace DCL.Communities.CommunityCreation
                         }
 
                         string ownerName = string.Empty;
-                        if (getAvatarsDetailsResult.Success)
-                        {
-                            foreach (var avatarDetails in getAvatarsDetailsResult.Value)
-                            {
-                                if (avatarDetails.avatars.Count == 0 || !string.Equals(placeInfo.owner, avatarDetails.avatars[0].userId, StringComparison.CurrentCultureIgnoreCase))
-                                    continue;
 
-                                ownerName = avatarDetails.avatars[0].name;
-                                break;
-                            }
+                        foreach (Profile? profile in getAvatarsDetailsResult)
+                        {
+                            if (!string.Equals(placeInfo.owner, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
+                                continue;
+
+                            ownerName = profile.Name;
+                            break;
                         }
+
 
                         if (string.IsNullOrEmpty(placeInfo.world_name))
                             originalCommunityLandsForEdition.Add(placeInfo.id);
@@ -506,18 +506,18 @@ namespace DCL.Communities.CommunityCreation
             }
         }
 
-        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
+        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CommunityVisibility visibility)
         {
             viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, lands, worlds, privacy, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, lands, worlds, privacy, visibility, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CommunityVisibility visibility, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
 
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, privacy, visibility, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES,
                                                 exceptionToResult: exception =>
                                                 {
@@ -535,7 +535,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!result.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CREATE_COMMUNITY_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CREATE_COMMUNITY_ERROR_MESSAGE));
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }
@@ -550,7 +550,7 @@ namespace DCL.Communities.CommunityCreation
                 ShowModerationErrorModal(result.Value.moderationData);
         }
 
-        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
+        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CommunityVisibility visibility)
         {
             viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
@@ -561,10 +561,11 @@ namespace DCL.Communities.CommunityCreation
                 originalCommunityLandsForEdition.Count == lands.Count && !originalCommunityLandsForEdition.Except(lands).Any() ? null : lands,
                 originalCommunityWorldsForEdition.Count == worlds.Count && !originalCommunityWorldsForEdition.Except(worlds).Any() ? null : worlds,
                 originalCommunityPrivacyForEdition == privacy ? null : privacy,
+                originalCommunityVisibilityForEdition == visibility ? null : visibility,
                 createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string? name, string? description, List<string>? lands, List<string>? worlds, CommunityPrivacy? privacy,
+        private async UniTaskVoid UpdateCommunityAsync(string id, string? name, string? description, List<string>? lands, List<string>? worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility,
             CancellationToken ct)
         {
             if (name == null &&
@@ -572,6 +573,7 @@ namespace DCL.Communities.CommunityCreation
                 lands == null &&
                 worlds == null &&
                 privacy == null &&
+                visibility == null &&
                 lastSelectedImageData == null)
             {
                 // If there is nothing to save, just close the panel
@@ -581,7 +583,7 @@ namespace DCL.Communities.CommunityCreation
 
             viewInstance!.SetCommunityCreationInProgress(true);
 
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, visibility, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES,
                                                 exceptionToResult: exception =>
                                                 {
@@ -599,7 +601,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!result.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(UPDATE_COMMUNITY_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(UPDATE_COMMUNITY_ERROR_MESSAGE));
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }
@@ -608,7 +610,7 @@ namespace DCL.Communities.CommunityCreation
             {
                 if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
                 {
-                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnailUrl, lastSelectedProfileThumbnail);
                     isProfileThumbnailDirty = false;
                     lastSelectedProfileThumbnail = null;
                 }
@@ -622,7 +624,7 @@ namespace DCL.Communities.CommunityCreation
         private void ShowModerationErrorModal(CommunityModerationResponse communityModerationData)
         {
             string formattedErrorMessage = string.Empty;
-            if (communityModerationData.data != null)
+            if (communityModerationData.data is { issues: not null })
             {
                 if (communityModerationData.data.issues.name is { Length: > 0 })
                     formattedErrorMessage += $"COMMUNITY NAME: {string.Join(", ", communityModerationData.data.issues.name.Select(s => $"[{s}]"))}\n\n";

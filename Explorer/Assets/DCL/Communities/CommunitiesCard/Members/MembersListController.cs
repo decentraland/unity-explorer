@@ -7,15 +7,16 @@ using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
-using DCL.NotificationsBusController.NotificationTypes;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
 using DCL.UI;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
@@ -23,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
-using Utility.Types;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -33,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string UNBAN_USER_ERROR_TEXT = "There was an error unbanning the user. Please try again.";
         private const string REMOVE_MODERATOR_ERROR_TEXT = "There was an error removing moderator from user. Please try again.";
         private const string ADD_MODERATOR_ERROR_TEXT = "There was an error adding moderator to user. Please try again.";
+        private const string TRANSFER_OWNERSHIP_ERROR_TEXT = "There was an error transfering ownership. Please try again.";
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
@@ -100,6 +102,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.BlockUserRequested += BlockUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
+            this.view.TransferOwnershipRequested += OnTransferOwnership;
             this.view.KickUserRequested += OnKickUser;
             this.view.BanUserRequested += OnBanUser;
 
@@ -128,6 +131,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.BlockUserRequested -= BlockUserClickedAsync;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
+            view.TransferOwnershipRequested -= OnTransferOwnership;
             view.KickUserRequested -= OnKickUser;
             view.BanUserRequested -= OnBanUser;
 
@@ -146,7 +150,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MANAGE_REQUEST_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MANAGE_REQUEST_ERROR_TEXT));
                     return;
                 }
 
@@ -231,7 +235,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(BAN_USER_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(BAN_USER_ERROR_TEXT));
                     return;
                 }
 
@@ -244,6 +248,30 @@ namespace DCL.Communities.CommunitiesCard.Members
                 MembersSorter.SortMembersList(memberList);
 
                 RefreshGrid(true);
+            }
+        }
+
+        private void OnTransferOwnership(ICommunityMemberData profile)
+        {
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            TransferOwnershipAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid TransferOwnershipAsync(CancellationToken token)
+            {
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.Address, communityData?.id, CommunityMemberRole.owner, token)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(TRANSFER_OWNERSHIP_ERROR_TEXT));
+                    return;
+                }
+
+                view.Close();
             }
         }
 
@@ -263,7 +291,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(KICK_USER_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(KICK_USER_ERROR_TEXT));
                     return;
                 }
 
@@ -303,7 +331,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ADD_MODERATOR_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ADD_MODERATOR_ERROR_TEXT));
                     return;
                 }
 
@@ -339,7 +367,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REMOVE_MODERATOR_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REMOVE_MODERATOR_ERROR_TEXT));
                     return;
                 }
 
@@ -362,7 +390,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             try
             {
                 //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
                 await UniTask.Delay(500);
                 chatEventBus.StartCallInCurrentConversation();
@@ -375,7 +403,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }
             catch (OperationCanceledException) { }
@@ -386,7 +414,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void OpenProfilePassport(ICommunityMemberData profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address)), cancellationToken).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(profile.Address)), cancellationToken).Forget();
 
         public override void Reset()
         {
@@ -460,7 +488,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private async UniTask FetchFriendshipStatusAndRefreshAsync(string userId, CancellationToken ct)
         {
-            Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userId, ct);
+            FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userId, ct);
 
             currentSectionFetchData.Items.Find(item => item.Address.Equals(userId))
                                    .FriendshipStatus = status.Convert();
@@ -520,7 +548,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             FetchNewDataAsync(ct).Forget();
 
-            if (community.privacy == CommunityPrivacy.@private)
+            if (community.privacy == CommunityPrivacy.@private && communityData?.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
                 FetchRequestsToJoinAsync(ct).Forget();
 
             return;
@@ -563,7 +591,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(UNBAN_USER_ERROR_TEXT));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(UNBAN_USER_ERROR_TEXT));
                     return;
                 }
 
