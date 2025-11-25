@@ -19,6 +19,7 @@ namespace DCL.MapRenderer.MapLayers
         Path = 1 << 11,
         SearchResults = 1 << 12,
         LiveEvents = 1 << 13,
+        HomeMarker = 1 << 14,
         // Add yours
     }
 }
