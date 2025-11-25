@@ -21,9 +21,9 @@ using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.Chat.ChatStates;
+using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
@@ -42,14 +42,15 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
+        private readonly ChatMainSharedAreaView chatMainView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly IEventBus eventBus;
 
+        private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
@@ -68,6 +69,10 @@ namespace DCL.UI.Sidebar
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
             IWebBrowser webBrowser,
+            bool includeCameraReel,
+            bool includeFriends,
+            bool includeMarketplaceCredits,
+            ChatMainSharedAreaView chatMainView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -83,15 +88,17 @@ namespace DCL.UI.Sidebar
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
+            this.includeCameraReel = includeCameraReel;
+            this.chatMainView = chatMainView;
             this.chatHistory = chatHistory;
+            this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.eventBus = eventBus;
 
-            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
         public override void Dispose()
@@ -109,8 +116,6 @@ namespace DCL.UI.Sidebar
 
         protected override void OnViewInstantiated()
         {
-            eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
-
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
             mvcManager.RegisterController(skyboxMenuController);
@@ -123,7 +128,6 @@ namespace DCL.UI.Sidebar
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
             viewInstance.cameraReelButton.gameObject.SetActive(includeCameraReel);
             viewInstance.InWorldCameraButton.gameObject.SetActive(includeCameraReel);
-            viewInstance?.communitiesButton.gameObject.SetActive(false);
 
             SubscribeToButtonsEvents();
 
@@ -141,18 +145,19 @@ namespace DCL.UI.Sidebar
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
-            checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
-            CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
+
+            checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
+            CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
 
             OnChatViewFoldingChanged(true);
         }
 
         private void SubscribeToButtonsEvents()
         {
-            viewInstance!.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
             viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
@@ -161,7 +166,7 @@ namespace DCL.UI.Sidebar
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (_) => viewInstance.sidebarSettingsButton.OnSelect(null);
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
@@ -226,8 +231,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            viewInstance!.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
-            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
+            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
+            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -271,7 +276,16 @@ namespace DCL.UI.Sidebar
         {
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(false);
 
-            bool includeMarketplaceCredits = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.MARKETPLACE_CREDITS, ct);
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+
+            if (ownProfile == null)
+                return;
+
+            includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
+                includeMarketplaceCredits,
+                ownProfile.UserId,
+                ct);
 
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
@@ -281,6 +295,7 @@ namespace DCL.UI.Sidebar
 
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
         {
+            viewInstance?.communitiesButton.gameObject.SetActive(false);
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }

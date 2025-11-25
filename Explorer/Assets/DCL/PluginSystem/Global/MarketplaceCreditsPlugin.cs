@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -77,10 +76,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(MarketplaceCreditsPluginSettings settings, CancellationToken ct)
         {
-            bool isFeatureEnabledForUser = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.MARKETPLACE_CREDITS, ct);
-
-            if (!isFeatureEnabledForUser) Dispose();
-
             CreditsUnlockedView creditsUnlockedPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CreditsUnlockedPrefab, ct))
                                                        .Value.GetComponent<CreditsUnlockedView>();
 
@@ -108,6 +103,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus,
                 textFormatter);
 
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
         }
 
