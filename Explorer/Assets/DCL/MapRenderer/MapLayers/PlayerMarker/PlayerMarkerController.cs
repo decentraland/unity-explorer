@@ -8,7 +8,6 @@ using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
