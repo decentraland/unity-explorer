@@ -187,25 +187,38 @@ namespace DCL.Web3.Authenticators
             BigInteger weiValue = ParseHexToBigInteger(value);
 
             // For simple ETH transfers (no data), use Transfer method
-            // if (string.IsNullOrEmpty(data) || data == "0x")
-            // {
-            //     var txReceipt = await ThirdWebManager.Instance.ActiveWallet.Transfer(
-            //         chainId,
-            //         to,
-            //         weiValue
-            //     );
-            //
-            //     return new EthApiResponse
-            //     {
-            //         id = request.id,
-            //         jsonrpc = "2.0",
-            //         result = txReceipt.TransactionHash,
-            //     };
-            // }
+            if (string.IsNullOrEmpty(data) || data == "0x")
+            {
+                ThirdwebTransactionReceipt? txReceipt = await ThirdWebManager.Instance.ActiveWallet.Transfer(
+                    chainId,
+                    to,
+                    weiValue
+                );
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = txReceipt.TransactionHash,
+                };
+            }
 
             // For contract interactions with data
-            ThirdwebContract? contract = await ThirdwebContract.Create(ThirdWebManager.Instance.Client, to, chainId);
-            ThirdwebTransaction? transaction = await ThirdwebContract.Prepare(ThirdWebManager.Instance.ActiveWallet, contract, data, weiValue);
+            // Pass empty ABI to avoid fetching contract metadata
+            ThirdwebContract? contract = await ThirdwebContract.Create(
+                ThirdWebManager.Instance.Client,
+                to,
+                chainId,
+                abi: "[]" // Empty ABI - we already have encoded data
+            );
+
+            ThirdwebTransaction? transaction = await ThirdwebContract.Prepare(
+                ThirdWebManager.Instance.ActiveWallet,
+                contract,
+                data,
+                weiValue
+            );
+
             string? txHash = await ThirdwebTransaction.Send(transaction);
 
             return new EthApiResponse
