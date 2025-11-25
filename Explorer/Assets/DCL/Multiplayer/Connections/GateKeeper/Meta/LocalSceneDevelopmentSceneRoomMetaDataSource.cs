@@ -1,12 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             if (string.IsNullOrWhiteSpace(id!))
                 return Result<MetaData>.ErrorResult("Id is empty or null");
 
-            return Result<MetaData>.SuccessResult(new MetaData(id, new MetaData.Input("LocalPreview", Vector2Int.zero)));
+            return Result<MetaData>.SuccessResult(new MetaData(id, Vector2Int.zero, new MetaData.Input("LocalPreview", Vector2Int.zero)));
         }
 
         [Serializable]
