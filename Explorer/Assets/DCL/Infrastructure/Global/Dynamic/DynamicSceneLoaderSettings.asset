@@ -42,6 +42,7 @@ MonoBehaviour:
   - eth_getTransactionCount
   - eth_getBlockByNumber
   - eth_getCode
+  - eth_chainId
   <Web3ReadOnlyMethods>k__BackingField:
   - net_version
   - web3_clientVersion
@@ -56,3 +57,4 @@ MonoBehaviour:
   - eth_getTransactionCount
   - eth_getBlockByNumber
   - eth_getCode
+  - eth_chainId

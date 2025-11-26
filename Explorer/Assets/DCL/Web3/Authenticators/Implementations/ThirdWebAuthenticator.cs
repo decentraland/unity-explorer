@@ -25,6 +25,8 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
 
+        private BigInteger chainId => EnvChainsUtils.Anoy;
+
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
@@ -110,8 +112,6 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await ThirdWebManager.Instance.DisconnectWallet();
-
-        private BigInteger chainId => EnvChainsUtils.Sepolia;
 
         //EnvChainsUtils.GetChainIdAsInt(environment);
 
