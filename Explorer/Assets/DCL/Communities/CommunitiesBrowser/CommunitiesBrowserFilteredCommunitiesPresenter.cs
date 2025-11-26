@@ -6,10 +6,10 @@ using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.NotificationsBusController.NotificationTypes;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Utility.Types;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -81,9 +81,9 @@ namespace DCL.Communities.CommunitiesBrowser
             scope.Dispose();
         }
 
-        private void OnJoinStream(string communityId)
+        private void OnJoinStream(string communityId, bool isMember)
         {
-            commandsLibrary.JoinStreamCommand.Execute(communityId);
+            commandsLibrary.JoinStreamCommand.Execute(communityId, isMember);
         }
 
         private void OnRequestToJoinCommunityCanceled(string communityId, string requestId)
@@ -214,7 +214,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return;
             }
 

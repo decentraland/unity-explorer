@@ -2,11 +2,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace DCL.VoiceChat
 {
@@ -22,11 +22,11 @@ namespace DCL.VoiceChat
         private int reconnectionAttempts;
         private bool isDisposed;
 
-        private CancellationTokenSource reconnectionCts;
+        private CancellationTokenSource reconnectionCts = new ();
 
-        public event Action ReconnectionStarted;
-        public event Action ReconnectionSuccessful;
-        public event Action ReconnectionFailed;
+        public event Action? ReconnectionStarted;
+        public event Action? ReconnectionSuccessful;
+        public event Action? ReconnectionFailed;
 
         public VoiceChatReconnectionManager(
             IRoomHub roomHub,
@@ -126,7 +126,6 @@ namespace DCL.VoiceChat
         private void CleanupReconnectionState()
         {
             reconnectionCts.SafeCancelAndDispose();
-            reconnectionCts = null;
             reconnectionAttempts = 0;
         }
     }

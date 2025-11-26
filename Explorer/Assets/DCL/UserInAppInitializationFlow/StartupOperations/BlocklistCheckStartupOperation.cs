@@ -5,7 +5,7 @@ using DCL.WebRequests.Analytics;
 using System;
 using System.Threading;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class BlocklistCheckStartupOperation : StartUpOperationBase
     {

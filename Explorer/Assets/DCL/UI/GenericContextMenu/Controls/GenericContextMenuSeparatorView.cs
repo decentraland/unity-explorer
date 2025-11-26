@@ -1,9 +1,9 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuSeparatorView : GenericContextMenuComponentBase
     {
@@ -17,6 +17,8 @@ namespace DCL.UI.GenericContextMenu.Controls
             HorizontalLayoutComponent.padding.right = settings.rightPadding;
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, settings.height);
         }
+
+        public override bool IsInteractable { get; set; }
 
         public override void UnregisterListeners() { }
 

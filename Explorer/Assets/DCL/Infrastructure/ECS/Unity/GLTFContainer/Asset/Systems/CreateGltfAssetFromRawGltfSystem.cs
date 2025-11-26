@@ -6,6 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -46,15 +47,26 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
-            if (assetIntention.CancellationTokenSource.IsCancellationRequested || gltfDataResult.Asset == null)
+            if (assetIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                World.Destroy(entity);
+                return;
+            }
+
+            if (!gltfDataResult.IsInitialized)
                 return;
 
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateGltfObject(gltfDataResult.Asset)));
+            if (gltfDataResult.Succeeded)
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateGltfObject(gltfDataResult.Asset)));
+            else
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(),
+                    new StreamableLoadingException(LogType.Exception, gltfDataResult.Exception.Message, gltfDataResult.Exception)));
+
         }
 
         private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
-            var result = GltfContainerAsset.Create(gltfData.Root, gltfData, gltfData.HierarchyPaths);
+            var result = GltfContainerAsset.Create(gltfData.Root, gltfData, hierarchyPaths: gltfData.HierarchyPaths);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())

@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatViewModels;
+using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ namespace DCL.Chat.ChatViews
         [SerializeField] public ProfilePictureView communityProfilePictureView;
         [SerializeField] private ChatUsernameView usernameElement;
         [SerializeField] private Button buttonOpenProfile;
+        [SerializeField] private RectTransform autoTranslateIndicator;
 
         public Button ButtonOpenProfile => buttonOpenProfile;
 
@@ -28,6 +30,7 @@ namespace DCL.Chat.ChatViews
                     model.Username,
                     model.WalletId,
                     model.HasClaimedName,
+                    model.IsOfficial,
                     model.ProfileColor
                 );
             }
@@ -42,9 +45,16 @@ namespace DCL.Chat.ChatViews
                     model.Username,
                     null,
                     false,
+                    false,
                     Color.white
                 );
             }
+        }
+
+        public void SetAutoTranslateIndicator(bool isVisible)
+        {
+            if (autoTranslateIndicator != null)
+                autoTranslateIndicator.gameObject.SetActive(isVisible);
         }
 
         public void SetConnectionStatus(bool isOnline, float greyOutOpacity)

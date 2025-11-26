@@ -3,11 +3,14 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace DCL.Settings.ModuleViews
 {
     public class SettingsDropdownModuleView : SettingsModuleView<SettingsDropdownModuleView.Config>
     {
+        public UnityEvent<bool> showStatusUpdated = new ();
+
         [Serializable]
         public class Config : SettingsModuleViewConfiguration
         {
@@ -17,6 +20,7 @@ namespace DCL.Settings.ModuleViews
         }
 
         [field: SerializeField] public DropdownView DropdownView { get; private set; }
+        [field: SerializeField] public TooltipButtonView TooltipButtonView { get; private set; }
 
         public override void SetInteractable(bool interactable) =>
             DropdownView.Dropdown.interactable = interactable;
@@ -26,6 +30,9 @@ namespace DCL.Settings.ModuleViews
 
         protected override void Configure(Config configuration)
         {
+            if (TooltipButtonView != null)
+                TooltipButtonView.Deactivate();
+            
             DropdownView.Dropdown.interactable = configuration.IsEnabled;
             DropdownView.Dropdown.MultiSelect = configuration.isMultiselect;
             DropdownView.Dropdown.options.Clear();
@@ -35,6 +42,16 @@ namespace DCL.Settings.ModuleViews
 
             if (DropdownView.Dropdown.options.Count > configuration.defaultOptionIndex && configuration.defaultOptionIndex >= 0)
                 DropdownView.Dropdown.value = configuration.defaultOptionIndex;
+        }
+
+        private void OnEnable()
+        {
+            showStatusUpdated.Invoke(true);
+        }
+
+        private void OnDisable()
+        {
+            showStatusUpdated.Invoke(false);
         }
     }
 }

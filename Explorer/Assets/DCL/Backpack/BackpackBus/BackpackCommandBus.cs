@@ -14,9 +14,9 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackSelectWearableCommand>? SelectWearableMessageReceived;
         public event Action<BackpackSelectEmoteCommand>? SelectEmoteMessageReceived;
         public event Action<BackpackHideCommand>? HideMessageReceived;
-        public event Action<BackpackFilterCategoryCommand>? FilterCategoryMessageReceived;
-        public event Action<BackpackSearchCommand>? SearchMessageReceived;
+        public event Action<BackpackFilterCommand>? FilterMessageReceived;
         public event Action<BackpackUnEquipAllCommand>? UnEquipAllMessageReceived;
+        public event Action<BackpackUnEquipAllWearablesCommand>? UnEquipAllWearablesMessageReceived;
         public event Action<BackpackPublishProfileCommand>? PublishProfileReceived;
         public event Action<BackpackChangeColorCommand>? ChangeColorMessageReceived;
 
@@ -45,14 +45,9 @@ namespace DCL.Backpack.BackpackBus
             HideMessageReceived?.Invoke(command);
         }
 
-        public void SendCommand(BackpackFilterCategoryCommand command)
+        public void SendCommand(BackpackFilterCommand command)
         {
-            FilterCategoryMessageReceived?.Invoke(command);
-        }
-
-        public void SendCommand(BackpackSearchCommand command)
-        {
-            SearchMessageReceived?.Invoke(command);
+            FilterMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackChangeColorCommand command)
@@ -63,6 +58,11 @@ namespace DCL.Backpack.BackpackBus
         public void SendCommand(BackpackUnEquipAllCommand command)
         {
             UnEquipAllMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackUnEquipAllWearablesCommand command)
+        {
+            UnEquipAllWearablesMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackPublishProfileCommand command)

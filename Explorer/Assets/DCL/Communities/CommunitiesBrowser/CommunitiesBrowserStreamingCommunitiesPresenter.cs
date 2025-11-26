@@ -3,13 +3,13 @@ using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -55,12 +55,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.ViewAllStreamingCommunitiesButtonClicked -= ViewAllStreamingCommunitiesButtonClicked;
         }
 
-        private void JoinStreamClicked(string communityId)
+        private void JoinStreamClicked(string communityId, bool isMember)
         {
             if (browserStateService.CurrentCommunityId.Value == communityId)
                 commandsLibrary.GoToStreamCommand.Execute(communityId);
 
-            commandsLibrary.JoinStreamCommand.Execute(communityId);
+            commandsLibrary.JoinStreamCommand.Execute(communityId, isMember);
         }
 
         private void ViewAllStreamingCommunitiesButtonClicked()
@@ -94,7 +94,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return;
             }
 

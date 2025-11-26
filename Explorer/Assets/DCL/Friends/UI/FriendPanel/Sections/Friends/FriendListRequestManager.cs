@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -87,6 +88,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void RemoveFriend(string userid)
         {
+            thumbnailContextMenuActions.Remove(userid);
             if (friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid)) > 0)
                 RefreshLoopList();
         }
@@ -119,6 +121,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
+            thumbnailContextMenuActions[elementView.UserProfile.Address.ToString()] = () => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView);
 
             elementView.JumpInButton.onClick.RemoveAllListeners();
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));

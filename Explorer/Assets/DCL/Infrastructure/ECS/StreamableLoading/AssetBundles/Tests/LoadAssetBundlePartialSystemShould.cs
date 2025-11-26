@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
@@ -22,7 +23,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Utility.Types;
 using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
@@ -120,8 +120,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             string assetUrl;
             #if UNITY_STANDALONE_WIN
             assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_windows";
-            #endif
-            #if UNITY_STANDALONE_OSX
+            #elif UNITY_STANDALONE_OSX
+            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
+            #else
             assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
             #endif
             var intention = new GetAssetBundleIntention(new CommonLoadingArguments(assetUrl));
@@ -134,7 +135,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
         private ABPromise NewABPromise()
         {
-            var intention = GetAssetBundleIntention.FromHash(typeof(GameObject), "bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda", permittedSources: AssetSource.WEB);
+            var intention = GetAssetBundleIntention.FromHash("bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda", typeof(GameObject), permittedSources: AssetSource.WEB);
             var partition = PartitionComponent.TOP_PRIORITY;
             var assetPromise = ABPromise.Create(world, intention, partition);
             world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());

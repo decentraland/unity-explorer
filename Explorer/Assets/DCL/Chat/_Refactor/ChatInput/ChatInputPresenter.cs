@@ -3,12 +3,13 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.EventBus;
 using DCL.Emoji;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatInput
 {
@@ -31,10 +32,11 @@ namespace DCL.Chat.ChatInput
             ResolveInputStateCommand resolveInputStateCommand,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            SendMessageCommand sendMessageCommand)
+            SendMessageCommand sendMessageCommand,
+            ITextFormatter textFormatter)
         {
             this.view = view;
-            this.view.Initialize(chatConfig);
+            this.view.Initialize(chatConfig, textFormatter);
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
@@ -97,13 +99,13 @@ namespace DCL.Chat.ChatInput
 
         public void OnBlur()
         {
-            cts.Cancel();
+            cts.SafeCancelAndDispose();
             fsm.ChangeState<UnfocusedChatInputState>();
         }
 
         public void OnMinimize()
         {
-            cts.Cancel();
+            cts.SafeCancelAndDispose();
             fsm.ChangeState<UnfocusedChatInputState>();
         }
 
@@ -123,8 +125,7 @@ namespace DCL.Chat.ChatInput
         public void Dispose()
         {
             scope.Dispose();
-            cts.Cancel();
-            cts.Dispose();
+            cts.SafeCancelAndDispose();
             fsm.Dispose();
         }
     }

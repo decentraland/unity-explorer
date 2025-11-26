@@ -13,9 +13,11 @@ using DCL.SkyBox;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using Global.AppArgs;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
 
 namespace DCL.Settings.Configuration
 {
@@ -44,10 +46,12 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
-            VolumeBus volumeBus)
+            VolumeBus volumeBus,
+            bool isTranslationChatEnabled,
+            IEventBus eventBus,
+            IAppArgs appParameters)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);

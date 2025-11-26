@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.FeatureFlags;
+using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -11,7 +12,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {
@@ -30,6 +31,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public TMP_Text UserAddress { get; private set; }
         [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
+        [field: SerializeField] public GameObject OfficialBadge { get; private set; }
         [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
         [field: SerializeField] public Button CopyNameButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; }
@@ -54,6 +56,8 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private CancellationTokenSource copyAnimationCts = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
+
+        public override bool IsInteractable { get; set; }
 
         public override void UnregisterListeners()
         {
@@ -83,7 +87,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor, settings.showWalletSection);
+            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor, settings.showWalletSection, OfficialWalletsHelper.Instance.IsOfficialWallet(settings.userData.userAddress));
 
             if (settings.showProfilePicture)
             {
@@ -120,7 +124,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             }
         }
 
-        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor, bool showWalletSection)
+        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor, bool showWalletSection, bool isOfficial)
         {
             UserName.text = userName;
             UserName.color = userColor;
@@ -139,6 +143,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             UserNameTag.gameObject.SetActive(!hasClaimedName);
             ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
             ClaimedNameBadgeSeparator.gameObject.SetActive(hasClaimedName);
+            OfficialBadge.SetActive(isOfficial);
 
             CopyAddressToast.Hide(true);
             CopyNameToast.Hide(true);

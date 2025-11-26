@@ -7,19 +7,21 @@ using DCL.MapPins.Bus;
 using DCL.MapPins.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using UnityEngine;
+
 using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.MapPins.Systems
 {
@@ -92,10 +94,10 @@ namespace DCL.SDKComponents.MapPins.Systems
         {
             if (mapPinComponent.TexturePromise is null || mapPinComponent.TexturePromise.Value.IsConsumed) return;
 
-            if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
+            if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<TextureData> texture))
             {
                 mapPinComponent.TexturePromise = null;
-                mapPinsEventBus.UpdateMapPinThumbnail(entity, texture.Asset);
+                mapPinsEventBus.UpdateMapPinThumbnail(entity, texture.Asset!.EnsureTexture2D());
             }
         }
 

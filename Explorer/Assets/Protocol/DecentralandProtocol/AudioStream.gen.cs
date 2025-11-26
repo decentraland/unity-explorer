@@ -25,14 +25,17 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXVkaW9fc3RyZWFtLnBy",
-            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMiXgoNUEJBdWRpb1N0",
-            "cmVhbRIUCgdwbGF5aW5nGAEgASgISACIAQESEwoGdm9sdW1lGAIgASgCSAGI",
-            "AQESCwoDdXJsGAMgASgJQgoKCF9wbGF5aW5nQgkKB192b2x1bWVCFKoCEURD",
-            "TC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMi+AEKDVBCQXVkaW9T",
+            "dHJlYW0SFAoHcGxheWluZxgBIAEoCEgAiAEBEhMKBnZvbHVtZRgCIAEoAkgB",
+            "iAEBEgsKA3VybBgDIAEoCRIUCgdzcGF0aWFsGAQgASgISAKIAQESIQoUc3Bh",
+            "dGlhbF9taW5fZGlzdGFuY2UYBSABKAJIA4gBARIhChRzcGF0aWFsX21heF9k",
+            "aXN0YW5jZRgGIAEoAkgEiAEBQgoKCF9wbGF5aW5nQgkKB192b2x1bWVCCgoI",
+            "X3NwYXRpYWxCFwoVX3NwYXRpYWxfbWluX2Rpc3RhbmNlQhcKFV9zcGF0aWFs",
+            "X21heF9kaXN0YW5jZUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioStream), global::DCL.ECSComponents.PBAudioStream.Parser, new[]{ "Playing", "Volume", "Url" }, new[]{ "Playing", "Volume" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioStream), global::DCL.ECSComponents.PBAudioStream.Parser, new[]{ "Playing", "Volume", "Url", "Spatial", "SpatialMinDistance", "SpatialMaxDistance" }, new[]{ "Playing", "Volume", "Spatial", "SpatialMinDistance", "SpatialMaxDistance" }, null, null, null)
           }));
     }
     #endregion
@@ -83,6 +86,9 @@ namespace DCL.ECSComponents {
       playing_ = other.playing_;
       volume_ = other.volume_;
       url_ = other.url_;
+      spatial_ = other.spatial_;
+      spatialMinDistance_ = other.spatialMinDistance_;
+      spatialMaxDistance_ = other.spatialMaxDistance_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -163,6 +169,92 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "spatial" field.</summary>
+    public const int SpatialFieldNumber = 4;
+    private bool spatial_;
+    /// <summary>
+    /// either the audio will be global or spatial (default: false)
+    /// global: plays the same way for every listener. It is not affected by distance, direction, or position.
+    /// spatial: changes depending on where the listener is relative to the sound source
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Spatial {
+      get { if ((_hasBits0 & 4) != 0) { return spatial_; } else { return false; } }
+      set {
+        _hasBits0 |= 4;
+        spatial_ = value;
+      }
+    }
+    /// <summary>Gets whether the "spatial" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSpatial {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "spatial" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSpatial() {
+      _hasBits0 &= ~4;
+    }
+
+    /// <summary>Field number for the "spatial_min_distance" field.</summary>
+    public const int SpatialMinDistanceFieldNumber = 5;
+    private float spatialMinDistance_;
+    /// <summary>
+    /// Within the min distance the audio will cease to grow louder in volume (default: 0)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float SpatialMinDistance {
+      get { if ((_hasBits0 & 8) != 0) { return spatialMinDistance_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 8;
+        spatialMinDistance_ = value;
+      }
+    }
+    /// <summary>Gets whether the "spatial_min_distance" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSpatialMinDistance {
+      get { return (_hasBits0 & 8) != 0; }
+    }
+    /// <summary>Clears the value of the "spatial_min_distance" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSpatialMinDistance() {
+      _hasBits0 &= ~8;
+    }
+
+    /// <summary>Field number for the "spatial_max_distance" field.</summary>
+    public const int SpatialMaxDistanceFieldNumber = 6;
+    private float spatialMaxDistance_;
+    /// <summary>
+    /// The distance where sound either becomes inaudible or stops attenuation (default: 60)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float SpatialMaxDistance {
+      get { if ((_hasBits0 & 16) != 0) { return spatialMaxDistance_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 16;
+        spatialMaxDistance_ = value;
+      }
+    }
+    /// <summary>Gets whether the "spatial_max_distance" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSpatialMaxDistance {
+      get { return (_hasBits0 & 16) != 0; }
+    }
+    /// <summary>Clears the value of the "spatial_max_distance" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSpatialMaxDistance() {
+      _hasBits0 &= ~16;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -181,6 +273,9 @@ namespace DCL.ECSComponents {
       if (Playing != other.Playing) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Volume, other.Volume)) return false;
       if (Url != other.Url) return false;
+      if (Spatial != other.Spatial) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SpatialMinDistance, other.SpatialMinDistance)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SpatialMaxDistance, other.SpatialMaxDistance)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -191,6 +286,9 @@ namespace DCL.ECSComponents {
       if (HasPlaying) hash ^= Playing.GetHashCode();
       if (HasVolume) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Volume);
       if (Url.Length != 0) hash ^= Url.GetHashCode();
+      if (HasSpatial) hash ^= Spatial.GetHashCode();
+      if (HasSpatialMinDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SpatialMinDistance);
+      if (HasSpatialMaxDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SpatialMaxDistance);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -221,6 +319,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(26);
         output.WriteString(Url);
       }
+      if (HasSpatial) {
+        output.WriteRawTag(32);
+        output.WriteBool(Spatial);
+      }
+      if (HasSpatialMinDistance) {
+        output.WriteRawTag(45);
+        output.WriteFloat(SpatialMinDistance);
+      }
+      if (HasSpatialMaxDistance) {
+        output.WriteRawTag(53);
+        output.WriteFloat(SpatialMaxDistance);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -243,6 +353,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(26);
         output.WriteString(Url);
       }
+      if (HasSpatial) {
+        output.WriteRawTag(32);
+        output.WriteBool(Spatial);
+      }
+      if (HasSpatialMinDistance) {
+        output.WriteRawTag(45);
+        output.WriteFloat(SpatialMinDistance);
+      }
+      if (HasSpatialMaxDistance) {
+        output.WriteRawTag(53);
+        output.WriteFloat(SpatialMaxDistance);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -261,6 +383,15 @@ namespace DCL.ECSComponents {
       }
       if (Url.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Url);
+      }
+      if (HasSpatial) {
+        size += 1 + 1;
+      }
+      if (HasSpatialMinDistance) {
+        size += 1 + 4;
+      }
+      if (HasSpatialMaxDistance) {
+        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -282,6 +413,15 @@ namespace DCL.ECSComponents {
       }
       if (other.Url.Length != 0) {
         Url = other.Url;
+      }
+      if (other.HasSpatial) {
+        Spatial = other.Spatial;
+      }
+      if (other.HasSpatialMinDistance) {
+        SpatialMinDistance = other.SpatialMinDistance;
+      }
+      if (other.HasSpatialMaxDistance) {
+        SpatialMaxDistance = other.SpatialMaxDistance;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -310,6 +450,18 @@ namespace DCL.ECSComponents {
             Url = input.ReadString();
             break;
           }
+          case 32: {
+            Spatial = input.ReadBool();
+            break;
+          }
+          case 45: {
+            SpatialMinDistance = input.ReadFloat();
+            break;
+          }
+          case 53: {
+            SpatialMaxDistance = input.ReadFloat();
+            break;
+          }
         }
       }
     #endif
@@ -335,6 +487,18 @@ namespace DCL.ECSComponents {
           }
           case 26: {
             Url = input.ReadString();
+            break;
+          }
+          case 32: {
+            Spatial = input.ReadBool();
+            break;
+          }
+          case 45: {
+            SpatialMinDistance = input.ReadFloat();
+            break;
+          }
+          case 53: {
+            SpatialMaxDistance = input.ReadFloat();
             break;
           }
         }

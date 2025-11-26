@@ -1,4 +1,6 @@
-﻿namespace DCL.WebRequests
+﻿using System.Collections.Generic;
+
+namespace DCL.WebRequests
 {
     /// <summary>
     ///     Retries will be applied only in one of the following cases:
@@ -46,21 +48,23 @@
         internal readonly int backoffMultiplier;
         internal readonly int maxRetriesCount;
         internal readonly Strictness strictness;
+        internal readonly ISet<long>? forceRecoverableCodes;
 
-        private RetryPolicy(int maxRetriesCount, Strictness strictness, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER)
+        private RetryPolicy(int maxRetriesCount, Strictness strictness, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null)
         {
             this.maxRetriesCount = maxRetriesCount;
             this.minDelayBetweenAttemptsMs = minDelayBetweenAttemptsMs;
             this.backoffMultiplier = backoffMultiplier;
             this.strictness = strictness;
+            this.forceRecoverableCodes = forceRecoverableCodes;
         }
 
         /// <summary>
         ///     Manually specify that retries are properly respected by the server
         /// </summary>
         /// <returns></returns>
-        public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT) =>
-            new (retriesCount, Strictness.ENFORCED);
+        public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null) =>
+            new (retriesCount, Strictness.ENFORCED, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
 
         public static RetryPolicy WithRetries(int retriesCount, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER) =>
             new (retriesCount, Strictness.NONE, minDelayBetweenAttemptsMs, backoffMultiplier);

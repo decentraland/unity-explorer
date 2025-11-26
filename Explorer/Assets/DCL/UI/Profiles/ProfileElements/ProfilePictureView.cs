@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,7 +12,7 @@ using Utility;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfilePictureView : MonoBehaviour, IDisposable, IPointerEnterHandler, IPointerExitHandler
+    public class ProfilePictureView : MonoBehaviour, IDisposable, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
@@ -29,6 +30,8 @@ namespace DCL.UI.ProfileElements
         private Color originalThumbnailFrameColor;
 
         private Color originalThumbnailImageColor;
+        private Action? contextMenuAction;
+        private string? userAddress;
 
         [Obsolete]
         private ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -104,7 +107,7 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct,
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string? faceSnapshotUrl, string _, CancellationToken ct,
             bool rethrowError = false)
         {
             profileRepositoryWrapper = profileDataProvider;
@@ -113,7 +116,7 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _ = "")
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string? faceSnapshotUrl, string _ = "")
         {
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
@@ -152,7 +155,7 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, bool rethrowError, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string? faceSnapshotUrl, bool rethrowError, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(faceSnapshotUrl)) return;
             if (faceSnapshotUrl.Equals(currentUrl)) return;
@@ -231,6 +234,29 @@ namespace DCL.UI.ProfileElements
                 originalThumbnailFrameColor = thumbnailFrame.color;
 
             originalColorsInitialized = true;
+        }
+
+        /// <summary>
+        ///    Configure the data needed to handle clicks on the profile picture thumbnail.
+        ///    Left click will open the passport of the user with the provided address.
+        ///    Right click will invoke the provided context menu action.
+        ///
+        ///    IMPORTANT: enable raycast target on all ProfilePictureView prefab Image chain (from root to loaded thumbnail) to receive the click events.
+        ///               It is disabled by default to prevent the click event consumption where ProfilePictureView is used as a non-interactive element.
+        /// </summary>
+        public void ConfigureThumbnailClickData(Action? contextMenuAction = null,
+            string? userAddress = null)
+        {
+            this.contextMenuAction = contextMenuAction;
+            this.userAddress = userAddress;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left && userAddress != null)
+                ViewDependencies.GlobalUIViews.OpenPassportAsync(userAddress!).Forget();
+            else if (eventData.button == PointerEventData.InputButton.Right)
+                contextMenuAction?.Invoke();
         }
     }
 }

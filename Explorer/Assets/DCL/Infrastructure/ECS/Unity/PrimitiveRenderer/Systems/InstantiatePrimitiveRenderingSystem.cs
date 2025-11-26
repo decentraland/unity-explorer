@@ -7,7 +7,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.MeshSetup;
@@ -17,6 +17,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {

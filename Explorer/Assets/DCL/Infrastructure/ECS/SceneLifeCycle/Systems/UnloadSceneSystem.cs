@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -54,7 +55,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                //TODO: Wait until LOD is Ready
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);
@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        [None(typeof(PortableExperienceComponent))]
+        [None(typeof(PortableExperienceComponent), typeof(SmartWearableId))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
@@ -91,7 +91,8 @@ namespace ECS.SceneLifeCycle.Systems
 
 
         [Query]
-        [All(typeof(DeleteEntityIntention), (typeof(PortableExperienceComponent)))]
+        [All(typeof(DeleteEntityIntention))]
+        [Any(typeof(PortableExperienceComponent), typeof(SmartWearableId))]
         private void UnloadLoadedPortableExperienceScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeAsync().Forget();

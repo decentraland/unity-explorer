@@ -9,6 +9,8 @@ using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
+using DCL.NotificationsBus;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -27,6 +29,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using MVC;
+using Runtime.Wearables;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -60,7 +63,9 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
+        private readonly IPassportBridge passportBridge;
         private readonly IEventBus eventBus;
+        private readonly SmartWearableCache smartWearableCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -87,7 +92,9 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
-            IEventBus eventBus)
+            IPassportBridge passportBridge,
+            IEventBus eventBus,
+            SmartWearableCache smartWearableCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -114,6 +121,8 @@ namespace DCL.PluginSystem.Global
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
             this.eventBus = eventBus;
+            this.passportBridge = passportBridge;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose() { }
@@ -138,21 +147,23 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
                 new ControlsPanelController(() => controlsPanelView),
+                new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                mainUIView.ChatView2,
+                mainUIView.ChatMainView,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus
+                eventBus,
+                smartWearableCache
             ));
         }
 

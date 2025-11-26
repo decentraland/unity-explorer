@@ -1,10 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RealmNavigation
 {

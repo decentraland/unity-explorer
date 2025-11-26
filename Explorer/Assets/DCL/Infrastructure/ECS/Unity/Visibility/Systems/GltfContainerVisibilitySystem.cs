@@ -4,14 +4,12 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Components;
-using ECS.Unity.GLTFContainer.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace ECS.Unity.Visibility.Systems
 {
     [UpdateInGroup(typeof(GltfContainerGroup))]
-    [UpdateAfter(typeof(FinalizeGltfContainerLoadingSystem))]
     public partial class GltfContainerVisibilitySystem : VisibilitySystemBase<GltfContainerComponent>
     {
         internal GltfContainerVisibilitySystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world, eventsBuffer)

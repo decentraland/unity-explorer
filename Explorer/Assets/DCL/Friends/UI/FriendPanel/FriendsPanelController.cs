@@ -5,6 +5,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -177,7 +178,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
         }
 

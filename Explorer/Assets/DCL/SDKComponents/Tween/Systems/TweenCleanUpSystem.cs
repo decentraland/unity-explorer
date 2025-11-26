@@ -11,7 +11,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 
-namespace DCL.SDKComponents.Tween.Systems
+namespace DCL.SDKComponents.Tween
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.TWEEN)]
@@ -19,22 +19,33 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private readonly TweenerPool tweenerPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly bool tweenSequenceSupport;
 
-        public TweenCleanUpSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
+        public TweenCleanUpSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, bool tweenSequenceSupport) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.tweenerPool = tweenerPool;
+            this.tweenSequenceSupport = tweenSequenceSupport;
         }
 
         protected override void Update(float t)
         {
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
+
+            if (tweenSequenceSupport)
+            {
+                HandleSequenceEntityDestructionQuery(World);
+                HandleSequenceComponentRemovalQuery(World);
+            }
         }
 
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+
+            if (tweenSequenceSupport)
+                FinalizeSequenceComponentsQuery(World);
         }
 
         [Query]
@@ -62,6 +73,35 @@ namespace DCL.SDKComponents.Tween.Systems
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent)
         {
             tweenerPool.ReleaseCustomTweenerFrom(sdkTweenComponent);
+            ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention), typeof(PBTween), typeof(PBTweenSequence))]
+        private void HandleSequenceEntityDestruction(ref SDKTweenSequenceComponent tweenSequenceComponent, CRDTEntity sdkEntity)
+        {
+            CleanUpTweenSequenceBeforeRemoval(sdkEntity, ref tweenSequenceComponent);
+        }
+
+        [Query]
+        [All(typeof(PBTween))]
+        [None(typeof(PBTweenSequence), typeof(DeleteEntityIntention))]
+        private void HandleSequenceComponentRemoval(Entity entity, ref SDKTweenSequenceComponent tweenSequenceComponent, CRDTEntity sdkEntity)
+        {
+            CleanUpTweenSequenceBeforeRemoval(sdkEntity, ref tweenSequenceComponent);
+            World.Remove<SDKTweenSequenceComponent>(entity);
+        }
+
+        [Query]
+        [All(typeof(SDKTweenSequenceComponent), typeof(PBTween), typeof(PBTweenSequence))]
+        private void FinalizeSequenceComponents(CRDTEntity sdkEntity, ref SDKTweenSequenceComponent tweenSequenceComponent)
+        {
+            CleanUpTweenSequenceBeforeRemoval(sdkEntity, ref tweenSequenceComponent);
+        }
+
+        private void CleanUpTweenSequenceBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenSequenceComponent sdkTweenSequenceComponent)
+        {
+            tweenerPool.ReleaseSequenceTweenerFrom(sdkTweenSequenceComponent);
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
         }
     }

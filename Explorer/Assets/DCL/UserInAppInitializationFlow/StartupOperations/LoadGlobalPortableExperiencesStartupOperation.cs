@@ -9,7 +9,7 @@ using PortableExperiences.Controller;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class LoadGlobalPortableExperiencesStartupOperation : StartUpOperationBase
     {

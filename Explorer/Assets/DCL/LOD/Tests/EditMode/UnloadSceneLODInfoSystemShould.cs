@@ -1,20 +1,17 @@
 ﻿using Arch.Core;
-using Arch.System;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
-using NSubstitute.Exceptions;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Localization.SmartFormat.Utilities;
 using Assert = UnityEngine.Assertions.Assert;
 
 namespace DCL.LOD.Tests
@@ -57,7 +54,7 @@ namespace DCL.LOD.Tests
             };
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
-            system = new UnloadSceneLODSystem(world, scenesCache, lodCache);
+            system = new UnloadSceneLODSystem(world, scenesCache, lodCache, Substitute.For<IRealmPartitionSettings>());
         }
 
         [Test]

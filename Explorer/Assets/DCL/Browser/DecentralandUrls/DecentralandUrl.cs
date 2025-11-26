@@ -86,14 +86,16 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         EmailSubscriptions,
 
         Communities,
+        CommunityThumbnail,
         Members,
+        CommunityProfileLink,
 
         DecentralandWorlds,
 
         DecentralandContentOverride,
         DecentralandLambdasOverride,
 
-        LambdasProfiles,
+        ChatTranslate,
 
         ActiveCommunityVoiceChats,
     }

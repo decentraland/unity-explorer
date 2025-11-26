@@ -1,11 +1,12 @@
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.ThreadSafePool;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -19,34 +20,57 @@ namespace DCL.SDKComponents.MediaStream
             actionOnGet: static source => source.gameObject.SetActive(true),
             actionOnRelease: static source =>
             {
-                source.Stop();
-                source.Free();
-                source.gameObject.SetActive(false);
+                source?.Stop();
+                source?.Free();
+                source?.gameObject.SetActive(false);
             });
 
         private readonly IRoom room;
         private readonly LivekitAudioSource audioSource;
-        private (WeakReference<IVideoStream>? video, WeakReference<IAudioStream>? audio)? currentStream;
+        private (Weak<IVideoStream> video, Weak<AudioStream> audio)? currentStream;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
 
         private bool disposed;
 
-        public bool MediaOpened => currentStream != null;
+        public bool MediaOpened =>
+            // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
+            IsVideoOpened || isAudioOpened;
+
         public float Volume { get; private set; }
 
         public PlayerState State => playerState;
 
-        public LivekitPlayer(IRoomHub roomHub)
+        public bool IsVideoOpened => currentStream != null && currentStream.Value.video.Resource.Has;
+
+        private bool isAudioOpened => currentStream != null && currentStream.Value.audio.Resource.Has;
+
+        public LivekitPlayer(IRoom streamingRoom)
         {
-            room = roomHub.StreamingRoom();
+            room = streamingRoom;
             audioSource = OBJECT_POOL.Get();
         }
 
-        public void EnsurePlaying()
+        public void EnsureVideoIsPlaying()
         {
-            if (this is { MediaOpened: false, State: PlayerState.PLAYING, playingAddress: { } address })
-                OpenMedia(address);
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (IsVideoOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
+        }
+
+        public void EnsureAudioIsPlaying()
+        {
+            if (State != PlayerState.PLAYING) return;
+            if (playingAddress == null) return;
+            if (isAudioOpened) return;
+
+            var address = playingAddress.Value;
+
+            OpenMedia(address);
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -56,13 +80,13 @@ namespace DCL.SDKComponents.MediaStream
             currentStream = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) => //Audio via user stream are not supported yet
-                    (self.room.VideoStreams.ActiveStream(userStream.Identity, userStream.Sid), null),
+                    (self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid)), Weak<AudioStream>.Null),
                 onCurrentStream: static self =>
                 {
                     var videoTrack = self.FirstVideo();
                     var audioTrack = self.FirstAudio();
 
-                    if (audioTrack != null)
+                    if (audioTrack.Resource.Has)
                     {
                         self.audioSource.Construct(audioTrack);
                         self.audioSource.Play();
@@ -76,23 +100,23 @@ namespace DCL.SDKComponents.MediaStream
             playingAddress = livekitAddress;
         }
 
-        private WeakReference<IVideoStream>? FirstVideo()
+        private Weak<IVideoStream> FirstVideo()
         {
             var result = FirstAvailableTrackSid(TrackKind.KindVideo);
-            if (result.HasValue == false) return null;
+            if (result.HasValue == false) return Weak<IVideoStream>.Null;
             var value = result.Value;
-            return room.VideoStreams.ActiveStream(value.identity, value.sid);
+            return room.VideoStreams.ActiveStream(value);
         }
 
-        private WeakReference<IAudioStream>? FirstAudio()
+        private Weak<AudioStream> FirstAudio()
         {
             var result = FirstAvailableTrackSid(TrackKind.KindAudio);
-            if (result.HasValue == false) return null;
+            if (result.HasValue == false) return Weak<AudioStream>.Null;
             var value = result.Value;
-            return room.AudioStreams.ActiveStream(value.identity, value.sid);
+            return room.AudioStreams.ActiveStream(value);
         }
 
-        private (string identity, string sid)? FirstAvailableTrackSid(TrackKind kind)
+        private StreamKey? FirstAvailableTrackSid(TrackKind kind)
         {
             // See: https://github.com/decentraland/unity-explorer/issues/3796
             lock (room.Participants)
@@ -106,7 +130,7 @@ namespace DCL.SDKComponents.MediaStream
 
                     foreach ((string sid, TrackPublication value) in participant.Tracks)
                         if (value.Kind == kind)
-                            return (remoteParticipantIdentity, sid);
+                            return new StreamKey(remoteParticipantIdentity, sid);
                 }
             }
 
@@ -118,8 +142,14 @@ namespace DCL.SDKComponents.MediaStream
             // doesn't need to dispose the stream, because it's responsibility of the owning room
             currentStream = null;
             playerState = PlayerState.STOPPED;
-            audioSource.Stop();
-            audioSource.Free();
+
+            //audioSource is never null during regular execution, but the check is required as when closing the game in a scene
+            //with a running livekit stream, the audioSource (being a monobehaviour) might be already destroyed when disposing the player
+            if (audioSource != null)
+            {
+                audioSource.Stop();
+                audioSource.Free();
+            }
         }
 
         public Texture? LastTexture()
@@ -127,12 +157,8 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.PLAYING)
                 return null;
 
-            // retry to fetch the stream if it's not presented yet
-            if (playingAddress != null && currentStream?.video == null)
-                OpenMedia(playingAddress.Value);
-
-            return currentStream?.video?.TryGetTarget(out var videoStream) ?? false
-                ? videoStream.DecodeLastFrame()
+            return currentStream?.video.Resource.Has ?? false
+                ? currentStream?.video.Resource.Value.DecodeLastFrame()
                 : null;
         }
 

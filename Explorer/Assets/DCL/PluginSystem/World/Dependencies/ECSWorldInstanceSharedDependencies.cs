@@ -3,7 +3,6 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.UpdateGate;
 using DCL.Interaction.Utility;
-using DCL.Time;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
@@ -21,13 +20,12 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly Dictionary<CRDTEntity, Entity> EntitiesMap;
         public readonly ISceneExceptionsHandler SceneExceptionsHandler;
         public readonly IEntityCollidersSceneCache EntityCollidersSceneCache;
+        public readonly IEntityCollidersGlobalCache EntityCollidersGlobalCache;
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly EntityEventsBuilder EntityEventsBuilder;
         public readonly MultiThreadSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
-
-        public readonly IWorldTimeProvider WorldTimeProvider;
 
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
@@ -36,8 +34,9 @@ namespace DCL.PluginSystem.World.Dependencies
             Dictionary<CRDTEntity, Entity> entitiesMap,
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
-            MultiThreadSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
+            MultiThreadSync multiThreadSync,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;
@@ -48,8 +47,7 @@ namespace DCL.PluginSystem.World.Dependencies
             SceneStateProvider = sceneStateProvider;
             SceneExceptionsHandler = sceneExceptionsHandler;
             EntityCollidersSceneCache = entityCollidersSceneCache;
-            SceneStateProvider = sceneStateProvider;
-            WorldTimeProvider = worldTimeProvider;
+            EntityCollidersGlobalCache = entityCollidersGlobalCache;
             EcsGroupThrottler = ecsGroupThrottler;
             EcsSystemsGate = ecsSystemsGate;
             EntityEventsBuilder = entityEventsBuilder;

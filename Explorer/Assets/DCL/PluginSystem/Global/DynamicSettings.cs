@@ -1,11 +1,10 @@
 using DCL.Communities.CommunitiesCard.Members;
-using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
-using DCL.UI.GenericContextMenu.Controllers;
 using DCL.Optimization.AdaptivePerformance.Systems;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public AssetReferenceGameObject PopupCloserView { get; private set; }
         [field: SerializeField] public Light DirectionalLight { get; private set; }
-        [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
+        [field: SerializeField] public NametagsData NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
         [field: SerializeField] public AssetReferenceT<GenericUserProfileContextMenuSettings> GenericUserProfileContextMenuSettings { get; private set; }
         [field: SerializeField] public AssetReferenceT<CommunityVoiceChatContextMenuConfiguration> CommunityVoiceChatContextMenuSettings { get; private set; }

@@ -1,4 +1,4 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Utilities;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuScrollableButtonListView : GenericContextMenuComponentBase
     {
@@ -62,6 +62,23 @@ namespace DCL.UI.GenericContextMenu.Controls
                                 + (BUTTON_HEIGHT * settings.dataLabels.Count);
 
             return totalHeight;
+        }
+
+        public override bool IsInteractable
+        {
+            get
+            {
+                if (buttonViews.Count == 0)
+                    return false;
+
+                return buttonViews[0].IsInteractable;
+            }
+
+            set
+            {
+                foreach (GenericContextMenuSimpleButtonView button in buttonViews)
+                    button.IsInteractable = value;
+            }
         }
 
         public override void UnregisterListeners()

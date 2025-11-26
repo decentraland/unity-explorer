@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
+using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -38,6 +39,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     Indicates that the loop was successfully launched but in the current context connection was not required
         /// </summary>
         NO_CONNECTION_REQUIRED,
+        /// <summary>
+        ///     Indicates that the connection failed due to a 403 Forbidden Access error
+        /// </summary>
+        FORBIDDEN_ACCESS,
     }
 
     /// <summary>
@@ -69,27 +74,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             roomPool = new ObjectPool<IRoom>(() =>
             {
-                var hub = new ParticipantsHub();
-                var videoStreams = new VideoStreams(hub);
-
-                var audioRemixConveyor = new ThreadedAudioRemixConveyor();
-                var audioStreams = new AudioStreams(hub, audioRemixConveyor);
-                var tracksFactory = new TracksFactory();
+                ParticipantsHub hub = new ();
 
                 // Pass null for AudioTracks - Room constructor will create it automatically
                 Room origin = new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
                     hub,
-                    tracksFactory,
+                    new TracksFactory(),
                     new FfiHandleFactory(),
                     new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),
-                    videoStreams,
-                    audioStreams,
-                    null!
+                    new VideoStreams(hub),
+                    new AudioStreams(hub),
+                    null
                 );
 
                 return new LogRoom(origin, logPrefix);
@@ -136,6 +136,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             cancellationTokenSource = null;
         }
 
+        protected virtual void OnForbiddenAccess() =>
+            attemptToConnectState.Set(AttemptToConnectState.FORBIDDEN_ACCESS);
+
         public IConnectiveRoom.State CurrentState() =>
             roomState.Value();
 
@@ -170,6 +173,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
+                    // When we receive a 403 Forbidden Access error, we have to set the attempt to connect state to FORBIDDEN_ACCESS
+                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+                        OnForbiddenAccess();
+
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
                     connectionLoopHealth.Set(stateOnException);
                     await RecoveryDelayAsync(ct);

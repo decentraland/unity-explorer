@@ -2,6 +2,7 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
+using DCL.VoiceChat;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
         public event Action<string>? RequestedToJoinCommunity;
-        public event Action<string>? JoinStreamClicked;
+        public event Action<string, bool>? JoinStreamClicked;
         public event Action<string, string>? RequestToJoinCommunityCanceled;
         public event Action<string>? GoToStreamClicked;
 
@@ -35,6 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
+        private ICommunityCallOrchestrator? communityVoiceChatOrchestrator;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
@@ -56,10 +58,11 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
+        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService, ICommunityCallOrchestrator orchestrator)
         {
             browserStateService = communitiesBrowserStateService;
             thumbnailLoader = newThumbnailLoader;
+            communityVoiceChatOrchestrator = orchestrator;
         }
 
         public void SetActiveViewSection(ActiveViewSection newActiveSection)
@@ -162,11 +165,12 @@ namespace DCL.Communities.CommunitiesBrowser
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
 
+            bool isMember = communityData.role != CommunityMemberRole.none;
+
             // Setup card data
-            cardView.SetCommunityId(communityData.id);
-            cardView.SetTitle(communityData.name);
-            cardView.SetOwner(communityData.ownerName);
-            cardView.SetDescription(communityData.description);
+            cardView.SetCommunityData(communityData.id, communityData.name, communityData.ownerName, communityData.description, isMember);
+
+            // Setup card data
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetInviteOrRequestId(communityData.inviteOrRequestId);
@@ -180,9 +184,13 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             cardView.SetActionButtonsState(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none, isStreaming, hasJoined);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token, true).Forget();
             cardView.SetActionLoadingActive(false);
-            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+
+            if (communityVoiceChatOrchestrator?.CurrentCommunityId.Value == communityData.id)
+                cardView.ConfigureListeningTooltip();
+            else
+                cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
 
             // Setup card events
             cardView.MainButtonClicked -= OnCommunityProfileOpened;
@@ -212,9 +220,9 @@ namespace DCL.Communities.CommunitiesBrowser
             GoToStreamClicked?.Invoke(communityId);
         }
 
-        private void OnJoinStreamClicked(string communityId)
+        private void OnJoinStreamClicked(string communityId, bool isMember)
         {
-            JoinStreamClicked?.Invoke(communityId);
+            JoinStreamClicked?.Invoke(communityId, isMember);
         }
 
         private void OnCommunityRequestedToJoin(string communityId, CommunityResultCardView cardView)

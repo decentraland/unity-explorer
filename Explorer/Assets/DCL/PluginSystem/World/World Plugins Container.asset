@@ -53,9 +53,9 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         FadeSpeed: 1
     - rid: 847852733734322176
-      type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      type: {class: SDKEntityTriggerAreaSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        CharacterTriggerAreaPrefab:
+        TriggerAreaPrefab:
           m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
           m_SubObjectName: 
           m_SubObjectType: 
@@ -213,13 +213,8 @@ MonoBehaviour:
     - rid: 4769369655026384898
       type: {class: MediaPlayerPlugin/MediaPlayerPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        MediaPlayerPrefab:
-          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         <FadeSpeed>k__BackingField: 1
+        <FlipMaterial>k__BackingField: {fileID: 2100000, guid: d08e60223593f4abe8863c64316f3476, type: 2}
         VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
     - rid: 6144113899072913497
       type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}

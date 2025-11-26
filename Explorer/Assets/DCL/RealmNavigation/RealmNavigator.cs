@@ -8,6 +8,7 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
@@ -15,7 +16,6 @@ using Segment.Serialization;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RealmNavigation
 {
@@ -82,7 +82,8 @@ namespace DCL.RealmNavigation
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool isWorld = false
         )
         {
             if (ct.IsCancellationRequested)
@@ -96,6 +97,9 @@ namespace DCL.RealmNavigation
 
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
+
+            if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
 
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);

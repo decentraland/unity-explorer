@@ -1,21 +1,24 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.EventsApi;
 using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
+using DCL.Web3.Identities;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using DCL.EventsApi;
-using DCL.Multiplayer.Connectivity;
-using DCL.MapRenderer.MapLayers;
-using ECS;
-using ECS.SceneLifeCycle.Realm;
+using Utility;
 
 namespace Global.Dynamic
 {
@@ -38,13 +41,16 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsAPIService,
+            HttpEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             IRealmNavigator teleportBusController,
             IRealmData realmData,
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider,
+            IWeb3IdentityCache web3IdentityCache,
+            HomePlaceEventBus homePlaceEventBus,
+            IEventBus eventBus,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -63,7 +69,10 @@ namespace Global.Dynamic
                     mapPinsEventBus,
                     teleportBusController,
                     navmapBus,
-                    onlineUsersProvider));
+                    onlineUsersProvider,
+                    web3IdentityCache,
+                    homePlaceEventBus,
+                    eventBus));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

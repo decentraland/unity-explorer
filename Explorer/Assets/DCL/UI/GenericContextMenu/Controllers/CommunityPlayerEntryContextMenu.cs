@@ -13,13 +13,12 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
@@ -29,10 +28,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
-namespace DCL.UI.GenericContextMenu.Controllers
+namespace DCL.UI
 {
     public class CommunityPlayerEntryContextMenu
     {
@@ -58,7 +56,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private readonly UI.GenericContextMenuParameter.GenericContextMenu contextMenu;
+        private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
@@ -123,7 +121,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             viewProfileButton = new GenericContextMenuElement(openUserProfileButtonControlSettings, false);
             chatButton = new GenericContextMenuElement(openConversationControlSettings, false);
 
-            contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
                          .AddControl(demoteSpeakerButton)
@@ -146,7 +144,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
             bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
-            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
 
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -188,7 +186,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenu.ChangeOffsetFromTarget(offset);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter.GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
@@ -297,7 +295,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             onChatShown?.Invoke();
         }
 
@@ -308,7 +306,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
             analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
@@ -344,11 +342,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private void ShowBanConfirmationDialog(string walletId)
         {
             string currentCommunityId = voiceChatOrchestrator.CurrentCommunityId.Value;
+
             if (!voiceChatOrchestrator.TryGetActiveCommunityData(currentCommunityId, out var community)) return;
 
-            var participant = voiceChatOrchestrator.ParticipantsStateService.GetParticipantState(walletId);
-
-            if (participant == null) return;
+            if (!voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(walletId, out var participant)) return;
 
             string communityName = community.communityName;
 

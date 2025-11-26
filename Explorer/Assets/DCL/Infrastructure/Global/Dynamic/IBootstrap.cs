@@ -11,7 +11,9 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using Global.Versioning;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -27,7 +29,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            bool hasDebugFlag,
+            IAppArgs appArgs,
             CancellationToken ct
         );
 
@@ -46,7 +48,7 @@ namespace Global.Dynamic
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
         UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct);
@@ -56,7 +58,7 @@ namespace Global.Dynamic
         GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
             UIDocument debugUiRoot, Entity playerEntity);
 
-        UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
+        UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, BootstrapContainer bootstrapContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 

@@ -3,6 +3,7 @@ using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utility.Types;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -13,7 +14,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, StreamableLoadingState, TIntention> cachedInternalFlowDelegate;
         private readonly Query query;
-        private readonly CancellationTokenSource cancellationTokenSource;
+        protected readonly CancellationTokenSource cancellationTokenSource;
 
         private bool systemIsDisposed;
 
@@ -97,7 +97,7 @@ namespace ECS.StreamableLoading.Common.Systems
             AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
             var intentionId = new IntentionsComparer<TIntention>.SourcedIntentionId(intention, currentSource);
-                
+
             //If a chunk is already loading, don't start another one, if it is a partial request it will resume from the point it was stopped
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
@@ -273,18 +273,18 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
-        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, 
+        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention,
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, 
-            StreamableLoadingState state, IPartitionComponent partition, 
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention,
+            StreamableLoadingState state, IPartitionComponent partition,
             IntentionsComparer<TIntention>.SourcedIntentionId intentionId, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            
+
             cache.OngoingRequests.SyncTryAdd(intentionId, source);
             var ongoingRequestRemoved = false;
 
@@ -365,17 +365,19 @@ namespace ECS.StreamableLoading.Common.Systems
             return null;
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, 
-            StreamableLoadingState state, IPartitionComponent partition, 
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention,
+            StreamableLoadingState state, IPartitionComponent partition,
             IntentionsComparer<TIntention>.SourcedIntentionId intentionId, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition, 
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition,
                 cachedInternalFlowDelegate, GetReportData(), ct);
-            return result is { Succeeded: false, IsInitialized: true } ? SetIrrecoverableFailure(intention, 
+
+            return result is { Succeeded: false, IsInitialized: true }
+                ? SetIrrecoverableFailure(intention,
                 intentionId, result.Value) : result;
         }
 
-        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, 
+        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention,
             IntentionsComparer<TIntention>.SourcedIntentionId intentionId, StreamableLoadingResult<TAsset> failure)
         {
             bool result = cache.IrrecoverableFailures.SyncTryAdd(intentionId, failure);

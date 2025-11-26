@@ -13,7 +13,8 @@ using DCL.Friends.UI.Requests;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connectivity;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
+using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -24,6 +25,7 @@ using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
@@ -33,7 +35,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.PluginSystem.Global
 {
@@ -173,6 +174,7 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
             syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
+            friendsService.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

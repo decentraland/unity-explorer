@@ -11,6 +11,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
+using ECS.Unity.Visibility.Systems;
 using SceneRunner.Scene;
 using Utility;
 
@@ -21,6 +22,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
+    [UpdateBefore(typeof(GltfContainerVisibilitySystem))]
     public partial class FinalizeGltfContainerLoadingSystem : BaseUnityLoopSystem
     {
         private readonly Entity sceneRoot;
@@ -91,6 +93,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                 result.Asset!.Root.transform.SetParent(transformComponent.Transform);
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
+
+                result.Asset.ToggleAnimationState(true);
 
                 component.State = LoadingState.Finished;
                 eventsBuffer.Add(entity, component);

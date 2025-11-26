@@ -11,7 +11,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
     /// </summary>
     public class JoinStreamCommand
     {
-        private const int UI_CLOSE_DELAY = 500;
+        private const int UI_CLOSE_DELAY = 600;
 
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -31,7 +31,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
         /// Joins a community voice chat stream.
         /// </summary>
         /// <param name="communityId">The community ID to join</param>
-        public void Execute(string communityId)
+        /// <param name="shouldOpenConversation">If we should open the conversation in the chat (false for communities we don't belong to)</param>
+        public void Execute(string communityId, bool shouldOpenConversation)
         {
             // If we already joined, we cannot join again
             if (orchestrator.CurrentCommunityId.Value == communityId)
@@ -42,8 +43,11 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid JoinStreamAsync()
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
-                chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
+
+                if (shouldOpenConversation)
+                    chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
+
                 // We wait until the panel has disappeared before starting the call, so the UX feels better.
                 await UniTask.Delay(UI_CLOSE_DELAY);
                 orchestrator.JoinCommunityVoiceChat(communityId, true);

@@ -15,18 +15,8 @@ using System.Threading;
 
 namespace DCL.Friends
 {
-    public class RPCFriendsService : IFriendsService
+    public class RPCFriendsService : RPCSocialServiceBase, IFriendsService
     {
-        internal class ServerStreamReportsDebouncer : FrameDebouncer
-        {
-            public ServerStreamReportsDebouncer() : base(1)
-            {
-                // Tasks can be distributed across 2 frames so the threshold distance is 1 frame
-            }
-
-            public override ReportHandler AppliedTo => ReportHandler.Sentry;
-        }
-
         /// <summary>
         ///     Timeout used for foreground operations, such as fetching the list of friends
         /// </summary>
@@ -46,12 +36,9 @@ namespace DCL.Friends
         private const string BLOCK_USER = "BlockUser";
         private const string UNBLOCK_USER = "UnblockUser";
 
-        private readonly ServerStreamReportsDebouncer serverStreamReportsDebouncer = new ();
-
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
         private readonly ISelfProfile selfProfile;
-        private readonly IRPCSocialServices socialServiceRPC;
 
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
@@ -62,33 +49,11 @@ namespace DCL.Friends
             IFriendsEventBus eventBus,
             FriendsCache friendsCache,
             ISelfProfile selfProfile,
-            IRPCSocialServices socialServiceRPC)
+            IRPCSocialServices socialServiceRPC) : base(socialServiceRPC, ReportCategory.FRIENDS)
         {
             this.eventBus = eventBus;
             this.friendsCache = friendsCache;
             this.selfProfile = selfProfile;
-            this.socialServiceRPC = socialServiceRPC;
-        }
-
-        public void Dispose()
-        {
-        }
-
-        private async UniTask KeepServerStreamOpenAsync(Func<UniTask> openStreamFunc, CancellationToken ct)
-        {
-            // We try to keep the stream open until cancellation is requested
-            // If for any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
-            while (!ct.IsCancellationRequested)
-            {
-                try
-                {
-                    // It's an endless [background] loop
-                    await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
-                    await openStreamFunc().AttachExternalCancellation(ct);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS, new ReportDebounce(serverStreamReportsDebouncer))); }
-            }
         }
 
         public UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
@@ -144,7 +109,10 @@ namespace DCL.Friends
                     }
 
                     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        DiagnosticInfoUtils.LogWebSocketException(e,ReportCategory.FRIENDS);
+                    }
                 }
             }
         }

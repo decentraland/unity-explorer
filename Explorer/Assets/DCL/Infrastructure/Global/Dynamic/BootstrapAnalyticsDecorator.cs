@@ -14,6 +14,7 @@ using Global.Versioning;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
@@ -53,12 +54,12 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            bool hasDebugFlag,
+            IAppArgs appArgs,
             CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, hasDebugFlag, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, appArgs, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -126,9 +127,9 @@ namespace Global.Dynamic
         public void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity) =>
             core.InitializePlayerEntity(staticContainer, playerEntity);
 
-        public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct)
+        public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController, CancellationToken ct)
         {
-            bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
+            bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, analytics, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
@@ -177,9 +178,11 @@ namespace Global.Dynamic
             core.InitializeFeaturesRegistry();
         }
 
-        public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
+        public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
+            BootstrapContainer bootstrapContainer,
+            GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
-            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, ct);
+            await core.UserInitializationAsync(dynamicWorldContainer, bootstrapContainer, globalWorld, playerEntity, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

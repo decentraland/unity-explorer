@@ -110,7 +110,7 @@ namespace Global
                                                         .Build())
                .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBCameraMode>.Create(ComponentID.CAMERA_MODE).AsProtobufResult())
-               .Add(SDKComponentBuilder<PBPointerLock>.Create(ComponentID.POINTER_LOCK).AsProtobufResult())
+               .Add(SDKComponentBuilder<PBPointerLock>.Create(ComponentID.POINTER_LOCK).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBEngineInfo>.Create(ComponentID.ENGINE_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent())
@@ -119,6 +119,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAudioSource>.Create(ComponentID.AUDIO_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTween>.Create(ComponentID.TWEEN).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTweenSequence>.Create(ComponentID.TWEEN_SEQUENCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenState>.Create(ComponentID.TWEEN_STATE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent())
@@ -137,7 +138,9 @@ namespace Global
                .Add(SDKComponentBuilder<PBLightSource>.Create(ComponentID.LIGHT_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPrimaryPointerInfo>.Create(ComponentID.PRIMARY_POINTER_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBSkyboxTime>.Create(ComponentID.SKYBOX_TIME).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBGltfNodeModifiers>.Create(ComponentID.GLTF_NODE_MODIFIERS).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBGltfNodeModifiers>.Create(ComponentID.GLTF_NODE_MODIFIERS).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTriggerArea>.Create(ComponentID.TRIGGER_AREA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTriggerAreaResult>.Create(ComponentID.TRIGGER_AREA_RESULT).AsProtobufResult());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

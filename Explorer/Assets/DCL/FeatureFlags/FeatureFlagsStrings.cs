@@ -15,7 +15,8 @@ namespace DCL.FeatureFlags
         public const string USER_ALLOW_LIST = "user-allow-list";
         public const string CSV_VARIANT = "csv-variant";
         public const string STRING_VARIANT = "string-variant";
-        public const string WALLETS_VARIANT = "wallet";
+        public const string WALLET_VARIANT = "wallet";
+        public const string WALLETS_VARIANT = "wallets";
         public const string ONBOARDING = "onboarding";
         public const string GREETING_ONBOARDING = "greeting-onboarding";
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
@@ -26,6 +27,7 @@ namespace DCL.FeatureFlags
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
         public const string VOICE_CHAT = "alfa-voice-chat";
         public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
+        public const string OFFICIAL_WALLETS = "alfa-official-wallets";
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
@@ -34,15 +36,18 @@ namespace DCL.FeatureFlags
         public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
-        public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
         public const string COMMUNITIES = "alfa-communities";
-        public const string COMMUNITIES_WALLETS_VARIANT = "wallets";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
+        public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
         public const string AUTH_CODE_VALIDATION = "number-validation";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
+        public const string TEMPORAL_LOADING_SCREEN_TIPS = "alfa-temporal-loading-screen-tip";
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
+        public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
+        public const string OUTFITS_ENABLED = "alfa-outfits";
+        public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
     }
 
     public enum FeatureFlag
@@ -79,7 +84,9 @@ namespace DCL.FeatureFlags
         MarketplaceCredits,
         MarketplaceCreditsWalletsVariant,
         AuthCodeValidation,
-        GpuiEnabled
+        GpuiEnabled,
+        ChatTranslation,
+        OutfitsEnabled
     }
 
     public static class FeatureFlagExtensions
@@ -98,7 +105,7 @@ namespace DCL.FeatureFlags
                 FeatureFlag.UserAllowList => FeatureFlagsStrings.USER_ALLOW_LIST,
                 FeatureFlag.CsvVariant => FeatureFlagsStrings.CSV_VARIANT,
                 FeatureFlag.StringVariant => FeatureFlagsStrings.STRING_VARIANT,
-                FeatureFlag.WalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
+                FeatureFlag.WalletsVariant => FeatureFlagsStrings.WALLET_VARIANT,
                 FeatureFlag.Onboarding => FeatureFlagsStrings.ONBOARDING,
                 FeatureFlag.GreetingOnboarding => FeatureFlagsStrings.GREETING_ONBOARDING,
                 FeatureFlag.OnboardingEnabledVariant => FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT,
@@ -117,9 +124,11 @@ namespace DCL.FeatureFlags
                 FeatureFlag.SceneMemoryLimit => FeatureFlagsStrings.SCENE_MEMORY_LIMIT,
                 FeatureFlag.Ktx2Conversion => FeatureFlagsStrings.KTX2_CONVERSION,
                 FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
-                FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT,
+                FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
                 FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
+                FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
+                FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
                 _ => string.Empty
             };
         }

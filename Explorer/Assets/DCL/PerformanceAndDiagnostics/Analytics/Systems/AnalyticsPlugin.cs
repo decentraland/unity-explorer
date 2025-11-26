@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Backpack.AvatarSection.Outfits.Analytics;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Profiles.Tables;
@@ -8,10 +9,12 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Profiling;
 using DCL.RealmNavigation;
+using DCL.Translation;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using Utility;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
@@ -27,8 +30,14 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IEventBus eventBus;
+        private readonly IScenesCache scenesCache;
+        private readonly ITranslationSettings translationSettings;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
+        private AutoTranslateAnalytics? autoTranslateAnalytics;
+        private OutfitsAnalytics outfitsAnalytics;
+        private HomeMarkerAnalytics homeMarkerAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
         public AnalyticsPlugin(
@@ -41,7 +50,9 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             ICameraReelStorageService cameraReelStorageService,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            IScenesCache scenesCache
+            IScenesCache scenesCache,
+            IEventBus eventBus,
+            ITranslationSettings translationSettings
         )
         {
             this.analytics = analytics;
@@ -53,7 +64,9 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cameraReelStorageService = cameraReelStorageService;
             this.entityParticipantTable = entityParticipantTable;
-
+            this.eventBus = eventBus;
+            this.translationSettings = translationSettings;
+            this.scenesCache = scenesCache;
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
             playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, scenesCache);
         }
@@ -67,6 +80,10 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             walkedDistanceAnalytics.Initialize();
+
+            autoTranslateAnalytics = new AutoTranslateAnalytics(analytics, eventBus, translationSettings);
+            outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
+            homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
 
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);

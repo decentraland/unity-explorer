@@ -21,6 +21,8 @@ namespace DCL.ECS7
         public const int UI_TEXT = 1052;
         public const int UI_BACKGROUND = 1053;
         public const int UI_CANVAS_INFORMATION = 1054;
+        public const int TRIGGER_AREA = 1060;
+        public const int TRIGGER_AREA_RESULT = 1061;
         public const int POINTER_EVENTS = 1062;
         public const int POINTER_EVENTS_RESULT = 1063;
         public const int RAYCAST = 1067;
@@ -54,5 +56,6 @@ namespace DCL.ECS7
         public const int REALM_INFO = 1106;
         public const int PRIMARY_POINTER_INFO = 1209;
         public const int SKYBOX_TIME = 1210;
+        public const int AVATAR_LOCOMOTION_SETTINGS = 1211;
     }
 }

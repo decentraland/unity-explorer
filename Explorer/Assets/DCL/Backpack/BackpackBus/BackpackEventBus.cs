@@ -13,27 +13,26 @@ namespace DCL.Backpack.BackpackBus
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable>? SelectWearableEvent;
-        public event Action<IWearable>? EquipWearableEvent;
+        public event Action<IWearable, bool>? EquipWearableEvent;
         public event Action<IWearable>? UnEquipWearableEvent;
         public event Action<int, IEmote, bool>? EquipEmoteEvent;
         public event Action<int, IEmote?>? UnEquipEmoteEvent;
         public event Action<int>? EmoteSlotSelectEvent;
         public event Action<IEmote>? SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>>? ForceRenderEvent;
-        public event Action<string>? FilterCategoryEvent;
-        public event Action<AvatarWearableCategoryEnum>? FilterCategoryByEnumEvent;
         public event Action<BackpackSections>? ChangedBackpackSectionEvent;
         public event Action? DeactivateEvent;
         public event Action? UnEquipAllEvent;
-        public event Action<Color,string>? ChangeColorEvent;
+        public event Action? UnEquipAllWearablesEvent;
+        public event Action<Color, string>? ChangeColorEvent;
         public event Action? PublishProfileEvent;
-        public event Action<string>? SearchEvent;
+        public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
 
         public void SendWearableSelect(IWearable equipWearable) =>
             SelectWearableEvent?.Invoke(equipWearable);
 
-        public void SendEquipWearable(IWearable equipWearable) =>
-            EquipWearableEvent?.Invoke(equipWearable);
+        public void SendEquipWearable(IWearable equipWearable, bool isManuallyEquipped) =>
+            EquipWearableEvent?.Invoke(equipWearable, isManuallyEquipped);
 
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             UnEquipWearableEvent?.Invoke(unEquipWearable);
@@ -41,20 +40,19 @@ namespace DCL.Backpack.BackpackBus
         public void SendUnEquipAll() =>
             UnEquipAllEvent?.Invoke();
 
+        public void SendUnEquipAllWearables()
+        {
+            UnEquipAllWearablesEvent?.Invoke();
+        }
+
         public void SendChangeColor(Color newColor, string category) =>
             ChangeColorEvent?.Invoke(newColor, category);
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
             ForceRenderEvent?.Invoke(forceRender);
 
-        public void SendFilterCategory(string category, AvatarWearableCategoryEnum categoryEnum)
-        {
-            FilterCategoryEvent?.Invoke(category);
-            FilterCategoryByEnumEvent?.Invoke(categoryEnum);
-        }
-
-        public void SendSearch(string searchText) =>
-            SearchEvent?.Invoke(searchText);
+        public void SendFilter(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText) =>
+            FilterEvent?.Invoke(category, categoryEnum, searchText);
 
         public void SendPublishProfile() =>
             PublishProfileEvent?.Invoke();
@@ -76,6 +74,5 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendBackpackDeactivateEvent() =>
             DeactivateEvent?.Invoke();
-
     }
 }

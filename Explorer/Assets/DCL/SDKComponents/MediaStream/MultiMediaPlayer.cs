@@ -45,11 +45,6 @@ namespace DCL.SDKComponents.MediaStream
             static _ => 0f
         );
 
-        public bool MediaOpened => Match(
-            static avPro => avPro.AvProMediaPlayer.MediaOpened,
-            static livekitPlayer => livekitPlayer.MediaOpened
-        );
-
         public bool IsFinished => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
             static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
@@ -65,6 +60,11 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        public bool IsBuffering => Match(
+            static avPro => avPro.AvProMediaPlayer.Control.IsBuffering(),
+            static _ => false
+        );
+
         public bool HasControl => Match(
             static avPro => avPro.AvProMediaPlayer.Control != null,
             static _ => false
@@ -74,6 +74,7 @@ namespace DCL.SDKComponents.MediaStream
             static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
             static _ => true
         );
+
         public Vector2 GetTexureScale => Match(static avPro =>
             {
                 float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
@@ -131,7 +132,7 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx));
         }
 
-        public void CrossfadeVolume(float volume, float volumeDelta = 1)
+        public readonly void CrossfadeVolume(float volume, float volumeDelta = 1)
         {
             Match(
                 (volume, volumeDelta),
@@ -160,7 +161,13 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
+        public readonly void SetLooping(bool isLooping) =>
+            Match(
+                isLooping,
+                static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
+                static (_, _) => { });
+
+        public readonly void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
@@ -170,6 +177,16 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             // Livekit streaming doesn't need to adjust playback properties
+        }
+
+        public readonly void SetPlaybackProperties(CustomMediaStream customMediaStream)
+        {
+            if (IsAvProPlayer(out AvProPlayer? mediaPlayer))
+            {
+                MediaPlayer avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
+                if (!avProPlayer.MediaOpened) return;
+                MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
+            }
         }
 
         public bool OpenMedia(MediaAddress mediaAddress, bool isFromContentServer, bool autoPlay)
@@ -240,14 +257,6 @@ namespace DCL.SDKComponents.MediaStream
                 static avPro => avPro.AvProMediaPlayer.Control.GetLastError(),
                 static _ => ErrorCode.None
             );
-        }
-
-        public void EnsurePlaying()
-        {
-            if (IsLivekitPlayer(out var livekitPlayer))
-                livekitPlayer!.EnsurePlaying();
-
-            // AvPro doesn't require ensure
         }
     }
 }

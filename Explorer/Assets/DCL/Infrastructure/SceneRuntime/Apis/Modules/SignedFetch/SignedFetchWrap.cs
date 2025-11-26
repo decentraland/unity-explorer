@@ -117,6 +117,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             return JsonConvert.SerializeObject(headers);
         }
 
+        //IMPORTANT: Validate that the correct SignatureMetadata is created if this method is altered
         [UsedImplicitly]
         public object SignedFetch(string url, string body, string headers, string method)
         {
@@ -254,6 +255,13 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error,
                         e.ResponseHeaders);
                 }
+                catch (OperationCanceledException)
+                {
+                    // If we are disposing we don't want to throw an exception into oblivion.
+                    // We cannot rethrow as a response to javascript, so we return a dummy response.
+                    // Code on JS is likely to be stopped execution either way.
+                    return FlatFetchResponse.Cancelled;
+                }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));
@@ -267,7 +275,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         private ReportData GetReportData() =>
             new (ReportCategory.SCENE_FETCH_REQUEST, sceneShortInfo: sceneData.SceneShortInfo);
 
-        private string CreateSignatureMetadata(string? hashPayload)
+        internal string CreateSignatureMetadata(string? hashPayload)
         {
             Vector2Int parcel = sceneData.SceneEntityDefinition.metadata.scene.DecodedBase;
 
@@ -297,7 +305,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         }
 
         [Serializable]
-        private struct SignatureMetadata
+        internal struct SignatureMetadata
         {
             public string sceneId;
             public string parcel;

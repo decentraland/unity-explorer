@@ -8,6 +8,7 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -19,6 +20,7 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
@@ -33,6 +35,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -52,7 +55,6 @@ namespace Global.Dynamic
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
-        private readonly ObjectProxy<IProfileRepository> profileRepositoryProxy = new ();
 
         private URLDomain? startingRealm;
         private Vector2Int startingParcel;
@@ -100,7 +102,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            bool hasDebugFlag,
+            IAppArgs appArgs,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -123,9 +125,9 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
-                profileRepositoryProxy,
+                bootstrapContainer.Environment,
                 ct,
-                hasDebugFlag
+                appArgs
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
@@ -182,20 +184,17 @@ namespace Global.Dynamic
                 realmUrls,
                 ct);
 
-            if (tuple.container != null)
-                profileRepositoryProxy.SetObject(tuple.container.ProfileRepository);
-
             return tuple;
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -251,7 +250,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
-                bootstrapContainer.Environment
+                bootstrapContainer.Environment,
+                dynamicWorldContainer.SystemClipboard
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
@@ -280,14 +280,20 @@ namespace Global.Dynamic
 
         public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
+            BootstrapContainer bootstrapContainer,
             GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
             splashScreen.Show();
+
+            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+            // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenNotFoundException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters

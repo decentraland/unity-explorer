@@ -53,8 +53,5 @@ namespace DCL.UI
                                   loadedCanvasGroup.interactable = true;
                               });
         }
-
-        private void OnDisable() =>
-            HideLoading();
     }
 }

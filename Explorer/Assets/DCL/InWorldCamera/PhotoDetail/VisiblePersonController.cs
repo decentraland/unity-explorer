@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.FeatureFlags;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Profiles;
 using DG.Tweening;
@@ -14,7 +15,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
-using DCL.InWorldCamera.PassportBridge;
+using DCL.Passport;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using Utility;
@@ -32,7 +33,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IMVCManager mvcManager;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -47,7 +47,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            IPassportBridge passportBridge,
             PhotoDetailPoolManager photoDetailPoolManager,
             ProfileRepositoryWrapper profileDataProvider)
         {
@@ -56,7 +55,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
-            this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
             this.profileRepositoryWrapper = profileDataProvider;
 
@@ -73,6 +71,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListContainer.gameObject.SetActive(false);
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
+            view.verifiedMark.SetActive(false);
+            view.officialMark.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
             Color userColor = NameColorHelper.GetNameColor(visiblePerson.userName);
 
@@ -87,6 +87,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             if (profile is not null)
             {
                 view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
+                view.verifiedMark.SetActive(profile.HasClaimedName);
+                view.officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(visiblePerson.userAddress));
                 await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else
@@ -106,8 +108,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void ShowPersonPassportClicked()
         {
             if (visiblePerson is null) return;
-
-            passportBridge.OpenPassport(mvcManager, visiblePerson.userAddress);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(visiblePerson.userAddress))).Forget();
         }
 
         private void WearableListButtonClicked()

@@ -3,8 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.Passport;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
@@ -61,36 +62,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             }
         }
 
-        internal static (GenericContextMenu, GenericContextMenuElement, GenericContextMenuElement) BuildContextMenu(
-            FriendListContextMenuConfiguration contextMenuSettings,
-            UserProfileContextMenuControlSettings userProfileContextMenuControlSettings,
-            bool includeUserBlocking,
-            bool includeCall,
-            Action openProfilePassportCallback,
-            Action jumpToFriendCallback,
-            Action callUserCallback,
-            Action blockUserCallback)
-        {
-            GenericContextMenuElement jumpInElement;
-            GenericContextMenuElement callElement;
-
-            GenericContextMenu contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                                            .AddControl(userProfileContextMenuControlSettings)
-                                            .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                                            .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, openProfilePassportCallback))
-                                            .AddControl(jumpInElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.JumpToLocationText,
-                                                 contextMenuSettings.JumpToLocationSprite, jumpToFriendCallback), false))
-                                            .AddControl(callElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, callUserCallback), includeCall))
-                                            .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, blockUserCallback), includeUserBlocking));
-
-            return (contextMenu, jumpInElement, callElement);
-        }
-
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
-
-        internal static void CallFriend(Web3Address walletId, IVoiceChatOrchestratorActions voiceChatOrchestratorActions) =>
-            voiceChatOrchestratorActions.StartCall(walletId.ToString(), VoiceChatType.PRIVATE);
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();

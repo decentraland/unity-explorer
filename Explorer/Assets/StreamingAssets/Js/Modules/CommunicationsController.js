@@ -1,3 +1,6 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/communications_controller.proto
+
 module.exports.sendBinary = async function(message) {
     var peerData = message.peerData
     if (peerData === undefined)

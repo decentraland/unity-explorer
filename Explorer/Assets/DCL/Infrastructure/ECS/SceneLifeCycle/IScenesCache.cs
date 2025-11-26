@@ -9,7 +9,7 @@ namespace ECS.SceneLifeCycle
     public interface IScenesCache
     {
         IReadonlyReactiveProperty<Vector2Int> CurrentParcel { get; }
-        ISceneFacade? CurrentScene { get;}
+        IReadonlyReactiveProperty<ISceneFacade?> CurrentScene { get;}
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
 
@@ -44,6 +44,7 @@ namespace ECS.SceneLifeCycle
 
     public class ScenesCache : IScenesCache
     {
+        private readonly ReactiveProperty<ISceneFacade?> currentScene = new ReactiveProperty<ISceneFacade?>(null);
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
         private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
@@ -53,7 +54,7 @@ namespace ECS.SceneLifeCycle
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
         public IReadonlyReactiveProperty<Vector2Int> CurrentParcel => currentParcel;
-        public ISceneFacade? CurrentScene { get; private set; }
+        public IReadonlyReactiveProperty<ISceneFacade?> CurrentScene => currentScene;
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
@@ -135,7 +136,7 @@ namespace ECS.SceneLifeCycle
 
         public void SetCurrentScene(ISceneFacade? sceneFacade)
         {
-            CurrentScene = sceneFacade;
+            currentScene.UpdateValue(sceneFacade);
         }
 
         public void UpdateCurrentParcel(Vector2Int newParcel)

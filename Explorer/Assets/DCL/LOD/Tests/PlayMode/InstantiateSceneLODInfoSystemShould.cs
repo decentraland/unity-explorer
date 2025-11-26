@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Arch.Core;
+using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
@@ -94,7 +95,8 @@ namespace DCL.LOD.Tests
             var promiseGenerated = GenerateSuccessfullPromise();
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevelPromise = 0;
-            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+            sceneLODInfo.id = "scene";
+            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
             system.Update(0);
@@ -117,7 +119,8 @@ namespace DCL.LOD.Tests
             //Arrange
             sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
             sceneLODInfo.CurrentLODLevelPromise = 0;
-            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+            sceneLODInfo.id = "scene";
+            Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
             system.Update(0);
@@ -133,7 +136,7 @@ namespace DCL.LOD.Tests
         private Promise GenerateFailedPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
+                GetAssetBundleIntention.FromHash("Cube", typeof(GameObject)),
                 new PartitionComponent());
 
             world.Add(promise.Entity,
@@ -145,12 +148,11 @@ namespace DCL.LOD.Tests
         private (AssetBundleData, Promise) GenerateSuccessfullPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
+                GetAssetBundleIntention.FromHash("Cube", typeof(GameObject)),
                 new PartitionComponent());
 
-            var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
-                new AssetBundleData[]
-                    { });
+            var fakeAssetBundleData = new AssetBundleData(null,null, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
+                typeof(GameObject), new AssetBundleData[] { });
 
             world.Add(promise.Entity,
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));

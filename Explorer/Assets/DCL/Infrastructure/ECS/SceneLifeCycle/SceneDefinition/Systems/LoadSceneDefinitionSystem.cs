@@ -24,11 +24,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<SceneEntityDefinition, GetSceneDefinition>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly bool isLocalSceneDevelopment;
 
-        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -42,7 +44,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
             //Could be removed once the asset bundle manifest registry has been battle tested
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct);
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
 
             // switching back is handled by the base class
             return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);

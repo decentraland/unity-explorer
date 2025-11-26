@@ -2,20 +2,18 @@ using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Threading;
-using DCL.Diagnostics;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Textures
 {
-    public class TextureDiskSerializer : IDiskSerializer<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>
+    public class TextureDiskSerializer : IDiskSerializer<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>
     {
-        public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public async UniTask<TextureData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
-            
+
             await UniTask.SwitchToMainThread();
             var texture = new Texture2D(meta.width, meta.height, meta.format, meta.mipCount, meta.linear, true)
             {
@@ -25,24 +23,30 @@ namespace ECS.StreamableLoading.Textures
                 wrapModeV = meta.wrapModeV,
                 wrapModeW = meta.wrapModeW
             };
-            
+
             using var handle = data.Memory.Pin();
 
             unsafe { texture.LoadRawTextureData((IntPtr)handle.Pointer + meta.ArrayLength, data.Memory.Length - meta.ArrayLength); }
-            
+
             texture.Apply();
 
             // LoadRawTextureData copies the data
             data.Dispose();
-            
-            return new Texture2DData(texture);
+
+            return new TextureData(AnyTexture.FromTexture2D(texture));
         }
 
-        public SerializeMemoryIterator<State> Serialize(Texture2DData data)
+        public SerializeMemoryIterator<State> Serialize(TextureData data)
         {
-            var textureData = data.Asset.GetRawTextureData<byte>()!;
+            if (!data.Asset.IsTexture2D(out Texture2D? tex2D))
+            {
+                // it should be never called
+                return SerializeMemoryIterator<State>.New(new State(), static (_, _, _) => 0, static (_, _, _) => false);
+            }
 
-            var meta = new Meta(data.Asset);
+            NativeArray<byte> textureData = tex2D!.GetRawTextureData<byte>()!;
+
+            var meta = new Meta(tex2D);
             State state = new State(meta, textureData);
 
             return SerializeMemoryIterator<State>.New(

@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatCommands
         }
 
         public void GetInitialMembersAndStartLoadingThumbnails(
-            IReadOnlyList<ChatMemberListView.MemberData> rawMembers,
+            IReadOnlyList<ChatMemberListData> rawMembers,
             List<ChatMemberListViewModel> targetList,
             CancellationToken ct)
         {

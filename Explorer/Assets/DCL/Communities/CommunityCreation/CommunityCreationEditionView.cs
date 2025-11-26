@@ -22,12 +22,14 @@ namespace DCL.Communities.CommunityCreation
         private const string PLACES_DROPDOWN_TITLE = "Select LAND or World";
         private const string PUBLIC_MEMBERSHIP_OPTION = "<b>Public</b> <size=11>Anyone can become a member, view Community details, and join your Voice Streams</size>";
         private const string PRIVATE_MEMBERSHIP_OPTION = "<b>Private</b> <size=11>Membership by request/invite; only Community description visible to non-members</size>";
+        private const string ALL_VISIBILITY_OPTION = "<b>Discoverable</b> <size=11>Listed in 'Browse Communities' section and search results</size>";
+        private const string UNLISTED_VISIBILITY_OPTION = "<b>Unlisted</b> <size=11>Hidden from non-members, invite-only</size>";
 
         public Action? CancelButtonClicked;
         public Action? GetNameButtonClicked;
         public Action? SelectProfilePictureButtonClicked;
-        public Action<string, string, List<string>, List<string>, CommunityPrivacy>? CreateCommunityButtonClicked;
-        public Action<string, string, List<string>, List<string>, CommunityPrivacy>? SaveCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, CommunityPrivacy, CommunityVisibility>? CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, CommunityPrivacy, CommunityVisibility>? SaveCommunityButtonClicked;
         public Action<int>? AddPlaceButtonClicked;
         public Action<int>? RemovePlaceButtonClicked;
         public Action<string>? ContentPolicyAndCodeOfEthicsLinksClicked;
@@ -59,6 +61,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline = null!;
         [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter = null!;
         [SerializeField] private SelectorButtonView creationPanelMembershipDropdown = null!;
+        [SerializeField] private SelectorButtonView creationPanelVisibilityDropdown = null!;
         [SerializeField] private SelectorButtonView creationPanelPlacesDropdown = null!;
         [SerializeField] private Transform placeTagsContainer = null!;
         [SerializeField] private CommunityPlaceTag placeTagPrefab = null!;
@@ -104,12 +107,15 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionInputField.onDeselect.AddListener(CreationPanelCommunityDescriptionInputDeselected);
             creationPanelCreateButton.onClick.AddListener(CreateButtonClicked);
 
-            creationPanelMembershipDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
-            creationPanelMembershipDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+            creationPanelMembershipDropdown.OptionsPanelOpened += BlockPanelScrolling;
+            creationPanelMembershipDropdown.OptionsPanelClosed += UnblockPanelScrolling;
+
+            creationPanelVisibilityDropdown.OptionsPanelOpened += BlockPanelScrolling;
+            creationPanelVisibilityDropdown.OptionsPanelClosed += UnblockPanelScrolling;
 
             creationPanelPlacesDropdown.OptionClicked += OnPlacesDropdownOptionSelected;
-            creationPanelPlacesDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
-            creationPanelPlacesDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+            creationPanelPlacesDropdown.OptionsPanelOpened += BlockPanelScrolling;
+            creationPanelPlacesDropdown.OptionsPanelClosed += UnblockPanelScrolling;
 
             creationPanelContentPolicyAndCodeOfEthicsText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
             creationPanelComplianceErrorModalDclGuidelinesText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
@@ -119,6 +125,9 @@ namespace DCL.Communities.CommunityCreation
         {
             creationPanelMembershipDropdown.SetOptions(new List<string> { PUBLIC_MEMBERSHIP_OPTION, PRIVATE_MEMBERSHIP_OPTION });
             SetCommunityPrivacy(CommunityPrivacy.@public, true);
+
+            creationPanelVisibilityDropdown.SetOptions(new List<string> { ALL_VISIBILITY_OPTION, UNLISTED_VISIBILITY_OPTION });
+            SetCommunityVisibility(CommunityVisibility.all, true);
         }
 
         private void OnDestroy()
@@ -138,12 +147,15 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionInputField.onSelect.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onDeselect.RemoveAllListeners();
 
-            creationPanelMembershipDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
-            creationPanelMembershipDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
+            creationPanelMembershipDropdown.OptionsPanelOpened -= BlockPanelScrolling;
+            creationPanelMembershipDropdown.OptionsPanelClosed -= UnblockPanelScrolling;
+
+            creationPanelVisibilityDropdown.OptionsPanelOpened -= BlockPanelScrolling;
+            creationPanelVisibilityDropdown.OptionsPanelClosed -= UnblockPanelScrolling;
 
             creationPanelPlacesDropdown.OptionClicked -= OnPlacesDropdownOptionSelected;
-            creationPanelPlacesDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
-            creationPanelPlacesDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
+            creationPanelPlacesDropdown.OptionsPanelOpened -= BlockPanelScrolling;
+            creationPanelPlacesDropdown.OptionsPanelClosed -= UnblockPanelScrolling;
 
             updateScrollPositionCts.SafeCancelAndDispose();
             thumbnailLoadingCts.SafeCancelAndDispose();
@@ -198,7 +210,7 @@ namespace DCL.Communities.CommunityCreation
             if (!string.IsNullOrEmpty(imageUrl))
             {
                 thumbnailLoadingCts = thumbnailLoadingCts.SafeRestart();
-                thumbnailLoader.LoadCommunityThumbnailAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token).Forget();
+                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token, true).Forget();
             }
             else
             {
@@ -232,6 +244,12 @@ namespace DCL.Communities.CommunityCreation
             creationPanelMembershipDropdown.SetAsInteractable(isInteractable);
         }
 
+        public void SetCommunityVisibility(CommunityVisibility visibility, bool isInteractable)
+        {
+            creationPanelVisibilityDropdown.SelectedIndex = (int)visibility;
+            creationPanelVisibilityDropdown.SetAsInteractable(isInteractable);
+        }
+
         public void SetPlacesSelector(List<string> options)
         {
             creationPanelPlacesDropdown.SetMainButtonText(PLACES_DROPDOWN_TITLE);
@@ -249,10 +267,10 @@ namespace DCL.Communities.CommunityCreation
         private void OnPlacesDropdownOptionSelected(int index) =>
             AddPlaceButtonClicked?.Invoke(index);
 
-        private void OnPlacesPanelOpened() =>
+        private void BlockPanelScrolling() =>
             creationPanelScrollRect.vertical = false;
 
-        private void OnPlacesPanelClosed() =>
+        private void UnblockPanelScrolling() =>
             creationPanelScrollRect.vertical = true;
 
         public void AddPlaceTag(string id, bool isWorld, string placeName, string ownerName, bool isRemovalAllowed, bool updateScrollPosition = true)
@@ -310,6 +328,7 @@ namespace DCL.Communities.CommunityCreation
             SetCommunityName(string.Empty, true);
             SetCommunityDescription(string.Empty);
             SetCommunityPrivacy(CommunityPrivacy.@public, true);
+            SetCommunityVisibility(CommunityVisibility.all, true);
             SetPlacesSelector(new List<string>());
             CreationPanelCommunityNameInputDeselected(null);
             CreationPanelCommunityDescriptionInputDeselected(null);
@@ -388,14 +407,16 @@ namespace DCL.Communities.CommunityCreation
                     creationPanelCommunityDescriptionInputField.text,
                     lands,
                     worlds,
-                    creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
+                    creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private,
+                    creationPanelVisibilityDropdown.SelectedIndex == 0 ? CommunityVisibility.all : CommunityVisibility.unlisted);
             else
                 SaveCommunityButtonClicked?.Invoke(
                     creationPanelCommunityNameInputField.text,
                     creationPanelCommunityDescriptionInputField.text,
                     lands,
                     worlds,
-                    creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
+                    creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private,
+                    creationPanelVisibilityDropdown.SelectedIndex == 0 ? CommunityVisibility.all : CommunityVisibility.unlisted);
         }
     }
 }

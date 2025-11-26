@@ -9,11 +9,11 @@ using DCL.Friends;
 using DCL.Prefs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Web3.Identities;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -158,7 +158,7 @@ namespace DCL.Chat.ChatCommands
         {
             nearbyUserStateService.Activate();
             currentChannelService.SetCurrentChannel(nearbyChannel, nearbyUserStateService);
-            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel });
+            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel, FromInitialization = true} );
         }
     }
 }

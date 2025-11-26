@@ -10,33 +10,41 @@ namespace DCL.WebRequests
         public readonly List<IMultipartFormSection>? MultipartFormSections;
         public readonly WWWForm? WWWForm;
         public readonly string PostData;
-        public readonly string ContentType;
+        public readonly string? ContentType;
+        public readonly UploadHandler? UploadHandler;
 
-        private GenericPostArguments(List<IMultipartFormSection> multipartFormSections)
+        public const string JSON = "application/json";
+        private const string JSON_UTF8 = "application/json; charset=utf-8";
+
+        private GenericPostArguments(List<IMultipartFormSection> multipartFormSections) : this()
         {
             MultipartFormSections = multipartFormSections;
             PostData = string.Empty;
-            ContentType = null;
-            WWWForm = null;
         }
 
-        private GenericPostArguments(string postData, string contentType)
+        private GenericPostArguments(string postData, string contentType) : this()
         {
-            MultipartFormSections = null;
             PostData = postData;
             ContentType = contentType;
-            WWWForm = null;
         }
 
-        private GenericPostArguments(WWWForm form)
+        private GenericPostArguments(WWWForm form) : this()
         {
-            MultipartFormSections = null;
             PostData = string.Empty;
-            ContentType = null;
             WWWForm = form;
         }
 
-        public static GenericPostArguments Empty => new (string.Empty, "application/json");
+        private GenericPostArguments(UploadHandler uploadHandler, string contentType) : this()
+        {
+            UploadHandler = uploadHandler;
+            ContentType = contentType;
+            PostData = string.Empty;
+        }
+
+        public static GenericPostArguments Empty => new (string.Empty, JSON);
+
+        public static GenericPostArguments CreateUploadHandler(UploadHandler uploadHandler, string contentType) =>
+            new (uploadHandler, contentType);
 
         public static GenericPostArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
             new (multipartFormSections);
@@ -48,10 +56,20 @@ namespace DCL.WebRequests
             new (postData, contentType);
 
         public static GenericPostArguments CreateJson(string postData) =>
-            new (postData, "application/json");
+            new (postData, JSON);
 
         public static GenericPostArguments CreateJsonOrDefault(string? postData) =>
             postData == null ? Empty : CreateJson(postData);
+
+        public static GenericPostArguments CreateJsonUtf8(string json)
+        {
+            return new GenericPostArguments (json, JSON_UTF8);
+        }
+
+        public static GenericPostArguments CreateJsonUtf8(object payload)
+        {
+            return new GenericPostArguments (JsonUtility.ToJson(payload), JSON_UTF8);
+        }
 
         public override string ToString() =>
             "GenericPostArguments:"

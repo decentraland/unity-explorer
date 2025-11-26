@@ -1,10 +1,10 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuToggleView : GenericContextMenuComponentBase
     {
@@ -22,13 +22,18 @@ namespace DCL.UI.GenericContextMenu.Controls
             RegisterListener(settings.callback);
         }
 
+        public override bool IsInteractable
+        {
+            get => ToggleComponent.Toggle.interactable;
+            set => ToggleComponent.Toggle.interactable = value;
+        }
+
         public override void UnregisterListeners() =>
             ToggleComponent.Toggle.onValueChanged.RemoveAllListeners();
 
         private void RegisterListener(Action<bool> listener) =>
             ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>(listener));
 
-        public override void RegisterCloseListener(Action listener) =>
-            ToggleComponent.Toggle.onValueChanged.AddListener(_ => listener());
+        public override void RegisterCloseListener(Action listener) { }
     }
 }

@@ -7,10 +7,12 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles;
 using ECS.Groups;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
@@ -43,14 +45,16 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
+                CreateQuery<GetSmartWearableSceneIntention, GetSmartWearableSceneIntention.Result>(),
                 CreateQuery<GetAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
-                CreateQuery<GetTextureIntention, Texture2DData>(),
+                CreateQuery<GetTextureIntention, TextureData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>()
+                CreateQuery<GetGLTFIntention, GLTFData>(),
+                CreateQuery<GetProfilesBatchIntent, ProfilesBatchResult>(),
             };
 
             COMPONENT_HANDLERS_SCENES = new[]

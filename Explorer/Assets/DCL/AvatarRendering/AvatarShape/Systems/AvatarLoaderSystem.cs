@@ -19,7 +19,7 @@ using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRend
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
     ///     Start loading the avatar shape for the entity from <see cref="Profile" /> or <see cref="PBAvatarShape" /> components.
@@ -140,13 +140,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
-        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
-
+        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition)
+        {
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
             // there is not need to convert
-            WearablePromise.Create(World,
+            return WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
+        }
 
         private void LoadAllEmotes(Profile profile, PartitionComponent partition)
         {
