@@ -84,7 +84,8 @@
         "GUID:e169fa6683c924c7e99a85981a91d953",
         "GUID:5556c2cd8a339d54ba194f39bbd30d73",
         "GUID:b97826ed91484ac1af953a8afc03316e",
-        "GUID:571dc9f8bded0034f98595106462e3d0"
+        "GUID:571dc9f8bded0034f98595106462e3d0",
+        "GUID:d0fdd32139c48634e9a421636d17ce04"
     ],
     "includePlatforms": [
         "Editor"
@@ -103,7 +104,8 @@
         "Microsoft.CodeAnalysis.CSharp.dll",
         "Microsoft.CodeAnalysis.dll",
         "CodeLess.Attributes.dll",
-        "Collections.Pooled.dll"
+        "Collections.Pooled.dll",
+        "Thirdweb.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

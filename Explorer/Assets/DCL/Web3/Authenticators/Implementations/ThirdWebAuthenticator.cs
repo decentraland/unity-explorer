@@ -111,10 +111,9 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await ThirdWebManager.Instance.DisconnectWallet();
 
-        private BigInteger chainId =>
+        private BigInteger chainId => EnvChainsUtils.Sepolia;
 
-            //EnvChainsUtils.Sepolia;
-            EnvChainsUtils.GetChainIdAsInt(environment);
+        //EnvChainsUtils.GetChainIdAsInt(environment);
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
         {
