@@ -60,6 +60,11 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        public bool ActiveInHierarchy => Match(
+            static avPro => avPro.AvProMediaPlayer.gameObject.activeInHierarchy,
+            static _ => true
+        );
+
         public bool IsBuffering => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsBuffering(),
             static _ => false
@@ -152,11 +157,11 @@ namespace DCL.SDKComponents.MediaStream
             // Livekit streaming doesn't need to adjust playback properties
         }
 
-        public void UpdatePlayback(bool hasPlaying, bool isPlaying)
+        public void UpdatePlayback(bool hasPlaying, bool isPlaying, bool isActive)
         {
             Match(
-                (hasPlaying, isPlaying),
-                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying),
+                (hasPlaying, isPlaying, isActive),
+                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying, ctx.isActive),
                 static (ctx, livekitPlayer) => livekitPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying)
             );
         }

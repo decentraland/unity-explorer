@@ -84,7 +84,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
             {
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
-                    component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+                    component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing, component.MediaPlayer.ActiveInHierarchy);
 
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
@@ -114,7 +114,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
                 {
-                    component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+                    component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing, component.MediaPlayer.ActiveInHierarchy);
                     component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
                 }
 
@@ -240,6 +240,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
+            if (!component.MediaPlayer.ActiveInHierarchy) return false;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {

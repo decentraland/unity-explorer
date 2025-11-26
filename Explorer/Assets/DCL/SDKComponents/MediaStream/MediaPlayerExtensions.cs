@@ -24,9 +24,9 @@ namespace DCL.SDKComponents.MediaStream
                 : Mathf.Min(targetVolume, mediaPlayer.AudioVolume + volumeDelta);
         }
 
-        public static void UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
+        public static void UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing, bool isActive)
         {
-            if (!mediaPlayer.MediaOpened)
+            if (!mediaPlayer.MediaOpened || !isActive)
                 return;
 
             IMediaControl control = mediaPlayer.Control!;
