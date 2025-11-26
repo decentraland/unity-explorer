@@ -472,7 +472,7 @@ namespace Global.Dynamic
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
-            
+
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -955,7 +955,13 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
                     mvcManager,
-                    thumbnailProvider)
+                    thumbnailProvider),
+                new DonationsPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    staticContainer.EthereumApi,
+                    staticContainer.ScenesCache,
+                    staticContainer.ProfilesContainer.Repository),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
