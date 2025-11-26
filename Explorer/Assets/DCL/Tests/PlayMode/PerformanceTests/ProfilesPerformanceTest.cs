@@ -63,7 +63,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             CreateController(concurrency);
 
             await BenchmarkAsync(concurrency, _ => controller!.PostAsync(profilesUrls, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromJson<List<GetAvatarsDetailsDto>>(WRJsonParser.Newtonsoft), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
+                                                              .CreateFromJson<List<GetProfileJsonRootDto>>(WRJsonParser.Newtonsoft), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
         }
     }
 }
