@@ -14,11 +14,13 @@ namespace DCL.Web3.Authenticators
 
         private const int MAINNET_NET_VERSION_INT = 1;
         private const int SEPOLIA_NET_VERSION_INT = 11155111;
+        private const int POLYGON_AMOY_NET_VERSION_INT = 80002;
 
         private const string MAINNET_CHAIN_ID = "0x1";
         private const string SEPOLIA_CHAIN_ID = "0xaa36a7";
 
         public static BigInteger Sepolia => new (SEPOLIA_NET_VERSION_INT);
+        public static BigInteger Anoy => new (POLYGON_AMOY_NET_VERSION_INT);
 
         public static string GetNetVersion(DecentralandEnvironment env) =>
             env is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;

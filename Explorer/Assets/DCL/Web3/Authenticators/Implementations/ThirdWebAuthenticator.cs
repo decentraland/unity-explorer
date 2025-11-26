@@ -16,6 +16,7 @@ namespace DCL.Web3.Authenticators
 {
     public partial class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
     {
+        public static ThirdWebAuthenticator Instance;
         private readonly SemaphoreSlim mutex = new (1, 1);
 
         private readonly HashSet<string> whitelistMethods;
@@ -27,6 +28,9 @@ namespace DCL.Web3.Authenticators
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
+            Instance?.Dispose();
+            Instance = this;
+
             this.environment = environment;
             this.identityCache = identityCache;
             this.whitelistMethods = whitelistMethods;
@@ -107,9 +111,10 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await ThirdWebManager.Instance.DisconnectWallet();
 
-        private BigInteger chainId => EnvChainsUtils.Sepolia;
+        private BigInteger chainId =>
 
-        //GetChainIdAsInt(environment);
+            //EnvChainsUtils.Sepolia;
+            EnvChainsUtils.GetChainIdAsInt(environment);
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
         {
@@ -251,7 +256,7 @@ namespace DCL.Web3.Authenticators
                 jsonrpc = "2.0",
                 request.id,
                 request.method,
-                @params = request.@params ?? Array.Empty<object>(),
+                request.@params,
             };
 
             string requestJson = JsonConvert.SerializeObject(rpcRequest);

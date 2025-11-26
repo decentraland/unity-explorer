@@ -345,6 +345,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 234607242}
+  - component: {fileID: 234607246}
   - component: {fileID: 234607245}
   m_Layer: 0
   m_Name: EntryPoint
@@ -381,14 +382,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 5
     targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
-      - {x: 145, y: 60}
-    targetWorld: yemel.dcl.eth
+      - {x: 83, y: -6}
+    targetWorld: flutterecho.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -522,6 +523,18 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+--- !u!114 &234607246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 234607240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb4329e3bb4442b89d44bbaab7bd4942, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Plugins::DCL.Web3.Authenticators.TestWeb3MonoBeh
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0

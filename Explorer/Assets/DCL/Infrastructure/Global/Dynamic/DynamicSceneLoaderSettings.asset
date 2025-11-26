@@ -25,10 +25,13 @@ MonoBehaviour:
   - https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest
   <Web3WhitelistMethods>k__BackingField:
   - eth_sendTransaction
+  - eth_getBalance
+  - personal_sign
+  - eth_signTypedData_v4
+  - eth_requestAccounts
   - eth_getTransactionReceipt
   - eth_estimateGas
   - eth_call
-  - eth_getBalance
   - eth_getStorageAt
   - eth_blockNumber
   - eth_gasPrice
@@ -38,11 +41,10 @@ MonoBehaviour:
   - web3_clientVersion
   - eth_getTransactionCount
   - eth_getBlockByNumber
-  - eth_requestAccounts
-  - eth_signTypedData_v4
   - eth_getCode
-  - personal_sign
   <Web3ReadOnlyMethods>k__BackingField:
+  - net_version
+  - web3_clientVersion
   - eth_getTransactionReceipt
   - eth_estimateGas
   - eth_call
@@ -50,9 +52,7 @@ MonoBehaviour:
   - eth_blockNumber
   - eth_gasPrice
   - eth_protocolVersion
-  - net_version
   - web3_sha3
-  - web3_clientVersion
   - eth_getTransactionCount
   - eth_getBlockByNumber
   - eth_getCode
