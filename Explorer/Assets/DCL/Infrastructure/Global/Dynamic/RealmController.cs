@@ -27,7 +27,6 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using Unity.Mathematics;
-using UnityEngine.Networking;
 using Utility;
 
  namespace Global.Dynamic
@@ -42,6 +41,9 @@ using Utility;
         private static readonly QueryDescription CLEAR_UNFINISHED_QUERY = new QueryDescription()
                                                                          .WithAll<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLoadingState>()
                                                                          .WithNone<DeleteEntityIntention, ISceneFacade>();
+
+        private static readonly QueryDescription INVALIDATE_PARTITIONS = new QueryDescription()
+           .WithAll<PartitionComponent, ISceneFacade>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -247,7 +249,7 @@ using Utility;
 
             if (globalWorld != null)
             {
-                RemoveUnfinishedScenes();
+                RemoveUnfinishedScenes(globalWorld.EcsWorld);
 
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
 
@@ -272,7 +274,9 @@ using Utility;
 
             World world = globalWorld.EcsWorld;
 
-            RemoveUnfinishedScenes();
+            RemoveUnfinishedScenes(world);
+
+            InvalidateScenePartitions(world);
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
@@ -296,6 +300,15 @@ using Utility;
             GC.Collect();
         }
 
+        private void InvalidateScenePartitions(World world)
+        {
+            world.Query(in INVALIDATE_PARTITIONS,
+                (ref PartitionComponent partitionComponent) =>
+                {
+                    partitionComponent.Bucket = byte.MaxValue;
+                });
+        }
+
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
             world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
@@ -313,12 +326,8 @@ using Utility;
             return false;
         }
 
-        private void RemoveUnfinishedScenes()
+        private void RemoveUnfinishedScenes(World world)
         {
-            if (globalWorld == null) return;
-
-            var world = globalWorld!.EcsWorld;
-
             // See https://github.com/decentraland/unity-explorer/issues/4935
             // The scene load process it is disrupted due to internet issues remaining in an invalid state
             // We need to remove them and reload them, otherwise they will keep in an inconsistent state forever

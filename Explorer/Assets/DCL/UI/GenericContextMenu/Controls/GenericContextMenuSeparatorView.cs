@@ -18,6 +18,8 @@ namespace DCL.UI.Controls
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, settings.height);
         }
 
+        public override bool IsInteractable { get; set; }
+
         public override void UnregisterListeners() { }
 
         public override void RegisterCloseListener(Action listener) { }

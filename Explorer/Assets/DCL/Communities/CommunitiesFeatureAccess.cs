@@ -2,8 +2,10 @@ using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Communities
 {
@@ -11,13 +13,16 @@ namespace DCL.Communities
     public partial class CommunitiesFeatureAccess
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IAppArgs appArgs;
 
         private bool? storedResult;
         private bool? storedMembersCounterResult;
+        private bool? storedAnnouncementsResult;
 
-        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache)
+        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache, IAppArgs appArgs)
         {
             this.web3IdentityCache = web3IdentityCache;
+            this.appArgs = appArgs;
 
             web3IdentityCache.OnIdentityChanged += OnIdentityCacheChanged;
         }
@@ -67,6 +72,19 @@ namespace DCL.Communities
 
             bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
             storedMembersCounterResult = result;
+            return result;
+        }
+
+        public bool IsAnnouncementsFeatureEnabled()
+        {
+            if (storedAnnouncementsResult != null)
+                return storedAnnouncementsResult.Value;
+
+            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) ||
+                          (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) ||
+                          Application.isEditor;
+
+            storedAnnouncementsResult = result;
             return result;
         }
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
+using Object = UnityEngine.Object;
 
 namespace DCL.DebugUtilities
 {
@@ -46,6 +47,7 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.REALM,
+                        IDebugContainerBuilder.Categories.PROFILES,
                         IDebugContainerBuilder.Categories.ANALYTICS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
@@ -53,7 +55,7 @@ namespace DCL.DebugUtilities
                 }
             }
 
-            var rootDocument = UnityEngine.Object.Instantiate(viewsCatalog.RootDocumentPrefab);
+            UIDocument? rootDocument = Object.Instantiate(viewsCatalog.RootDocumentPrefab);
 
             return new DebugUtilitiesContainer(
                 new DebugContainerBuilder(
