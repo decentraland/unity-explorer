@@ -247,7 +247,7 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
-        public async UniTask OpenBackpack()
+        public async UniTask OpenBackpackAsync()
         {
             await ShowAsync(PanelsSharingSpace.Explore,
                 new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar), PanelsSharingSpace.Chat);

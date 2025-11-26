@@ -48,7 +48,7 @@ namespace DCL.UI.SharedSpaceManager
         ///     Directly opens the backpack
         /// </summary>
         /// <returns></returns>
-        UniTask OpenBackpack();
+        UniTask OpenBackpackAsync();
         
         /// <summary>
         ///     <inheritdoc cref="ShowAsync{TParams}" /> <br />

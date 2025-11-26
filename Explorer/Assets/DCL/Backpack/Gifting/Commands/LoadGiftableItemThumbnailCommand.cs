@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 
@@ -52,7 +53,7 @@ namespace DCL.Backpack.Gifting.Commands
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
+                ReportHub.LogException(e, ReportCategory.GIFTING);
                 eventBus.Publish(new GiftingEvents.ThumbnailLoadedEvent(urn, null, success: false));
             }
         }

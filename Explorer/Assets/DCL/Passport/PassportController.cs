@@ -828,14 +828,19 @@ namespace DCL.Passport
             userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
-        private async void GiftUserClicked()
+        private void GiftUserClicked()
+        {
+            GiftUserClickedAsync().Forget();
+        }
+
+        private async UniTaskVoid GiftUserClickedAsync()
         {
             if (targetProfile == null)
                 return;
 
             ReportHub.Log(ReportCategory.GIFTING, $"Gifting user: {inputData.UserId}");
-            // open gifting popup
-            // close passport popup
+
+            // Open gifting popup and close passport popup
             await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile?.UserId, targetProfile?.DisplayName)));
         }
         

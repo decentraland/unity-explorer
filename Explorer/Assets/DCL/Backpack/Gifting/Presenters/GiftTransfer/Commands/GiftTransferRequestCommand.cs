@@ -1,7 +1,5 @@
 ﻿using System.Threading;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Backpack.Gifting.Cache;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;

@@ -34,7 +34,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private GiftingHeaderPresenter? headerPresenter;
         private GiftingFooterPresenter? footerPresenter;
 
-        private GiftingTabsManager tabsManager;
+        private GiftingTabsManager? tabsManager;
         
         private IGiftingGridPresenter? wearablesGridPresenter;
         private IGiftingGridPresenter? emotesGridPresenter;
@@ -79,18 +79,21 @@ namespace DCL.Backpack.Gifting.Presenters
             emotesGridPresenter = ePresenter;
         }
 
-        protected override async void OnViewShow()
+        protected override void OnViewShow()
+        {
+            InitializeViewAsync().Forget();
+        }
+
+        private async UniTaskVoid InitializeViewAsync()
         {
             lifeCts = new CancellationTokenSource();
             giftingErrorsController?.Hide(true);
 
             try
             {
-                // 1. Initialize Data
                 await equippedStatusProvider.InitializeAsync(lifeCts.Token);
                 if (lifeCts.IsCancellationRequested) return;
 
-                // 2. Reset UI
                 headerPresenter?.ClearSearchImmediate();
                 wearablesGridPresenter?.Deactivate();
                 emotesGridPresenter?.Deactivate();
@@ -98,7 +101,6 @@ namespace DCL.Backpack.Gifting.Presenters
 
                 headerPresenter?.SetupAsync(inputData.userAddress, inputData.userName, lifeCts.Token).Forget();
 
-                // 3. Subscribe Events
                 if (headerPresenter != null) headerPresenter.OnSearchChanged += HandleSearchChanged;
                 if (footerPresenter != null) footerPresenter.OnSendGift += HandleSendGift;
 
@@ -119,7 +121,6 @@ namespace DCL.Backpack.Gifting.Presenters
                     tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
                     tabsManager.OnSectionActivated += HandleSectionActivated;
 
-                    // 4. Start UI
                     tabsManager.Initialize();
                 }
             }

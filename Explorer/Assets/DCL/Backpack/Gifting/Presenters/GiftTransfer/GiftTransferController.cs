@@ -150,10 +150,10 @@ namespace DCL.Backpack.Gifting.Presenters
         private void StartDelayedStateTimer(CancellationToken ct)
         {
             delayCts = delayCts.SafeRestartLinked(ct);
-            ShowAfterDelay(delayCts.Token).Forget();
+            ShowAfterDelayAsync(delayCts.Token).Forget();
         }
 
-        private async UniTaskVoid ShowAfterDelay(CancellationToken token)
+        private async UniTaskVoid ShowAfterDelayAsync(CancellationToken token)
         {
             try
             {

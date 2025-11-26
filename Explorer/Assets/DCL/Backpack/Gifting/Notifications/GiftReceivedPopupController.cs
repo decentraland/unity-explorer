@@ -202,7 +202,7 @@ namespace DCL.Backpack.Gifting.Notifications
                 UniTask.WhenAny(closeBtn, backpackBtn, bgBtn);
 
             if (result == 1)
-                await sharedSpaceManager.OpenBackpack();
+                await sharedSpaceManager.OpenBackpackAsync();
 
             await PlayHideAnimationAsync(CancellationToken.None);
             lifeCts.SafeCancelAndDispose();
