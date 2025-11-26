@@ -181,8 +181,10 @@ jobs:
       - name: Install Unity
         uses: kuler90/setup-unity@v1
         with:
-          version: ${{ steps.unity-version.outputs.version }}
-          components: linux-mono # minimal, no need for IL2CPP to generate .sln
+          unity-version: ${{ steps.unity-version.outputs.version }}
+          unity-modules: linux-mono
+          project-path: ${{ github.workspace }}/Explorer
+          install-path: /opt/unity
 
       - name: Generate solution and project files
         run: |
