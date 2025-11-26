@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Donations.UI;
+using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS.SceneLifeCycle;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEthereumApi ethereumApi;
         private readonly IScenesCache scenesCache;
         private readonly IProfileRepository profileRepository;
+        private readonly FeatureFlagsConfiguration featureFlags;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -27,13 +29,15 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IEthereumApi ethereumApi,
             IScenesCache scenesCache,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            FeatureFlagsConfiguration featureFlags)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.ethereumApi = ethereumApi;
             this.scenesCache = scenesCache;
             this.profileRepository = profileRepository;
+            this.featureFlags = featureFlags;
         }
 
         public void Dispose()
@@ -50,13 +54,22 @@ namespace DCL.PluginSystem.Global
             DonationsPanelView donationsPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.DonationsPanelPrefab, ct: ct)).GetComponent<DonationsPanelView>();
             ControllerBase<DonationsPanelView>.ViewFactoryMethod viewFactoryMethod = DonationsPanelController.Preallocate(donationsPanelViewAsset, null, out DonationsPanelView donationsPanelView);
 
+            bool recommendedAmountParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.RECOMMENDED_DONATION_AMOUNT, "main", out DonationRecommendedAmount temporalTipsJson);
+
             donationsPanelController = new DonationsPanelController(
                 viewFactoryMethod,
                 ethereumApi,
                 scenesCache,
-                profileRepository);
+                profileRepository,
+                recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
 
             mvcManager.RegisterController(donationsPanelController);
+        }
+
+        [Serializable]
+        private struct DonationRecommendedAmount
+        {
+            public float amount;
         }
     }
 

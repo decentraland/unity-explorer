@@ -48,6 +48,7 @@ namespace DCL.FeatureFlags
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
+        public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
     }
 
     public enum FeatureFlag
