@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 
 namespace DCL.Utilities
@@ -44,6 +45,31 @@ namespace DCL.Utilities
 
             var years = (int)Math.Floor(timeDifference.TotalDays / 365);
             return FormatTime(sb, years, "year");
+        }
+
+        public static string GetRelativeTimeForPosts(string timestampString)
+        {
+            DateTime announcementDateTime = DateTime.Parse(timestampString, null, DateTimeStyles.RoundtripKind);
+            TimeSpan timeDifference = DateTime.UtcNow - announcementDateTime;
+
+            if (timeDifference.TotalMinutes < 1)
+                return "Now";
+
+            switch (timeDifference.TotalHours)
+            {
+                case < 1:
+                {
+                    int minutes = (int)Math.Floor(timeDifference.TotalMinutes);
+                    return $"{minutes}m";
+                }
+                case < 24:
+                {
+                    int hours = (int)Math.Floor(timeDifference.TotalHours);
+                    return $"{hours}h";
+                }
+                default:
+                    return announcementDateTime.ToString(announcementDateTime.Year == DateTime.UtcNow.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture);
+            }
         }
 
         private static string FormatTime(StringBuilder sb, int value, string unit)

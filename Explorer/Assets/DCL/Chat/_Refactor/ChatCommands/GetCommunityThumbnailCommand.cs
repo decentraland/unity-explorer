@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatCommands
 
                 try
                 {
-                    var sprite = await spriteCache.GetSpriteAsync(thumbnailUrl, true, ct);
+                    Sprite? sprite = await spriteCache.GetSpriteAsync(thumbnailUrl, true, ct: ct);
 
                     if (sprite != null)
                         return sprite;

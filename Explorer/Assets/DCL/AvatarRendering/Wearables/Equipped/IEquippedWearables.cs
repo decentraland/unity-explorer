@@ -20,5 +20,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         IReadOnlyCollection<string> ForceRenderCategories { get; }
         void SetForceRender(IReadOnlyCollection<string> categories);
+
+        void Clear();
     }
 }

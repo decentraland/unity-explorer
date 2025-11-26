@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.Tween.Components
         private readonly IObjectPool<Vector3Tweener> vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
         private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
         private readonly IObjectPool<Vector2Tweener> vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
-        private readonly IObjectPool<SequenceTweener> sequenceTweenerPool = new ObjectPool<SequenceTweener>(() => new SequenceTweener());
+        private readonly IObjectPool<SequenceTweener> sequenceTweenerPool = new ObjectPool<SequenceTweener>(() => new SequenceTweener(), actionOnRelease: tweener => tweener.Kill(true));
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds, Transform? transform = null, Vector2? textureStart = null)
         {
@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.Tween.Components
                 case QuaternionTweener quaternionTweener:
                     quaternionTweenerPool.Release(quaternionTweener);
                     break;
-                
+
             }
 
             sdkTweenComponent.CustomTweener = null;
