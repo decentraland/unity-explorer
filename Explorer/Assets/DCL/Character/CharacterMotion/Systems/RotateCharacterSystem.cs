@@ -74,7 +74,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.LookDirection = newLookDirection;
             transform.Transform.forward = newLookDirection;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation (look): " + transform.Transform.rotation);
+       //     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation (look): " + transform.Transform.rotation);
 
             // If we are on a platform we save our local rotation
             PlatformSaveLocalRotation.Execute(ref platformComponent, transform.Transform.forward, scenesCache.CurrentScene.Value);

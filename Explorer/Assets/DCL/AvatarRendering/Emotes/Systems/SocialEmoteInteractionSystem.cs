@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -76,6 +75,12 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [All(typeof(MoveToOutcomeStartPositionIntent))]
         private void AdjustReceiverBeforeOutcomeAnimation(Entity entity, IAvatarView avatarView, MoveToOutcomeStartPositionIntent moveIntent)
         {
+            if (moveIntent.HasBeenCancelled)
+            {
+                World.Remove<MoveToOutcomeStartPositionIntent>(entity);
+                return;
+            }
+
             const float INTERPOLATION_DURATION = 0.4f;
             float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / INTERPOLATION_DURATION;
 
@@ -116,7 +121,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
             if (isCloseEnoughToInitiator ||
                 movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
-                jumpInputComponent.IsPressed)  // If player jumps, the process is canceled
+                jumpInputComponent.IsPressed ||  // If player jumps, the process is canceled
+                moveIntent.HasBeenCancelled)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
 
@@ -124,8 +130,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 animationComponent.States.MovementBlendValue = 0.0f;
                 movementInput.IgnoreCamera = false;
 
-                if (isCloseEnoughToInitiator)
+                if (isCloseEnoughToInitiator && !moveIntent.HasBeenCancelled)
                 {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED -> Playing emote</color>");
+
                     // Emote playing
                     World.Add(entity, moveIntent.TriggerEmoteIntent);
                 }
@@ -134,7 +142,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             }
             else
             {
-                movementInput.Kind = MovementKind.RUN;
+                movementInput.Kind = MovementKind.WALK;
                 movementInput.Axes = Vector2.up;
                 // The avatar can walk freely towards the initiator without taking the camera's orientation into consideration
                 movementInput.IgnoreCamera = true;
