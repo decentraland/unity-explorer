@@ -1,4 +1,5 @@
-﻿using DCL.WebRequests;
+﻿using DCL.Profiles;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
@@ -27,7 +28,7 @@ namespace ECS.StreamableLoading.Textures.Tests
 
         protected override LoadTextureSystem CreateSystem() =>
             new (world, cache, TestWebRequestController.INSTANCE, IDiskCache<TextureData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
+                Substitute.For<IProfileRepository>());
 
         protected override void AssertSuccess(TextureData data)
         {

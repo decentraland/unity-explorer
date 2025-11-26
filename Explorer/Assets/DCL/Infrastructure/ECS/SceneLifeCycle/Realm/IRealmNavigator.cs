@@ -14,7 +14,8 @@ namespace ECS.SceneLifeCycle.Realm
         SameRealm,
         NotReachable,
         LocalSceneDevelopmentBlocked,
-        UnauthorizedWorldAccess
+        UnauthorizedWorldAccess,
+        Timeout
     }
 
     public static class ChangeRealmErrors
@@ -27,6 +28,7 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.SameRealm => TaskError.MessageError,
                 ChangeRealmError.NotReachable => TaskError.MessageError,
                 ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
+                ChangeRealmError.Timeout => TaskError.Timeout,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
@@ -34,7 +36,7 @@ namespace ECS.SceneLifeCycle.Realm
             e switch
             {
                 TaskError.MessageError => ChangeRealmError.MessageError,
-                TaskError.Timeout => ChangeRealmError.MessageError,
+                TaskError.Timeout => ChangeRealmError.Timeout,
                 TaskError.Cancelled => ChangeRealmError.ChangeCancelled,
                 TaskError.UnexpectedException => ChangeRealmError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)

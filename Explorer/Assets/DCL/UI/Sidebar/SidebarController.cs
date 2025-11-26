@@ -27,6 +27,7 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
+using Runtime.Wearables;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -39,6 +40,7 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
+        private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
@@ -49,6 +51,7 @@ namespace DCL.UI.Sidebar
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
+        private readonly SmartWearableCache smartWearablesCache;
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
@@ -68,6 +71,7 @@ namespace DCL.UI.Sidebar
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
+            SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
@@ -78,7 +82,8 @@ namespace DCL.UI.Sidebar
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            SmartWearableCache smartWearableCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -87,6 +92,7 @@ namespace DCL.UI.Sidebar
             this.notificationsPanelController = notificationsPanelController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
+            this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
             this.chatMainView = chatMainView;
@@ -97,6 +103,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.smartWearablesCache = smartWearableCache;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -118,8 +125,56 @@ namespace DCL.UI.Sidebar
         {
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
+
+            /*viewInstance!.backpackButton.onClick.AddListener(() =>
+            {
+                viewInstance.backpackNotificationIndicator.SetActive(false);
+                OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
+            });
+
+            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
+            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
+
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
+            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
+            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
+            viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
+            viewInstance.backpackNotificationIndicator.SetActive(false);
+            viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
+            viewInstance.skyboxButton.interactable = true;
+            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
+            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
+            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
+            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+
+            if (includeCameraReel)
+                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
+            else
+            {
+                viewInstance.cameraReelButton.gameObject.SetActive(false);
+                viewInstance.InWorldCameraButton.gameObject.SetActive(false);
+            }
+
+            if (includeFriends)
+                viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
+
+            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+
+            //chatView.FoldingChanged += OnChatViewFoldingChanged;*/
+
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
+            mvcManager.RegisterController(smartWearablesTooltipController);
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
             mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
@@ -140,6 +195,7 @@ namespace DCL.UI.Sidebar
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
@@ -401,6 +457,16 @@ namespace DCL.UI.Sidebar
             await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection)));
 
             //await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection), PanelsSharingSpace.Chat);
+        }
+
+        private void OnSmartWearablesButtonHover()
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
+        }
+
+        private void OnSmartWearablesButtonUnhover()
+        {
+            smartWearablesTooltipController.Close();
         }
 #endregion
     }

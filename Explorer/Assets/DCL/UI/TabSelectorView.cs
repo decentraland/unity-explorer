@@ -32,6 +32,9 @@ namespace DCL.UI
         [field: SerializeField]
         public AudioClipConfig TabClickAudio { get; private set; }
 
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
+
         private void OnEnable()
         {
             tabAnimator.enabled = true;
@@ -53,6 +56,7 @@ namespace DCL.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             if (tabAnimator != null)
                 tabAnimator.SetTrigger(UIAnimationHashes.HOVER);
         }

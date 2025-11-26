@@ -35,11 +35,17 @@ namespace DCL.PluginSystem.Global
             var errorPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(reference, ct: CancellationToken.None)).Value;
             var errorPopupView = errorPopupPrefab.GetComponent<ErrorPopupView>().EnsureNotNull($"{nameof(ErrorPopupView)} not found in the asset");
             mvcManager.RegisterController(new ErrorPopupController(errorPopupView));
+
+            ProvidedAsset<GameObject> prefab = await assetsProvisioner.ProvideMainAssetAsync(settings.ErrorPopupWithRetry, ct);
+            ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory = ErrorPopupWithRetryController.CreateLazily(prefab.Value.GetComponent<ErrorPopupWithRetryView>(), null);
+            var loadErrorGuardController = new ErrorPopupWithRetryController(viewFactory);
+            mvcManager.RegisterController(loadErrorGuardController);
         }
 
         public class ErrorPopupSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceGameObject ErrorPopup { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject ErrorPopupWithRetry { get; private set; } = null!;
         }
     }
 }

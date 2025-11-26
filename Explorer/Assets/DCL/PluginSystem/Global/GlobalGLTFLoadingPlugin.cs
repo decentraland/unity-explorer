@@ -35,8 +35,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            IGltFastDownloadStrategy downloadStrategy = localSceneDevelopment ?
-                new GltFastRealmDataDownloadStrategy(realmData)
+            IGltFastDownloadStrategy downloadStrategy = localSceneDevelopment
+                ? new GltFastRealmDataDownloadStrategy(realmData)
                 : new GltFastGlobalDownloadStrategy(builderContentURL);
 
             LoadGLTFSystem.InjectToWorld(

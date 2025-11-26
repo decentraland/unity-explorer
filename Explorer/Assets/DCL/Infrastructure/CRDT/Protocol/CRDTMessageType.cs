@@ -17,9 +17,11 @@ namespace CRDT.Protocol
         APPEND_COMPONENT = 4,
 
         // Network
+        // PUT_COMPONENT_NETWORK messages (used for network communication)
         PUT_COMPONENT_NETWORK = 5,
         DELETE_COMPONENT_NETWORK = 6,
         DELETE_ENTITY_NETWORK = 7,
+        AUTHORITATIVE_PUT_COMPONENT = 8,
 
         MAX_MESSAGE_TYPE,
     }
@@ -41,6 +43,7 @@ namespace CRDT.Protocol
                 CRDTMessageType.DELETE_COMPONENT_NETWORK => 16, // header
                 CRDTMessageType.DELETE_ENTITY_NETWORK => 8, // header
                 CRDTMessageType.MAX_MESSAGE_TYPE => 0, // header
+                CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT => 16 + memory.Slice(12).ReadConst<uint>(), // 16 bytes - header, 12 bytes - dataLength offset
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             };
     }

@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         private readonly Dictionary<string, IWearable?> wearables = new ();
         private readonly HashSet<string> forceRenderCategories = new ();
         public IReadOnlyCollection<string> ForceRenderCategories => forceRenderCategories;
-        
+
         private Color hairColor;
         private Color eyesColor;
         private Color bodyshapeColor;
@@ -62,6 +62,12 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         {
             forceRenderCategories.Clear();
             foreach (string category in categories) { forceRenderCategories.Add(category); }
+        }
+
+        public void Clear()
+        {
+            wearables.Clear();
+            forceRenderCategories.Clear();
         }
 
         public IReadOnlyDictionary<string, IWearable?> Items() =>
