@@ -178,22 +178,19 @@ jobs:
 
       # C# Linting using JetBrains ReSharper CLI
 
-      - name: Install Unity
-        uses: kuler90/setup-unity@v1
-        with:
-          unity-version: ${{ steps.unity-version.outputs.version }}
-          unity-modules: linux-mono
-          project-path: ${{ github.workspace }}/Explorer
-          install-path: /opt/unity
-
-      - name: Generate solution and project files
+      - name: Generate solution inside Unity Docker container
         run: |
-          /opt/unity/Editor/Unity \
-            -batchmode \
-            -projectPath Explorer/ \
-            -executeMethod UnityEditor.SyncVS.SyncSolution \
-            -quit \
-            -logFile -
+          docker run --rm \
+           -v "${{ github.workspace }}:/workspace" \
+           -w /workspace \
+           ${{ steps.img.outputs.ghcr }} \
+           unity-editor \
+           -batchmode \
+           -nographics \
+           -projectPath /workspace/Explorer \
+           -executeMethod UnityEditor.SyncVS.SyncSolution \
+           -quit \
+           -logFile -
 
       - name: Download ReSharper Command Line Tools
         run: |
