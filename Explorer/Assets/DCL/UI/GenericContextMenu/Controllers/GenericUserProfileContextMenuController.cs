@@ -19,6 +19,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -52,6 +53,7 @@ namespace DCL.UI
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeVoiceChat;
         private readonly bool includeCommunities;
+        private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -86,7 +88,7 @@ namespace DCL.UI
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             bool includeCommunities,
-            CommunitiesDataProvider communitiesDataProvider)
+            CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -102,6 +104,7 @@ namespace DCL.UI
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.includeCommunities = includeCommunities;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -324,8 +327,7 @@ namespace DCL.UI
         private async UniTaskVoid StartCallAsync(string userId)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-            chatEventBus.OpenPrivateConversationUsingUserId(userId);
-            chatEventBus.StartCallInCurrentConversation();
+            voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 
         private void OnBlockUserClicked(string userId)

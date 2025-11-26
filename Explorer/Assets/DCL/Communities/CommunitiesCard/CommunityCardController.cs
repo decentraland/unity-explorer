@@ -56,6 +56,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
+        private const string COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE = "Link successfully copied!";
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -147,14 +148,17 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+            communitiesDataProvider.CommunityOwnershipTransferred += OnCommunityUpdated;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
         }
 
         public override void Dispose()
@@ -172,6 +176,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.AcceptInvite -= AcceptCommunityInvitation;
                 viewInstance.RejectInvite -= RejectCommunityInvitation;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
+                viewInstance.CopyCommunityLinkRequested -= OnCopyCommunityLinkRequested;
             }
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
@@ -179,6 +184,7 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
+            communitiesDataProvider.CommunityOwnershipTransferred -= OnCommunityUpdated;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -206,6 +212,7 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityUserRequestToJoinAcceptedNotification joinAcceptedNotification => joinAcceptedNotification.Metadata.CommunityId,
                                      CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
                                      CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
+                                     CommunityOwnershipTransferredNotification ownershipTransferredNotification => ownershipTransferredNotification.Metadata.CommunityId,
                                      _ => string.Empty
                                  };
 
@@ -247,6 +254,18 @@ namespace DCL.Communities.CommunitiesCard
             if (communityId == string.Empty || communityId != communityData.id) return;
 
             CloseController();
+        }
+
+        private void OnCommunityTransferredToMe(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden || notification is not CommunityOwnershipTransferredNotification transferredNotification)
+                return;
+
+            if (communityData.id != transferredNotification.Metadata.CommunityId)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(transferredNotification.Metadata.CommunityId);
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
@@ -332,6 +351,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.AcceptInvite += AcceptCommunityInvitation;
             viewInstance.RejectInvite += RejectCommunityInvitation;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
+            viewInstance.CopyCommunityLinkRequested += OnCopyCommunityLinkRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -722,6 +742,12 @@ namespace DCL.Communities.CommunitiesCard
 
                 CloseController();
             }
+        }
+
+        private void OnCopyCommunityLinkRequested()
+        {
+            ViewDependencies.ClipboardManager.Copy(this, string.Format(decentralandUrlsSource.Url(DecentralandUrl.CommunityProfileLink), communityData.id));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE));
         }
 
         private void DisableShortcutsInput() =>
