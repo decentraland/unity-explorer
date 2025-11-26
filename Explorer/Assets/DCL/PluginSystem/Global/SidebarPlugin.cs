@@ -65,6 +65,14 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
 
+        private SidebarController? sidebarController;
+        private NotificationsPanelController? notificationsPanelController;
+        private ProfileWidgetController? profileWidgetController;
+        private ProfileMenuController? profileMenuController;
+        private SkyboxMenuController? skyboxMenuController;
+        private ControlsPanelController? controlsPanelController;
+        private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
+
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -123,7 +131,16 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            sidebarController?.Dispose();
+            notificationsPanelController?.Dispose();
+            profileWidgetController?.Dispose();
+            profileMenuController?.Dispose();
+            skyboxMenuController?.Dispose();
+            controlsPanelController?.Dispose();
+            smartWearablesSideBarTooltipController?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
@@ -137,19 +154,26 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
-            mvcManager.RegisterController(new SidebarController(() =>
+            notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper);
+            profileWidgetController = new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
+            profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
+            skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
+            controlsPanelController = new ControlsPanelController(() => controlsPanelView);
+            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
+
+            sidebarController = new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
                     view.gameObject.SetActive(true);
                     return view;
                 },
                 mvcManager,
-                new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
-                new ControlsPanelController(() => controlsPanelView),
-                new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache),
+                notificationsPanelController,
+                profileWidgetController,
+                profileMenuController,
+                skyboxMenuController,
+                controlsPanelController,
+                smartWearablesSideBarTooltipController,
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
@@ -162,7 +186,9 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 eventBus,
                 smartWearableCache
-            ));
+            );
+
+            mvcManager.RegisterController(sidebarController);
         }
 
         public class SidebarSettings : IDCLPluginSettings

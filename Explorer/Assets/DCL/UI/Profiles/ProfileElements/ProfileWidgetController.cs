@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using MVC;
-using System;
 using System.Threading;
 using Utility;
 
