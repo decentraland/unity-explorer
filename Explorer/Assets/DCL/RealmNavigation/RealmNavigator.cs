@@ -12,7 +12,7 @@ using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -137,7 +137,7 @@ namespace DCL.RealmNavigation
             if (lastOpResult.Success == false)
                 analyticsController.Track(
                     AnalyticsEvents.General.LOADING_ERROR,
-                    new JsonObject
+                    new JObject
                     {
                         ["type"] = "teleportation",
                         ["message"] = lastOpResult.AsResult().ErrorMessage,
