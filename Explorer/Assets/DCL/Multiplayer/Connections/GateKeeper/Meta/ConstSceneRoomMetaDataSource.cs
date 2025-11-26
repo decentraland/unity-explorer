@@ -18,6 +18,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             metaData = new MetaData(name, Vector2Int.zero, metadataInput);
         }
 
+        private ConstSceneRoomMetaDataSource(string realmName, string sceneId)
+        {
+            metadataInput = new MetaData.Input(realmName, Vector2Int.zero);
+            metaData = new MetaData(sceneId, Vector2Int.zero, metadataInput);
+        }
+
         public static ConstSceneRoomMetaDataSource FromMachineUUID()
         {
             string uuid = SystemInfo.deviceUniqueIdentifier;
@@ -25,7 +31,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             //hashed due privacy purposes to don't expose user's unique machine uuid
             string hashed = HashUtility.ByteString(key.Hash.Memory);
-            return new ConstSceneRoomMetaDataSource(hashed);
+            ReportHub.Log(ReportCategory.JAVASCRIPT, $"Local preview sceneId: {hashed} (from machine UUID)");
+            return new ConstSceneRoomMetaDataSource("LocalPreview", hashed);
         }
 
         public bool ScenesCommunicationIsIsolated => false;
