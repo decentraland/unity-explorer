@@ -88,20 +88,20 @@ namespace DCL.SocialService
                     else
                         ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
 
-                    try { await WaitNextRetry(retryAttempt, ct); }
+                    try { await WaitNextRetryAsync(retryAttempt, ct); }
                     catch (OperationCanceledException) { break; }
                 }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
 
-                    try { await WaitNextRetry(retryAttempt, ct); }
+                    try { await WaitNextRetryAsync(retryAttempt, ct); }
                     catch (OperationCanceledException) { break; }
                 }
             }
         }
 
-        private async UniTask WaitNextRetry(int retryAttempt, CancellationToken ct)
+        private async UniTask WaitNextRetryAsync(int retryAttempt, CancellationToken ct)
         {
             // Calculate exponential backoff delay
             int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
