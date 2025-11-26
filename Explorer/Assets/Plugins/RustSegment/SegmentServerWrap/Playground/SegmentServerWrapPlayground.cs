@@ -1,5 +1,5 @@
 using DCL.Diagnostics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
@@ -8,7 +8,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
         [SerializeField] private bool fillMode;
-        [SerializeField] private long unFlushedBatches;
 
         private RustSegmentAnalyticsService service = null!;
 
@@ -22,8 +21,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         {
             if (fillMode)
                 Track();
-
-            unFlushedBatches = (long) NativeMethods.SegmentServerUnFlushedBatchesCount();
         }
 
         [ContextMenu(nameof(Initialize))]
@@ -42,7 +39,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         {
             service.Identify(
                 "check_user_id",
-                new JsonObject
+                new JObject
                 {
                     ["env"] = "test",
                 }
@@ -52,12 +49,12 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [ContextMenu(nameof(Track))]
         public void Track()
         {
-            var curly = new JsonObject
+            var curly = new JObject
             {
                 { "works", "yes" },
             };
 
-            var bracket = new JsonObject
+            var bracket = new JObject
             {
                 ["works"] = "yes"
             };
@@ -73,7 +70,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [ContextMenu(nameof(InstantTrackAndFlush))]
         public void InstantTrackAndFlush()
         {
-            var curly = new JsonObject
+            var curly = new JObject
             {
                 { "works", "yes" },
             };
