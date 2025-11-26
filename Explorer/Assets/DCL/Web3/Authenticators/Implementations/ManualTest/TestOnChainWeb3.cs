@@ -1,4 +1,5 @@
 ﻿using DCL.Web3.Abstract;
+using System.Numerics;
 using Thirdweb;
 using ThirdWebUnity;
 using UnityEngine;
@@ -22,10 +23,15 @@ namespace DCL.Web3.Authenticators
             EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
 
             var hexBalance = response.result.ToString();
-            Debug.Log($"Balance (ETH): {hexBalance.HexToNumber()}");
-            Debug.Log($"Balance (ETH): {hexBalance.HexToString()}");
 
-            // Debug.Log($"Balance (ETH): {hexBalance.ToWei()}");
+            // Правильная конвертация: Hex → BigInteger → String → ETH
+            BigInteger weiValue = hexBalance.HexToNumber();
+            var weiString = weiValue.ToString();
+            string? ethBalance = weiString.ToEth(decimalsToDisplay: 6, addCommas: true);
+
+            Debug.Log($"Balance (raw hex): {hexBalance}");
+            Debug.Log($"Balance (wei): {weiValue}");
+            Debug.Log($"Balance (ETH): {ethBalance}");
         }
     }
 }
