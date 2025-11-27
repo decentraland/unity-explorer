@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 
@@ -35,6 +35,7 @@ namespace DCL.PluginSystem
             string pluginName = plugin.GetType().Name;
 
             Track(analytics, pluginName, "started", string.Empty);
+
             try
             {
                 await plugin.Initialize(pluginSettingsContainer, ct);
@@ -50,7 +51,8 @@ namespace DCL.PluginSystem
             return (plugin, true);
         }
 
-        private static void Track(IAnalyticsController analytics, string pluginName, string status, string exception) => analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JsonObject { { "plugin", pluginName }, { "status", status }, { "exception", exception } });
+        private static void Track(IAnalyticsController analytics, string pluginName, string status, string exception) =>
+            analytics.Track(AnalyticsEvents.General.PLUGINS_INIT, new JObject { { "plugin", pluginName }, { "status", status }, { "exception", exception } });
 
         public static UniTask<TPlugin> ThrowOnFail<TPlugin>(this UniTask<(TPlugin? plugin, bool success)> parentTask) where TPlugin: class, IDCLPlugin
         {
