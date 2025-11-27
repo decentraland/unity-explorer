@@ -1,15 +1,11 @@
 ﻿using CDPBridges;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
-using Sentry;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -17,7 +13,6 @@ namespace DCL.WebRequests
 {
     public class WebRequestController : IWebRequestController
     {
-        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
@@ -45,24 +40,16 @@ namespace DCL.WebRequests
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
 
-            RetryPolicy retryPolicy = envelope.CommonArguments.RetryPolicy;
-            var attemptNumber = 0;
-
             // ensure disposal of headersInfo
             using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
 
-            while (true)
-            {
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
-                bool idempotent = request.IsIdempotent(envelope.signInfo);
 
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
                 using UnityWebRequest wr = request.UnityWebRequest;
 
                 try
                 {
-                    attemptNumber++;
-
                     using var pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
                     string method = request.UnityWebRequest.method!;
                     NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
@@ -107,29 +94,9 @@ namespace DCL.WebRequests
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
                         return default(TResult);
 
-                    if (!envelope.SuppressErrors)
-
-                        // Print verbose
-                        ReportHub.LogError(
-                            envelope.ReportData,
-                            $"Exception (code {exception.ResponseCode}) occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
-                            + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"
-                        );
-
-                    (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
-
-                    if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
-                    {
-                        // Ignore the file error as we always try to read from the file first
-                        if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-                            SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
-
-                        throw;
-                    }
-
-                    await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
+                    throw;
                 }
-            }
         }
     }
+
 }

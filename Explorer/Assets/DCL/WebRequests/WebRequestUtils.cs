@@ -27,11 +27,6 @@ namespace DCL.WebRequests
             catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
         }
 
-        public static bool IsIdempotent<TWebRequest>(this TWebRequest webRequest, in WebRequestSignInfo? signInfo) where TWebRequest: ITypedWebRequest =>
-
-            // Requests with a signature are not idempotent due to the possible signature expiration
-            webRequest.Idempotent && !signInfo.HasValue;
-
         public static (bool canBeRepeated, TimeSpan retryDelay) CanBeRepeated(int attemptNumber, RetryPolicy retryPolicy, bool idempotent, UnityWebRequestException webRequestException)
         {
             // Retries count are exhausted (attemptNumber is 1-based)

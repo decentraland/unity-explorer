@@ -55,6 +55,10 @@ namespace DCL.WebRequests
             IgnoreIrrecoverableErrors = ignoreIrrecoverableErrors;
         }
 
+        // Requests with a signature are not idempotent due to the possible signature expiration
+        public bool IsIdempotent() =>
+            default(TWebRequest).Idempotent && !signInfo.HasValue;
+
         public override string ToString() =>
             "RequestEnvelope:"
             + $"\nWebRequestType: {typeof(TWebRequest).Name}"
