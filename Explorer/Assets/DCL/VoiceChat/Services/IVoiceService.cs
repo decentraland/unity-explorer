@@ -19,8 +19,6 @@ namespace DCL.VoiceChat.Services
 
         UniTask<EndPrivateVoiceChatResponse> EndPrivateVoiceChatAsync(string callId, CancellationToken ct);
 
-        UniTask SubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct);
-
         UniTask<GetIncomingPrivateVoiceChatRequestResponse> GetIncomingPrivateVoiceChatRequestAsync(CancellationToken ct);
     }
 }
