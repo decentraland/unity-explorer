@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -13,13 +14,17 @@ namespace DCL.WebRequests
     public interface IWebRequestController
     {
 #if UNITY_EDITOR
+        static int TOTAL_BUDGET = 15;
+
         static readonly IWebRequestController DEFAULT = new WebRequestController(
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
                 new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
-            ChromeDevtoolProtocolClient.NewForTest()
+            ChromeDevtoolProtocolClient.NewForTest(),
+            new ElementBinding<ulong>((ulong)TOTAL_BUDGET),
+            TOTAL_BUDGET
         );
 #endif
 
