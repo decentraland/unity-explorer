@@ -12,11 +12,10 @@ using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using Utility;
-using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.Profiles
 {
-    public class ProfileMenuController : ControllerBase<ProfileMenuView>, IControllerInSharedSpace<ProfileMenuView, ControllerNoData>
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
@@ -44,18 +43,19 @@ namespace DCL.UI.Profiles
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+            viewInstance!.gameObject.SetActive(true);
+        }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        protected override void OnViewClose()
         {
             profileMenuCts.Cancel();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(UniTask.WaitUntilCanceled(profileMenuCts.Token), UniTask.WaitUntilCanceled(ct));
         }
 
@@ -71,7 +71,7 @@ namespace DCL.UI.Profiles
         {
             base.OnViewInstantiated();
 
-            viewInstance.CloseButton.onClick.AddListener(OnClose);
+            viewInstance!.CloseButton.onClick.AddListener(OnClose);
         }
 
         private void OnClose()

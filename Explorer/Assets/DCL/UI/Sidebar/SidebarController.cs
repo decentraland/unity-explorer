@@ -142,8 +142,8 @@ namespace DCL.UI.Sidebar
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
+            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
@@ -166,7 +166,7 @@ namespace DCL.UI.Sidebar
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
@@ -364,9 +364,9 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private async void OnControlsButtonClickedAsync()
+        private void OnControlsButtonClicked()
         {
-            await mvcManager.ShowAsync(ControlsPanelController.IssueCommand());
+            mvcManager.ShowAndForget(ControlsPanelController.IssueCommand());
         }
 
         private async void OpenSidebarSettingsAsync()
@@ -384,7 +384,7 @@ namespace DCL.UI.Sidebar
 
         private async void OpenProfileMenuAsync()
         {
-            viewInstance.BlockSidebar();
+            viewInstance!.BlockSidebar();
             await mvcManager.ShowAsync(ProfileMenuController.IssueCommand());
             viewInstance.UnblockSidebar();
 
