@@ -130,7 +130,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress);
 
             // Checks if the initiator is still available, otherwise cancel the movement
-            if (interaction == null || interaction.AreInteracting)
+            if (interaction == null || interaction.AreInteracting || interaction.Id != moveIntent.TriggerEmoteIntent.InteractionId)
                 moveIntent.HasBeenCancelled = true;
 
             bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < 2.0f;
