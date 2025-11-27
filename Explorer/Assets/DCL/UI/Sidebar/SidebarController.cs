@@ -142,10 +142,9 @@ namespace DCL.UI.Sidebar
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
-            
+
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
-
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
@@ -385,17 +384,12 @@ namespace DCL.UI.Sidebar
 
         private async void OpenProfileMenuAsync()
         {
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-
-                //Profile is already open
-                return;
-
-            //TODO FRAN -> Create proper controller for this view!!
-            viewInstance!.ProfileMenuView.gameObject.SetActive(true);
-
             viewInstance.BlockSidebar();
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
+            await mvcManager.ShowAsync(ProfileMenuController.IssueCommand());
             viewInstance.UnblockSidebar();
+
+            //viewInstance!.ProfileMenuView.gameObject.SetActive(true);
+            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
         }
 
         private async void OpenSkyboxSettingsAsync()
