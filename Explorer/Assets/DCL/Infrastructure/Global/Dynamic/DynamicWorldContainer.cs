@@ -962,7 +962,8 @@ namespace Global.Dynamic
                     staticContainer.EthereumApi,
                     staticContainer.ScenesCache,
                     staticContainer.ProfilesContainer.Repository,
-                    featureFlags),
+                    featureFlags,
+                    staticContainer.WebRequestsContainer.WebRequestController),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

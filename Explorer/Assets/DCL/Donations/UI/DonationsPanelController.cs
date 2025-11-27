@@ -1,8 +1,9 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Web3;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -14,9 +15,12 @@ namespace DCL.Donations.UI
 {
     public class DonationsPanelController : ControllerBase<DonationsPanelView>
     {
+        private readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
+
         private readonly IEthereumApi ethereumApi;
         private readonly IScenesCache scenesCache;
         private readonly IProfileRepository profileRepository;
+        private readonly IWebRequestController webRequestController;
         private readonly float recommendedDonationAmount;
 
         private CancellationTokenSource panelLifecycleCts = new ();
@@ -28,12 +32,14 @@ namespace DCL.Donations.UI
             IEthereumApi ethereumApi,
             IScenesCache scenesCache,
             IProfileRepository profileRepository,
+            IWebRequestController webRequestController,
             float recommendedDonationAmount)
             : base(viewFactory)
         {
             this.ethereumApi = ethereumApi;
             this.scenesCache = scenesCache;
             this.profileRepository = profileRepository;
+            this.webRequestController = webRequestController;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -68,8 +74,9 @@ namespace DCL.Donations.UI
 
                 Profile? creatorProfile = await profileRepository.GetAsync(creatorAddress, ct);
                 EthApiResponse currentBalanceResponse = await GetCurrentBalanceAsync(ct);
+                ManaPriceResponse manaPriceResponse = await GetCurrentManaConversionAsync(ct);
 
-                viewInstance!.ConfigurePanel(creatorProfile, 0, recommendedDonationAmount,0); // TODO: Fill with real values
+                viewInstance!.ConfigurePanel(creatorProfile, 0, recommendedDonationAmount, manaPriceResponse.decentraland.usd); // TODO: Fill with real values
             }
             catch (OperationCanceledException)
             {
@@ -107,5 +114,24 @@ namespace DCL.Donations.UI
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));
+
+        private async UniTask<ManaPriceResponse> GetCurrentManaConversionAsync(CancellationToken ct) =>
+            await webRequestController.GetAsync(
+                                           new CommonArguments(MANA_USD_API_URL),
+                                           ct,
+                                           ReportCategory.DONATIONS)
+                                      .CreateFromJson<ManaPriceResponse>(WRJsonParser.Newtonsoft);
+
+        [Serializable]
+        private readonly struct ManaPriceResponse
+        {
+            public readonly Coin decentraland;
+
+            [Serializable]
+            public readonly struct Coin
+            {
+                public readonly float usd;
+            }
+        }
     }
 }

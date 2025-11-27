@@ -5,6 +5,7 @@ using DCL.Donations.UI;
 using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Web3;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -22,6 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly IProfileRepository profileRepository;
         private readonly FeatureFlagsConfiguration featureFlags;
+        private readonly IWebRequestController webRequestController;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -30,7 +32,8 @@ namespace DCL.PluginSystem.Global
             IEthereumApi ethereumApi,
             IScenesCache scenesCache,
             IProfileRepository profileRepository,
-            FeatureFlagsConfiguration featureFlags)
+            FeatureFlagsConfiguration featureFlags,
+            IWebRequestController webRequestController)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -38,6 +41,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.profileRepository = profileRepository;
             this.featureFlags = featureFlags;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose()
@@ -61,6 +65,7 @@ namespace DCL.PluginSystem.Global
                 ethereumApi,
                 scenesCache,
                 profileRepository,
+                webRequestController,
                 recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
 
             mvcManager.RegisterController(donationsPanelController);
