@@ -56,6 +56,7 @@ MonoBehaviour:
   - rid: 6169970366055448665
   - rid: 2008243996523495520
   - rid: 3821626543930605662
+  - rid: 2563261270153757000
   references:
     version: 2
     RefIds:
@@ -381,6 +382,15 @@ MonoBehaviour:
         <ReportHandlingSettingsDevelopment>k__BackingField: {fileID: 11400000, guid: 0dd75559898ca8d4db9fc8ab99ac2269, type: 2}
         <ReportHandlingSettingsProduction>k__BackingField: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
+    - rid: 2563261270153757000
+      type: {class: DonationsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <DonationsPanelPrefab>k__BackingField:
+          m_AssetGUID: 925419b3e8ba740ef9f36530d3e3a0bc
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2799748311381442562
       type: {class: ErrorPopupPlugin/ErrorPopupSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
