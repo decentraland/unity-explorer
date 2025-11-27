@@ -182,7 +182,7 @@ namespace ThirdWebUnity.Playground
                     inAppWalletOptions
                 );
 
-                IThirdwebWallet wallet = await ThirdWebManager.Instance.ConnectWallet(options);
+                InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(options);
                 string address = await wallet.GetAddress();
                 Debug.Log($"🎉 SUCCESS! Wallet connected: {address}");
             }

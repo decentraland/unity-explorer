@@ -385,7 +385,7 @@ MonoBehaviour:
   launchSettings:
     initialRealm: 5
     targetScene: {x: 0, y: 0}
-    EditorSceneStartPosition: 1
+    EditorSceneStartPosition: 0
     predefinedScenes:
       enabled: 0
       parcels:
@@ -548,6 +548,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1141db6910ed4fbc9b1b1ac9faab3d49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Plugins::DCL.Web3.Authenticators.TestOnChainWeb3
+  selectedNetwork: 1
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0

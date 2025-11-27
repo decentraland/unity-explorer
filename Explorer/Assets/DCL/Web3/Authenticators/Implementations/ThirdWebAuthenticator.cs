@@ -54,8 +54,12 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                // string sender = await LoginViaJWT(email, password);
-                string sender = await LoginViaOTP("popuzin@gmail.com");
+                ThirdWebManager.Instance.ActiveWallet
+                    = await LoginViaJWT(email, password);
+
+                //  = await LoginViaOTP("popuzin@gmail.com");
+
+                string? sender = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -99,7 +103,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<string> LoginViaOTP(string email)
+        private async UniTask<InAppWallet> LoginViaOTP(string email)
         {
             Debug.Log("Login via OTP");
 
@@ -109,11 +113,14 @@ namespace DCL.Web3.Authenticators
                 new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.Default, email: email)
             );
 
-            IThirdwebWallet wallet = await ThirdWebManager.Instance.ConnectWallet(walletOptions);
-            return await wallet.GetAddress();
+            InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
+            await wallet.SendOTP();
+            var otp = "MOCK"; // wait callback
+            _ = await wallet.LoginWithOtp(otp);
+            return wallet;
         }
 
-        private async UniTask<string> LoginViaJWT(string email, string password)
+        private async UniTask<InAppWallet> LoginViaJWT(string email, string password)
         {
             string? jwt = await ThirdWebCustomJWTAuth.GetJWT(email, password);
 
@@ -123,8 +130,10 @@ namespace DCL.Web3.Authenticators
                 new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.JWT, jwtOrPayload: jwt)
             );
 
-            IThirdwebWallet wallet = await ThirdWebManager.Instance.ConnectWallet(walletOptions);
-            return await wallet.GetAddress();
+            InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
+            await wallet.LoginWithJWT(walletOptions.InAppWalletOptions.JwtOrPayload);
+
+            return wallet;
         }
 
         public void Dispose()

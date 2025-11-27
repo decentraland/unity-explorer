@@ -25,7 +25,7 @@ namespace ThirdWebUnity
         public static ThirdWebManager Instance { get; private set; }
 
         public ThirdwebClient Client { get; private set; }
-        public IThirdwebWallet ActiveWallet { get; private set; }
+        public IThirdwebWallet ActiveWallet { get; set; }
 
         private void Awake()
         {
@@ -59,24 +59,8 @@ namespace ThirdWebUnity
                 Debug.LogError("VVV Failed to initialize ThirdwebManager.");
         }
 
-        public async Task<IThirdwebWallet> ConnectWallet(WalletOptions walletOptions)
+        public async Task<IThirdwebWallet> ConnectWallet(IThirdwebWallet wallet, WalletOptions walletOptions)
         {
-            if (walletOptions == null)
-                throw new ArgumentNullException(nameof(walletOptions));
-
-            if (walletOptions.ChainId <= 0)
-                throw new ArgumentException("ChainId must be greater than 0.");
-
-            IThirdwebWallet wallet = await InAppWallet.Create(
-                Client,
-                walletOptions.InAppWalletOptions.Email,
-                walletOptions.InAppWalletOptions.PhoneNumber,
-                walletOptions.InAppWalletOptions.AuthProvider,
-                walletOptions.InAppWalletOptions.StorageDirectoryPath,
-                walletOptions.InAppWalletOptions.SiweSigner,
-                walletOptions.InAppWalletOptions.WalletSecret,
-                executionMode: walletOptions.InAppWalletOptions.ExecutionMode
-            );
 
             // InAppWallet auth flow
             if (walletOptions.Provider == WalletProvider.InAppWallet && !await wallet.IsConnected())
@@ -93,10 +77,10 @@ namespace ThirdWebUnity
                         // Wait OTP form UI ->// _ = await InAppWalletModal.LoginWithOtp(inAppWallet);
                         // Verify with OTP -> //_ = await inAppWallet.LoginWithOtp(otp);
                         break;
-                    case AuthProvider.JWT:
-                        _ = await inAppWallet.LoginWithJWT(walletOptions.InAppWalletOptions.JwtOrPayload);
-                        break;
 
+                    // case AuthProvider.JWT:
+                    //     _ = await inAppWallet.LoginWithJWT(walletOptions.InAppWalletOptions.JwtOrPayload);
+                    //     break;
                     // case AuthProvider.AuthEndpoint:
                     //     _ = await inAppWallet.LoginWithAuthEndpoint(walletOptions.InAppWalletOptions.JwtOrPayload);
                     //     break;
@@ -125,6 +109,28 @@ namespace ThirdWebUnity
             }
 
             ActiveWallet = wallet;
+            return wallet;
+        }
+
+        public async Task<InAppWallet> CreateInAppWallet(WalletOptions walletOptions)
+        {
+            if (walletOptions == null)
+                throw new ArgumentNullException(nameof(walletOptions));
+
+            if (walletOptions.ChainId <= 0)
+                throw new ArgumentException("ChainId must be greater than 0.");
+
+            InAppWallet wallet = await InAppWallet.Create(
+                Client,
+                walletOptions.InAppWalletOptions.Email,
+                walletOptions.InAppWalletOptions.PhoneNumber,
+                walletOptions.InAppWalletOptions.AuthProvider,
+                walletOptions.InAppWalletOptions.StorageDirectoryPath,
+                walletOptions.InAppWalletOptions.SiweSigner,
+                walletOptions.InAppWalletOptions.WalletSecret,
+                executionMode: walletOptions.InAppWalletOptions.ExecutionMode
+            );
+
             return wallet;
         }
 
