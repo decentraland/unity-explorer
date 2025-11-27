@@ -274,6 +274,9 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+                // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
+                // If the token is cancelled, the await will throw an OperationCanceledException immediately.
+                // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
@@ -384,6 +387,9 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+                // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
+                // If the token is cancelled, the await will throw an OperationCanceledException immediately.
+                // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
