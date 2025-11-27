@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -26,6 +27,8 @@ namespace DCL.PluginSystem.Global
         private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly Entity playerEntity;
+        private readonly Arch.Core.World world;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -36,7 +39,9 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             FeatureFlagsConfiguration featureFlags,
             IWebRequestController webRequestController,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            Entity playerEntity,
+            Arch.Core.World world)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -46,6 +51,8 @@ namespace DCL.PluginSystem.Global
             this.featureFlags = featureFlags;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.playerEntity = playerEntity;
+            this.world = world;
         }
 
         public void Dispose()
@@ -71,6 +78,8 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 webRequestController,
                 profileRepositoryWrapper,
+                world,
+                playerEntity,
                 recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
 
             mvcManager.RegisterController(donationsPanelController);

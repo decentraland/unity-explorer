@@ -1,5 +1,7 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -11,12 +13,14 @@ using System;
 using System.Threading;
 using Utility;
 using Newtonsoft.Json.Linq;
+using Utility.Arch;
 
 namespace DCL.Donations.UI
 {
     public class DonationsPanelController : ControllerBase<DonationsPanelView>
     {
-        private readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
+        private static readonly URN EMOTE_MONEY_URN = new ("money");
+        private static readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
 
         private readonly IEthereumApi ethereumApi;
         private readonly IScenesCache scenesCache;
@@ -24,6 +28,8 @@ namespace DCL.Donations.UI
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly float recommendedDonationAmount;
+        private readonly Entity playerEntity;
+        private readonly World world;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -36,6 +42,8 @@ namespace DCL.Donations.UI
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
+            World world,
+            Entity playerEntity,
             float recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -44,6 +52,8 @@ namespace DCL.Donations.UI
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.world = world;
+            this.playerEntity = playerEntity;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -75,6 +85,17 @@ namespace DCL.Donations.UI
         private void OnSendDonationRequested(string creatorAddress, float amount)
         {
             //TODO: Implement donation sending flow
+            PlayEmoteByUrn(EMOTE_MONEY_URN);
+        }
+
+        private void PlayEmoteByUrn(URN emoteUrn)
+        {
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent
+            {
+                EmoteId = emoteUrn,
+                Spatial = true,
+                TriggerSource = TriggerSource.SELF
+            });
         }
 
         private async UniTaskVoid LoadDataAsync(CancellationToken ct)

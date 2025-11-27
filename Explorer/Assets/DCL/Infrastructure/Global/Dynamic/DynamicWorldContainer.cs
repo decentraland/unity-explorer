@@ -964,7 +964,9 @@ namespace Global.Dynamic
                     staticContainer.ProfilesContainer.Repository,
                     featureFlags,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    profileRepositoryWrapper),
+                    profileRepositoryWrapper,
+                    playerEntity,
+                    globalWorld),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
