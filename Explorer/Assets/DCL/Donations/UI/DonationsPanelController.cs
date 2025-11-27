@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle;
@@ -21,6 +22,7 @@ namespace DCL.Donations.UI
         private readonly IScenesCache scenesCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly float recommendedDonationAmount;
 
         private CancellationTokenSource panelLifecycleCts = new ();
@@ -33,6 +35,7 @@ namespace DCL.Donations.UI
             IScenesCache scenesCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
             float recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -40,6 +43,7 @@ namespace DCL.Donations.UI
             this.scenesCache = scenesCache;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -66,7 +70,7 @@ namespace DCL.Donations.UI
                 viewInstance!.SetLoadingState(true);
                 string? creatorAddress = scenesCache.CurrentScene.Value?.SceneData.SceneEntityDefinition.metadata.creator;
 
-                if (creatorAddress == null)
+                if (creatorAddress == null || scenesCache.CurrentScene.Value == null)
                 {
                     CloseController();
                     return;
@@ -76,7 +80,9 @@ namespace DCL.Donations.UI
                 EthApiResponse currentBalanceResponse = await GetCurrentBalanceAsync(ct);
                 ManaPriceResponse manaPriceResponse = await GetCurrentManaConversionAsync(ct);
 
-                viewInstance!.ConfigurePanel(creatorProfile, 0, recommendedDonationAmount, manaPriceResponse.decentraland.usd); // TODO: Fill with real values
+                viewInstance!.ConfigurePanel(creatorProfile, scenesCache.CurrentScene.Value, 0,
+                    recommendedDonationAmount, manaPriceResponse.decentraland.usd,
+                    profileRepositoryWrapper); // TODO: Fill with real values
             }
             catch (OperationCanceledException)
             {

@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using MVC;
+using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,9 +27,14 @@ namespace DCL.Donations.UI
                 loadingView.HideLoading();
         }
 
-        public void ConfigurePanel(Profile? profile, float currentBalance, float suggestedDonationAmount, float manaUsdPrice)
+        public void ConfigurePanel(Profile? profile,
+            ISceneFacade sceneFacade,
+            float currentBalance,
+            float suggestedDonationAmount,
+            float manaUsdPrice,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
-
+            
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)

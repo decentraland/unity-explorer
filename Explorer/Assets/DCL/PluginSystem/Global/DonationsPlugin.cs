@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Donations.UI;
 using DCL.FeatureFlags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle;
@@ -24,6 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IWebRequestController webRequestController;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -33,7 +35,8 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             IProfileRepository profileRepository,
             FeatureFlagsConfiguration featureFlags,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -42,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.featureFlags = featureFlags;
             this.webRequestController = webRequestController;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
         public void Dispose()
@@ -66,6 +70,7 @@ namespace DCL.PluginSystem.Global
                 scenesCache,
                 profileRepository,
                 webRequestController,
+                profileRepositoryWrapper,
                 recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
 
             mvcManager.RegisterController(donationsPanelController);

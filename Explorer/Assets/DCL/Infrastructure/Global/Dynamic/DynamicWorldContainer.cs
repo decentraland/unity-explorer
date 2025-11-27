@@ -963,7 +963,8 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache,
                     staticContainer.ProfilesContainer.Repository,
                     featureFlags,
-                    staticContainer.WebRequestsContainer.WebRequestController),
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    profileRepositoryWrapper),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
