@@ -68,7 +68,7 @@ namespace DCL.Donations.UI
             try
             {
                 viewInstance!.SetLoadingState(true);
-                string? creatorAddress = scenesCache.CurrentScene.Value?.SceneData.SceneEntityDefinition.metadata.creator;
+                string? creatorAddress = scenesCache.CurrentScene.Value?.SceneData.GetCreatorAddress();
 
                 if (creatorAddress == null || scenesCache.CurrentScene.Value == null)
                 {
