@@ -11,12 +11,14 @@ using System.Threading;
 using Thirdweb;
 using ThirdWebUnity;
 using ThirdWebUnity.Playground;
+using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
     public partial class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
     {
         public static ThirdWebAuthenticator Instance;
+
         private readonly SemaphoreSlim mutex = new (1, 1);
 
         private readonly HashSet<string> whitelistMethods;
@@ -25,7 +27,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
 
-        private BigInteger chainId => EnvChainsUtils.Anoy;
+        private BigInteger chainId;
 
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
@@ -38,6 +40,8 @@ namespace DCL.Web3.Authenticators
             this.whitelistMethods = whitelistMethods;
             this.web3AccountFactory = web3AccountFactory;
             this.identityExpirationDuration = identityExpirationDuration;
+
+            chainId = EnvChainsUtils.GetChainIdAsInt(environment);
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
@@ -50,18 +54,8 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                string? jwt = await ThirdWebCustomJWTAuth.GetJWT(email, password);
-
-                var walletOptions = new ThirdWebManager.WalletOptions(
-                    ThirdWebManager.WalletProvider.InAppWallet,
-                    EnvChainsUtils.GetChainIdAsInt(environment),
-
-                    // new BigInteger(11155111),
-                    new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.JWT, jwtOrPayload: jwt)
-                );
-
-                IThirdwebWallet wallet = await ThirdWebManager.Instance.ConnectWallet(walletOptions);
-                string sender = await wallet.GetAddress();
+                // string sender = await LoginViaJWT(email, password);
+                string sender = await LoginViaOTP("popuzin@gmail.com");
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -105,6 +99,34 @@ namespace DCL.Web3.Authenticators
             }
         }
 
+        private async UniTask<string> LoginViaOTP(string email)
+        {
+            Debug.Log("Login via OTP");
+
+            var walletOptions = new ThirdWebManager.WalletOptions(
+                ThirdWebManager.WalletProvider.InAppWallet,
+                EnvChainsUtils.GetChainIdAsInt(environment),
+                new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.Default, email: email)
+            );
+
+            IThirdwebWallet wallet = await ThirdWebManager.Instance.ConnectWallet(walletOptions);
+            return await wallet.GetAddress();
+        }
+
+        private async UniTask<string> LoginViaJWT(string email, string password)
+        {
+            string? jwt = await ThirdWebCustomJWTAuth.GetJWT(email, password);
+
+            var walletOptions = new ThirdWebManager.WalletOptions(
+                ThirdWebManager.WalletProvider.InAppWallet,
+                EnvChainsUtils.GetChainIdAsInt(environment),
+                new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.JWT, jwtOrPayload: jwt)
+            );
+
+            IThirdwebWallet wallet = await ThirdWebManager.Instance.ConnectWallet(walletOptions);
+            return await wallet.GetAddress();
+        }
+
         public void Dispose()
         {
             LogoutAsync(CancellationToken.None).Forget();
@@ -113,7 +135,15 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await ThirdWebManager.Instance.DisconnectWallet();
 
-        //EnvChainsUtils.GetChainIdAsInt(environment);
+        public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
+        {
+            var targetChainId = new BigInteger(chainId);
+
+            this.chainId = targetChainId;
+            await ThirdWebManager.Instance.ActiveWallet.SwitchNetwork(this.chainId);
+
+            return await SendAsync(request, ct);
+        }
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
         {
@@ -299,5 +329,76 @@ namespace DCL.Web3.Authenticators
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback)
         {
         }
+
+        // public async UniTask<string> MintFakeManaAsync(decimal amountInMana, CancellationToken ct)
+        // {
+        //     try
+        //     {
+        //         // 1. Проверяем, что есть активный кошелёк
+        //         IThirdwebWallet? wallet = ThirdWebManager.Instance.ActiveWallet;
+        //         if (wallet == null)
+        //         {
+        //             UnityEngine.Debug.LogError("[UNSPECIFIED]: MintFakeManaAsync: ActiveWallet is null. Call LoginAsync first.");
+        //             return string.Empty;
+        //         }
+        //
+        //         // 2. Адрес получателя — текущий EOA пользователя
+        //         string toAddress = await wallet.GetAddress();
+        //
+        //         // 3. Конвертация MANA → wei (18 decimals)
+        //         // 1 MANA = 10^18, см. README про FakeMana
+        //         // https://github.com/decentraland/governance (Sepolia FakeMana)
+        //         BigInteger weiPerMana = BigInteger.Pow(10, 18);
+        //         BigInteger amountWei = new BigInteger(amountInMana * (decimal)weiPerMana);
+        //
+        //         if (amountWei <= BigInteger.Zero)
+        //         {
+        //             UnityEngine.Debug.LogError($"[UNSPECIFIED]: MintFakeManaAsync: amountInMana must be > 0, got {amountInMana}");
+        //             return string.Empty;
+        //         }
+        //
+        //         // 4. Адрес Fake MANA на Sepolia (Sepolia FakeMana из README)
+        //         const string fakeManaContractAddress = "0xFa04D2e2BA9aeC166c93dFEEba7427B2303beFa9";
+        //
+        //         // Минимальный ABI только с методом mint(address to, uint256 amount)
+        //         const string fakeManaAbi = @"[
+        //             {
+        //                 ""inputs"": [
+        //                     { ""internalType"": ""address"", ""name"": ""to"", ""type"": ""address"" },
+        //                     { ""internalType"": ""uint256"", ""name"": ""amount"", ""type"": ""uint256"" }
+        //                 ],
+        //                 ""name"": ""mint"",
+        //                 ""outputs"": [],
+        //                 ""stateMutability"": ""nonpayable"",
+        //                 ""type"": ""function""
+        //             }
+        //         ]";
+        //
+        //         // 5. Создаём контракт на Sepolia (chainId у тебя уже привязан к Sepolia)
+        //         var client = ThirdWebManager.Instance.Client;
+        //
+        //         ThirdwebContract contract = await ThirdwebContract.Create(
+        //             client: client,
+        //             address: fakeManaContractAddress,
+        //             chain: new BigInteger(11155111),          // private BigInteger chainId => EnvChainsUtils.Sepolia;
+        //             abi: fakeManaAbi
+        //         );
+        //
+        //         // 6. Пишем в контракт через ThirdwebContract.Write (без SendTransaction)
+        //         var receipt = await contract.Write(wallet, "mint", BigInteger.Zero, toAddress, amountWei);
+        //         Console.WriteLine($"Transaction receipt: {receipt}");
+        //
+        //         UnityEngine.Debug.Log(
+        //             $"[MintFakeManaAsync] Minted {amountInMana} Fake MANA to {toAddress}. TxHash: {receipt.TransactionHash}"
+        //         );
+        //
+        //         return receipt.TransactionHash;
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         UnityEngine.Debug.LogError($"[UNSPECIFIED]: MintFakeMana failed: {ex}");
+        //         return string.Empty;
+        //     }
+        // }
     }
 }

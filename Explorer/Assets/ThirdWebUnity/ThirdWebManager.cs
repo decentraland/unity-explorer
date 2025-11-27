@@ -30,10 +30,7 @@ namespace ThirdWebUnity
         private void Awake()
         {
             if (Instance == null)
-            {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
             else
             {
                 Destroy(gameObject);
@@ -46,15 +43,7 @@ namespace ThirdWebUnity
             if (string.IsNullOrWhiteSpace(BundleId))
                 Debug.LogError("VVV Bundle Id is not set");
 
-            Client = CreateClient();
-
-            if (Client == null)
-                Debug.LogError("VVV Failed to initialize ThirdwebManager.");
-        }
-
-        private ThirdwebClient CreateClient()
-        {
-            return ThirdwebClient.Create(
+            Client = ThirdwebClient.Create(
                 ClientId,
                 bundleId: BundleId,
                 httpClient: new CrossPlatformUnityHttpClient(),
@@ -64,8 +53,10 @@ namespace ThirdWebUnity
                 sdkVersion: THIRDWEB_UNITY_SDK_VERSION,
                 rpcOverrides: rpcOverrides == null || rpcOverrides.Count == 0
                     ? null
-                    : rpcOverrides.ToDictionary(rpcOverride => new BigInteger(rpcOverride.ChainId), rpcOverride => rpcOverride.RpcUrl)
-            );
+                    : rpcOverrides.ToDictionary(rpcOverride => new BigInteger(rpcOverride.ChainId), rpcOverride => rpcOverride.RpcUrl));
+
+            if (Client == null)
+                Debug.LogError("VVV Failed to initialize ThirdwebManager.");
         }
 
         public async Task<IThirdwebWallet> ConnectWallet(WalletOptions walletOptions)
@@ -76,9 +67,7 @@ namespace ThirdWebUnity
             if (walletOptions.ChainId <= 0)
                 throw new ArgumentException("ChainId must be greater than 0.");
 
-            IThirdwebWallet wallet = null;
-
-            wallet = await InAppWallet.Create(
+            IThirdwebWallet wallet = await InAppWallet.Create(
                 Client,
                 walletOptions.InAppWalletOptions.Email,
                 walletOptions.InAppWalletOptions.PhoneNumber,
@@ -99,8 +88,8 @@ namespace ThirdWebUnity
                 switch (walletOptions.InAppWalletOptions.AuthProvider)
                 {
                     case AuthProvider.Default:
+                        Debug.Log("Sending OTP");
                         await inAppWallet.SendOTP();
-
                         // Wait OTP form UI ->// _ = await InAppWalletModal.LoginWithOtp(inAppWallet);
                         // Verify with OTP -> //_ = await inAppWallet.LoginWithOtp(otp);
                         break;
