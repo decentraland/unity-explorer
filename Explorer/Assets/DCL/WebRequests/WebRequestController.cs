@@ -7,6 +7,7 @@ using DCL.WebRequests.RequestsHub;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
+using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.WebRequests
@@ -43,59 +44,60 @@ namespace DCL.WebRequests
             // ensure disposal of headersInfo
             using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
 
-                TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
+            TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
 
-                // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
-                using UnityWebRequest wr = request.UnityWebRequest;
+            // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
+            using UnityWebRequest wr = request.UnityWebRequest;
+
+            try
+            {
+                using PooledObject<Dictionary<string, string>> pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
+                string method = request.UnityWebRequest.method!;
+
+                NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
+                    ? chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers)
+                    : null;
 
                 try
                 {
-                    using var pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
-                    string method = request.UnityWebRequest.method!;
-                    NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
-                        ? chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers)
-                        : null;
+                    await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
 
-                    try
+                    if (notifyScope.HasValue)
                     {
-                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
+                        var statusCode = (int)request.UnityWebRequest.responseCode;
 
-                        if (notifyScope.HasValue)
-                        {
-                            int statusCode = (int)request.UnityWebRequest.responseCode;
+                        // TODO avoid allocation?
+                        Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
 
-                            // TODO avoid allocation?
-                            Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
-
-                            string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
-                            int encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
-                            notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
-                        }
+                        string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
+                        var encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
+                        notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
                     }
-                    catch (OperationCanceledException)
-                    {
-                        notifyScope?.NotifyFailed("Cancelled", true);
-                        throw;
-                    }
-                    catch
-                    {
-                        notifyScope?.NotifyFailed(request.UnityWebRequest.error!, false);
-                        throw;
-                    }
-
-                    // if no exception is thrown Request is successful and the continuation op can be executed
-                    return await op.ExecuteAsync(request, envelope.Ct);
-
-                    // After the operation is executed, the flow may continue in the background thread
                 }
-                catch (UnityWebRequestException exception)
+                catch (OperationCanceledException)
                 {
-                    // No result can be concluded in this case
-                    if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
-                        return default(TResult);
-
+                    notifyScope?.NotifyFailed("Cancelled", true);
                     throw;
                 }
+                catch
+                {
+                    notifyScope?.NotifyFailed(request.UnityWebRequest.error!, false);
+                    throw;
+                }
+
+                // if no exception is thrown Request is successful and the continuation op can be executed
+                return await op.ExecuteAsync(request, envelope.Ct);
+
+                // After the operation is executed, the flow may continue in the background thread
+            }
+            catch (UnityWebRequestException exception)
+            {
+                // No result can be concluded in this case
+                if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
+                    return default(TResult);
+
+                throw;
+            }
         }
     }
 
