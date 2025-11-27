@@ -410,7 +410,7 @@ MonoBehaviour:
     overrideConnectionQuality: 0
     connectionQuality: 2
     appParameters:
-    - --realm
+    - --ream
     - https://peer-ue-2.decentraland.zone
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
