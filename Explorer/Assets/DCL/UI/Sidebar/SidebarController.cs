@@ -48,7 +48,7 @@ namespace DCL.UI.Sidebar
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "backpack");
+        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
