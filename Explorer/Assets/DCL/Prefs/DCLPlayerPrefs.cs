@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using Unity.Multiplayer.Playmode;
+
 using UnityEngine;
 
 namespace DCL.Prefs
@@ -15,7 +15,7 @@ namespace DCL.Prefs
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
         {
-            string[] playmodeTags = CurrentPlayer.ReadOnlyTags();
+            string[] playmodeTags = Unity.Multiplayer.PlayMode.CurrentPlayer.ReadOnlyTags();
             Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
