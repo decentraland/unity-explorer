@@ -69,14 +69,15 @@ namespace DCL.Donations.UI
         }
 
         public void ConfigurePanel(Profile? profile,
-            ISceneFacade sceneFacade,
+            string sceneCreatorAddress,
+            string sceneName,
             float currentBalance,
             float suggestedDonationAmount,
             float manaUsdPrice,
             ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             mansUsdConversion = manaUsdPrice;
-            sceneNameText.text = sceneFacade.Info.Name;
+            sceneNameText.text = sceneName;
 
             profilePictureView.gameObject.SetActive(profile != null);
             userNameElement.gameObject.SetActive(profile != null);
@@ -88,15 +89,15 @@ namespace DCL.Donations.UI
                 userNameElement.Setup(profile);
             }
             else
-                creatorAddressController!.Setup(sceneFacade.SceneData.GetCreatorAddress()!);
+                creatorAddressController!.Setup(sceneCreatorAddress);
 
             currentBalanceText.text = currentBalance.ToString("0.00");
-            ((TMP_Text)donationInputField.placeholder).text = suggestedDonationAmount.ToString("0.00");
+            donationInputField.text = suggestedDonationAmount.ToString("0.00");
 
             confirmationCts = confirmationCts.SafeRestart();
 
             sendButton.onClick.RemoveAllListeners();
-            sendButton.onClick.AddListener( () => OpenConfirmationDialogAsync(sceneFacade.SceneData.GetCreatorAddress()!, float.Parse(donationInputField.text), confirmationCts.Token));
+            sendButton.onClick.AddListener( () => OpenConfirmationDialogAsync(sceneCreatorAddress, float.Parse(donationInputField.text), confirmationCts.Token));
         }
 
         private async UniTaskVoid OpenConfirmationDialogAsync(string creatorAddress, float amount, CancellationToken ct)
@@ -129,7 +130,7 @@ namespace DCL.Donations.UI
         {
             bool isValid = float.TryParse(value, out float number) && number >= 1;
             sendButton.interactable = isValid;
-            donationBorderError.color = isValid ? Color.softRed : Color.white;
+            donationBorderError.color = isValid ? Color.white : Color.softRed;
 
             if (isValid)
                 usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * mansUsdConversion);

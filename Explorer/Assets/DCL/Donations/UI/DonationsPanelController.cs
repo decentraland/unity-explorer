@@ -3,16 +3,20 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
+using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
+using ECS;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
 using System.Threading;
 using Utility;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using UnityEngine;
 using Utility.Arch;
 
 namespace DCL.Donations.UI
@@ -30,6 +34,8 @@ namespace DCL.Donations.UI
         private readonly float recommendedDonationAmount;
         private readonly Entity playerEntity;
         private readonly World world;
+        private readonly IRealmData realmData;
+        private readonly IPlacesAPIService placesAPIService;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -44,6 +50,8 @@ namespace DCL.Donations.UI
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             Entity playerEntity,
+            IRealmData realmData,
+            IPlacesAPIService placesAPIService,
             float recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -55,6 +63,8 @@ namespace DCL.Donations.UI
             this.world = world;
             this.playerEntity = playerEntity;
             this.recommendedDonationAmount = recommendedDonationAmount;
+            this.realmData = realmData;
+            this.placesAPIService = placesAPIService;
         }
 
         public override void Dispose()
@@ -86,6 +96,7 @@ namespace DCL.Donations.UI
         {
             //TODO: Implement donation sending flow
             PlayEmoteByUrn(EMOTE_MONEY_URN);
+            CloseController();
         }
 
         private void PlayEmoteByUrn(URN emoteUrn)
@@ -111,12 +122,14 @@ namespace DCL.Donations.UI
                     return;
                 }
 
-                Profile? creatorProfile = await profileRepository.GetAsync(creatorAddress, ct);
-                EthApiResponse currentBalanceResponse = await GetCurrentBalanceAsync(ct);
-                ManaPriceResponse manaPriceResponse = await GetCurrentManaConversionAsync(ct);
+                Profile? creatorProfile = await profileRepository.GetAsync(creatorAddress, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
+                //EthApiResponse currentBalanceResponse = await GetCurrentBalanceAsync(ct);
+                float manaPriceUsd = await GetCurrentManaConversionAsync(ct);
+                string sceneName = await GetSceneNameAsync(scenesCache.CurrentScene.Value.Info.BaseParcel, ct);
 
-                viewInstance!.ConfigurePanel(creatorProfile, scenesCache.CurrentScene.Value, 0,
-                    recommendedDonationAmount, manaPriceResponse.decentraland.usd,
+                viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,
+                    sceneName, 0,
+                    recommendedDonationAmount, manaPriceUsd,
                     profileRepositoryWrapper); // TODO: Fill with real values
             }
             catch (OperationCanceledException)
@@ -129,6 +142,38 @@ namespace DCL.Donations.UI
                 CloseController();
             }
             finally { viewInstance!.SetLoadingState(false); }
+        }
+
+        private async UniTask<string> GetSceneNameAsync(Vector2Int parcelPosition, CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
+
+            if (realmData.ScenesAreFixed)
+                return realmData.RealmName.Replace(".dcl.eth", string.Empty);
+
+            return placeInfo?.title ?? "Unknown place";
+        }
+
+        private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(Vector2Int parcelPosition, CancellationToken ct)
+        {
+            await realmData.WaitConfiguredAsync();
+
+            try
+            {
+                if (realmData.ScenesAreFixed)
+                    return null;
+
+                return await placesAPIService.GetPlaceAsync(parcelPosition, ct);
+            }
+            catch (NotAPlaceException notAPlaceException)
+            {
+                ReportHub.LogWarning(ReportCategory.DONATIONS, $"Not a place requested: {notAPlaceException.Message}");
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private async UniTask<EthApiResponse> GetCurrentBalanceAsync(CancellationToken ct)
@@ -156,23 +201,14 @@ namespace DCL.Donations.UI
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));
 
-        private async UniTask<ManaPriceResponse> GetCurrentManaConversionAsync(CancellationToken ct) =>
-            await webRequestController.GetAsync(
+        private async UniTask<float> GetCurrentManaConversionAsync(CancellationToken ct)
+        {
+            var response = await webRequestController.GetAsync(
                                            new CommonArguments(MANA_USD_API_URL),
                                            ct,
                                            ReportCategory.DONATIONS)
-                                      .CreateFromJson<ManaPriceResponse>(WRJsonParser.Newtonsoft);
-
-        [Serializable]
-        private readonly struct ManaPriceResponse
-        {
-            public readonly Coin decentraland;
-
-            [Serializable]
-            public readonly struct Coin
-            {
-                public readonly float usd;
-            }
+                                      .CreateFromJson<Dictionary<string, Dictionary<string, float>>>(WRJsonParser.Newtonsoft);
+            return response["decentraland"]["usd"];
         }
     }
 }

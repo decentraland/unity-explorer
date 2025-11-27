@@ -4,10 +4,12 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Donations.UI;
 using DCL.FeatureFlags;
+using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
+using ECS;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -29,6 +31,8 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Entity playerEntity;
         private readonly Arch.Core.World world;
+        private readonly IRealmData realmData;
+        private readonly IPlacesAPIService placesAPIService;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -41,7 +45,9 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Entity playerEntity,
-            Arch.Core.World world)
+            Arch.Core.World world,
+            IRealmData realmData,
+            IPlacesAPIService placesAPIService)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -53,6 +59,8 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.playerEntity = playerEntity;
             this.world = world;
+            this.realmData = realmData;
+            this.placesAPIService = placesAPIService;
         }
 
         public void Dispose()
@@ -80,6 +88,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 world,
                 playerEntity,
+                realmData,
+                placesAPIService,
                 recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
 
             mvcManager.RegisterController(donationsPanelController);

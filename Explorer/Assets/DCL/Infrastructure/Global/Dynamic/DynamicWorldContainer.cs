@@ -966,7 +966,9 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     profileRepositoryWrapper,
                     playerEntity,
-                    globalWorld),
+                    globalWorld,
+                    staticContainer.RealmData,
+                    placesAPIService),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
