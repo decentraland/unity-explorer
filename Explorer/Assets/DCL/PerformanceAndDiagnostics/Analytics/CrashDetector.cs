@@ -1,5 +1,5 @@
 using DCL.Prefs;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -16,7 +16,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 // Application crashed on previous run
                 string previousSessionID = DCLPlayerPrefs.GetString(DCLPrefKeys.CRASH_DETECTOR_SESSION_ID, string.Empty);
 
-                analyticsController.Track(AnalyticsEvents.General.CRASH, new JsonObject
+                analyticsController.Track(AnalyticsEvents.General.CRASH, new JObject
                 {
                     { "previous_session_id", previousSessionID }
                 });
