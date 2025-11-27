@@ -31,6 +31,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public string? CommunityId { get; private set; }
 
+        public List<MemberListItemView> CurrentRequestReceivedMembers { get; } = new ();
+
         [SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
         [SerializeField] private TMP_Text requestsReceivedText = null!;
@@ -42,7 +44,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
 
         private IObjectPool<MemberListItemView>? requestsReceivedMembersPool;
-        private readonly List<MemberListItemView> currentRequestReceivedMembers = new ();
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private GenericContextMenu? contextMenu;
         private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
@@ -69,7 +70,7 @@ namespace DCL.Communities.CommunitiesBrowser
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx))));
         }
 
-        public void InitializePools()
+        public void Initialize()
         {
             contextMenuCts.SafeCancelAndDispose();
 
@@ -91,20 +92,16 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ClearRequestReceivedMemberItems()
         {
-            foreach (var requestReceivedMember in currentRequestReceivedMembers)
+            foreach (var requestReceivedMember in CurrentRequestReceivedMembers)
                 requestsReceivedMembersPool!.Release(requestReceivedMember);
 
-            currentRequestReceivedMembers.Clear();
+            CurrentRequestReceivedMembers.Clear();
         }
 
-        public MemberListItemView[] SetRequestReceivedMemberItems(ICommunityMemberData[] members)
+        public void SetRequestReceivedMemberItems(ICommunityMemberData[] members)
         {
-            List<MemberListItemView> result = new List<MemberListItemView>();
-
             foreach (var community in members)
-                result.Add(CreateAndSetupRequestReceivedMembers(community));
-
-            return result.ToArray();
+                CreateAndSetupRequestReceivedMembers(community);
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -123,7 +120,7 @@ namespace DCL.Communities.CommunitiesBrowser
             return requestsReceivedMember;
         }
 
-        private MemberListItemView CreateAndSetupRequestReceivedMembers(ICommunityMemberData memberProfile)
+        private void CreateAndSetupRequestReceivedMembers(ICommunityMemberData memberProfile)
         {
             MemberListItemView requestReceivedMemberView = requestsReceivedMembersPool!.Get();
 
@@ -137,8 +134,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 null!,
                 (member, intention) => RequestReceivedManageButtonClicked?.Invoke(CommunityId!, member, intention));
 
-            currentRequestReceivedMembers.Add(requestReceivedMemberView);
-            return requestReceivedMemberView;
+            CurrentRequestReceivedMembers.Add(requestReceivedMemberView);
         }
 
         private void OnContextMenuButtonClicked(ICommunityMemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
@@ -166,7 +162,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public int UpdateRequestReceivedMember(string profileId, bool isSuccess)
         {
-            foreach (MemberListItemView requestReceivedMember in currentRequestReceivedMembers)
+            foreach (MemberListItemView requestReceivedMember in CurrentRequestReceivedMembers)
             {
                 if (requestReceivedMember.UserProfile!.Id != profileId)
                     continue;
@@ -174,13 +170,13 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (isSuccess)
                 {
                     requestsReceivedMembersPool!.Release(requestReceivedMember);
-                    currentRequestReceivedMembers.Remove(requestReceivedMember);
+                    CurrentRequestReceivedMembers.Remove(requestReceivedMember);
                 }
 
                 break;
             }
 
-            return currentRequestReceivedMembers.Count;
+            return CurrentRequestReceivedMembers.Count;
         }
     }
 }

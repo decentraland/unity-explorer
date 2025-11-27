@@ -1,4 +1,3 @@
-using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
@@ -62,7 +61,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text requestsTitleText = null!;
 
         private readonly List<CommunityResultCardView> currentInvites = new ();
-        private readonly List<KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]>> currentRequestsReceivedGroups = new ();
+        private readonly List<CommunityRequestsReceivedGroupView> currentRequestsReceivedGroups = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
         private readonly CancellationTokenSource thumbnailsCts = new ();
         private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
@@ -161,8 +160,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             foreach (var requestsReceivedGroup in currentRequestsReceivedGroups)
             {
-                requestsReceivedGroup.Key.ClearRequestReceivedMemberItems();
-                requestReceivedGroupsPool.Release(requestsReceivedGroup.Key);
+                requestsReceivedGroup.ClearRequestReceivedMemberItems();
+                requestReceivedGroupsPool.Release(requestsReceivedGroup);
             }
 
             currentRequestsReceivedGroups.Clear();
@@ -270,9 +269,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public void UpdateRequestsReceived(string communityId, string profileId, bool isSuccess)
         {
             var currentRequestsReceivedGroupsIndex = 0;
-            foreach (KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]> requestsReceivedGroup in currentRequestsReceivedGroups)
+            foreach (CommunityRequestsReceivedGroupView requestsReceivedGroup in currentRequestsReceivedGroups)
             {
-                if (requestsReceivedGroup.Key.CommunityId != communityId)
+                if (requestsReceivedGroup.CommunityId != communityId)
                 {
                     currentRequestsReceivedGroupsIndex++;
                     continue;
@@ -280,18 +279,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
                 if (isSuccess)
                 {
-                    int amountOfRequestReceivedMemberInGroup = requestsReceivedGroup.Key.UpdateRequestReceivedMember(profileId, isSuccess);
+                    int amountOfRequestReceivedMemberInGroup = requestsReceivedGroup.UpdateRequestReceivedMember(profileId, isSuccess);
                     if (amountOfRequestReceivedMemberInGroup == 0)
                     {
-                        requestReceivedGroupsPool.Release(requestsReceivedGroup.Key);
+                        requestReceivedGroupsPool.Release(requestsReceivedGroup);
                         currentRequestsReceivedGroups.RemoveAt(currentRequestsReceivedGroupsIndex);
                     }
-                    else
-                    {
-                        //currentRequestsReceivedGroups[currentRequestsReceivedGroupsIndex].Value
-                    }
 
-                    requestsReceivedGroup.Key.SetRequestsReceived(amountOfRequestReceivedMemberInGroup);
+                    requestsReceivedGroup.SetRequestsReceived(amountOfRequestReceivedMemberInGroup);
 
                     if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
                         SetInvitesAndRequestsAsEmpty(true);
@@ -300,7 +295,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
                     var amountOfRequestReceivedMemberInAllGroups = 0;
                     foreach (var group in currentRequestsReceivedGroups)
-                        amountOfRequestReceivedMemberInAllGroups += group.Value.Length;
+                        amountOfRequestReceivedMemberInAllGroups += group.CurrentRequestReceivedMembers.Count;
 
                     SetRequestsReceivedGridCounter(amountOfRequestReceivedMemberInAllGroups);
                 }
@@ -379,7 +374,7 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityRequestsReceivedGroupView requestsReceivedGroupView = requestReceivedGroupsPool.Get();
 
             // Setup card data
-            requestsReceivedGroupView.InitializePools();
+            requestsReceivedGroupView.Initialize();
             requestsReceivedGroupView.SetCommunityId(requestsReceivedGroup.Key.id);
             requestsReceivedGroupView.SetTitle(requestsReceivedGroup.Key.name);
             requestsReceivedGroupView.SetRequestsReceived(requestsReceivedGroup.Key.requestsReceived);
@@ -402,10 +397,8 @@ namespace DCL.Communities.CommunitiesBrowser
             requestsReceivedGroupView.RequestReceivedManageButtonClicked -= OnManageRequestReceived;
             requestsReceivedGroupView.RequestReceivedManageButtonClicked += OnManageRequestReceived;
 
-            currentRequestsReceivedGroups.Add(
-                new KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]>(
-                    requestsReceivedGroupView,
-                    requestsReceivedGroupView.SetRequestReceivedMemberItems(requestsReceivedGroup.Value)));
+            currentRequestsReceivedGroups.Add(requestsReceivedGroupView);
+            requestsReceivedGroupView.SetRequestReceivedMemberItems(requestsReceivedGroup.Value);
         }
 
         private CommunityResultCardView InstantiateRequestedToJoinCommunityCardPrefab()
