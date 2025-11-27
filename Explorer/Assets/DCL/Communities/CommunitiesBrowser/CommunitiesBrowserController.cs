@@ -20,6 +20,7 @@ using DCL.VoiceChat;
 using DCL.WebRequests;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -30,6 +31,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private const int SEARCH_AWAIT_TIME = 1000;
 
         private const string INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading invites. Please try again.";
+        private const string REQUESTS_RECEIVED_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading requests received. Please try again.";
         private const string REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading requests. Please try again.";
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
@@ -37,7 +39,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
 
         private const string INVITES_RESULTS_TITLE = "Invites";
-        private const string REQUESTS_RESULTS_TITLE = "Requests";
+        private const string REQUESTS_RECEIVED_RESULTS_TITLE = "Requests Received";
+        private const string REQUESTS_RESULTS_TITLE = "Requests Sent";
 
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
@@ -264,6 +267,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 int invitesCount = await LoadInvitesAsync(updateInvitesGrid: true, ct);
                 view.InvitesAndRequestsView.SetInvitesTitle($"{INVITES_RESULTS_TITLE} ({invitesCount})");
                 if (ct.IsCancellationRequested) return;
+                int requestsReceivedCount = await LoadRequestsReceivedAsync(ct);
+                view.InvitesAndRequestsView.SetRequestsReceivedTitle($"{REQUESTS_RECEIVED_RESULTS_TITLE} ({requestsReceivedCount})");
+                if (ct.IsCancellationRequested) return;
                 int requestsCount = await LoadJoinRequestsAsync(ct);
                 view.InvitesAndRequestsView.SetRequestsTitle($"{REQUESTS_RESULTS_TITLE} ({requestsCount})");
                 view.InvitesAndRequestsView.SetAsLoading(false);
@@ -303,6 +309,46 @@ namespace DCL.Communities.CommunitiesBrowser
             view.InvitesAndRequestsView.SetInvitesCounter(invitesCount);
 
             return invitesCount;
+        }
+
+        private async UniTask<int> LoadRequestsReceivedAsync(CancellationToken ct)
+        {
+            view.InvitesAndRequestsView.ClearRequestsReceivedItems();
+            browserStateService.ClearRequestsReceivedGroups();
+
+            Result<GetUserCommunitiesResponse> myCommunitiesResult = await dataProvider.GetUserCommunitiesAsync(
+                                                                                            name: string.Empty,
+                                                                                            onlyMemberOf: true,
+                                                                                            pageNumber: 1,
+                                                                                            elementsPerPage: 1000,
+                                                                                            ct: ct,
+                                                                                            includeRequestsReceivedPerCommunity: true)
+                                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
+
+            if (!myCommunitiesResult.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUESTS_RECEIVED_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                return 0;
+            }
+
+            List<GetUserCommunitiesData.CommunityData> requestsReceivedCommunities = new ();
+            if (myCommunitiesResult.Value.data.results.Length > 0)
+            {
+                foreach (GetUserCommunitiesData.CommunityData myCommunityData in myCommunitiesResult.Value.data.results)
+                {
+                    if (myCommunityData.requestsReceived > 0)
+                        requestsReceivedCommunities.Add(myCommunityData);
+                }
+
+                var requestsReceivedCommunitiesArray = requestsReceivedCommunities.ToArray();
+                view.InvitesAndRequestsView.SetRequestsReceivedItems(requestsReceivedCommunitiesArray);
+                browserStateService.AddRequestsReceivedGroups(requestsReceivedCommunitiesArray);
+            }
+
+            return requestsReceivedCommunities.Count;
         }
 
         private async UniTask<int> LoadJoinRequestsAsync(CancellationToken ct)

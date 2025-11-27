@@ -12,6 +12,7 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private readonly Dictionary<string, CommunityData> allCommunities = new();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentInvitationRequests = new ();
+        private readonly List<CommunityData> currentRequestsReceivedGroups = new ();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentJoinRequests = new ();
         private readonly EventSubscriptionScope scope = new ();
         public IReadonlyReactiveProperty<string> CurrentCommunityId { get; }
@@ -26,6 +27,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public IReadOnlyList<GetUserInviteRequestData.UserInviteRequestData> CurrentJoinRequests => currentJoinRequests;
 
         public IReadOnlyList<GetUserInviteRequestData.UserInviteRequestData> CurrentInvitationRequests => currentInvitationRequests;
+
+        public IReadOnlyList<CommunityData> CurrentRequestsReceivedGroups => currentRequestsReceivedGroups;
 
         public CommunityData GetCommunityDataById(string communityId) =>
             allCommunities.GetValueOrDefault(communityId);
@@ -68,6 +71,16 @@ namespace DCL.Communities.CommunitiesBrowser
             currentInvitationRequests.AddRange(newInvitations);
         }
 
+        public void ClearRequestsReceivedGroups()
+        {
+            currentRequestsReceivedGroups.Clear();
+        }
+
+        public void AddRequestsReceivedGroups(CommunityData[] newRequestsReceivedGroups)
+        {
+            currentRequestsReceivedGroups.AddRange(newRequestsReceivedGroups);
+        }
+
         public void ClearJoinRequests()
         {
             currentJoinRequests.Clear();
@@ -92,6 +105,11 @@ namespace DCL.Communities.CommunitiesBrowser
         public void RemoveInvitation(GetUserInviteRequestData.UserInviteRequestData invitationRequest)
         {
             currentInvitationRequests.Remove(invitationRequest);
+        }
+
+        public void RemoveRequestsReceivedGroup(CommunityData requestsReceivedGroup)
+        {
+            currentRequestsReceivedGroups.Remove(requestsReceivedGroup);
         }
 
         public void RemoveJoinRequest(GetUserInviteRequestData.UserInviteRequestData joinRequest)

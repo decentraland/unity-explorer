@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject invitesAndRequestsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView invitesAndRequestsLoadingSpinner = null!;
         [SerializeField] private CommunityResultCardView communityCardPrefab = null!;
+        [SerializeField] private CommunityRequestsReceivedGroupView requestsReceivedGroupPrefab = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
         [Header("Invites")]
@@ -41,15 +42,22 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject invitesEmptyContainer = null!;
         [SerializeField] private TMP_Text invitesTitleText = null!;
 
-        [Header("Requests")]
+        [Header("Requests Received")]
+        [SerializeField] private Transform requestsReceivedGridContainer = null!;
+        [SerializeField] private GameObject requestsReceivedEmptyContainer = null!;
+        [SerializeField] private TMP_Text requestsReceivedTitleText = null!;
+
+        [Header("Requests Sent")]
         [SerializeField] private Transform requestsGridContainer = null!;
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
 
         private readonly List<CommunityResultCardView> currentInvites = new ();
+        private readonly List<CommunityRequestsReceivedGroupView> currentRequestsReceivedGroups = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
         private readonly CancellationTokenSource thumbnailsCts = new ();
         private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
+        private IObjectPool<CommunityRequestsReceivedGroupView> requestReceivedGroupsPool = null!;
         private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
@@ -65,6 +73,12 @@ namespace DCL.Communities.CommunitiesBrowser
                 defaultCapacity: INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: invitedCommunityCardView => invitedCommunityCardView.gameObject.SetActive(true),
                 actionOnRelease: invitedCommunityCardView => invitedCommunityCardView.gameObject.SetActive(false));
+
+            requestReceivedGroupsPool = new ObjectPool<CommunityRequestsReceivedGroupView>(
+                InstantiateRequestsReceivedGroupPrefab,
+                defaultCapacity: INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY,
+                actionOnGet: requestsReceivedGroupView => requestsReceivedGroupView.gameObject.SetActive(true),
+                actionOnRelease: requestsReceivedGroupView => requestsReceivedGroupView.gameObject.SetActive(false));
 
             requestedToJoinCommunityCardsPool = new ObjectPool<CommunityResultCardView>(
                 InstantiateRequestedToJoinCommunityCardPrefab,
@@ -129,6 +143,26 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesCounterContainer.SetActive(count > 0);
             invitesCounterText.text = count.ToString();
         }
+
+        public void ClearRequestsReceivedItems()
+        {
+            foreach (var requestsReceivedGroup in currentRequestsReceivedGroups)
+                requestReceivedGroupsPool.Release(requestsReceivedGroup);
+
+            currentRequestsReceivedGroups.Clear();
+            SetRequestsReceivedAsEmpty(true);
+        }
+
+        public void SetRequestsReceivedItems(GetUserCommunitiesData.CommunityData[] communities)
+        {
+            foreach (var community in communities)
+                CreateAndSetupRequestsReceivedGroup(community);
+
+            SetRequestsReceivedAsEmpty(communities.Length == 0);
+        }
+
+        public void SetRequestsReceivedTitle(string text) =>
+            requestsReceivedTitleText.text = text;
 
         public void ClearRequestsItems()
         {
@@ -219,6 +253,12 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesGridContainer.gameObject.SetActive(!isEmpty);
         }
 
+        private void SetRequestsReceivedAsEmpty(bool isEmpty)
+        {
+            requestsReceivedEmptyContainer.SetActive(isEmpty);
+            requestsReceivedGridContainer.gameObject.SetActive(!isEmpty);
+        }
+
         private void SetRequestsAsEmpty(bool isEmpty)
         {
             requestsEmptyContainer.SetActive(isEmpty);
@@ -262,6 +302,29 @@ namespace DCL.Communities.CommunitiesBrowser
                 invitedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, community);
 
             currentInvites.Add(invitedCommunityCardView);
+        }
+
+        private CommunityRequestsReceivedGroupView InstantiateRequestsReceivedGroupPrefab()
+        {
+            CommunityRequestsReceivedGroupView requestsReceivedGroup = Instantiate(requestsReceivedGroupPrefab, requestsReceivedGridContainer);
+            return requestsReceivedGroup;
+        }
+
+        private void CreateAndSetupRequestsReceivedGroup(GetUserCommunitiesData.CommunityData community)
+        {
+            CommunityRequestsReceivedGroupView requestsReceivedGroupView = requestReceivedGroupsPool.Get();
+
+            // Setup card data
+            requestsReceivedGroupView.SetCommunityId(community.id);
+            requestsReceivedGroupView.SetTitle(community.name);
+            requestsReceivedGroupView.SetRequestsReceived(community.requestsReceived);
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+
+            // Setup card events
+            requestsReceivedGroupView.CommunityButtonClicked -= OnOpenCommunityProfile;
+            requestsReceivedGroupView.CommunityButtonClicked += OnOpenCommunityProfile;
+
+            currentRequestsReceivedGroups.Add(requestsReceivedGroupView);
         }
 
         private CommunityResultCardView InstantiateRequestedToJoinCommunityCardPrefab()

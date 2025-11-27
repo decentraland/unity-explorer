@@ -192,10 +192,14 @@ MonoBehaviour:
   invitesAndRequestsEmptyContainer: {fileID: 38479743561911304}
   invitesAndRequestsLoadingSpinner: {fileID: 4960476354784381275}
   communityCardPrefab: {fileID: 3029749034696696981, guid: 7ed908ab51fa48948bfa61f87229bfbf, type: 3}
+  requestsReceivedGroupPrefab: {fileID: 4679361349128067339, guid: 83ab01aa869f2a64aa7910e15cf70c09, type: 3}
   defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   invitesGridContainer: {fileID: 7206591658017702998}
   invitesEmptyContainer: {fileID: 6447134269332471940}
   invitesTitleText: {fileID: 3237596296284011330}
+  requestsReceivedGridContainer: {fileID: 2598984833070589514}
+  requestsReceivedEmptyContainer: {fileID: 5308438942703644941}
+  requestsReceivedTitleText: {fileID: 2974846230132552703}
   requestsGridContainer: {fileID: 4740268607108573288}
   requestsEmptyContainer: {fileID: 5081065994305565372}
   requestsTitleText: {fileID: 5028914248588117342}
@@ -1294,6 +1298,22 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9094362301477994229, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
   m_PrefabInstance: {fileID: 6978498198927082243}
   m_PrefabAsset: {fileID: 0}
+--- !u!224 &2598984833070589514 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4956749931089782089, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
+  m_PrefabInstance: {fileID: 6978498198927082243}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2974846230132552703 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5300839848896459004, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
+  m_PrefabInstance: {fileID: 6978498198927082243}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &3237596296284011330 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5491818202497316929, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
@@ -1335,6 +1355,11 @@ MonoBehaviour:
 --- !u!1 &5081065994305565372 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2763813492974088639, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
+  m_PrefabInstance: {fileID: 6978498198927082243}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5308438942703644941 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2986948907595198990, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
   m_PrefabInstance: {fileID: 6978498198927082243}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &6447134269332471940 stripped
