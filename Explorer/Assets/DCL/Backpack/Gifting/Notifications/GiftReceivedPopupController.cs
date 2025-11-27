@@ -48,23 +48,14 @@ namespace DCL.Backpack.Gifting.Notifications
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
-        protected override void OnViewInstantiated()
-        {
-            // viewInstance!.CloseButton.onClick.AddListener(Close);
-            // if (viewInstance.BackgroundOverlayButton != null)
-            //     viewInstance.BackgroundOverlayButton.onClick.AddListener(Close);
-            //
-            // viewInstance.OpenBackpackButton.onClick.AddListener(OpenBackpackAndClose);
-        }
-
         protected override void OnViewShow()
         {
             var metadata = inputData;
 
-            viewInstance!.SubTitleText.text = "GIFT OPENED";
+            viewInstance!.SubTitleText.text = GiftingTextIds.GiftOpenedTitle;
             viewInstance.ItemNameText.text = metadata.Item.GiftName;
 
-            SetupItemVisualsAsync(metadata, CancellationToken.None).Forget();
+            SetupItemVisuals(metadata);
             SetupSenderProfileAsync(metadata, CancellationToken.None).Forget();
             
             PlayAnimationAsync()
@@ -73,18 +64,20 @@ namespace DCL.Backpack.Gifting.Notifications
 
         protected override void OnViewClose()
         {
-            // Fade out background and then close
             lifeCts.SafeCancelAndDispose();
         }
 
-        private async UniTaskVoid SetupItemVisualsAsync(GiftReceivedNotificationMetadata metadata, CancellationToken ct)
+        /// <summary>
+        ///     NOTE: setup thumbnail in this method when backend provides us with
+        ///     NOTE: data (for now just basic things)
+        /// </summary>
+        /// <param name="metadata"></param>
+        private void SetupItemVisuals(GiftReceivedNotificationMetadata metadata)
         {
             var itemView = viewInstance!.GiftItemView;
 
-            // 1. Set Loading State
             itemView.SetLoading();
 
-            // 2. Configure Rarity/Category Backgrounds immediately (using Metadata strings)
             if (wearableCatalog != null)
             {
                 string rarity = string.IsNullOrEmpty(metadata.Item.GiftRarity) ? "base" : metadata.Item.GiftRarity;
@@ -96,44 +89,6 @@ namespace DCL.Backpack.Gifting.Notifications
                         ? wearableCatalog.GetCategoryIcon(metadata.Item.GiftCategory)
                         : null
                 );
-            }
-
-            // 3. Fetch Thumbnail using DCL Providers
-            // We treat TokenId as the URN here.
-            string urn = metadata.Item.TokenId;
-            Sprite? thumbnail = null;
-
-            // try
-            // {
-            //     // A. Try finding as Wearable
-            //     if (wearableStorage.TryGet(urn, out var wearable))
-            //     {
-            //         thumbnail = await thumbnailProvider.GetAsync(wearable, ct);
-            //     }
-            //     // B. Try finding as Emote
-            //     else if (emoteStorage.TryGet(urn, out var emote))
-            //     {
-            //         thumbnail = await thumbnailProvider.GetAsync(emote, ct);
-            //     }
-            //     // C. Fallback: If local storage doesn't have it (unlikely if gifted), 
-            //     // we could fallback to metadata.Item.ImageUrl here if we had a generic loader,
-            //     // but usually Gifting implies the items are catalogued.
-            // }
-            // catch (System.Exception e)
-            // {
-            //     Debug.LogException(e);
-            // }
-
-            // 4. Set Result
-            if (ct.IsCancellationRequested) return;
-
-            if (thumbnail != null)
-            {
-                itemView.SetThumbnail(thumbnail);
-            }
-            else
-            {
-                ReportHub.LogWarning(ReportCategory.GIFTING, $"[GiftPopup] Could not load thumbnail for URN: {urn}");
             }
         }
 

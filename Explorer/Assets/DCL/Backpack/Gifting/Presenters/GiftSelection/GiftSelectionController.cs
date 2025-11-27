@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Factory;
+using DCL.Backpack.Gifting.Services.GiftingInventory;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Views;
@@ -25,10 +26,8 @@ namespace DCL.Backpack.Gifting.Presenters
         
         private readonly IProfileRepository profileRepository;
         private readonly GiftSelectionComponentFactory componentFactory;
-        private readonly IPendingTransferService pendingTransferService;
+        private readonly GiftInventoryService giftInventoryService;
         private readonly IAvatarEquippedStatusProvider  equippedStatusProvider;
-        private readonly IWearableStorage wearableStorage;
-        private readonly IEmoteStorage emoteStorage;
         private readonly IMVCManager mvcManager;
         
         private GiftingHeaderPresenter? headerPresenter;
@@ -44,20 +43,16 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public GiftSelectionController(ViewFactoryMethod viewFactory,
             GiftSelectionComponentFactory componentFactory,
-            IPendingTransferService pendingTransferService,
+            GiftInventoryService giftInventoryService,
             IAvatarEquippedStatusProvider  equippedStatusProvider,
             IProfileRepository profileRepository,
-            IMVCManager mvcManager,
-            IWearableStorage wearableStorage,
-            IEmoteStorage emoteStorage) : base(viewFactory)
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.componentFactory = componentFactory;
-            this.pendingTransferService = pendingTransferService;
+            this.giftInventoryService = giftInventoryService;
             this.equippedStatusProvider = equippedStatusProvider;
             this.profileRepository = profileRepository;
             this.mvcManager = mvcManager;
-            this.wearableStorage = wearableStorage;
-            this.emoteStorage = emoteStorage;
         }
 
         #region MVC
@@ -69,8 +64,7 @@ namespace DCL.Backpack.Gifting.Presenters
             headerPresenter = componentFactory.CreateHeader(viewInstance.HeaderView);
             footerPresenter = componentFactory.CreateFooter(viewInstance.FooterView);
             giftingErrorsController = componentFactory.CreateErrorController(viewInstance);
-
-            // Create presenters and capture references
+            
             tabsManager = componentFactory.CreateTabs(viewInstance,
                 out var wPresenter,
                 out var ePresenter);
@@ -208,17 +202,17 @@ namespace DCL.Backpack.Gifting.Presenters
         
         private async UniTaskVoid OpenTransferPopupAsync()
         {
-            var activePresenter = tabsManager.ActivePresenter;
+            var activePresenter = tabsManager?.ActivePresenter;
             string selectedUrn = activePresenter?.SelectedUrn;
 
             if (string.IsNullOrEmpty(selectedUrn)) return;
 
             string itemType = activePresenter is WearableGridPresenter ? "wearable" : "emote";
 
-            if (!TryGetGiftTokenId(new URN(selectedUrn), itemType, out string tokenId, out var instanceUrn))
+            if (!giftInventoryService.TryGetBestTransferableToken(new URN(selectedUrn), itemType, out string tokenId, out var instanceUrn))
             {
                 ReportHub.LogError(ReportCategory.GIFTING, $"Could not find a valid tokenId for URN {selectedUrn}. Aborting gift transfer.");
-                giftingErrorsController.Show("Cannot send this item as a gift because it's not a transferable NFT.");
+                giftingErrorsController?.Show("Cannot send this item as a gift because it's not a transferable NFT.");
                 return;
             }
 
@@ -248,56 +242,6 @@ namespace DCL.Backpack.Gifting.Presenters
             );
 
             await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams));
-        }
-
-        private bool TryGetGiftTokenId(
-            URN itemBaseUrn,
-            string itemType,
-            out string tokenId,
-            out URN instanceUrn)
-        {
-            tokenId = "0";
-            instanceUrn = default;
-
-            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> ownedCopies;
-
-            // 1. Get the dictionary of instances (TokenID -> Entry) for this specific Base URN
-            if (itemType == "wearable")
-            {
-                if (!wearableStorage.TryGetOwnedNftRegistry(itemBaseUrn, out ownedCopies))
-                    return false;
-            }
-            else
-            {
-                if (!emoteStorage.TryGetOwnedNftRegistry(itemBaseUrn, out ownedCopies))
-                    return false;
-            }
-
-            NftBlockchainOperationEntry? bestCandidate = null;
-
-            foreach (var entry in ownedCopies.Values)
-            {
-                // entry.Urn is the Full URN (e.g. urn:...:tokenId)
-                string fullUrnString = entry.Urn;
-
-                // Check dependencies: Is it currently on avatar? Is it currently pending?
-                if (!equippedStatusProvider.IsEquipped(fullUrnString) &&
-                    !pendingTransferService.IsPending(fullUrnString))
-                {
-                    // Pick the most recently transferred/acquired one
-                    if (bestCandidate == null || entry.TransferredAt > bestCandidate.Value.TransferredAt)
-                        bestCandidate = entry;
-                }
-            }
-
-            if (bestCandidate != null)
-            {
-                tokenId = bestCandidate.Value.TokenId;
-                instanceUrn = new URN(bestCandidate.Value.Urn);
-                return true;
-            }
-
-            return false;
         }
 
         private void HandleSearchChanged(string searchText)

@@ -53,5 +53,8 @@
 
         public const string JustNowMessage =
             "Just now.";
+        
+        public const string GiftOpenedTitle =
+            "GIFT OPENED";
     }
 }

@@ -57,6 +57,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             return count;
         }
 
+        
         public void Prune(
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
@@ -68,12 +69,12 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             }
             
             var toRemove = new List<string>();
-
+            
             foreach (string? pendingUrn in pendingFullUrns)
             {
-                // Check if we still own this specific pending item
                 bool stillOwned = IsUrnInRegistry(pendingUrn, wearableRegistry) ||
                                   IsUrnInRegistry(pendingUrn, emoteRegistry);
+                
 
                 // If it's not in our owned registry anymore, the transfer finished (or failed/gone)
                 if (!stillOwned)
@@ -118,7 +119,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         public void LogPendingTransfers()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("=== Pending Transfers ===");
+            sb.AppendLine("Pending Transfers:");
             foreach (string? urn in pendingFullUrns) sb.AppendLine(urn);
             ReportHub.Log(ReportCategory.GIFTING, sb.ToString());
         }

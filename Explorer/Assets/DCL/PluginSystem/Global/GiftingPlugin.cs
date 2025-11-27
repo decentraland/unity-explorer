@@ -18,6 +18,7 @@ using DCL.Backpack.Gifting.Notifications;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.GiftingInventory;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
@@ -116,7 +117,6 @@ namespace DCL.PluginSystem.Global
         {
             giftSelectionController?.Dispose();
             giftReceivedPopupController?.Dispose();
-            giftNotificationOpenerController?.Dispose();
         }
 
         public async UniTask InitializeAsync(GiftingSettings settings, CancellationToken ct)
@@ -140,6 +140,11 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
             
             var giftTransferService = new Web3GiftTransferService(ethereumApi);
+            
+            var giftInventoryService = new GiftInventoryService(wearableStorage,
+                emoteStorage,
+                equippedStatusProvider,
+                pendingTransferService);
 
             var wearableCatalog = new WearableStylingCatalog(rarityColors,
                 rarityBackgrounds,
@@ -185,12 +190,10 @@ namespace DCL.PluginSystem.Global
                 GiftSelectionController
                     .CreateLazily(giftSelectionPopupPrefab, null),
                 componentFactory,
-                pendingTransferService,
+                giftInventoryService,
                 equippedStatusProvider,
                 profileRepository,
-                mvcManager,
-                wearableStorage,
-                emoteStorage
+                mvcManager
             );
 
             giftTransferStatusController = new GiftTransferController(
