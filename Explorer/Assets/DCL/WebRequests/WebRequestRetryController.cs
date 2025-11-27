@@ -10,6 +10,7 @@ namespace DCL.WebRequests
 {
     public class WebRequestRetryController : IWebRequestController
     {
+        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
         private readonly IWebRequestController origin;
 
         public WebRequestRetryController(IWebRequestController origin)
@@ -17,7 +18,6 @@ namespace DCL.WebRequests
             this.origin = origin;
         }
 
-        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op) where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
