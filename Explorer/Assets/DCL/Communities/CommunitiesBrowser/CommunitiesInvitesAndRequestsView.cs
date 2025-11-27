@@ -16,6 +16,9 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesInvitesAndRequestsView : MonoBehaviour
     {
+        private const string INVITES_RESULTS_TITLE = "Invites";
+        private const string REQUESTS_RECEIVED_RESULTS_TITLE = "Requests Received";
+        private const string REQUESTS_RESULTS_TITLE = "Requests Sent";
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
         public event Action? BackButtonClicked;
@@ -26,6 +29,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationRejected;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
+        public event Action<ICommunityMemberData>? CallUserRequested;
+        public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<string, ICommunityMemberData, InviteRequestIntention>? ManageRequestReceivedRequested;
 
         [Header("Invites & Requests Section")]
         [SerializeField] private Button backButton = null!;
@@ -142,8 +148,8 @@ namespace DCL.Communities.CommunitiesBrowser
             SetInvitesAsEmpty(communities.Length == 0);
         }
 
-        public void SetInvitesTitle(string text) =>
-            invitesTitleText.text = text;
+        public void SetInvitesGridCounter(int count) =>
+            invitesTitleText.text = $"{INVITES_RESULTS_TITLE} ({count})";
 
         public void SetInvitesCounter(int count)
         {
@@ -171,8 +177,8 @@ namespace DCL.Communities.CommunitiesBrowser
             SetRequestsReceivedAsEmpty(requestsReceivedGroups.Count == 0);
         }
 
-        public void SetRequestsReceivedTitle(string text) =>
-            requestsReceivedTitleText.text = text;
+        public void SetRequestsReceivedGridCounter(int count) =>
+            requestsReceivedTitleText.text = $"{REQUESTS_RECEIVED_RESULTS_TITLE} ({count})";
 
         public void ClearRequestsItems()
         {
@@ -191,8 +197,8 @@ namespace DCL.Communities.CommunitiesBrowser
             SetRequestsAsEmpty(communities.Length == 0);
         }
 
-        public void SetRequestsTitle(string text) =>
-            requestsTitleText.text = text;
+        public void SetRequestsGridCounter(int count) =>
+            requestsTitleText.text = $"{REQUESTS_RESULTS_TITLE} ({count})";
 
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;
@@ -215,10 +221,12 @@ namespace DCL.Communities.CommunitiesBrowser
                     requestedToJoinCommunityCardsPool.Release(requestCard);
                     currentRequests.Remove(requestCard);
 
-                    if (currentInvites.Count == 0 && currentRequests.Count == 0)
+                    if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
                         SetInvitesAndRequestsAsEmpty(true);
                     else
                         SetRequestsAsEmpty(currentRequests.Count == 0);
+
+                    SetRequestsGridCounter(currentRequests.Count);
                 }
                 else
                 {
@@ -242,16 +250,62 @@ namespace DCL.Communities.CommunitiesBrowser
                     invitedCommunityCardsPool.Release(invitationCard);
                     currentInvites.Remove(invitationCard);
 
-                    if (currentInvites.Count == 0 && currentRequests.Count == 0)
+                    if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
                         SetInvitesAndRequestsAsEmpty(true);
                     else
                         SetInvitesAsEmpty(currentInvites.Count == 0);
+
+                    SetInvitesCounter(currentInvites.Count);
                 }
                 else
                 {
                     invitationCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
+
+                break;
+            }
+        }
+
+        public void UpdateRequestsReceived(string communityId, string profileId, bool isSuccess)
+        {
+            var currentRequestsReceivedGroupsIndex = 0;
+            foreach (KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]> requestsReceivedGroup in currentRequestsReceivedGroups)
+            {
+                if (requestsReceivedGroup.Key.CommunityId != communityId)
+                {
+                    currentRequestsReceivedGroupsIndex++;
+                    continue;
+                }
+
+                if (isSuccess)
+                {
+                    int amountOfRequestReceivedMemberInGroup = requestsReceivedGroup.Key.UpdateRequestReceivedMember(profileId, isSuccess);
+                    if (amountOfRequestReceivedMemberInGroup == 0)
+                    {
+                        requestReceivedGroupsPool.Release(requestsReceivedGroup.Key);
+                        currentRequestsReceivedGroups.RemoveAt(currentRequestsReceivedGroupsIndex);
+                    }
+                    else
+                    {
+                        //currentRequestsReceivedGroups[currentRequestsReceivedGroupsIndex].Value
+                    }
+
+                    requestsReceivedGroup.Key.SetRequestsReceived(amountOfRequestReceivedMemberInGroup);
+
+                    if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
+                        SetInvitesAndRequestsAsEmpty(true);
+                    else
+                        SetRequestsReceivedAsEmpty(currentRequestsReceivedGroups.Count == 0);
+
+                    var amountOfRequestReceivedMemberInAllGroups = 0;
+                    foreach (var group in currentRequestsReceivedGroups)
+                        amountOfRequestReceivedMemberInAllGroups += group.Value.Length;
+
+                    SetRequestsReceivedGridCounter(amountOfRequestReceivedMemberInAllGroups);
+                }
+                else
+                    ClearSelection();
 
                 break;
             }
@@ -341,6 +395,12 @@ namespace DCL.Communities.CommunitiesBrowser
             requestsReceivedGroupView.OpenProfilePassportRequested += OnOpenProfilePassport;
             requestsReceivedGroupView.OpenUserChatRequested -= OnOpenUserChat;
             requestsReceivedGroupView.OpenUserChatRequested += OnOpenUserChat;
+            requestsReceivedGroupView.CallUserRequested -= OnCallUser;
+            requestsReceivedGroupView.CallUserRequested += OnCallUser;
+            requestsReceivedGroupView.BlockUserRequested -= OnBlockUser;
+            requestsReceivedGroupView.BlockUserRequested += OnBlockUser;
+            requestsReceivedGroupView.RequestReceivedManageButtonClicked -= OnManageRequestReceived;
+            requestsReceivedGroupView.RequestReceivedManageButtonClicked += OnManageRequestReceived;
 
             currentRequestsReceivedGroups.Add(
                 new KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]>(
@@ -404,5 +464,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnOpenUserChat(ICommunityMemberData profile) =>
             OpenUserChatRequested?.Invoke(profile);
+
+        private void OnCallUser(ICommunityMemberData profile) =>
+            CallUserRequested?.Invoke(profile);
+
+        private void OnBlockUser(ICommunityMemberData profile) =>
+            BlockUserRequested?.Invoke(profile);
+
+        private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
+            ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);
     }
 }

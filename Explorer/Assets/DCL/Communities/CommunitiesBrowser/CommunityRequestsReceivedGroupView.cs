@@ -22,12 +22,14 @@ namespace DCL.Communities.CommunitiesBrowser
         private static readonly Vector2 ITEM_CONTEXT_MENU_SUBMENU_OFFSET = new (0.0f, -26.0f);
 
         public event Action<string>? CommunityButtonClicked;
-        public event Action<ICommunityMemberData, InviteRequestIntention>? ElementManageRequestClicked;
+        public event Action<string, ICommunityMemberData, InviteRequestIntention>? RequestReceivedManageButtonClicked;
         public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+
+        public string? CommunityId { get; private set; }
 
         [SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
@@ -39,7 +41,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("Assets")]
         [SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
 
-        private string? currentCommunityId;
         private IObjectPool<MemberListItemView>? requestsReceivedMembersPool;
         private readonly List<MemberListItemView> currentRequestReceivedMembers = new ();
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
@@ -55,8 +56,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             communityButton.onClick.AddListener(() =>
             {
-                if (currentCommunityId != null)
-                    CommunityButtonClicked?.Invoke(currentCommunityId);
+                if (CommunityId != null)
+                    CommunityButtonClicked?.Invoke(CommunityId);
             });
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing, showRim: true)
@@ -80,7 +81,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         public void SetCommunityId(string id) =>
-            currentCommunityId = id;
+            CommunityId = id;
 
         public void SetTitle(string title) =>
             communityTitle.text = title;
@@ -122,19 +123,19 @@ namespace DCL.Communities.CommunitiesBrowser
             return requestsReceivedMember;
         }
 
-        private MemberListItemView CreateAndSetupRequestReceivedMembers(ICommunityMemberData community)
+        private MemberListItemView CreateAndSetupRequestReceivedMembers(ICommunityMemberData memberProfile)
         {
             MemberListItemView requestReceivedMemberView = requestsReceivedMembersPool!.Get();
 
             // Setup card data
-            requestReceivedMemberView.Configure(community, MembersListView.MemberListSections.REQUESTS, false, profileRepositoryWrapper!);
+            requestReceivedMemberView.Configure(memberProfile, MembersListView.MemberListSections.REQUESTS, false, profileRepositoryWrapper!);
 
             // Setup card events
             requestReceivedMemberView.SubscribeToInteractions(member => OpenProfilePassportRequested?.Invoke(member),
                 OnContextMenuButtonClicked,
                 null!,
                 null!,
-                (member, intention) => ElementManageRequestClicked?.Invoke(member, intention));
+                (member, intention) => RequestReceivedManageButtonClicked?.Invoke(CommunityId!, member, intention));
 
             currentRequestReceivedMembers.Add(requestReceivedMemberView);
             return requestReceivedMemberView;
@@ -161,6 +162,25 @@ namespace DCL.Communities.CommunitiesBrowser
             ViewDependencies.ContextMenuOpener.OpenContextMenu(
                 new GenericContextMenuParameter(contextMenu!, buttonPosition, actionOnHide: () => elementView.CanUnHover = true),
                 contextMenuCts.Token);
+        }
+
+        public int UpdateRequestReceivedMember(string profileId, bool isSuccess)
+        {
+            foreach (MemberListItemView requestReceivedMember in currentRequestReceivedMembers)
+            {
+                if (requestReceivedMember.UserProfile!.Id != profileId)
+                    continue;
+
+                if (isSuccess)
+                {
+                    requestsReceivedMembersPool!.Release(requestReceivedMember);
+                    currentRequestReceivedMembers.Remove(requestReceivedMember);
+                }
+
+                break;
+            }
+
+            return currentRequestReceivedMembers.Count;
         }
     }
 }
