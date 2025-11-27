@@ -12,11 +12,16 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarView : ViewBase, IView
     {
+        public delegate void AutohideStatusChangedDelegate(bool status);
+
+        public delegate void BlockStatusChangedDelegate(bool status);
+        public event AutohideStatusChangedDelegate? AutohideStatusChanged;
+
+        public event BlockStatusChangedDelegate? BlockStatusChanged;
         [field: Header("Notifications")]
         [field: SerializeField] public Button notificationsButton { get; private set; } = null!;
         [field: SerializeField] public NotificationsMenuView NotificationsMenuView { get; private set; } = null!;
         [field: SerializeField] internal GameObject backpackNotificationIndicator { get; private set; } = null!;
-
 
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; } = null!;
@@ -45,7 +50,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; } = null!;
-        [field: SerializeField] internal ElementWithCloseArea sidebarSettingsWidget { get; private set; } = null!;
+        [field: SerializeField] public SidebarSettingsWidgetView SidebarSettingsWidgetView { get; private set; } = null!;
         [field: SerializeField] internal Toggle autoHideToggle { get; private set; } = null!;
 
         [field: Header("Emotes")]
@@ -69,25 +74,19 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public Animator marketplaceCreditsButtonAnimator { get; private set; } = null!;
         [field: SerializeField] public GameObject marketplaceCreditsButtonAlertMark { get; private set; } = null!;
 
-        public delegate void BlockStatusChangedDelegate(bool status);
-        public delegate void AutohideStatusChangedDelegate(bool status);
-
-        public event BlockStatusChangedDelegate? BlockStatusChanged;
-        public event AutohideStatusChangedDelegate? AutohideStatusChanged;
-
         public void BlockSidebar()
         {
             BlockStatusChanged?.Invoke(true);
         }
 
-        public void UnblockSidebar()
-        {
-            BlockStatusChanged?.Invoke(false);
-        }
-
         public void SetAutoHideSidebarStatus(bool value)
         {
             AutohideStatusChanged?.Invoke(value);
+        }
+
+        public void UnblockSidebar()
+        {
+            BlockStatusChanged?.Invoke(false);
         }
     }
 }

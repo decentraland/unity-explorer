@@ -85,9 +85,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8668400090129615844}
   - component: {fileID: 321041792510861939}
-  - component: {fileID: 8782030481539249862}
   - component: {fileID: 5285945422190251414}
   - component: {fileID: 4694019954775888957}
+  - component: {fileID: 2601026016110483493}
   m_Layer: 5
   m_Name: SettingsToggleContainer
   m_TagString: Untagged
@@ -126,22 +126,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 290599697974945711}
   m_CullTransparentMesh: 1
---- !u!114 &8782030481539249862
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 290599697974945711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2484fd80a26d4165bc1109fe1a374b84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <canvas>k__BackingField: {fileID: 0}
-  <raycaster>k__BackingField: {fileID: 0}
-  <viewAnimationElement>k__BackingField: {fileID: 5285945422190251414}
-  <closeAreaButton>k__BackingField: {fileID: 6413295789050748537}
 --- !u!114 &5285945422190251414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -168,6 +152,22 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 1
+--- !u!114 &2601026016110483493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 290599697974945711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f49e10eb9afdb3e499300fa9b8cbeb1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI.Sidebar::DCL.UI.Sidebar.SidebarSettingsWidgetView
+  <canvas>k__BackingField: {fileID: 0}
+  <raycaster>k__BackingField: {fileID: 0}
+  <viewAnimationElement>k__BackingField: {fileID: 5285945422190251414}
+  <closeButton>k__BackingField: {fileID: 6413295789050748537}
 --- !u!1 &4260141329178713802
 GameObject:
   m_ObjectHideFlags: 0
@@ -351,6 +351,10 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 5704302672301971345}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &5943212432612326670
 GameObject:
   m_ObjectHideFlags: 0

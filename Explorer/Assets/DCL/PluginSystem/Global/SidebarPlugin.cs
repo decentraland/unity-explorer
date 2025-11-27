@@ -28,6 +28,7 @@ using DCL.WebRequests;
 using ECS;
 using MVC;
 using Runtime.Wearables;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private SkyboxMenuController? skyboxMenuController;
         private ControlsPanelController? controlsPanelController;
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
+        private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -119,7 +121,7 @@ namespace DCL.PluginSystem.Global
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
-            this.profileRepositoryWrapper = profileDataProvider;
+            profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
@@ -140,6 +142,7 @@ namespace DCL.PluginSystem.Global
             skyboxMenuController?.Dispose();
             controlsPanelController?.Dispose();
             smartWearablesSideBarTooltipController?.Dispose();
+            sidebarSettingsWidgetController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -160,6 +163,7 @@ namespace DCL.PluginSystem.Global
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
+            sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarSettingsWidgetView);
 
             sidebarController = new SidebarController(() =>
                 {
@@ -188,17 +192,18 @@ namespace DCL.PluginSystem.Global
                 smartWearableCache
             );
 
-
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
             mvcManager.RegisterController(profileWidgetController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
+            mvcManager.RegisterController(sidebarSettingsWidgetController);
 
             mvcManager.RegisterController(sidebarController);
         }
 
+        [Serializable]
         public class SidebarSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; } = null!;

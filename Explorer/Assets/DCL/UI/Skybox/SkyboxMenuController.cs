@@ -13,11 +13,11 @@ namespace DCL.UI.Skybox
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
         private UniTaskCompletionSource? closeViewTask;
         private bool? pendingInteractableState;
-        private bool isRestrictedByScene = false;
+        private bool isRestrictedByScene;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings, ISceneRestrictionBusController sceneRestrictionBusController) : base(viewFactory)
         {
@@ -87,6 +87,11 @@ namespace DCL.UI.Skybox
                 skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
         }
 
+        private void OnClose()
+        {
+            closeViewTask?.TrySetCanceled();
+        }
+
         protected override void OnViewClose()
         {
             closeViewTask?.TrySetCanceled();
@@ -100,7 +105,7 @@ namespace DCL.UI.Skybox
 
         private static string GetFormatedTime(float time)
         {
-            int totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
+            var totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
 
             int hours = totalMinutes / 60;
             int minutes = totalMinutes % 60;
@@ -118,7 +123,7 @@ namespace DCL.UI.Skybox
 
         private void SetInteractable(bool isInteractable)
         {
-            if (viewInstance == null)
+            if (!viewInstance)
             {
                 pendingInteractableState = isInteractable;
                 return;

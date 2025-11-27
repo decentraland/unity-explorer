@@ -59,9 +59,9 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource? referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
 
-        public event Action? HelpOpened;
-
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        public event Action? HelpOpened;
 
         public SidebarController(
             ViewFactoryMethod viewFactory,
@@ -88,7 +88,7 @@ namespace DCL.UI.Sidebar
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
-            this.profileMenuController = profileMenuMenuWidgetController;
+            profileMenuController = profileMenuMenuWidgetController;
             this.notificationsPanelController = notificationsPanelController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
@@ -103,7 +103,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.smartWearablesCache = smartWearableCache;
+            smartWearablesCache = smartWearableCache;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -143,8 +143,7 @@ namespace DCL.UI.Sidebar
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
-
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
@@ -172,7 +171,6 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += OnSettingsWidgetShowingCompleted;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
@@ -195,11 +193,6 @@ namespace DCL.UI.Sidebar
         private void OnMapButtonClicked()
         {
             OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget();
-        }
-
-        private void OnSettingsWidgetShowingCompleted(IPanelInSharedSpace panel)
-        {
-            viewInstance?.sidebarSettingsButton.OnSelect(null);
         }
 
         private void OnBackpackButtonClicked()
@@ -310,7 +303,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(false);
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            var ownProfile = await selfProfile.ProfileAsync(ct);
+            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
             if (ownProfile == null)
                 return;
@@ -343,18 +336,21 @@ namespace DCL.UI.Sidebar
         private async void OnEmotesWheelButtonClickedAsync()
         {
             await mvcManager.ShowAsync(EmotesWheelController.IssueCommand());
+
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
         }
 
         private async void OnFriendsButtonClickedAsync()
         {
             await mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)));
+
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
         private async void OnMarketplaceCreditsButtonClickedAsync()
         {
             await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)));
+
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false));
         }
 
@@ -375,8 +371,7 @@ namespace DCL.UI.Sidebar
 
             viewInstance.BlockSidebar();
 
-            //TODO FRAN -> Create proper controller for this view!!
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
+            await mvcManager.ShowAsync(SidebarSettingsWidgetController.IssueCommand());
             viewInstance.UnblockSidebar();
 
             viewInstance.sidebarSettingsButton.OnDeselect(null);
@@ -417,6 +412,7 @@ namespace DCL.UI.Sidebar
             viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
 
             await mvcManager.ShowAsync(NotificationsPanelController.IssueCommand());
+
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
 
             viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
@@ -434,6 +430,7 @@ namespace DCL.UI.Sidebar
         private void OnSmartWearablesButtonHover()
         {
             mvcManager.ShowAndForget(SmartWearablesSideBarTooltipController.IssueCommand());
+
             //sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
         }
 
