@@ -86,6 +86,8 @@ namespace DCL.SDKComponents.MediaStream
             if (UnityObjectUtils.IsQuitting) return;
 
             mediaPlayer.Stop();
+            mediaPlayer.CloseMedia();
+            mediaPlayer.AudioVolume = 0f;
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
 
