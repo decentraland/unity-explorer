@@ -56,6 +56,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
+        private const string COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE = "Link successfully copied!";
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -175,6 +176,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.AcceptInvite -= AcceptCommunityInvitation;
                 viewInstance.RejectInvite -= RejectCommunityInvitation;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
+                viewInstance.CopyCommunityLinkRequested -= OnCopyCommunityLinkRequested;
             }
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
@@ -349,6 +351,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.AcceptInvite += AcceptCommunityInvitation;
             viewInstance.RejectInvite += RejectCommunityInvitation;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
+            viewInstance.CopyCommunityLinkRequested += OnCopyCommunityLinkRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -739,6 +742,12 @@ namespace DCL.Communities.CommunitiesCard
 
                 CloseController();
             }
+        }
+
+        private void OnCopyCommunityLinkRequested()
+        {
+            ViewDependencies.ClipboardManager.Copy(this, string.Format(decentralandUrlsSource.Url(DecentralandUrl.CommunityProfileLink), communityData.id));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE));
         }
 
         private void DisableShortcutsInput() =>

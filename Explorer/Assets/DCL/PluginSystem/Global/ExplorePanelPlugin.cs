@@ -51,8 +51,8 @@ using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBus;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.UI.Profiles.Helpers;
@@ -131,6 +131,7 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IChatEventBus chatEventBus;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         private readonly bool includeCameraReel;
 
@@ -212,6 +213,7 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
             IChatEventBus chatEventBus,
+            HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache)
         {
             this.eventBus = eventBus;
@@ -271,6 +273,7 @@ namespace DCL.PluginSystem.Global
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
+            this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
         }
@@ -361,7 +364,7 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -387,7 +390,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus),
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus, homePlaceEventBus: homePlaceEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(
@@ -426,8 +429,8 @@ namespace DCL.PluginSystem.Global
                 searchBarController,
                 zoomController,
                 satelliteController,
-                placeToastController,
-                placesAPIService);
+                placesAPIService,
+                homePlaceEventBus);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
