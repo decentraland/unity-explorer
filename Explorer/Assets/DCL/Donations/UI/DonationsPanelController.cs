@@ -50,10 +50,19 @@ namespace DCL.Donations.UI
         public override void Dispose()
         {
             panelLifecycleCts.SafeCancelAndDispose();
+
+            if (viewInstance == null) return;
+
+            viewInstance.SendDonationRequested += OnSendDonationRequested;
         }
 
         private void CloseController() =>
             closeIntentCompletionSource.TrySetResult();
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance!.SendDonationRequested += OnSendDonationRequested;
+        }
 
         protected override void OnBeforeViewShow()
         {
@@ -61,6 +70,11 @@ namespace DCL.Donations.UI
             panelLifecycleCts.Token.ThrowIfCancellationRequested();
             closeIntentCompletionSource = new UniTaskCompletionSource();
             LoadDataAsync(panelLifecycleCts.Token).Forget();
+        }
+
+        private void OnSendDonationRequested(string creatorAddress, float amount)
+        {
+            //TODO: Implement donation sending flow
         }
 
         private async UniTaskVoid LoadDataAsync(CancellationToken ct)

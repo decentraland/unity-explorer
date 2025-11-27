@@ -1,8 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using MVC;
 using SceneRunner.Scene;
 using System;
@@ -10,12 +13,18 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Donations.UI
 {
     public class DonationsPanelView : ViewBase, IView
     {
-        private readonly string manaEquivalentFormat = "(${0:0.00} USD)";
+        private const string MANA_EQUIVALENT_FORMAT = "(${0:0.00} USD)";
+        private const string SEND_CONFIRMATION_TEXT_FORMAT = "Are you sure you want to send {0} MANA to {1}?";
+        private const string SEND_DONATION_CONFIRM_TEXT = "YES";
+        private const string SEND_DONATION_CANCEL_TEXT = "NO";
+
+        public event Action<string, float>? SendDonationRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button cancelButton { get; set; } = null!;
@@ -40,7 +49,8 @@ namespace DCL.Donations.UI
         private readonly UniTask[] closingTasks = new UniTask[2];
 
         private UserWalletAddressElementController? creatorAddressController;
-        private float mansUsdConversion = 0f;
+        private float mansUsdConversion;
+        private CancellationTokenSource confirmationCts = new ();
 
         private void Awake()
         {
@@ -82,6 +92,24 @@ namespace DCL.Donations.UI
 
             currentBalanceText.text = currentBalance.ToString("0.00");
             ((TMP_Text)donationInputField.placeholder).text = suggestedDonationAmount.ToString("0.00");
+
+            confirmationCts = confirmationCts.SafeRestart();
+
+            sendButton.onClick.RemoveAllListeners();
+            sendButton.onClick.AddListener( () => OpenConfirmationDialogAsync(sceneFacade.SceneData.GetCreatorAddress()!, float.Parse(donationInputField.text), confirmationCts.Token));
+        }
+
+        private async UniTaskVoid OpenConfirmationDialogAsync(string creatorAddress, float amount, CancellationToken ct)
+        {
+            var result = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(
+                                                    new ConfirmationDialogParameter(string.Format(SEND_CONFIRMATION_TEXT_FORMAT, amount, creatorAddress), SEND_DONATION_CANCEL_TEXT, SEND_DONATION_CONFIRM_TEXT,
+                                                        null, false, false), ct)
+                                               .SuppressToResultAsync(ReportCategory.DONATIONS);
+
+            if (!result.Success || result.Value == ConfirmationResult.CANCEL || ct.IsCancellationRequested)
+                return;
+
+            SendDonationRequested?.Invoke(creatorAddress, amount);
         }
 
         private void OnValueChanged(string value)
@@ -104,7 +132,7 @@ namespace DCL.Donations.UI
             donationBorderError.color = isValid ? Color.softRed : Color.white;
 
             if (isValid)
-                usdEquivalentText.text = string.Format(manaEquivalentFormat, number * mansUsdConversion);
+                usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * mansUsdConversion);
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)
