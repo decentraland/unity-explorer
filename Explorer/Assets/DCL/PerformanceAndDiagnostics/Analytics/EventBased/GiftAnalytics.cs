@@ -1,5 +1,5 @@
 ﻿using DCL.Backpack.Gifting.Events;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -27,7 +27,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnSuccessfulGift(GiftingEvents.OnSuccessfulGift evt)
         {
-            var payload = new JsonObject
+            var payload = new JObject
             {
                 {
                     "item", evt.ItemUrn
@@ -48,7 +48,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnFailedGift(GiftingEvents.OnFailedGift evt)
         {
-            var payload = new JsonObject
+            var payload = new JObject
             {
                 {
                     "item", evt.ItemUrn
@@ -69,7 +69,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnCanceledGift(GiftingEvents.OnCanceledGift evt)
         {
-            var payload = new JsonObject
+            var payload = new JObject
             {
                 {
                     "item", evt.ItemUrn
@@ -90,7 +90,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnSentGift(GiftingEvents.OnSentGift evt)
         {
-            var payload = new JsonObject
+            var payload = new JObject
             {
                 {
                     "item", evt.ItemUrn
