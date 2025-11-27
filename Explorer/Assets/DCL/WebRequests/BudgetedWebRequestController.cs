@@ -2,7 +2,6 @@
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
-using System;
 
 namespace DCL.WebRequests
 {
@@ -31,20 +30,12 @@ namespace DCL.WebRequests
             {
                 lock (debugBudget) { debugBudget.Value--; }
 
-                TResult? result = await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
-
-                ReleaseBudget();
-                return result;
+                return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
             }
-            catch (Exception e)
-            {
-                ReleaseBudget();
-                throw;
-            }
-
-            void ReleaseBudget()
+            finally
             {
                 lock (debugBudget) { debugBudget.Value++; }
+
                 totalBudgetAcquired.Dispose();
             }
         }
