@@ -123,58 +123,6 @@ namespace DCL.UI.Sidebar
 
         protected override void OnViewInstantiated()
         {
-            mvcManager.RegisterController(controlsPanelController);
-            mvcManager.RegisterController(notificationsPanelController);
-
-            /*viewInstance!.backpackButton.onClick.AddListener(() =>
-            {
-                viewInstance.backpackNotificationIndicator.SetActive(false);
-                OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
-            });
-
-            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
-            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
-            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
-
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
-            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
-            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
-            viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
-            viewInstance.backpackNotificationIndicator.SetActive(false);
-            viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
-            viewInstance.skyboxButton.interactable = true;
-            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
-            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
-            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
-            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
-            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-
-            if (includeCameraReel)
-                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
-            else
-            {
-                viewInstance.cameraReelButton.gameObject.SetActive(false);
-                viewInstance.InWorldCameraButton.gameObject.SetActive(false);
-            }
-
-            if (includeFriends)
-                viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
-
-            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
-
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-
-            //chatView.FoldingChanged += OnChatViewFoldingChanged;*/
-
-            mvcManager.RegisterController(skyboxMenuController);
-            mvcManager.RegisterController(profileMenuController);
-            mvcManager.RegisterController(smartWearablesTooltipController);
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
             mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
@@ -184,7 +132,7 @@ namespace DCL.UI.Sidebar
             viewInstance.cameraReelButton.gameObject.SetActive(includeCameraReel);
             viewInstance.InWorldCameraButton.gameObject.SetActive(includeCameraReel);
 
-            SubscribeToButtonsEvents();
+            SubscribeToEvents();
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
@@ -193,13 +141,10 @@ namespace DCL.UI.Sidebar
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
             //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
+            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
+            
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
-
-            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
@@ -211,29 +156,62 @@ namespace DCL.UI.Sidebar
             OnChatViewFoldingChanged(true);
         }
 
-        private void SubscribeToButtonsEvents()
+        private void SubscribeToEvents()
         {
-            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
-            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
-            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
+            viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
+            viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
+            viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
-            viewInstance.backpackButton.onClick.AddListener(() =>
-            {
-                viewInstance.backpackNotificationIndicator.SetActive(false);
-                OpenExplorePanelInSectionAsync(ExploreSections.Backpack).Forget();
-            });
+            viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
+            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
+            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += OnSettingsWidgetShowingCompleted;
 
-            if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel).Forget());
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
+
+            if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (includeFriends) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
+        }
+
+        private void OnSettingsButtonClicked()
+        {
+            OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget();
+        }
+
+        private void OnCommunitiesButtonClicked()
+        {
+            OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget();
+        }
+
+        private void OnMapButtonClicked()
+        {
+            OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget();
+        }
+
+        private void OnSettingsWidgetShowingCompleted(IPanelInSharedSpace panel)
+        {
+            viewInstance?.sidebarSettingsButton.OnSelect(null);
+        }
+
+        private void OnBackpackButtonClicked()
+        {
+            viewInstance!.backpackNotificationIndicator.SetActive(false);
+            OpenExplorePanelInSectionAsync(ExploreSections.Backpack).Forget();
+        }
+
+        private void OnCameraReelButtonClicked()
+        {
+            OpenExplorePanelInSectionAsync(ExploreSections.CameraReel).Forget();
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -461,7 +439,8 @@ namespace DCL.UI.Sidebar
 
         private void OnSmartWearablesButtonHover()
         {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
+            mvcManager.ShowAndForget(SmartWearablesSideBarTooltipController.IssueCommand());
+            //sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
         }
 
         private void OnSmartWearablesButtonUnhover()

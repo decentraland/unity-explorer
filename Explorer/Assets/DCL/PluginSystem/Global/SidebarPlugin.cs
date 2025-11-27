@@ -154,11 +154,11 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
+            controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper);
             profileWidgetController = new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
-            controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
 
             sidebarController = new SidebarController(() =>
@@ -187,6 +187,14 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 smartWearableCache
             );
+
+
+            mvcManager.RegisterController(controlsPanelController);
+            mvcManager.RegisterController(notificationsPanelController);
+            mvcManager.RegisterController(profileWidgetController);
+            mvcManager.RegisterController(profileMenuController);
+            mvcManager.RegisterController(skyboxMenuController);
+            mvcManager.RegisterController(smartWearablesSideBarTooltipController);
 
             mvcManager.RegisterController(sidebarController);
         }
