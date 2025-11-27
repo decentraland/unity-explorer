@@ -113,10 +113,26 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// </summary>
         [Query]
         [All(typeof(MoveBeforePlayingSocialEmoteIntent))]
-        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform,
+        [None(typeof(StopEmoteIntent))]
+        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform, CharacterEmoteComponent emoteComponent,
             ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, ref CharacterAnimationComponent animationComponent,
             ref MoveBeforePlayingSocialEmoteIntent moveIntent)
         {
+            // If the avatar is playing an emote, it must cancel before moving to the initiator
+            if (emoteComponent.IsPlayingEmote)
+            {
+                World.Add(entity, new StopEmoteIntent(emoteComponent.EmoteUrn));
+
+                // Sends stop signal to other clients
+                messageBus.Send(emoteComponent.EmoteUrn, false, false, -1, false, string.Empty, string.Empty, true, -1);
+            }
+
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress);
+
+            // Checks if the initiator is still available, otherwise cancel the movement
+            if (interaction == null || interaction.AreInteracting)
+                moveIntent.HasBeenCancelled = true;
+
             bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < 2.0f;
 
             if (isCloseEnoughToInitiator ||

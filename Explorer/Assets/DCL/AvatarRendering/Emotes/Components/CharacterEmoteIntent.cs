@@ -30,6 +30,11 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         public IEmote? EmoteAsset;
 
+        /// <summary>
+        ///
+        /// </summary>
+        public bool HasPlayedEmote;
+
         public void UpdateRemoteId(URN emoteId)
         {
             this.WalletAddress = string.Empty;

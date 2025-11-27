@@ -128,8 +128,6 @@ namespace DCL.AvatarRendering.Emotes
                             intention.TargetAvatarWalletAddress = remoteEmoteIntention.TargetAvatarWalletAddress;
                             intention.IsRepeating = remoteEmoteIntention.IsRepeating;
                             intention.SocialEmoteInteractionId = remoteEmoteIntention.SocialEmoteInteractionId;
-
-
                         }
                         else
                         {
