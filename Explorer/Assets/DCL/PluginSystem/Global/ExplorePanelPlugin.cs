@@ -298,7 +298,7 @@ namespace DCL.PluginSystem.Global
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
-            
+
             backpackSubPlugin = new BackpackSubPlugin(
                 featureFlags,
                 assetsProvisioner,
@@ -331,7 +331,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 eventBus,
                 smartWearableCache,
-                mvcManager
+                mvcManager,
+                decentralandUrlsSource
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
