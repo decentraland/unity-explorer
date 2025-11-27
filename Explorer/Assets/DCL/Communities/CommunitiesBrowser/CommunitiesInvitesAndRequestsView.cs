@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
@@ -23,6 +24,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string, string, CommunityResultCardView>? RequestToJoinCommunityCanceled;
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationAccepted;
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationRejected;
+        public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
+        public event Action<ICommunityMemberData>? OpenUserChatRequested;
 
         [Header("Invites & Requests Section")]
         [SerializeField] private Button backButton = null!;
@@ -53,7 +56,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text requestsTitleText = null!;
 
         private readonly List<CommunityResultCardView> currentInvites = new ();
-        private readonly List<CommunityRequestsReceivedGroupView> currentRequestsReceivedGroups = new ();
+        private readonly List<KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]>> currentRequestsReceivedGroups = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
         private readonly CancellationTokenSource thumbnailsCts = new ();
         private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
@@ -61,6 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
+        private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
         private ThumbnailLoader? thumbnailLoader;
 
         private void Awake()
@@ -104,8 +108,11 @@ namespace DCL.Communities.CommunitiesBrowser
             thumbnailsCts.SafeCancelAndDispose();
         }
 
-        public void Initialize(ProfileRepositoryWrapper profileDataProvider) =>
+        public void Initialize(ProfileRepositoryWrapper profileDataProvider, CommunitiesDataProvider.CommunitiesDataProvider commDataProvider)
+        {
             profileRepositoryWrapper = profileDataProvider;
+            communitiesDataProvider = commDataProvider;
+        }
 
         public void SetAsLoading(bool isLoading)
         {
@@ -147,18 +154,21 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ClearRequestsReceivedItems()
         {
             foreach (var requestsReceivedGroup in currentRequestsReceivedGroups)
-                requestReceivedGroupsPool.Release(requestsReceivedGroup);
+            {
+                requestsReceivedGroup.Key.ClearRequestReceivedMemberItems();
+                requestReceivedGroupsPool.Release(requestsReceivedGroup.Key);
+            }
 
             currentRequestsReceivedGroups.Clear();
             SetRequestsReceivedAsEmpty(true);
         }
 
-        public void SetRequestsReceivedItems(GetUserCommunitiesData.CommunityData[] communities)
+        public void SetRequestsReceivedItems(List<KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>> requestsReceivedGroups)
         {
-            foreach (var community in communities)
-                CreateAndSetupRequestsReceivedGroup(community);
+            foreach (var requestsReceivedGroup in requestsReceivedGroups)
+                CreateAndSetupRequestsReceivedGroup(requestsReceivedGroup);
 
-            SetRequestsReceivedAsEmpty(communities.Length == 0);
+            SetRequestsReceivedAsEmpty(requestsReceivedGroups.Count == 0);
         }
 
         public void SetRequestsReceivedTitle(string text) =>
@@ -310,21 +320,32 @@ namespace DCL.Communities.CommunitiesBrowser
             return requestsReceivedGroup;
         }
 
-        private void CreateAndSetupRequestsReceivedGroup(GetUserCommunitiesData.CommunityData community)
+        private void CreateAndSetupRequestsReceivedGroup(KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]> requestsReceivedGroup)
         {
             CommunityRequestsReceivedGroupView requestsReceivedGroupView = requestReceivedGroupsPool.Get();
 
             // Setup card data
-            requestsReceivedGroupView.SetCommunityId(community.id);
-            requestsReceivedGroupView.SetTitle(community.name);
-            requestsReceivedGroupView.SetRequestsReceived(community.requestsReceived);
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            requestsReceivedGroupView.InitializePools();
+            requestsReceivedGroupView.SetCommunityId(requestsReceivedGroup.Key.id);
+            requestsReceivedGroupView.SetTitle(requestsReceivedGroup.Key.name);
+            requestsReceivedGroupView.SetRequestsReceived(requestsReceivedGroup.Key.requestsReceived);
+            requestsReceivedGroupView.SetProfileDataProvider(profileRepositoryWrapper!);
+            requestsReceivedGroupView.SetCommunitiesDataProvider(communitiesDataProvider!);
+
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(requestsReceivedGroup.Key.thumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             requestsReceivedGroupView.CommunityButtonClicked -= OnOpenCommunityProfile;
             requestsReceivedGroupView.CommunityButtonClicked += OnOpenCommunityProfile;
+            requestsReceivedGroupView.OpenProfilePassportRequested -= OnOpenProfilePassport;
+            requestsReceivedGroupView.OpenProfilePassportRequested += OnOpenProfilePassport;
+            requestsReceivedGroupView.OpenUserChatRequested -= OnOpenUserChat;
+            requestsReceivedGroupView.OpenUserChatRequested += OnOpenUserChat;
 
-            currentRequestsReceivedGroups.Add(requestsReceivedGroupView);
+            currentRequestsReceivedGroups.Add(
+                new KeyValuePair<CommunityRequestsReceivedGroupView, MemberListItemView[]>(
+                    requestsReceivedGroupView,
+                    requestsReceivedGroupView.SetRequestReceivedMemberItems(requestsReceivedGroup.Value)));
         }
 
         private CommunityResultCardView InstantiateRequestedToJoinCommunityCardPrefab()
@@ -377,5 +398,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ClearSelection() =>
             EventSystem.current.SetSelectedGameObject(null);
+
+        private void OnOpenProfilePassport(ICommunityMemberData profile) =>
+            OpenProfilePassportRequested?.Invoke(profile);
+
+        private void OnOpenUserChat(ICommunityMemberData profile) =>
+            OpenUserChatRequested?.Invoke(profile);
     }
 }
