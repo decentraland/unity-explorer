@@ -109,15 +109,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (!viewModelsByUrn.TryGetValue(urn, out var vm)) 
                 return false;
 
-            string rarityId = vm.RarityId ?? "base";
-
-            var rarityBg = stylingCatalog.GetRarityBackground(rarityId);
-            var flapColor = stylingCatalog.GetRarityFlapColor(rarityId);
-
-            // Emotes use a generic emote category icon from the catalog (usually "emote")
-            var categoryIc = stylingCatalog.GetCategoryIcon("emote");
-
-            style = new GiftItemStyleSnapshot(categoryIc, rarityBg, flapColor);
+            style = stylingCatalog.GetStyleSnapshot(vm.RarityId, "emote");
             return true;
         }
     }

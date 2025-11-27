@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.Backpack.Gifting.Views;
+using UnityEngine;
 
 namespace DCL.Backpack.Gifting.Styling
 {
@@ -12,9 +13,9 @@ namespace DCL.Backpack.Gifting.Styling
             NftTypeIconSO rarityBackgrounds,
             NftTypeIconSO categoryIcons)
         {
-            this.rarityColors      = rarityColors;
+            this.rarityColors = rarityColors;
             this.rarityBackgrounds = rarityBackgrounds;
-            this.categoryIcons     = categoryIcons;
+            this.categoryIcons = categoryIcons;
         }
 
         public Sprite GetRarityBackground(string? rarity)
@@ -30,6 +31,15 @@ namespace DCL.Backpack.Gifting.Styling
         public Sprite GetCategoryIcon(string? category)
         {
             return categoryIcons.GetTypeImage(category);
+        }
+
+        public GiftItemStyleSnapshot GetStyleSnapshot(string? rarity, string? category)
+        {
+            var rarityBg = GetRarityBackground(rarity ?? "base");
+            var flapCol = GetRarityFlapColor(rarity ?? "base");
+            var catIcon = GetCategoryIcon(category);
+
+            return new GiftItemStyleSnapshot(catIcon, rarityBg, flapCol);
         }
     }
 }

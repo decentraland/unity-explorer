@@ -62,41 +62,55 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
         {
-            if (pendingFullUrns.Count > 0 && wearableRegistry.Count == 0 && emoteRegistry.Count == 0)
-            {
-                ReportHub.Log(ReportCategory.GIFTING, "[PendingTransferService] Prune skipped: Inventory registries are empty. Waiting for load.");
-                return;
-            }
-            
-            var toRemove = new List<string>();
-            
-            foreach (string? pendingUrn in pendingFullUrns)
-            {
-                bool stillOwned = IsUrnInRegistry(pendingUrn, wearableRegistry) ||
-                                  IsUrnInRegistry(pendingUrn, emoteRegistry);
-                
+            if (pendingFullUrns.Count == 0) return;
 
-                // If it's not in our owned registry anymore, the transfer finished (or failed/gone)
+            // Safety: If registries are empty, data likely hasn't loaded yet. Do not prune.
+            if (wearableRegistry.Count == 0 && emoteRegistry.Count == 0) return;
+
+            var toRemove = new List<string>();
+
+            foreach (string pendingUrn in pendingFullUrns)
+            {
+                // We need the Base URN (the URN without the Token ID).
+                // Format: urn:decentraland:chain:collection:contract:tokenId
+                // We find the last ':' and take the substring before it.
+                int lastColonIndex = pendingUrn.LastIndexOf(':');
+
+                if (lastColonIndex == -1)
+                {
+                    toRemove.Add(pendingUrn); // Remove bad data
+                    continue;
+                }
+
+                string baseUrnString = pendingUrn.Substring(0, lastColonIndex);
+                var baseUrn = new URN(baseUrnString);
+                var fullUrnKey = new URN(pendingUrn);
+
+                bool stillOwned = false;
+
+                // O(1) Lookup: Check if we have the Base URN, then check if we have the specific instance
+                if (wearableRegistry.TryGetValue(baseUrn, out var wInstances) && wInstances.ContainsKey(fullUrnKey))
+                {
+                    stillOwned = true;
+                }
+                else if (emoteRegistry.TryGetValue(baseUrn, out var eInstances) && eInstances.ContainsKey(fullUrnKey))
+                {
+                    stillOwned = true;
+                }
+
+                // If it's not in our registry, the transfer is confirmed (or item is gone)
                 if (!stillOwned)
-                {
-                    ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Pruning {pendingUrn} - User no longer owns it (Transfer likely confirmed).");
                     toRemove.Add(pendingUrn);
-                }
-                else
-                {
-                    ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Keeping {pendingUrn} - User still owns it in local registry.");
-                }
             }
 
             if (toRemove.Count > 0)
             {
-                foreach (string? item in toRemove) pendingFullUrns.Remove(item);
+                foreach (string item in toRemove)
+                    pendingFullUrns.Remove(item);
+                
                 persistence.SavePendingUrns(pendingFullUrns);
+                
                 ReportHub.Log(ReportCategory.GIFTING, $"Pruned {toRemove.Count} confirmed gifts.");
-            }
-            else
-            {
-                ReportHub.Log(ReportCategory.GIFTING, "[PendingTransferService] Nothing to prune.");
             }
         }
 

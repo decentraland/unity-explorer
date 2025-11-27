@@ -109,14 +109,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (!viewModelsByUrn.TryGetValue(urn, out var vm)) 
                 return false;
 
-            string rarityId = vm.RarityId ?? "base";
-            string? categoryId = vm.CategoryId;
-
-            var rarityBg = stylingCatalog.GetRarityBackground(rarityId);
-            var flapColor = stylingCatalog.GetRarityFlapColor(rarityId);
-            var categoryIc = categoryId != null ? stylingCatalog.GetCategoryIcon(categoryId) : null;
-
-            style = new GiftItemStyleSnapshot(categoryIc, rarityBg, flapColor);
+            style = stylingCatalog.GetStyleSnapshot(vm.RarityId, vm.CategoryId);
             return true;
         }
     }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.Backpack.Gifting.Views;
+using UnityEngine;
 
 namespace DCL.Backpack.Gifting.Styling
 {
@@ -7,5 +8,6 @@ namespace DCL.Backpack.Gifting.Styling
         Sprite GetRarityBackground(string? rarity);
         Color GetRarityFlapColor(string? rarity);
         Sprite GetCategoryIcon(string? category);
+        GiftItemStyleSnapshot GetStyleSnapshot(string? rarity, string? category);
     }
 }
