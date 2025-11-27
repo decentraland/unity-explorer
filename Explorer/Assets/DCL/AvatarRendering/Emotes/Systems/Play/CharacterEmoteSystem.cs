@@ -101,10 +101,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByMovementQuery(World);
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
-            EmoteAssetChecksBeforePlayingQuery(World);
-            StopCurrentEmoteBeforePlayingQuery(World);
+            BeforePlayingCheckEmoteAssetQuery(World);
+            BeforePlayingStopCurrentEmoteQuery(World);
             PlayNewEmoteQuery(World);
-            UpdateSocialEmoteInteractionsQuery(World);
+            AfterPlayingUpdateSocialEmoteInteractionsQuery(World);
             RotateReceiverAvatarToCoincideWithInitiatorAvatarQuery(World); // This must occur after ConsumeEmoteIntentQuery, because it has to rotate the avatar one frame after the emote plays, at least
             ConsumeStopEmoteIntentQuery(World); // Repeated on purpose, if the state of both participants in a social emote interaction must be consistent all the time
             CancelEmotesByDeletionQuery(World);
@@ -314,6 +314,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void ConsumeStopEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile,
             in StopEmoteIntent stopEmoteIntent)
         {
+            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "stopintent urn: " + emoteComponent.EmoteUrn);
+
             if (emoteComponent.IsPlayingEmote && emoteComponent.EmoteUrn == stopEmoteIntent.EmoteUrn)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consume stopintent urn: " + emoteComponent.EmoteUrn);
@@ -324,7 +326,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void EmoteAssetChecksBeforePlaying(Entity entity, ref CharacterEmoteIntent emoteIntent,
+        private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent,
             ref AvatarShapeComponent avatarShapeComponent)
         {
             if(emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
@@ -379,12 +381,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                     CreateEmotePromise(emoteIntent.EmoteId, avatarShapeComponent.BodyShape);
                 }
             }
-            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+            catch (Exception e)
+            {
+                World.Remove<CharacterEmoteIntent>(entity);
+                ReportHub.LogException(e, GetReportData());
+            }
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void StopCurrentEmoteBeforePlaying(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
+        private void BeforePlayingStopCurrentEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
         {
             if (emoteIntent.EmoteAsset == null)
                 return;
@@ -431,7 +437,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
                 }
             }
-            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+            catch (Exception e)
+            {
+                World.Remove<CharacterEmoteIntent>(entity);
+                ReportHub.LogException(e, GetReportData());
+            }
         }
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
@@ -501,12 +511,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AFTER PLAY USER: hash " + emoteComponent.GetHashCode() + " " + emoteIntent.WalletAddress + " " + emoteComponent.EmoteUrn + " " + emoteComponent.Metadata?.name ?? string.Empty);
             }
-            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+            catch (Exception e)
+            {
+                World.Remove<CharacterEmoteIntent>(entity);
+                ReportHub.LogException(e, GetReportData());
+            }
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateSocialEmoteInteractions(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
+        private void AfterPlayingUpdateSocialEmoteInteractions(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
             CharacterTransform characterTransform, AvatarStateMachineEventHandler avatarStateMachineEventHandler)
         {
             if(emoteIntent.EmoteAsset == null || !emoteIntent.HasPlayedEmote)
@@ -549,12 +563,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Add(entity, new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity));
                 }
 
-                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                if (emoteComponent.Metadata!.IsSocialEmote)
                     avatarStateMachineEventHandler.EmoteStateExiting = OnEmoteStateExiting; // Setting and not subscribing because it could play the emote more than once and we can't know if it is the first for this client
 
                 World.Remove<CharacterEmoteIntent>(entity);
             }
-            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+            catch (Exception e)
+            {
+                World.Remove<CharacterEmoteIntent>(entity);
+                ReportHub.LogException(e, GetReportData());
+            }
         }
 
 // TODO: Use state machine events instead of a query
