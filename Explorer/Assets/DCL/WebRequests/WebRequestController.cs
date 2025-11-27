@@ -1,6 +1,8 @@
 ﻿using CDPBridges;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
@@ -24,19 +26,26 @@ namespace DCL.WebRequests
         private readonly IRequestHub requestHub;
         private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
+        private readonly IReleasablePerformanceBudget totalBudget;
+        private readonly ElementBinding<ulong> debugBudget;
+
+
         IRequestHub IWebRequestController.requestHub => requestHub;
 
         public WebRequestController(
             IWebRequestsAnalyticsContainer analyticsContainer,
             IWeb3IdentityCache web3IdentityCache,
             IRequestHub requestHub,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
-        )
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            ElementBinding<ulong> debugBudget,
+            IReleasablePerformanceBudget totalBudget)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
             this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
+            this.debugBudget = debugBudget;
+            this.totalBudget = totalBudget;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -48,12 +57,19 @@ namespace DCL.WebRequests
 
             RetryPolicy retryPolicy = envelope.CommonArguments.RetryPolicy;
             var attemptNumber = 0;
+            TimeSpan retryTime;
 
             // ensure disposal of headersInfo
             using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
 
             while (true)
             {
+                IAcquiredBudget totalBudgetAcquired;
+
+                // Wait for budget availability
+                while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
+                    await UniTask.Yield(envelope.Ct);
+
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
                 bool idempotent = request.IsIdempotent(envelope.signInfo);
 
@@ -120,6 +136,7 @@ namespace DCL.WebRequests
 
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
 
+                    retryTime = retryDelay;
                     if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
                     {
                         // Ignore the file error as we always try to read from the file first
@@ -128,9 +145,16 @@ namespace DCL.WebRequests
 
                         throw;
                     }
-
-                    await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
                 }
+                finally
+                {
+                    lock (debugBudget) { debugBudget.Value++; }
+
+                    totalBudgetAcquired.Dispose();
+                }
+
+                // Delay before retry (budget already released in finally)
+                await UniTask.Delay(retryTime, DelayType.Realtime, cancellationToken: envelope.Ct);
             }
         }
     }
