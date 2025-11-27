@@ -8,7 +8,6 @@ namespace DCL.UI.Controls
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        private bool closePanel;
         private UniTaskCompletionSource? closeViewTask;
 
         public ControlsPanelController(ViewFactoryMethod viewFactory) : base(viewFactory) { }

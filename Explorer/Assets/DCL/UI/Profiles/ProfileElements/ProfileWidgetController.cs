@@ -9,7 +9,7 @@ using Utility;
 namespace DCL.UI.ProfileElements
 {
     /// <summary>
-    ///     Profile of the current user
+    ///     Displays the Profile of the current user
     /// </summary>
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
