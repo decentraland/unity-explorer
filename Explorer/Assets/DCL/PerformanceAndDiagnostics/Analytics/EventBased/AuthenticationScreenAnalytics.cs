@@ -1,5 +1,5 @@
 ﻿using DCL.AuthenticationScreenFlow;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -41,7 +41,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
                 // Triggered when the user tries to log in and is redirected to the authentication site
                 case AuthenticationStatus.VerificationInProgress:
-                    analytics.Track(Authentication.VERIFICATION_REQUESTED, new JsonObject
+                    analytics.Track(Authentication.VERIFICATION_REQUESTED, new JObject
                     {
                         { "requestID", authenticationController.CurrentRequestID },
                     }); break;

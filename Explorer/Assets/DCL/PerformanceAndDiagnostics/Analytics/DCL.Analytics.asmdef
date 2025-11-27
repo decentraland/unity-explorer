@@ -22,7 +22,8 @@
     "precompiledReferences": [
         "Segment.Analytics.CSharp.dll",
         "Serialization.NET.dll",
-        "Coroutine.NET.dll"
+        "Coroutine.NET.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
