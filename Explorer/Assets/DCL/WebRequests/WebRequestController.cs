@@ -38,14 +38,14 @@ namespace DCL.WebRequests
             IRequestHub requestHub,
             ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
             ElementBinding<ulong> debugBudget,
-            IReleasablePerformanceBudget totalBudget)
+            int totalBudget)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
             this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
             this.debugBudget = debugBudget;
-            this.totalBudget = totalBudget;
+            this.totalBudget = new ConcurrentLoadingPerformanceBudget(totalBudget);
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
