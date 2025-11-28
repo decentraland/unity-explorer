@@ -1,5 +1,5 @@
 using DCL.Friends.UI.FriendPanel;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -24,7 +24,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         private void TrackFriendshipNotificationClicked() =>
-            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_NOTIFICATION_CLICKED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_NOTIFICATION_CLICKED, new JObject
             {
                 {"notification_type", "friends"}
             });

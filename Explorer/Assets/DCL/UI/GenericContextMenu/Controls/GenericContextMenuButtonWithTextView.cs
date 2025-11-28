@@ -17,12 +17,15 @@ namespace DCL.UI.Controls
             ImageComponent.color = settings.iconColor;
         }
 
-        public override void SetAsInteractable(bool isInteractable)
+        public override bool IsInteractable
         {
-            base.SetAsInteractable(isInteractable);
-
-            ImageComponent.color = new Color(ImageComponent.color.r, ImageComponent.color.g, ImageComponent.color.b, isInteractable ? 1 : OpacityOnNonInteractable);
-            TextComponent.color = new Color(TextComponent.color.r, TextComponent.color.g, TextComponent.color.b, isInteractable ? 1 : OpacityOnNonInteractable);
+            get => base.IsInteractable;
+            set
+            {
+                base.IsInteractable = value;
+                ImageComponent.color = new Color(ImageComponent.color.r, ImageComponent.color.g, ImageComponent.color.b, value ? 1 : OpacityOnNonInteractable);
+                TextComponent.color = new Color(TextComponent.color.r, TextComponent.color.g, TextComponent.color.b, value ? 1 : OpacityOnNonInteractable);
+            }
         }
     }
 }
