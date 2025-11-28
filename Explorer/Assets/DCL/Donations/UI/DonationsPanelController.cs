@@ -9,7 +9,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle;
 using MVC;
 using System;
 using System.Threading;
@@ -27,7 +26,7 @@ namespace DCL.Donations.UI
         private static readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
 
         private readonly IEthereumApi ethereumApi;
-        private readonly IScenesCache scenesCache;
+        private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -44,7 +43,7 @@ namespace DCL.Donations.UI
 
         public DonationsPanelController(ViewFactoryMethod viewFactory,
             IEthereumApi ethereumApi,
-            IScenesCache scenesCache,
+            DonationsService donationsService,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -56,7 +55,7 @@ namespace DCL.Donations.UI
             : base(viewFactory)
         {
             this.ethereumApi = ethereumApi;
-            this.scenesCache = scenesCache;
+            this.donationsService = donationsService;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -114,20 +113,20 @@ namespace DCL.Donations.UI
             try
             {
                 viewInstance!.SetLoadingState(true);
-                string? creatorAddress = scenesCache.CurrentScene.Value?.SceneData.GetCreatorAddress();
+                var donationStatus = donationsService.DonationsEnabledCurrentScene.Value;
 
-                if (creatorAddress == null || scenesCache.CurrentScene.Value == null)
+                if (!donationStatus.enabled)
                 {
                     CloseController();
                     return;
                 }
 
-                Profile? creatorProfile = await profileRepository.GetAsync(creatorAddress, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
+                Profile? creatorProfile = await profileRepository.GetAsync(donationStatus.creatorAddress!, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
                 //EthApiResponse currentBalanceResponse = await GetCurrentBalanceAsync(ct);
                 float manaPriceUsd = await GetCurrentManaConversionAsync(ct);
-                string sceneName = await GetSceneNameAsync(scenesCache.CurrentScene.Value.Info.BaseParcel, ct);
+                string sceneName = await GetSceneNameAsync(donationStatus.baseParcel!.Value, ct);
 
-                viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,
+                viewInstance!.ConfigurePanel(creatorProfile, donationStatus.creatorAddress!,
                     sceneName, 0,
                     recommendedDonationAmount, manaPriceUsd,
                     profileRepositoryWrapper); // TODO: Fill with real values

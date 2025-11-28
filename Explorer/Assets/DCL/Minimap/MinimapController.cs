@@ -24,6 +24,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
@@ -74,6 +75,7 @@ namespace DCL.Minimap
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly DonationsService donationsService;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -111,7 +113,8 @@ namespace DCL.Minimap
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            DonationsService donationsService)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -132,10 +135,11 @@ namespace DCL.Minimap
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.donationsService = donationsService;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
 
-            scenesCache.CurrentScene.OnUpdate += EvaluateDonateToCreatorMenuElement;
+            donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorMenuElement;
         }
 
         public override void Dispose()
@@ -145,7 +149,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
 
-            scenesCache.CurrentScene.OnUpdate -= EvaluateDonateToCreatorMenuElement;
+            donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorMenuElement;
 
             if (includeBannedUsersFromScene)
             {
@@ -171,12 +175,12 @@ namespace DCL.Minimap
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
-        private void EvaluateDonateToCreatorMenuElement(ISceneFacade? currentScene)
+        private void EvaluateDonateToCreatorMenuElement((bool enabled, string? creatorAddress, Vector2Int? baseParcel) donationStatus)
         {
-            if (donateToCreatorMenuElement == null) return;
+            if (donateToCreatorMenuElement == null || donateToCreatorSeparatorMenuElement == null) return;
 
-            donateToCreatorMenuElement.Enabled = currentScene?.SceneData.GetCreatorAddress() != null;
-            donateToCreatorSeparatorMenuElement!.Enabled = donateToCreatorMenuElement.Enabled;
+            donateToCreatorMenuElement.Enabled = donationStatus.enabled;
+            donateToCreatorSeparatorMenuElement.Enabled = donationStatus.enabled;
         }
 
         protected override void OnViewInstantiated()
@@ -207,7 +211,7 @@ namespace DCL.Minimap
                          .AddControl(donateToCreatorSeparatorMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings()))
                          .AddControl(donateToCreatorMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings("Donate to creator", viewInstance.contextMenuConfig.donateIcon, OpenDonateToCreatorPanel)));
 
-            EvaluateDonateToCreatorMenuElement(scenesCache.CurrentScene.Value);
+            EvaluateDonateToCreatorMenuElement(donationsService.DonationsEnabledCurrentScene.Value);
             SetInitialHomeToggleValue();
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
 

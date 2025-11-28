@@ -25,6 +25,7 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -540,6 +541,7 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
+            var donationsService = new DonationsService(staticContainer.ScenesCache);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
@@ -560,7 +562,8 @@ namespace Global.Dynamic
                 roomHub,
                 staticContainer.LoadingStatus,
                 includeBannedUsersFromScene,
-                homePlaceEventBus
+                homePlaceEventBus,
+                donationsService
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -960,7 +963,7 @@ namespace Global.Dynamic
                     mvcManager,
                     assetsProvisioner,
                     staticContainer.EthereumApi,
-                    staticContainer.ScenesCache,
+                    donationsService,
                     staticContainer.ProfilesContainer.Repository,
                     featureFlags,
                     staticContainer.WebRequestsContainer.WebRequestController,

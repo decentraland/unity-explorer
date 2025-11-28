@@ -88,8 +88,8 @@ namespace DCL.Donations.UI
                 profilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 userNameElement.Setup(profile);
             }
-            else
-                creatorAddressController!.Setup(sceneCreatorAddress);
+
+            creatorAddressController!.Setup(sceneCreatorAddress);
 
             currentBalanceText.text = currentBalance.ToString("0.00");
             donationInputField.text = suggestedDonationAmount.ToString("0.00");

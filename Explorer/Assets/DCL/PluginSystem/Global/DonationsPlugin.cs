@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.FeatureFlags;
 using DCL.PlacesAPIService;
@@ -24,7 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEthereumApi ethereumApi;
-        private readonly IScenesCache scenesCache;
+        private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IWebRequestController webRequestController;
@@ -39,7 +40,7 @@ namespace DCL.PluginSystem.Global
         public DonationsPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IEthereumApi ethereumApi,
-            IScenesCache scenesCache,
+            DonationsService donationsService,
             IProfileRepository profileRepository,
             FeatureFlagsConfiguration featureFlags,
             IWebRequestController webRequestController,
@@ -52,7 +53,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.ethereumApi = ethereumApi;
-            this.scenesCache = scenesCache;
+            this.donationsService = donationsService;
             this.profileRepository = profileRepository;
             this.featureFlags = featureFlags;
             this.webRequestController = webRequestController;
@@ -66,6 +67,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             donationsPanelController?.Dispose();
+            donationsService.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -82,7 +84,7 @@ namespace DCL.PluginSystem.Global
             donationsPanelController = new DonationsPanelController(
                 viewFactoryMethod,
                 ethereumApi,
-                scenesCache,
+                donationsService,
                 profileRepository,
                 webRequestController,
                 profileRepositoryWrapper,
