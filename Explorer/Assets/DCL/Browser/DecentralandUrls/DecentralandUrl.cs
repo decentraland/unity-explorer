@@ -88,6 +88,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Communities,
         CommunityThumbnail,
         Members,
+        CommunityProfileLink,
 
         DecentralandWorlds,
 
