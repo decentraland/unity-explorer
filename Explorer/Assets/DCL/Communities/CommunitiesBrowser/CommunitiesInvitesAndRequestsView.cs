@@ -71,6 +71,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
         private ThumbnailLoader? thumbnailLoader;
+        private int currentInvitesAndRequestsCounter = 0;
 
         private void Awake()
         {
@@ -150,10 +151,12 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetInvitesGridCounter(int count) =>
             invitesTitleText.text = $"{INVITES_RESULTS_TITLE} ({count})";
 
-        public void SetInvitesCounter(int count)
+        public void SetInvitesAndRequestsCounter(int count)
         {
+            count = Mathf.Max(count, 0);
             invitesCounterContainer.SetActive(count > 0);
             invitesCounterText.text = count.ToString();
+            currentInvitesAndRequestsCounter = count;
         }
 
         public void ClearRequestsReceivedItems()
@@ -254,7 +257,8 @@ namespace DCL.Communities.CommunitiesBrowser
                     else
                         SetInvitesAsEmpty(currentInvites.Count == 0);
 
-                    SetInvitesCounter(currentInvites.Count);
+                    SetInvitesGridCounter(currentInvites.Count);
+                    SetInvitesAndRequestsCounter(currentInvitesAndRequestsCounter - 1);
                 }
                 else
                 {
@@ -298,6 +302,7 @@ namespace DCL.Communities.CommunitiesBrowser
                         amountOfRequestReceivedMemberInAllGroups += group.CurrentRequestReceivedMembers.Count;
 
                     SetRequestsReceivedGridCounter(amountOfRequestReceivedMemberInAllGroups);
+                    SetInvitesAndRequestsCounter(currentInvitesAndRequestsCounter - 1);
                 }
                 else
                     ClearSelection();

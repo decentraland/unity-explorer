@@ -244,7 +244,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             LoadMyCommunities();
             LoadJoinRequestsAndAllCommunities();
-            RefreshInvitesCounter();
+            RefreshInvitesAndRequestsCounter();
         }
 
         private void LoadMyCommunities()
@@ -283,8 +283,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 int invitesCount = await LoadInvitesAsync(updateInvitesGrid: true, ct);
                 view.InvitesAndRequestsView.SetInvitesGridCounter(invitesCount);
                 if (ct.IsCancellationRequested) return;
-                int receivedRequestsCount = await LoadRequestsReceivedAsync(ct);
+                int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: true, ct);
                 view.InvitesAndRequestsView.SetRequestsReceivedGridCounter(receivedRequestsCount);
+                view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(invitesCount + receivedRequestsCount);
                 if (ct.IsCancellationRequested) return;
                 int requestsCount = await LoadJoinRequestsAsync(ct);
                 view.InvitesAndRequestsView.SetRequestsGridCounter(requestsCount);
@@ -322,12 +323,10 @@ namespace DCL.Communities.CommunitiesBrowser
                 browserStateService.AddInvitationsRequests(invitesResult.Value.data.results);
             }
 
-            view.InvitesAndRequestsView.SetInvitesCounter(invitesCount);
-
             return invitesCount;
         }
 
-        private async UniTask<int> LoadRequestsReceivedAsync(CancellationToken ct)
+        private async UniTask<int> LoadRequestsReceivedAsync(bool updateRequestsReceivedGrid, CancellationToken ct)
         {
             Result<GetUserCommunitiesResponse> myCommunitiesResult = await dataProvider.GetUserCommunitiesAsync(
                                                                                             name: string.Empty,
@@ -341,7 +340,8 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return 0;
 
-            view.InvitesAndRequestsView.ClearRequestsReceivedItems();
+            if (updateRequestsReceivedGrid)
+                view.InvitesAndRequestsView.ClearRequestsReceivedItems();
 
             if (!myCommunitiesResult.Success)
             {
@@ -377,7 +377,8 @@ namespace DCL.Communities.CommunitiesBrowser
                     }
                 }
 
-                view.InvitesAndRequestsView.SetRequestsReceivedItems(requestsReceivedCommunities);
+                if (updateRequestsReceivedGrid)
+                    view.InvitesAndRequestsView.SetRequestsReceivedItems(requestsReceivedCommunities);
             }
 
             return totalAmountOfRequests;
@@ -411,14 +412,22 @@ namespace DCL.Communities.CommunitiesBrowser
             return requestsResult.Value.data.results.Length;
         }
 
-        private void RefreshInvitesCounter(bool setCounterToZeroAtTheBeginning = true)
+        private void RefreshInvitesAndRequestsCounter(bool setCounterToZeroAtTheBeginning = true)
         {
             if (setCounterToZeroAtTheBeginning)
-                view.InvitesAndRequestsView.SetInvitesCounter(0);
+                view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(0);
 
-            // Get the current invites to update the invite counter on the main page
+            // Get the current invites & received requests to update the invite counter on the main page
             updateInvitesCounterCts = updateInvitesCounterCts.SafeRestart();
-            LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token).Forget();
+            RefreshInvitesCounterAsync(updateInvitesCounterCts.Token).Forget();
+            return;
+
+            async UniTaskVoid RefreshInvitesCounterAsync(CancellationToken ct)
+            {
+                int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token);
+                int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, updateInvitesCounterCts.Token);
+                view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(invitesCount + receivedRequestsCount);
+            }
         }
 
         private void DisableShortcutsInput(string text) =>
@@ -616,7 +625,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 if (communityId == invitation.communityId)
                 {
-                    RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                    RefreshInvitesAndRequestsCounter(setCounterToZeroAtTheBeginning: false);
                     break;
                 }
             }
@@ -633,7 +642,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (communityId == invitation.communityId)
                 {
                     alreadyExistsInvitation = true;
-                    RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                    RefreshInvitesAndRequestsCounter(setCounterToZeroAtTheBeginning: false);
                     break;
                 }
             }
@@ -677,7 +686,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, true, success);
 
-                RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                RefreshInvitesAndRequestsCounter(setCounterToZeroAtTheBeginning: false);
 
                 if (!RemoveCurrentCommunityInviteRequest(communityId))
                     LoadMyCommunities();
@@ -694,7 +703,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (success)
             {
-                RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                RefreshInvitesAndRequestsCounter(setCounterToZeroAtTheBeginning: false);
                 RemoveCurrentCommunityInviteRequest(communityId);
                 LoadMyCommunities();
             }
@@ -797,7 +806,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (isInvitesAndRequestsSectionActive)
                 LoadInvitesAndRequestsResults();
 
-            RefreshInvitesCounter();
+            RefreshInvitesAndRequestsCounter();
         }
 
         private void OnJoinRequestAccepted(INotification notification)
