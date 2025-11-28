@@ -49,7 +49,6 @@ namespace DCL.Notifications.NotificationEntry
             Notification = notification;
             NotificationType = notification.Type;
 
-            // 1. Initial State: Show truncated address
             string shortAddr = notification.Metadata.SenderAddress.Length > 8 
                 ? $"{notification.Metadata.SenderAddress.Substring(0, 4)}..." 
                 : notification.Metadata.SenderAddress;
@@ -57,7 +56,6 @@ namespace DCL.Notifications.NotificationEntry
             HeaderText.text = $"{shortAddr} sent you a gift!";
             TimeText.text = GiftingTextIds.JustNowMessage;
 
-            // 2. Set Default Styling (Gray background for generic gift icon)
             if (NotificationImageBackground != null) 
                 NotificationImageBackground.color = new Color(0.5f, 0.5f, 0.5f, 1f);  
         }
@@ -68,7 +66,6 @@ namespace DCL.Notifications.NotificationEntry
             HeaderText.text = string.Format(GiftingTextIds.GiftReceivedTitleFormat, hexColor, playerName);
         }
         
-        // Called by Controller (Optional: if we want rarity color in list)
         public void UpdateRarityBackground(Sprite raritySprite)
         {
             if (NotificationImageBackground != null && raritySprite != null)
