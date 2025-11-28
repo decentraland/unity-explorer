@@ -272,8 +272,7 @@ namespace DCL.Interaction.Systems
                     {
                         int outcomeIndex = i;
                         string initiatorWalletAddress = currentProfileHovered.UserId;
-                        contextMenuConfiguration.AddControl(new ButtonContextMenuControlSettings(outcomes[i].title,
-                                                            null, // sprite
+                        contextMenuConfiguration.AddControl(new SimpleButtonContextMenuControlSettings(outcomes[i].title,
                                                             () => OnOutcomePerformed(outcomeIndex, initiatorWalletAddress, playerEntity)));
                     }
 
@@ -286,10 +285,10 @@ namespace DCL.Interaction.Systems
                         closeTask: contextMenuTask.Task
                     );
 
+                    menusAccessFacade.ShowGenericContextMenuAsync(parameter).Forget();
+
                     // Unlocks the camera when showing the outcomes context menu
                     World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState = CursorState.Free;
-
-                    menusAccessFacade.ShowGenericContextMenuAsync(parameter).Forget();
                 }
             }
         }
