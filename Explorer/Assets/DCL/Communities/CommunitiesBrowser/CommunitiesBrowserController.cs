@@ -56,6 +56,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly ICommunityCallOrchestrator orchestrator;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
         private readonly CommunitiesBrowserStateService browserStateService;
@@ -100,6 +101,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.selfProfile = selfProfile;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.orchestrator = orchestrator;
 
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
@@ -866,9 +868,7 @@ namespace DCL.Communities.CommunitiesBrowser
             try
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
-                await UniTask.Delay(500);
-                chatEventBus.StartCallInCurrentConversation();
+                orchestrator.StartPrivateCallWithUserId(profile.Address);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
