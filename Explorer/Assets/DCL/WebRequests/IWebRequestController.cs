@@ -13,28 +13,27 @@ namespace DCL.WebRequests
 {
     public interface IWebRequestController
     {
-#if UNITY_EDITOR
-        static int TOTAL_BUDGET = 15;
+        public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { WebRequestUtils.NOT_FOUND };
 
-        static readonly IWebRequestController DEFAULT = new WebRequestController(
+        internal IRequestHub requestHub { get; }
+
+        public UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+            where TWebRequestArgs: struct
+            where TWebRequest: struct, ITypedWebRequest
+            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>;
+#if UNITY_EDITOR
+        public static int TOTAL_BUDGET = 15;
+
+        public static readonly IWebRequestController DEFAULT = new WebRequestController(
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
                 new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
             ChromeDevtoolProtocolClient.NewForTest(),
-            new ElementBinding<ulong>((ulong)TOTAL_BUDGET),
-            TOTAL_BUDGET
+            new WebRequestBudget(TOTAL_BUDGET,
+                new ElementBinding<ulong>((ulong)TOTAL_BUDGET))
         );
 #endif
-
-        public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { WebRequestUtils.NOT_FOUND };
-
-        UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
-            where TWebRequestArgs: struct
-            where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>;
-
-        internal IRequestHub requestHub { get; }
     }
 }

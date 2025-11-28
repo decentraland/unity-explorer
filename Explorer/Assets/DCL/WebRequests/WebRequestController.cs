@@ -1,8 +1,6 @@
 ﻿using CDPBridges;
 using Cysharp.Threading.Tasks;
-using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
@@ -26,9 +24,7 @@ namespace DCL.WebRequests
         private readonly IRequestHub requestHub;
         private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
-        private readonly IReleasablePerformanceBudget totalBudget;
-        private readonly ElementBinding<ulong> debugBudget;
-
+        private readonly WebRequestBudget budget;
 
         IRequestHub IWebRequestController.requestHub => requestHub;
 
@@ -37,15 +33,13 @@ namespace DCL.WebRequests
             IWeb3IdentityCache web3IdentityCache,
             IRequestHub requestHub,
             ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
-            ElementBinding<ulong> debugBudget,
-            int totalBudget)
+            WebRequestBudget budget)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
             this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
-            this.debugBudget = debugBudget;
-            this.totalBudget = new ConcurrentLoadingPerformanceBudget(totalBudget);
+            this.budget = budget;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -56,20 +50,13 @@ namespace DCL.WebRequests
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
 
             RetryPolicy retryPolicy = envelope.CommonArguments.RetryPolicy;
-            var attemptNumber = 0;
-            TimeSpan retryTime;
+            int attemptNumber = 0;
 
             // ensure disposal of headersInfo
             using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
 
             while (true)
             {
-                IAcquiredBudget totalBudgetAcquired;
-
-                // Wait for budget availability
-                while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
-                    await UniTask.Yield(envelope.Ct);
-
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
                 bool idempotent = request.IsIdempotent(envelope.signInfo);
 
@@ -78,40 +65,15 @@ namespace DCL.WebRequests
 
                 try
                 {
-                    attemptNumber++;
-
-                    using PooledObject<Dictionary<string, string>> pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
-                    string method = request.UnityWebRequest.method!;
-
-                    NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
-                        ? chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers)
-                        : null;
-
-                    try
+                    // Budget the web request itself only:
+                    // There is no harm to execute pre-processing as it's lightweight
+                    // and content processing as it's off the main thread
+                    using (await budget.AcquireAsync(envelope.Ct))
                     {
-                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
+                        attemptNumber++;
 
-                        if (notifyScope.HasValue)
-                        {
-                            var statusCode = (int)request.UnityWebRequest.responseCode;
-
-                            // TODO avoid allocation?
-                            Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
-
-                            string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
-                            var encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
-                            notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        notifyScope?.NotifyFailed("Cancelled", true);
-                        throw;
-                    }
-                    catch
-                    {
-                        notifyScope?.NotifyFailed(request.UnityWebRequest.error!, false);
-                        throw;
+                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct))
+                                     .WithChromeDevtools(envelope, wr, chromeDevtoolProtocolClient);
                     }
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
@@ -136,7 +98,6 @@ namespace DCL.WebRequests
 
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
 
-                    retryTime = retryDelay;
                     if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
                     {
                         // Ignore the file error as we always try to read from the file first
@@ -145,16 +106,9 @@ namespace DCL.WebRequests
 
                         throw;
                     }
-                }
-                finally
-                {
-                    lock (debugBudget) { debugBudget.Value++; }
 
-                    totalBudgetAcquired.Dispose();
+                    await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
                 }
-
-                // Delay before retry (budget already released in finally)
-                await UniTask.Delay(retryTime, DelayType.Realtime, cancellationToken: envelope.Ct);
             }
         }
     }
