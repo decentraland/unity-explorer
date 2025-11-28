@@ -33,6 +33,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transfer Community Ownership";
         private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "You are about to transfer the [{0}] community ownership to [{1}]. Once done will have Moderator permissions. This action cannot be reversed by you. Do you wish to proceed?";
+        private const string TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK = "Community ownership can be only transferred to people who has a Claimed Name.";
         private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
         private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
         private const string TRANSFER_OWNERSHIP_CANCEL_TEXT = "CANCEL";
@@ -147,6 +148,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;
             transferOwnershipContextMenuElement!.Enabled = communityData?.role == CommunityMemberRole.owner && profile.Role is CommunityMemberRole.member or CommunityMemberRole.moderator;
             transferOwnershipContextMenuElement!.Interactable = profile.HasClaimedName;
+            if (!transferOwnershipContextMenuElement!.Interactable)
+                transferOwnershipContextMenuElement!.NonInteractableFeedback = TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK;
             kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
             banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
 

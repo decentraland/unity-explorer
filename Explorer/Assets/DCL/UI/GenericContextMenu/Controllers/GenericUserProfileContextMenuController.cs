@@ -24,7 +24,7 @@ using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -373,7 +373,7 @@ namespace DCL.UI
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
-            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },

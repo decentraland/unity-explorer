@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
@@ -38,7 +39,8 @@ namespace DCL.Multiplayer.Connections.Demo
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, launchMode);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
-            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest()));
+            var totalBudget = 15;
+            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget))));
 
             var metaDataSource = new ConstSceneRoomMetaDataSource("random-name").WithLog();
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
