@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -12,6 +13,7 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
 using DCL.SocialEmotes.UI;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -36,6 +38,8 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly Entity playerEntity;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -50,7 +54,9 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade,
             SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            ObjectProxy<Entity> cameraEntityProxy,
+            Entity playerEntity)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
@@ -60,6 +66,8 @@ namespace DCL.PluginSystem.Global
             this.menusAccessFacade = menusAccessFacade;
             this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
             this.identityCache = identityCache;
+            this.cameraEntityProxy = cameraEntityProxy;
+            this.playerEntity = playerEntity;
         }
 
         public void Dispose() { }
@@ -102,7 +110,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, socialEmoteOutcomeMenuController, identityCache);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, socialEmoteOutcomeMenuController, identityCache, cameraEntityProxy, playerEntity);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
