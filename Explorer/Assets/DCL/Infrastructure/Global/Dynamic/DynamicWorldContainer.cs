@@ -541,7 +541,7 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
-            var donationsService = new DonationsService(staticContainer.ScenesCache);
+            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
@@ -962,16 +962,12 @@ namespace Global.Dynamic
                 new DonationsPlugin(
                     mvcManager,
                     assetsProvisioner,
-                    staticContainer.EthereumApi,
                     donationsService,
                     staticContainer.ProfilesContainer.Repository,
                     featureFlags,
-                    staticContainer.WebRequestsContainer.WebRequestController,
                     profileRepositoryWrapper,
                     playerEntity,
-                    globalWorld,
-                    staticContainer.RealmData,
-                    placesAPIService),
+                    globalWorld),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

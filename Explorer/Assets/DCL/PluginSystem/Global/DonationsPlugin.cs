@@ -5,13 +5,8 @@ using DCL.AssetsProvision;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.FeatureFlags;
-using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.Web3;
-using DCL.WebRequests;
-using ECS;
-using ECS.SceneLifeCycle;
 using MVC;
 using System;
 using System.Threading;
@@ -24,44 +19,32 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IEthereumApi ethereumApi;
         private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly FeatureFlagsConfiguration featureFlags;
-        private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Entity playerEntity;
         private readonly Arch.Core.World world;
-        private readonly IRealmData realmData;
-        private readonly IPlacesAPIService placesAPIService;
 
         private DonationsPanelController? donationsPanelController;
 
         public DonationsPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
-            IEthereumApi ethereumApi,
             DonationsService donationsService,
             IProfileRepository profileRepository,
             FeatureFlagsConfiguration featureFlags,
-            IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Entity playerEntity,
-            Arch.Core.World world,
-            IRealmData realmData,
-            IPlacesAPIService placesAPIService)
+            Arch.Core.World world)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
-            this.ethereumApi = ethereumApi;
             this.donationsService = donationsService;
             this.profileRepository = profileRepository;
             this.featureFlags = featureFlags;
-            this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.playerEntity = playerEntity;
             this.world = world;
-            this.realmData = realmData;
-            this.placesAPIService = placesAPIService;
         }
 
         public void Dispose()
@@ -83,15 +66,11 @@ namespace DCL.PluginSystem.Global
 
             donationsPanelController = new DonationsPanelController(
                 viewFactoryMethod,
-                ethereumApi,
                 donationsService,
                 profileRepository,
-                webRequestController,
                 profileRepositoryWrapper,
                 world,
                 playerEntity,
-                realmData,
-                placesAPIService,
                 recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
 
             mvcManager.RegisterController(donationsPanelController);
