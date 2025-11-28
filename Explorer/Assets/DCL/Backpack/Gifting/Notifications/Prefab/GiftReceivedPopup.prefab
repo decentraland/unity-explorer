@@ -2138,7 +2138,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Backpack::DCL.Backpack.Gifting.Notifications.GiftReceivedPopupView
   <canvas>k__BackingField: {fileID: 1975820729051496160}
   <raycaster>k__BackingField: {fileID: 6235405414018787488}
-  <MainCanvasGroup>k__BackingField: {fileID: 0}
+  <MainCanvasGroup>k__BackingField: {fileID: 6491360263879610646}
   <SubTitleText>k__BackingField: {fileID: 5762466065429781110}
   <TitleText>k__BackingField: {fileID: 1734260733215024557}
   <ItemNameText>k__BackingField: {fileID: 3235714324396133903}
@@ -2417,6 +2417,8 @@ GameObject:
   - component: {fileID: 5439971128415697277}
   - component: {fileID: 9072841955768298993}
   - component: {fileID: 4934552351763102251}
+  - component: {fileID: 3560963596135746078}
+  - component: {fileID: 7667598112777776212}
   m_Layer: 5
   m_Name: Thumbnail
   m_TagString: Untagged
@@ -2439,9 +2441,9 @@ RectTransform:
   m_Father: {fileID: 4374271691098607111}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 3}
-  m_SizeDelta: {x: -12.000003, y: -11.999997}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5439971128415697277
 CanvasRenderer:
@@ -2493,6 +2495,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
+--- !u!114 &3560963596135746078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8193094171510782914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.AspectRatioFitter
+  m_AspectMode: 3
+  m_AspectRatio: 1
+--- !u!114 &7667598112777776212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8193094171510782914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.ImageView
+  <LoadingObject>k__BackingField: {fileID: 1816780371033150597}
+  <skeletonLoadingView>k__BackingField: {fileID: 7110485093870063857}
+  <Image>k__BackingField: {fileID: 9072841955768298993}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 3560963596135746078}
+  rectTransform: {fileID: 727816672550444537}
 --- !u!1 &8475371522446432737
 GameObject:
   m_ObjectHideFlags: 0
@@ -2505,6 +2539,8 @@ GameObject:
   - component: {fileID: 5620636475380892487}
   - component: {fileID: 886193836340327677}
   - component: {fileID: 7110485093870063857}
+  - component: {fileID: 8842556322777936511}
+  - component: {fileID: 7490072393752195013}
   m_Layer: 5
   m_Name: GiftingItemReceived
   m_TagString: Untagged
@@ -2547,7 +2583,7 @@ MonoBehaviour:
   loadingStateContainer: {fileID: 1816780371033150597}
   loadedStateContainer: {fileID: 2716859366198204010}
   loadingView: {fileID: 7110485093870063857}
-  thumbnailImage: {fileID: 9072841955768298993}
+  <ThumbnailImageView>k__BackingField: {fileID: 7667598112777776212}
   RarityBackground: {fileID: 1044888434896880520}
   FlapBackground: {fileID: 5853487798384720885}
   CategoryImage: {fileID: 5299433450304040677}
@@ -2580,6 +2616,44 @@ MonoBehaviour:
   bones: []
   tweenDuration: 1
   fadeDuration: 0.3
+--- !u!222 &8842556322777936511
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8475371522446432737}
+  m_CullTransparentMesh: 1
+--- !u!114 &7490072393752195013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8475371522446432737}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &8837275937258257281
 GameObject:
   m_ObjectHideFlags: 0

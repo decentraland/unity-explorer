@@ -278,9 +278,27 @@ namespace DCL.Notifications.NotificationsMenu
                 case GiftReceivedNotification giftNotification:
                     var giftView = (GiftNotificationView)notificationView;
                     giftView.Configure(giftNotification);
-                    // Set rarity background
-                    giftView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(giftNotification.Metadata.Item.GiftRarity);
+                    UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, notificationThumbnailCts.Token).Forget();
                     break;
+            }
+        }
+
+        private async UniTaskVoid UpdateGiftSenderNameAsync(GiftNotificationView giftView, string address, CancellationToken ct)
+        {
+            try
+            {
+                var profile = await profileRepository.GetProfileAsync(address, ct);
+                if (profile != null && !ct.IsCancellationRequested)
+                {
+                    if (giftView.Notification is GiftReceivedNotification current && current.Metadata.SenderAddress == address)
+                    {
+                        giftView.UpdateSenderName(profile.Name, profile.UserNameColor);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
             }
         }
 

@@ -25,7 +25,7 @@ namespace DCL.Backpack.Gifting.Notifications
                 return;
 
             mvcManager
-                .ShowAsync(GiftReceivedPopupController.IssueCommand(notification.Metadata))
+                .ShowAsync(GiftReceivedPopupController.IssueCommand(notification))
                 .Forget();
         }
     }

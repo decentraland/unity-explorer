@@ -1,7 +1,6 @@
 ﻿using DCL.Audio;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
-using DCL.Utilities;
 using System;
 using TMPro;
 using UnityEngine;
@@ -56,11 +55,17 @@ namespace DCL.Notifications.NotificationEntry
             Notification = notification;
             NotificationType = notification.Type;
 
-            var userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
-            string? hexColor = ColorUtility.ToHtmlStringRGB(userColor);
+            string shortAddr = notification.Metadata.SenderAddress.Length > 8 
+                ? notification.Metadata.SenderAddress.Substring(0, 6) + "..."
+                : notification.Metadata.SenderAddress;
 
-            // Set Text: "PlayerName #1234 sent you a Gift!"
-            TitleText.text = $"<color=#{hexColor}><b>{notification.Metadata.Sender.Name}</b></color> sent you a Gift!";
+            TitleText.text = $"{shortAddr} sent you a Gift!";
+        }
+
+        public void UpdateSenderName(string name, Color nameColor)
+        {
+            string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
+            TitleText.text = $"<color=#{hexColor}><b>{name}</b></color> sent you a Gift!";
         }
     }
 }

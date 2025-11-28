@@ -3,7 +3,6 @@ using DCL.Audio;
 using DCL.Backpack.Gifting;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
-using DCL.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -50,16 +49,33 @@ namespace DCL.Notifications.NotificationEntry
             Notification = notification;
             NotificationType = notification.Type;
 
-            var userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
-            string hexColor = ColorUtility.ToHtmlStringRGB(userColor);
+            // 1. Initial State: Show truncated address
+            string shortAddr = notification.Metadata.SenderAddress.Length > 8 
+                ? $"{notification.Metadata.SenderAddress.Substring(0, 4)}..." 
+                : notification.Metadata.SenderAddress;
 
-            HeaderText.text = string.Format(
-                GiftingTextIds.GiftReceivedTitleFormat,
-                hexColor,
-                name
-            );
-
+            HeaderText.text = $"{shortAddr} sent you a gift!";
             TimeText.text = GiftingTextIds.JustNowMessage;
+
+            // 2. Set Default Styling (Gray background for generic gift icon)
+            if (NotificationImageBackground != null) 
+                NotificationImageBackground.color = new Color(0.5f, 0.5f, 0.5f, 1f);  
+        }
+        
+        public void UpdateSenderName(string playerName, Color nameColor)
+        {
+            string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
+            HeaderText.text = string.Format(GiftingTextIds.GiftReceivedTitleFormat, hexColor, playerName);
+        }
+        
+        // Called by Controller (Optional: if we want rarity color in list)
+        public void UpdateRarityBackground(Sprite raritySprite)
+        {
+            if (NotificationImageBackground != null && raritySprite != null)
+            {
+                NotificationImageBackground.sprite = raritySprite;
+                NotificationImageBackground.color = Color.white;
+            }
         }
 
         private void OnPointerClick()

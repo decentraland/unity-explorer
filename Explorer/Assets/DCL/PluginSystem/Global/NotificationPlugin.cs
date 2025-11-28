@@ -10,6 +10,7 @@ using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
+using DCL.Profiles;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileRepository profileRepository;
 
         private CancellationTokenSource? notificationPollingCt;
 
@@ -31,13 +33,15 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
             NotificationsRequestController notificationsRequestController,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
+            this.profileRepository = profileRepository;
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
@@ -58,7 +62,8 @@ namespace DCL.PluginSystem.Global
                     notificationIconTypes,
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,
-                    webRequestController
+                    webRequestController,
+                    profileRepository
                 );
 
             mvcManager.RegisterController(newNotificationController);

@@ -11,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.Notifications.NotificationEntry;
+using DCL.Profiles;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -28,6 +30,7 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
+        private readonly IProfileRepository profileRepository;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
         private ImageController thumbnailImageController;
@@ -44,12 +47,14 @@ namespace DCL.Notifications.NewNotification
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController) : base(viewFactory)
+            IWebRequestController webRequestController,
+            IProfileRepository profileRepository) : base(viewFactory)
         {
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
+            this.profileRepository = profileRepository;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -152,15 +157,30 @@ namespace DCL.Notifications.NewNotification
             giftView.Configure(giftNotification);
 
             var defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
-            var icon = defaultThumbnail.Thumbnail;
-
-            if (icon != null)
+            if (defaultThumbnail.Thumbnail != null)
             {
-                giftToastImageController.SetImage(icon);
+                giftToastImageController.SetImage(defaultThumbnail.Thumbnail);
             }
+
+            UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, cts.Token)
+                .Forget();
 
             await AnimateGiftNotificationAsync();
         }
+        
+        private async UniTaskVoid UpdateGiftSenderNameAsync(GiftToastView view, string address, CancellationToken ct)
+        {
+            try
+            {
+                var profile = await profileRepository.GetAsync(address, ct);
+                if (profile != null && !ct.IsCancellationRequested)
+                {
+                    view.UpdateSenderName(profile.Name, profile.UserNameColor);
+                }
+            }
+            catch (Exception) { /* ignore failures, keep address */ }
+        }
+
 
         private async UniTask AnimateGiftNotificationAsync()
         {

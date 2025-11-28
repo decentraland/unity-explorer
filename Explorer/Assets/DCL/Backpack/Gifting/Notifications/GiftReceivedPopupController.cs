@@ -1,62 +1,71 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.GiftItemLoader;
 using DCL.Backpack.Gifting.Styling;
-using DCL.Diagnostics;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.SharedSpaceManager;
-using DCL.Web3;
+using DCL.WebRequests;
 using MVC;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Notifications
 {
-    public class GiftReceivedPopupController : ControllerBase<GiftReceivedPopupView, GiftReceivedNotificationMetadata>
+    public class GiftReceivedPopupController : ControllerBase<GiftReceivedPopupView, GiftReceivedNotification>
     {
         private readonly IProfileRepository profileRepository;
         private readonly WearableStylingCatalog? wearableCatalog;
-        private readonly IWearableStorage wearableStorage;
-        private readonly IEmoteStorage emoteStorage;
-        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IWebRequestController webRequestController;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IGiftItemLoaderService giftItemLoaderService;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
+        private ImageController? imageController;
         private CancellationTokenSource? lifeCts;
 
         public GiftReceivedPopupController(
             ViewFactoryMethod viewFactory,
             IProfileRepository profileRepository,
+            IGiftItemLoaderService giftItemLoaderService,
             WearableStylingCatalog wearableCatalog,
-            IWearableStorage wearableStorage,
-            IEmoteStorage emoteStorage,
-            IThumbnailProvider thumbnailProvider,
+            IWebRequestController webRequestController,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.profileRepository = profileRepository;
+            this.giftItemLoaderService = giftItemLoaderService;
             this.wearableCatalog = wearableCatalog;
-            this.wearableStorage = wearableStorage;
-            this.emoteStorage = emoteStorage;
-            this.thumbnailProvider = thumbnailProvider;
+            this.webRequestController = webRequestController;
+            
             this.sharedSpaceManager = sharedSpaceManager;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            if (viewInstance?.GiftItemView?.ThumbnailImageView != null)
+            {
+                imageController = new ImageController(viewInstance.GiftItemView.ThumbnailImageView, webRequestController);
+                imageController.SpriteLoaded += OnImageLoaded;
+            }
         }
 
         protected override void OnViewShow()
         {
-            var metadata = inputData;
-
             viewInstance!.SubTitleText.text = GiftingTextIds.GiftOpenedTitle;
-            viewInstance.ItemNameText.text = metadata.Item.GiftName;
+            viewInstance.GiftItemView.SetLoading();
+            viewInstance.ItemNameText.text = "Loading...";
 
-            SetupItemVisuals(metadata);
-            SetupSenderProfileAsync(metadata, CancellationToken.None).Forget();
+            lifeCts = new CancellationTokenSource();
+
+            LoadFullDataAsync(inputData, lifeCts.Token)
+                .Forget();
             
             PlayAnimationAsync()
                 .Forget();
@@ -65,38 +74,63 @@ namespace DCL.Backpack.Gifting.Notifications
         protected override void OnViewClose()
         {
             lifeCts.SafeCancelAndDispose();
+            imageController?.StopLoading();
         }
 
-        /// <summary>
-        ///     NOTE: setup thumbnail in this method when backend provides us with
-        ///     NOTE: data (for now just basic things)
-        /// </summary>
-        /// <param name="metadata"></param>
-        private void SetupItemVisuals(GiftReceivedNotificationMetadata metadata)
+
+        private async UniTaskVoid LoadFullDataAsync(GiftReceivedNotification notification, CancellationToken ct)
         {
-            var itemView = viewInstance!.GiftItemView;
+            var (profile, itemData) = await UniTask.WhenAll(
+                profileRepository.GetAsync(notification.Metadata.SenderAddress, ct),
+                giftItemLoaderService.LoadItemMetadataAsync(notification.Metadata.TokenUri, ct)
+            );
 
-            itemView.SetLoading();
+            if (ct.IsCancellationRequested) return;
 
-            if (wearableCatalog != null)
+            if (profile != null)
             {
-                string rarity = string.IsNullOrEmpty(metadata.Item.GiftRarity) ? "base" : metadata.Item.GiftRarity;
+                string hexColor = ColorUtility.ToHtmlStringRGB(profile.UserNameColor);
+                viewInstance!.TitleText.text = string.Format(GiftingTextIds.GiftReceivedFromFormat, hexColor, profile.Name);
+            }
 
-                itemView.ConfigureAttributes(
-                    rarityBg: wearableCatalog.GetRarityBackground(rarity),
-                    flapColor: wearableCatalog.GetRarityFlapColor(rarity),
-                    categoryIcon: !string.IsNullOrEmpty(metadata.Item.GiftCategory)
-                        ? wearableCatalog.GetCategoryIcon(metadata.Item.GiftCategory)
-                        : null
-                );
+            if (itemData.HasValue)
+            {
+                var data = itemData.Value;
+                viewInstance!.ItemNameText.text = data.Name;
+
+                if (wearableCatalog != null)
+                {
+                    viewInstance.GiftItemView.ConfigureAttributes(
+                        rarityBg: wearableCatalog.GetRarityBackground(data.Rarity),
+                        flapColor: wearableCatalog.GetRarityFlapColor(data.Rarity),
+                        categoryIcon: wearableCatalog.GetCategoryIcon(data.Category)
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(data.ImageUrl) && imageController != null)
+                {
+                    imageController.RequestImage(data.ImageUrl, fitAndCenterImage: true);
+                }
+                else
+                {
+                    viewInstance.GiftItemView.SetLoadedState();
+                }
+            }
+            else
+            {
+                viewInstance!.ItemNameText.text = "Unknown Item";
+                viewInstance.GiftItemView.SetLoadedState();
             }
         }
 
+        private void OnImageLoaded(Sprite sprite)
+        {
+            viewInstance?.GiftItemView?.SetLoadedState();
+        }
+        
         private async UniTaskVoid PlayAnimationAsync()
         {
-            lifeCts = new CancellationTokenSource();
             await PlayShowAnimationAsync(lifeCts.Token);
-            
         }
 
         private async UniTask PlayShowAnimationAsync(CancellationToken ct)
@@ -116,21 +150,21 @@ namespace DCL.Backpack.Gifting.Notifications
                 await viewInstance.BackgroundRaysAnimation.HideAnimationAsync(ct);
         }
 
-        private async UniTask SetupSenderProfileAsync(GiftReceivedNotificationMetadata metadata, CancellationToken ct)
-        {
-            var senderAddress = new Web3Address(metadata.Sender.Address);
-            var profile = await profileRepository.GetAsync(senderAddress, ct);
-
-            string name = profile != null ? profile.Name : metadata.Sender.Name;
-            var nameColor = profile?.UserNameColor ?? Color.white;
-            string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-
-            viewInstance!.TitleText.text = string.Format(
-                GiftingTextIds.GiftReceivedFromFormat,
-                hexColor,
-                name
-            );
-        }
+        // private async UniTask SetupSenderProfileAsync(GiftReceivedNotificationMetadata metadata, CancellationToken ct)
+        // {
+        //     var senderAddress = new Web3Address(metadata.Sender.Address);
+        //     var profile = await profileRepository.GetAsync(senderAddress, ct);
+        //
+        //     string name = profile != null ? profile.Name : metadata.Sender.Name;
+        //     var nameColor = profile?.UserNameColor ?? Color.white;
+        //     string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
+        //
+        //     viewInstance!.TitleText.text = string.Format(
+        //         GiftingTextIds.GiftReceivedFromFormat,
+        //         hexColor,
+        //         name
+        //     );
+        // }
 
         private void OpenBackpackAndClose()
         {

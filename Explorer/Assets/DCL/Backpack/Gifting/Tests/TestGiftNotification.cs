@@ -1,83 +1,46 @@
 ﻿using DCL.Diagnostics;
+using UnityEngine;
+using System;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 
 namespace DCL.Backpack.Gifting.Tests
 {
-    using UnityEngine;
-    using NotificationsBus;
-    using NotificationsBus.NotificationTypes;
-    using System;
-
     public class TestGiftNotification : MonoBehaviour
     {
-        private const string FIXED_WALLET = "0xc81f875d23e9de99018fd109178a4856b1dd5e42";
-        private const string FIXED_IMAGE_URL = "https://assets-cdn.decentraland.org/social/communities/c5815049-5a02-4c22-a068-19cc44b1b8a4/raw-thumbnail.png";
-
-        // "Real" looking data pools
-        private readonly string[] possibleNames =
+        private const string SENDER_WALLET = "0xc81f875d23e9de99018fd109178a4856b1dd5e42";
+        private const string MY_WALLET = "0x0000000000000000000000000000000000000000";
+        
+        private readonly string[] validTokenUris = 
         {
-            "CryptoKing", "MetaExplorer", "DCL_Architect", "PixelPioneer", "EtherBaron", "ManaTrader", "VoxelArtist", "DecentraFan"
+            "https://peer.decentraland.org/lambdas/collections/standard/erc721/137/0xc73b75640bac8bced8829d07aa57e694b446b3f9/4/1678",
+            "https://peer.decentraland.org/lambdas/collections/standard/erc721/137/0x5b1f2f9462d7fc6535bbfb4b4c0dd5d85896be5f/2/1678",
+            // "https://peer-ue-2.decentraland.zone/lambdas/collections/standard/erc721/137/0x4fcd400a147618a2184836927e0b458559a1ad16/0/1678",
+            // "https://peer-ue-2.decentraland.zone/lambdas/collections/standard/erc721/137/0x3b5306be0da3202a5e7b00d1acc16a46cd88dfdc/9/1678",
         };
-
-        private readonly string[] itemNames =
+        
+        [ContextMenu("Trigger Gift Notification (new payload")]
+        public void TriggerNotificationNewPayload()
         {
-            "Cyberpunk Sneakers", "Golden Wings", "Mana Hoodie", "Neon Visor", "Ancient Staff", "Space Helmet", "Festival T-Shirt", "Diamond Earnings"
-        };
-
-        private readonly string[] rarities =
-        {
-            "common", "uncommon", "rare", "epic", "legendary", "mythic", "unique"
-        };
-
-        private readonly string[] categories =
-        {
-            "wearable", "emote"
-        };
-
-        [ContextMenu("Trigger Gift Notification")]
-        public void TriggerNotification()
-        {
-            // 1. Generate Random Data
-            string randomSenderName = possibleNames[UnityEngine.Random.Range(0, possibleNames.Length)];
-            string randomItemName = itemNames[UnityEngine.Random.Range(0, itemNames.Length)];
-            string randomRarity = rarities[UnityEngine.Random.Range(0, rarities.Length)];
-            string randomCategory = categories[UnityEngine.Random.Range(0, categories.Length)];
-
-            // Random Token ID (e.g., 1 to 5000)
-            string randomTokenId = UnityEngine.Random.Range(1, 5000).ToString();
-
-            // Random Request ID (GUID)
-            string randomRequestId = Guid.NewGuid().ToString();
-
-            // Random Claimed Name status
-            bool isClaimedName = UnityEngine.Random.value > 0.5f;
-
-            // 2. Create Item Metadata
-            var giftItem = new GiftItemMetadata
+            string randomUri = validTokenUris[UnityEngine.Random.Range(0, validTokenUris.Length)];
+            
+            var meta = new GiftReceivedNotificationMetadata
             {
-                GiftName = randomItemName, GiftRarity = randomRarity, ImageUrl = FIXED_IMAGE_URL, GiftCategory = randomCategory,
-                TokenId = randomTokenId
+                SenderAddress = SENDER_WALLET,
+                ReceiverAddress = MY_WALLET,
+                TokenUri = randomUri
             };
 
-            // 3. Create Notification Object
             var notification = new GiftReceivedNotification
             {
-                Id = Guid.NewGuid().ToString(), Type = NotificationType.GIFT_RECEIVED, Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), Read = false,
-                Metadata = new GiftReceivedNotificationMetadata
-                {
-                    Sender = new GiftProfile
-                    {
-                        Address = FIXED_WALLET, Name = "Mirko", ProfileImageUrl = "", HasClaimedName = isClaimedName
-                    },
-                    Receiver = new GiftProfile
-                    {
-                        Address = "0xMyAddress...", Name = "Me", HasClaimedName = true
-                    },
-                    RequestId = randomRequestId, Item = giftItem
-                }
+                Id = Guid.NewGuid().ToString(),
+                Type = NotificationType.GIFT_RECEIVED,
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
+                Read = false,
+                Metadata = meta
             };
 
-            // 4. Send to Bus
-            ReportHub.Log(ReportCategory.GIFTING, $"[TestGift] Sending notification from {randomSenderName} sending {randomItemName} ({randomRarity})");
+            ReportHub.Log(ReportCategory.GIFTING, $"[TestGift] Simulating gift from {randomUri}");
             NotificationsBusController.Instance.AddNotification(notification);
         }
     }

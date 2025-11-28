@@ -19,9 +19,11 @@ using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.GiftingInventory;
+using DCL.Backpack.Gifting.Services.GiftItemLoaderService;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
+using DCL.Backpack.Gifting.Tests;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -32,6 +34,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -50,6 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IWebRequestController webRequestController;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -71,6 +75,7 @@ namespace DCL.PluginSystem.Global
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IPendingTransferService pendingTransferService,
+            IWebRequestController webRequestController,
             IAvatarEquippedStatusProvider equippedStatusProvider,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IProfileRepository profileRepository,
@@ -93,6 +98,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.pendingTransferService = pendingTransferService;
+            this.webRequestController = webRequestController;
             this.equippedStatusProvider = equippedStatusProvider;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
@@ -140,6 +146,7 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
             
             var giftTransferService = new Web3GiftTransferService(ethereumApi);
+            var giftItemLoaderService = new GiftItemLoaderService(webRequestController);
             
             var giftInventoryService = new GiftInventoryService(wearableStorage,
                 emoteStorage,
@@ -161,10 +168,9 @@ namespace DCL.PluginSystem.Global
             giftReceivedPopupController = new GiftReceivedPopupController(
                 GiftReceivedPopupController.CreateLazily(giftReceivedView, null),
                 profileRepository,
+                giftItemLoaderService,
                 wearableCatalog,
-                wearableStorage,
-                emoteStorage,
-                thumbnailProvider,
+                webRequestController,
                 sharedSpaceManager
             );
 
@@ -214,6 +220,18 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferStatusController);
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
+
+            #region EDITOR_TEST
+#if UNITY_EDITOR
+            // NOTE: For triggering notification in the editor because
+            // NOTE: method in the documentation for faking notifications doesn't work
+            // NOTE: look for TestGiftNotification component on TEST_GIFT_NOTIFICATIONS game object
+            // NOTE: and trigger notification through context menu by
+            // NOTE: choosing "Trigger Gift Notification" option
+            var go = new GameObject().AddComponent<TestGiftNotification>();
+            go.name = "TEST_GIFT_NOTIFICATIONS";
+#endif
+            #endregion
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

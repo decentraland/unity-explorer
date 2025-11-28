@@ -1,9 +1,6 @@
-﻿using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Audio;
+﻿using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
 using DCL.RewardPanel;
-using DG.Tweening;
 using MVC;
 using TMPro;
 using UnityEngine;

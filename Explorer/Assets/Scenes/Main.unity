@@ -395,7 +395,7 @@ MonoBehaviour:
     useRemoteAssetsBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
-  decentralandEnvironment: 1
+  decentralandEnvironment: 0
   debugSettings:
     showSplash: 1
     showAuthentication: 1
@@ -409,9 +409,7 @@ MonoBehaviour:
     emotesToAddToUserProfile: []
     overrideConnectionQuality: 0
     connectionQuality: 2
-    appParameters:
-    - --ream
-    - https://peer-ue-2.decentraland.zone
+    appParameters: []
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
@@ -524,50 +522,6 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
---- !u!1 &485583612
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 485583614}
-  - component: {fileID: 485583613}
-  m_Layer: 0
-  m_Name: GIFT_NOTIFICATION_TEST
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &485583613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 485583612}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5668c1dd3b9427caba34b29e2c3adb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Backpack::DCL.Backpack.Gifting.Tests.TestGiftNotification
---- !u!4 &485583614
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 485583612}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -881,4 +835,3 @@ SceneRoots:
   - {fileID: 1929393544}
   - {fileID: 2104274357}
   - {fileID: 108934498}
-  - {fileID: 485583614}

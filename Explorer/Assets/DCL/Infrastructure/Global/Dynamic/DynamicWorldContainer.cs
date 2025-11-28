@@ -870,6 +870,7 @@ namespace Global.Dynamic
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
                     pendingTransferService,
+                    staticContainer.WebRequestsContainer.WebRequestController,
                     equippedStatusProvider,
                     profileRepositoryWrapper,
                     profilesRepository,
@@ -929,7 +930,8 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     notificationsRequestController,
-                    identityCache),
+                    identityCache,
+                    profilesRepository),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,

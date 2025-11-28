@@ -23,74 +23,23 @@ namespace DCL.NotificationsBus.NotificationTypes
             ReportHub.Log(ReportCategory.GIFTING, "Gift received notification clicked");
         }
 
-        public override string GetHeader()
-        {
-            return NOTIFICATION_HEADER;
-        }
+        public override string GetHeader() => NOTIFICATION_HEADER;
 
-        public override string GetTitle()
-        {
-            return NOTIFICATION_TITLE;
-        }
+        public override string GetTitle() => NOTIFICATION_TITLE;
 
-        public override string GetThumbnail()
-        {
-            // Prefer item thumbnail, fallback to sender avatar
-            if (!string.IsNullOrEmpty(Metadata.Item.ImageUrl))
-                return Metadata.Item.ImageUrl;
-
-            return Metadata.Sender.ProfileImageUrl;
-        }
-    }
-
-    [Serializable]
-    public struct GiftProfile
-    {
-        [JsonProperty("address")]
-        public string Address { get; set; }
-
-        [JsonProperty("name")]
-        public string Name { get; set; }
-
-        [JsonProperty("profileImageUrl")]
-        public string ProfileImageUrl { get; set; }
-
-        [JsonProperty("hasClaimedName")]
-        public bool HasClaimedName { get; set; }
-    }
-
-    [Serializable]
-    public struct GiftItemMetadata
-    {
-        [JsonProperty("name")]
-        public string GiftName { get; set; }
-
-        [JsonProperty("imageUrl")]
-        public string ImageUrl { get; set; }
-
-        [JsonProperty("category")]
-        public string GiftCategory { get; set; }
-
-        [JsonProperty("rarity")]
-        public string GiftRarity { get; set; }
-
-        [JsonProperty("tokenId")]
-        public string TokenId { get; set; }
+        public override string GetThumbnail() => "";
     }
 
     [Serializable]
     public struct GiftReceivedNotificationMetadata
     {
-        [JsonProperty("sender")]
-        public GiftProfile Sender { get; set; }
+        [JsonProperty("senderAddress")]
+        public string SenderAddress { get; set; }
 
-        [JsonProperty("receiver")]
-        public GiftProfile Receiver { get; set; }
+        [JsonProperty("receiverAddress")]
+        public string ReceiverAddress { get; set; }
 
-        [JsonProperty("requestId")]
-        public string RequestId { get; set; }
-
-        [JsonProperty("item")]
-        public GiftItemMetadata Item { get; set; }
+        [JsonProperty("tokenUri")]
+        public string TokenUri { get; set; }
     }
 }
