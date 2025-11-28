@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ namespace DCL.Profiles
         }
 
         public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null) =>
+            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null, RetryPolicy? retryPolicy = null) =>
             UniTask.FromResult(profileCache.Get(id));
     }
 }

@@ -49,7 +49,7 @@ namespace DCL.Donations.UI
         private readonly UniTask[] closingTasks = new UniTask[2];
 
         private UserWalletAddressElementController? creatorAddressController;
-        private float mansUsdConversion;
+        private float manaUsdConversion;
         private CancellationTokenSource confirmationCts = new ();
 
         private void Awake()
@@ -76,12 +76,11 @@ namespace DCL.Donations.UI
             float manaUsdPrice,
             ProfileRepositoryWrapper profileRepositoryWrapper)
         {
-            mansUsdConversion = manaUsdPrice;
+            manaUsdConversion = manaUsdPrice;
             sceneNameText.text = sceneName;
 
             profilePictureView.gameObject.SetActive(profile != null);
             userNameElement.gameObject.SetActive(profile != null);
-            creatorAddressElement.gameObject.SetActive(profile == null);
 
             if (profile != null)
             {
@@ -133,7 +132,7 @@ namespace DCL.Donations.UI
             donationBorderError.color = isValid ? Color.white : Color.softRed;
 
             if (isValid)
-                usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * mansUsdConversion);
+                usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * manaUsdConversion);
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)

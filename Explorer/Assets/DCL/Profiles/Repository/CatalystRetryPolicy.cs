@@ -18,5 +18,6 @@ namespace DCL.Profiles
         ///     Total wait time ≈ 122 s (~2.0 minutes)
         /// </summary>
         public static readonly RetryPolicy VALUE = RetryPolicy.Enforce(6, 2000, 2, IWebRequestController.IGNORE_NOT_FOUND);
+        public static readonly RetryPolicy SIMPLE = RetryPolicy.Enforce(1, 2000, 2, IWebRequestController.IGNORE_NOT_FOUND);
     }
 }

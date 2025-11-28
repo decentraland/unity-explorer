@@ -236,7 +236,8 @@ namespace DCL.Profiles
             bool delayBatchResolution,
             bool getFromCacheIfPossible = true,
             IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
-            IPartitionComponent? partition = null)
+            IPartitionComponent? partition = null,
+            RetryPolicy? retryPolicy = null)
         {
             try
             {
@@ -266,17 +267,17 @@ namespace DCL.Profiles
                         // Not found profiles (Catalyst replication delays) will be processed individually by GET
                         // ⚠️ The following produces potentially a very long-living task ⚠️
                         // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
-                        return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+                        return result == null && delayBatchResolution ? await EnforceSingleGetAsync(retryPolicy) : result;
 
                     case IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET:
-                        return await EnforceSingleGetAsync();
+                        return await EnforceSingleGetAsync(retryPolicy);
                     default:
                         throw new NotSupportedException($"BatchBehaviour {batchBehaviour} not supported");
                 }
             }
             finally { await UniTask.SwitchToMainThread(); }
 
-            UniTask<Profile?> EnforceSingleGetAsync()
+            UniTask<Profile?> EnforceSingleGetAsync(RetryPolicy? retryPolicy)
             {
                 // Add directly to the ongoing batch as it's dispatch immediately
                 // It's needed if the same profile is requested again (Single or in the batch) so it will wait for the existing request
@@ -284,14 +285,15 @@ namespace DCL.Profiles
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
-                return ExecuteSingleGetAsync(id, fromCatalyst, ct);
+                return ExecuteSingleGetAsync(id, fromCatalyst, retryPolicy, ct);
             }
         }
 
         public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
             IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
-            IPartitionComponent? partition = null) =>
-            GetAsync(id, version, fromCatalyst, ct, true, getFromCacheIfPossible, batchBehaviour, partition);
+            IPartitionComponent? partition = null,
+            RetryPolicy? retryPolicy = null) =>
+            GetAsync(id, version, fromCatalyst, ct, true, getFromCacheIfPossible, batchBehaviour, partition, retryPolicy);
 
         /// <summary>
         ///     Should be called from the background thread
@@ -326,14 +328,14 @@ namespace DCL.Profiles
         ///     Enforces single get without prioritization and batching
         /// </summary>
         /// <returns></returns>
-        private async UniTask<Profile?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
+        private async UniTask<Profile?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, RetryPolicy? retryPolicy, CancellationToken ct)
         {
             try
             {
                 URLAddress url = GetUrl(id, fromCatalyst);
 
                 // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy ?? CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),

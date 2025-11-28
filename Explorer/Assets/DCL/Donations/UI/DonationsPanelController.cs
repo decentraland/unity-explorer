@@ -121,7 +121,10 @@ namespace DCL.Donations.UI
                     return;
                 }
 
-                Profile? creatorProfile = await profileRepository.GetAsync(donationStatus.creatorAddress!, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
+                Profile? creatorProfile = await profileRepository.GetAsync(donationStatus.creatorAddress!, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET, CatalystRetryPolicy.SIMPLE);
+                // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
+                if (creatorProfile == null)
+                    ReportHub.LogException(new Exception($"Previous 404 on profile {donationStatus.creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
                 //EthApiResponse currentBalanceResponse = await GetCurrentBalanceAsync(ct);
                 float manaPriceUsd = await GetCurrentManaConversionAsync(ct);
                 string sceneName = await GetSceneNameAsync(donationStatus.baseParcel!.Value, ct);

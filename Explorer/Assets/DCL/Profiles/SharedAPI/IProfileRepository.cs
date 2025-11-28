@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using System.Collections.Generic;
 using System.Threading;
@@ -42,7 +43,8 @@ namespace DCL.Profiles
         /// </returns>
         public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
             BatchBehaviour batchBehaviour = BatchBehaviour.DEFAULT,
-            IPartitionComponent? partition = null);
+            IPartitionComponent? partition = null,
+            RetryPolicy? retryPolicy = null);
     }
 
     public static class ProfileRepositoryExtensions
@@ -50,8 +52,8 @@ namespace DCL.Profiles
         /// <summary>
         ///     Suppresses inner exceptions to 'Null' return value
         /// </summary>
-        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT) =>
-            profileRepository.GetAsync(id, 0, null, ct, batchBehaviour: batchBehaviour).SuppressAnyExceptionWithFallback(null);
+        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, RetryPolicy? retryPolicy = null) =>
+            profileRepository.GetAsync(id, 0, null, ct, batchBehaviour: batchBehaviour, retryPolicy: retryPolicy).SuppressAnyExceptionWithFallback(null);
 
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, CancellationToken ct, bool getFromCacheIfPossible = true,
             IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT) =>
