@@ -221,7 +221,7 @@ namespace DCL.Interaction.Systems
                 if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
                     socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
 
-                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.Pointer);
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
                 hoverFeedbackComponent.Add(viewProfileTooltip);
             }
         }
