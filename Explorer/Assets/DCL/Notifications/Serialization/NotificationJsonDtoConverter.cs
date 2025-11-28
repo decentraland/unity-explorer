@@ -39,7 +39,7 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_OWNERSHIP_TRANSFERRED_TYPE = "community_ownership_transferred";
         private const string USER_BANNED_FROM_SCENE_TYPE = "user_banned_from_scene";
         private const string USER_UNBANNED_FROM_SCENE_TYPE = "user_unbanned_from_scene";
-        private const string GIFT_RECEIVED_TYPE = "gift_received";
+        private const string GIFT_RECEIVED_TYPE = "transfer-received";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
