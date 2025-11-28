@@ -296,7 +296,7 @@ namespace DCL.Interaction.Systems
 
         private void OnOutcomePerformed(int outcomeIndex, string interactingUserWalletAddress, Entity playerEntity)
         {
-            sdSocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(interactingUserWalletAddress);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(interactingUserWalletAddress);
 
             // Checks if the current emote has an outcome for the given index
             int outcomeCount = interaction!.Emote.Model.Asset!.metadata.data!.outcomes!.Length;
