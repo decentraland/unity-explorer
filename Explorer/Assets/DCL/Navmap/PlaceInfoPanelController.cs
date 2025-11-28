@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Donations.UI;
 using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -135,7 +136,7 @@ namespace DCL.Navmap
 
             favoriteButton = new MultiStateButtonController(view.FavoriteButton, true);
             favoriteButton.OnButtonClicked += SetAsFavorite;
-            
+
             if(view.HomeButton != null)
             {
                 homeButton = new MultiStateButtonController(view.HomeButton, true);
@@ -146,6 +147,7 @@ namespace DCL.Navmap
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
+            view.DonateButton.onClick.AddListener(DonateToSceneCreator);
 
             view.OverviewTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             //Photos scroll view is already handled by the camera reel gallery controller
@@ -168,6 +170,9 @@ namespace DCL.Navmap
             view.gameObject.SetActive(false);
         }
 
+        private void DonateToSceneCreator() =>
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.scene_creator, place!.base_position_processed)));
+
         public void Set(PlacesData.PlaceInfo place)
         {
             this.place = place;
@@ -188,6 +193,7 @@ namespace DCL.Navmap
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.StartNavigationButton.gameObject.SetActive(true);
             view.StopNavigationButton.gameObject.SetActive(false);
+            view.DonateButton.gameObject.SetActive(!string.IsNullOrEmpty(place.scene_creator));
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
@@ -211,9 +217,9 @@ namespace DCL.Navmap
             if (originParcel == null) return;
             if (place == null) return;
             if (!TeleportUtils.IsRoad(place.title)) return;
-            
+
             view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
-            
+
             if(!homeButton.IsButtonOn)
                 homeButton.SetButtonState(homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
         }
@@ -287,7 +293,7 @@ namespace DCL.Navmap
 
         private void SetAsHome(bool isHome)
         {
-            if (place == null) 
+            if (place == null)
                 return;
 
             Vector2Int positionReference;
@@ -296,7 +302,7 @@ namespace DCL.Navmap
             else if (VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates))
                 positionReference = coordinates;
             else return;
-            
+
             if(isHome)
                 homePlaceEventBus.SetAsHome(positionReference);
             else

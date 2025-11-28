@@ -30,6 +30,7 @@ namespace DCL.PlacesAPIService
             public string owner;
             public string[] tags;
             public string world_name;
+            public string scene_creator;
 
             public Vector2Int[] Positions;
 

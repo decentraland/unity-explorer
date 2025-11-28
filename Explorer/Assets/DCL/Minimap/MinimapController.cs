@@ -250,7 +250,7 @@ namespace DCL.Minimap
         }
 
         private void OpenDonateToCreatorPanel() =>
-            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand());
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Empty));
 
         private void CopyJumpInLink()
         {

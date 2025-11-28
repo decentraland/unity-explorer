@@ -8,12 +8,13 @@ using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 using Utility.Arch;
 
 namespace DCL.Donations.UI
 {
-    public class DonationsPanelController : ControllerBase<DonationsPanelView>
+    public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
         private static readonly URN EMOTE_MONEY_URN = new ("money");
 
@@ -74,6 +75,7 @@ namespace DCL.Donations.UI
         private void OnSendDonationRequested(string creatorAddress, float amount)
         {
             //TODO: Implement donation sending flow
+            // async with animation on the main panel
             PlayEmoteByUrn(EMOTE_MONEY_URN);
             CloseController();
         }
@@ -93,23 +95,36 @@ namespace DCL.Donations.UI
             try
             {
                 viewInstance!.SetLoadingState(true);
-                var donationStatus = donationsService.DonationsEnabledCurrentScene.Value;
 
-                if (!donationStatus.enabled)
+                string creatorAddress;
+                Vector2Int baseParcel;
+
+                if (inputData.HasValues)
                 {
-                    CloseController();
-                    return;
+                    creatorAddress = inputData.CreatorAddress;
+                    baseParcel = inputData.BaseParcel;
+                }
+                else
+                {
+                    var donationStatus = donationsService.DonationsEnabledCurrentScene.Value;
+                    if (!donationStatus.enabled)
+                    {
+                        CloseController();
+                        return;
+                    }
+                    creatorAddress = donationStatus.creatorAddress!;
+                    baseParcel = donationStatus.baseParcel!.Value;
                 }
 
-                Profile? creatorProfile = await profileRepository.GetAsync(donationStatus.creatorAddress!, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET, CatalystRetryPolicy.SIMPLE);
+                Profile? creatorProfile = await profileRepository.GetAsync(creatorAddress, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET, CatalystRetryPolicy.SIMPLE);
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
                 if (creatorProfile == null)
-                    ReportHub.LogException(new Exception($"Previous 404 on profile {donationStatus.creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
+                    ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
                 //EthApiResponse currentBalanceResponse = await donationsService.GetCurrentBalanceAsync(ct);
                 float manaPriceUsd = await donationsService.GetCurrentManaConversionAsync(ct);
-                string sceneName = await donationsService.GetSceneNameAsync(donationStatus.baseParcel!.Value, ct);
+                string sceneName = await donationsService.GetSceneNameAsync(baseParcel, ct);
 
-                viewInstance!.ConfigurePanel(creatorProfile, donationStatus.creatorAddress!,
+                viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,
                     sceneName, 0,
                     recommendedDonationAmount, manaPriceUsd,
                     profileRepositoryWrapper); // TODO: Fill with real values
