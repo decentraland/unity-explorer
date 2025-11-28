@@ -2,7 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -17,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables
     {
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
-        private readonly List<IWearable> resultWearablesBuffer = new ();
+        private readonly List<ITrimmedWearable> resultWearablesBuffer = new ();
         private readonly string builderDTOsUrl;
 
         public ApplicationParametersWearablesProvider(IAppArgs appArgs, IWearablesProvider source, string builderDTOsUrl)
@@ -27,16 +29,14 @@ namespace DCL.AvatarRendering.Wearables
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize,
-            int pageNumber,
-            CancellationToken ct,
+        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             bool smartWearablesOnly = false,
             string? name = null,
-            List<IWearable>? results = null,
+            List<ITrimmedWearable>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Wearables
                     await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
                         RequestPointersAsync(pointers, BodyShape.FEMALE, ct));
 
-                results ??= new List<IWearable>();
+                results ??= new List<ITrimmedWearable>();
 
                 lock (resultWearablesBuffer)
                 {
@@ -72,8 +72,8 @@ namespace DCL.AvatarRendering.Wearables
             {
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries).ToArray();
 
-                results ??= new List<IWearable>();
-                var localBuffer = ListPool<IWearable>.Get();
+                results ??= new List<ITrimmedWearable>();
+                var localBuffer = ListPool<ITrimmedWearable>.Get();
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded wearables
@@ -100,12 +100,12 @@ namespace DCL.AvatarRendering.Wearables
                 const int OWNED_PAGE_SIZE = 200;
                 int ownedPage = 1;
                 int ownedTotal = int.MaxValue;
-                using var ownedPageBufferScope = ListPool<IWearable>.Get(out var ownedPageBuffer);
+                using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
 
                 while (localBuffer.Count < ownedTotal)
                 {
                     ownedPageBuffer.Clear();
-                    (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
+                    (IReadOnlyList<ITrimmedWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
                         OWNED_PAGE_SIZE,
                         ownedPage,
                         ct,
@@ -138,7 +138,7 @@ namespace DCL.AvatarRendering.Wearables
 
                 int count = unified.Count;
 
-                ListPool<IWearable>.Release(localBuffer);
+                ListPool<ITrimmedWearable>.Release(localBuffer);
 
                 return (results, count);
             }

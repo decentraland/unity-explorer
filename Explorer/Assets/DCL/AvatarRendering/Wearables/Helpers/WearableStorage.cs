@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 }
 
                 DateTime latestDate = DateTime.MinValue;
-                
+
                 foreach (var entry in registry.Values)
                 {
                     if (entry.TransferredAt > latestDate)
@@ -133,7 +133,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         latestDate = entry.TransferredAt;
                     }
                 }
-                
+
                 latestTransferredAt = latestDate;
                 return true;
             }
@@ -190,8 +190,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static void DisposeThumbnail(IWearable wearable)
         {
-            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
-                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
+            IAvatarAttachment attachment = wearable;
+            if (attachment.ThumbnailAssetResult is { IsInitialized: true })
+                attachment.ThumbnailAssetResult.Value.Asset.RemoveReference();
         }
 
         private void UpdateListedCachePriority(URN @for)

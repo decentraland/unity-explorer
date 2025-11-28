@@ -11,7 +11,7 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize,
+        UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
             int pageNumber,
             CancellationToken ct,
             SortingField sortingField = SortingField.Date,
@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Wearables
             CollectionType collectionType = CollectionType.All,
             bool smartWearablesOnly = false,
             string? name = null,
-            List<IWearable>? results = null,
+            List<ITrimmedWearable>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false);
 
