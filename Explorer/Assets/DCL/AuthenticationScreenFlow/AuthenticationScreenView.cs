@@ -22,8 +22,10 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public TMP_InputField EmailInputField { get; private set; } = null!;
+
         [field: SerializeField]
         public TMP_InputField PasswordInputField { get; private set; } = null!;
+
         [field: SerializeField]
         public Button RegisterButton { get; private set; } = null!;
 

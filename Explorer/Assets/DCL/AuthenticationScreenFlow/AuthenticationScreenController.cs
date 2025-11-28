@@ -90,6 +90,7 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
+        private UniTaskCompletionSource<string>? otpCompletionSource;
         private StringVariable? profileNameLabel;
         private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
@@ -145,6 +146,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
             web3Authenticator.SetVerificationListener(null);
+            web3Authenticator.SetOtpRequestListener(null);
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
         }
 
@@ -181,7 +183,30 @@ namespace DCL.AuthenticationScreenFlow
 
         private void SendRegistration()
         {
-            _ = ThirdWebCustomJWTAuth.Register(viewInstance.EmailInputField.text, viewInstance.PasswordInputField.text);
+            // If we're waiting for OTP input, complete the task with the entered code
+            if (otpCompletionSource != null)
+            {
+                string otp = viewInstance!.PasswordInputField.text;
+                otpCompletionSource.TrySetResult(otp);
+                return;
+            }
+
+            // Otherwise, proceed with normal registration flow
+            _ = ThirdWebCustomJWTAuth.Register(viewInstance!.EmailInputField.text, viewInstance.PasswordInputField.text);
+        }
+
+        private UniTask<string> RequestOtpFromUserAsync(CancellationToken ct)
+        {
+            otpCompletionSource = new UniTaskCompletionSource<string>();
+
+            // Register cancellation to clean up if cancelled
+            ct.Register(() =>
+            {
+                otpCompletionSource?.TrySetCanceled(ct);
+                otpCompletionSource = null;
+            });
+
+            return otpCompletionSource.Task;
         }
 
         protected override void OnBeforeViewShow()
@@ -214,6 +239,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance!.FinalizeContainer.SetActive(false);
             viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
+            web3Authenticator.SetOtpRequestListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
@@ -355,13 +381,15 @@ namespace DCL.AuthenticationScreenFlow
 
                     sentryTransactionManager.StartSpan(web3AuthSpan);
 
+                    // Set up OTP callback for ThirdWeb OTP flow
+                    web3Authenticator.SetOtpRequestListener(RequestOtpFromUserAsync);
+
                     string email = viewInstance!.EmailInputField.text;
-                    string password = viewInstance!.PasswordInputField.text;
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
 
-                    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-                        Debug.Log("ERROR: Email and Password are required");
-
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync(email, password, ct);
+                    // Clean up OTP callback
+                    web3Authenticator.SetOtpRequestListener(null);
+                    otpCompletionSource = null;
 
                     var identityValidationSpan = new SpanData
                     {
@@ -476,7 +504,7 @@ namespace DCL.AuthenticationScreenFlow
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
 
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync("", "", ct);
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync("", ct);
 
                     web3Authenticator.SetVerificationListener(null);
 
@@ -783,6 +811,11 @@ namespace DCL.AuthenticationScreenFlow
         {
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
+
+            // Clean up OTP waiting state
+            otpCompletionSource?.TrySetCanceled();
+            otpCompletionSource = null;
+            web3Authenticator.SetOtpRequestListener(null);
         }
 
         private void OpenOrCloseVerificationCodeHint()

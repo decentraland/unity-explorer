@@ -65,14 +65,17 @@ namespace DCL.Web3.Authenticators
             public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
                 originApi.AddVerificationListener(callback);
 
-            public UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct) =>
-                originAuth.LoginAsync(email, password, ct);
+            public UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct) =>
+                originAuth.LoginAsync(email, ct);
 
             public UniTask LogoutAsync(CancellationToken cancellationToken) =>
                 originAuth.LogoutAsync(cancellationToken);
 
             public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
                 originAuth.SetVerificationListener(callback);
+
+            public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
+                originAuth.SetOtpRequestListener(callback);
         }
     }
 }

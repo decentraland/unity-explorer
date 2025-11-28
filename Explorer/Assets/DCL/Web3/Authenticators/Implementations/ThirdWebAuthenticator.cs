@@ -28,6 +28,8 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         private BigInteger chainId;
+        private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
+        private IWeb3VerifiedAuthenticator.OtpRequestDelegate? otpRequestCallback;
 
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
@@ -44,7 +46,7 @@ namespace DCL.Web3.Authenticators
             chainId = EnvChainsUtils.GetChainIdAsInt(environment);
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -55,9 +57,9 @@ namespace DCL.Web3.Authenticators
                 await UniTask.SwitchToMainThread(ct);
 
                 ThirdWebManager.Instance.ActiveWallet
-                    = await LoginViaJWT(email, password);
 
-                //  = await LoginViaOTP("popuzin@gmail.com");
+                    //   = await LoginViaJWT(email, password);
+                    = await LoginViaOTP("popuzin@gmail.com", ct);
 
                 string? sender = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
@@ -103,7 +105,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<InAppWallet> LoginViaOTP(string email)
+        private async UniTask<InAppWallet> LoginViaOTP(string email, CancellationToken ct)
         {
             Debug.Log("Login via OTP");
 
@@ -115,7 +117,9 @@ namespace DCL.Web3.Authenticators
 
             InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
             await wallet.SendOTP();
-            var otp = "MOCK"; // wait callback
+            Debug.Log("OTP sent");
+
+            string otp = await otpRequestCallback!.Invoke(ct);
             _ = await wallet.LoginWithOtp(otp);
             return wallet;
         }
@@ -331,9 +335,11 @@ namespace DCL.Web3.Authenticators
         private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
 
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback)
-        {
-        }
+        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
+            codeVerificationCallback = callback;
+
+        public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
+            otpRequestCallback = callback;
 
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback)
         {

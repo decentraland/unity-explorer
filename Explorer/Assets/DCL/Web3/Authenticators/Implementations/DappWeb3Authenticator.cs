@@ -139,7 +139,7 @@ namespace DCL.Web3.Authenticators
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(string email, string password, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -216,6 +216,11 @@ namespace DCL.Web3.Authenticators
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             codeVerificationCallback = callback;
+
+        public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback)
+        {
+            // Not used in Dapp flow - OTP is handled via browser, not in-app UI
+        }
 
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
             signatureVerificationCallback = callback;
