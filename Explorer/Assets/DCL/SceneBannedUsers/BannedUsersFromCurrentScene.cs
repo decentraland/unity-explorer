@@ -4,6 +4,7 @@ using LiveKit.Proto;
 using Newtonsoft.Json;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.SceneBannedUsers
 {
@@ -17,6 +18,8 @@ namespace DCL.SceneBannedUsers
         private readonly bool includeBannedUsersFromScene;
 
         private CancellationTokenSource checkIfPlayerIsBannedCts;
+        private string roomMetadata = string.Empty;
+        private BannedUsersRoomMetadata bannedUsersRoomMetadata;
 
         public BannedUsersFromCurrentScene(
             IRoomHub roomHub,
@@ -24,6 +27,13 @@ namespace DCL.SceneBannedUsers
         {
             this.roomHub = roomHub;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
+            roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
+        }
+
+        private void OnRoomMetadataChanged(string metadata)
+        {
+            roomMetadata = metadata;
+            bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
         }
 
         /// <summary>
@@ -39,12 +49,8 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
-            string roomMetadata = roomHub.SceneRoom().Room().Info.Metadata;
-
             if (string.IsNullOrEmpty(roomMetadata))
                 return false;
-
-            BannedUsersRoomMetadata bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
 
             if (bannedUsersRoomMetadata.bannedAddresses == null)
                 return false;
@@ -56,28 +62,6 @@ namespace DCL.SceneBannedUsers
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Returns the number of banned users from the current scene.
-        /// </summary>
-        /// <returns>Number of banned users from the current scene.</returns>
-        public int BannedUsersCount()
-        {
-            if (!includeBannedUsersFromScene)
-                return 0;
-
-            if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
-                return 0;
-
-            string roomMetadata = roomHub.SceneRoom().Room().Info.Metadata;
-
-            if (string.IsNullOrEmpty(roomMetadata))
-                return 0;
-
-            BannedUsersRoomMetadata bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
-
-            return bannedUsersRoomMetadata.bannedAddresses?.Length ?? 0;
         }
     }
 }
