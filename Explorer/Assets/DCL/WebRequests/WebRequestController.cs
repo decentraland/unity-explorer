@@ -73,7 +73,7 @@ namespace DCL.WebRequests
                         attemptNumber++;
 
                         await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct))
-                                     .WithChromeDevtools(envelope, wr, chromeDevtoolProtocolClient);
+                                     .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
                     }
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
@@ -113,3 +113,4 @@ namespace DCL.WebRequests
         }
     }
 }
+
