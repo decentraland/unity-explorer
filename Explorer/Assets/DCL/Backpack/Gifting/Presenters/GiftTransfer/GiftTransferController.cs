@@ -17,6 +17,8 @@ namespace DCL.Backpack.Gifting.Presenters
     public sealed class GiftTransferController
         : ControllerBase<GiftTransferStatusView, GiftTransferParams>
     {
+        private static readonly TimeSpan LONG_RUNNING_HINT_DELAY = TimeSpan.FromSeconds(10);
+        
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private enum State { Waiting, Success, Failed }
@@ -28,27 +30,18 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
-        private readonly IWeb3VerifiedAuthenticator authenticator;
-        private readonly Action OnCancelTransfer;
-        
+
         private IDisposable? subProgress;
-        private IDisposable? subSucceeded;
-        private IDisposable? subFailed;
-        private IDisposable? subOpenRequested;
 
         private CancellationTokenSource? lifeCts;
         private CancellationTokenSource? delayCts;
-
-        private string urn = string.Empty;
 
         public GiftTransferController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
-            GiftTransferRequestCommand giftTransferRequestCommand,
-            IWeb3VerifiedAuthenticator authenticator,
-            Action OnCancelTransfer
+            GiftTransferRequestCommand giftTransferRequestCommand
         )
             : base(viewFactory)
         {
@@ -57,8 +50,6 @@ namespace DCL.Backpack.Gifting.Presenters
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
-            this.OnCancelTransfer = OnCancelTransfer;
-            this.authenticator  = authenticator;
         }
 
         protected override void OnViewInstantiated()
@@ -69,8 +60,6 @@ namespace DCL.Backpack.Gifting.Presenters
         protected override void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
-
-            urn = inputData.giftUrn;
 
             if (viewInstance != null)
             {
@@ -99,26 +88,17 @@ namespace DCL.Backpack.Gifting.Presenters
             }
 
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);
-            subSucceeded = eventBus.Subscribe<GiftTransferSucceeded>(OnSuccess);
-            subFailed = eventBus.Subscribe<GiftTransferFailed>(OnFailure);
 
-            // Start the process
-            giftTransferRequestCommand.ExecuteAsync(inputData, lifeCts.Token).Forget();
-        }
-
-        private void OnMarketplaceActivityLinkClicked(string _)
-        {
-            LinkCallback(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink));
+            ProcessTransferFlow(lifeCts.Token)
+                .Forget();
         }
 
         protected override void OnViewClose()
         {
             if (viewInstance != null)
                 viewInstance.MarketplaceLink.OnLinkClicked -= OnMarketplaceActivityLinkClicked;
-            
+
             subProgress?.Dispose();
-            subSucceeded?.Dispose();
-            subFailed?.Dispose();
             delayCts.SafeCancelAndDispose();
             lifeCts.SafeCancelAndDispose();
         }
@@ -139,6 +119,23 @@ namespace DCL.Backpack.Gifting.Presenters
             await UniTask.WhenAny(closeTasks);
         }
 
+        private async UniTaskVoid ProcessTransferFlow(CancellationToken ct)
+        {
+            var result = await giftTransferRequestCommand.ExecuteAsync(inputData, ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (result.IsSuccess)
+                OnSuccess();
+            else
+                OnFailure();
+        }
+
+        private void OnMarketplaceActivityLinkClicked(string _)
+        {
+            LinkCallback(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink));
+        }
+
         private void OnProgress(GiftTransferProgress e)
         {
             SetPhase(e.Phase, e.Message);
@@ -157,7 +154,10 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(10), cancellationToken: token);
+                // If the Web3 signature prompt takes too long,
+                // show a hint so users don't think the UI is frozen.
+                await UniTask.Delay(LONG_RUNNING_HINT_DELAY, cancellationToken: token);
+                
                 if (viewInstance != null && viewInstance.LongRunningHint != null)
                     viewInstance.LongRunningHint.gameObject.SetActive(true);
             }
@@ -167,14 +167,23 @@ namespace DCL.Backpack.Gifting.Presenters
             }
         }
 
-        private void OnSuccess(GiftTransferSucceeded e)
+        private void OnSuccess()
         {
-            if (e.Urn != urn) return;
-
             currentState = State.Success;
             delayCts.SafeCancelAndDispose();
             RequestClose();
-            OpenSuccessScreenAfterCloseAsync(CancellationToken.None).Forget();
+            OpenSuccessScreenAfterCloseAsync(CancellationToken.None)
+                .Forget();
+        }
+
+        private void OnFailure()
+        {
+            currentState = State.Failed;
+            delayCts.SafeCancelAndDispose();
+
+            RequestClose();
+            ShowErrorPopupAsync(CancellationToken.None)
+                .Forget();
         }
 
         private async UniTaskVoid OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
@@ -183,15 +192,7 @@ namespace DCL.Backpack.Gifting.Presenters
             await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
         }
 
-        private void OnFailure(GiftTransferFailed e)
-        {
-            if (e.Urn != urn) return;
-            currentState = State.Failed;
-            delayCts.SafeCancelAndDispose();
-
-            RequestClose();
-            ShowErrorPopupAsync(CancellationToken.None).Forget();
-        }
+        
 
         private void SetViewState(State newState)
         {

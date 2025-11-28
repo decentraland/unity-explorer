@@ -141,7 +141,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING)); }
         }
 
-        protected async UniTask RequestNextPageAsync(CancellationToken ct)
+        private async UniTask RequestNextPageAsync(CancellationToken ct)
         {
             if (isLoading) return;
 
@@ -149,7 +149,11 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             canLoadNextPage = false;
             currentPage++;
 
+            // Create a token specific to this fetch operation.
+            // It is linked to 'lifeCts' so it cancels if the view closes,
+            // but can also be canceled independently if a new search starts.
             fetchCts = fetchCts.SafeRestartLinked(ct);
+            
             var localCt = fetchCts.Token;
 
             try

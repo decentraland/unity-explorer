@@ -2,6 +2,7 @@
 using System.Text;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Backpack.Gifting.Utils;
 using DCL.Diagnostics;
 
 namespace DCL.Backpack.Gifting.Services.PendingTransfers
@@ -44,10 +45,8 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             int count = 0;
             foreach (string pending in pendingFullUrns)
             {
-                // Check if pending starts with baseUrn AND is followed by a separator or end
-                // This handles "urn:1" vs "urn:10" correctly
-                if (pending.StartsWith(baseUrn) &&
-                    (pending.Length == baseUrn.Length || pending[baseUrn.Length] == ':'))
+                if (GiftingUrnParsingHelper.TryGetBaseUrn(pending, out string extractedBase) &&
+                    extractedBase == baseUrn)
                 {
                     count++;
                 }
@@ -64,31 +63,25 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         {
             if (pendingFullUrns.Count == 0) return;
 
-            // Safety: If registries are empty, data likely hasn't loaded yet. Do not prune.
-            if (wearableRegistry.Count == 0 && emoteRegistry.Count == 0) return;
+            if (wearableRegistry.Count == 0 &&
+                emoteRegistry.Count == 0) return;
 
             var toRemove = new List<string>();
 
             foreach (string pendingUrn in pendingFullUrns)
             {
-                // We need the Base URN (the URN without the Token ID).
-                // Format: urn:decentraland:chain:collection:contract:tokenId
-                // We find the last ':' and take the substring before it.
-                int lastColonIndex = pendingUrn.LastIndexOf(':');
-
-                if (lastColonIndex == -1)
+                if (!GiftingUrnParsingHelper.TryGetBaseUrn(pendingUrn, out string baseUrnString))
                 {
-                    toRemove.Add(pendingUrn); // Remove bad data
+                    toRemove.Add(pendingUrn);
                     continue;
                 }
 
-                string baseUrnString = pendingUrn.Substring(0, lastColonIndex);
                 var baseUrn = new URN(baseUrnString);
                 var fullUrnKey = new URN(pendingUrn);
 
                 bool stillOwned = false;
 
-                // O(1) Lookup: Check if we have the Base URN, then check if we have the specific instance
+                // O(1) Lookups
                 if (wearableRegistry.TryGetValue(baseUrn, out var wInstances) && wInstances.ContainsKey(fullUrnKey))
                 {
                     stillOwned = true;
@@ -98,7 +91,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                     stillOwned = true;
                 }
 
-                // If it's not in our registry, the transfer is confirmed (or item is gone)
+                // Validates pending transfers against the latest inventory data.
+                // If an item is no longer in the registry, it means the Indexer has caught up 
+                // and the item has left the user's wallet. We can safely stop tracking it locally.
                 if (!stillOwned)
                     toRemove.Add(pendingUrn);
             }
@@ -107,27 +102,10 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             {
                 foreach (string item in toRemove)
                     pendingFullUrns.Remove(item);
-                
+
                 persistence.SavePendingUrns(pendingFullUrns);
-                
                 ReportHub.Log(ReportCategory.GIFTING, $"Pruned {toRemove.Count} confirmed gifts.");
             }
-        }
-
-        private bool IsUrnInRegistry(string pendingFullUrn, IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> registry)
-        {
-            // We don't know the BaseURN easily from the string without parsing, 
-            // so we have to iterate the values (Instances). 
-            // This is still fast enough for the occasional Prune call.
-            foreach (var instances in registry.Values)
-            {
-                foreach (var entry in instances.Values)
-                {
-                    if (entry.Urn == pendingFullUrn) return true;
-                }
-            }
-
-            return false;
         }
 
         public void LogPendingTransfers()

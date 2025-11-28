@@ -203,9 +203,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand,
-                dappWeb3Authenticator,
-                dappWeb3Authenticator.CancelCurrentWeb3Operation
+                giftTransferRequestCommand
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController

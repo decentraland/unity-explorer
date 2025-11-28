@@ -27,7 +27,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             this.pendingTransferService = pendingTransferService;
         }
 
-        public async UniTaskVoid ExecuteAsync(GiftTransferParams data, CancellationToken ct)
+        public async UniTask<GiftTransferResult> ExecuteAsync(GiftTransferParams data, CancellationToken ct)
         {
             eventBus.Publish(new GiftingEvents.GiftTransferProgress(data.giftUrn,
                 GiftingEvents.GiftTransferPhase.Authorizing,
@@ -37,14 +37,17 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             var identity = web3IdentityCache.Identity;
             if (identity == null)
             {
-                eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, "User identity not found."));
-                return;
+                string error = "User identity not found.";
+                eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, error));
+                return GiftTransferResult.Fail(error);
             }
 
             string senderAddress = identity.Address.ToString();
 
-            // Track SendGift
-            eventBus.Publish(new GiftingEvents.OnSentGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+            eventBus.Publish(new GiftingEvents.OnSentGift(data.giftUrn,
+                senderAddress,
+                data.recipientAddress,
+                data.itemType));
             
             var result = await giftTransferService
                 .RequestTransferAsync(senderAddress,
@@ -55,10 +58,8 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             if (ct.IsCancellationRequested)
             {
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, "Gifting was cancelled."));
-
-                // Track gift canceled
                 eventBus.Publish(new GiftingEvents.OnCanceledGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
-                return;
+                return GiftTransferResult.Fail("Cancelled");
             }
 
             if (result.IsSuccess)
@@ -66,17 +67,15 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
                 pendingTransferService.AddPending(data.instanceUrn);
 
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
-
-                // Track gift successful
                 eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
             }
             else
             {
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, result.ErrorMessage));
-
-                // Track gift failed
                 eventBus.Publish(new GiftingEvents.OnFailedGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
             }
+
+            return result;
         }
     }
 }
