@@ -52,7 +52,7 @@ namespace DCL.Donations.UI
 
             if (viewInstance == null) return;
 
-            viewInstance.SendDonationRequested += OnSendDonationRequested;
+            viewInstance.SendDonationRequested -= OnSendDonationRequested;
         }
 
         private void CloseController() =>
