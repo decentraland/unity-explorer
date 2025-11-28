@@ -17,7 +17,8 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const string INVITES_RESULTS_TITLE = "Invites";
         private const string REQUESTS_RECEIVED_RESULTS_TITLE = "Requests Received";
-        private const string REQUESTS_RESULTS_TITLE = "Requests Sent";
+        private const string REQUESTS_RESULTS_TITLE_FOR_OWNERS = "Requests Sent";
+        private const string REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS = "Requests";
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
         public event Action? BackButtonClicked;
@@ -49,16 +50,19 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Transform invitesGridContainer = null!;
         [SerializeField] private GameObject invitesEmptyContainer = null!;
         [SerializeField] private TMP_Text invitesTitleText = null!;
+        [SerializeField] private TMP_Text invitesEmptyTitleText = null!;
 
         [Header("Requests Received")]
         [SerializeField] private Transform requestsReceivedGridContainer = null!;
         [SerializeField] private GameObject requestsReceivedEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsReceivedTitleText = null!;
+        [SerializeField] private TMP_Text requestsReceivedEmptyTitleText = null!;
 
         [Header("Requests Sent")]
         [SerializeField] private Transform requestsGridContainer = null!;
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
+        [SerializeField] private TMP_Text requestsEmptyTitleText = null!;
 
         private readonly List<CommunityResultCardView> currentInvites = new ();
         private readonly List<CommunityRequestsReceivedGroupView> currentRequestsReceivedGroups = new ();
@@ -70,6 +74,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
+        private CommunitiesBrowserStateService? communitiesBrowserStateService;
         private ThumbnailLoader? thumbnailLoader;
         private int currentInvitesAndRequestsCounter = 0;
 
@@ -114,10 +119,11 @@ namespace DCL.Communities.CommunitiesBrowser
             thumbnailsCts.SafeCancelAndDispose();
         }
 
-        public void Initialize(ProfileRepositoryWrapper profileDataProvider, CommunitiesDataProvider.CommunitiesDataProvider commDataProvider)
+        public void Initialize(ProfileRepositoryWrapper profileDataProvider, CommunitiesDataProvider.CommunitiesDataProvider commDataProvider, CommunitiesBrowserStateService browserStateService)
         {
             profileRepositoryWrapper = profileDataProvider;
             communitiesDataProvider = commDataProvider;
+            communitiesBrowserStateService = browserStateService;
         }
 
         public void SetAsLoading(bool isLoading)
@@ -200,7 +206,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         public void SetRequestsGridCounter(int count) =>
-            requestsTitleText.text = $"{REQUESTS_RESULTS_TITLE} ({count})";
+            requestsTitleText.text = $"{(IsOwnerOrModerator() ? REQUESTS_RESULTS_TITLE_FOR_OWNERS : REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS)} ({count})";
 
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;
@@ -315,18 +321,28 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             invitesEmptyContainer.SetActive(isEmpty);
             invitesGridContainer.gameObject.SetActive(!isEmpty);
+            invitesEmptyTitleText.text = $"{INVITES_RESULTS_TITLE} (0)";
         }
 
         private void SetRequestsReceivedAsEmpty(bool isEmpty)
         {
+            if (!IsOwnerOrModerator())
+            {
+                requestsReceivedEmptyContainer.SetActive(false);
+                requestsReceivedGridContainer.gameObject.SetActive(false);
+                return;
+            }
+
             requestsReceivedEmptyContainer.SetActive(isEmpty);
             requestsReceivedGridContainer.gameObject.SetActive(!isEmpty);
+            requestsReceivedEmptyTitleText.text = $"{REQUESTS_RECEIVED_RESULTS_TITLE} (0)";
         }
 
         private void SetRequestsAsEmpty(bool isEmpty)
         {
             requestsEmptyContainer.SetActive(isEmpty);
             requestsGridContainer.gameObject.SetActive(!isEmpty);
+            requestsEmptyTitleText.text = $"{(IsOwnerOrModerator() ? REQUESTS_RESULTS_TITLE_FOR_OWNERS : REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS)} (0)";
         }
 
         private CommunityResultCardView InstantiateInvitedCommunityCardPrefab()
@@ -471,5 +487,20 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
             ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);
+
+        private bool IsOwnerOrModerator()
+        {
+            var isOwnerOrModerator = false;
+            foreach (GetUserCommunitiesData.CommunityData myCommunity in communitiesBrowserStateService!.MyCommunities)
+            {
+                if (myCommunity.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
+                {
+                    isOwnerOrModerator = true;
+                    break;
+                }
+            }
+
+            return isOwnerOrModerator;
+        }
     }
 }

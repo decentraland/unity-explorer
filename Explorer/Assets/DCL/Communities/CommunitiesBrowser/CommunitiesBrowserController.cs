@@ -113,7 +113,7 @@ namespace DCL.Communities.CommunitiesBrowser
             mainRightSectionPresenter = new CommunitiesBrowserMainRightSectionPresenter(view.RightSectionView, dataProvider, browserStateService, thumbnailLoader, profileRepositoryWrapper, browserEventBus, commandsLibrary, orchestrator);
 
             view.SetThumbnailLoader(thumbnailLoader);
-            view.InvitesAndRequestsView.Initialize(profileRepositoryWrapper, dataProvider);
+            view.InvitesAndRequestsView.Initialize(profileRepositoryWrapper, dataProvider, browserStateService);
             view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked += LoadInvitesAndRequestsResults;
             view.InvitesAndRequestsView.BackButtonClicked += OnBackButtonClicked;
 
