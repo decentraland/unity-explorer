@@ -25,7 +25,7 @@ namespace DCL.Navmap
         public Button StopNavigationButton { get; private set; }
 
         [field: SerializeField]
-        public Button DonateButton { get; private set; }
+        public Button? DonateButton { get; private set; }
 
         [field: SerializeField]
         public MultiStateButtonView LikeButton { get; private set; }

@@ -147,7 +147,7 @@ namespace DCL.Navmap
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
-            view.DonateButton.onClick.AddListener(DonateToSceneCreator);
+            view.DonateButton?.onClick.AddListener(DonateToSceneCreator);
 
             view.OverviewTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             //Photos scroll view is already handled by the camera reel gallery controller
@@ -193,7 +193,7 @@ namespace DCL.Navmap
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.StartNavigationButton.gameObject.SetActive(true);
             view.StopNavigationButton.gameObject.SetActive(false);
-            view.DonateButton.gameObject.SetActive(!string.IsNullOrEmpty(place.scene_creator));
+            view.DonateButton?.gameObject.SetActive(!string.IsNullOrEmpty(place.scene_creator));
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
