@@ -76,6 +76,7 @@ MonoBehaviour:
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <cameraReelButton>k__BackingField: {fileID: 3655238427613538003}
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
+  marketplaceButton: {fileID: 6324497326329296387}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
   <skyboxButton>k__BackingField: {fileID: 5031247465953263118}
@@ -1540,6 +1541,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5604293973387185170, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6324497326329296387 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6402059950594699960, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6705180925666095888 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5913254704669603755, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
