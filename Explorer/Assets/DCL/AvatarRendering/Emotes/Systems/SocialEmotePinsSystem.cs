@@ -54,7 +54,7 @@ namespace DCL.SocialEmotes.UI
             if(identityCache.Identity == null)
                 return;
 
-            CreatePinQuery(World, identityCache.Identity.Address.OriginalFormat, mainCameraComponent);
+            CreatePinQuery(World, mainCameraComponent);
             UpdatePinPositionQuery(World);
             AddNametagHeightToPinPositionQuery(World);
             MakePinFaceCameraQuery(World, mainCameraComponent);
@@ -63,7 +63,7 @@ namespace DCL.SocialEmotes.UI
 
         [Query]
         [None(typeof(SocialEmotePin), typeof(PlayerComponent))]
-        private void CreatePin([Data] string playerWalletAddress, [Data] CameraComponent camera, in Entity entity, in CharacterEmoteComponent emoteComponent,
+        private void CreatePin([Data] CameraComponent camera, in Entity entity, in CharacterEmoteComponent emoteComponent,
             in CharacterTransform characterTransform, in AvatarShapeComponent avatarShape, in PartitionComponent partitionComponent)
         {
             if (avatarShape.HiddenByModifierArea ||
@@ -74,8 +74,7 @@ namespace DCL.SocialEmotes.UI
             if(emoteComponent.IsPlayingEmote &&
                emoteComponent.Metadata != null &&
                emoteComponent.Metadata.IsSocialEmote &&
-               !emoteComponent.IsPlayingSocialEmoteOutcome &&
-               emoteComponent.TargetAvatarWalletAddress == playerWalletAddress)
+               !emoteComponent.IsPlayingSocialEmoteOutcome)
                 World.Add(entity, pinsPool.Get());
         }
 

@@ -38,12 +38,14 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string HOVER_TOOLTIP = "Options...";
+        private const string OPTIONS_TOOLTIP = "Options...";
+        private const string EMOTE_TOOLTIP = "Interact: ";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private HoverFeedbackComponent.Tooltip viewProfileTooltip;
+        private HoverFeedbackComponent.Tooltip socialEmoteInteractionTooltip;
         private Profile? currentProfileHovered;
         private readonly IMVCManager mvcManager;
         private Vector2? currentPositionHovered;
@@ -66,7 +68,7 @@ namespace DCL.Interaction.Systems
             private int elementsSpacing = 5;
 
             [SerializeField]
-            private Vector2 offset = new (-205, 127);
+            private Vector2 offset = new (50, 0);
 
             [SerializeField]
             private RectOffset verticalLayoutPadding = new RectOffset(){left = 10, right = 10, top = 8, bottom = 16};
@@ -105,7 +107,7 @@ namespace DCL.Interaction.Systems
                     contextMenuSettings.Offset,
                     contextMenuSettings.VerticalLayoutPadding,
                     contextMenuSettings.ElementsSpacing,
-                    ContextMenuOpenDirection.TOP_LEFT);
+                    ContextMenuOpenDirection.CENTER_LEFT);
         }
 
         protected override void Update(float t)
@@ -135,6 +137,7 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = null;
             currentPositionHovered = null;
             hoverFeedbackComponent.Remove(viewProfileTooltip);
+            hoverFeedbackComponent.Remove(socialEmoteInteractionTooltip);
 
             bool canHover = !eventSystem.IsPointerOverGameObject();
             GlobalColliderGlobalEntityInfo? entityInfo = raycastResultForGlobalEntities.GetEntityInfo();
@@ -178,7 +181,7 @@ namespace DCL.Interaction.Systems
                 (string.IsNullOrEmpty(socialEmoteInteraction.TargetWalletAddress) || // Is not a directed emote
                     socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
-                Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
+             /*   Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
                 Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
 
                 const float MAX_SQR_DISTANCE_TO_INTERACT = 5.0f * 5.0f; // TODO: Move to a proper place
@@ -205,7 +208,12 @@ namespace DCL.Interaction.Systems
                         UsernameColor = profile.UserNameColor,
                         IsCloseEnoughToAvatar = sqrDistanceToAvatar < MAX_SQR_DISTANCE_TO_INTERACT
                     });
-                }
+                }*/
+
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
+                hoverFeedbackComponent.Add(viewProfileTooltip);
+                socialEmoteInteractionTooltip = new HoverFeedbackComponent.Tooltip(EMOTE_TOOLTIP + socialEmoteInteraction.Emote.Model.Asset.metadata.name, dclInput.Player.Pointer);
+                hoverFeedbackComponent.Add(socialEmoteInteractionTooltip);
             }
             else
             {
@@ -213,7 +221,7 @@ namespace DCL.Interaction.Systems
                 if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
                     socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
 
-                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.Pointer);
                 hoverFeedbackComponent.Add(viewProfileTooltip);
             }
         }
@@ -230,7 +238,7 @@ namespace DCL.Interaction.Systems
 
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(50, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
         }
 
         private void OpenEmoteOutcomeContextMenu(Entity entityRef)
@@ -288,7 +296,7 @@ namespace DCL.Interaction.Systems
                     menusAccessFacade.ShowGenericContextMenuAsync(parameter).Forget();
 
                     // Unlocks the camera when showing the outcomes context menu
-                    World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState = CursorState.Free;
+                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(false));
                 }
             }
         }
