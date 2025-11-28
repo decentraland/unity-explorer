@@ -9,15 +9,17 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.SmartWearables;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -71,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -109,7 +112,8 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
             SmartWearableCache smartWearableCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
@@ -143,6 +147,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -268,7 +273,6 @@ namespace DCL.PluginSystem.Global
                 featureFlags,
                 selfProfile,
                 webBrowser,
-                web3Identity,
                 avatarView,
                 rarityBackgroundsMapping,
                 backpackCommandBus,
@@ -289,12 +293,12 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 webController,
                 equippedWearables,
-                equippedEmotes,
                 wearableStorage,
                 wearablesProvider,
                 nftNamesProvider,
                 eventBus,
-                deleteIcon
+                deleteIcon,
+                decentralandUrlsSource
             );
         }
 
