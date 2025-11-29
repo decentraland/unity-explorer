@@ -19,6 +19,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Profiles;
+using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
 using DCL.SocialEmotes;
 using DCL.UI.EphemeralNotifications;
 using DCL.Utilities;
@@ -321,6 +322,31 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
+        private readonly int beatForFrames = 30;
+
+        private async UniTask StartOutlineBeating(AvatarShapeComponent avatarShapeComponent)
+        {
+            var currentFrame = 0;
+
+            while (true)
+            {
+                while (currentFrame < beatForFrames)
+                {
+                    foreach (Renderer? rend in avatarShapeComponent.OutlineCompatibleRenderers)
+                    {
+                        if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                            RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(rend!, Color.white, 1.0f);
+                    }
+
+                    currentFrame++;
+                    await UniTask.Yield();
+                }
+
+                currentFrame = 0;
+                await UniTask.Delay(TimeSpan.FromSeconds(1));
+            }
+        }
+
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -449,9 +475,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                         {
                             SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId, emoteIntent.TargetAvatarWalletAddress);
                             emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
-
                             if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
                             {
+                                StartOutlineBeating(avatarShapeComponent).Forget();
                                 ephemeralNotificationsController.AddNotificationAsync(DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[]{ emote.GetName() }).Forget();
                             }
 

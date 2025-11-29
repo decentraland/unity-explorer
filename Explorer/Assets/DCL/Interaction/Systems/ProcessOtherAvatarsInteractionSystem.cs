@@ -11,6 +11,7 @@ using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Profiles;
+using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
 using DCL.SocialEmotes.UI;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -115,6 +116,18 @@ namespace DCL.Interaction.Systems
                 (string.IsNullOrEmpty(socialEmoteInteraction.TargetWalletAddress) || // Is not a directed emote
                     socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
+                if (World.Has<AvatarShapeComponent>(entityRef))
+                {
+                    AvatarShapeComponent avatarShape = World.Get<AvatarShapeComponent>(entityRef);
+
+                    foreach (Renderer? rend in avatarShape.OutlineCompatibleRenderers)
+                    {
+                        if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                            RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(rend!, Color.white, 1.0f);
+                    }
+                }
+
+
                 Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
                 Vector3 playerPosition = Vector3.zero;
                 World.Query(in new QueryDescription().WithAll<CharacterTransform, PlayerComponent>(),

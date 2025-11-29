@@ -88,11 +88,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/avatar_highlight",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "881241610636aefab264592ff274f7860141f4ad"
+      "hash": "65a2f83168d5e8746019737d122938784de71fc3"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -481,11 +481,11 @@
       "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#feat/avatar_highlight",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "dd23d7ffc0deb432c8442979b60e40c1e2d3f007"
+      "hash": "e90a26047c0024d40b1cb9432059e21fb87fcfba"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.4.0",
