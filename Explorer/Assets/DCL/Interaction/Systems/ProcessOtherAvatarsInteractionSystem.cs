@@ -68,7 +68,7 @@ namespace DCL.Interaction.Systems
             private int elementsSpacing = 5;
 
             [SerializeField]
-            private Vector2 offset = new (50, 0);
+            private Vector2 offset = new (0, 0);
 
             [SerializeField]
             private RectOffset verticalLayoutPadding = new RectOffset(){left = 10, right = 10, top = 8, bottom = 16};
@@ -112,6 +112,12 @@ namespace DCL.Interaction.Systems
 
         protected override void Update(float t)
         {
+/*            if (isMenuOpen)
+            {
+                ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
+                cursor.IsOverUI = true;
+            }
+*/
             ProcessRaycastResultQuery(World);
         }
 
@@ -123,11 +129,14 @@ namespace DCL.Interaction.Systems
             contextMenuTask.TrySetResult();
         }
 
+        private bool wasLocked;
+        private bool isMenuOpen;
+
         private bool wasLeftClickPressed;
 
         private void OnLeftClickPressed(InputAction.CallbackContext obj)
         {
-            wasLeftClickPressed = true;
+            wasLeftClickPressed = obj.control.IsPressed();
         }
 
         [Query]
@@ -228,7 +237,7 @@ namespace DCL.Interaction.Systems
 
         private void OpenContextMenu(InputAction.CallbackContext context)
         {
-            if (context.control!.IsPressed() || currentProfileHovered == null)
+            if (!context.control.IsPressed() || currentProfileHovered == null)
                 return;
 
             string userId = currentProfileHovered.UserId;
@@ -236,9 +245,39 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
+            wasLocked = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
+
+            ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
+
+            if(cursor.CursorState == CursorState.Locked)
+                //cursor.CursorState = CursorState.LockedWithUI;
+World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+            World.Set(cameraEntityProxy.Object, cursor);
+
+            isMenuOpen = true;
+
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(50, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(100, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true, onHide: OnHide);
+        }
+
+        private void OnHide()
+        {
+            isMenuOpen = false;
+
+            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "HIDDEN");
+
+            if (wasLocked)
+            {
+                ReportHub.Log(ReportCategory.EMOTE_DEBUG, "--> LOCKED");
+                /*if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
+                {
+                    World.Remove<PointerLockIntention>(cameraEntityProxy.Object);
+                }
+
+                World.Add(cameraEntityProxy.Object, new PointerLockIntention(true));*/
+                World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState = CursorState.Locked;
+            }
         }
 
         private void OpenEmoteOutcomeContextMenu(Entity entityRef)
@@ -290,15 +329,31 @@ namespace DCL.Interaction.Systems
                     GenericContextMenuParameter parameter = new GenericContextMenuParameter(
                         contextMenuConfiguration,
                         currentPositionHovered!.Value,
-                        closeTask: contextMenuTask.Task
+                        closeTask: contextMenuTask.Task,
+                        actionOnHide: OnHide
                     );
 
-                    menusAccessFacade.ShowGenericContextMenuAsync(parameter).Forget();
+                    ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
 
+                    wasLocked = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
+
+                    if(cursor.CursorState == CursorState.Locked)
+                        World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+                        //cursor.CursorState = CursorState.LockedWithUI;
+
+                    World.Set(cameraEntityProxy.Object, cursor);
+
+                    isMenuOpen = true;
+                    menusAccessFacade.ShowGenericContextMenuAsync(parameter).Forget();
                     // Unlocks the camera when showing the outcomes context menu
-                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(false));
+            //        World.Add(cameraEntityProxy.Object, new PointerLockIntention(false));
                 }
             }
+        }
+
+        private void UnlockCursor()
+        {
+
         }
 
         private void OnOutcomePerformed(int outcomeIndex, string interactingUserWalletAddress, Entity playerEntity)

@@ -107,6 +107,8 @@ namespace DCL.Input.Systems
         [Query]
         private void UpdateCursor(ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
+            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "cursor....: " + cursorComponent.CursorState);
+
             Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
             IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
@@ -122,7 +124,15 @@ namespace DCL.Input.Systems
             ref CursorComponent cursorComponent,
             ref PointerLockIntention intention)
         {
-            if (intention.Locked)
+            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "POINTER LOCK " + intention.Locked);
+
+            if (cursorComponent.CursorState == CursorState.LockedWithUI)
+            {
+                World.Remove<PointerLockIntention>(entity);
+                return;
+            }
+
+            if (intention.Locked && !intention.WithUI)
             {
                 if (cursorComponent.CursorState == CursorState.Locked)
                 {
@@ -138,6 +148,19 @@ namespace DCL.Input.Systems
                 // This is because how the editor window focusing works (it needs a click on the game window).
                 // In the build it works 100%
                 UpdateState(ref cursorComponent, CursorState.Locked);
+            }
+            else if (intention.WithUI)
+            {
+                if (cursorComponent.CursorState == CursorState.LockedWithUI)
+                {
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
+                }
+
+                // In editor sometimes the pointer is still visible even if its locked.
+                // This is because how the editor window focusing works (it needs a click on the game window).
+                // In the build it works 100%
+                UpdateState(ref cursorComponent, CursorState.LockedWithUI);
             }
             else
             {
@@ -188,6 +211,10 @@ namespace DCL.Input.Systems
                 case CursorState.Panning:
                     cursorStyle = CursorStyle.CameraPan;
                     break;
+                case CursorState.LockedWithUI:
+                    cursorStyle = CursorStyle.Interaction;
+
+                    break;
             }
 
             cursor.SetStyle(cursorStyle);
@@ -201,6 +228,16 @@ namespace DCL.Input.Systems
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
             CursorState nextState = cursorComponent.CursorState;
+
+            if (nextState == CursorState.LockedWithUI)
+            {
+                UpdateState(ref cursorComponent, nextState);
+
+                if (cursorComponent.CursorState != CursorState.Panning)
+                    cursorComponent.PositionIsDirty = false;
+
+                return;
+            }
 
             if (cursorComponent is { IsOverUI: true, CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
@@ -268,9 +305,17 @@ namespace DCL.Input.Systems
                     crosshairCanvas.SetDisplayed(true);
                     cursor.SetVisibility(false);
                     break;
+
+                case CursorState.LockedWithUI:
+                    crosshairCanvas.SetDisplayed(false);
+                    cursor.SetVisibility(true);
+                    cursor.Unlock();
+                    break;
             }
 
             cursorComponent.CursorState = nextState;
+
+            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "CURSOR: " + cursorComponent.CursorState);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

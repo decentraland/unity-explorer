@@ -7,6 +7,7 @@ namespace DCL.Character.CharacterCamera.Components
         Free,
         Locked,
         Panning,
+        LockedWithUI
     }
 
     public struct CursorComponent
