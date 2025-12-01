@@ -262,8 +262,12 @@ namespace DCL.Communities.CommunitiesCard
 
         public void ResetToggle(bool invokeEvent)
         {
-            currentSection = null;
             ToggleSection(Sections.MEMBERS, invokeEvent);
+        }
+
+        public void ClearCurrentSection()
+        {
+            currentSection = null;
         }
 
         public void SetLoadingState(bool isLoading)
