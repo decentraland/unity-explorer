@@ -23,6 +23,9 @@ namespace DCL.MapRenderer
         public IMapRendererSettings.PlayerMarkerObjectRef PlayerMarker { get; private set; }
 
         [field: SerializeField]
+        public IMapRendererSettings.HomeMarkerObjectRef HomeMarker { get; private set; }
+
+        [field: SerializeField]
         public IMapRendererSettings.PinMarkerRef PinMarker { get; private set; }
 
         [field: SerializeField]

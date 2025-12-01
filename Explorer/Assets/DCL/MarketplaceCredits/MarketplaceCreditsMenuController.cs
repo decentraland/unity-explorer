@@ -362,16 +362,16 @@ namespace DCL.MarketplaceCredits
 
         private static bool TrySetAsShownThisWeek(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            if (string.IsNullOrEmpty(creditsProgramProgressResponse.currentSeason.startDate))
+            if (string.IsNullOrEmpty(creditsProgramProgressResponse.currentWeek.startDate))
                 return false;
 
             string isoString = DCLPlayerPrefs.GetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, DateTime.MinValue.ToString("o"));
 
             if (DateTime.TryParse(isoString, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime lastShownWeek)
-                && DateTime.TryParse(creditsProgramProgressResponse.currentSeason.startDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime currentSeasonStart)
+                && DateTime.TryParse(creditsProgramProgressResponse.currentWeek.startDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime currentSeasonStart)
                 && currentSeasonStart > lastShownWeek)
             {
-                DCLPlayerPrefs.SetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, creditsProgramProgressResponse.currentSeason.startDate);
+                DCLPlayerPrefs.SetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, creditsProgramProgressResponse.currentWeek.startDate);
                 return true;
             }
 

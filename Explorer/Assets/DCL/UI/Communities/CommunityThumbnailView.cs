@@ -61,7 +61,7 @@ namespace DCL.UI.Communities
                 SetLoadingState(true);
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await thumbnailCache!.GetSpriteAsync(imageUrl, cts.Token);
+                sprite = await thumbnailCache!.GetSpriteAsync(imageUrl, ct: cts.Token);
 
                 if (sprite == null)
                     currentCommunityUrl = null;

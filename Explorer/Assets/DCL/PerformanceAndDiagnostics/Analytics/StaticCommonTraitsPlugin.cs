@@ -1,30 +1,27 @@
 ﻿using Global.AppArgs;
 using Global.Versioning;
-using Segment.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class StaticCommonTraitsPlugin : EventPlugin
+    public class StaticCommonTraitsPlugin : IAnalyticsPlugin
     {
         private const string UNITY_EDITOR = "unity-editor";
         private const string DCL_EDITOR = "dcl-editor";
         private const string DEBUG = "debug";
         private const string RELEASE = "release";
 
-        private readonly JsonElement sessionId;
-        private readonly JsonElement launcherAnonymousId;
+        private readonly JToken sessionId;
+        private readonly JToken launcherAnonymousId;
 
-        private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
-        private readonly JsonElement rendererVersion;
-        private readonly JsonElement installSource;
-        private readonly JsonElement os = SystemInfo.operatingSystem;
-        private readonly JsonElement runtime;
+        private readonly JToken dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
+        private readonly JToken rendererVersion;
+        private readonly JToken installSource;
+        private readonly JToken os = SystemInfo.operatingSystem;
+        private readonly JToken runtime;
 
         private readonly bool isLocalSceneDevelopment;
-
-        public override PluginType Type => PluginType.Enrichment;
 
         public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, BuildData buildData, DCLVersion dclVersion)
         {
@@ -51,18 +48,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return RELEASE;
         }
 
-        public override TrackEvent Track(TrackEvent trackEvent)
+        public void Track(JObject trackEvent)
         {
-            trackEvent.Context["dcl_renderer_type"] = dclRendererType;
-            trackEvent.Context["session_id"] = sessionId;
-            trackEvent.Context["launcher_anonymous_id"] = launcherAnonymousId;
-            trackEvent.Context["renderer_version"] = rendererVersion;
-            trackEvent.Context["install_source"] = installSource;
-            trackEvent.Context["runtime"] = runtime;
-            trackEvent.Context["operating_system"] = os;
-            trackEvent.Context["is_local_scene"] = isLocalSceneDevelopment;
-
-            return trackEvent;
+            trackEvent["dcl_renderer_type"] = dclRendererType;
+            trackEvent["session_id"] = sessionId;
+            trackEvent["launcher_anonymous_id"] = launcherAnonymousId;
+            trackEvent["renderer_version"] = rendererVersion;
+            trackEvent["install_source"] = installSource;
+            trackEvent["runtime"] = runtime;
+            trackEvent["operating_system"] = os;
+            trackEvent["is_local_scene"] = isLocalSceneDevelopment;
         }
     }
 

@@ -54,9 +54,9 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
-        private readonly IRPCCommunitiesService rpcCommunitiesService;
+        private readonly RPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
-        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IProfileRepository profileRepository;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
-            LambdasProfilesProvider lambdasProfilesProvider,
+            IProfileRepository profileRepository,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IVoiceChatOrchestrator voiceChatOrchestrator)
@@ -109,7 +109,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
-            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.profileRepository = profileRepository;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -154,9 +154,10 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 decentralandUrlsSource,
                 web3IdentityCache,
-                lambdasProfilesProvider,
+                profileRepository,
                 galleryEventBus,
-                voiceChatOrchestrator);
+                voiceChatOrchestrator,
+                inputBlock);
 
             mvcManager.RegisterController(communityCardController);
 
@@ -173,7 +174,7 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 selfProfile,
                 mvcManager,
-                lambdasProfilesProvider);
+                profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
@@ -186,7 +187,7 @@ namespace DCL.PluginSystem.Global
                 realmNavigator);
             mvcManager.RegisterController(eventInfoController);
 
-            rpcCommunitiesService.SubscribeToConnectivityStatusAsync(ct).Forget();
+            rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
     }
 
