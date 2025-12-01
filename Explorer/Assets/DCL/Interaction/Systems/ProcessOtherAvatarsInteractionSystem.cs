@@ -68,7 +68,7 @@ namespace DCL.Interaction.Systems
             private int elementsSpacing = 5;
 
             [SerializeField]
-            private Vector2 offset = new (0, 0);
+            private Vector2 offset = new (50, 0);
 
             [SerializeField]
             private RectOffset verticalLayoutPadding = new RectOffset(){left = 10, right = 10, top = 8, bottom = 16};
@@ -258,7 +258,7 @@ World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
 
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(100, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true, onHide: OnHide);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(50, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true, onHide: OnHide);
         }
 
         private void OnHide()

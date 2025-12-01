@@ -107,7 +107,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(InWorldCameraComponent))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
-            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson) && cursorComponent.CursorState != CursorState.LockedWithUI)
+            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson) || cursorComponent.CursorState == CursorState.LockedWithUI)
                 return;
 
             ICinemachineThirdPersonCameraData cameraData = cameraComponent.Mode == CameraMode.ThirdPerson ? cinemachinePreset.ThirdPersonCameraData : cinemachinePreset.DroneViewCameraData;
