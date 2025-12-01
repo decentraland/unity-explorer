@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
@@ -120,14 +121,14 @@ namespace DCL.Donations.UI
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
                 if (creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
-                //EthApiResponse currentBalanceResponse = await donationsService.GetCurrentBalanceAsync(ct);
+                float currentBalance = await donationsService.GetCurrentBalanceAsync(ct);
                 float manaPriceUsd = await donationsService.GetCurrentManaConversionAsync(ct);
                 string sceneName = await donationsService.GetSceneNameAsync(baseParcel, ct);
 
                 viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,
-                    sceneName, 0,
+                    sceneName, currentBalance,
                     recommendedDonationAmount, manaPriceUsd,
-                    profileRepositoryWrapper); // TODO: Fill with real values
+                    profileRepositoryWrapper);
             }
             catch (OperationCanceledException)
             {
