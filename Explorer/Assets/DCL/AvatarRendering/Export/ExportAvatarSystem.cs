@@ -88,8 +88,12 @@ namespace DCL.AvatarRendering.Export
             };
             Dictionary<string, Transform> bonesToExport = VRMExporterUtils.CacheFBXBones(avatarBase.Armature);
 
+            //return default;
             if (avatarBase.AvatarAnimator.avatar == null)
+            {
+                avatarBase.AvatarAnimator.runtimeAnimatorController = null;
                 avatarBase.AvatarAnimator.avatar = CreateAvatarFromSkeleton(avatarBase);
+            }
             
             GameObject bonesNormalized = VRMBoneNormalizer.Execute(avatarBase.AvatarAnimator.gameObject, true);
             var vrmNormalized = VRMExporter.Export(settings, bonesNormalized, textureSerializer);
@@ -225,12 +229,18 @@ namespace DCL.AvatarRendering.Export
                 { HumanBodyBones.RightFoot, avatarBase.RightFootAnchorPoint },
                 { HumanBodyBones.RightToes, avatarBase.RightToeBaseAnchorPoint },
                 
+                // TODO: Got to add finger mapping to our avatar, since we only have 2 fingers right now
                 // Fingers
-                { HumanBodyBones.LeftIndexProximal, avatarBase.LeftHandIndexAnchorPoint },
-                { HumanBodyBones.RightIndexProximal, avatarBase.RightHandIndexAnchorPoint },
+                // { HumanBodyBones.LeftIndexProximal, avatarBase.LeftHandIndexAnchorPoint },
+                // { HumanBodyBones.RightIndexProximal, avatarBase.RightHandIndexAnchorPoint },
             };
 
-            var validBones = humanBones.Where(kvp => kvp.Value != null).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var validBones = new Dictionary<HumanBodyBones, Transform>();
+            foreach (var kvp in humanBones)
+            {
+                if (kvp.Value != null) 
+                    validBones.Add(kvp.Key, kvp.Value);
+            }
 
             if (validBones.Count < 15) // Minimum required bones for humanoid
             {
@@ -238,13 +248,42 @@ namespace DCL.AvatarRendering.Export
                 return null;
             }
 
+            // We have to reset to T-pose since our implementation does not work well with UniHumanoid's structure.
+            EnforceTPose(validBones);
+
             var avatarDescription = AvatarDescription.Create();
             avatarDescription.SetHumanBones(validBones);
             
-            Avatar avatar = avatarDescription.CreateAvatar(animator.transform);
+            Avatar avatar = avatarDescription.CreateAvatar(avatarBase.HipAnchorPoint);
             animator.avatar = avatar;
             
             return avatar;
+        }
+        
+        private void EnforceTPose(Dictionary<HumanBodyBones, Transform> bones)
+        {
+            // Reset all bones to identity rotation first
+            foreach (var bone in bones.Values)
+            {
+                bone.localRotation = Quaternion.identity;
+            }
+
+            // Apply specific T-pose rotations for exceptions
+            if (bones.TryGetValue(HumanBodyBones.LeftShoulder, out var leftShoulder))
+                leftShoulder.localRotation = Quaternion.Euler(0, -180, -90);
+    
+            if (bones.TryGetValue(HumanBodyBones.RightShoulder, out var rightShoulder))
+                rightShoulder.localRotation = Quaternion.Euler(0, 0, -90);
+            
+            if (bones.TryGetValue(HumanBodyBones.Spine, out var spine))
+                spine.localRotation = Quaternion.Euler(0, 0, -180);
+
+            // Legs should be straight down
+            if (bones.TryGetValue(HumanBodyBones.LeftFoot, out var leftFoot))
+                leftFoot.localRotation = Quaternion.Euler(-90, 180, 0);
+    
+            if (bones.TryGetValue(HumanBodyBones.LeftFoot, out var rightFoot))
+                rightFoot.localRotation = Quaternion.Euler(-90, 180, 0);
         }
 
         private void DebugAvatar(Entity entity, ref AvatarShapeComponent avatarShape, AvatarBase avatarBase)

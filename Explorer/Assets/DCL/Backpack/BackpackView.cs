@@ -18,6 +18,9 @@ namespace DCL.Backpack
         public Button TipsButton { get; private set; }
 
         [field: SerializeField]
+        public Button vrmExportButton { get; private set; }
+
+        [field: SerializeField]
         public DeselectableUiElement TipsPanelDeselectable { get; private set; }
 
         [field: SerializeField]

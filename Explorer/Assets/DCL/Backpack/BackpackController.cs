@@ -224,6 +224,7 @@ namespace DCL.Backpack
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
+            view.vrmExportButton.onClick.AddListener(OnVRMExportClicked);
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
@@ -262,6 +263,12 @@ namespace DCL.Backpack
                 view.TipsPanelDeselectable.SelectElement();
 
             view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
+        }
+
+        private void OnVRMExportClicked()
+        {
+            var exportIntention = new ExportAvatarIntention(ExportMode.DebugLog);
+            world.Add(playerEntity, exportIntention);
         }
 
         private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)

@@ -9367,6 +9367,7 @@ MonoBehaviour:
     <Section>k__BackingField: 1
   <BackpackSortView>k__BackingField: {fileID: 6128057872158891546}
   <TipsButton>k__BackingField: {fileID: 8027559671807818544}
+  <vrmExportButton>k__BackingField: {fileID: 4164241681764719371}
   <TipsPanelDeselectable>k__BackingField: {fileID: 8484032604503467888}
   <CharacterPreviewView>k__BackingField: {fileID: 4359593439648312558}
   <PanelAnimator>k__BackingField: {fileID: 358424403103859707}
