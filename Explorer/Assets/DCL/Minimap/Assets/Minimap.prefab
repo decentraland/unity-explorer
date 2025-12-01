@@ -858,7 +858,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -895,7 +895,7 @@ MonoBehaviour:
   nonInteractiveSprite: {fileID: 21300000, guid: d611741aa8e4140208d8ee7bdcfa7ad1, type: 3}
   imageFill: {fileID: 5941708964308013512}
   interactiveColor: {r: 1, g: 1, b: 1, a: 1}
-  nonInteractiveColor: {r: 0.44313726, g: 0.41960785, b: 0.4862745, a: 1}
+  nonInteractiveColor: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
   buttonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &2278950974466955166
 GameObject:
@@ -931,8 +931,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -6, y: 11.399996}
-  m_SizeDelta: {x: 204, y: 20}
+  m_AnchoredPosition: {x: -12.9535, y: 11.399996}
+  m_SizeDelta: {x: 190.0931, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &874412190483968444
 CanvasRenderer:
