@@ -233,10 +233,5 @@ namespace DCL.WebRequests
 
         public static IWebRequestController WithDump(this IWebRequestController origin) =>
             new WebRequestDumpRecorder(origin);
-
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget)
-        {
-            return new BudgetedWebRequestController(origin, totalBudget, debugBudget);
-        }
     }
 }

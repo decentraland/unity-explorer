@@ -26,8 +26,8 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, string> CommunityUserBanned;
         public event Action<string, string, bool> CommunityRequestedToJoin;
         public event Action<string, bool> CommunityInviteRequestCancelled;
-        public event Action<string, bool> CommunityInviteRequestAccepted;
-        public event Action<string, bool> CommunityInviteRequestRejected;
+        public event Action<string, string, bool> CommunityInviteRequestAccepted;
+        public event Action<string, string, bool> CommunityInviteRequestRejected;
         public event Action<string> CommunityOwnershipTransferred;
 
         private readonly IWebRequestController webRequestController;
@@ -364,10 +364,10 @@ namespace DCL.Communities.CommunitiesDataProvider
             switch (intention)
             {
                 case InviteRequestIntention.accepted:
-                    CommunityInviteRequestAccepted?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestAccepted?.Invoke(communityId, requestId, result.Success);
                     break;
                 case InviteRequestIntention.rejected:
-                    CommunityInviteRequestRejected?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestRejected?.Invoke(communityId, requestId, result.Success);
                     break;
                 case InviteRequestIntention.cancelled:
                     CommunityInviteRequestCancelled?.Invoke(communityId, result.Success);
