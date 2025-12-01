@@ -1,6 +1,7 @@
 ﻿using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.Analytics;
 using DCL.WebRequests.GenericDelete;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -9,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -36,6 +38,11 @@ namespace DCL.WebRequests.Dumper
         public bool Enabled { get; private set; }
 
         public string Filter { get; set; } = string.Empty;
+
+        public bool IsMatch(bool signed, string url) =>
+            Enabled && !signed && (string.IsNullOrEmpty(Filter) || Regex.IsMatch(url, Filter));
+
+        public WebRequestsAnalyticsContainer? AnalyticsContainer { get; internal set; }
 
         public int Count => dump.entries.Count;
 

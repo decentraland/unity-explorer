@@ -6,13 +6,15 @@ using DCL.Prefs;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
+using DCL.WebRequests.Dumper;
 using DCL.WebRequests.RequestsHub;
+using System;
 using Utility.Multithreading;
 using Utility.Storage;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsContainer
+    public class WebRequestsContainer : IDisposable
     {
         public IWebRequestController WebRequestController { get; }
 
@@ -52,10 +54,12 @@ namespace DCL.WebRequests.Analytics
                                                               .AddTrackedMetric<TotalFailed>()
                                                               .AddTrackedMetric<BandwidthDown>()
                                                               .AddTrackedMetric<BandwidthUp>()
-                                                              .AddTrackedMetric<ServerTimeSmallFileAverage>()
+                                                              .AddTrackedMetric<ServeTimeSmallFileAverage>()
                                                               .AddTrackedMetric<ServeTimePerMBAverage>()
                                                               .AddTrackedMetric<FillRateAverage>()
                                                               .AddTrackedMetric<TimeToFirstByteAverage>();
+
+            WebRequestsDumper.Instance.AnalyticsContainer = analyticsContainer;
 
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
@@ -197,5 +201,8 @@ namespace DCL.WebRequests.Analytics
                 delaySetting.ForceSave(delay);
             }
         }
+
+        public void Dispose() =>
+            WebRequestsDumper.Instance.AnalyticsContainer = null;
     }
 }

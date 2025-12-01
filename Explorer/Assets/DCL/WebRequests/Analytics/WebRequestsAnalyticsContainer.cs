@@ -1,12 +1,21 @@
-﻿using System;
+﻿using DCL.WebRequests.Analytics.Metrics;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsAnalyticsContainer : IMutableWebRequestsAnalyticsContainer
+    public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
         private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
         private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();
+
+        private readonly List<IRequestMetric> flatMetrics = new ();
+
+        public WebRequestsAnalyticsContainer AddFlatMetric(IRequestMetric metric)
+        {
+            flatMetrics.Add(metric);
+            return this;
+        }
 
         public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) =>
             requestTypesWithMetrics.GetValueOrDefault(requestType);
@@ -17,8 +26,17 @@ namespace DCL.WebRequests.Analytics
         public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new()
         {
             requestMetricTypes.Add(typeof(T), () => new T());
+
+            // Allow adding metrics dynamically at runtime
+            foreach ((_, List<IRequestMetric>? metrics) in requestTypesWithMetrics)
+                metrics.Add(new T());
+
             return this;
         }
+
+        public void RemoveFlatMetric(IRequestMetric metric) =>
+            flatMetrics.Remove(metric);
+
         void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
         {
             if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics))
@@ -35,6 +53,9 @@ namespace DCL.WebRequests.Analytics
             {
                 metric.OnRequestStarted(request);
             }
+
+            foreach (IRequestMetric flat in flatMetrics)
+                flat.OnRequestStarted(request);
         }
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
@@ -45,6 +66,9 @@ namespace DCL.WebRequests.Analytics
             {
                 metric.OnRequestEnded(request);
             }
+
+            foreach (IRequestMetric flat in flatMetrics)
+                flat.OnRequestEnded(request);
         }
 
         void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }

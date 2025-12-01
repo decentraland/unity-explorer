@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class ServerTimeSmallFileAverage : IRequestMetric
+    public class ServeTimeSmallFileAverage : IRequestMetric
     {
         private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
 

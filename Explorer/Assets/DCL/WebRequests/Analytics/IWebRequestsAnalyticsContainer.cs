@@ -31,11 +31,6 @@ namespace DCL.WebRequests.Analytics
         public static readonly IWebRequestsAnalyticsContainer DEFAULT = new WebRequestsAnalyticsContainer();
     }
 
-    public interface IMutableWebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
-    {
-        WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new();
-    }
-
     public static class WebRequestsAnalyticsExtensions
     {
         internal static async UniTask WithAnalyticsAsync<T>(this T request, IWebRequestsAnalyticsContainer analyticsContainer, UniTask innerTask) where T: ITypedWebRequest

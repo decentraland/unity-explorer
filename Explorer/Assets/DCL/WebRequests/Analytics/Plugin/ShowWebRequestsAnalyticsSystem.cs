@@ -9,9 +9,11 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
+using DCL.WebRequests.Dumper;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -102,17 +104,29 @@ namespace DCL.WebRequests.Analytics
             return message;
         }
 
+        private static bool profilerEnabled
+        {
+            get
+            {
+#if ENABLE_PROFILER
+                return Profiler.enabled && Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY);
+#endif
+                return false;
+            }
+        }
+
         protected override void Update(float t)
         {
             metricsUpdatedThisFrame = false;
+
+            sumUpload = 0;
+            sumDownload = 0;
+
+            TryUpdateAllMetrics();
+
 #if ENABLE_PROFILER
-            if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            if (profilerEnabled)
             {
-                sumUpload = 0;
-                sumDownload = 0;
-
-                UpdateAllMetrics();
-
                 NetworkProfilerCounters.WEB_REQUESTS_UPLOADED.Value = sumUpload;
                 NetworkProfilerCounters.WEB_REQUESTS_DOWNLOADED.Value = sumDownload;
                 NetworkProfilerCounters.WEB_REQUESTS_UPLOADED_FRAME.Value = sumUpload - prevSumUpload;
@@ -125,9 +139,6 @@ namespace DCL.WebRequests.Analytics
 
             if (visibilityBinding is { IsExpanded: true })
             {
-                // Some metrics may require update without throttling
-                UpdateAllMetrics();
-
                 if (lastTimeSinceMetricsUpdate > THROTTLE)
                 {
                     lastTimeSinceMetricsUpdate = 0;
@@ -149,30 +160,33 @@ namespace DCL.WebRequests.Analytics
             lastTimeSinceMetricsUpdate += t;
         }
 
-        private void UpdateAllMetrics()
+        private void TryUpdateAllMetrics()
         {
-            if (metricsUpdatedThisFrame) return;
-
-            foreach (RequestType requestType in requestTypes)
+            if (profilerEnabled || visibilityBinding is { IsExpanded: true } || WebRequestsDumper.Instance.Enabled)
             {
-                IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+                if (metricsUpdatedThisFrame) return;
 
-                if (metrics == null)
-                    continue;
-
-                foreach (IRequestMetric metric in metrics)
+                foreach (RequestType requestType in requestTypes)
                 {
-                    metric.Update();
+                    IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
 
-                    switch (metric)
+                    if (metrics == null)
+                        continue;
+
+                    foreach (IRequestMetric metric in metrics)
                     {
-                        case BandwidthUp: sumUpload += metric.GetMetric(); break;
-                        case BandwidthDown: sumDownload += metric.GetMetric(); break;
+                        metric.Update();
+
+                        switch (metric)
+                        {
+                            case BandwidthUp: sumUpload += metric.GetMetric(); break;
+                            case BandwidthDown: sumDownload += metric.GetMetric(); break;
+                        }
                     }
                 }
-            }
 
-            metricsUpdatedThisFrame = true;
+                metricsUpdatedThisFrame = true;
+            }
         }
     }
 }

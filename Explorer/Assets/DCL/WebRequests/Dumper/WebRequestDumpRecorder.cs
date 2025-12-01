@@ -23,8 +23,7 @@ namespace DCL.WebRequests.Dumper
             WebRequestsDumper instance = WebRequestsDumper.Instance;
 
             // Signed requests are not supported
-            if (instance.Enabled && (string.IsNullOrEmpty(instance.Filter) || Regex.IsMatch(envelope.CommonArguments.URL, instance.Filter))
-                                 && envelope.signInfo == null)
+            if (instance.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
                 instance.Add(new WebRequestDump.Envelope(typeof(TWebRequest), envelope.CommonArguments, typeof(TWebRequestArgs), envelope.args, envelope.headersInfo));
 
             return origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
