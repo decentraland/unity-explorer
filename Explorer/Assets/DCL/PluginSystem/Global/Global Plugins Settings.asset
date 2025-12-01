@@ -238,28 +238,7 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
-        <EmbeddedEmotes>k__BackingField:
-        - urn:decentraland:off-chain:base-emotes:wave
-        - urn:decentraland:off-chain:base-emotes:fistpump
-        - urn:decentraland:off-chain:base-emotes:dance
-        - urn:decentraland:off-chain:base-emotes:raiseHand
-        - urn:decentraland:off-chain:base-emotes:clap
-        - urn:decentraland:off-chain:base-emotes:money
-        - urn:decentraland:off-chain:base-emotes:kiss
-        - urn:decentraland:off-chain:base-emotes:shrug
-        - urn:decentraland:off-chain:base-emotes:headexplode
-        - urn:decentraland:off-chain:base-emotes:cry
-        - urn:decentraland:off-chain:base-emotes:dab
-        - urn:decentraland:off-chain:base-emotes:disco
-        - urn:decentraland:off-chain:base-emotes:dontsee
-        - urn:decentraland:off-chain:base-emotes:hammer
-        - urn:decentraland:off-chain:base-emotes:handsair
-        - urn:decentraland:off-chain:base-emotes:hohoho
-        - urn:decentraland:off-chain:base-emotes:robot
-        - urn:decentraland:off-chain:base-emotes:snowfall
-        - urn:decentraland:off-chain:base-emotes:tektonik
-        - urn:decentraland:off-chain:base-emotes:tik
-        - urn:decentraland:off-chain:base-emotes:confettipopper
+        <EmbeddedEmotes>k__BackingField: []
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
