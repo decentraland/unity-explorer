@@ -3,9 +3,9 @@ using DCL.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Minimap
+namespace DCL.UI
 {
-	public class FavoriteButton : MonoBehaviour
+	public class ToggleButtonWithDisabledState : MonoBehaviour
 	{
 		[SerializeField] internal Button button;
 		[SerializeField] private Image image;

@@ -63,7 +63,7 @@ namespace DCL.Minimap
         internal ButtonView minimapContextualButtonView { get; private set; }
 
         [field: SerializeField]
-        internal FavoriteButton favoriteButton { get; private set; }
+        internal ToggleButtonWithDisabledState favoriteButton { get; private set; }
 
         [field: SerializeField]
         internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
