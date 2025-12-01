@@ -75,6 +75,7 @@ namespace DCL.Minimap
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
+        private CancellationTokenSource? favoriteCancellationToken = new ();
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
@@ -82,7 +83,6 @@ namespace DCL.Minimap
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings homeToggleSettings;
         private CancellationTokenSource showBannedTooltipCts;
-        private CancellationTokenSource? favoriteCancellationToken = new ();
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -365,8 +365,10 @@ namespace DCL.Minimap
 
         private void ForceUpdateFavoriteButton()
         {
-            favoriteCancellationToken.SafeCancelAndDispose();
-            favoriteCancellationToken = new CancellationTokenSource();
+            // Using same token as player position based update, because player position based update takes priority
+            // and using same token prevents race condition.
+            placesApiCts.SafeCancelAndDispose();
+            placesApiCts = new CancellationTokenSource();
             ForceUpdateFavoriteButton().Forget();
 
             async UniTaskVoid ForceUpdateFavoriteButton()
@@ -374,7 +376,7 @@ namespace DCL.Minimap
                 try
                 {
                     PlacesData.PlaceInfo? placeInfo = 
-                        await GetPlaceInfoAsync(previousParcelPosition, favoriteCancellationToken.Token, true);
+                        await GetPlaceInfoAsync(previousParcelPosition, placesApiCts.Token, true);
                     if (placeInfo == null)
                     {
                         viewInstance!.favoriteButton.SetButtonState(false, false);
@@ -411,11 +413,22 @@ namespace DCL.Minimap
         private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
             PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
-    
+
             if (realmData.ScenesAreFixed)
+            {
                 viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                viewInstance!.favoriteButton.SetButtonState(false, false);
+            }
+            else if (placeInfo != null)
+            {
+                viewInstance!.placeNameText.text = placeInfo.title;
+                viewInstance!.favoriteButton.SetButtonState(placeInfo.user_favorite);
+            }
             else
-                viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
+            {
+                viewInstance!.placeNameText.text = "Unknown place";
+                viewInstance!.favoriteButton.SetButtonState(false, false);
+            }
     
             viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
         }
@@ -437,8 +450,9 @@ namespace DCL.Minimap
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
                 return null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, $"Could not get place API: {e.Message}");
                 return null;
             }
         }
