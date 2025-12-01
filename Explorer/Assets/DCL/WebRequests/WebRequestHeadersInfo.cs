@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests.CustomDownloadHandlers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,12 @@ namespace DCL.WebRequests
         private List<WebRequestHeader>? values;
 
         public readonly IReadOnlyList<WebRequestHeader> Value => values as IReadOnlyList<WebRequestHeader> ?? Array.Empty<WebRequestHeader>();
+
+        [JsonConstructor]
+        private WebRequestHeadersInfo(List<WebRequestHeader> values)
+        {
+            this.values = values;
+        }
 
         public WebRequestHeadersInfo(IReadOnlyDictionary<string, string>? headers)
         {
