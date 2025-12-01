@@ -44,9 +44,9 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 
-            controller = new BudgetedWebRequestController(new WebRequestController(analytics, identityCache,
+            controller = new WebRequestController(analytics, identityCache,
                 new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache),
-                ChromeDevtoolProtocolClient.NewForTest()), concurrency, new ElementBinding<ulong>(0));
+                ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 
         protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,

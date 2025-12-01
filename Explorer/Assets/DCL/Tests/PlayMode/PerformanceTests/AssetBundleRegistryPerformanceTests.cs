@@ -153,10 +153,10 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             int iterationsCount,
             TimeSpan delayBetweenIterations)
         {
-            webRequestController = new BudgetedWebRequestController(new WebRequestController(analytics = new PerformanceTestWebRequestsAnalytics(),
+            webRequestController = new WebRequestController(analytics = new PerformanceTestWebRequestsAnalytics(),
                 new IWeb3IdentityCache.Fake(),
                 new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)),
-                ChromeDevtoolProtocolClient.NewForTest()), concurrency, new ElementBinding<ulong>(0));
+                ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
 
             analytics.WarmingUp = true;
 
