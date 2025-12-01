@@ -9,6 +9,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     [Serializable]
     public class TrimmedWearableDTO : TrimmedAvatarAttachmentDTO<TrimmedWearableDTO.WearableMetadataDto>
     {
+        public ElementIndividualDataDto[] individualData;
+
         [Serializable]
         public class WearableMetadataDto : TrimmedMetadataBase<TrimmedDataBase>
         {
@@ -38,13 +40,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public class LambdaResponseElementDto : ILambdaResponseElement<TrimmedWearableDTO>
         {
             public TrimmedWearableDTO entity;
-            public ElementIndividualDataDto[] individualData;
 
             [JsonIgnore]
             public TrimmedWearableDTO Entity => entity;
 
             [JsonIgnore]
-            public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
+            public IReadOnlyList<ElementIndividualDataDto> IndividualData => entity.individualData;
         }
     }
 

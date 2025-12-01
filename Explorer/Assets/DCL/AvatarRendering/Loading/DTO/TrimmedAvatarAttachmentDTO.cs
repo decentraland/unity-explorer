@@ -13,7 +13,6 @@ namespace DCL.AvatarRendering.Loading.DTO
     public abstract class TrimmedAvatarAttachmentDTO : TrimmedEntityDefinitionBase
     {
         public string? ContentDownloadUrl { get; protected set; }
-        public bool isSmart;
 
         public abstract TrimmedMetadataBase<TrimmedDataBase> Metadata { get; }
 
@@ -25,6 +24,7 @@ namespace DCL.AvatarRendering.Loading.DTO
             //urn
             public string id;
             public string rarity;
+            public bool isSmart;
         }
 
         [Serializable]

@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             new (TrimmedDTO.thumbnail);
 
         public bool IsSmart() =>
-            TrimmedDTO.isSmart;
+            TrimmedDTO.Metadata.isSmart;
 
         URN GetUrn() =>
             this.TrimmedDTO.Metadata.id;
