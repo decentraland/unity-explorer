@@ -1,5 +1,4 @@
-﻿using System;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using MVC;

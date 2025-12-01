@@ -91,7 +91,6 @@ namespace DCL.Notifications.NewNotification
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            ReportHub.Log(ReportCategory.GIFTING, "ClickedNotification");
             StopAnimation();
             NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }

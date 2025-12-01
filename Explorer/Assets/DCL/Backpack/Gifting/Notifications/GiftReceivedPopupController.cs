@@ -59,9 +59,9 @@ namespace DCL.Backpack.Gifting.Notifications
         protected override void OnViewShow()
         {
             viewInstance!.SubTitleText.text = GiftingTextIds.GiftOpenedTitle;
+            viewInstance.ItemNameText.text = GiftingTextIds.GiftLoading;
             viewInstance.GiftItemView.SetLoading();
-            viewInstance.ItemNameText.text = "Loading...";
-
+            
             lifeCts = new CancellationTokenSource();
 
             LoadFullDataAsync(inputData, lifeCts.Token)

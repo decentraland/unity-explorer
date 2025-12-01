@@ -27,7 +27,7 @@
             "Gift Sent to <color=#{0}>{1}</color>!";
 
         public const string GiftReceivedTitleFormat =
-            "<color=#{0}>{1}</color> Sent You A Gift!";
+            "<color=#{0}>{1}</color> sent you something!";
 
         public const string GiftReceivedFromFormat =
             "FROM <color=#{0}>{1}</color>";
@@ -55,6 +55,9 @@
             "Just now.";
         
         public const string GiftOpenedTitle =
-            "GIFT OPENED";
+            "ITEM OPENED";
+
+        public const string GiftLoading =
+            "Loading...";
     }
 }

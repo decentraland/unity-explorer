@@ -53,26 +53,14 @@ namespace DCL.Notifications.NotificationEntry
                 ? $"{notification.Metadata.SenderAddress.Substring(0, 4)}..." 
                 : notification.Metadata.SenderAddress;
 
-            HeaderText.text = $"{shortAddr} sent you a gift!";
+            HeaderText.text = $"{shortAddr} sent you a something!";
             TimeText.text = GiftingTextIds.JustNowMessage;
-
-            if (NotificationImageBackground != null) 
-                NotificationImageBackground.color = new Color(0.5f, 0.5f, 0.5f, 1f);  
         }
         
         public void UpdateSenderName(string playerName, Color nameColor)
         {
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
             HeaderText.text = string.Format(GiftingTextIds.GiftReceivedTitleFormat, hexColor, playerName);
-        }
-        
-        public void UpdateRarityBackground(Sprite raritySprite)
-        {
-            if (NotificationImageBackground != null && raritySprite != null)
-            {
-                NotificationImageBackground.sprite = raritySprite;
-                NotificationImageBackground.color = Color.white;
-            }
         }
 
         private void OnPointerClick()
