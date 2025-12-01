@@ -89,7 +89,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);
 
-            ProcessTransferFlow(lifeCts.Token)
+            ProcessTransferFlowAsync(lifeCts.Token)
                 .Forget();
         }
 
@@ -119,7 +119,7 @@ namespace DCL.Backpack.Gifting.Presenters
             await UniTask.WhenAny(closeTasks);
         }
 
-        private async UniTaskVoid ProcessTransferFlow(CancellationToken ct)
+        private async UniTaskVoid ProcessTransferFlowAsync(CancellationToken ct)
         {
             var result = await giftTransferRequestCommand.ExecuteAsync(inputData, ct);
 
