@@ -260,10 +260,8 @@ namespace DCL.Communities.CommunitiesCard
             backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        public void ResetToggle(bool invokeEvent)
-        {
+        public void ResetToggle(bool invokeEvent) =>
             ToggleSection(Sections.MEMBERS, invokeEvent);
-        }
 
         public void ClearCurrentSection()
         {
