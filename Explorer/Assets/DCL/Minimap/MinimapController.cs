@@ -369,9 +369,9 @@ namespace DCL.Minimap
             // and using same token prevents race condition.
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            ForceUpdateFavoriteButton().Forget();
+            ForceUpdateFavoriteButtonAsync().Forget();
 
-            async UniTaskVoid ForceUpdateFavoriteButton()
+            async UniTaskVoid ForceUpdateFavoriteButtonAsync()
             {
                 try
                 {
