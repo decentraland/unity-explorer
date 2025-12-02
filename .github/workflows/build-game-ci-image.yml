@@ -42,7 +42,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: Ubuntu-Big
     steps:
       - name: Checkout
         uses: actions/checkout@v4
