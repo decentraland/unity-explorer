@@ -68,7 +68,7 @@ namespace DCL.UI
 
         private async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
-            // 1. Release the previous image (decrements ref count in cache)
+            // Release the previous image (decrements ref count in cache)
             CleanUpCurrentEntity();
 
             try
@@ -76,7 +76,7 @@ namespace DCL.UI
                 view.Image.color = LOADING_COLOR;
                 view.IsLoading = true;
 
-                // 2. Define the Intention
+                // Define the Intention
                 // The Cache system uses this Intention to check if the asset is already loaded or downloading.
                 var intention = new GetTextureIntention(
                     url: uri,
@@ -87,7 +87,7 @@ namespace DCL.UI
                     reportSource: "UI_StreamableImageController"
                 );
 
-                // 3. Create the Promise Entity
+                // Create the Promise Entity
                 // TOP_PRIORITY ensures UI assets skip the distance check and get budget priority.
                 var promise = AssetPromise<TextureData, GetTextureIntention>.Create(
                     world,
@@ -97,7 +97,7 @@ namespace DCL.UI
 
                 currentLoadingEntity = promise.Entity;
 
-                // 4. Wait for ECS to resolve the loading
+                // Wait for ECS to resolve the loading
                 // We use ToUniTaskWithoutDestroyAsync because we want to keep the entity alive
                 // to hold the reference to the texture.
                 promise = await promise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: ct);
@@ -144,7 +144,8 @@ namespace DCL.UI
             {
                 view.IsLoading = false;
 
-                // If cancelled mid-flight, clean up the entity immediately to avoid hanging references
+                // If cancelled mid-flight, clean up the entity
+                // immediately to avoid hanging references
                 if (ct.IsCancellationRequested)
                     CleanUpCurrentEntity();
             }
