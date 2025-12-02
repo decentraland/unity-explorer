@@ -82,7 +82,7 @@ namespace DCL.CharacterMotion.Systems
                     + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
-            bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            bool hasGroundedFlag = /*deltaMovement.y <= 0 && */EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
