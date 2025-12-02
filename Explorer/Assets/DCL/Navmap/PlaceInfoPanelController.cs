@@ -190,7 +190,7 @@ namespace DCL.Navmap
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
             
-            if(place.is_empty_place) 
+            if(place.IsEmptyPlace) 
                 view.FavoriteButton.SetButtonState(false, false);
             else
                 view.FavoriteButton.SetButtonState(place.user_favorite);
