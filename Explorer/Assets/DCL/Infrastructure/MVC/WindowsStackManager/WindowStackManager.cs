@@ -124,13 +124,17 @@ namespace MVC
 
         private void TryGracefulClose(IController controller)
         {
-            for (int i = 0; i < controllersClosures.Count; i++)
+            for (int i = controllersClosures.Count - 1; i >= 0; i--)
+            {
                 if (controllersClosures[i].controller == controller)
                 {
                     controllersClosures[i].closer.TrySetResult();
-                    controllersClosures.RemoveAt(i);
+                    // Safe check to prevent errors in parallel async flows
+                    if (i < controllersClosures.Count)
+                        controllersClosures.RemoveAt(i);
                     break;
                 }
+            }
         }
 
         public UniTaskCompletionSource? GetControllerClosure(IController controller)
