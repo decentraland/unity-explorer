@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Arch.Core;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -43,7 +44,8 @@ namespace DCL.Passport.Modules.Badges
             IWebRequestController webRequestController,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            BadgePreviewCameraView badge3DPreviewCamera)
+            BadgePreviewCameraView badge3DPreviewCamera,
+            World world)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.webRequestController = webRequestController;
@@ -58,7 +60,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeTierButton =>
                 {
-                    badgeTierButton.ConfigureImageController(webRequestController);
+                    badgeTierButton.ConfigureImageController(world);
                     badgeTierButton.gameObject.SetActive(true);
                     badgeTierButton.SetAsSelected(false);
                     badgeTierButton.transform.SetAsLastSibling();

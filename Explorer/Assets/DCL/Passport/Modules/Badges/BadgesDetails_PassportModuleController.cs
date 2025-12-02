@@ -9,6 +9,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Arch.Core;
 using UnityEngine;
 using Utility;
 
@@ -43,7 +44,8 @@ namespace DCL.Passport.Modules.Badges
             PassportErrorsController passportErrorsController,
             IWebRequestController webRequestController,
             ISelfProfile selfProfile,
-            BadgePreviewCameraView badge3DPreviewCamera)
+            BadgePreviewCameraView badge3DPreviewCamera,
+            World world)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -51,7 +53,7 @@ namespace DCL.Passport.Modules.Badges
             this.selfProfile = selfProfile;
 
             badgesCategoriesController = new BadgesCategories_PassportModuleSubController(view);
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController, badge3DPreviewCamera);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController, badge3DPreviewCamera, world);
             badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
 
             badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;

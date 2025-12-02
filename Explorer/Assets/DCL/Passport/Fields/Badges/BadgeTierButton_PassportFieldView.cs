@@ -1,6 +1,6 @@
+using Arch.Core;
 using DCL.BadgesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -38,14 +38,14 @@ namespace DCL.Passport.Fields.Badges
 
         public TierData Model { get; private set; }
 
-        private ImageController? imageController;
+        private StreamableImageController? imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(World webRequestController)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(TierImage, webRequestController);
+            imageController = new StreamableImageController(TierImage, webRequestController);
         }
 
         public void StopLoadingImage() =>
