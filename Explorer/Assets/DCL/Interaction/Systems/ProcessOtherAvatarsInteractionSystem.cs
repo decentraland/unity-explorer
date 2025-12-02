@@ -49,29 +49,9 @@ namespace DCL.Interaction.Systems
         private readonly CancellationTokenSource cts = new ();
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly Entity playerEntity;
+        private readonly SocialEmoteOutcomesContextMenuSettings contextMenuSettings;
 
         private GenericContextMenu contextMenuConfiguration;
-
-        class SocialEmoteOutcomesContextMenuSettings
-        {
-            [Header("Layout")]
-            [SerializeField]
-            private int width = 260;
-
-            [SerializeField]
-            private int elementsSpacing = 5;
-
-            [SerializeField]
-            private Vector2 offset = new (50, 0);
-
-            [SerializeField]
-            private RectOffset verticalLayoutPadding = new RectOffset(){left = 10, right = 10, top = 8, bottom = 16};
-
-            public int Width => width;
-            public int ElementsSpacing => elementsSpacing;
-            public Vector2 Offset => offset;
-            public RectOffset VerticalLayoutPadding => verticalLayoutPadding;
-        }
 
         private ProcessOtherAvatarsInteractionSystem(
             World world,
@@ -79,7 +59,8 @@ namespace DCL.Interaction.Systems
             IMVCManagerMenusAccessFacade menusAccessFacade,
             IWeb3IdentityCache identityCache,
             ObjectProxy<Entity> cameraEntityProxy,
-            Entity playerEntity) : base(world)
+            Entity playerEntity,
+            SocialEmoteOutcomesContextMenuSettings contextMenuSettings) : base(world)
         {
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
@@ -87,17 +68,16 @@ namespace DCL.Interaction.Systems
             this.identityCache = identityCache;
             this.cameraEntityProxy = cameraEntityProxy;
             this.playerEntity = playerEntity;
+            this.contextMenuSettings = contextMenuSettings;
 
             dclInput.Player.Pointer!.performed += OnLeftClickPressed;
-            dclInput.Player.RightPointer!.performed += OpenContextMenu;
-
-            SocialEmoteOutcomesContextMenuSettings contextMenuSettings = new SocialEmoteOutcomesContextMenuSettings();
+            dclInput.Player.RightPointer!.performed += OnRightClickPressed;
 
             contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
                     contextMenuSettings.Offset,
                     contextMenuSettings.VerticalLayoutPadding,
                     contextMenuSettings.ElementsSpacing,
-                    ContextMenuOpenDirection.CENTER_LEFT);
+                    ContextMenuOpenDirection.CENTER_RIGHT);
         }
 
         protected override void Update(float t)
@@ -109,17 +89,23 @@ namespace DCL.Interaction.Systems
         {
             cts.SafeCancelAndDispose();
             dclInput.Player.Pointer!.performed -= OnLeftClickPressed;
-            dclInput.Player.RightPointer!.performed -= OpenContextMenu;
+            dclInput.Player.RightPointer!.performed -= OnRightClickPressed;
             contextMenuTask.TrySetResult();
         }
 
         private bool wasLocked;
 
+        private bool wasRightClickPressed;
         private bool wasLeftClickPressed;
 
         private void OnLeftClickPressed(InputAction.CallbackContext obj)
         {
             wasLeftClickPressed = obj.control.IsPressed();
+        }
+
+        private void OnRightClickPressed(InputAction.CallbackContext obj)
+        {
+            wasRightClickPressed = obj.control.IsPressed();
         }
 
         [Query]
@@ -137,6 +123,7 @@ namespace DCL.Interaction.Systems
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
             {
                 wasLeftClickPressed = false;
+                wasRightClickPressed = false;
                 return;
             }
 
@@ -148,6 +135,7 @@ namespace DCL.Interaction.Systems
                 || World.Has<IgnoreInteractionComponent>(entityRef))
             {
                 wasLeftClickPressed = false;
+                wasRightClickPressed = false;
                 return;
             }
 
@@ -171,6 +159,12 @@ namespace DCL.Interaction.Systems
                 OpenEmoteOutcomeContextMenu();
             }
 
+            if (wasRightClickPressed)
+            {
+                wasRightClickPressed = false;
+                OpenOptionsContextMenu();
+            }
+
             // Tooltips
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
 
@@ -190,9 +184,9 @@ namespace DCL.Interaction.Systems
             }
         }
 
-        private void OpenContextMenu(InputAction.CallbackContext context)
+        private void OpenOptionsContextMenu()
         {
-            if (!context.control.IsPressed() || currentProfileHovered == null)
+            if (currentProfileHovered == null)
                 return;
 
             string userId = currentProfileHovered.UserId;
@@ -258,7 +252,7 @@ namespace DCL.Interaction.Systems
                     {
                         int outcomeIndex = i;
                         string initiatorWalletAddress = currentProfileHovered.UserId;
-                        contextMenuConfiguration.AddControl(new SimpleButtonContextMenuControlSettings(outcomes[i].title,
+                        contextMenuConfiguration.AddControl(new ButtonContextMenuControlSettings(outcomes[i].title, contextMenuSettings.EmoteIcon,
                                                             () => OnOutcomePerformed(outcomeIndex, initiatorWalletAddress, playerEntity)));
                     }
 

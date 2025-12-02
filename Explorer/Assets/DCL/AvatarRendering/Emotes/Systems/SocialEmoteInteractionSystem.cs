@@ -162,7 +162,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             }
             else
             {
-                movementInput.Kind = MovementKind.WALK;
+                movementInput.Kind = MovementKind.RUN;
                 movementInput.Axes = Vector2.up;
                 // The avatar can walk freely towards the initiator without taking the camera's orientation into consideration
                 movementInput.IgnoreCamera = true;

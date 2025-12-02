@@ -167,6 +167,7 @@ MonoBehaviour:
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
             IconClass: sprite-interaction__icon-mouse-right
+        <socialEmoteOutcomesContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 79f752bc43a65384bab431cb6a44d8bd, type: 2}
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
