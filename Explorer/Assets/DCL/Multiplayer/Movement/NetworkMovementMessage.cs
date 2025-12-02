@@ -14,6 +14,9 @@ namespace DCL.Multiplayer.Movement
 
         public float rotationY;
 
+        public bool headFreeLookEnabled;
+        public Vector2 headYawAndPitch;
+
         public MovementKind movementKind;
         public bool isSliding;
         public bool isStunned;

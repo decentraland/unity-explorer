@@ -95,6 +95,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 {
                     temporalData = receivedMessage.Payload.TemporalData,
                     movementData = receivedMessage.Payload.MovementData,
+                    headSyncData = receivedMessage.Payload.HeadSyncData,
                 };
 
                 Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
@@ -135,6 +136,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
                 isEmoting = proto.IsEmoting,
+
+                headFreeLookEnabled = proto.HeadFreeLookEnabled,
+                headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
             };
         }
 
@@ -189,12 +193,17 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;
+
+            movement.HeadFreeLookEnabled = message.headFreeLookEnabled;
+            movement.HeadYaw = message.headYawAndPitch.x;
+            movement.HeadPitch = message.headYawAndPitch.y;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
         {
             proto.TemporalData = message.temporalData;
             proto.MovementData = message.movementData;
+            proto.HeadSyncData = message.headSyncData;
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

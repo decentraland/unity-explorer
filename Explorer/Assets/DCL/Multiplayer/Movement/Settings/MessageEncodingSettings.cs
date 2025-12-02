@@ -10,6 +10,8 @@ namespace DCL.Multiplayer.Movement.Settings
         public const int PARCEL_BITS = 17;
         private const int MOVEMENT_KIND_BITS = 2;
 
+        public const int HEAD_ROTATION_BITS = 6;
+
         // int32 - 9 (Anim) - 2 (Tiers) = 21 bits
         [Header("TIMESTAMP [21]")]
         public float TIMESTAMP_QUANTUM = 0.02f;

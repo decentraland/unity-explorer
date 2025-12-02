@@ -13,11 +13,9 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
-using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.InputSystem;
 #if UNITY_EDITOR
 using DCL.AvatarRendering.DemoScripts.Components;
 #endif
@@ -177,9 +175,9 @@ namespace DCL.CharacterMotion.Systems
             if (!isEnabled || inWorldCameraActive) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
-            Vector3 targetDirection = cameraComponent.Camera.transform.forward;
+            headIK.LookAt = cameraComponent.Camera.transform.forward;
 
-            ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings);
+            ApplyHeadLookAt.Execute(headIK.LookAt, avatarBase, dt, settings);
         }
     }
 }
