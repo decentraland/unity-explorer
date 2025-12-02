@@ -79,23 +79,47 @@ namespace DCL.WebRequests.Dumper
         [Preserve]
         public class Envelope
         {
+            public enum StatusKind
+            {
+                // Request is either not sent due to budgeting or is still processing
+                NOT_CONCLUDED = 0,
+                FAILURE = 1,
+                SUCCESS = 2,
+            }
+
             public readonly object Args;
             public readonly Type ArgsType;
             public readonly CommonArguments CommonArguments;
             public readonly WebRequestHeadersInfo? HeadersInfo;
 
             public readonly Type RequestType;
+            public readonly DateTime StartTime;
+            public StatusKind Status;
+            public DateTime EndTime;
+
+            [JsonIgnore]
+            public float Duration;
 
             // Sign is not supported
 
             [JsonConstructor]
-            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo)
+            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo,
+                DateTime startTime)
             {
                 CommonArguments = commonArguments;
                 ArgsType = argsType;
                 Args = args;
                 HeadersInfo = headersInfo;
                 RequestType = requestType;
+                Status = StatusKind.NOT_CONCLUDED;
+                StartTime = startTime;
+            }
+
+            internal void Conclude(StatusKind status, DateTime time)
+            {
+                Status = status;
+                EndTime = time;
+                Duration = (float)time.Subtract(StartTime).TotalSeconds;
             }
 
             public UniTask RecreateWithNoOp(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken token)

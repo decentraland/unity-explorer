@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.WebRequests.RequestsHub;
+using System;
 using System.Text.RegularExpressions;
 
 namespace DCL.WebRequests.Dumper
@@ -15,18 +16,31 @@ namespace DCL.WebRequests.Dumper
             this.origin = origin;
         }
 
-        public UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestArgs: struct
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
             WebRequestsDumper instance = WebRequestsDumper.Instance;
 
-            // Signed requests are not supported
-            if (instance.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
-                instance.Add(new WebRequestDump.Envelope(typeof(TWebRequest), envelope.CommonArguments, typeof(TWebRequestArgs), envelope.args, envelope.headersInfo));
+            WebRequestDump.Envelope? dumpEnvelope = null;
 
-            return origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
+            try
+            {
+                // Signed requests are not supported
+                if (instance.IsMatch(envelope.signInfo != null, envelope.CommonArguments.URL))
+                    instance.Add(dumpEnvelope = new WebRequestDump.Envelope(typeof(TWebRequest), envelope.CommonArguments, typeof(TWebRequestArgs), envelope.args, envelope.headersInfo, DateTime.Now));
+
+                TResult? result = await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
+
+                dumpEnvelope?.Conclude(WebRequestDump.Envelope.StatusKind.SUCCESS, DateTime.Now);
+                return result;
+            }
+            catch (Exception)
+            {
+                dumpEnvelope?.Conclude(WebRequestDump.Envelope.StatusKind.FAILURE, DateTime.Now);
+                throw;
+            }
         }
     }
 }
