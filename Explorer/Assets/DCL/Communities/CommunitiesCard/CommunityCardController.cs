@@ -482,6 +482,7 @@ namespace DCL.Communities.CommunitiesCard
 
             ResetSubControllers();
             viewInstance!.ResetToggle(false);
+            viewInstance!.ClearCurrentSection();
         }
 
         private void ResetSubControllers()
