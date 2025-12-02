@@ -73,8 +73,8 @@ namespace DCL.Interaction.Systems
             this.contextMenuSettings = contextMenuSettings;
             this.socialEmotesSettings = socialEmotesSettings;
 
-            dclInput.Player.Pointer!.performed += OnLeftClickPressed;
-            dclInput.Player.RightPointer!.performed += OnRightClickPressed;
+            dclInput.Player.Pointer!.performed += OpenEmoteOutcomeContextMenu;
+            dclInput.Player.RightPointer!.performed += OpenOptionsContextMenu;
 
             contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
                     contextMenuSettings.Offset,
@@ -91,25 +91,12 @@ namespace DCL.Interaction.Systems
         protected override void OnDispose()
         {
             cts.SafeCancelAndDispose();
-            dclInput.Player.Pointer!.performed -= OnLeftClickPressed;
-            dclInput.Player.RightPointer!.performed -= OnRightClickPressed;
+            dclInput.Player.Pointer!.performed -= OpenEmoteOutcomeContextMenu;
+            dclInput.Player.RightPointer!.performed -= OpenOptionsContextMenu;
             contextMenuTask.TrySetResult();
         }
 
         private bool wasLocked;
-
-        private bool wasRightClickPressed;
-        private bool wasLeftClickPressed;
-
-        private void OnLeftClickPressed(InputAction.CallbackContext obj)
-        {
-            wasLeftClickPressed = obj.control.IsPressed();
-        }
-
-        private void OnRightClickPressed(InputAction.CallbackContext obj)
-        {
-            wasRightClickPressed = obj.control.IsPressed();
-        }
 
         [Query]
         private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities,
@@ -124,11 +111,7 @@ namespace DCL.Interaction.Systems
             GlobalColliderGlobalEntityInfo? entityInfo = raycastResultForGlobalEntities.GetEntityInfo();
 
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
-            {
-                wasLeftClickPressed = false;
-                wasRightClickPressed = false;
                 return;
-            }
 
             Entity entityRef = entityInfo.Value.EntityReference;
 
@@ -136,11 +119,7 @@ namespace DCL.Interaction.Systems
                 || !World!.TryGet(entityRef, out Profile? profile)
                 || World.Has<HiddenPlayerComponent>(entityRef)
                 || World.Has<IgnoreInteractionComponent>(entityRef))
-            {
-                wasLeftClickPressed = false;
-                wasRightClickPressed = false;
                 return;
-            }
 
             currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
@@ -154,18 +133,6 @@ namespace DCL.Interaction.Systems
             // Distance limit
             if(sqrDistanceToAvatar > socialEmotesSettings.VisibilityDistance * socialEmotesSettings.VisibilityDistance)
                 return;
-
-            if (wasLeftClickPressed)
-            {
-                wasLeftClickPressed = false;
-                OpenEmoteOutcomeContextMenu();
-            }
-
-            if (wasRightClickPressed)
-            {
-                wasRightClickPressed = false;
-                OpenOptionsContextMenu();
-            }
 
             // Tooltips
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
@@ -186,9 +153,9 @@ namespace DCL.Interaction.Systems
             }
         }
 
-        private void OpenOptionsContextMenu()
+        private void OpenOptionsContextMenu(InputAction.CallbackContext context)
         {
-            if (currentProfileHovered == null)
+            if (!context.control.IsPressed() || currentProfileHovered == null)
                 return;
 
             string userId = currentProfileHovered.UserId;
@@ -221,8 +188,11 @@ namespace DCL.Interaction.Systems
             }
         }
 
-        private void OpenEmoteOutcomeContextMenu()
+        private void OpenEmoteOutcomeContextMenu(InputAction.CallbackContext context)
         {
+            if (!context.control.IsPressed() || currentProfileHovered == null)
+                return;
+
             string userId = currentProfileHovered.UserId;
 
             if (string.IsNullOrEmpty(userId))
