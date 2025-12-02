@@ -1,6 +1,9 @@
 name: Build GameCI Image
 
 on:
+  push:
+    branches:
+      - dev-game-ci-docker-image
   workflow_dispatch:
     inputs:
       editor_version:
