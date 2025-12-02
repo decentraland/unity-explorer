@@ -76,6 +76,7 @@ namespace DCL.PluginSystem.Global
         private Transform? socialPinsPoolParent = null;
         private Transform poolParent;
         private IObjectPool<SocialEmotePin> socialEmotePinsPool;
+        private SocialEmotesSettings socialEmotesSettings;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -154,7 +155,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController, socialEmotesSettings);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -162,13 +163,15 @@ namespace DCL.PluginSystem.Global
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
 
-            SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus);
+            SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus, socialEmotesSettings);
 
             SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            socialEmotesSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.SocialEmotesSettings, ct)).Value;
+
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
             // TODO: convert into an async operation so we don't increment the loading times at app's startup
@@ -225,6 +228,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
             [field: SerializeField] public SocialEmotePinRef SocialEmotePinPrefab { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<SocialEmotesSettings> SocialEmotesSettings { get; set; } = null!;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

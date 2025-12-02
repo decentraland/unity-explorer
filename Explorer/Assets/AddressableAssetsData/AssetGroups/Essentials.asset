@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Essentials
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
+  - m_GUID: 000895e935900fa43b53faf506ee15fa
+    m_Address: Assets/DCL/AvatarRendering/Emotes/SocialEmotesSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 00657accebbe6c348b5208e385e5ec73
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
     m_ReadOnly: 0

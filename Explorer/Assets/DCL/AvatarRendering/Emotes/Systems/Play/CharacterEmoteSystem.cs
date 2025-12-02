@@ -17,7 +17,6 @@ using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Movement;
 using DCL.Profiles;
 using DCL.SocialEmotes;
 using DCL.UI.EphemeralNotifications;
@@ -34,8 +33,6 @@ using Global.AppArgs;
 using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;
-using ECS.SceneLifeCycle;
-using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Animations;
@@ -63,11 +60,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly URN[] loadEmoteBuffer = new URN[1];
         private readonly IWeb3IdentityCache identityCache;
         private readonly EphemeralNotificationsController ephemeralNotificationsController;
-
-        private const string DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME = "DirectedSocialEmoteEphemeralNotification";
-        private const string DIRECTED_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME = "DirectedEmoteEphemeralNotification";
-
-        private readonly IWeb3IdentityCache playerIdentity;
+        private readonly SocialEmotesSettings socialEmotesSettings;
 
         public CharacterEmoteSystem(
             World world,
@@ -79,7 +72,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             IAppArgs appArgs,
             IScenesCache scenesCache,
             IWeb3IdentityCache identityCache,
-            EphemeralNotificationsController ephemeralNotificationsController) : base(world)
+            EphemeralNotificationsController ephemeralNotificationsController,
+            SocialEmotesSettings socialEmotesSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
@@ -87,8 +81,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             this.scenesCache = scenesCache;
             this.identityCache = identityCache;
             this.ephemeralNotificationsController = ephemeralNotificationsController;
+            this.socialEmotesSettings = socialEmotesSettings;
             emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
-            this.playerIdentity = playerIdentity;
         }
 
         protected override void Update(float t)
@@ -551,13 +545,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                         emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
 
                         if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
-                            ephemeralNotificationsController.AddNotificationAsync(DIRECTED_SOCIAL_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
+                            ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedSocialEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
 
                         //TODO: The initiator has to look at the receiver
                     }
                 }
                 else if (!emoteComponent.Metadata.IsSocialEmote && !isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
-                    ephemeralNotificationsController.AddNotificationAsync(DIRECTED_EMOTE_EPHEMERAL_NOTIFICATION_PREFAB_NAME, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
+                    ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
 
                 if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.UseOutcomeReactionAnimation)
                 {

@@ -50,6 +50,7 @@ namespace DCL.Interaction.Systems
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly Entity playerEntity;
         private readonly SocialEmoteOutcomesContextMenuSettings contextMenuSettings;
+        private readonly SocialEmotesSettings socialEmotesSettings;
 
         private GenericContextMenu contextMenuConfiguration;
 
@@ -60,7 +61,8 @@ namespace DCL.Interaction.Systems
             IWeb3IdentityCache identityCache,
             ObjectProxy<Entity> cameraEntityProxy,
             Entity playerEntity,
-            SocialEmoteOutcomesContextMenuSettings contextMenuSettings) : base(world)
+            SocialEmoteOutcomesContextMenuSettings contextMenuSettings,
+            SocialEmotesSettings socialEmotesSettings) : base(world)
         {
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
@@ -69,6 +71,7 @@ namespace DCL.Interaction.Systems
             this.cameraEntityProxy = cameraEntityProxy;
             this.playerEntity = playerEntity;
             this.contextMenuSettings = contextMenuSettings;
+            this.socialEmotesSettings = socialEmotesSettings;
 
             dclInput.Player.Pointer!.performed += OnLeftClickPressed;
             dclInput.Player.RightPointer!.performed += OnRightClickPressed;
@@ -146,11 +149,10 @@ namespace DCL.Interaction.Systems
             Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
             Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
 
-            const float MAX_SQR_DISTANCE_TO_INTERACT = 5.0f * 5.0f; // TODO: Move to a proper place
             float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
 
             // Distance limit
-            if(sqrDistanceToAvatar > MAX_SQR_DISTANCE_TO_INTERACT)
+            if(sqrDistanceToAvatar > socialEmotesSettings.VisibilityDistance * socialEmotesSettings.VisibilityDistance)
                 return;
 
             if (wasLeftClickPressed)

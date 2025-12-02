@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.HoverCanvas;
@@ -104,7 +105,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, identityCache, cameraEntityProxy, playerEntity, settings.socialEmoteOutcomesContextMenuSettings);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, identityCache, cameraEntityProxy, playerEntity, settings.socialEmoteOutcomesContextMenuSettings, settings.socialEmoteSettings);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
@@ -116,6 +117,7 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
             [field: SerializeField] internal SocialEmoteOutcomesContextMenuSettings socialEmoteOutcomesContextMenuSettings { get; private set; }
+            [field: SerializeField] internal SocialEmotesSettings socialEmoteSettings { get; private set; }
         }
     }
 }

@@ -24,11 +24,13 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
     [LogCategory(ReportCategory.EMOTE)]
     public partial class SocialEmoteInteractionSystem : BaseUnityLoopSystem
     {
-        IEmotesMessageBus messageBus;
+        private readonly IEmotesMessageBus messageBus;
+        private readonly SocialEmotesSettings socialEmotesSettings;
 
-        public SocialEmoteInteractionSystem(World world, IEmotesMessageBus messageBus) : base(world)
+        public SocialEmoteInteractionSystem(World world, IEmotesMessageBus messageBus, SocialEmotesSettings socialEmotesSettings) : base(world)
         {
             this.messageBus = messageBus;
+            this.socialEmotesSettings = socialEmotesSettings;
         }
 
         protected override void Update(float t)
@@ -83,8 +85,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 return;
             }
 
-            const float INTERPOLATION_DURATION = 0.4f;
-            float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / INTERPOLATION_DURATION;
+            float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / socialEmotesSettings.OutcomeStartInterpolationDuration;
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Emote tag?: {avatarView.AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == AnimationHashes.EMOTE} Speed: {avatarView.AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND).ToString("F6")}</color>");
 
@@ -137,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (interaction == null || interaction.AreInteracting || interaction.Id != moveIntent.TriggerEmoteIntent.InteractionId)
                 moveIntent.HasBeenCancelled = true;
 
-            bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < 2.0f;
+            bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < socialEmotesSettings.OutcomeStartInterpolationRadius * socialEmotesSettings.OutcomeStartInterpolationRadius;
 
             if (isCloseEnoughToInitiator ||
                 movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
@@ -162,7 +163,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             }
             else
             {
-                movementInput.Kind = MovementKind.RUN;
+                movementInput.Kind = socialEmotesSettings.ReceiverRuns ? MovementKind.RUN : MovementKind.WALK;
                 movementInput.Axes = Vector2.up;
                 // The avatar can walk freely towards the initiator without taking the camera's orientation into consideration
                 movementInput.IgnoreCamera = true;
@@ -195,8 +196,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [All(typeof(InterpolateCameraTargetTowardsNewParentIntent))]
         private void InterpolateCameraTargetTowardsNewParent(Entity entity, ref PlayerComponent player, in InterpolateCameraTargetTowardsNewParentIntent interpolateIntent)
         {
-            const float INTERPOLATION_DURATION = 0.4f;
-            float interpolation = (UnityEngine.Time.time - interpolateIntent.StartTime) / INTERPOLATION_DURATION;
+            float interpolation = (UnityEngine.Time.time - interpolateIntent.StartTime) / socialEmotesSettings.OutcomeCameraInterpolationDuration;
 
             try
             {
