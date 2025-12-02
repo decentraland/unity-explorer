@@ -29,6 +29,8 @@ namespace DCL.Donations
         private const string TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
         private const decimal WEI_FACTOR = 1_000_000_000_000_000_000;
 
+        private const double MANA_RATE_CACHE_DURATION_MINUTES = 30;
+
         private static readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
 
         public IReadonlyReactiveProperty<(bool enabled, string? creatorAddress, Vector2Int? baseParcel)> DonationsEnabledCurrentScene => donationsEnabledCurrentScene;
@@ -40,6 +42,9 @@ namespace DCL.Donations
         private readonly IRealmData realmData;
         private readonly IPlacesAPIService placesAPIService;
         private readonly string contractAddress;
+
+        private DateTime lastManaRateQueryTime = new ();
+        private decimal lastManaRate;
 
         public DonationsService(IScenesCache scenesCache,
             IEthereumApi ethereumApi,
@@ -153,12 +158,19 @@ namespace DCL.Donations
 
         public async UniTask<decimal> GetCurrentManaConversionAsync(CancellationToken ct)
         {
+            if (lastManaRateQueryTime.AddMinutes(MANA_RATE_CACHE_DURATION_MINUTES) > DateTime.UtcNow)
+                return lastManaRate;
+
             var response = await webRequestController.GetAsync(
                                                           new CommonArguments(MANA_USD_API_URL),
                                                           ct,
                                                           ReportCategory.DONATIONS)
                                                      .CreateFromJson<Dictionary<string, Dictionary<string, decimal>>>(WRJsonParser.Newtonsoft);
-            return response["decentraland"]["usd"];
+
+            lastManaRate = response["decentraland"]["usd"];
+            lastManaRateQueryTime = DateTime.UtcNow;
+
+            return lastManaRate;
         }
     }
 }

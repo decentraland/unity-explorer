@@ -117,13 +117,15 @@ namespace DCL.Donations.UI
                     baseParcel = donationStatus.baseParcel!.Value;
                 }
 
-                Profile? creatorProfile = await profileRepository.GetAsync(creatorAddress, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET, CatalystRetryPolicy.SIMPLE);
+                (Profile? creatorProfile, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
+                    await UniTask.WhenAll(profileRepository.GetAsync(creatorAddress, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET, CatalystRetryPolicy.SIMPLE),
+                        donationsService.GetCurrentBalanceAsync(ct),
+                        donationsService.GetCurrentManaConversionAsync(ct),
+                        donationsService.GetSceneNameAsync(baseParcel, ct));
+
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
                 if (creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
-                decimal currentBalance = await donationsService.GetCurrentBalanceAsync(ct);
-                decimal manaPriceUsd = await donationsService.GetCurrentManaConversionAsync(ct);
-                string sceneName = await donationsService.GetSceneNameAsync(baseParcel, ct);
 
                 viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,
                     sceneName, currentBalance,
