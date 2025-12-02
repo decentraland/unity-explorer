@@ -130,7 +130,7 @@ namespace DCL.Donations
             return (decimal)weiValue / WEI_FACTOR;
         }
 
-        public async UniTask<string> SendDonationAsync(string toAddress, decimal amountInMana, CancellationToken ct)
+        public async UniTask<bool> SendDonationAsync(string toAddress, decimal amountInMana, CancellationToken ct)
         {
             BigInteger value = new BigInteger(decimal.Round(amountInMana * WEI_FACTOR, 0, MidpointRounding.AwayFromZero));
             string to = toAddress[2..];
@@ -153,7 +153,10 @@ namespace DCL.Donations
 
             EthApiResponse response = await ethereumApi.SendAsync(request, ct);
 
-            return response.result.ToString();
+            if (response.result != null)
+                ReportHub.Log(ReportCategory.DONATIONS, $"Donation was successful. Tx hash: {response.result}");
+
+            return response.result != null;
         }
 
         public async UniTask<decimal> GetCurrentManaConversionAsync(CancellationToken ct)

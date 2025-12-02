@@ -79,10 +79,10 @@ namespace DCL.Donations.UI
             {
                 viewInstance!.PlayWaitAnimation();
 
-                string result = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
-                ReportHub.Log(ReportCategory.DONATIONS, $"Donation was successful. Tx hash: {result}");
+                bool success = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
 
-                PlayEmoteByUrn(EMOTE_MONEY_URN);
+                if (success)
+                    PlayEmoteByUrn(EMOTE_MONEY_URN);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.DONATIONS); }
