@@ -26,7 +26,7 @@ namespace DCL.Profiles
         {
             var compact = new Profile.CompactInfo
             {
-                UserId = jObject["userId"]?.Value<string>() ?? "",
+                UserId = jObject["userId"]?.Value<string>() ?? jObject["pointer"]?.Value<string>() ?? "",
                 HasClaimedName = jObject["hasClaimedName"]?.Value<bool>() ?? false,
                 Name = jObject["name"]?.Value<string>() ?? "",
                 UnclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "",
