@@ -22,7 +22,7 @@ namespace DCL.Donations.UI
         private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly float recommendedDonationAmount;
+        private readonly decimal recommendedDonationAmount;
         private readonly Entity playerEntity;
         private readonly World world;
 
@@ -37,7 +37,7 @@ namespace DCL.Donations.UI
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             Entity playerEntity,
-            float recommendedDonationAmount)
+            decimal recommendedDonationAmount)
             : base(viewFactory)
         {
             this.donationsService = donationsService;
@@ -121,8 +121,8 @@ namespace DCL.Donations.UI
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
                 if (creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
-                float currentBalance = await donationsService.GetCurrentBalanceAsync(ct);
-                float manaPriceUsd = await donationsService.GetCurrentManaConversionAsync(ct);
+                decimal currentBalance = await donationsService.GetCurrentBalanceAsync(ct);
+                decimal manaPriceUsd = await donationsService.GetCurrentManaConversionAsync(ct);
                 string sceneName = await donationsService.GetSceneNameAsync(baseParcel, ct);
 
                 viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,

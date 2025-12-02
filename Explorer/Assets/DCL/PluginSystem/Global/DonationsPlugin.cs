@@ -71,7 +71,7 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 world,
                 playerEntity,
-                recommendedAmountParseSuccess ? temporalTipsJson.amount : 1.0f);
+                recommendedAmountParseSuccess ? temporalTipsJson.amount : 1);
 
             mvcManager.RegisterController(donationsPanelController);
         }
@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
         [Serializable]
         private struct DonationRecommendedAmount
         {
-            public float amount;
+            public decimal amount;
         }
     }
 

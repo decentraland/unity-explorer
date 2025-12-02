@@ -23,8 +23,11 @@ namespace DCL.Donations
     public class DonationsService : IDisposable
     {
         private const string MAIN_NET_CONTRACT_ADDRESS = "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942";
-        private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xB3C6F2cB6dBf3BfC4c6E3E5D1E8b8D7F4F5A6B7C8";
+        private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xFa04D2e2BA9aeC166c93dFEEba7427B2303beFa9";
+
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
+        private const string TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
+        private const decimal WEI_FACTOR = 1_000_000_000_000_000_000;
 
         private static readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
 
@@ -98,7 +101,7 @@ namespace DCL.Donations
             }
         }
 
-        public async UniTask<float> GetCurrentBalanceAsync(CancellationToken ct)
+        public async UniTask<decimal> GetCurrentBalanceAsync(CancellationToken ct)
         {
             var request = new EthApiRequest
             {
@@ -119,16 +122,42 @@ namespace DCL.Donations
 
             BigInteger weiValue = BigInteger.Parse(response.result.ToString()[2..], NumberStyles.HexNumber);
 
-            return (float)weiValue / 1_000_000_000_000_000_000f;
+            return (decimal)weiValue / WEI_FACTOR;
         }
 
-        public async UniTask<float> GetCurrentManaConversionAsync(CancellationToken ct)
+        public async UniTask<string> SendDonationAsync(string toAddress, decimal amountInMana, CancellationToken ct)
+        {
+            BigInteger value = new BigInteger(decimal.Round(amountInMana * WEI_FACTOR, 0, MidpointRounding.AwayFromZero));
+            string to = toAddress[2..];
+
+            var request = new EthApiRequest
+            {
+                id = Guid.NewGuid().GetHashCode(),
+                method = "eth_sendTransaction",
+                @params = new object[]
+                {
+                    new JObject
+                    {
+                        ["from"] = ViewDependencies.CurrentIdentity?.Address.ToString(),
+                        ["to"] = contractAddress,
+                        ["value"] = "0x0",
+                        ["data"] = $"{TRANSFER_FUNCTION_SELECTOR}000000000000000000000000{to}{value.ToString("x")}"
+                    }
+                }
+            };
+
+            EthApiResponse response = await ethereumApi.SendAsync(request, ct);
+
+            return response.result.ToString();
+        }
+
+        public async UniTask<decimal> GetCurrentManaConversionAsync(CancellationToken ct)
         {
             var response = await webRequestController.GetAsync(
                                                           new CommonArguments(MANA_USD_API_URL),
                                                           ct,
                                                           ReportCategory.DONATIONS)
-                                                     .CreateFromJson<Dictionary<string, Dictionary<string, float>>>(WRJsonParser.Newtonsoft);
+                                                     .CreateFromJson<Dictionary<string, Dictionary<string, decimal>>>(WRJsonParser.Newtonsoft);
             return response["decentraland"]["usd"];
         }
     }

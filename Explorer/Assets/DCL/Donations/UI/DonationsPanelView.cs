@@ -49,7 +49,7 @@ namespace DCL.Donations.UI
         private readonly UniTask[] closingTasks = new UniTask[2];
 
         private UserWalletAddressElementController? creatorAddressController;
-        private float manaUsdConversion;
+        private decimal manaUsdConversion;
         private CancellationTokenSource confirmationCts = new ();
 
         private void Awake()
@@ -71,9 +71,9 @@ namespace DCL.Donations.UI
         public void ConfigurePanel(Profile? profile,
             string sceneCreatorAddress,
             string sceneName,
-            float currentBalance,
-            float suggestedDonationAmount,
-            float manaUsdPrice,
+            decimal currentBalance,
+            decimal suggestedDonationAmount,
+            decimal manaUsdPrice,
             ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             manaUsdConversion = manaUsdPrice;
@@ -127,7 +127,7 @@ namespace DCL.Donations.UI
 
         private void Validate(string value)
         {
-            bool isValid = float.TryParse(value, out float number) && number >= 1;
+            bool isValid = decimal.TryParse(value, out decimal number) && number >= 1;
             sendButton.interactable = isValid;
             donationBorderError.color = isValid ? Color.white : Color.softRed;
 
