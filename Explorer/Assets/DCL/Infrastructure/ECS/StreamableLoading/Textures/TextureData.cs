@@ -23,8 +23,11 @@ namespace ECS.StreamableLoading.Textures
         /// <summary>
         ///     Throws an exception or returns the Texture2D if the underlying asset is not a video texture
         /// </summary>
-        public Texture2D EnsureTexture2D() =>
-            Asset.Match(_ => throw new ArgumentException("Expected Texture2D, got VideoTexture"), texture => texture);
+        public Texture2D EnsureTexture2D()
+        {
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TextureData] Destroying/Unloading Texture: {Asset.Texture?.name}");
+            return Asset.Match(_ => throw new ArgumentException("Expected Texture2D, got VideoTexture"), texture => texture);
+        }
 
         public static implicit operator Texture?(TextureData? textureData) =>
             textureData?.Asset.Texture;
