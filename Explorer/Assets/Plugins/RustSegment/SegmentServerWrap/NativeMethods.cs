@@ -12,20 +12,22 @@ namespace Plugins.RustSegment.SegmentServerWrap
         internal enum Response : byte
         {
             Success = 0,
-            FailInitializedWrongKey = 1,
-            ErrorMessageTooLarge = 2,
-            ErrorDeserialize = 3,
-            ErrorNetwork = 4,
-            ErrorUtf8Decode = 5,
+            Error = 1,
         }
 
         [UnmanagedFunctionPointer(CALLING_CONVENTION)]
         internal delegate void SegmentFfiCallback(ulong operationId, Response responseCode);
 
+        [UnmanagedFunctionPointer(CALLING_CONVENTION)]
+        internal delegate void SegmentFfiErrorCallback(IntPtr msg);
+
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_initialize")]
         internal static extern bool SegmentServerInitialize(
+            IntPtr queueFilePath,
+            uint queueCountLimit,
             IntPtr segmentWriteKey,
-            SegmentFfiCallback callback
+            SegmentFfiCallback callback,
+            SegmentFfiErrorCallback errorCallback
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_identify")]
@@ -53,9 +55,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
             IntPtr propertiesJson,
             IntPtr contextJson
         );
-
-        [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_unflushed_batches_count")]
-        internal static extern ulong SegmentServerUnFlushedBatchesCount();
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_flush")]
         internal static extern ulong SegmentServerFlush();

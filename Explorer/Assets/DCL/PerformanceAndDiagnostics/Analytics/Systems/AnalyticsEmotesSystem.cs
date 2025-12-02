@@ -7,7 +7,7 @@ using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 
 namespace DCL.Analytics.Systems
@@ -53,7 +53,7 @@ namespace DCL.Analytics.Systems
 
         private void SendAnalytics(string id, bool isBase, string source)
         {
-            analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
+            analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JObject
             {
                 { "item_id", id }, // Id of the item <contract-address>-<item_id>
                 { "is_base", isBase }, // if the item is a base emote
