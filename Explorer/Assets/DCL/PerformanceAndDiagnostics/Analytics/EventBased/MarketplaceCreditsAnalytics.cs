@@ -1,5 +1,5 @@
 using DCL.MarketplaceCredits;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -24,7 +24,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnMarketplaceCreditsOpened(bool openedFromNotification)
         {
-            analytics.Track(AnalyticsEvents.MarketplaceCredits.MARKETPLACE_CREDITS_OPENED, new JsonObject
+            analytics.Track(AnalyticsEvents.MarketplaceCredits.MARKETPLACE_CREDITS_OPENED, new JObject
             {
                 { "from_notification", openedFromNotification },
             });

@@ -1,6 +1,6 @@
 using System;
 using DCL.MapRenderer.MapLayers.HomeMarker;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -25,7 +25,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
 		private void OnHomeChanged(HomeMarkerEvents.MessageHomePositionChanged evt)
 		{
-			var properties = new JsonObject
+			var properties = new JObject
 			{
 				{ "is_home_set", evt.IsHomeSet },
 				{ "coordinates", evt.Coordinates.ToString() }
