@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System;
@@ -46,6 +47,9 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerEmote(string predefinedEmote)
         {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#D00>--- TRIGGERED SCENE EMOTE ---</color>");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Scene emote: " + predefinedEmote);
+
             return TriggerEmoteAsync().ToDisconnectedPromise(this);
 
             async UniTask TriggerEmoteAsync()
@@ -58,6 +62,9 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerSceneEmote(string src, bool loop)
         {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#D00>--- TRIGGERED SCENE EMOTE ---</color>");
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Scene emote: " + src + " loop: " + loop);
+
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 

@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -14,6 +13,7 @@ using DCL.Profiles;
 using DCL.SocialEmotes;
 using DCL.Utilities;
 using ECS.Abstract;
+using System;
 using UnityEngine;
 using Utility.Animations;
 
@@ -34,9 +34,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         protected override void Update(float t)
         {
             PlayInitiatorOutcomeAnimationQuery(World);
-            AdjustReceiverBeforeOutcomeAnimationQuery(World);
+            InterpolateAvatarToOutcomeStartPoseQuery(World);
             WalkToInitiatorPositionBeforePlayingOutcomeAnimationQuery(World);
             ForceAvatarToLookAtPositionQuery(World);
+            InterpolateCameraTargetTowardsNewParentQuery(World);
         }
 
         /// <summary>
@@ -70,12 +71,18 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         }
 
         /// <summary>
-        /// Moves the avatar of the receiver of the interaction to the position and rotation it will have when animation begins.
+        /// Moves and rotates the avatar to the position and rotation it will have when animation begins.
         /// </summary>
         [Query]
-        [All(typeof(MoveToOutcomeStartPositionIntent))]
-        private void AdjustReceiverBeforeOutcomeAnimation(Entity entity, IAvatarView avatarView, MoveToOutcomeStartPositionIntent moveIntent)
+        [All(typeof(InterpolateToOutcomeStartPoseIntent))]
+        private void InterpolateAvatarToOutcomeStartPose(Entity entity, IAvatarView avatarView, InterpolateToOutcomeStartPoseIntent moveIntent)
         {
+            if (moveIntent.HasBeenCancelled)
+            {
+                World.Remove<InterpolateToOutcomeStartPoseIntent>(entity);
+                return;
+            }
+
             const float INTERPOLATION_DURATION = 0.4f;
             float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / INTERPOLATION_DURATION;
 
@@ -98,7 +105,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (interpolation >= 1.0f)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>INTERPOLATION FINISHED</color>");
-                World.Remove<MoveToOutcomeStartPositionIntent>(entity);
+                World.Remove<InterpolateToOutcomeStartPoseIntent>(entity);
             }
         }
 
@@ -108,15 +115,34 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// </summary>
         [Query]
         [All(typeof(MoveBeforePlayingSocialEmoteIntent))]
-        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform,
+        [None(typeof(StopEmoteIntent))]
+        private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform, CharacterEmoteComponent emoteComponent,
             ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, ref CharacterAnimationComponent animationComponent,
             ref MoveBeforePlayingSocialEmoteIntent moveIntent)
         {
+            // If the avatar is playing an emote, it must cancel that emote before moving to the initiator
+            if (emoteComponent.IsPlayingEmote)
+            {
+                World.Add(entity, new StopEmoteIntent(emoteComponent.EmoteUrn));
+
+                // Sends stop signal to other clients
+                messageBus.Send(emoteComponent.EmoteUrn, false, false, -1, false, string.Empty, string.Empty, true, -1);
+
+                return;
+            }
+
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress);
+
+            // Checks if the initiator is still available, otherwise cancel the movement
+            if (interaction == null || interaction.AreInteracting || interaction.Id != moveIntent.TriggerEmoteIntent.InteractionId)
+                moveIntent.HasBeenCancelled = true;
+
             bool isCloseEnoughToInitiator = Vector3.SqrMagnitude(characterTransform.Position - moveIntent.InitiatorWorldPosition) < 2.0f;
 
             if (isCloseEnoughToInitiator ||
                 movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
-                jumpInputComponent.IsPressed)  // If player jumps, the process is canceled
+                jumpInputComponent.IsPressed ||  // If player jumps, the process is canceled
+                moveIntent.HasBeenCancelled)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
 
@@ -124,8 +150,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 animationComponent.States.MovementBlendValue = 0.0f;
                 movementInput.IgnoreCamera = false;
 
-                if (isCloseEnoughToInitiator)
+                if (isCloseEnoughToInitiator && !moveIntent.HasBeenCancelled)
                 {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED -> Playing emote</color>");
+
                     // Emote playing
                     World.Add(entity, moveIntent.TriggerEmoteIntent);
                 }
@@ -134,7 +162,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             }
             else
             {
-                movementInput.Kind = MovementKind.RUN;
+                movementInput.Kind = MovementKind.WALK;
                 movementInput.Axes = Vector2.up;
                 // The avatar can walk freely towards the initiator without taking the camera's orientation into consideration
                 movementInput.IgnoreCamera = true;
@@ -161,6 +189,45 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             avatarView.GetTransform().forward = (lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position).normalized;
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward after: " + avatarView.GetTransform().forward);
             World.Remove<LookAtPositionIntention>(entity);
+        }
+
+        [Query]
+        [All(typeof(InterpolateCameraTargetTowardsNewParentIntent))]
+        private void InterpolateCameraTargetTowardsNewParent(Entity entity, ref PlayerComponent player, in InterpolateCameraTargetTowardsNewParentIntent interpolateIntent)
+        {
+            const float INTERPOLATION_DURATION = 0.4f;
+            float interpolation = (UnityEngine.Time.time - interpolateIntent.StartTime) / INTERPOLATION_DURATION;
+
+            try
+            {
+                player.CameraFocus.parent = null;
+
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#559933>CAMERA INTERPOLATION: {interpolation.ToString("F6")}</color>");
+
+                Vector3 targetPositionWithHeight = interpolateIntent.Target.position;
+                targetPositionWithHeight.y = interpolateIntent.StartPosition.y;
+
+                player.CameraFocus.position = Vector3.Lerp(interpolateIntent.StartPosition, targetPositionWithHeight, interpolation);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.EMOTE);
+                interpolation = 1.0f;
+            }
+            finally
+            {
+                if (interpolation >= 1.0f)
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#559933>CAMERA INTERPOLATION FINISHED</color>");
+
+                    // Re-parents the camera focus object
+                    player.CameraFocus.parent = interpolateIntent.Target;
+                    player.CameraFocus.localPosition = new Vector3(0.0f, player.CameraFocus.localPosition.y, 0.0f);
+                    player.CameraFocus.localRotation = Quaternion.identity;
+
+                    World.Remove<InterpolateCameraTargetTowardsNewParentIntent>(entity);
+                }
+            }
         }
     }
 }

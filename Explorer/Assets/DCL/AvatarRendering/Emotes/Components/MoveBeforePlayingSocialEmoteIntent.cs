@@ -33,6 +33,11 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         public bool AreAvatarsLookingAtEachOther;
 
+        /// <summary>
+        ///
+        /// </summary>
+        public bool HasBeenCancelled;
+
         public MoveBeforePlayingSocialEmoteIntent(Vector3 initiatorWorldPosition, Quaternion initiatorWorldRotation, Entity initiatorEntityId, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent)
         {
             InitiatorWorldPosition = initiatorWorldPosition;
@@ -40,6 +45,7 @@ namespace DCL.AvatarRendering.Emotes
             TriggerEmoteIntent = triggerEmoteIntent;
             InitiatorEntityId = initiatorEntityId;
             AreAvatarsLookingAtEachOther = false;
+            HasBeenCancelled = false;
         }
     }
 }

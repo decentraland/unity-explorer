@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Emotes
                         ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "interpolation " + interpolationExists + " " + EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp));
 
                         // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
-                        if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
+                        if (interpolationExists && (EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp) || !intComp.Enabled))
                         {
                             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation + " IsReactingToSocialEmote " + remoteEmoteIntention.IsReactingToSocialEmote + " repeating? " + remoteEmoteIntention.IsRepeating + " id: " + remoteEmoteIntention.SocialEmoteInteractionId);
 
@@ -128,8 +128,6 @@ namespace DCL.AvatarRendering.Emotes
                             intention.TargetAvatarWalletAddress = remoteEmoteIntention.TargetAvatarWalletAddress;
                             intention.IsRepeating = remoteEmoteIntention.IsRepeating;
                             intention.SocialEmoteInteractionId = remoteEmoteIntention.SocialEmoteInteractionId;
-
-
                         }
                         else
                         {
@@ -176,7 +174,7 @@ namespace DCL.AvatarRendering.Emotes
             return;
 
             bool EmoteIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteIntention remoteEmoteIntention, InterpolationComponent intComp) =>
-                intComp.Time + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
+                intComp.Present + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
         }
 
         [Query]

@@ -25,6 +25,16 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsRepeating;
         public int SocialEmoteInteractionId;
 
+        /// <summary>
+        ///
+        /// </summary>
+        public IEmote? EmoteAsset;
+
+        /// <summary>
+        ///
+        /// </summary>
+        public bool HasPlayedEmote;
+
         public void UpdateRemoteId(URN emoteId)
         {
             this.WalletAddress = string.Empty;
@@ -38,6 +48,7 @@ namespace DCL.AvatarRendering.Emotes
             this.TargetAvatarWalletAddress = string.Empty;
             this.IsRepeating = false;
             this.SocialEmoteInteractionId = 0;
+            this.EmoteAsset = null;
         }
     }
 }

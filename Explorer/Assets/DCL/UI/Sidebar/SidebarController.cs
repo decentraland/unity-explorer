@@ -1,14 +1,21 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ChatStates;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
+using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
@@ -19,16 +26,7 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using CommunicationData.URLHelpers;
-using DCL.Chat.ChatStates;
-using DCL.ChatArea;
-using DCL.Communities;
-using DCL.Diagnostics;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
 using DCL.EmotesWheel.Params;
-using DCL.Profiles;
-using Runtime.Wearables;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -45,14 +43,13 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatMainSharedAreaView chatMainView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly SmartWearableCache smartWearablesCache;
+        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
@@ -77,14 +74,12 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatMainSharedAreaView chatMainView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IEventBus eventBus,
-            SmartWearableCache smartWearableCache)
+            IEventBus eventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -96,7 +91,6 @@ namespace DCL.UI.Sidebar
             this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
-            this.chatMainView = chatMainView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
@@ -104,7 +98,6 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.smartWearablesCache = smartWearableCache;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -135,7 +128,7 @@ namespace DCL.UI.Sidebar
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
             viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
-
+            viewInstance.marketplaceButton.onClick.AddListener(OpenMarketplace);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
@@ -406,6 +399,14 @@ namespace DCL.UI.Sidebar
         private void OnSmartWearablesButtonUnhover()
         {
             smartWearablesTooltipController.Close();
+        }
+
+        private void OpenMarketplace()
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
+            urlBuilder.AppendParameter(marketplaceSourceParam);
+            webBrowser.OpenUrl(urlBuilder.Build());
         }
 #endregion
     }
