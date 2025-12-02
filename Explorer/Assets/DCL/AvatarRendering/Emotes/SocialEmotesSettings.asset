@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffb1b9fcc9cc4e55a26720a421155ca3, type: 3}
   m_Name: SocialEmotesSettings
   m_EditorClassIdentifier: DCL.Plugins::DCL.AvatarRendering.Emotes.SocialEmotesSettings
-  ReceiverRuns: 0
-  VisibilityDistance: 5
-  InteractionDistance: 5
-  OutcomeStartInterpolationRadius: 0.5
+  ReceiverJogs: 1
+  VisibilityDistance: 12
+  InteractionDistance: 8
+  OutcomeStartInterpolationRadius: 1.2
   OutcomeStartInterpolationDuration: 0.4
   OutcomeCameraInterpolationDuration: 0.4
   DirectedSocialEmoteEphemeralNotificationPrefab: {fileID: 7116653218615566311, guid: ed9bd6ae37fb2fb4daafdf0736f59c0e, type: 3}
