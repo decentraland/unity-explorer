@@ -182,7 +182,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!playerComponent.IsPlaying)
             {
-                if (playerComponent.State == VideoState.VsError)
+                if (playerComponent.State is VideoState.VsError or VideoState.VsNone)
                 {
                     RenderBlackTexture(ref assignedTexture);
                     return;
