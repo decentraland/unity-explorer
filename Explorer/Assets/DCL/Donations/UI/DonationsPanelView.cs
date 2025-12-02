@@ -24,7 +24,7 @@ namespace DCL.Donations.UI
         private const string SEND_DONATION_CONFIRM_TEXT = "YES";
         private const string SEND_DONATION_CANCEL_TEXT = "NO";
 
-        public event Action<string, float>? SendDonationRequested;
+        public event Action<string, decimal>? SendDonationRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button cancelButton { get; set; } = null!;
@@ -68,6 +68,16 @@ namespace DCL.Donations.UI
                 loadingView.HideLoading();
         }
 
+        public void PlayWaitAnimation()
+        {
+
+        }
+
+        public void StopWaitAnimation()
+        {
+
+        }
+
         public void ConfigurePanel(Profile? profile,
             string sceneCreatorAddress,
             string sceneName,
@@ -96,10 +106,10 @@ namespace DCL.Donations.UI
             confirmationCts = confirmationCts.SafeRestart();
 
             sendButton.onClick.RemoveAllListeners();
-            sendButton.onClick.AddListener( () => OpenConfirmationDialogAsync(sceneCreatorAddress, float.Parse(donationInputField.text), confirmationCts.Token));
+            sendButton.onClick.AddListener( () => OpenConfirmationDialogAsync(sceneCreatorAddress, decimal.Parse(donationInputField.text), confirmationCts.Token));
         }
 
-        private async UniTaskVoid OpenConfirmationDialogAsync(string creatorAddress, float amount, CancellationToken ct)
+        private async UniTaskVoid OpenConfirmationDialogAsync(string creatorAddress, decimal amount, CancellationToken ct)
         {
             var result = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(
                                                     new ConfirmationDialogParameter(string.Format(SEND_CONFIRMATION_TEXT_FORMAT, amount, creatorAddress), SEND_DONATION_CANCEL_TEXT, SEND_DONATION_CONFIRM_TEXT,

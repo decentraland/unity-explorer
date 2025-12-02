@@ -73,12 +73,24 @@ namespace DCL.Donations.UI
             LoadDataAsync(panelLifecycleCts.Token).Forget();
         }
 
-        private void OnSendDonationRequested(string creatorAddress, float amount)
+        private async void OnSendDonationRequested(string creatorAddress, decimal amount)
         {
-            //TODO: Implement donation sending flow
-            // async with animation on the main panel
-            PlayEmoteByUrn(EMOTE_MONEY_URN);
-            CloseController();
+            try
+            {
+                viewInstance!.PlayWaitAnimation();
+
+                string result = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
+                ReportHub.Log(ReportCategory.DONATIONS, $"Donation was successful. Tx hash: {result}");
+
+                PlayEmoteByUrn(EMOTE_MONEY_URN);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.DONATIONS); }
+            finally
+            {
+                viewInstance!.StopWaitAnimation();
+                CloseController();
+            }
         }
 
         private void PlayEmoteByUrn(URN emoteUrn)
