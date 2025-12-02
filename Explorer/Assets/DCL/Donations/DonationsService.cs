@@ -22,7 +22,7 @@ namespace DCL.Donations
 {
     public class DonationsService : IDisposable
     {
-        private const string MAIN_NET_CONTRACT_ADDRESS = "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942";
+        private const string POLYGON_CONTRACT_ADDRESS = "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4";
         private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xFa04D2e2BA9aeC166c93dFEEba7427B2303beFa9";
 
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
@@ -59,7 +59,7 @@ namespace DCL.Donations
             this.realmData = realmData;
             this.placesAPIService = placesAPIService;
 
-            contractAddress = dclEnvironment == DecentralandEnvironment.Org ? MAIN_NET_CONTRACT_ADDRESS : SEPOLIA_NET_CONTRACT_ADDRESS;
+            contractAddress = dclEnvironment == DecentralandEnvironment.Org ? POLYGON_CONTRACT_ADDRESS : SEPOLIA_NET_CONTRACT_ADDRESS;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
