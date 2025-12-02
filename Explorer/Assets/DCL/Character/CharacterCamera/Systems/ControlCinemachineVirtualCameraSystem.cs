@@ -141,8 +141,7 @@ namespace DCL.Character.CharacterCamera.Systems
                             ThirdPersonCameraShoulder.Center => 0,
                         };
 
-            //if(!cursorComponent.IsOverUI)
-                cameraData.CameraOffset.offset = Vector3.MoveTowards(cameraData.CameraOffset.offset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
+            cameraData.CameraOffset.offset = Vector3.MoveTowards(cameraData.CameraOffset.offset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
         [Query]

@@ -2,13 +2,11 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterCamera.Components;
 using DCL.Character.Components;
-using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -23,7 +21,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -39,7 +36,6 @@ namespace DCL.Interaction.Systems
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
         private const string OPTIONS_TOOLTIP = "Options...";
-        private const string EMOTE_TOOLTIP = "Interact: ";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
@@ -47,12 +43,10 @@ namespace DCL.Interaction.Systems
         private HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private HoverFeedbackComponent.Tooltip socialEmoteInteractionTooltip;
         private Profile? currentProfileHovered;
-        private readonly IMVCManager mvcManager;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
-        private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly CancellationTokenSource cts = new ();
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly Entity playerEntity;
 
@@ -83,8 +77,6 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             IMVCManagerMenusAccessFacade menusAccessFacade,
-            IMVCManager mvcManager,
-            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
             IWeb3IdentityCache identityCache,
             ObjectProxy<Entity> cameraEntityProxy,
             Entity playerEntity) : base(world)
@@ -92,8 +84,6 @@ namespace DCL.Interaction.Systems
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
-            this.mvcManager = mvcManager;
-            this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
             this.identityCache = identityCache;
             this.cameraEntityProxy = cameraEntityProxy;
             this.playerEntity = playerEntity;
@@ -112,12 +102,6 @@ namespace DCL.Interaction.Systems
 
         protected override void Update(float t)
         {
-/*            if (isMenuOpen)
-            {
-                ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
-                cursor.IsOverUI = true;
-            }
-*/
             ProcessRaycastResultQuery(World);
         }
 
@@ -130,7 +114,6 @@ namespace DCL.Interaction.Systems
         }
 
         private bool wasLocked;
-        private bool isMenuOpen;
 
         private bool wasLeftClickPressed;
 
@@ -153,9 +136,6 @@ namespace DCL.Interaction.Systems
 
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
             {
-                if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
-                    socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
-
                 wasLeftClickPressed = false;
                 return;
             }
@@ -167,9 +147,6 @@ namespace DCL.Interaction.Systems
                 || World.Has<HiddenPlayerComponent>(entityRef)
                 || World.Has<IgnoreInteractionComponent>(entityRef))
             {
-                if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
-                    socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
-
                 wasLeftClickPressed = false;
                 return;
             }
@@ -178,58 +155,36 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
 
+            Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
+            Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
+
+            const float MAX_SQR_DISTANCE_TO_INTERACT = 5.0f * 5.0f; // TODO: Move to a proper place
+            float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
+
+            // Distance limit
+            if(sqrDistanceToAvatar > MAX_SQR_DISTANCE_TO_INTERACT)
+                return;
+
             if (wasLeftClickPressed)
             {
                 wasLeftClickPressed = false;
-                OpenEmoteOutcomeContextMenu(entityRef);
+                OpenEmoteOutcomeContextMenu();
             }
 
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            // Tooltips
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
 
             if (socialEmoteInteraction is { AreInteracting: false } &&
                 (string.IsNullOrEmpty(socialEmoteInteraction.TargetWalletAddress) || // Is not a directed emote
                     socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
-             /*   Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
-                Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
-
-                const float MAX_SQR_DISTANCE_TO_INTERACT = 5.0f * 5.0f; // TODO: Move to a proper place
-                float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
-
-                if (socialEmoteOutcomeMenuController.State == ControllerState.ViewHidden)
-                {
-                    // From hidden to showing
-                    mvcManager.ShowAsync(SocialEmoteOutcomeMenuController.IssueCommand(new SocialEmoteOutcomeMenuController.SocialEmoteOutcomeMenuParams()
-                    {
-                        InteractingUserWalletAddress = currentProfileHovered.UserId,
-                        Username = profile.ValidatedName,
-                        UsernameColor = profile.UserNameColor,
-                        IsCloseEnoughToAvatar = sqrDistanceToAvatar < MAX_SQR_DISTANCE_TO_INTERACT
-                    }), cts.Token).Forget();
-                }
-                else
-                {
-                    // Is visible, updates data
-                    socialEmoteOutcomeMenuController.SetParams(new SocialEmoteOutcomeMenuController.SocialEmoteOutcomeMenuParams()
-                    {
-                        InteractingUserWalletAddress = currentProfileHovered.UserId,
-                        Username = profile.ValidatedName,
-                        UsernameColor = profile.UserNameColor,
-                        IsCloseEnoughToAvatar = sqrDistanceToAvatar < MAX_SQR_DISTANCE_TO_INTERACT
-                    });
-                }*/
-
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
                 hoverFeedbackComponent.Add(viewProfileTooltip);
-                socialEmoteInteractionTooltip = new HoverFeedbackComponent.Tooltip(EMOTE_TOOLTIP + socialEmoteInteraction.Emote.Model.Asset.metadata.name, dclInput.Player.Pointer);
+                socialEmoteInteractionTooltip = new HoverFeedbackComponent.Tooltip(socialEmoteInteraction.Emote.Model.Asset!.metadata.name, dclInput.Player.Pointer);
                 hoverFeedbackComponent.Add(socialEmoteInteractionTooltip);
             }
             else
             {
-                // The initiator is probably interacting with another avatar so the menu should be hidden immediately
-                if(socialEmoteOutcomeMenuController.State != ControllerState.ViewHiding && socialEmoteOutcomeMenuController.State != ControllerState.ViewHidden)
-                    socialEmoteOutcomeMenuController.HideViewAsync(cts.Token).Forget();
-
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
                 hoverFeedbackComponent.Add(viewProfileTooltip);
             }
@@ -250,11 +205,9 @@ namespace DCL.Interaction.Systems
             ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
 
             if(cursor.CursorState == CursorState.Locked)
-                //cursor.CursorState = CursorState.LockedWithUI;
-World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
-            World.Set(cameraEntityProxy.Object, cursor);
+                World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
 
-            isMenuOpen = true;
+            World.Set(cameraEntityProxy.Object, cursor);
 
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
@@ -263,24 +216,16 @@ World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
 
         private void OnHide()
         {
-            isMenuOpen = false;
-
             ReportHub.Log(ReportCategory.EMOTE_DEBUG, "HIDDEN");
 
             if (wasLocked)
             {
                 ReportHub.Log(ReportCategory.EMOTE_DEBUG, "--> LOCKED");
-                /*if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
-                {
-                    World.Remove<PointerLockIntention>(cameraEntityProxy.Object);
-                }
-
-                World.Add(cameraEntityProxy.Object, new PointerLockIntention(true));*/
                 World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState = CursorState.Locked;
             }
         }
 
-        private void OpenEmoteOutcomeContextMenu(Entity entityRef)
+        private void OpenEmoteOutcomeContextMenu()
         {
             string userId = currentProfileHovered.UserId;
 
@@ -293,12 +238,6 @@ World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
                 (string.IsNullOrEmpty(interaction.TargetWalletAddress) || // Is not a directed emote
                     interaction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
-                Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
-                Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
-
-                const float MAX_SQR_DISTANCE_TO_INTERACT = 5.0f * 5.0f; // TODO: Move to a proper place
-                float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
-
                 contextMenuConfiguration.ClearControls();
 
                 contextMenuConfiguration.AddControl(new TextContextMenuControlSettings(interaction.Emote.Model.Asset.metadata.name));
@@ -339,21 +278,12 @@ World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
 
                     if(cursor.CursorState == CursorState.Locked)
                         World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
-                        //cursor.CursorState = CursorState.LockedWithUI;
 
                     World.Set(cameraEntityProxy.Object, cursor);
 
-                    isMenuOpen = true;
                     menusAccessFacade.ShowGenericContextMenuAsync(parameter).Forget();
-                    // Unlocks the camera when showing the outcomes context menu
-            //        World.Add(cameraEntityProxy.Object, new PointerLockIntention(false));
                 }
             }
-        }
-
-        private void UnlockCursor()
-        {
-
         }
 
         private void OnOutcomePerformed(int outcomeIndex, string interactingUserWalletAddress, Entity playerEntity)

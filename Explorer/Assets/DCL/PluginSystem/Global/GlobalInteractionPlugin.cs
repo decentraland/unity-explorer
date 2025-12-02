@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Emotes;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.HoverCanvas;
@@ -21,7 +20,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 
@@ -34,9 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
         private readonly IEventSystem eventSystem;
-        private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
-        private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly Entity playerEntity;
@@ -51,9 +47,7 @@ namespace DCL.PluginSystem.Global
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
             IEventSystem eventSystem,
-            IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade,
-            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
             IWeb3IdentityCache identityCache,
             ObjectProxy<Entity> cameraEntityProxy,
             Entity playerEntity)
@@ -62,9 +56,7 @@ namespace DCL.PluginSystem.Global
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.globalInputEvents = globalInputEvents;
             this.eventSystem = eventSystem;
-            this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
-            this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
             this.identityCache = identityCache;
             this.cameraEntityProxy = cameraEntityProxy;
             this.playerEntity = playerEntity;
@@ -112,7 +104,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, socialEmoteOutcomeMenuController, identityCache, cameraEntityProxy, playerEntity);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, identityCache, cameraEntityProxy, playerEntity);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

@@ -126,12 +126,6 @@ namespace DCL.Input.Systems
         {
             ReportHub.Log(ReportCategory.EMOTE_DEBUG, "POINTER LOCK " + intention.Locked);
 
-            if (cursorComponent.CursorState == CursorState.LockedWithUI)
-            {
-                World.Remove<PointerLockIntention>(entity);
-                return;
-            }
-
             if (intention.Locked && !intention.WithUI)
             {
                 if (cursorComponent.CursorState == CursorState.Locked)
