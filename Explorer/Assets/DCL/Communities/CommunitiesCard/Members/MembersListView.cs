@@ -184,7 +184,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                          transferOwnershipSprite,
                                                                                          false, false,
                                                                                          subText: string.Format(TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT, communityName, profile.Name),
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
+                                                                                         userInfo: profile.Profile),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
