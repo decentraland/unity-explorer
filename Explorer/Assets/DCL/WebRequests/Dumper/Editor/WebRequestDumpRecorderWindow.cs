@@ -163,7 +163,7 @@ namespace DCL.WebRequests.Dumper.Editor
             window.Show();
         }
 
-        private static Func<IReadOnlyList<IRequestMetric>, ulong> AggregateMetrics(Type metricType)
+        private static Func<IReadOnlyList<RequestMetricBase>, ulong> AggregateMetrics(Type metricType)
         {
             if (metricType == typeof(ServeTimePerMBAverage) ||
                 metricType == typeof(ServeTimeSmallFileAverage) ||
@@ -233,9 +233,9 @@ namespace DCL.WebRequests.Dumper.Editor
 
         private void CreateAnalytics()
         {
-            IDictionary<Type, Func<IRequestMetric>> trackedMetrics = WebRequestsDumper.Instance.AnalyticsContainer!.GetTrackedMetrics();
+            IDictionary<Type, Func<RequestMetricBase>> trackedMetrics = WebRequestsDumper.Instance.AnalyticsContainer!.GetTrackedMetrics();
 
-            foreach ((Type type, Func<IRequestMetric> ctor) in trackedMetrics)
+            foreach ((Type type, Func<RequestMetricBase> ctor) in trackedMetrics)
             {
                 var recorder = new RequestMetricRecorder(ctor());
                 activeMetrics[MetricsRegistry.INDICES[type]] = recorder;

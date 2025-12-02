@@ -9,7 +9,7 @@ namespace DCL.WebRequests.Analytics.Metrics
     {
         public static readonly Type[] TYPES = AppDomain.CurrentDomain.GetAssemblies()
                                                        .SelectMany(assembly => assembly.GetTypes())
-                                                       .Where(type => typeof(IRequestMetric).IsAssignableFrom(type) && !type.IsAbstract && !type.IsGenericType
+                                                       .Where(type => typeof(RequestMetricBase).IsAssignableFrom(type) && !type.IsAbstract && !type.IsGenericType
                                                                       && type != typeof(RequestMetricRecorder))
                                                        .ToArray();
 

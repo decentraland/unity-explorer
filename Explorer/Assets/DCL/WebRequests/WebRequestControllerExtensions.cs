@@ -39,7 +39,7 @@ namespace DCL.WebRequests
             where TWebRequestOp: struct, IWebRequestOp<TWebRequest, TResult> =>
             controller.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
                 new RequestEnvelope<TWebRequest, TWebRequestArgs>(
-                    controller.requestHub.RequestDelegateFor<TWebRequestArgs, TWebRequest>(),
+                    controller.RequestHub.RequestDelegateFor<TWebRequestArgs, TWebRequest>(),
                     commonArguments,
                     args,
                     ct,

@@ -1,7 +1,10 @@
+using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Prefs;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
@@ -20,21 +23,69 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestController SceneWebRequestController { get; }
 
-        public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
+        public WebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; }
+
+        private readonly DebugWidgetBuilder? widget;
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
             IWebRequestController sceneWebRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
-        )
+            WebRequestsAnalyticsContainer analyticsContainer,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            DebugWidgetBuilder? widget)
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
             ChromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
+            this.widget = widget;
             SceneWebRequestController = sceneWebRequestController;
+        }
+
+        public WebRequestsPlugin CreatePlugin(bool isLocalSceneDevelopment)
+        {
+            AnalyticsContainer
+               .BuildUpDebugWidget(isLocalSceneDevelopment)
+               .AddTrackedMetric<ActiveCounter>()
+               .AddTrackedMetric<Total>()
+               .AddTrackedMetric<TotalFailed>()
+               .AddTrackedMetric<BandwidthDown>()
+               .AddTrackedMetric<BandwidthUp>()
+               .AddTrackedMetric<ServeTimeSmallFileAverage>()
+               .AddTrackedMetric<ServeTimePerMBAverage>()
+               .AddTrackedMetric<FillRateAverage>()
+               .AddTrackedMetric<TimeToFirstByteAverage>()
+               .Build();
+
+            widget?.AddSingleButton("Open Chrome DevTools", () =>
+            {
+                BridgeStartResult result = ChromeDevtoolProtocolClient.StartAndOpen();
+                string? errorMessage = ErrorMessageFromBridgeResult(result);
+
+                if (errorMessage != null)
+                    NotificationsBusController
+                       .Instance
+                       .AddNotification(new ServerErrorNotification(errorMessage));
+            });
+
+            return new WebRequestsPlugin(AnalyticsContainer);
+        }
+
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        private static string? ErrorMessageFromBridgeResult(BridgeStartResult result)
+        {
+            string message = result.Match(
+                onSuccess: static () => null!,
+                onBridgeStartError: static e => e.Match(
+                    onWebSocketError: static e => $"Cannot start WebSocket server: {e.Exception.Message}",
+                    onBrowserOpenError: static e => e.Match(
+                        onErrorChromeNotInstalled: static () => "Chrome not installed",
+                        onException: static e => $"Cannot open DevTools: {e.Message}")
+                )
+            );
+
+            return message;
         }
 
         public static WebRequestsContainer Create(
@@ -46,18 +97,11 @@ namespace DCL.WebRequests.Analytics
             int sceneBudget
         )
         {
-            var options = new ElementBindingOptions();
+            var options = new ArtificialDelayOptions.ElementBindingOptions();
 
-            WebRequestsAnalyticsContainer analyticsContainer = new WebRequestsAnalyticsContainer()
-                                                              .AddTrackedMetric<ActiveCounter>()
-                                                              .AddTrackedMetric<Total>()
-                                                              .AddTrackedMetric<TotalFailed>()
-                                                              .AddTrackedMetric<BandwidthDown>()
-                                                              .AddTrackedMetric<BandwidthUp>()
-                                                              .AddTrackedMetric<ServeTimeSmallFileAverage>()
-                                                              .AddTrackedMetric<ServeTimePerMBAverage>()
-                                                              .AddTrackedMetric<FillRateAverage>()
-                                                              .AddTrackedMetric<TimeToFirstByteAverage>();
+            DebugWidgetBuilder? widget = debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS);
+
+            var analyticsContainer = new WebRequestsAnalyticsContainer(widget);
 
             WebRequestsDumper.Instance.AnalyticsContainer = analyticsContainer;
 
@@ -86,7 +130,7 @@ namespace DCL.WebRequests.Analytics
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer, chromeDevtoolProtocolClient);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer, chromeDevtoolProtocolClient, widget);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
@@ -165,41 +209,8 @@ namespace DCL.WebRequests.Analytics
         public void SetKTXEnabled(bool enabled)
         {
             // TODO: Temporary until we rewrite FF to be static
-            WebRequestController.requestHub.SetKTXEnabled(enabled);
-            SceneWebRequestController.requestHub.SetKTXEnabled(enabled);
-        }
-
-        public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
-        {
-            public readonly IElementBinding<bool> Enable;
-            public readonly IElementBinding<float> Delay;
-            private readonly PersistentSetting<bool> enableSetting;
-            private readonly PersistentSetting<float> delaySetting;
-
-            public ElementBindingOptions() : this(
-                PersistentSetting.CreateBool(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED, false),
-                PersistentSetting.CreateFloat(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS, 10)
-            ) { }
-
-            public ElementBindingOptions(PersistentSetting<bool> enableSetting, PersistentSetting<float> delaySetting)
-            {
-                this.enableSetting = enableSetting;
-                this.delaySetting = delaySetting;
-                Enable = new PersistentElementBinding<bool>(enableSetting);
-                Delay = new PersistentElementBinding<float>(delaySetting);
-            }
-
-            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
-            {
-                await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
-                    return (Delay.Value, Enable.Value);
-            }
-
-            public void ApplyValues(bool enable, float delay)
-            {
-                enableSetting.ForceSave(enable);
-                delaySetting.ForceSave(delay);
-            }
+            WebRequestController.RequestHub.SetKTXEnabled(enabled);
+            SceneWebRequestController.RequestHub.SetKTXEnabled(enabled);
         }
 
         public void Dispose() =>

@@ -1,36 +1,37 @@
 ﻿using DCL.DebugUtilities;
-using DCL.WebRequests.Analytics;
+using DCL.WebRequests.Analytics.Metrics;
+using System;
 
 namespace DCL.WebRequests.Dumper
 {
-    public class RequestMetricRecorder : IRequestMetric
+    public class RequestMetricRecorder : RequestMetricBase
     {
-        private readonly IRequestMetric metric;
+        private readonly RequestMetricBase metric;
 
-        public RequestMetricRecorder(IRequestMetric metric)
+        public RequestMetricRecorder(RequestMetricBase metric)
         {
             this.metric = metric;
         }
 
-        public DebugLongMarkerDef.Unit GetUnit() =>
+        public override DebugLongMarkerDef.Unit GetUnit() =>
             metric.GetUnit();
 
-        public ulong GetMetric() =>
+        public override ulong GetMetric() =>
             metric.GetMetric();
 
         private static bool IsSigned(ITypedWebRequest request) =>
             !string.IsNullOrEmpty(request.UnityWebRequest.GetRequestHeader("x-identity-auth-chain-0"));
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
         {
             if (!WebRequestsDumper.Instance.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
-            metric.OnRequestStarted(request);
+            metric.OnRequestStarted(request, startTime);
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
         {
             if (!WebRequestsDumper.Instance.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
-            metric.OnRequestEnded(request);
+            metric.OnRequestEnded(request, duration);
         }
     }
 }

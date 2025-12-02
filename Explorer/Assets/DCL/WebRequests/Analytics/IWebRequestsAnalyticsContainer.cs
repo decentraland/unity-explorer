@@ -1,11 +1,11 @@
 using CDPBridges;
-using Collections.Pooled;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
+using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 
@@ -16,9 +16,21 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics();
+        public readonly struct RequestType
+        {
+            public readonly Type Type;
+            public readonly string MarkerName;
 
-        IReadOnlyList<IRequestMetric>? GetMetric(Type requestType);
+            public RequestType(Type type, string markerName)
+            {
+                Type = type;
+                MarkerName = markerName;
+            }
+        }
+
+        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics();
+
+        public IReadOnlyList<RequestMetricBase>? GetMetric(Type requestType);
 
         protected internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
@@ -28,7 +40,7 @@ namespace DCL.WebRequests.Analytics
 
         protected internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest;
 
-        public static readonly IWebRequestsAnalyticsContainer DEFAULT = new WebRequestsAnalyticsContainer();
+        public static readonly IWebRequestsAnalyticsContainer TEST = new WebRequestsAnalyticsContainer(null);
     }
 
     public static class WebRequestsAnalyticsExtensions

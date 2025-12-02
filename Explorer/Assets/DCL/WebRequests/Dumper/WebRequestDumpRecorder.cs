@@ -8,7 +8,7 @@ namespace DCL.WebRequests.Dumper
     {
         private readonly IWebRequestController origin;
 
-        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+        IRequestHub IWebRequestController.RequestHub => origin.RequestHub;
 
         public WebRequestDumpRecorder(IWebRequestController origin)
         {

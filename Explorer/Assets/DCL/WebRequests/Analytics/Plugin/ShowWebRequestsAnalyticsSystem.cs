@@ -1,43 +1,25 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CDPBridges;
-using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.Dumper;
 using ECS.Abstract;
-using System;
 using System.Collections.Generic;
 using Profiler = UnityEngine.Profiling.Profiler;
+using static DCL.WebRequests.Analytics.IWebRequestsAnalyticsContainer;
 
 namespace DCL.WebRequests.Analytics
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class ShowWebRequestsAnalyticsSystem : BaseUnityLoopSystem
     {
-        public readonly struct RequestType
-        {
-            public readonly Type Type;
-            public readonly string MarkerName;
-
-            public RequestType(Type type, string markerName)
-            {
-                Type = type;
-                MarkerName = markerName;
-            }
-        }
-
         private const float THROTTLE = 0.1f;
 
         private readonly IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer;
         private readonly RequestType[] requestTypes;
 
-        private readonly Dictionary<Type, Dictionary<string, ElementBinding<ulong>>> ongoingRequests = new ();
         private readonly DebugWidgetVisibilityBinding? visibilityBinding;
 
         private float lastTimeSinceMetricsUpdate;
@@ -51,57 +33,12 @@ namespace DCL.WebRequests.Analytics
 
         internal ShowWebRequestsAnalyticsSystem(World world,
             IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer,
-            IDebugContainerBuilder debugContainerBuilder,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            DebugWidgetVisibilityBinding? visibilityBinding,
             RequestType[] requestTypes) : base(world)
         {
             this.webRequestsAnalyticsContainer = webRequestsAnalyticsContainer;
             this.requestTypes = requestTypes;
-
-            DebugWidgetBuilder? widget = debugContainerBuilder
-                                        .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
-                                       ?.AddSingleButton("Open Chrome DevTools", () =>
-                                         {
-                                             BridgeStartResult result = chromeDevtoolProtocolClient.StartAndOpen();
-                                             string? errorMessage = ErrorMessageFromBridgeResult(result);
-
-                                             if (errorMessage != null)
-                                                 NotificationsBusController
-                                                    .Instance
-                                                    .AddNotification(new ServerErrorNotification(errorMessage));
-                                         })
-                                        .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
-
-            foreach (RequestType requestType in requestTypes)
-            {
-                var bindings = new Dictionary<string, ElementBinding<ulong>>(0);
-                var metrics = webRequestsAnalyticsContainer.GetTrackedMetrics();
-
-                foreach (var metric in metrics)
-                {
-                    bindings.Add(metric.Key.Name, new ElementBinding<ulong>(0));
-                    DebugLongMarkerDef.Unit requestMetricUnit = metric.Value().GetUnit();
-                    widget?.AddMarker(requestType.MarkerName + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
-                }
-
-                ongoingRequests[requestType.Type] = bindings;
-            }
-        }
-
-        // ReSharper disable once ReturnTypeCanBeNotNullable
-        private static string? ErrorMessageFromBridgeResult(BridgeStartResult result)
-        {
-            string message = result.Match(
-                onSuccess: static () => null!,
-                onBridgeStartError: static e => e.Match(
-                    onWebSocketError: static e => $"Cannot start WebSocket server: {e.Exception.Message}",
-                    onBrowserOpenError: static e => e.Match(
-                        onErrorChromeNotInstalled: static () => "Chrome not installed",
-                        onException: static e => $"Cannot open DevTools: {e.Message}")
-                )
-            );
-
-            return message;
+            this.visibilityBinding = visibilityBinding;
         }
 
         private static bool profilerEnabled
@@ -145,14 +82,11 @@ namespace DCL.WebRequests.Analytics
 
                     foreach (RequestType requestType in requestTypes)
                     {
-                        IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+                        IReadOnlyList<RequestMetricBase>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
                         if (metrics == null) continue;
 
-                        foreach (IRequestMetric? metric in metrics)
-                        {
-                            if (ongoingRequests.TryGetValue(requestType.Type, out Dictionary<string, ElementBinding<ulong>> bindings) &&
-                                bindings.TryGetValue(metric.GetType().Name, out ElementBinding<ulong> binding)) { binding.Value = metric.GetMetric(); }
-                        }
+                        foreach (RequestMetricBase metric in metrics)
+                            metric.UpdateDebugMenu();
                     }
                 }
             }
@@ -168,12 +102,12 @@ namespace DCL.WebRequests.Analytics
 
                 foreach (RequestType requestType in requestTypes)
                 {
-                    IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+                    IReadOnlyList<RequestMetricBase>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
 
                     if (metrics == null)
                         continue;
 
-                    foreach (IRequestMetric metric in metrics)
+                    foreach (RequestMetricBase metric in metrics)
                     {
                         metric.Update();
 

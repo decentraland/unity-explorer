@@ -42,7 +42,7 @@ namespace DCL.WebRequests.Dumper
         public bool IsMatch(bool signed, string url) =>
             Enabled && !signed && (string.IsNullOrEmpty(Filter) || Regex.IsMatch(url, Filter));
 
-        public WebRequestsAnalyticsContainer? AnalyticsContainer { get; internal set; }
+        public WebRequestsAnalyticsContainer? AnalyticsContainer { get; set; }
 
         public int Count => dump.entries.Count;
 
