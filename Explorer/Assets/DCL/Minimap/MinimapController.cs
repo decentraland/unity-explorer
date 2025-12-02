@@ -76,13 +76,13 @@ namespace DCL.Minimap
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private CancellationTokenSource? favoriteCancellationToken = new ();
+        private CancellationTokenSource showBannedTooltipCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings homeToggleSettings;
-        private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -137,6 +137,7 @@ namespace DCL.Minimap
         {
             placesApiCts.SafeCancelAndDispose();
             disposeCts.Cancel();
+            favoriteCancellationToken.SafeCancelAndDispose();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
 
@@ -149,7 +150,10 @@ namespace DCL.Minimap
             }
 
             sceneRestrictionsController?.Dispose();
-            viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
+
+            if (viewInstance == null) return;
+            viewInstance.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
+            viewInstance.favoriteButton.OnButtonClicked -= OnFavoriteButtonClicked;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -254,10 +258,10 @@ namespace DCL.Minimap
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
                 catch (OperationCanceledException _) { }
-                catch (Exception e)
+                catch (Exception exception)
                 {
                     viewInstance!.favoriteButton.SetButtonState(false);
-                    ReportHub.LogError(ReportCategory.GENERIC_WEB_REQUEST, $"Failed setting place as favorite + {e}");
+                    ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
                 }
             }
         }
@@ -360,36 +364,9 @@ namespace DCL.Minimap
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
 
-            ForceUpdateFavoriteButton();
-        }
-
-        private void ForceUpdateFavoriteButton()
-        {
-            // Using same token as player position based update, because player position based update takes priority
-            // and using same token prevents race condition.
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            ForceUpdateFavoriteButtonAsync().Forget();
-
-            async UniTaskVoid ForceUpdateFavoriteButtonAsync()
-            {
-                try
-                {
-                    PlacesData.PlaceInfo? placeInfo = 
-                        await GetPlaceInfoAsync(previousParcelPosition, placesApiCts.Token, true);
-                    if (placeInfo == null)
-                    {
-                        viewInstance!.favoriteButton.SetButtonState(false, false);
-                        return;
-                    }
-                    viewInstance!.favoriteButton.SetButtonState(placeInfo.user_favorite);
-                }
-                catch (NotAPlaceException _)
-                {
-                    viewInstance!.favoriteButton.SetButtonState(false, false);
-                }
-                catch (Exception _) { }
-            };
+            RefreshPlaceInfoUIAsync(previousParcelPosition, placesApiCts.Token).Forget();
         }
 
         private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
@@ -445,16 +422,17 @@ namespace DCL.Minimap
         
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
             }
+            catch (OperationCanceledException _) { }
             catch (NotAPlaceException notAPlaceException)
             {
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
-                return null;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                ReportHub.LogWarning(ReportCategory.GENERIC_WEB_REQUEST, $"Could not get place API: {e.Message}");
-                return null;
+                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
             }
+            
+            return null;
         }
 
         private void SetGenesisMode(bool isGenesisModeActivated)

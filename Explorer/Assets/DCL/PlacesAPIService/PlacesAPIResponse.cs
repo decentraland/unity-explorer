@@ -30,6 +30,7 @@ namespace DCL.PlacesAPIService
             public string owner;
             public string[] tags;
             public string world_name;
+            public bool is_empty_place;
 
             public Vector2Int[] Positions;
 
@@ -65,6 +66,7 @@ namespace DCL.PlacesAPIService
             {
                 id = "fake_id";
                 title = "Empty place";
+                is_empty_place = true;
                 description = "No description";
                 image = "https://peer.decentraland.org/content/contents/bafkreidj26s7aenyxfthfdibnqonzqm5ptc4iamml744gmcyuokewkr76y";
                 owner = "no owner";
