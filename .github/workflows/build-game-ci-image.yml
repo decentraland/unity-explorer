@@ -1,0 +1,69 @@
+name: Build GameCI Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      editor_version:
+        description: 'Unity Editor Version'
+        required: true
+        default: '6000.2.14f1'
+      change_set:
+        description: 'Unity Editor Changeset'
+        required: true
+        default: '589824c1fc31'
+      base_os:
+        description: 'Base OS'
+        required: true
+        default: 'ubuntu'
+        type: choice
+        options:
+          - ubuntu
+          - windows
+          - mac
+      target_platform:
+        description: 'Target Platform'
+        required: true
+        default: 'linux-il2cpp'
+        type: choice
+        options:
+          - linux-il2cpp
+          - windows-il2cpp
+          - mac-il2cpp
+          - android
+          - ios
+          - webgl
+      image_suffix:
+        description: 'Image Tag Suffix'
+        required: true
+        default: '3.2.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone game-ci/docker
+        run: git clone https://github.com/game-ci/docker.git
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        working-directory: docker
+        run: |
+          IMAGE_NAME="ghcr.io/decentraland/unityci-editor:${{ inputs.base_os }}-${{ inputs.editor_version }}-${{ inputs.target_platform }}-${{ inputs.image_suffix }}"
+          
+          docker build . \
+            --file ./images/${{ inputs.base_os }}/editor/Dockerfile \
+            -t $IMAGE_NAME \
+            --build-arg version=${{ inputs.editor_version }} \
+            --build-arg changeSet=${{ inputs.change_set }} \
+            --build-arg module=${{ inputs.target_platform }}
+            
+          docker push $IMAGE_NAME
