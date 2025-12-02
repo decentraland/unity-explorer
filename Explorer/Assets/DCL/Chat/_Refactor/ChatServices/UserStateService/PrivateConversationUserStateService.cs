@@ -6,18 +6,15 @@ using DCL.Friends.UserBlocking;
 using DCL.Optimization.Pools;
 using DCL.Settings.Settings;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using DCL.Utility;
-using DCL.Utility.Types;
-using DCL.Web3;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using Segment.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using LiveKit.Proto;
 using System.Linq;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Chat.ChatServices

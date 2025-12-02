@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace DCL.WebRequests
 {
@@ -50,6 +51,7 @@ namespace DCL.WebRequests
         internal readonly Strictness strictness;
         internal readonly ISet<long>? forceRecoverableCodes;
 
+        [JsonConstructor]
         private RetryPolicy(int maxRetriesCount, Strictness strictness, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null)
         {
             this.maxRetriesCount = maxRetriesCount;
