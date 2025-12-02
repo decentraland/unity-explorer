@@ -35,7 +35,6 @@ namespace DCL.CharacterMotion.Systems
         {
             TeleportPlayerQuery(World);
             TryRemoveJustTeleportedQuery(World);
-            TryRemoveMovePlayerToInfoQuery(World);
         }
 
         [Query]
@@ -176,14 +175,6 @@ namespace DCL.CharacterMotion.Systems
         {
             if (justTeleported.ExpireFrame <= UnityEngine.Time.frameCount)
                 World.Remove<PlayerTeleportIntent.JustTeleported>(entity);
-        }
-
-        [Query]
-        [All(typeof(MovePlayerToInfo))]
-        [None(typeof(PlayerTeleportIntent))]
-        private void TryRemoveMovePlayerToInfo(Entity entity)
-        {
-            World.Remove<MovePlayerToInfo>(entity);
         }
     }
 }
