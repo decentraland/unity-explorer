@@ -124,17 +124,13 @@ namespace MVC
 
         private void TryGracefulClose(IController controller)
         {
-            for (int i = controllersClosures.Count - 1; i >= 0; i--)
-            {
+            for (int i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                 {
                     controllersClosures[i].closer.TrySetResult();
-                    // Safe check to prevent errors in parallel async flows
-                    if (i < controllersClosures.Count)
-                        controllersClosures.RemoveAt(i);
+                    controllersClosures.RemoveAt(i);
                     break;
                 }
-            }
         }
 
         public UniTaskCompletionSource? GetControllerClosure(IController controller)
@@ -152,10 +148,12 @@ namespace MVC
             topController = null;
         }
 
-        public PopupPopInfo PopPopup(IController controller)
+        public PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true)
         {
             RemovePopup(controller);
-            TryGracefulClose(controller);
+
+            if(shouldGracefullyClose)
+                TryGracefulClose(controller);
 
             if (popupStack.Count == 0)
             {
