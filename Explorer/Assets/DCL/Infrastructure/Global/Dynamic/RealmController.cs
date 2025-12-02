@@ -242,7 +242,7 @@ using Utility;
             if (ct.IsCancellationRequested || !promise.TryGetResult(world, out var result) || !result.Succeeded) return null;
 
             var sceneDefinitions = result.Asset;
-            if (world.TryGet(realmEntity, out SmartWearablePreviewScene smartWearablePreviewScene))
+            if (world.TryGet(realmEntity, out SmartWearablePreviewScene smartWearablePreviewScene) && smartWearablePreviewScene.Value != Entity.Null)
             {
                 // In local scene development we can be loading a Smart Wearable preview scene
                 // In that case the scene definition cannot be found at the standard active entities endpoint
