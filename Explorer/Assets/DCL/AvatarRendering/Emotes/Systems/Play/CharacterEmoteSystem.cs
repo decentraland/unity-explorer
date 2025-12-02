@@ -280,8 +280,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.Reset();
 
             // Cancels interpolating to start position in a social emote outcome animation
-            if(World.Has<MoveToOutcomeStartPositionIntent>(entity))
-                World.Get<MoveToOutcomeStartPositionIntent>(entity).HasBeenCancelled = true;
+            if(World.Has<InterpolateToOutcomeStartPoseIntent>(entity))
+                World.Get<InterpolateToOutcomeStartPoseIntent>(entity).HasBeenCancelled = true;
         }
 
         private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)
@@ -538,10 +538,15 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (emoteComponent.IsPlayingSocialEmoteOutcome)
                     {
                         if (SocialEmoteInteractionsManager.Instance.InteractionExists(emoteIntent.SocialEmoteInitiatorWalletAddress) && // When the outcome is a loop, it may receive an emote intent when the interaction has just finished locally
-                            emoteComponent.IsReactingToSocialEmote) { SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, entity, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress); }
+                            emoteComponent.IsReactingToSocialEmote)
+                        {
+                            // Reacting to the interaction
+                            SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, entity, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress);
+                        }
                     }
-                    else // Starting interaction
+                    else
                     {
+                        // Starting interaction
                         SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId, emoteIntent.TargetAvatarWalletAddress);
                         emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
 
@@ -688,6 +693,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=cyan>EXITING EMOTE STATE " + avatarBase.name + " </color>");
 
+            avatarBase.RestoreArmatureName(); // This is necessary to avoid jittering during the transition
+
             Vector3 newCharacterForward = avatarBase.HipAnchorPoint.forward;
             newCharacterForward.y = 0.0f;
             newCharacterForward.Normalize();
@@ -699,47 +706,65 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ref CharacterController characterController = ref World.TryGetRef<CharacterController>(entity, out bool isLocal);
             ref CharacterRigidTransform characterRigidTransform = ref World.TryGetRef<CharacterRigidTransform>(entity, out bool _);
+            ref PlayerComponent playerComponent = ref World.TryGetRef<PlayerComponent>(entity, out bool _);
 
             if(isLocal)
                 Debug.DrawRay(characterController.transform.position + characterController.center, newCharacterForward, Color.red, 3.0f);
             else
                 Debug.DrawRay(hipsWorldPosition, newCharacterForward, Color.magenta, 3.0f);
 
-            if (isLocal)
+            Vector3 cameraFocusCurrentPosition = Vector3.zero;
+
+            try
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Local controller transform reset " + avatarBase.name);
-                characterController.transform.position = hipsWorldPosition;
-                characterRigidTransform.MoveVelocity.Velocity = Vector3.zero;
-                characterRigidTransform.LookDirection = newCharacterForward;
+                if (isLocal)
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Local controller transform reset " + avatarBase.name);
+                    cameraFocusCurrentPosition = playerComponent.CameraFocus.position;
+                    playerComponent.CameraFocus.transform.parent = null; // It's necessary to do this before the interpolation starts in order to avoid jittering
+                    characterController.transform.position = hipsWorldPosition;
+                    characterRigidTransform.MoveVelocity.Velocity = Vector3.zero;
+                    characterRigidTransform.LookDirection = newCharacterForward;
+                }
+                else
+                {
+                    // Although the position of the remote avatar will be overriden with incoming position messages, the animation may finish
+                    // before those messages arrive so we have to update the position as if they already arrived or the avatar will make a weird movement
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Remote controller transform reset " + avatarBase.name);
+                    ref CharacterTransform characterTransform = ref World.Get<CharacterTransform>(entity);
+                    characterTransform.Transform.position = hipsWorldPosition;
+                    characterTransform.Transform.forward = newCharacterForward;
+                }
+
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Avatar transform reset");
+
+                avatarBase.GetTransform().localPosition = Vector3.zero;
+                avatarBase.GetTransform().localRotation = Quaternion.identity;
+
+                if (isLocal)
+                {
+                    World.Add(entity, new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward));
+                    // With this intent the next network movement message is marked as instant which will be used in the other clients to avoid
+                    // a problem that made the remote avatar move to a previous position (the old position of the CharacterController) before moving
+                    // to the current position, due to interpolation
+                    World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
+
+                    // Interpolates the position of the object the camera is looking at, from current position to original position in the controller
+                    World.Add(entity, new InterpolateCameraTargetTowardsNewParentIntent(cameraFocusCurrentPosition, characterController.transform));
+                }
+
+                if(isLocal)
+                    Debug.DrawRay(characterController.transform.position + characterController.center, avatarBase.GetTransform().forward, Color.cyan, 3.0f);
+                else
+                    Debug.DrawRay(hipsWorldPosition, avatarBase.GetTransform().forward, Color.blue, 3.0f);
             }
-            else
+            catch // The try/catch is necessary to avoid that playerComponent.CameraFocus ends up without parent due to an exception
             {
-                // Although the position of the remote avatar will be overriden with incoming position messages, the animation may finish
-                // before those messages arrive so we have to update the position as if they already arrived or the avatar will make a weird movement
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Remote controller transform reset " + avatarBase.name);
-                ref CharacterTransform characterTransform = ref World.Get<CharacterTransform>(entity);
-                characterTransform.Transform.position = hipsWorldPosition;
-                characterTransform.Transform.forward = newCharacterForward;
+                if(characterController != null)
+                    playerComponent.CameraFocus.parent = characterController.transform;
+
+                throw;
             }
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Avatar transform reset");
-
-            avatarBase.GetTransform().localPosition = Vector3.zero;
-            avatarBase.GetTransform().localRotation = Quaternion.identity;
-
-            if (isLocal)
-            {
-                World.Add(entity, new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward));
-                // With this intent the next network movement message is marked as instant which will be used in the other clients to avoid
-                // a problem that made the remote avatar move to a previous position (the old position of the CharacterController) before moving
-                // to the current position, due to interpolation
-                World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
-            }
-
-            if(isLocal)
-                Debug.DrawRay(characterController.transform.position + characterController.center, avatarBase.GetTransform().forward, Color.cyan, 3.0f);
-            else
-                Debug.DrawRay(hipsWorldPosition, avatarBase.GetTransform().forward, Color.blue, 3.0f);
         }
 
         private void PrepareToAdjustReceiverBeforeOutcomeAnimation(string initiatorWalletAddress)
@@ -776,22 +801,26 @@ namespace DCL.AvatarRendering.Emotes.Play
             GizmoDrawer.Instance.DrawWireSphere(3, targetAvatarPosition, 0.2f, Color.magenta);
 
             // Adjustment interpolation
-            World.Add(interaction.ReceiverEntity, new MoveToOutcomeStartPositionIntent(
+            World.Add(interaction.ReceiverEntity, new InterpolateToOutcomeStartPoseIntent(
                 originalAvatarPosition,
                 receiverAvatar.GetTransform().rotation,
                 targetAvatarPosition,
                 initiatorAvatar.GetTransform().rotation,
                 new TriggerEmoteReactingToSocialEmoteIntent(emoteUrn, interaction.OutcomeIndex, initiatorWalletAddress, interaction.Id),
                 initiatorAvatar.GetTransform().position));
+
+            // Interpolates the position of the object the camera is looking at, from current position to the position of the avatar's head
+            if (World.TryGet(interaction.ReceiverEntity, out PlayerComponent playerComponent))
+                World.Add(interaction.ReceiverEntity, new InterpolateCameraTargetTowardsNewParentIntent(playerComponent.CameraFocus.position, receiverAvatar.GetTransform()));
         }
 
+        // Comes from the animator's state machine behaviour
         private void OnEmoteStateExiting(Entity entity, AvatarStateMachineEventHandler avatarStateMachineEventHandler)
         {
             avatarStateMachineEventHandler.EmoteStateExiting = null;
 
+            // This must occur right at the moment the Emote or Emote Loop states transition to Movement
             ResetAvatarAndControllerTransforms(entity);
-
-            World.Remove<AvatarStateMachineEventHandler>(entity);
         }
     }
 }

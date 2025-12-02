@@ -6,7 +6,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
     /// <summary>
     ///
     /// </summary>
-    public struct MoveToOutcomeStartPositionIntent
+    public struct InterpolateToOutcomeStartPoseIntent
     {
         /// <summary>
         ///
@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// <param name="targetAvatarRotation"></param>
         /// <param name="triggerEmoteIntent"></param>
         /// <param name="initiatorWorldPosition"></param>
-        public MoveToOutcomeStartPositionIntent(Vector3 originalAvatarPosition, Quaternion originalAvatarRotation, Vector3 targetAvatarPosition, Quaternion targetAvatarRotation, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent, Vector3 initiatorWorldPosition)
+        public InterpolateToOutcomeStartPoseIntent(Vector3 originalAvatarPosition, Quaternion originalAvatarRotation, Vector3 targetAvatarPosition, Quaternion targetAvatarRotation, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent, Vector3 initiatorWorldPosition)
         {
             TargetAvatarPosition = targetAvatarPosition;
             TargetAvatarRotation = targetAvatarRotation;
