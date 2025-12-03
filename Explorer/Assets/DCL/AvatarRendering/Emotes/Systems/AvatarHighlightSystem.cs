@@ -1,0 +1,88 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
+using DCL.Diagnostics;
+using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
+using ECS.Abstract;
+using UnityEngine;
+
+namespace DCL.SocialEmotes.UI
+{
+    /// <summary>
+    /// It controls the outline VFX that appears around avatars.
+    /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(SocialEmoteInteractionSystem))]
+    [LogCategory(ReportCategory.EMOTE)]
+    public partial class AvatarHighlightSystem : BaseUnityLoopSystem
+    {
+        // TODO: Move to a settings file
+        private const float OUTLINE_FADING_SPEED = 12.0f;
+
+        public AvatarHighlightSystem(World world) : base(world)
+        {
+        }
+
+        protected override void Update(float t)
+        {
+            UpdateAvatarHighlightVanishingQuery(World, t);
+            UpdateAvatarHighlightShowingQuery(World, t);
+            UpdateAvatarHighlightBlinkingAnimationQuery(World); // This animation overrides the normal fx params
+            UpdateAvatarHighlightQuery(World);
+        }
+
+        [Query]
+        [None(typeof(ShowAvatarHighlightIntent), typeof(PlayAvatarHighlightBlinkingAnimationIntent))]
+        private void UpdateAvatarHighlightVanishing([Data] float t, ref AvatarShapeComponent avatarShapeComponent)
+        {
+            if(avatarShapeComponent.OutlineVfxOpacity <= 0.0f)
+                return;
+
+            // While there is no intent, the opacity decreases
+            avatarShapeComponent.OutlineVfxOpacity -= t * OUTLINE_FADING_SPEED;
+        }
+
+        [Query]
+        private void UpdateAvatarHighlightShowing([Data] float t, Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref ShowAvatarHighlightIntent animationIntent)
+        {
+            // Sets the params and increases the opacity
+            avatarShapeComponent.OutlineColor = animationIntent.OutlineColor;
+            avatarShapeComponent.OutlineThickness = animationIntent.Thickness;
+            avatarShapeComponent.OutlineVfxOpacity = Mathf.Clamp01(avatarShapeComponent.OutlineVfxOpacity + t * OUTLINE_FADING_SPEED);
+
+            World.Remove<ShowAvatarHighlightIntent>(entity);
+        }
+
+        [Query]
+        private void UpdateAvatarHighlightBlinkingAnimation(Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref PlayAvatarHighlightBlinkingAnimationIntent animationIntent)
+        {
+            animationIntent.Progress = (UnityEngine.Time.time - animationIntent.StartTime) / animationIntent.Duration;
+            float loopLength = 1.0f / animationIntent.LoopCount;
+            float progressInIteration = (animationIntent.Progress % loopLength) / loopLength;
+            float alpha = progressInIteration < 0.5f ? (progressInIteration * 2.0f) : (1.0f - (progressInIteration - 0.5f) * 2.0f);
+
+            avatarShapeComponent.OutlineVfxOpacity = Mathf.Clamp01(alpha);
+            avatarShapeComponent.OutlineColor = animationIntent.OutlineColor;
+            avatarShapeComponent.OutlineThickness = animationIntent.Thickness;
+
+            if (animationIntent.Progress >= 1.0f)
+                World.Remove<PlayAvatarHighlightBlinkingAnimationIntent>(entity);
+        }
+
+        [Query]
+        private void UpdateAvatarHighlight(in AvatarShapeComponent avatarShapeComponent)
+        {
+            Color color = avatarShapeComponent.OutlineColor;
+            color.a *= avatarShapeComponent.OutlineVfxOpacity;
+
+            // Just applies the effect to renderers of avatars
+            foreach (Renderer? rend in avatarShapeComponent.OutlineCompatibleRenderers)
+                if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                    RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(rend, color, avatarShapeComponent.OutlineThickness);
+        }
+    }
+}

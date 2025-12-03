@@ -22,6 +22,7 @@ namespace DCL.SocialEmotes.UI
     [LogCategory(ReportCategory.EMOTE)]
     public partial class SocialEmotePinsSystem : BaseUnityLoopSystem
     {
+        // TODO: Put this in a settings file
         private const float MAX_DISTANCE = 40;
         private const float MAX_DISTANCE_SQR = MAX_DISTANCE * MAX_DISTANCE;
 
