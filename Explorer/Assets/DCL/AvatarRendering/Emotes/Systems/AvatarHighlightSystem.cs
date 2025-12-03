@@ -29,6 +29,9 @@ namespace DCL.SocialEmotes.UI
 
         protected override void Update(float t)
         {
+            if(!socialEmotesSettings.EnabledOutline)
+                return;
+
             UpdateAvatarHighlightVanishingQuery(World, t);
             UpdateAvatarHighlightShowingQuery(World, t);
             UpdateAvatarHighlightBlinkingAnimationQuery(World); // This animation overrides the normal fx params
