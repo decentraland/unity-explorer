@@ -2,20 +2,27 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.GenericDelete;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using NUnit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Scripting;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+
+[assembly: InternalsVisibleTo("DCL.Editor")]
 
 namespace DCL.WebRequests.Dumper
 {
@@ -33,9 +40,43 @@ namespace DCL.WebRequests.Dumper
             },
         };
 
+        internal readonly RequestMetricRecorder[] activeMetrics = new RequestMetricRecorder[MetricsRegistry.TYPES.Length];
+
         private readonly WebRequestDump dump = new ();
 
-        public bool Enabled { get; private set; }
+#if UNITY_EDITOR
+        /// <summary>
+        ///     Preserves the values across domain reload (edit mode => play mode)
+        /// </summary>
+        private bool IsEnabledFromEditorPrefs
+        {
+            get => EditorPrefs.GetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", false);
+            set => EditorPrefs.SetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", value);
+        }
+#endif
+
+        private bool isEnabled;
+
+        public bool Enabled
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return IsEnabledFromEditorPrefs;
+#else
+                return isEnabled;
+#endif
+            }
+
+            set
+            {
+#if UNITY_EDITOR
+                IsEnabledFromEditorPrefs = value;
+#else
+                isEnabled = value;
+#endif
+            }
+        }
 
         public string Filter { get; set; } = string.Empty;
 

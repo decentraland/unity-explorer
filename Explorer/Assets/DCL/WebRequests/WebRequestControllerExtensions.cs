@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
+using DCL.WebRequests.Analytics;
 using DCL.WebRequests.CustomDownloadHandlers;
 using DCL.WebRequests.Dumper;
 using System.Buffers;
@@ -231,7 +232,7 @@ namespace DCL.WebRequests
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
 
-        public static IWebRequestController WithDump(this IWebRequestController origin) =>
-            new WebRequestDumpRecorder(origin);
+        public static IWebRequestController WithDump(this IWebRequestController origin, WebRequestsAnalyticsContainer analyticsContainer) =>
+            new WebRequestDumpRecorder(origin, analyticsContainer);
     }
 }

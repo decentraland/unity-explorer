@@ -1,8 +1,6 @@
 ﻿using DCL.DebugUtilities.Views;
 using DCL.Diagnostics;
-using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,8 +14,9 @@ namespace DCL.WebRequests.Dumper.Editor
     public class WebRequestDumpRecorderWindow : EditorWindow
     {
         private const string FILTER_PREFS_KEY = "WebRequestDumper.Filter";
+        private const string DISABLE_DISK_CACHE_PREFS_KEY = "WebRequestDumper.DisableCache";
 
-        private readonly RequestMetricRecorder[] activeMetrics = new RequestMetricRecorder[MetricsRegistry.TYPES.Length];
+        private RequestMetricRecorder[] activeMetrics => WebRequestsDumper.Instance.activeMetrics;
 
         private TextField filterField;
         private ListView metricsView;
@@ -25,11 +24,17 @@ namespace DCL.WebRequests.Dumper.Editor
         private Button saveButton;
         private Button stopResumeButton;
 
-        private void OnEnable() =>
+        private void OnEnable()
+        {
             EditorApplication.update += UpdateUI;
+            EditorApplication.playModeStateChanged += OnPlayModeChanged;
+        }
 
-        private void OnDisable() =>
+        private void OnDisable()
+        {
             EditorApplication.update -= UpdateUI;
+            EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+        }
 
         public void CreateGUI()
         {
@@ -62,6 +67,20 @@ namespace DCL.WebRequests.Dumper.Editor
             });
 
             root.Add(filterField);
+
+            // Disable Disk Cache
+            var disableCacheToggle = new Toggle("Disable Cache");
+            disableCacheToggle.value = EditorPrefs.GetBool(DISABLE_DISK_CACHE_PREFS_KEY, false);
+
+            disableCacheToggle.RegisterValueChangedCallback(evt =>
+            {
+                WebRequestsDebugControl.DisableCache = evt.newValue;
+                EditorPrefs.SetBool(DISABLE_DISK_CACHE_PREFS_KEY, evt.newValue);
+            });
+
+            disableCacheToggle.style.marginBottom = 10;
+
+            root.Add(disableCacheToggle);
 
             // Metrics List view
             const int METRIC_ELEMENT_HEIGHT = 20;
@@ -177,6 +196,9 @@ namespace DCL.WebRequests.Dumper.Editor
             return metrics => (ulong)metrics.Sum(static m => (double)m.GetMetric());
         }
 
+        private void OnPlayModeChanged(PlayModeStateChange change) =>
+            ResetMetrics();
+
         private void UpdateUI()
         {
             if (metricsView == null || stopResumeButton == null) return;
@@ -223,25 +245,15 @@ namespace DCL.WebRequests.Dumper.Editor
                 }
             }
 
-            Array.Clear(activeMetrics, 0, activeMetrics.Length);
+            ResetMetrics();
 
-            // Recreate metrics to start over
-            if (dumper.AnalyticsContainer != null) { CreateAnalytics(); }
+            // Metrics will be re-created in WebRequestDumpRecorder
 
             ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording restarted");
         }
 
-        private void CreateAnalytics()
-        {
-            IDictionary<Type, Func<RequestMetricBase>> trackedMetrics = WebRequestsDumper.Instance.AnalyticsContainer!.GetTrackedMetrics();
-
-            foreach ((Type type, Func<RequestMetricBase> ctor) in trackedMetrics)
-            {
-                var recorder = new RequestMetricRecorder(ctor());
-                activeMetrics[MetricsRegistry.INDICES[type]] = recorder;
-                WebRequestsDumper.Instance.AnalyticsContainer.AddFlatMetric(recorder);
-            }
-        }
+        private void ResetMetrics() =>
+            Array.Clear(activeMetrics, 0, activeMetrics.Length);
 
         private void OnStopResume()
         {
@@ -256,12 +268,6 @@ namespace DCL.WebRequests.Dumper.Editor
             else
             {
                 dumper.Resume();
-
-                if (activeMetrics.All(a => a == null))
-                {
-                    if (WebRequestsDumper.Instance.AnalyticsContainer != null)
-                        CreateAnalytics();
-                }
 
                 ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording resumed");
             }
