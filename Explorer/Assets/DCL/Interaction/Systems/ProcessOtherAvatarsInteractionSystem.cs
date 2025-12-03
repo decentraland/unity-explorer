@@ -148,8 +148,9 @@ namespace DCL.Interaction.Systems
 
                 bool isCloseEnoughToInteract = sqrDistanceToAvatar < socialEmotesSettings.InteractionDistance * socialEmotesSettings.InteractionDistance;
 
-                if (!World.Has<ShowAvatarHighlightIntent>(entityRef))
-                    World.Add(entityRef, new ShowAvatarHighlightIntent(0.001f, isCloseEnoughToInteract ? Color.green : Color.red));
+                // Avatar highlight
+                if (!World.Has<ShowAvatarHighlightIntent>(entityRef) && socialEmotesSettings.EnabledOutline)
+                    World.Add(entityRef, new ShowAvatarHighlightIntent(socialEmotesSettings.AvatarOutlineThickness, isCloseEnoughToInteract ? socialEmotesSettings.InteractableAvatarOutlineColor : socialEmotesSettings.NonInteractableAvatarOutlineColor));
             }
             else
             {

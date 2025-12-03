@@ -20,11 +20,11 @@ namespace DCL.SocialEmotes.UI
     [LogCategory(ReportCategory.EMOTE)]
     public partial class AvatarHighlightSystem : BaseUnityLoopSystem
     {
-        // TODO: Move to a settings file
-        private const float OUTLINE_FADING_SPEED = 12.0f;
+        private readonly SocialEmotesSettings socialEmotesSettings;
 
-        public AvatarHighlightSystem(World world) : base(world)
+        public AvatarHighlightSystem(World world, SocialEmotesSettings socialEmotesSettings) : base(world)
         {
+            this.socialEmotesSettings = socialEmotesSettings;
         }
 
         protected override void Update(float t)
@@ -43,7 +43,7 @@ namespace DCL.SocialEmotes.UI
                 return;
 
             // While there is no intent, the opacity decreases
-            avatarShapeComponent.OutlineVfxOpacity -= t * OUTLINE_FADING_SPEED;
+            avatarShapeComponent.OutlineVfxOpacity -= t * socialEmotesSettings.AvatarOutlineFadingSpeed;
         }
 
         [Query]
@@ -52,7 +52,7 @@ namespace DCL.SocialEmotes.UI
             // Sets the params and increases the opacity
             avatarShapeComponent.OutlineColor = animationIntent.OutlineColor;
             avatarShapeComponent.OutlineThickness = animationIntent.Thickness;
-            avatarShapeComponent.OutlineVfxOpacity = Mathf.Clamp01(avatarShapeComponent.OutlineVfxOpacity + t * OUTLINE_FADING_SPEED);
+            avatarShapeComponent.OutlineVfxOpacity = Mathf.Clamp01(avatarShapeComponent.OutlineVfxOpacity + t * socialEmotesSettings.AvatarOutlineFadingSpeed);
 
             World.Remove<ShowAvatarHighlightIntent>(entity);
         }

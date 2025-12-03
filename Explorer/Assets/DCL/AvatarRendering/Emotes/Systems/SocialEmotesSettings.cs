@@ -1,6 +1,5 @@
 ﻿using DCL.UI.EphemeralNotifications;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -45,6 +44,58 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         [Tooltip("")]
         public float OutcomeCameraInterpolationDuration;
+
+        [Header("Avatar Outline")]
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public bool EnabledOutline = true;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public Color InteractableAvatarOutlineColor = Color.green;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public Color NonInteractableAvatarOutlineColor = Color.red;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public float DirectedEmoteReceivedAnimationDuration = 1.0f;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public int DirectedEmoteReceivedAnimationLoops = 2;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public Color DirectedEmoteReceivedAnimationColor = Color.cyan;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public float AvatarOutlineThickness = 0.1f;
+
+        /// <summary>
+        ///
+        /// </summary>
+        [Tooltip("")]
+        public float AvatarOutlineFadingSpeed = 12.0f;
+
+        [Header("Ephemeral notification prefabs")]
 
         public AbstractEphemeralNotification DirectedSocialEmoteEphemeralNotificationPrefab;
 

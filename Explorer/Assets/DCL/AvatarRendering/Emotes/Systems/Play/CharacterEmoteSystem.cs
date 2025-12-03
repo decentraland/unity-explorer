@@ -546,8 +546,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                         if (emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address)
                         {
                             // The outline of the initiator blinks
-                            if (!World.Has<PlayAvatarHighlightBlinkingAnimationIntent>(entity))
-                                World.Add(entity, new PlayAvatarHighlightBlinkingAnimationIntent(0.1f, Color.cyan, 1.0f, 2));
+                            if (!World.Has<PlayAvatarHighlightBlinkingAnimationIntent>(entity) && socialEmotesSettings.EnabledOutline)
+                                World.Add(entity, new PlayAvatarHighlightBlinkingAnimationIntent(socialEmotesSettings.AvatarOutlineThickness, socialEmotesSettings.DirectedEmoteReceivedAnimationColor, socialEmotesSettings.DirectedEmoteReceivedAnimationDuration, socialEmotesSettings.DirectedEmoteReceivedAnimationLoops));
 
                             // Notification displayed
                             ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedSocialEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();

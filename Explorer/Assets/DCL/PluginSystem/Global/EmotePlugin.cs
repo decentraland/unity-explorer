@@ -167,7 +167,7 @@ namespace DCL.PluginSystem.Global
 
             SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
 
-            AvatarHighlightSystem.InjectToWorld(ref builder);
+            AvatarHighlightSystem.InjectToWorld(ref builder, socialEmotesSettings);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
