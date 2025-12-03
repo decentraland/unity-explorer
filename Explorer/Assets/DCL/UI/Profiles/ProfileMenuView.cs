@@ -10,6 +10,5 @@ namespace DCL.UI.Profiles
     {
         [field: SerializeField] public ProfileSectionView ProfileMenu { get; private set; } = null!;
         [field: SerializeField] public SystemMenuView SystemMenuView { get; private set; } = null!;
-        [field: SerializeField] public Button CloseButton { get; private set; } = null!;
     }
 }

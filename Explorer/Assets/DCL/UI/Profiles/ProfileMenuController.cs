@@ -67,13 +67,6 @@ namespace DCL.UI.Profiles
             systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
         }
 
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
-        }
-
         private void OnClose()
         {
             profileMenuCts.Cancel();

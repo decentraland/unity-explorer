@@ -53,9 +53,7 @@ namespace DCL.UI.Skybox
             skyboxSettings.DayCycleChanged += OnDayCycleChanged;
             skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
 
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
-
-            viewInstance.TimeProgressionToggle.isOn = false;
+            viewInstance!.TimeProgressionToggle.isOn = false;
             viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleChanged);
             viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
 
@@ -85,11 +83,6 @@ namespace DCL.UI.Skybox
 
             if (skyboxSettings.IsUIControlled)
                 skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
-        }
-
-        private void OnClose()
-        {
-            closeViewTask?.TrySetCanceled();
         }
 
         protected override void OnViewClose()

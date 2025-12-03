@@ -12,11 +12,6 @@ namespace DCL.UI.Sidebar
 
         public SidebarSettingsWidgetController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-        protected override void OnViewInstantiated()
-        {
-            viewInstance!.closeButton.onClick.AddListener(Close);
-        }
-
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             closeViewTask = new UniTaskCompletionSource();
@@ -27,8 +22,6 @@ namespace DCL.UI.Sidebar
         {
             closeViewTask?.TrySetCanceled();
         }
-
-        private void Close() => closeViewTask?.TrySetCanceled();
     }
 }
 

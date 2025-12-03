@@ -224,7 +224,7 @@ namespace MVC
             do
             {
                 await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
-                    UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused));
+                    UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused, cancellationToken: ct));
             }
             while (currentController != windowsStackManager.TopMostPopup.controller);
         }
