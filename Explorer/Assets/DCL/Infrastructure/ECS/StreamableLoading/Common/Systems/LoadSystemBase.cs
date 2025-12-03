@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -146,13 +147,20 @@ namespace ECS.StreamableLoading.Common.Systems
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    //Temporarly disabled as we don't have partial loading integrated
+                    //Temporarily disabled as we don't have partial loading integrated
                     //SynchronizePartialData(state, ongoingRequestResult);
 
                     result = ongoingRequestResult.Result;
 
                     if (requestIsNotFulfilled)
                     {
+                        // Assert the recursion possibility
+                        // At this point the request should never be ongoing
+                        if (cache.OngoingRequests.SyncRemove(intentionId))
+
+                            // Break the flow instead of trying to continue - we have to find and fix the origin of the issue
+                            throw new StreamableLoadingException(LogType.Exception, $"Execution of {intentionId} caused recursion");
+
                         await FlowAsync(entity, source, intention, state, partition, intentionId, disposalCt);
                         return;
                     }
@@ -286,7 +294,6 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             cache.OngoingRequests.SyncTryAdd(intentionId, source);
-            var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
 
@@ -303,15 +310,14 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result is { Succeeded: true })
                     genericCache
                        .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), ct)
-                       .Forget(
-                            static e =>
-                                ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
+                       .Forget(static e =>
+                            ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
                         );
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
-                TryRemoveOngoingRequest();
+                RemoveOngoingRequest();
 
                 source.TrySetResult(new OngoingRequestResult<TAsset>(state.PartialDownloadingData, result));
 
@@ -320,33 +326,26 @@ namespace ECS.StreamableLoading.Common.Systems
                 // (e.g. if in StreamingAssets the requested asset is not present, arguments to download from WEB source will be prepared separately)
                 return result;
             }
-            catch (OperationCanceledException operationCanceledException)
+            catch (Exception e) when (e is OperationCanceledException || e.InnerException is OperationCanceledException)
             {
                 if (result is { Succeeded: true })
                     DisposeAbandonedResult(result.Value.Asset!);
 
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
-                TryRemoveOngoingRequest();
+                RemoveOngoingRequest();
 
                 // Cancellation does not produce asset result
-                source.TrySetCanceled(operationCanceledException.CancellationToken);
+                source.TrySetCanceled(ct);
                 throw;
             }
-            finally
-            {
-                // We need to remove the request the same frame to prevent de-sync with new requests
-                TryRemoveOngoingRequest();
-            }
 
-            void TryRemoveOngoingRequest()
+            // Other exceptions are impossible according to the flow
+
+            void RemoveOngoingRequest()
             {
-                if (!ongoingRequestRemoved)
-                {
-                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intentionId);
-                    ongoingRequestRemoved = true;
-                }
+                // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                cache.OngoingRequests.SyncRemove(intentionId);
             }
         }
 
