@@ -4,25 +4,23 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
-
-//using DCL.Passport;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using MVC;
 using System;
 using System.Threading;
 using Utility;
 
 namespace DCL.UI.SystemMenu
 {
-    public class SystemMenuController : ControllerBase<SystemMenuView>
+    public class SystemSectionPresenter : IDisposable
     {
-        public event Action OnClosed;
+        public event Action? OnClosed;
 
+        private readonly SystemMenuView view;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
@@ -34,10 +32,8 @@ namespace DCL.UI.SystemMenu
 
         private CancellationTokenSource? logoutCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
-        public SystemMenuController(
-            ViewFactoryMethod viewFactory,
+        public SystemSectionPresenter(
+            SystemMenuView view,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -45,8 +41,9 @@ namespace DCL.UI.SystemMenu
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            IPassportBridge passportBridge) : base(viewFactory)
+            IPassportBridge passportBridge)
         {
+            this.view = view;
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -55,42 +52,43 @@ namespace DCL.UI.SystemMenu
             this.passportBridge = passportBridge;
             this.playerEntity = playerEntity;
             this.world = world;
+
+            SubscribeToEvents();
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
-            base.Dispose();
             logoutCts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
-
-        protected override void OnViewInstantiated()
+        private void SubscribeToEvents()
         {
-            base.OnViewInstantiated();
-
-            viewInstance!.LogoutButton.onClick.AddListener(Logout);
-            viewInstance.ExitAppButton.onClick.AddListener(ExitUtils.Exit);
-            viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
-            viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
-            // viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
-
-            viewInstance!.LogoutButton.onClick.AddListener(CloseView);
-            viewInstance.ExitAppButton.onClick.AddListener(CloseView);
-            viewInstance.PrivacyPolicyButton.onClick.AddListener(CloseView);
-            viewInstance.TermsOfServiceButton.onClick.AddListener(CloseView);
-            viewInstance.PreviewProfileButton.onClick.AddListener(OnPreviewProfileButtonClickedAsync);
+            view.LogoutButton.onClick.AddListener(Logout);
+            view.ExitAppButton.onClick.AddListener(ExitUtils.Exit);
+            view.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
+            view.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
+            view.LogoutButton.onClick.AddListener(CloseView);
+            view.ExitAppButton.onClick.AddListener(CloseView);
+            view.PrivacyPolicyButton.onClick.AddListener(CloseView);
+            view.TermsOfServiceButton.onClick.AddListener(CloseView);
+            view.PreviewProfileButton.onClick.AddListener(OnPreviewProfileButtonClickedAsync);
         }
 
-        private async void OnPreviewProfileButtonClickedAsync()
+        private void OnPreviewProfileButtonClickedAsync()
         {
-            // Closing the popup provokes inconsistencies in the popup chain: system menu->passport->name editor
-            // Making the name editor be behind the passport
-            // The delay is dirty, but it forces the sorting to be correct
             CloseView();
-            await UniTask.Delay(500);
             ShowPassport();
+            return;
+
+            void ShowPassport()
+            {
+                string userId = web3IdentityCache.Identity?.Address ?? string.Empty;
+
+                if (string.IsNullOrEmpty(userId))
+                    return;
+
+                passportBridge.ShowAsync(new PassportParams(userId, isOwnProfile: true)).Forget();
+            }
         }
 
         private void CloseView()
@@ -104,18 +102,13 @@ namespace DCL.UI.SystemMenu
         private void ShowPrivacyPolicy() =>
             webBrowser.OpenUrl(DecentralandUrl.PrivacyPolicy);
 
-        private void ShowPassport()
-        {
-            string userId = web3IdentityCache.Identity?.Address ?? string.Empty;
-
-            if (string.IsNullOrEmpty(userId))
-                return;
-
-            passportBridge.ShowAsync(new PassportParams(userId, isOwnProfile: true));
-        }
 
         private void Logout()
         {
+            logoutCts = logoutCts.SafeRestart();
+            LogoutAsync(logoutCts.Token).Forget();
+            return;
+
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
                 if (web3IdentityCache.Identity == null)
@@ -141,9 +134,6 @@ namespace DCL.UI.SystemMenu
                     ct
                 );
             }
-
-            logoutCts = logoutCts.SafeRestart();
-            LogoutAsync(logoutCts.Token).Forget();
         }
     }
 }

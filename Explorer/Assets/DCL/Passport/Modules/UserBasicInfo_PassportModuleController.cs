@@ -16,8 +16,8 @@ namespace DCL.Passport.Modules
 {
     public class UserBasicInfo_PassportModuleController : IPassportModuleController
     {
-        private readonly UserNameElementController nameElementController;
-        private readonly UserWalletAddressElementController walletAddressElementController;
+        private readonly UserNameElementPresenter userNameElementPresenter;
+        private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
@@ -48,8 +48,8 @@ namespace DCL.Passport.Modules
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            nameElementController = new UserNameElementController(view.UserNameElement);
-            walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
+            userNameElementPresenter = new UserNameElementPresenter(view.UserNameElement);
+            walletAddressElementPresenter = new UserWalletAddressElementPresenter(view.UserWalletAddressElement);
 
             view.ClaimNameButton.onClick.AddListener(ClaimName);
             view.EditNameButton.onClick.AddListener(ShowNameEditor);
@@ -59,8 +59,8 @@ namespace DCL.Passport.Modules
         {
             currentProfile = profile;
 
-            nameElementController.Setup(profile);
-            walletAddressElementController.Setup(profile);
+            userNameElementPresenter.Setup(profile);
+            walletAddressElementPresenter.Setup(profile);
 
             checkNameEditionCancellationToken = checkNameEditionCancellationToken.SafeRestart();
             CheckForEditionAvailabilityAsync(checkNameEditionCancellationToken.Token).Forget();
@@ -68,14 +68,14 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
-            nameElementController.Element.CopyNameWarningNotification.Hide(true);
-            walletAddressElementController.Element.CopyWalletWarningNotification.Hide(true);
+            userNameElementPresenter.Element.CopyNameWarningNotification.Hide(true);
+            walletAddressElementPresenter.Element.CopyWalletWarningNotification.Hide(true);
         }
 
         public void Dispose()
         {
-            nameElementController.Element.CopyUserNameButton.onClick.RemoveAllListeners();
-            walletAddressElementController.Element.CopyWalletAddressButton.onClick.RemoveAllListeners();
+            userNameElementPresenter.Element.CopyUserNameButton.onClick.RemoveAllListeners();
+            walletAddressElementPresenter.Element.CopyWalletAddressButton.onClick.RemoveAllListeners();
             Clear();
         }
 

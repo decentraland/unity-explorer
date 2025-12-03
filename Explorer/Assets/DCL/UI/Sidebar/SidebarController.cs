@@ -35,7 +35,7 @@ namespace DCL.UI.Sidebar
     public class SidebarController : ControllerBase<SidebarView>
     {
         private readonly IMVCManager mvcManager;
-        private readonly ProfileWidgetController profileIconWidgetController;
+        private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly NotificationsPanelController notificationsPanelController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
@@ -67,7 +67,7 @@ namespace DCL.UI.Sidebar
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             NotificationsPanelController notificationsPanelController,
-            ProfileWidgetController profileIconWidgetController,
+            SidebarProfileButtonPresenter profileButtonPresenter,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
@@ -87,7 +87,7 @@ namespace DCL.UI.Sidebar
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
-            this.profileIconWidgetController = profileIconWidgetController;
+            this.profileButtonPresenter = profileButtonPresenter;
             profileMenuController = profileMenuMenuWidgetController;
             this.notificationsPanelController = notificationsPanelController;
             this.skyboxMenuController = skyboxMenuController;
@@ -286,7 +286,7 @@ namespace DCL.UI.Sidebar
             profileWidgetCts = profileWidgetCts.SafeRestart();
 
             //We load the data into the profile widget
-            profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
+            profileButtonPresenter.LoadProfile();
         }
 
         protected override void OnViewClose()

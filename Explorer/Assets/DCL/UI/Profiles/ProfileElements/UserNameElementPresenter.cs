@@ -5,13 +5,13 @@ using System.Threading;
 
 namespace DCL.UI.ProfileElements
 {
-    public class UserNameElementController : IDisposable
+    public class UserNameElementPresenter : IDisposable
     {
         private Profile? currentProfile;
 
         public readonly UserNameElement Element;
 
-        public UserNameElementController(
+        public UserNameElementPresenter(
             UserNameElement element)
         {
             Element = element;

@@ -28,11 +28,12 @@ namespace DCL.ExplorePanel
     {
 
         private readonly BackpackController backpackController;
-        private readonly ProfileWidgetController profileWidgetController;
+        private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
+        private readonly IMVCManager mvcManager;
         private bool includeCommunities;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -40,7 +41,6 @@ namespace DCL.ExplorePanel
         private Dictionary<ExploreSections, ISection> exploreSections;
         private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource? animationCts;
-        private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource setupExploreSectionsCts;
         private TabSelectorView? previousSelector;
@@ -63,19 +63,19 @@ namespace DCL.ExplorePanel
             SettingsController settingsController,
             BackpackController backpackController,
             CameraReelController cameraReelController,
-            ProfileWidgetController profileWidgetController,
+            SidebarProfileButtonPresenter profileButtonPresenter,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager, IMVCManager mvcManager)
             : base(viewFactory)
         {
             NavmapController = navmapController;
             SettingsController = settingsController;
             this.backpackController = backpackController;
             CameraReelController = cameraReelController;
-            this.profileWidgetController = profileWidgetController;
+            this.profileButtonPresenter = profileButtonPresenter;
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
@@ -83,6 +83,7 @@ namespace DCL.ExplorePanel
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.mvcManager = mvcManager;
             CommunitiesBrowserController = communitiesBrowserController;
         }
 
@@ -90,7 +91,6 @@ namespace DCL.ExplorePanel
         {
             base.Dispose();
 
-            profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
         }
@@ -160,7 +160,7 @@ namespace DCL.ExplorePanel
         protected override void OnViewShow()
         {
             isControlClosing = false;
-            sectionSelectorController!.ResetAnimators();
+            sectionSelectorController.ResetAnimators();
 
             ExploreSections sectionToShow = inputData.IsSectionProvided ? inputData.Section : lastShownSection;
 
@@ -176,11 +176,7 @@ namespace DCL.ExplorePanel
             if (inputData.SettingsSection != null)
                 SettingsController.Toggle(inputData.SettingsSection.Value);
 
-            profileWidgetCts = profileWidgetCts.SafeRestart();
-
-            profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
-                                        new ControllerNoData(), profileWidgetCts.Token)
-                                   .Forget();
+            profileButtonPresenter.LoadProfile();
 
             profileMenuCts = profileMenuCts.SafeRestart();
 
@@ -300,7 +296,6 @@ namespace DCL.ExplorePanel
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
                 profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
-            profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
 
             UnblockUnwantedInputs();
@@ -337,14 +332,17 @@ namespace DCL.ExplorePanel
 
         private async void ShowProfileMenuAsync()
         {
+            profileMenuCts = profileMenuCts.SafeRestart();
+
             if (profileMenuController.State == ControllerState.ViewHidden)
             {
                 try
                 {
-                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0),
-                                                                         new ControllerNoData(), profileMenuCts.Token);
+                    await mvcManager.ShowAsync(ProfileMenuController.IssueCommand(), profileMenuCts.Token);
 
-                    await profileMenuController.HideViewAsync(profileMenuCts.Token);
+//                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0),new ControllerNoData(), profileMenuCts.Token);
+
+ //                   await profileMenuController.HideViewAsync(profileMenuCts.Token);
                 }
                 catch (OperationCanceledException)
                 {

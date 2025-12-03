@@ -2,7 +2,6 @@
 using DCL.UI.SystemMenu;
 using MVC;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.Profiles
 {

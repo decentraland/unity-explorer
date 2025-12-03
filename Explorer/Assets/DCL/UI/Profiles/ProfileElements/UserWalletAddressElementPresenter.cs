@@ -4,13 +4,13 @@ using System.Threading;
 
 namespace DCL.UI.ProfileElements
 {
-    public class UserWalletAddressElementController : IDisposable
+    public class UserWalletAddressElementPresenter : IDisposable
     {
         public readonly UserWalletAddressElement Element;
 
         private Profile currentProfile;
 
-        public UserWalletAddressElementController(UserWalletAddressElement element)
+        public UserWalletAddressElementPresenter(UserWalletAddressElement element)
         {
             this.Element = element;
 

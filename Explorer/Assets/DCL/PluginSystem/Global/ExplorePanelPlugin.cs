@@ -490,9 +490,9 @@ namespace DCL.PluginSystem.Global
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
+                    new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                    communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager);
+                    communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager, mvcManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

@@ -11,61 +11,52 @@ namespace DCL.UI.ProfileElements
     /// <summary>
     ///     Displays the Profile of the current user
     /// </summary>
-    public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
+    public class SidebarProfileButtonPresenter
     {
         private const string GUEST_NAME = "Guest";
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly ProfileWidgetView view;
 
         private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> thumbnail = new (ProfileThumbnailViewModel.WithColor.Default());
 
         private CancellationTokenSource? loadProfileCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
-
-        public ProfileWidgetController(ViewFactoryMethod viewFactory,
+        public SidebarProfileButtonPresenter(
+            ProfileWidgetView view,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             ProfileChangesBus profileChangesBus
-        ) : base(viewFactory)
+        )
         {
+            this.view = view;
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.profileChangesBus = profileChangesBus;
-        }
 
-        public override void Dispose()
-        {
-            loadProfileCts.SafeCancelAndDispose();
-            profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
-            identityCache.OnIdentityChanged -= OnIdentityChanged;
-            identityCache.OnIdentityCleared -= OnIdentityCleared;
-
-            base.Dispose();
-        }
-
-        protected override void OnViewInstantiated()
-        {
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
 
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
-            viewInstance!.ProfilePictureView.Bind(thumbnail);
+            view.ProfilePictureView.Bind(thumbnail);
         }
 
-        protected override void OnBeforeViewShow()
+        public void Dispose()
         {
-            base.OnBeforeViewShow();
-
-            loadProfileCts = loadProfileCts.SafeRestart();
-            LoadAsync(loadProfileCts.Token).Forget();
+            loadProfileCts.SafeCancelAndDispose();
+            profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
+            identityCache.OnIdentityChanged -= OnIdentityChanged;
+            identityCache.OnIdentityCleared -= OnIdentityCleared;
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        public void LoadProfile()
+        {
+            loadProfileCts = loadProfileCts.SafeRestart();
+            LoadProfileAsync(loadProfileCts.Token).Forget();
+        }
 
         private void OnIdentityCleared() =>
             loadProfileCts.SafeCancelAndDispose();
@@ -73,16 +64,16 @@ namespace DCL.UI.ProfileElements
         private void OnIdentityChanged()
         {
             loadProfileCts = loadProfileCts.SafeRestart();
-            LoadAsync(loadProfileCts.Token).Forget();
+            LoadProfileAsync(loadProfileCts.Token).Forget();
         }
 
         private void OnProfileUpdated(Profile profile)
         {
             loadProfileCts = loadProfileCts.SafeRestart();
-            LoadAsync(loadProfileCts.Token).Forget();
+            LoadProfileAsync(loadProfileCts.Token).Forget();
         }
 
-        private async UniTask LoadAsync(CancellationToken ct)
+        private async UniTask LoadProfileAsync(CancellationToken ct)
         {
             if (identityCache.Identity == null) return;
 
@@ -92,12 +83,12 @@ namespace DCL.UI.ProfileElements
 
             thumbnail.UpdateValue(thumbnail.Value.SetLoading(profile.UserNameColor));
 
-            if (viewInstance!.NameLabel != null)
-                viewInstance.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
+            if (view.NameLabel != null)
+                view.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
 
-            if (viewInstance.AddressLabel != null)
+            if (view.AddressLabel != null)
                 if (profile.HasClaimedName == false)
-                    viewInstance.AddressLabel.text = profile.WalletId;
+                    view.AddressLabel.text = profile.WalletId;
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, identityCache.Identity.Address, profile.Avatar.FaceSnapshotUrl, ct);
         }

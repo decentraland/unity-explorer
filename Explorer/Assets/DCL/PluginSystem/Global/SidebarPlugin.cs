@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.Global
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
-        private ProfileWidgetController? profileWidgetController;
+        private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController? profileMenuController;
         private SkyboxMenuController? skyboxMenuController;
         private ControlsPanelController? controlsPanelController;
@@ -137,7 +137,7 @@ namespace DCL.PluginSystem.Global
         {
             sidebarController?.Dispose();
             notificationsPanelController?.Dispose();
-            profileWidgetController?.Dispose();
+            profileButtonPresenter?.Dispose();
             profileMenuController?.Dispose();
             skyboxMenuController?.Dispose();
             controlsPanelController?.Dispose();
@@ -159,7 +159,7 @@ namespace DCL.PluginSystem.Global
 
             controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper);
-            profileWidgetController = new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
+            profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
@@ -173,7 +173,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsPanelController,
-                profileWidgetController,
+                profileButtonPresenter,
                 profileMenuController,
                 skyboxMenuController,
                 controlsPanelController,
@@ -194,7 +194,6 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
-            mvcManager.RegisterController(profileWidgetController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
