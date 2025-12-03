@@ -137,7 +137,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 isInstant = proto.IsInstant,
                 isEmoting = proto.IsEmoting,
 
-                headFreeLookEnabled = proto.HeadFreeLookEnabled,
+                headIKEnabled = proto.HeadFreeLookEnabled,
                 headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
             };
         }
@@ -194,7 +194,7 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;
 
-            movement.HeadFreeLookEnabled = message.headFreeLookEnabled;
+            movement.HeadFreeLookEnabled = message.headIKEnabled;
             movement.HeadYaw = message.headYawAndPitch.x;
             movement.HeadPitch = message.headYawAndPitch.y;
         }

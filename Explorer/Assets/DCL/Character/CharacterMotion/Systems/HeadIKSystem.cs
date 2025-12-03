@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
@@ -13,6 +14,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -75,6 +77,7 @@ namespace DCL.CharacterMotion.Systems
             UpdatePreviewAvatarIKQuery(World, t);
 
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
+            UpdateRemoteIKQuery(World, t);
         }
 
         [Query]
@@ -146,6 +149,7 @@ namespace DCL.CharacterMotion.Systems
         // This prevents all random avatars from moving the head when the player's camera is moved
         [None(typeof(RandomAvatar))]
 #endif
+        [None(typeof(RemotePlayerMovementComponent))]
         private void UpdateIK(
             [Data] float dt,
             [Data] in CameraComponent cameraComponent,
@@ -178,6 +182,26 @@ namespace DCL.CharacterMotion.Systems
             headIK.LookAt = cameraComponent.Camera.transform.forward;
 
             ApplyHeadLookAt.Execute(headIK.LookAt, avatarBase, dt, settings);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent))]
+        private void UpdateRemoteIK(
+            [Data] float dt,
+            ref HeadIKComponent headIK,
+            ref AvatarBase avatarBase,
+            in RemotePlayerMovementComponent remotePlayerMovement
+        )
+        {
+            bool isEnabled = headIKIsEnabled && headIK.IsEnabled;
+
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
+
+            if (!isEnabled) return;
+
+            Vector3 targetDirection = headIK.LookAt.sqrMagnitude > 0 ? headIK.LookAt.normalized : avatarBase.HeadIKRig.transform.forward;
+
+            ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings, useFrontalReset: false);
         }
     }
 }

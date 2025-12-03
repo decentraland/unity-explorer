@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
                 movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
-                headSyncData = CompressHeadSyncData(message.headFreeLookEnabled, message.headYawAndPitch)
+                headSyncData = CompressHeadSyncData(message.headIKEnabled, message.headYawAndPitch)
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
@@ -122,7 +122,7 @@ namespace DCL.Multiplayer.Movement
             float headPitch = FloatQuantizer.Decompress(compressedHeadPitch, 0f, 360f, MessageEncodingSettings.HEAD_ROTATION_BITS);
             int compressedHeadYaw = (compressedMessage.headSyncData >> MessageEncodingSettings.HEAD_ROTATION_BITS) & headRotationMask;
             float headYaw = FloatQuantizer.Decompress(compressedHeadYaw, 0f, 360f, MessageEncodingSettings.HEAD_ROTATION_BITS);
-            bool headFreeLookEnabled = (compressedMessage.headSyncData >> (2 * MessageEncodingSettings.HEAD_ROTATION_BITS)) != 0;
+            bool headIKEnabled = (compressedMessage.headSyncData >> (2 * MessageEncodingSettings.HEAD_ROTATION_BITS)) != 0;
 
             return new NetworkMovementMessage
             {
@@ -154,7 +154,7 @@ namespace DCL.Multiplayer.Movement
                 isSliding = (compressedTemporalData & (1 << encodingSettings.SLIDING_BIT)) != 0,
 
                 // Decompressed head sync data
-                headFreeLookEnabled = headFreeLookEnabled,
+                headIKEnabled = headIKEnabled,
                 headYawAndPitch = new Vector2(headYaw, headPitch),
             };
         }

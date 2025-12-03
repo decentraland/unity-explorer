@@ -36,19 +36,23 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, 
+        private void HandleFirstMessage(ref CharacterTransform transComp, ref HeadIKComponent headIK, in NetworkMovementMessage firstRemote,
             ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
-            
+            ApplyHeadIK(ref headIK, firstRemote.headIKEnabled, firstRemote.headYawAndPitch);
+
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
         }
 
         [Query]
         [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
+        private void UpdateRemotePlayersMovement([Data] float deltaTime,
+            ref CharacterTransform transComp,
+            ref HeadIKComponent headIK,
+            ref RemotePlayerMovementComponent remotePlayerMovement,
+            ref InterpolationComponent intComp,
             ref ExtrapolationComponent extComp)
         {
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
@@ -59,7 +63,7 @@ namespace DCL.Multiplayer.Movement.Systems
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)
             {
-                HandleFirstMessage(ref transComp, playerInbox.Dequeue(), ref remotePlayerMovement);
+                HandleFirstMessage(ref transComp, ref headIK, playerInbox.Dequeue(), ref remotePlayerMovement);
                 if (playerInbox.Count == 0) return;
             }
 
@@ -97,11 +101,16 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             if (playerInbox.Count > 0)
-                HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
+                HandleNewMessage(deltaTime, ref transComp, ref headIK, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
         }
 
-        private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+        private void HandleNewMessage(float deltaTime,
+            ref CharacterTransform transComp,
+            ref HeadIKComponent headIK,
+            ref RemotePlayerMovementComponent remotePlayerMovement,
+            ref InterpolationComponent intComp,
+            ref ExtrapolationComponent extComp,
+            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
@@ -126,6 +135,7 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
+            ApplyHeadIK(ref headIK, remote.headIKEnabled, remote.headYawAndPitch);
         }
 
         private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
@@ -166,7 +176,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return true;
         }
 
-        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, 
+        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
@@ -280,6 +290,12 @@ namespace DCL.Multiplayer.Movement.Systems
 
             intComp.End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(intComp.TotalDuration, intComp.Start.animState.MovementBlendValue,
                 intComp.End.movementKind, intComp.End.velocitySqrMagnitude, characterControllerSettings);
+        }
+
+        private static void ApplyHeadIK(ref HeadIKComponent headIK, bool enabled, Vector2 angles)
+        {
+            headIK.IsEnabled = enabled;
+            headIK.LookAt = angles.sqrMagnitude > 0.0001f ? Quaternion.Euler(angles.y, angles.x, 0) * Vector3.forward : Vector3.forward;
         }
     }
 }
