@@ -129,7 +129,11 @@ namespace DCL.Multiplayer.Movement.Systems
                 isBlend = false;
                 TeleportFiltered(ref remote, ref transComp, ref remotePlayerMovement, playerInbox);
 
-                if (playerInbox.Count == 0) return;
+                if (playerInbox.Count == 0)
+                {
+                    ApplyHeadIK(ref headIK, remote.headIKEnabled, remote.headYawAndPitch);
+                    return;
+                }
 
                 remote = playerInbox.Dequeue();
             }
