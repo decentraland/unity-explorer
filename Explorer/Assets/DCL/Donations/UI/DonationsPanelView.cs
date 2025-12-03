@@ -25,6 +25,7 @@ namespace DCL.Donations.UI
         private const string SEND_DONATION_CANCEL_TEXT = "NO";
 
         public event Action<string, decimal>? SendDonationRequested;
+        public event Action? BuyMoreRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button cancelButton { get; set; } = null!;
@@ -43,6 +44,7 @@ namespace DCL.Donations.UI
 
         [field: Header("Donation")]
         [field: SerializeField] private TMP_Text currentBalanceText { get; set; } = null!;
+        [field: SerializeField] private TMP_Text manaAvailableText { get; set; } = null!;
         [field: SerializeField] private TMP_InputField donationInputField { get; set; } = null!;
         [field: SerializeField] private Image donationBorderError { get; set; } = null!;
         [field: SerializeField] private TMP_Text usdEquivalentText { get; set; } = null!;
@@ -54,14 +56,20 @@ namespace DCL.Donations.UI
 
         private UserWalletAddressElementController? creatorAddressController;
         private decimal manaUsdConversion;
+        private decimal currentBalance;
         private CancellationTokenSource confirmationCts = new ();
+        private Color donationBorderOriginalColor;
+        private Color manaAvailableOriginalColor;
 
         private void Awake()
         {
             creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
+            donationBorderOriginalColor = donationBorderError.color;
+            manaAvailableOriginalColor = manaAvailableText.color;
 
             donationInputField.onValueChanged.AddListener(OnValueChanged);
             donationInputField.onEndEdit.AddListener(OnEndEdit);
+            BuyMoreMANAButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
         }
 
         public void SetLoadingState(bool active)
@@ -91,6 +99,7 @@ namespace DCL.Donations.UI
             ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             manaUsdConversion = manaUsdPrice;
+            this.currentBalance = currentBalance;
             sceneNameText.text = sceneName;
 
             userNameElement.gameObject.SetActive(profile != null);
@@ -145,12 +154,29 @@ namespace DCL.Donations.UI
 
         private void Validate(string value)
         {
-            bool isValid = decimal.TryParse(value, out decimal number) && number >= 1;
+            bool isValid = decimal.TryParse(value, out decimal number) && number >= 1 && number <= currentBalance;
             sendButton.interactable = isValid;
-            donationBorderError.color = isValid ? Color.white : Color.softRed;
+
+            if (number >= currentBalance)
+            {
+                BalanceWarningIcon.SetActive(true);
+                currentBalanceText.color = InvalidColor;
+                manaAvailableText.color = InvalidColor;
+            }
+            else
+            {
+                BalanceWarningIcon.SetActive(false);
+                currentBalanceText.color = manaAvailableOriginalColor;
+                manaAvailableText.color = manaAvailableOriginalColor;
+            }
 
             if (isValid)
+            {
                 usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * manaUsdConversion);
+                donationBorderError.color = donationBorderOriginalColor;
+            }
+            else
+                donationBorderError.color = InvalidColor;
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)

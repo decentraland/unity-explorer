@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -17,6 +18,7 @@ namespace DCL.Donations.UI
 {
     public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
+        private const string BUY_MORE_URL = "https://decentraland.org/";
         private static readonly URN EMOTE_MONEY_URN = new ("money");
 
         private readonly DonationsService donationsService;
@@ -25,6 +27,7 @@ namespace DCL.Donations.UI
         private readonly decimal recommendedDonationAmount;
         private readonly Entity playerEntity;
         private readonly World world;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -37,6 +40,7 @@ namespace DCL.Donations.UI
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             Entity playerEntity,
+            IWebBrowser webBrowser,
             decimal recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -45,6 +49,7 @@ namespace DCL.Donations.UI
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.webBrowser = webBrowser;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -55,6 +60,7 @@ namespace DCL.Donations.UI
             if (viewInstance == null) return;
 
             viewInstance.SendDonationRequested -= OnSendDonationRequested;
+            viewInstance!.BuyMoreRequested -= OnBuyMoreRequested;
         }
 
         private void CloseController() =>
@@ -63,7 +69,11 @@ namespace DCL.Donations.UI
         protected override void OnViewInstantiated()
         {
             viewInstance!.SendDonationRequested += OnSendDonationRequested;
+            viewInstance!.BuyMoreRequested += OnBuyMoreRequested;
         }
+
+        private void OnBuyMoreRequested() =>
+            webBrowser.OpenUrl(BUY_MORE_URL);
 
         protected override void OnBeforeViewShow()
         {

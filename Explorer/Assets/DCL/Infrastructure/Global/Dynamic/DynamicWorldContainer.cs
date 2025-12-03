@@ -967,7 +967,8 @@ namespace Global.Dynamic
                     featureFlags,
                     profileRepositoryWrapper,
                     playerEntity,
-                    globalWorld),
+                    globalWorld,
+                    webBrowser),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
