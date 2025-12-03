@@ -42,7 +42,7 @@ namespace DCL.Profiles
 
                 IPartitionComponent partition = PartitionComponent.MIN_PRIORITY;
 
-                var intent = new GetProfilesBatchIntent(profileRepository.PostUrl(batch.LambdasUrl), batch.LambdasUrl, batch.Tier, cts);
+                var intent = new GetProfilesBatchIntent(profileRepository.PostUrl(batch.LambdasUrl, batch.Tier), batch.LambdasUrl, batch.Tier, cts);
 
                 foreach ((string? userId, ProfilesBatchRequest.Input input) in batch.PendingRequests)
                 {

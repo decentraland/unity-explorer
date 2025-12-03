@@ -360,13 +360,16 @@ namespace DCL.Profiles
             return urlBuilder.Build();
         }
 
-        public URLAddress PostUrl(URLDomain fromCatalyst)
+        public URLAddress PostUrl(URLDomain fromCatalyst, ProfileTier.Kind tier)
         {
             urlBuilder.Clear();
 
             // Warning: putting a trailing slash break the backend routing!
             urlBuilder.AppendDomain(fromCatalyst)
                       .AppendPath(URLPath.FromString("profiles"));
+
+            if (tier == ProfileTier.Kind.Compact)
+                urlBuilder.AppendPath(URLPath.FromString("metadata"));
 
             return urlBuilder.Build();
         }
