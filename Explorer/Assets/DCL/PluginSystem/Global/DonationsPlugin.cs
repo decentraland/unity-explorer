@@ -22,7 +22,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
-        private readonly FeatureFlagsConfiguration featureFlags;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Entity playerEntity;
         private readonly Arch.Core.World world;
@@ -34,7 +33,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             DonationsService donationsService,
             IProfileRepository profileRepository,
-            FeatureFlagsConfiguration featureFlags,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Entity playerEntity,
             Arch.Core.World world,
@@ -44,7 +42,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.donationsService = donationsService;
             this.profileRepository = profileRepository;
-            this.featureFlags = featureFlags;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.playerEntity = playerEntity;
             this.world = world;
@@ -66,7 +63,7 @@ namespace DCL.PluginSystem.Global
             DonationsPanelView donationsPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.DonationsPanelPrefab, ct: ct)).GetComponent<DonationsPanelView>();
             ControllerBase<DonationsPanelView, DonationsPanelParameter>.ViewFactoryMethod viewFactoryMethod = DonationsPanelController.Preallocate(donationsPanelViewAsset, null, out DonationsPanelView donationsPanelView);
 
-            bool recommendedAmountParseSuccess = featureFlags.TryGetJsonPayload(FeatureFlagsStrings.RECOMMENDED_DONATION_AMOUNT, "main", out DonationRecommendedAmount temporalTipsJson);
+            bool recommendedAmountParseSuccess = FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.RECOMMENDED_DONATION_AMOUNT, "main", out DonationRecommendedAmount temporalTipsJson);
 
             donationsPanelController = new DonationsPanelController(
                 viewFactoryMethod,

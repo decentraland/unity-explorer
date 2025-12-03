@@ -541,7 +541,7 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
-            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService, bootstrapContainer.Environment, featureFlags);
+            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService, bootstrapContainer.Environment);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
@@ -965,7 +965,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     donationsService,
                     staticContainer.ProfilesContainer.Repository,
-                    featureFlags,
                     profileRepositoryWrapper,
                     playerEntity,
                     globalWorld,

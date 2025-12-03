@@ -56,8 +56,7 @@ namespace DCL.Donations
             IWebRequestController webRequestController,
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
-            DecentralandEnvironment dclEnvironment,
-            FeatureFlagsConfiguration featureFlags)
+            DecentralandEnvironment dclEnvironment)
         {
             this.scenesCache = scenesCache;
             this.ethereumApi = ethereumApi;
@@ -66,7 +65,7 @@ namespace DCL.Donations
             this.placesAPIService = placesAPIService;
 
             contractAddress = dclEnvironment == DecentralandEnvironment.Org ? POLYGON_CONTRACT_ADDRESS : SEPOLIA_NET_CONTRACT_ADDRESS;
-            donationFeatureEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor;
+            donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
