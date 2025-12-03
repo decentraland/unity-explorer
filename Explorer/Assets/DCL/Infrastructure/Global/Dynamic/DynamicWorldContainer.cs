@@ -541,7 +541,7 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
-            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService, bootstrapContainer.Environment);
+            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService, bootstrapContainer.Environment, featureFlags);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
@@ -860,7 +860,8 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     homePlaceEventBus,
-                    staticContainer.SmartWearableCache
+                    staticContainer.SmartWearableCache,
+                    donationsService
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),

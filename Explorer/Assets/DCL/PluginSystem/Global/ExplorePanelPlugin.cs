@@ -43,6 +43,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -154,6 +155,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly DonationsService donationsService;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -214,7 +216,8 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            DonationsService donationsService)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -276,6 +279,7 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.donationsService = donationsService;
         }
 
         public void Dispose()
@@ -365,7 +369,7 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, cameraReelStorageService, cameraReelScreenshotsStorage,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -391,7 +395,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus, homePlaceEventBus: homePlaceEventBus),
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(

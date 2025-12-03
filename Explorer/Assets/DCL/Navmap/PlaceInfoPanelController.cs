@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.EventsApi;
 using DCL.InWorldCamera;
@@ -52,6 +53,7 @@ namespace DCL.Navmap
         private readonly MultiStateButtonController homeButton;
         private readonly List<EventElementView> eventElements = new ();
         private readonly CameraReelGalleryController cameraReelGalleryController;
+        private readonly DonationsService donationsService;
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
@@ -76,6 +78,7 @@ namespace DCL.Navmap
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
+            DonationsService donationsService,
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
@@ -95,6 +98,7 @@ namespace DCL.Navmap
             this.mvcManager = mvcManager;
             this.galleryEventBus = galleryEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.donationsService = donationsService;
 
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
@@ -193,7 +197,7 @@ namespace DCL.Navmap
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.StartNavigationButton.gameObject.SetActive(true);
             view.StopNavigationButton.gameObject.SetActive(false);
-            view.DonateButton?.gameObject.SetActive(!string.IsNullOrEmpty(place.scene_creator));
+            view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.scene_creator));
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
