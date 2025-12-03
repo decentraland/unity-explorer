@@ -16,12 +16,10 @@ namespace DCL.Analytics.Systems
     public partial class DebugAnalyticsSystem : BaseUnityLoopSystem
     {
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
-        private readonly ElementBinding<ulong> binding;
 
         public DebugAnalyticsSystem(World world, IAnalyticsController analyticsController, IDebugContainerBuilder debugBuilder) : base(world)
         {
             visibilityBinding = new DebugWidgetVisibilityBinding(true);
-            binding = new ElementBinding<ulong>(0);
             var widget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ANALYTICS);
 
             if (widget == null)
@@ -31,17 +29,9 @@ namespace DCL.Analytics.Systems
 
             widget.SetVisibilityBinding(visibilityBinding);
             widget.AddCustomMarker("Service", serviceBinding);
-            widget.AddMarker("Unflushed Count", binding, DebugLongMarkerDef.Unit.NoFormat);
             widget.AddSingleButton("Manual Flush", analyticsController.Flush);
         }
 
-        protected override void Update(float t)
-        {
-            if (visibilityBinding.IsConnectedAndExpanded == false)
-                return;
-
-            ulong value = RustSegmentAnalyticsService.UnflushedCount();
-            binding.SetAndUpdate(value);
-        }
+        protected override void Update(float t) { }
     }
 }
