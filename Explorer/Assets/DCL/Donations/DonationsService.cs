@@ -22,6 +22,7 @@ namespace DCL.Donations
 {
     public class DonationsService : IDisposable
     {
+        // https://contracts.decentraland.org/addresses.json
         private const string POLYGON_CONTRACT_ADDRESS = "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4";
         private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xFa04D2e2BA9aeC166c93dFEEba7427B2303beFa9";
 

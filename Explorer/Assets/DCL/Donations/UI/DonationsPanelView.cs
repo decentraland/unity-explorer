@@ -19,7 +19,7 @@ namespace DCL.Donations.UI
 {
     public class DonationsPanelView : ViewBase, IView
     {
-        private const string MANA_EQUIVALENT_FORMAT = "(${0:0.00} USD)";
+        private const string MANA_EQUIVALENT_FORMAT = "${0:0.00}";
         private const string SEND_CONFIRMATION_TEXT_FORMAT = "Are you sure you want to send {0} MANA to {1}?";
         private const string SEND_DONATION_CONFIRM_TEXT = "YES";
         private const string SEND_DONATION_CANCEL_TEXT = "NO";
@@ -39,12 +39,16 @@ namespace DCL.Donations.UI
         [field: SerializeField] private SimpleUserNameElement userNameElement { get; set; } = null!;
         [field: Space(5)]
         [field: SerializeField] private UserWalletAddressElement creatorAddressElement { get; set; } = null!;
+        [field: SerializeField] private Color NoProfileColor { get; set; }
 
         [field: Header("Donation")]
         [field: SerializeField] private TMP_Text currentBalanceText { get; set; } = null!;
         [field: SerializeField] private TMP_InputField donationInputField { get; set; } = null!;
         [field: SerializeField] private Image donationBorderError { get; set; } = null!;
         [field: SerializeField] private TMP_Text usdEquivalentText { get; set; } = null!;
+        [field: SerializeField] private Color InvalidColor { get; set; }
+        [field: SerializeField] private Button BuyMoreMANAButton { get; set; }
+        [field: SerializeField] private GameObject BalanceWarningIcon { get; set; }
 
         private readonly UniTask[] closingTasks = new UniTask[2];
 
@@ -89,13 +93,17 @@ namespace DCL.Donations.UI
             manaUsdConversion = manaUsdPrice;
             sceneNameText.text = sceneName;
 
-            profilePictureView.gameObject.SetActive(profile != null);
             userNameElement.gameObject.SetActive(profile != null);
 
             if (profile != null)
             {
                 profilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 userNameElement.Setup(profile);
+            }
+            else
+            {
+                profilePictureView.SetBackgroundColor(NoProfileColor);
+                profilePictureView.SetDefaultThumbnail();
             }
 
             creatorAddressController!.Setup(sceneCreatorAddress);
