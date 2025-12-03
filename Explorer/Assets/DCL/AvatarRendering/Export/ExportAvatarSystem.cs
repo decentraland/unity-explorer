@@ -17,6 +17,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using UniHumanoid;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using VRM;
 using VRMShaders;
 
@@ -86,16 +87,21 @@ namespace DCL.AvatarRendering.Export
                 Author = "TODO: Get author name",
                 Reference = "TODO: Get asset reference"
             };
-            Dictionary<string, Transform> bonesToExport = VRMExporterUtils.CacheFBXBones(avatarBase.Armature);
+            Dictionary<string, Transform> boneMapping;
+            var duplicatedAvatar = 
+                DuplicateSkeletonObject(avatarBase.Armature, avatarBase.HipAnchorPoint, out boneMapping);
 
             //return default;
             if (avatarBase.AvatarAnimator.avatar == null)
             {
                 avatarBase.AvatarAnimator.runtimeAnimatorController = null;
-                avatarBase.AvatarAnimator.avatar = CreateAvatarFromSkeleton(avatarBase);
+                //avatarBase.AvatarAnimator.avatar = CreateAvatarFromSkeleton(avatarBase);
             }
+
+            CreateAvatarFromSkeleton(avatarBase);
+            return default;
             
-            GameObject bonesNormalized = VRMBoneNormalizer.Execute(avatarBase.AvatarAnimator.gameObject, true);
+            GameObject bonesNormalized = VRMBoneNormalizer.Execute(avatarBase.AvatarAnimator.gameObject, false);
             var vrmNormalized = VRMExporter.Export(settings, bonesNormalized, textureSerializer);
             
             string fileName = $"Avatar_{DateTime.Now:yyyyMMddhhmmss}";
@@ -183,6 +189,52 @@ namespace DCL.AvatarRendering.Export
             //return cachedMeshes;
             return default;
         }
+
+        private GameObject DuplicateSkeletonObject(Transform armatureTransform, Transform hipsTransform, out Dictionary<string, Transform> bones)
+        {
+            // TODO: Remove this offset
+            Vector3 debugAvatarSpawnOffset = new Vector3(-2f, 0f, 0f);
+
+            GameObject duplicateRoot = new GameObject("DCL_Avatar");
+            duplicateRoot.transform.SetPositionAndRotation(armatureTransform.position + debugAvatarSpawnOffset, armatureTransform.rotation);
+            duplicateRoot.transform.localScale = armatureTransform.transform.localScale;
+            duplicateRoot.AddComponent<Animator>();
+            var boneRenderer = duplicateRoot.AddComponent<BoneRenderer>();
+
+            // Creating hips manually to avoid coping M_Head_BaseMesh which is added to the bone structure.
+            Transform hips = new GameObject(hipsTransform.gameObject.name).transform;
+            hips.parent = duplicateRoot.transform;
+            hips.SetLocalPositionAndRotation(hipsTransform.localPosition, hipsTransform.localRotation);
+            hips.transform.localScale = hipsTransform.localScale;
+            
+            bones = new Dictionary<string, Transform>();
+            bones[hips.name] = hips.transform;
+            
+            CopyChildrenRecursive(hipsTransform, hips, bones);
+            boneRenderer.transforms = new Transform[bones.Count];
+            int i = 0;
+            foreach (var bone in bones.Values)
+            {
+                boneRenderer.transforms[i] = bone.transform;
+                i++;
+            }
+            return duplicateRoot;
+            
+            void CopyChildrenRecursive(Transform source, Transform destParent, Dictionary<string, Transform> bones)
+            {
+                foreach (Transform sourceChild in source)
+                {
+                    Transform child = new GameObject(sourceChild.name).transform;
+                    child.SetParent(destParent);
+                    child.SetLocalPositionAndRotation(sourceChild.localPosition, sourceChild.localRotation);
+                    child.localScale = sourceChild.localScale;
+                    bones[sourceChild.name] = child;
+        
+                    // Recurse
+                    CopyChildrenRecursive(sourceChild, child.transform, bones);
+                }
+            }
+        }
         
         // TODO: move this to utils
         public Avatar CreateAvatarFromSkeleton(AvatarBase avatarBase)
@@ -251,10 +303,16 @@ namespace DCL.AvatarRendering.Export
             // We have to reset to T-pose since our implementation does not work well with UniHumanoid's structure.
             EnforceTPose(validBones);
 
+            return null;
             var avatarDescription = AvatarDescription.Create();
             avatarDescription.SetHumanBones(validBones);
             
-            Avatar avatar = avatarDescription.CreateAvatar(avatarBase.HipAnchorPoint);
+            Avatar avatar = avatarDescription.CreateAvatar(animator.transform);
+            if (!avatar.isValid)
+            {
+                Debug.LogError("Created avatar is invalid! Checking HumanDescription...");
+                return null;
+            }
             animator.avatar = avatar;
             
             return avatar;
@@ -267,22 +325,28 @@ namespace DCL.AvatarRendering.Export
             {
                 bone.localRotation = Quaternion.identity;
             }
-
+            
             // Apply specific T-pose rotations for exceptions
+            if (bones.TryGetValue(HumanBodyBones.Hips, out var hips))
+            {
+                // Resetting armature rotation
+                hips.parent.transform.localRotation = Quaternion.identity;
+                hips.localRotation = Quaternion.Euler(0, 0, 180);
+            }
+            
+            if (bones.TryGetValue(HumanBodyBones.Spine, out var spine))
+                spine.localRotation = Quaternion.Euler(0, 0, -180);
+            
             if (bones.TryGetValue(HumanBodyBones.LeftShoulder, out var leftShoulder))
                 leftShoulder.localRotation = Quaternion.Euler(0, -180, -90);
     
             if (bones.TryGetValue(HumanBodyBones.RightShoulder, out var rightShoulder))
                 rightShoulder.localRotation = Quaternion.Euler(0, 0, -90);
-            
-            if (bones.TryGetValue(HumanBodyBones.Spine, out var spine))
-                spine.localRotation = Quaternion.Euler(0, 0, -180);
 
-            // Legs should be straight down
             if (bones.TryGetValue(HumanBodyBones.LeftFoot, out var leftFoot))
                 leftFoot.localRotation = Quaternion.Euler(-90, 180, 0);
     
-            if (bones.TryGetValue(HumanBodyBones.LeftFoot, out var rightFoot))
+            if (bones.TryGetValue(HumanBodyBones.RightFoot, out var rightFoot))
                 rightFoot.localRotation = Quaternion.Euler(-90, 180, 0);
         }
 
