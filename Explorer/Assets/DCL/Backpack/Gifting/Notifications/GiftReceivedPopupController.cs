@@ -1,9 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Services.GiftItemLoader;
 using DCL.Backpack.Gifting.Styling;
+using DCL.Diagnostics;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI;
@@ -17,6 +19,8 @@ namespace DCL.Backpack.Gifting.Notifications
 {
     public class GiftReceivedPopupController : ControllerBase<GiftReceivedPopupView, GiftReceivedNotification>
     {
+        public const string UnknownItemName = "Unknown Item";
+        
         private readonly IProfileRepository profileRepository;
         private readonly WearableStylingCatalog? wearableCatalog;
         private readonly IWebRequestController webRequestController;
@@ -66,71 +70,83 @@ namespace DCL.Backpack.Gifting.Notifications
 
             LoadFullDataAsync(inputData, lifeCts.Token)
                 .Forget();
-            
-            PlayAnimationAsync()
+
+            PlayShowAnimationAsync(lifeCts.Token)
                 .Forget();
         }
 
         protected override void OnViewClose()
         {
             lifeCts.SafeCancelAndDispose();
-            imageController?.StopLoading();
+            if (imageController != null)
+            {
+                imageController.SpriteLoaded -= OnImageLoaded;
+                imageController.StopLoading();
+            }
         }
 
 
-        private async UniTaskVoid LoadFullDataAsync(GiftReceivedNotification notification, CancellationToken ct)
+        private async UniTask LoadFullDataAsync(GiftReceivedNotification notification, CancellationToken ct)
         {
-            var (profile, itemData) = await UniTask.WhenAll(
-                profileRepository.GetAsync(notification.Metadata.SenderAddress, ct),
-                giftItemLoaderService.LoadItemMetadataAsync(notification.Metadata.TokenUri, ct)
-            );
-
-            if (ct.IsCancellationRequested) return;
-
-            if (profile != null)
+            try
             {
-                string hexColor = ColorUtility.ToHtmlStringRGB(profile.UserNameColor);
-                viewInstance!.TitleText.text = string.Format(GiftingTextIds.GiftReceivedFromFormat, hexColor, profile.Name);
-            }
+                var (profile, itemData) = await UniTask.WhenAll(
+                    profileRepository.GetAsync(notification.Metadata.SenderAddress, ct),
+                    giftItemLoaderService.LoadItemMetadataAsync(notification.Metadata.TokenUri, ct)
+                );
 
-            if (itemData.HasValue)
-            {
-                var data = itemData.Value;
-                viewInstance!.ItemNameText.text = data.Name;
+                if (ct.IsCancellationRequested || viewInstance == null)
+                    return;
 
-                if (wearableCatalog != null)
+                if (profile != null)
                 {
-                    viewInstance.GiftItemView.ConfigureAttributes(
-                        rarityBg: wearableCatalog.GetRarityBackground(data.Rarity),
-                        flapColor: wearableCatalog.GetRarityFlapColor(data.Rarity),
-                        categoryIcon: wearableCatalog.GetCategoryIcon(data.Category)
-                    );
+                    string hexColor = ColorUtility.ToHtmlStringRGB(profile.UserNameColor);
+                    viewInstance!.TitleText.text = string.Format(GiftingTextIds.GiftReceivedFromFormat, hexColor, profile.Name);
                 }
 
-                if (!string.IsNullOrEmpty(data.ImageUrl) && imageController != null)
+                if (itemData.HasValue)
                 {
-                    imageController.RequestImage(data.ImageUrl, fitAndCenterImage: true);
+                    var data = itemData.Value;
+                    viewInstance!.ItemNameText.text = data.Name;
+
+                    if (wearableCatalog != null)
+                    {
+                        viewInstance.GiftItemView.ConfigureAttributes(
+                            rarityBg: wearableCatalog.GetRarityBackground(data.Rarity),
+                            flapColor: wearableCatalog.GetRarityFlapColor(data.Rarity),
+                            categoryIcon: wearableCatalog.GetCategoryIcon(data.Category)
+                        );
+                    }
+
+                    if (!string.IsNullOrEmpty(data.ImageUrl) && imageController != null)
+                    {
+                        imageController.RequestImage(data.ImageUrl, fitAndCenterImage: true);
+                    }
+                    else
+                    {
+                        viewInstance.GiftItemView.SetLoadedState();
+                    }
                 }
                 else
                 {
+                    viewInstance!.ItemNameText.text = UnknownItemName;
                     viewInstance.GiftItemView.SetLoadedState();
                 }
             }
-            else
+            catch (Exception e)
             {
-                viewInstance!.ItemNameText.text = "Unknown Item";
+                ReportHub.LogException(e, ReportCategory.GIFTING);
+                if (viewInstance == null) return;
+
+                viewInstance.ItemNameText.text = UnknownItemName;
                 viewInstance.GiftItemView.SetLoadedState();
             }
+            
         }
 
         private void OnImageLoaded(Sprite sprite)
         {
-            viewInstance?.GiftItemView?.SetLoadedState();
-        }
-        
-        private async UniTaskVoid PlayAnimationAsync()
-        {
-            await PlayShowAnimationAsync(lifeCts.Token);
+            viewInstance?.GiftItemView.SetLoadedState();
         }
 
         private async UniTask PlayShowAnimationAsync(CancellationToken ct)
@@ -148,33 +164,6 @@ namespace DCL.Backpack.Gifting.Notifications
         {
             if (viewInstance != null)
                 await viewInstance.BackgroundRaysAnimation.HideAnimationAsync(ct);
-        }
-
-        // private async UniTask SetupSenderProfileAsync(GiftReceivedNotificationMetadata metadata, CancellationToken ct)
-        // {
-        //     var senderAddress = new Web3Address(metadata.Sender.Address);
-        //     var profile = await profileRepository.GetAsync(senderAddress, ct);
-        //
-        //     string name = profile != null ? profile.Name : metadata.Sender.Name;
-        //     var nameColor = profile?.UserNameColor ?? Color.white;
-        //     string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-        //
-        //     viewInstance!.TitleText.text = string.Format(
-        //         GiftingTextIds.GiftReceivedFromFormat,
-        //         hexColor,
-        //         name
-        //     );
-        // }
-
-        private void OpenBackpackAndClose()
-        {
-            Close();
-        }
-
-        private void Close()
-        {
-            viewInstance!
-                .HideAsync(CancellationToken.None).Forget();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -196,19 +185,5 @@ namespace DCL.Backpack.Gifting.Notifications
             await PlayHideAnimationAsync(CancellationToken.None);
             lifeCts.SafeCancelAndDispose();
         }
-    }
-
-    public class GiftPopupItemViewModel : IGiftableItemViewModel
-    {
-        public string Urn { get; set; }
-        public string DisplayName { get; }
-        public Sprite Thumbnail { get; set; }
-        public ThumbnailState ThumbnailState { get; set; }
-        public int NftCount { get; set; }
-        public string RarityId { get; set; }
-        public string CategoryId { get; set; }
-        public bool IsEquipped { get; set; }
-        public IGiftable Giftable { get; }
-        public bool IsGiftable { get; set; }
     }
 }

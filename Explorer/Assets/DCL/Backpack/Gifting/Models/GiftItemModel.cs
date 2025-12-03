@@ -21,18 +21,18 @@ namespace DCL.Backpack.Gifting.Models
     [Serializable]
     public class GiftItemResponseDTO
     {
-        public string id;
-        public string name;
-        public string description;
-        public string thumbnail;
-        public string image;
-        public List<GiftItemAttributeDTO> attributes;
+        public string? id;
+        public string? name;
+        public string? description;
+        public string? thumbnail;
+        public string? image;
+        public List<GiftItemAttributeDTO>? attributes;
     }
 
     [Serializable]
     public class GiftItemAttributeDTO
     {
-        public string trait_type;
-        public string value;
+        public string? trait_type;
+        public string? value;
     }
 }

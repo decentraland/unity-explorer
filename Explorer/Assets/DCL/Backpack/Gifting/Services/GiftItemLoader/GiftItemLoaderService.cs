@@ -13,7 +13,6 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
     public class GiftItemLoaderService : IGiftItemLoaderService
     {
         private readonly IWebRequestController webRequestController;
-        private readonly URLBuilder urlBuilder = new();
 
         public GiftItemLoaderService(IWebRequestController webRequestController)
         {
@@ -26,7 +25,6 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
 
             try
             {
-                urlBuilder.Clear();
                 URLAddress url = URLAddress.FromString(tokenUri);
 
                 GiftItemResponseDTO dto = await webRequestController
@@ -34,7 +32,8 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
                     .CreateFromJson<GiftItemResponseDTO>(WRJsonParser.Unity);
 
                 if (dto == null) return null;
-                
+
+                // NOTE: what are the defaults?
                 string rarity = "common";
                 string category = "wearable";
 
@@ -42,19 +41,31 @@ namespace DCL.Backpack.Gifting.Services.GiftItemLoaderService
                 {
                     foreach (var attr in dto.attributes)
                     {
-                        string trait = attr.trait_type.ToLower();
-                        string val = attr.value.ToLower();
+                        string trait = attr.trait_type?.ToLower() ?? "";
+                        string val = attr.value?.ToLower() ?? "";
 
-                        if (trait == "rarity") rarity = val;
-                        else if (trait == "category") category = val;
+                        switch (trait)
+                        {
+                            case "rarity":
+                                rarity = val;
+                                break;
+                            case "category":
+                                category = val;
+                                break;
+                        }
                     }
                 }
 
+                string name = dto.name ?? string.Empty;
+                string description = dto.description ?? string.Empty;
+                string imageUrl =
+                    !string.IsNullOrEmpty(dto.thumbnail) ? dto.thumbnail :
+                    !string.IsNullOrEmpty(dto.image) ? dto.image :
+                    string.Empty;
+
                 return new GiftItemModel
                 {
-                    Name = dto.name,
-                    Description = dto.description,
-                    ImageUrl = !string.IsNullOrEmpty(dto.thumbnail) ? dto.thumbnail : dto.image,
+                    Name = name, Description = description, ImageUrl = imageUrl,
                     Rarity = rarity,
                     Category = category
                 };

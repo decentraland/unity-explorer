@@ -119,16 +119,27 @@ namespace DCL.Backpack.Gifting.Presenters
             await UniTask.WhenAny(closeTasks);
         }
 
-        private async UniTaskVoid ProcessTransferFlowAsync(CancellationToken ct)
+        private async UniTask ProcessTransferFlowAsync(CancellationToken ct)
         {
-            var result = await giftTransferRequestCommand.ExecuteAsync(inputData, ct);
+            try
+            {
+                var result = await giftTransferRequestCommand.ExecuteAsync(inputData, ct);
+                ct.ThrowIfCancellationRequested();
 
-            if (ct.IsCancellationRequested) return;
-
-            if (result.IsSuccess)
-                OnSuccess();
-            else
+                if (result.IsSuccess)
+                    OnSuccess();
+                else
+                    OnFailure();
+            }
+            catch (OperationCanceledException)
+            {
+                // expected, ignore
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
                 OnFailure();
+            }
         }
 
         private void OnMarketplaceActivityLinkClicked(string _)
@@ -140,17 +151,23 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             SetPhase(e.Phase, e.Message);
 
-            if (e.Phase == GiftTransferPhase.Authorizing)
-                StartDelayedStateTimer(lifeCts!.Token);
+            if (e.Phase != GiftTransferPhase.Authorizing)
+                return;
+
+            if (lifeCts == null || lifeCts.IsCancellationRequested)
+                return;
+
+            StartDelayedStateTimer(lifeCts.Token);
         }
 
         private void StartDelayedStateTimer(CancellationToken ct)
         {
             delayCts = delayCts.SafeRestartLinked(ct);
-            ShowAfterDelayAsync(delayCts.Token).Forget();
+            ShowAfterDelayAsync(delayCts.Token)
+                .Forget();
         }
 
-        private async UniTaskVoid ShowAfterDelayAsync(CancellationToken token)
+        private async UniTask ShowAfterDelayAsync(CancellationToken token)
         {
             try
             {
@@ -172,6 +189,7 @@ namespace DCL.Backpack.Gifting.Presenters
             currentState = State.Success;
             delayCts.SafeCancelAndDispose();
             RequestClose();
+            
             OpenSuccessScreenAfterCloseAsync(CancellationToken.None)
                 .Forget();
         }
@@ -182,18 +200,31 @@ namespace DCL.Backpack.Gifting.Presenters
             delayCts.SafeCancelAndDispose();
 
             RequestClose();
+            
             ShowErrorPopupAsync(CancellationToken.None)
                 .Forget();
         }
 
-        private async UniTaskVoid OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
+        private async UniTask OpenSuccessScreenAfterCloseAsync(CancellationToken ct)
         {
-            var successParams = new GiftTransferSuccessParams(inputData.recipientName, inputData.userThumbnail, inputData.userNameColorHex);
-            await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
+            try
+            {
+                var successParams = new GiftTransferSuccessParams(inputData.recipientName,
+                    inputData.userThumbnail,
+                    inputData.userNameColorHex);
+
+                await mvcManager.ShowAsync(GiftTransferSuccessController.IssueCommand(successParams), ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore, user navigated away
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+            }
         }
-
         
-
         private void SetViewState(State newState)
         {
             currentState = newState;
@@ -223,32 +254,43 @@ namespace DCL.Backpack.Gifting.Presenters
             viewInstance?.CloseButton.onClick.Invoke();
         }
 
-        private async UniTaskVoid ShowErrorPopupAsync(CancellationToken ct)
+        private async UniTask ShowErrorPopupAsync(CancellationToken ct)
         {
-            string supportUrl = decentralandUrlsSource.Url(DecentralandUrl.Support);
-            string supportLink = string.Format(GiftingTextIds.ErrorDialogSupportLinkFormat, supportUrl);
-
-            var dialogParams = new ConfirmationDialogParameter(
-                GiftingTextIds.ErrorDialogTitle,
-                GiftingTextIds.ErrorDialogCancelText,
-                GiftingTextIds.ErrorDialogConfirmText,
-                viewInstance?.WarningIcon,
-                false,
-                false,
-                null,
-                GiftingTextIds.ErrorDialogDescription,
-                linkText: supportLink,
-                onLinkClickCallback: LinkCallback
-            );
-
-            var result = await ViewDependencies
-                .ConfirmationDialogOpener
-                .OpenConfirmationDialogAsync(dialogParams, ct);
-
-            if (result == ConfirmationResult.CONFIRM)
+            try
             {
-                ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RetryLogMessage);
-                await mvcManager.ShowAsync(IssueCommand(inputData), ct);
+                string supportUrl = decentralandUrlsSource.Url(DecentralandUrl.Support);
+                string supportLink = string.Format(GiftingTextIds.ErrorDialogSupportLinkFormat, supportUrl);
+
+                var dialogParams = new ConfirmationDialogParameter(
+                    GiftingTextIds.ErrorDialogTitle,
+                    GiftingTextIds.ErrorDialogCancelText,
+                    GiftingTextIds.ErrorDialogConfirmText,
+                    viewInstance?.WarningIcon,
+                    false,
+                    false,
+                    null,
+                    GiftingTextIds.ErrorDialogDescription,
+                    linkText: supportLink,
+                    onLinkClickCallback: LinkCallback
+                );
+
+                var result = await ViewDependencies
+                    .ConfirmationDialogOpener
+                    .OpenConfirmationDialogAsync(dialogParams, ct);
+
+                if (result == ConfirmationResult.CONFIRM)
+                {
+                    ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RetryLogMessage);
+                    await mvcManager.ShowAsync(IssueCommand(inputData), ct);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // dialog closed or navigation away
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
             }
         }
 

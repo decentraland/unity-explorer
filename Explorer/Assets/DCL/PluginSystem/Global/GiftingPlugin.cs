@@ -54,23 +54,20 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWebRequestController webRequestController;
-        private readonly IEquippedWearables equippedWearables;
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
         private readonly IEthereumApi ethereumApi;
-        private readonly ISelfProfile selfProfile;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IWeb3VerifiedAuthenticator dappWeb3Authenticator;
         private readonly ISharedSpaceManager sharedSpaceManager;
         
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
-        private GiftReceivedPopupController giftReceivedPopupController;
-        private GiftNotificationOpenerController giftNotificationOpenerController;
+        private GiftReceivedPopupController? giftReceivedPopupController;
+        private GiftNotificationOpenerController? giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -83,16 +80,13 @@ namespace DCL.PluginSystem.Global
             IWearablesProvider wearablesProvider,
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
-            IEquippedWearables equippedWearables,
             IEmoteProvider emoteProvider,
             IWeb3IdentityCache web3IdentityCache,
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
-            ISelfProfile selfProfile,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3VerifiedAuthenticator dappWeb3Authenticator,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -106,16 +100,13 @@ namespace DCL.PluginSystem.Global
             this.wearablesProvider = wearablesProvider;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
-            this.equippedWearables = equippedWearables;
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus =  eventBus;
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
-            this.selfProfile = selfProfile;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.dappWeb3Authenticator = dappWeb3Authenticator;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -252,17 +243,6 @@ namespace DCL.PluginSystem.Global
             [field: Header("Notifications")]
             [field: SerializeField]
             public AssetReferenceGameObject GiftReceivedPopupPrefab;
-
-            [Header("Localization / Constants")]
-            [SerializeField] public string GiftTransferPopupStatusTitle = "Preparing Gift for";
-
-            [SerializeField] public string GiftTransferPopupStatusWaitingMessage = "A browser window should open for you to confirm the transaction.";
-            [SerializeField] public string GiftTransferPopupStatusProcessingMessage = "Processing...";
-
-            [SerializeField] public string GiftTransferErrorPopupTitle = "Something went wrong";
-            [SerializeField] public string GiftTransferErrorPopupAdditionalUrlTitle = "Your gift wasn't delivered. Please try again of contact Support.";
-            [SerializeField] public string GiftTransferErrorPopupCloseButtonText = "CLOSE";
-            [SerializeField] public string GiftTransferErrorPopupConfirmButtonText = "TRY AGAIN";
             
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }

@@ -15,6 +15,22 @@ namespace DCL.Backpack.Gifting.Services
     /// </summary>
     public class Web3GiftTransferService : IGiftTransferService, IDisposable
     {
+        private const string ErrorIdentityNotFound =
+            "Web3 identity not found. Please ensure the user is logged in.";
+
+        private const string ErrorInvalidUrn =
+            "Could not extract contract address from URN: {0}";
+
+        private const string ErrorSignatureFailed =
+            "Signing failed. The user may have rejected the request.";
+
+        private const string LogSignatureSuccess =
+            "Gifting message signed successfully. Signature: {0}...";
+
+        private const string JsonKeyFrom = "from";
+        private const string JsonKeyTo = "to";
+        private const string JsonKeyData = "data";
+        
         private readonly IEthereumApi ethereumApi;
 
         public Web3GiftTransferService(IEthereumApi ethereumApi)
@@ -43,18 +59,19 @@ namespace DCL.Backpack.Gifting.Services
             try
             {
                 if (string.IsNullOrEmpty(fromAddress))
-                    return GiftTransferResult.Fail("Web3 identity not found. Please ensure the user is logged in.");
+                    return GiftTransferResult.Fail(ErrorIdentityNotFound);
 
                 if (!GiftingUrnParsingHelper.TryGetContractAddress(giftUrn, out string contractAddress))
-                    return GiftTransferResult.Fail($"Could not extract contract address from URN: {giftUrn}");
+                    return GiftTransferResult.Fail(string.Format(ErrorInvalidUrn, giftUrn));
 
                 // Build call data for transferFrom(from, to, tokenId)
-                string data = ManualTxEncoder.EncodeTransferFrom(fromAddress, recipientAddress, tokenId);
+                string data = ManualTxEncoder
+                    .EncodeTransferFrom(fromAddress, recipientAddress, tokenId);
 
                 // Compose tx: ONLY from, to, data
                 var tx = new JObject
                 {
-                    ["from"] = fromAddress, ["to"]   = contractAddress, ["data"] = data
+                    [JsonKeyFrom] = fromAddress, [JsonKeyTo] = contractAddress, [JsonKeyData] = data
                 };
 
                 var request = new EthApiRequest
@@ -65,16 +82,18 @@ namespace DCL.Backpack.Gifting.Services
                     }
                 };
 
-                // This call automatically triggers the browser pop-up via DappWeb3Authenticator
+                // This call automatically triggers the
+                // browser pop-up via DappWeb3Authenticator
                 var response = await ethereumApi.SendAsync(request, ct);
 
                 if (response.result == null ||
                     string.IsNullOrEmpty(response.result.ToString()))
-                    
-                    return GiftTransferResult.Fail("Signing failed. The user may have rejected the request.");
+
+                    return GiftTransferResult.Fail(ErrorSignatureFailed);
 
                 string signature = response.result.ToString();
-                ReportHub.Log(ReportCategory.GIFTING, $"Gifting message signed successfully. Signature: {signature.Substring(0, 10)}...");
+                ReportHub.Log(ReportCategory.GIFTING,
+                    string.Format(LogSignatureSuccess, signature.Substring(0, 10)));
 
                 return GiftTransferResult.Success();
             }

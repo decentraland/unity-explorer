@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
 using DCL.Diagnostics;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Commands
@@ -23,25 +20,16 @@ namespace DCL.Backpack.Gifting.Commands
             this.eventBus = eventBus;
         }
 
-        public async UniTaskVoid ExecuteAsync(IGiftable giftable, string urn, CancellationToken ct)
+        public async UniTask ExecuteAsync(IGiftable giftable, string urn, CancellationToken ct)
         {
             try
             {
-                Sprite sprite;
-
-                switch (giftable)
+                var sprite = giftable switch
                 {
-                    case WearableGiftable wg:
-                        sprite = await thumbnailProvider.GetAsync(wg.Wearable, ct);
-                        break;
-
-                    case EmoteGiftable eg:
-                        sprite = await thumbnailProvider.GetAsync(eg.Emote, ct);
-                        break;
-
-                    default:
-                        throw new NotSupportedException($"Unsupported giftable type: {giftable?.GetType().Name}");
-                }
+                    WearableGiftable wg => await thumbnailProvider.GetAsync(wg.Wearable, ct),
+                    EmoteGiftable eg => await thumbnailProvider.GetAsync(eg.Emote, ct),
+                    _ => throw new NotSupportedException($"Unsupported giftable type: {giftable?.GetType().Name}")
+                };
 
                 if (ct.IsCancellationRequested) return;
 

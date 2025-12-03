@@ -1,7 +1,9 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using MVC;
 using Utility;
 
@@ -38,14 +40,27 @@ namespace DCL.Backpack.Gifting.Presenters
                     viewInstance.RecipientThumbnail.sprite = inputData.UserThumbnail;
             }
 
-            PlayAnimationAsync()
+            lifeCts = new CancellationTokenSource();
+
+            PlayAnimationAsync(lifeCts.Token)
                 .Forget();
         }
 
-        private async UniTaskVoid PlayAnimationAsync()
+        private async UniTask PlayAnimationAsync(CancellationToken ct)
         {
-            lifeCts = new CancellationTokenSource();
-            await PlayShowAnimationAsync(lifeCts.Token);
+            try
+            {
+                await PlayShowAnimationAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // user closed / navigated away, ignore
+            }
+            catch (Exception e)
+            {
+                // if you have gifting logging here, you can log
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+            }
         }
 
         protected override void OnViewClose()

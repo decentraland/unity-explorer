@@ -11,6 +11,10 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 {
     public class GiftTransferRequestCommand
     {
+        private const string MsgIdentityNotFound = "User identity not found.";
+        private const string MsgCancelUser = "Gifting was canceled.";
+        private const string MsgCancelShort = "Canceled";
+        
         private readonly IEventBus eventBus;
         private readonly IGiftTransferService giftTransferService;
         private readonly IWeb3IdentityCache  web3IdentityCache;
@@ -37,7 +41,7 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             var identity = web3IdentityCache.Identity;
             if (identity == null)
             {
-                string error = "User identity not found.";
+                string error = MsgIdentityNotFound;
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, error));
                 return GiftTransferResult.Fail(error);
             }
@@ -57,9 +61,9 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             
             if (ct.IsCancellationRequested)
             {
-                eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, "Gifting was cancelled."));
+                eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, MsgCancelUser));
                 eventBus.Publish(new GiftingEvents.OnCanceledGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
-                return GiftTransferResult.Fail("Cancelled");
+                return GiftTransferResult.Fail(MsgCancelShort);
             }
 
             if (result.IsSuccess)

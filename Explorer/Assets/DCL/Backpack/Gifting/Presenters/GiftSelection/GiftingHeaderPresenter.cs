@@ -98,7 +98,7 @@ namespace DCL.Backpack.Gifting.Presenters
             DebounceSearchAsync(newText, searchCts.Token).Forget();
         }
 
-        private async UniTaskVoid DebounceSearchAsync(string newText, CancellationToken ct)
+        private async UniTask DebounceSearchAsync(string newText, CancellationToken ct)
         {
             await UniTask.Delay(SEARCH_DEBOUNCE_MS, cancellationToken: ct);
             OnSearchChanged?.Invoke(newText);

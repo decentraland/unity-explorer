@@ -12,10 +12,10 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct ThumbnailLoadedEvent
         {
             public readonly string Urn;
-            public readonly Sprite Sprite;
+            public readonly Sprite? Sprite;
             public readonly bool Success;
 
-            public ThumbnailLoadedEvent(string urn, Sprite sprite, bool success)
+            public ThumbnailLoadedEvent(string urn, Sprite? sprite, bool success)
             {
                 Urn = urn;
                 Sprite = sprite;

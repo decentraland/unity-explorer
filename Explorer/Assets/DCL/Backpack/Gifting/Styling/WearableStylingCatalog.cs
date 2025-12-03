@@ -5,6 +5,8 @@ namespace DCL.Backpack.Gifting.Styling
 {
     public sealed class WearableStylingCatalog : IWearableStylingCatalog
     {
+        private const string DefaultRarity = "base";
+        
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NftTypeIconSO categoryIcons;
@@ -35,8 +37,11 @@ namespace DCL.Backpack.Gifting.Styling
 
         public GiftItemStyleSnapshot GetStyleSnapshot(string? rarity, string? category)
         {
-            var rarityBg = GetRarityBackground(rarity ?? "base");
-            var flapCol = GetRarityFlapColor(rarity ?? "base");
+            string r = rarity ?? DefaultRarity;
+
+            var rarityBg = GetRarityBackground(r);
+            var flapCol  = GetRarityFlapColor(r);
+            
             var catIcon = GetCategoryIcon(category);
 
             return new GiftItemStyleSnapshot(catIcon, rarityBg, flapCol);

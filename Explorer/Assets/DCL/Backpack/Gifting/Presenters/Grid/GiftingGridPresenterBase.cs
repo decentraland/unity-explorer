@@ -225,11 +225,12 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             pendingThumbnailLoads++;
-
-            // FIX: Use Abstract method to update state without casting
-            viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
             
-            loadThumbnailCommand.ExecuteAsync(vm.Giftable, urn, lifeCts!.Token).Forget();
+            viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
+
+            loadThumbnailCommand
+                .ExecuteAsync(vm.Giftable, urn, lifeCts!.Token)
+                .Forget();
         }
 
         private void OnThumbnailLoaded(GiftingEvents.ThumbnailLoadedEvent evt)

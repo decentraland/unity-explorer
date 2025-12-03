@@ -32,12 +32,15 @@ namespace DCL.Passport
             showErrorCts.SafeCancelAndDispose();
         }
 
-        private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
+        private async UniTask ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
             errorNotification.Text.text = message;
-            errorNotification.Show();
+
+            errorNotification.Show(CancellationToken.None);
+            
             await UniTask.Delay(HIDE_TIME_MS, cancellationToken: ct);
-            errorNotification.Hide();
+
+            errorNotification.Hide(false, CancellationToken.None);
         }
     }
 }

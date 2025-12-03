@@ -8,6 +8,12 @@ using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 
 namespace DCL.Backpack.Gifting.Services.GiftingInventory
 {
+    public static class GiftingItemTypes
+    {
+        public const string Wearable = "wearable";
+        public const string Emote = "emote";
+    }
+    
     public class GiftInventoryService
     {
         private readonly IWearableStorage wearableStorage;
@@ -31,24 +37,39 @@ namespace DCL.Backpack.Gifting.Services.GiftingInventory
         {
             tokenId = "0";
             instanceUrn = string.Empty;
-            URN baseUrnObj = new URN(itemUrn);
+
+            URN baseUrnObj;
+
+            try { baseUrnObj = new URN(itemUrn); }
+            catch { return false; }
 
             IReadOnlyDictionary<URN, NftBlockchainOperationEntry> ownedCopies;
 
-            if (itemType == "wearable")
+            string normalizedType = itemType.ToLowerInvariant();
+            switch (normalizedType)
             {
-                if (!wearableStorage.TryGetOwnedNftRegistry(baseUrnObj, out ownedCopies)) return false;
-            }
-            else
-            {
-                if (!emoteStorage.TryGetOwnedNftRegistry(baseUrnObj, out ownedCopies)) return false;
+                case GiftingItemTypes.Wearable:
+                    if (!wearableStorage.TryGetOwnedNftRegistry(baseUrnObj, out ownedCopies))
+                        return false;
+                    break;
+
+                case GiftingItemTypes.Emote:
+                    if (!emoteStorage.TryGetOwnedNftRegistry(baseUrnObj, out ownedCopies))
+                        return false;
+                    break;
+
+                default:
+                    // Unknown item type
+                    return false;
             }
 
             NftBlockchainOperationEntry? bestCandidate = null;
 
             foreach (var entry in ownedCopies.Values)
             {
-                string fullUrnString = entry.Urn;
+                var fullUrnString = entry.Urn;
+                if (string.IsNullOrEmpty(fullUrnString))
+                    continue;
 
                 if (!equippedStatusProvider.IsEquipped(fullUrnString) &&
                     !pendingTransferService.IsPending(fullUrnString))

@@ -43,21 +43,16 @@ namespace DCL.Backpack.Gifting.Factory
             return new GiftingErrorsController(view.ErrorNotification);
         }
 
-        // FIX: This method now uses 'out' parameters to return the presenters
-        // so the Controller can subscribe to their events.
         public GiftingTabsManager CreateTabs(GiftingView view,
             out IGiftingGridPresenter wearablesPresenter,
             out IGiftingGridPresenter emotesPresenter)
         {
-            // 1. Create Adapters
             var wAdapter = new SuperScrollGridAdapter<WearableViewModel>(view.WearablesGrid?.Grid);
             var eAdapter = new SuperScrollGridAdapter<EmoteViewModel>(view.EmotesGrid?.Grid);
 
-            // 2. Create Presenters via Grid Factory
             wearablesPresenter = gridFactory.CreateWearablesPresenter(view.WearablesGrid, wAdapter);
             emotesPresenter = gridFactory.CreateEmotesPresenter(view.EmotesGrid, eAdapter);
 
-            // 3. Return Manager
             return new GiftingTabsManager(view, wearablesPresenter, emotesPresenter);
         }
     }

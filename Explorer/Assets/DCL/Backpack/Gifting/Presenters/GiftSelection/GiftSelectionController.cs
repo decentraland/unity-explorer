@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Factory;
 using DCL.Backpack.Gifting.Services.GiftingInventory;
-using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
@@ -22,6 +17,10 @@ namespace DCL.Backpack.Gifting.Presenters
 {
     public class GiftSelectionController : ControllerBase<GiftingView, GiftSelectionParams>
     {
+        private const string MsgErrorNonTransferableNft = "Cannot send this item as a gift because it's not a transferable NFT.";
+        private const string CouldNotFindTokenForUrnLog = "Could not find a valid tokenId for URN {0}. Aborting gift transfer.";
+        private const string DefaultGiftItemName = "Item";
+        
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
         private readonly IProfileRepository profileRepository;
@@ -75,10 +74,11 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override void OnViewShow()
         {
-            InitializeViewAsync().Forget();
+            InitializeViewAsync()
+                .Forget();
         }
 
-        private async UniTaskVoid InitializeViewAsync()
+        private async UniTask InitializeViewAsync()
         {
             lifeCts = new CancellationTokenSource();
             giftingErrorsController?.Hide(true);
@@ -113,10 +113,11 @@ namespace DCL.Backpack.Gifting.Presenters
                 if (tabsManager != null)
                 {
                     tabsManager.OnSectionDeactivated += HandleSectionDeactivated;
-                    tabsManager.OnSectionActivated += HandleSectionActivated;
-
                     tabsManager.Initialize();
                 }
+
+                wearablesGridPresenter?.SetSearchText(string.Empty);
+                emotesGridPresenter?.SetSearchText(string.Empty);
             }
             catch (Exception e)
             {
@@ -127,11 +128,6 @@ namespace DCL.Backpack.Gifting.Presenters
         private void HandleSectionDeactivated(GiftingSection section, IGiftingGridPresenter _)
         {
             headerPresenter?.ClearSearchImmediate();
-        }
-
-        private void HandleSectionActivated(GiftingSection section, IGiftingGridPresenter presenter)
-        {
-            //presenter.ForceSearch(string.Empty);
         }
 
         protected override void OnViewClose()
@@ -152,10 +148,7 @@ namespace DCL.Backpack.Gifting.Presenters
             }
 
             if (tabsManager != null)
-            {
                 tabsManager.OnSectionDeactivated -= HandleSectionDeactivated;
-                tabsManager.OnSectionActivated -= HandleSectionActivated;
-            }
 
             wearablesGridPresenter?.Deactivate();
             emotesGridPresenter?.Deactivate();
@@ -172,17 +165,19 @@ namespace DCL.Backpack.Gifting.Presenters
                 return;
             }
 
-            var active = tabsManager.ActivePresenter;
+            var active = tabsManager?.ActivePresenter;
             string? itemName = active?.GetItemNameByUrn(selectedUrn);
             footerPresenter?.UpdateState(itemName, inputData.userName);
         }
 
         private void OnLoadingStateChanged(bool isLoading)
         {
-            if (viewInstance == null) return;
+            if (viewInstance == null || tabsManager == null)
+                return;
 
             var activePresenter = tabsManager.ActivePresenter;
-            if (activePresenter == null) return;
+            if (activePresenter == null)
+                return;
 
             if (isLoading)
             {
@@ -197,56 +192,73 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void HandleSendGift()
         {
-            OpenTransferPopupAsync().Forget();
+            OpenTransferPopupAsync()
+                .Forget();
         }
-        
-        private async UniTaskVoid OpenTransferPopupAsync()
+
+        private async UniTask OpenTransferPopupAsync()
         {
             var activePresenter = tabsManager?.ActivePresenter;
-            string selectedUrn = activePresenter?.SelectedUrn;
+            string? selectedUrn = activePresenter?.SelectedUrn;
 
-            if (string.IsNullOrEmpty(selectedUrn)) return;
-
-            string itemType = activePresenter is WearableGridPresenter ? "wearable" : "emote";
-
-            if (!giftInventoryService.TryGetBestTransferableToken(new URN(selectedUrn), itemType, out string tokenId, out var instanceUrn))
-            {
-                ReportHub.LogError(ReportCategory.GIFTING, $"Could not find a valid tokenId for URN {selectedUrn}. Aborting gift transfer.");
-                giftingErrorsController?.Show("Cannot send this item as a gift because it's not a transferable NFT.");
+            if (activePresenter == null || string.IsNullOrEmpty(selectedUrn))
                 return;
+
+            try
+            {
+                string itemType = activePresenter is WearableGridPresenter
+                    ? GiftingItemTypes.Wearable
+                    : GiftingItemTypes.Emote;
+
+                if (!giftInventoryService.TryGetBestTransferableToken(new URN(selectedUrn), itemType, out string tokenId, out string instanceUrn))
+                {
+                    ReportHub.LogError( ReportCategory.GIFTING, string.Format(CouldNotFindTokenForUrnLog, selectedUrn));
+                    giftingErrorsController?.Show(MsgErrorNonTransferableNft);
+                    return;
+                }
+
+                string giftDisplayName = activePresenter.GetItemNameByUrn(selectedUrn) ?? DefaultGiftItemName;
+                var giftThumb = activePresenter.GetThumbnailByUrn(selectedUrn);
+
+                if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
+                    style = new GiftItemStyleSnapshot(null, null, Color.white);
+
+                var ct = lifeCts?.Token ?? CancellationToken.None;
+                var recipientProfile = await profileRepository.GetAsync(inputData.userAddress, ct);
+                if (ct.IsCancellationRequested) return;
+
+                var userNameColor = recipientProfile?.UserNameColor ?? Color.black;
+                string userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
+
+                var transferParams = new GiftTransferParams(
+                    inputData.userAddress,
+                    inputData.userName,
+                    headerPresenter?.CurrentRecipientAvatarSprite,
+                    selectedUrn,
+                    giftDisplayName,
+                    giftThumb,
+                    style,
+                    itemType,
+                    tokenId,
+                    instanceUrn,
+                    userNameColorHex
+                );
+
+                await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams), CancellationToken.None);
             }
-
-            string giftDisplayName = activePresenter?.GetItemNameByUrn(selectedUrn) ?? "Item";
-            var giftThumb = activePresenter?.GetThumbnailByUrn(selectedUrn);
-            if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
-                style = new GiftItemStyleSnapshot(null, null, Color.white);
-
-            var recipientProfile = await profileRepository.GetAsync(inputData.userAddress, CancellationToken.None);
-
-            string? userNameColorHex = "000000";
-            if (recipientProfile != null)
-                userNameColorHex = ColorUtility.ToHtmlStringRGB(recipientProfile.UserNameColor);
-            
-            var transferParams = new GiftTransferParams(
-                inputData.userAddress,
-                inputData.userName,
-                headerPresenter?.CurrentRecipientAvatarSprite,
-                selectedUrn,
-                giftDisplayName,
-                giftThumb,
-                style,
-                itemType,
-                tokenId,
-                instanceUrn.ToString(),
-                userNameColorHex
-            );
-
-            await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams));
+            catch (OperationCanceledException)
+            {
+                // expected path when the popup / controller is disposed; no-op
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
+            }
         }
 
         private void HandleSearchChanged(string searchText)
         {
-            tabsManager.ActivePresenter?.SetSearchText(searchText);
+            tabsManager?.ActivePresenter?.SetSearchText(searchText);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
