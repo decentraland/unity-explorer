@@ -524,8 +524,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             try
             {
                 IEmote? emote = emoteIntent.EmoteAsset;
-                bool isPlayingDifferentEmote = emoteComponent.EmoteUrn.Shorten() != emoteIntent.EmoteId.Shorten();
-                bool isLoopingSameEmote = emote.IsLooping() && emoteComponent.IsPlayingEmote && !isPlayingDifferentEmote;
 
                 if (emoteComponent.Metadata!.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                 {
@@ -544,14 +542,26 @@ namespace DCL.AvatarRendering.Emotes.Play
                         SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId, emoteIntent.TargetAvatarWalletAddress);
                         emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
 
-                        if (!isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
+                        // Directed social emote
+                        if (emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address)
+                        {
+                            // The outline of the initiator blinks
+                            if (!World.Has<PlayAvatarHighlightBlinkingAnimationIntent>(entity))
+                                World.Add(entity, new PlayAvatarHighlightBlinkingAnimationIntent(0.1f, Color.cyan, 1.0f, 2));
+
+                            // Notification displayed
                             ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedSocialEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
+                        }
 
                         //TODO: The initiator has to look at the receiver
                     }
                 }
-                else if (!emoteComponent.Metadata.IsSocialEmote && !isLoopingSameEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address.OriginalFormat)
+                else if (!emoteComponent.Metadata.IsSocialEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address)
+                {
+                    // Directed normal emote
+                    // Notification displayed
                     ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
+                }
 
                 if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.UseOutcomeReactionAnimation)
                 {

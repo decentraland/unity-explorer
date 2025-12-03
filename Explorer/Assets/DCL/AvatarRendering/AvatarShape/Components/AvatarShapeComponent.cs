@@ -12,6 +12,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsVisible;
         public bool HiddenByModifierArea;
         public bool IsPreview;
+        public float OutlineVfxOpacity;
+        public float OutlineThickness;
+        public Color OutlineColor;
 
         public Color SkinColor;
         public Color HairColor;
@@ -45,6 +48,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
+            OutlineVfxOpacity = 0.0f;
+            OutlineColor = Color.clear;
+            OutlineThickness = 0.0f;
         }
 
         public void CreateOutlineCompatibilityList()

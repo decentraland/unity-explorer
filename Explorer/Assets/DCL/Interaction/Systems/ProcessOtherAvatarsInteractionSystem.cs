@@ -145,6 +145,11 @@ namespace DCL.Interaction.Systems
                 hoverFeedbackComponent.Add(viewProfileTooltip);
                 socialEmoteInteractionTooltip = new HoverFeedbackComponent.Tooltip(socialEmoteInteraction.Emote.Model.Asset!.metadata.name, dclInput.Player.Pointer);
                 hoverFeedbackComponent.Add(socialEmoteInteractionTooltip);
+
+                bool isCloseEnoughToInteract = sqrDistanceToAvatar < socialEmotesSettings.InteractionDistance * socialEmotesSettings.InteractionDistance;
+
+                if (!World.Has<ShowAvatarHighlightIntent>(entityRef))
+                    World.Add(entityRef, new ShowAvatarHighlightIntent(0.001f, isCloseEnoughToInteract ? Color.green : Color.red));
             }
             else
             {
