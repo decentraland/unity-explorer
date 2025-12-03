@@ -245,7 +245,7 @@ namespace DCL.PlacesAPIService
 
             await webRequestController.PatchAsync(
                                            fullUrl,
-                                           GenericPatchArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD),
+                                           GenericPostArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD),
                                            ct,
                                            ReportCategory.UI,
                                            signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
@@ -272,7 +272,7 @@ namespace DCL.PlacesAPIService
 
             await webRequestController.PatchAsync(
                                            fullUrl,
-                                           GenericPatchArguments.CreateJson(payload),
+                                           GenericPostArguments.CreateJson(payload),
                                            ct,
                                            ReportCategory.UI,
                                            signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
@@ -330,7 +330,7 @@ namespace DCL.PlacesAPIService
 
             await UniTask.SwitchToMainThread();
 
-            await webRequestController.PutAsync(response.data.signed_url, GenericPutArguments.CreateJson(putData), ct, ReportCategory.UI)
+            await webRequestController.PutAsync(response.data.signed_url, GenericPostArguments.CreateJson(putData), ct, ReportCategory.UI)
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error reporting place:"));
         }
     }

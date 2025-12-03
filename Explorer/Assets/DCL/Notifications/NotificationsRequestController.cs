@@ -168,7 +168,7 @@ namespace DCL.Notifications
 
             await webRequestController.PutAsync(
                                            commonArgumentsForSetRead,
-                                           GenericPutArguments.CreateJson(bodyBuilder.ToString()),
+                                           GenericPostArguments.CreateJson(bodyBuilder.ToString()),
                                            ct,
                                            ReportCategory.UI,
                                            signInfo: WebRequestSignInfo.NewFromUrl(commonArgumentsForSetRead.URL, unixTimestamp, "put"),
