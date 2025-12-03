@@ -152,7 +152,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
-        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly IVoiceChatOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
         private readonly DonationsService donationsService;
@@ -209,7 +209,7 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            ICommunityCallOrchestrator communityCallOrchestrator,
+            IVoiceChatOrchestrator communityCallOrchestrator,
             bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
