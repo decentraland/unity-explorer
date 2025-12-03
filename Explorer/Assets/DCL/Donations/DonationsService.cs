@@ -114,6 +114,7 @@ namespace DCL.Donations
 
         public async UniTask<decimal> GetCurrentBalanceAsync(CancellationToken ct)
         {
+            return 100;
             var request = new EthApiRequest
             {
                 id = Guid.NewGuid().GetHashCode(),

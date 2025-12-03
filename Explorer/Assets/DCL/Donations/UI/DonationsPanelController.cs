@@ -31,6 +31,7 @@ namespace DCL.Donations.UI
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
+        private Profile? currentCreatorProfile;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -87,18 +88,20 @@ namespace DCL.Donations.UI
         {
             try
             {
-                viewInstance!.PlayWaitAnimation();
+                viewInstance!.ShowLoading();
 
-                bool success = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
+                bool success = true;//await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
 
                 if (success)
+                {
+                    await viewInstance.ShowTxConfirmedAsync(currentCreatorProfile, creatorAddress, panelLifecycleCts.Token, profileRepositoryWrapper);
                     PlayEmoteByUrn(EMOTE_MONEY_URN);
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.DONATIONS); }
             finally
             {
-                viewInstance!.StopWaitAnimation();
                 CloseController();
             }
         }
@@ -144,6 +147,8 @@ namespace DCL.Donations.UI
                         donationsService.GetCurrentBalanceAsync(ct),
                         donationsService.GetCurrentManaConversionAsync(ct),
                         donationsService.GetSceneNameAsync(baseParcel, ct));
+
+                currentCreatorProfile = creatorProfile;
 
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
                 if (creatorProfile == null)

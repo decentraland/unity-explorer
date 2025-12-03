@@ -1,28 +1,28 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities.Extensions;
 using MVC;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.Donations.UI
 {
     public class DonationsPanelView : ViewBase, IView
     {
+        private enum State
+        {
+            DEFAULT,
+            LOADING,
+            TX_CONFIRMED,
+            ERROR
+        }
+
         private const string MANA_EQUIVALENT_FORMAT = "${0:0.00}";
-        private const string SEND_CONFIRMATION_TEXT_FORMAT = "Are you sure you want to send {0} MANA to {1}?";
-        private const string SEND_DONATION_CONFIRM_TEXT = "YES";
-        private const string SEND_DONATION_CANCEL_TEXT = "NO";
 
         public event Action<string, decimal>? SendDonationRequested;
         public event Action? BuyMoreRequested;
@@ -31,6 +31,7 @@ namespace DCL.Donations.UI
         [field: SerializeField] private Button cancelButton { get; set; } = null!;
         [field: SerializeField] private Button sendButton { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingView { get; set; } = null!;
+        [field: SerializeField] private DonationConfirmedView donationConfirmedView { get; set; } = null!;
 
         [field: Header("Scene")]
         [field: SerializeField] private TMP_Text sceneNameText { get; set; } = null!;
@@ -57,7 +58,6 @@ namespace DCL.Donations.UI
         private UserWalletAddressElementController? creatorAddressController;
         private decimal manaUsdConversion;
         private decimal currentBalance;
-        private CancellationTokenSource confirmationCts = new ();
         private Color donationBorderOriginalColor;
         private Color manaAvailableOriginalColor;
 
@@ -74,20 +74,30 @@ namespace DCL.Donations.UI
 
         public void SetLoadingState(bool active)
         {
+            ChangeState(State.DEFAULT);
+
             if (active)
                 loadingView.ShowLoading();
             else
                 loadingView.HideLoading();
         }
 
-        public void PlayWaitAnimation()
+        public void ShowLoading()
         {
-
+            //ChangeState(State.LOADING);
         }
 
-        public void StopWaitAnimation()
+        private void ChangeState(State newState)
         {
+            loadingView.gameObject.SetActive(newState == State.DEFAULT);
+            donationConfirmedView.gameObject.SetActive(newState == State.TX_CONFIRMED);
+        }
 
+        public async UniTask ShowTxConfirmedAsync(Profile? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
+        {
+            ChangeState(State.TX_CONFIRMED);
+
+            await donationConfirmedView.ShowAsync(profile, creatorAddress, ct, profileRepositoryWrapper);
         }
 
         public void ConfigurePanel(Profile? profile,
@@ -120,23 +130,8 @@ namespace DCL.Donations.UI
             currentBalanceText.text = currentBalance.ToString("0.00");
             donationInputField.text = suggestedDonationAmount.ToString("0.00");
 
-            confirmationCts = confirmationCts.SafeRestart();
-
             sendButton.onClick.RemoveAllListeners();
-            sendButton.onClick.AddListener( () => OpenConfirmationDialogAsync(sceneCreatorAddress, decimal.Parse(donationInputField.text), confirmationCts.Token));
-        }
-
-        private async UniTaskVoid OpenConfirmationDialogAsync(string creatorAddress, decimal amount, CancellationToken ct)
-        {
-            var result = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(
-                                                    new ConfirmationDialogParameter(string.Format(SEND_CONFIRMATION_TEXT_FORMAT, amount, creatorAddress), SEND_DONATION_CANCEL_TEXT, SEND_DONATION_CONFIRM_TEXT,
-                                                        null, false, false), ct)
-                                               .SuppressToResultAsync(ReportCategory.DONATIONS);
-
-            if (!result.Success || result.Value == ConfirmationResult.CANCEL || ct.IsCancellationRequested)
-                return;
-
-            SendDonationRequested?.Invoke(creatorAddress, amount);
+            sendButton.onClick.AddListener( () => SendDonationRequested?.Invoke(sceneCreatorAddress, decimal.Parse(donationInputField.text)));
         }
 
         private void OnValueChanged(string value)
