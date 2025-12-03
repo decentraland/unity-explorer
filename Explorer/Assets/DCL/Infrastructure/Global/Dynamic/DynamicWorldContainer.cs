@@ -109,6 +109,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -471,7 +472,9 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
-
+            HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
+            IEventBus eventBus = new EventBus(true);
+            
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -488,6 +491,8 @@ namespace Global.Dynamic
                         sharedNavmapCommandBus,
                         onlineUsersProvider,
                         identityCache,
+                        homePlaceEventBus,
+                        eventBus,
                         ct
                     );
 
@@ -558,14 +563,14 @@ namespace Global.Dynamic
                 reloadSceneChatCommand,
                 roomHub,
                 staticContainer.LoadingStatus,
-                includeBannedUsersFromScene
+                includeBannedUsersFromScene,
+                homePlaceEventBus
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
 
             IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
-            IEventBus eventBus = new EventBus(true);
             var currentChannelService = new CurrentChannelService();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
@@ -864,6 +869,7 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     passportBridge,
                     chatEventBus,
+                    homePlaceEventBus,
                     staticContainer.SmartWearableCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),

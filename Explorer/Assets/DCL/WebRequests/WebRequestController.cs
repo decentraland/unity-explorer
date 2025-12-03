@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
+using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.WebRequests
@@ -23,19 +24,22 @@ namespace DCL.WebRequests
         private readonly IRequestHub requestHub;
         private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
+        private readonly WebRequestBudget budget;
+
         IRequestHub IWebRequestController.requestHub => requestHub;
 
         public WebRequestController(
             IWebRequestsAnalyticsContainer analyticsContainer,
             IWeb3IdentityCache web3IdentityCache,
             IRequestHub requestHub,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
-        )
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            WebRequestBudget budget)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
             this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
+            this.budget = budget;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -46,7 +50,7 @@ namespace DCL.WebRequests
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
 
             RetryPolicy retryPolicy = envelope.CommonArguments.RetryPolicy;
-            var attemptNumber = 0;
+            int attemptNumber = 0;
 
             // ensure disposal of headersInfo
             using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
@@ -61,43 +65,25 @@ namespace DCL.WebRequests
 
                 try
                 {
-                    attemptNumber++;
+                    // Budget the web request itself only:
+                    // There is no harm to execute pre-processing as it's lightweight
+                    // and content processing as it's off the main thread
+                    using (await budget.AcquireAsync(envelope.Ct))
+                    {
+                        attemptNumber++;
 
-                    using var pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
-                    string method = request.UnityWebRequest.method!;
-                    NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
-                        ? chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers)
-                        : null;
+                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct))
+                                     .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
+                    }
+
+                    analyticsContainer.OnProcessDataStarted(request);
 
                     try
                     {
-                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
-
-                        if (notifyScope.HasValue)
-                        {
-                            int statusCode = (int)request.UnityWebRequest.responseCode;
-
-                            // TODO avoid allocation?
-                            Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
-
-                            string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
-                            int encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
-                            notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
-                        }
+                        // if no exception is thrown Request is successful and the continuation op can be executed
+                        return await op.ExecuteAsync(request, envelope.Ct);
                     }
-                    catch (OperationCanceledException)
-                    {
-                        notifyScope?.NotifyFailed("Cancelled", true);
-                        throw;
-                    }
-                    catch
-                    {
-                        notifyScope?.NotifyFailed(request.UnityWebRequest.error!, false);
-                        throw;
-                    }
-
-                    // if no exception is thrown Request is successful and the continuation op can be executed
-                    return await op.ExecuteAsync(request, envelope.Ct);
+                    finally { analyticsContainer.OnProcessDataFinished(request); }
 
                     // After the operation is executed, the flow may continue in the background thread
                 }
@@ -133,3 +119,4 @@ namespace DCL.WebRequests
         }
     }
 }
+

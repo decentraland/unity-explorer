@@ -64,6 +64,23 @@ namespace DCL.UI.Controls
             return totalHeight;
         }
 
+        public override bool IsInteractable
+        {
+            get
+            {
+                if (buttonViews.Count == 0)
+                    return false;
+
+                return buttonViews[0].IsInteractable;
+            }
+
+            set
+            {
+                foreach (GenericContextMenuSimpleButtonView button in buttonViews)
+                    button.IsInteractable = value;
+            }
+        }
+
         public override void UnregisterListeners()
         {
             buttonViews.Clear();
@@ -73,12 +90,6 @@ namespace DCL.UI.Controls
         {
             foreach (GenericContextMenuSimpleButtonView button in buttonViews)
                 button.ButtonComponent.onClick.AddListener(new UnityAction(listener));
-        }
-
-        public override void SetAsInteractable(bool isInteractable)
-        {
-            foreach (GenericContextMenuSimpleButtonView button in buttonViews)
-                button.SetAsInteractable(isInteractable);
         }
     }
 }

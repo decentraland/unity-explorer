@@ -14,12 +14,14 @@ namespace DCL.Optimization.Pools
             public T Get() =>
                 new ();
 
-            public PooledObject<T> Get(out T v) =>
-                throw new NotImplementedException();
+            public PooledObject<T> Get(out T v)
+            {
+                v = default(T);
+                return new PooledObject<T>(v, this);
+            }
 
             public void Release(T element)
             {
-
             }
 
             public void Clear()
@@ -32,6 +34,9 @@ namespace DCL.Optimization.Pools
 
         public static Scope<TElement> EmptyScope<TElement>(TElement defaultValue) where TElement: class, new() =>
             new (defaultValue, EmptyPool<TElement>.INSTANCE);
+
+        public static PooledObject<TElement> EmptyPooledObject<TElement>() where TElement: class, new() =>
+            EmptyPool<TElement>.INSTANCE.Get(out _);
 
         public static Scope<List<TComponent>> GetComponentsInChildrenIntoPooledList<TComponent>(this GameObject go, bool includeInactive = false) where TComponent: class
         {
