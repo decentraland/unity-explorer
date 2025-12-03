@@ -76,8 +76,14 @@ namespace DCL.WebRequests
                                      .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
                     }
 
-                    // if no exception is thrown Request is successful and the continuation op can be executed
-                    return await op.ExecuteAsync(request, envelope.Ct);
+                    analyticsContainer.OnProcessDataStarted(request);
+
+                    try
+                    {
+                        // if no exception is thrown Request is successful and the continuation op can be executed
+                        return await op.ExecuteAsync(request, envelope.Ct);
+                    }
+                    finally { analyticsContainer.OnProcessDataFinished(request); }
 
                     // After the operation is executed, the flow may continue in the background thread
                 }

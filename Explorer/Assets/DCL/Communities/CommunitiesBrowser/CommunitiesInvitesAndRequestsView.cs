@@ -15,6 +15,10 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesInvitesAndRequestsView : MonoBehaviour
     {
+        private const string INVITES_RESULTS_TITLE = "Invites";
+        private const string REQUESTS_RECEIVED_RESULTS_TITLE = "Requests Received";
+        private const string REQUESTS_RESULTS_TITLE_FOR_OWNERS = "Requests Sent";
+        private const string REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS = "Requests";
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
         public event Action? BackButtonClicked;
@@ -23,6 +27,11 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string, string, CommunityResultCardView>? RequestToJoinCommunityCanceled;
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationAccepted;
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationRejected;
+        public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
+        public event Action<ICommunityMemberData>? OpenUserChatRequested;
+        public event Action<ICommunityMemberData>? CallUserRequested;
+        public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<string, ICommunityMemberData, InviteRequestIntention>? ManageRequestReceivedRequested;
 
         [Header("Invites & Requests Section")]
         [SerializeField] private Button backButton = null!;
@@ -34,26 +43,40 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject invitesAndRequestsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView invitesAndRequestsLoadingSpinner = null!;
         [SerializeField] private CommunityResultCardView communityCardPrefab = null!;
+        [SerializeField] private CommunityRequestsReceivedGroupView requestsReceivedGroupPrefab = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
         [Header("Invites")]
         [SerializeField] private Transform invitesGridContainer = null!;
         [SerializeField] private GameObject invitesEmptyContainer = null!;
         [SerializeField] private TMP_Text invitesTitleText = null!;
+        [SerializeField] private TMP_Text invitesEmptyTitleText = null!;
 
-        [Header("Requests")]
+        [Header("Requests Received")]
+        [SerializeField] private Transform requestsReceivedGridContainer = null!;
+        [SerializeField] private GameObject requestsReceivedEmptyContainer = null!;
+        [SerializeField] private TMP_Text requestsReceivedTitleText = null!;
+        [SerializeField] private TMP_Text requestsReceivedEmptyTitleText = null!;
+
+        [Header("Requests Sent")]
         [SerializeField] private Transform requestsGridContainer = null!;
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
+        [SerializeField] private TMP_Text requestsEmptyTitleText = null!;
 
         private readonly List<CommunityResultCardView> currentInvites = new ();
+        private readonly List<CommunityRequestsReceivedGroupView> currentRequestsReceivedGroups = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
         private readonly CancellationTokenSource thumbnailsCts = new ();
         private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
+        private IObjectPool<CommunityRequestsReceivedGroupView> requestReceivedGroupsPool = null!;
         private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
+        private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
+        private CommunitiesBrowserStateService? communitiesBrowserStateService;
         private ThumbnailLoader? thumbnailLoader;
+        private int currentInvitesAndRequestsCounter = 0;
 
         private void Awake()
         {
@@ -65,6 +88,12 @@ namespace DCL.Communities.CommunitiesBrowser
                 defaultCapacity: INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: invitedCommunityCardView => invitedCommunityCardView.gameObject.SetActive(true),
                 actionOnRelease: invitedCommunityCardView => invitedCommunityCardView.gameObject.SetActive(false));
+
+            requestReceivedGroupsPool = new ObjectPool<CommunityRequestsReceivedGroupView>(
+                InstantiateRequestsReceivedGroupPrefab,
+                defaultCapacity: INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY,
+                actionOnGet: requestsReceivedGroupView => requestsReceivedGroupView.gameObject.SetActive(true),
+                actionOnRelease: requestsReceivedGroupView => requestsReceivedGroupView.gameObject.SetActive(false));
 
             requestedToJoinCommunityCardsPool = new ObjectPool<CommunityResultCardView>(
                 InstantiateRequestedToJoinCommunityCardPrefab,
@@ -90,8 +119,12 @@ namespace DCL.Communities.CommunitiesBrowser
             thumbnailsCts.SafeCancelAndDispose();
         }
 
-        public void Initialize(ProfileRepositoryWrapper profileDataProvider) =>
+        public void Initialize(ProfileRepositoryWrapper profileDataProvider, CommunitiesDataProvider.CommunitiesDataProvider commDataProvider, CommunitiesBrowserStateService browserStateService)
+        {
             profileRepositoryWrapper = profileDataProvider;
+            communitiesDataProvider = commDataProvider;
+            communitiesBrowserStateService = browserStateService;
+        }
 
         public void SetAsLoading(bool isLoading)
         {
@@ -121,14 +154,39 @@ namespace DCL.Communities.CommunitiesBrowser
             SetInvitesAsEmpty(communities.Length == 0);
         }
 
-        public void SetInvitesTitle(string text) =>
-            invitesTitleText.text = text;
+        public void SetInvitesGridCounter(int count) =>
+            invitesTitleText.text = $"{INVITES_RESULTS_TITLE} ({count})";
 
-        public void SetInvitesCounter(int count)
+        public void SetInvitesAndRequestsCounter(int count)
         {
+            count = Mathf.Max(count, 0);
             invitesCounterContainer.SetActive(count > 0);
             invitesCounterText.text = count.ToString();
+            currentInvitesAndRequestsCounter = count;
         }
+
+        public void ClearRequestsReceivedItems()
+        {
+            foreach (var requestsReceivedGroup in currentRequestsReceivedGroups)
+            {
+                requestsReceivedGroup.ClearRequestReceivedMemberItems();
+                requestReceivedGroupsPool.Release(requestsReceivedGroup);
+            }
+
+            currentRequestsReceivedGroups.Clear();
+            SetRequestsReceivedAsEmpty(true);
+        }
+
+        public void SetRequestsReceivedItems(List<KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>> requestsReceivedGroups)
+        {
+            foreach (var requestsReceivedGroup in requestsReceivedGroups)
+                CreateAndSetupRequestsReceivedGroup(requestsReceivedGroup);
+
+            SetRequestsReceivedAsEmpty(requestsReceivedGroups.Count == 0);
+        }
+
+        public void SetRequestsReceivedGridCounter(int count) =>
+            requestsReceivedTitleText.text = $"{REQUESTS_RECEIVED_RESULTS_TITLE} ({count})";
 
         public void ClearRequestsItems()
         {
@@ -147,8 +205,8 @@ namespace DCL.Communities.CommunitiesBrowser
             SetRequestsAsEmpty(communities.Length == 0);
         }
 
-        public void SetRequestsTitle(string text) =>
-            requestsTitleText.text = text;
+        public void SetRequestsGridCounter(int count) =>
+            requestsTitleText.text = $"{(IsOwnerOrModerator() ? REQUESTS_RESULTS_TITLE_FOR_OWNERS : REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS)} ({count})";
 
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;
@@ -171,10 +229,12 @@ namespace DCL.Communities.CommunitiesBrowser
                     requestedToJoinCommunityCardsPool.Release(requestCard);
                     currentRequests.Remove(requestCard);
 
-                    if (currentInvites.Count == 0 && currentRequests.Count == 0)
+                    if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
                         SetInvitesAndRequestsAsEmpty(true);
                     else
                         SetRequestsAsEmpty(currentRequests.Count == 0);
+
+                    SetRequestsGridCounter(currentRequests.Count);
                 }
                 else
                 {
@@ -198,10 +258,13 @@ namespace DCL.Communities.CommunitiesBrowser
                     invitedCommunityCardsPool.Release(invitationCard);
                     currentInvites.Remove(invitationCard);
 
-                    if (currentInvites.Count == 0 && currentRequests.Count == 0)
+                    if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
                         SetInvitesAndRequestsAsEmpty(true);
                     else
                         SetInvitesAsEmpty(currentInvites.Count == 0);
+
+                    SetInvitesGridCounter(currentInvites.Count);
+                    SetInvitesAndRequestsCounter(currentInvitesAndRequestsCounter - 1);
                 }
                 else
                 {
@@ -213,16 +276,73 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
+        public void UpdateRequestsReceived(string communityId, string profileId, bool isSuccess)
+        {
+            var currentRequestsReceivedGroupsIndex = 0;
+            foreach (CommunityRequestsReceivedGroupView requestsReceivedGroup in currentRequestsReceivedGroups)
+            {
+                if (requestsReceivedGroup.CommunityId != communityId)
+                {
+                    currentRequestsReceivedGroupsIndex++;
+                    continue;
+                }
+
+                if (isSuccess)
+                {
+                    int amountOfRequestReceivedMemberInGroup = requestsReceivedGroup.UpdateRequestReceivedMember(profileId, isSuccess);
+                    if (amountOfRequestReceivedMemberInGroup == 0)
+                    {
+                        requestReceivedGroupsPool.Release(requestsReceivedGroup);
+                        currentRequestsReceivedGroups.RemoveAt(currentRequestsReceivedGroupsIndex);
+                    }
+
+                    requestsReceivedGroup.SetRequestsReceived(amountOfRequestReceivedMemberInGroup);
+
+                    if (currentInvites.Count == 0 && currentRequestsReceivedGroups.Count == 0 && currentRequests.Count == 0)
+                        SetInvitesAndRequestsAsEmpty(true);
+                    else
+                        SetRequestsReceivedAsEmpty(currentRequestsReceivedGroups.Count == 0);
+
+                    var amountOfRequestReceivedMemberInAllGroups = 0;
+                    foreach (var group in currentRequestsReceivedGroups)
+                        amountOfRequestReceivedMemberInAllGroups += group.CurrentRequestReceivedMembers.Count;
+
+                    SetRequestsReceivedGridCounter(amountOfRequestReceivedMemberInAllGroups);
+                    SetInvitesAndRequestsCounter(currentInvitesAndRequestsCounter - 1);
+                }
+                else
+                    ClearSelection();
+
+                break;
+            }
+        }
+
         private void SetInvitesAsEmpty(bool isEmpty)
         {
             invitesEmptyContainer.SetActive(isEmpty);
             invitesGridContainer.gameObject.SetActive(!isEmpty);
+            invitesEmptyTitleText.text = $"{INVITES_RESULTS_TITLE} (0)";
+        }
+
+        private void SetRequestsReceivedAsEmpty(bool isEmpty)
+        {
+            if (!IsOwnerOrModerator())
+            {
+                requestsReceivedEmptyContainer.SetActive(false);
+                requestsReceivedGridContainer.gameObject.SetActive(false);
+                return;
+            }
+
+            requestsReceivedEmptyContainer.SetActive(isEmpty);
+            requestsReceivedGridContainer.gameObject.SetActive(!isEmpty);
+            requestsReceivedEmptyTitleText.text = $"{REQUESTS_RECEIVED_RESULTS_TITLE} (0)";
         }
 
         private void SetRequestsAsEmpty(bool isEmpty)
         {
             requestsEmptyContainer.SetActive(isEmpty);
             requestsGridContainer.gameObject.SetActive(!isEmpty);
+            requestsEmptyTitleText.text = $"{(IsOwnerOrModerator() ? REQUESTS_RESULTS_TITLE_FOR_OWNERS : REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS)} (0)";
         }
 
         private CommunityResultCardView InstantiateInvitedCommunityCardPrefab()
@@ -262,6 +382,44 @@ namespace DCL.Communities.CommunitiesBrowser
                 invitedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, community);
 
             currentInvites.Add(invitedCommunityCardView);
+        }
+
+        private CommunityRequestsReceivedGroupView InstantiateRequestsReceivedGroupPrefab()
+        {
+            CommunityRequestsReceivedGroupView requestsReceivedGroup = Instantiate(requestsReceivedGroupPrefab, requestsReceivedGridContainer);
+            return requestsReceivedGroup;
+        }
+
+        private void CreateAndSetupRequestsReceivedGroup(KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]> requestsReceivedGroup)
+        {
+            CommunityRequestsReceivedGroupView requestsReceivedGroupView = requestReceivedGroupsPool.Get();
+
+            // Setup card data
+            requestsReceivedGroupView.Initialize();
+            requestsReceivedGroupView.SetCommunityId(requestsReceivedGroup.Key.id);
+            requestsReceivedGroupView.SetTitle(requestsReceivedGroup.Key.name);
+            requestsReceivedGroupView.SetRequestsReceived(requestsReceivedGroup.Key.requestsReceived);
+            requestsReceivedGroupView.SetProfileDataProvider(profileRepositoryWrapper!);
+            requestsReceivedGroupView.SetCommunitiesDataProvider(communitiesDataProvider!);
+
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(requestsReceivedGroup.Key.thumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+
+            // Setup card events
+            requestsReceivedGroupView.CommunityButtonClicked -= OnOpenCommunityProfile;
+            requestsReceivedGroupView.CommunityButtonClicked += OnOpenCommunityProfile;
+            requestsReceivedGroupView.OpenProfilePassportRequested -= OnOpenProfilePassport;
+            requestsReceivedGroupView.OpenProfilePassportRequested += OnOpenProfilePassport;
+            requestsReceivedGroupView.OpenUserChatRequested -= OnOpenUserChat;
+            requestsReceivedGroupView.OpenUserChatRequested += OnOpenUserChat;
+            requestsReceivedGroupView.CallUserRequested -= OnCallUser;
+            requestsReceivedGroupView.CallUserRequested += OnCallUser;
+            requestsReceivedGroupView.BlockUserRequested -= OnBlockUser;
+            requestsReceivedGroupView.BlockUserRequested += OnBlockUser;
+            requestsReceivedGroupView.RequestReceivedManageButtonClicked -= OnManageRequestReceived;
+            requestsReceivedGroupView.RequestReceivedManageButtonClicked += OnManageRequestReceived;
+
+            currentRequestsReceivedGroups.Add(requestsReceivedGroupView);
+            requestsReceivedGroupView.SetRequestReceivedMemberItems(requestsReceivedGroup.Value);
         }
 
         private CommunityResultCardView InstantiateRequestedToJoinCommunityCardPrefab()
@@ -314,5 +472,35 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ClearSelection() =>
             EventSystem.current.SetSelectedGameObject(null);
+
+        private void OnOpenProfilePassport(ICommunityMemberData profile) =>
+            OpenProfilePassportRequested?.Invoke(profile);
+
+        private void OnOpenUserChat(ICommunityMemberData profile) =>
+            OpenUserChatRequested?.Invoke(profile);
+
+        private void OnCallUser(ICommunityMemberData profile) =>
+            CallUserRequested?.Invoke(profile);
+
+        private void OnBlockUser(ICommunityMemberData profile) =>
+            BlockUserRequested?.Invoke(profile);
+
+        private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
+            ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);
+
+        private bool IsOwnerOrModerator()
+        {
+            var isOwnerOrModerator = false;
+            foreach (GetUserCommunitiesData.CommunityData myCommunity in communitiesBrowserStateService!.MyCommunities)
+            {
+                if (myCommunity.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
+                {
+                    isOwnerOrModerator = true;
+                    break;
+                }
+            }
+
+            return isOwnerOrModerator;
+        }
     }
 }

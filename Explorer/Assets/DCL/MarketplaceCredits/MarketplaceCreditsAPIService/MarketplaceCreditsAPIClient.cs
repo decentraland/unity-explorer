@@ -128,8 +128,8 @@ namespace DCL.MarketplaceCredits
 
             try
             {
-                await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
-                    .WithNoOpAsync();
+                await webRequestController.SignedFetchPutAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                          .WithNoOpAsync();
 
                 return EnumResult<EmailSubscriptionError>.SuccessResult();
             }
