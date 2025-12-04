@@ -6,28 +6,33 @@ const BANDS_COUNT: usize = 8;
 pub struct AudioAnalysis {
     pub amplitude: f32,
     pub bands: [f32; BANDS_COUNT],
-    pub spectral_centroid: f32,
-    pub spectral_flux: f32,
-    pub onset: bool,
-    pub bpm: f32,
+
+    // Internal and experimental
+    // pub spectral_centroid: f32,
+    // pub spectral_flux: f32,
+    // pub onset: bool,
+    // pub bpm: f32,
 }
 
+/// # Safety
+///
+/// Pass valid pointer and length parameters
 #[unsafe(no_mangle)]
-pub extern "C" fn audio_analysis_analyze_audio_buffer(
+pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
     buffer: *const f32,
     len: usize,
     sample_rate: f32,
 
-    onset_treshold: f32, // assumed to be 2.5 by default
+    // onset_treshold: f32, // assumed to be 2.5 by default
 ) -> AudioAnalysis {
     if buffer.is_null() || len < 2 || sample_rate <= 0.0 {
         return AudioAnalysis {
             amplitude: 0.0,
             bands: [0.0; BANDS_COUNT],
-            spectral_centroid: 0.0,
-            spectral_flux: 0.0,
-            onset: false,
-            bpm: 0.0,
+            // spectral_centroid: 0.0,
+            // spectral_flux: 0.0,
+            // onset: false,
+            // bpm: 0.0,
         };
     }
 
@@ -59,24 +64,24 @@ pub extern "C" fn audio_analysis_analyze_audio_buffer(
     let bands = compute_bands(&spectrum, sample_rate);
 
     // Spectral centroid
-    let spectral_centroid = compute_centroid(&spectrum, sample_rate);
+    // let spectral_centroid = compute_centroid(&spectrum, sample_rate);
 
     // Spectral flux (approx: positive diffs between neighboring bins)
-    let spectral_flux = compute_flux(&spectrum);
+    // let spectral_flux = compute_flux(&spectrum);
 
     // Onset: simple threshold on flux
-    let onset = spectral_flux > onset_treshold;
+    // let onset = spectral_flux > onset_treshold;
 
     // Crude BPM via autocorrelation of energy envelope
-    let bpm = estimate_bpm(samples, sample_rate);
+    // let bpm = estimate_bpm(samples, sample_rate);
 
     AudioAnalysis {
         amplitude,
         bands,
-        spectral_centroid,
-        spectral_flux,
-        onset,
-        bpm,
+        // spectral_centroid,
+        // spectral_flux,
+        // onset,
+        // bpm,
     }
 }
 
@@ -125,9 +130,10 @@ fn freq_to_bin(freq: f32, sample_rate: f32, bins: usize) -> usize {
     }
     // bins cover 0..=Nyquist
     let bin_f = freq / nyquist * (bins as f32 - 1.0);
-    bin_f.round().clamp(0.0, (bins as f32 - 1.0)) as usize
+    bin_f.round().clamp(0.0, bins as f32 - 1.0) as usize
 }
 
+/* Beyond MVP
 fn compute_centroid(spectrum: &[f32], sample_rate: f32) -> f32 {
     if spectrum.is_empty() || sample_rate <= 0.0 {
         return 0.0;
@@ -211,3 +217,4 @@ fn autocorrelate(x: &[f32]) -> Vec<f32> {
     }
     out
 }
+*/

@@ -13,19 +13,20 @@ namespace Plugins.NativeAudioAnalysis
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = NativeMethods.BANDS)]
         public float[] bands;
 
-        public float spectral_centroid;
-        public float spectral_flux;
+        // Will be covered beyond MVP
+        // public float spectral_centroid;
+        // public float spectral_flux;
 
-        [MarshalAs(UnmanagedType.I1)] // Rust bool = 1 byte
-        public bool onset;
+        // [MarshalAs(UnmanagedType.I1)] // Rust bool = 1 byte
+        // public bool onset;
 
-        public float bpm;
+        // public float bpm;
     }
 
     public static class NativeMethods
     {
-    public const int BANDS = 8;
-    public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
+        public const int BANDS = 8;
+        public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
 
         private const string LIBRARY_NAME = "audio-analysis";
 
@@ -33,8 +34,8 @@ namespace Plugins.NativeAudioAnalysis
         internal extern static unsafe AudioAnalysis audio_analysis_analyze_audio_buffer(
             float* buffer,
             UIntPtr len,
-            float sample_rate,
-            float onset_threshold = DEFAULT_ONSET_THRESHOLD
+            float sample_rate
+            // float onset_threshold = DEFAULT_ONSET_THRESHOLD
         );
 
         public static AudioAnalysis AnalyzeAudioBuffer(float[] data, float sampleRate) 

@@ -63,6 +63,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
             // Amplitude
             amplitudeCenter.localScale = Vector3.one * lastAnalysis.amplitude * amplitudePower;
 
+            /* Beyond MVP
             // Spectral centroid
             float t = Mathf.InverseLerp(200, 4000, lastAnalysis.spectral_centroid);
             mainCamera.backgroundColor = Color.Lerp(Color.red, Color.blue, t);
@@ -86,6 +87,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
             {
                 medianAnalysis.bands[i] = (medianAnalysis.bands[i] + lastAnalysis.bands[i]) / 2;
             }
+            */
         }
 
         private void OnDisable()
