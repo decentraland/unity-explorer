@@ -7,11 +7,13 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterCamera.Components;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using DCL.InWorldCamera;
 using DCL.Profiles;
 using DCL.SocialEmotes.UI;
 using DCL.UI;
@@ -289,6 +291,9 @@ namespace DCL.Interaction.Systems
                         interaction.InitiatorWalletAddress,
                         interaction.Id))
                 );
+
+                // When reacting to a social emote, the camera mode is forced to be third person
+                World.Get<CameraComponent>(cameraEntityProxy.Object).Mode = CameraMode.ThirdPerson;
             }
         }
     }
