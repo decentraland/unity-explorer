@@ -52,6 +52,9 @@ namespace DCL.EmotesWheel
         [field: SerializeField]
         public Sprite EmoteSlotIcon { get; private set; }
 
+        [field: SerializeField]
+        public TMP_Text OpenInviteWarning { get; private set; }
+
         private void Awake()
         {
             foreach (Button button in closeButtons)

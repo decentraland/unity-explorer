@@ -214,11 +214,19 @@ namespace DCL.EmotesWheel
         {
             if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
+            else if (inputData.IsDirectedEmote)
+            {
+                viewInstance.OpenInviteWarning.gameObject.SetActive(false);
+                viewInstance!.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
+            }
             else
-                if(inputData.IsDirectedEmote)
-                    viewInstance!.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
-                else
-                    viewInstance!.CurrentEmoteName.text = emote.GetName();
+            {
+                // Social and not directed, shows warning message
+                if(emote.IsSocial)
+                    viewInstance.OpenInviteWarning.gameObject.SetActive(true);
+
+                viewInstance!.CurrentEmoteName.text = emote.GetName();
+            }
         }
 
         private void ClearCurrentEmote(int slot)
@@ -227,6 +235,8 @@ namespace DCL.EmotesWheel
                 viewInstance!.SocialEmoteNameWithUser.text = string.Empty;
             else
                 viewInstance!.CurrentEmoteName.text = string.Empty;
+
+            viewInstance.OpenInviteWarning.gameObject.SetActive(false);
         }
 
         private void PlayEmote(int slot)
