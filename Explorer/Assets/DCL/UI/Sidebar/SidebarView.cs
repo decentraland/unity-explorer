@@ -19,7 +19,7 @@ namespace DCL.UI.Sidebar
 
         public event BlockStatusChangedDelegate? BlockStatusChanged;
         [field: Header("Notifications")]
-        [field: SerializeField] public Button notificationsButton { get; private set; } = null!;
+        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator NotificationsButton { get; private set; } = null!;
         [field: SerializeField] public NotificationsMenuView NotificationsMenuView { get; private set; } = null!;
         [field: SerializeField] internal GameObject backpackNotificationIndicator { get; private set; } = null!;
 
@@ -45,7 +45,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; } = null!;
 
         [field: Header("Smart Wearables")]
-        [field: SerializeField] internal HoverableButton SmartWearablesButton { get; private set; }
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator SmartWearablesButton { get; private set; }
         [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; }
 
         [field: Header("Sidebar Settings")]

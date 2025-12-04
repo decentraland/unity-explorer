@@ -161,7 +161,7 @@ namespace DCL.UI.Sidebar
             viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
-            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
+            viewInstance.NotificationsButton.Button.onClick.AddListener(OpenNotificationsPanelAsync);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
@@ -409,13 +409,15 @@ namespace DCL.UI.Sidebar
             if (viewInstance == null) return;
 
             viewInstance.BlockSidebar();
-            viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
+            viewInstance.NotificationsButton.OnSelect(null);
+            //animator.SetTrigger(UIAnimationHashes.ACTIVE));
 
             await mvcManager.ShowAsync(NotificationsPanelController.IssueCommand());
 
+            //TODO FRAN: REMOVE THIS
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-
-            viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
+            viewInstance.NotificationsButton.OnDeselect(null);
+            //viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             viewInstance.UnblockSidebar();
         }
 
@@ -430,7 +432,7 @@ namespace DCL.UI.Sidebar
         private void OnSmartWearablesButtonHover()
         {
             mvcManager.ShowAndForget(SmartWearablesSideBarTooltipController.IssueCommand());
-
+            //TODO FRAN: REMOVE THIS
             //sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
         }
 

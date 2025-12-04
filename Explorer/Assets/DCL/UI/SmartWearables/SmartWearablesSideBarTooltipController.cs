@@ -21,9 +21,14 @@ namespace DCL.UI.Skybox
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            SetupView();
-            cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cancellationTokenSource = cancellationTokenSource.SafeRestartLinked(ct);
             await UniTask.WaitUntilCanceled(cancellationTokenSource.Token);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            SetupView();
+            base.OnBeforeViewShow();
         }
 
         private void SetupView()

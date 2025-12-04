@@ -8,17 +8,17 @@ namespace DCL.UI.Buttons
 {
     public class HoverableButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action OnButtonHover;
-        public event Action OnButtonUnhover;
+        public event Action? OnButtonHover;
+        public event Action? OnButtonUnhover;
 
         [field: SerializeField]
-        public Button Button { get; private set; }
+        public Button Button { get; private set; } = null!;
 
         [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig ButtonPressedAudio { get; private set; }
+        public AudioClipConfig ButtonPressedAudio { get; private set; } = null!;
         [field: SerializeField]
-        public AudioClipConfig ButtonHoveredAudio { get; private set; }
+        public AudioClipConfig ButtonHoveredAudio { get; private set; } = null!;
 
         public void Awake()
         {
