@@ -121,13 +121,13 @@ namespace DCL.AvatarRendering.Emotes
                             ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                             intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                             intention.WalletAddress = remoteEmoteIntention.WalletId;
-                            intention.SocialEmoteOutcomeIndex = remoteEmoteIntention.SocialEmoteOutcomeIndex;
-                            intention.UseOutcomeReactionAnimation = remoteEmoteIntention.IsReactingToSocialEmote;
-                            intention.UseSocialEmoteOutcomeAnimation = remoteEmoteIntention.IsUsingSocialOutcomeAnimation;
-                            intention.SocialEmoteInitiatorWalletAddress = remoteEmoteIntention.SocialEmoteInitiatorWalletAddress;
-                            intention.TargetAvatarWalletAddress = remoteEmoteIntention.TargetAvatarWalletAddress;
-                            intention.IsRepeating = remoteEmoteIntention.IsRepeating;
-                            intention.SocialEmoteInteractionId = remoteEmoteIntention.SocialEmoteInteractionId;
+                            intention.SocialEmote.OutcomeIndex = remoteEmoteIntention.SocialEmoteOutcomeIndex;
+                            intention.SocialEmote.UseOutcomeReactionAnimation = remoteEmoteIntention.IsReactingToSocialEmote;
+                            intention.SocialEmote.UseOutcomeAnimation = remoteEmoteIntention.IsUsingSocialOutcomeAnimation;
+                            intention.SocialEmote.InitiatorWalletAddress = remoteEmoteIntention.SocialEmoteInitiatorWalletAddress;
+                            intention.SocialEmote.TargetAvatarWalletAddress = remoteEmoteIntention.TargetAvatarWalletAddress;
+                            intention.SocialEmote.IsRepeating = remoteEmoteIntention.IsRepeating;
+                            intention.SocialEmote.InteractionId = remoteEmoteIntention.SocialEmoteInteractionId;
                         }
                         else
                         {

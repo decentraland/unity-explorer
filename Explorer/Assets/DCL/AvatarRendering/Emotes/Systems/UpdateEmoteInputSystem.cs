@@ -130,17 +130,20 @@ namespace DCL.AvatarRendering.Emotes
                 Spatial = true,
                 TriggerSource = TriggerSource.SELF,
                 WalletAddress = walletAddress,
-                SocialEmoteOutcomeIndex = socialEmoteOutcomeIndex,
-                UseOutcomeReactionAnimation = useOutcomeReactionAnimation,
-                UseSocialEmoteOutcomeAnimation = useSocialEmoteOutcomeAnimation,
-                SocialEmoteInitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
-                TargetAvatarWalletAddress = targetAvatarWalletAddress,
-                SocialEmoteInteractionId = socialEmoteInteractionId
+                SocialEmote = new CharacterEmoteIntent.SocialEmoteData()
+                {
+                    OutcomeIndex = socialEmoteOutcomeIndex,
+                    UseOutcomeReactionAnimation = useOutcomeReactionAnimation,
+                    UseOutcomeAnimation = useSocialEmoteOutcomeAnimation,
+                    InitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
+                    TargetAvatarWalletAddress = targetAvatarWalletAddress,
+                    InteractionId = socialEmoteInteractionId
+                }
             };
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation, emoteIntent.SocialEmoteInitiatorWalletAddress, emoteIntent.TargetAvatarWalletAddress, false, emoteIntent.SocialEmoteInteractionId);
+            messageBus.Send(emoteId, false, emoteIntent.SocialEmote.UseOutcomeAnimation, emoteIntent.SocialEmote.OutcomeIndex, emoteIntent.SocialEmote.UseOutcomeReactionAnimation, emoteIntent.SocialEmote.InitiatorWalletAddress, emoteIntent.SocialEmote.TargetAvatarWalletAddress, false, emoteIntent.SocialEmote.InteractionId);
         }
     }
 }

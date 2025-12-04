@@ -75,7 +75,7 @@ namespace DCL.SocialEmotes.UI
             if(emoteComponent.IsPlayingEmote &&
                emoteComponent.Metadata != null &&
                emoteComponent.Metadata.IsSocialEmote &&
-               !emoteComponent.IsPlayingSocialEmoteOutcome)
+               !emoteComponent.SocialEmote.IsPlayingOutcome)
                 World.Add(entity, pinsPool.Get());
         }
 
@@ -105,7 +105,7 @@ namespace DCL.SocialEmotes.UI
                 partitionComponent.IsBehind ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, 0.0f) ||
                 !emoteComponent.IsPlayingEmote ||
-                emoteComponent.IsPlayingSocialEmoteOutcome)
+                emoteComponent.SocialEmote.IsPlayingOutcome)
             {
                 pinsPool.Release(pin);
                 World.Remove<SocialEmotePin>(entity);

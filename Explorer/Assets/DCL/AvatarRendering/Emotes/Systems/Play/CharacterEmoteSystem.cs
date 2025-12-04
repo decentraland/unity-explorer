@@ -235,7 +235,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteUrn != default)
             {
                 // Sends stop signal to other clients
-                messageBus.Send(emoteUrn, false, false, -1, false, string.Empty, string.Empty, true, emoteComponent.SocialEmoteInteractionId);
+                messageBus.Send(emoteUrn, false, false, -1, false, string.Empty, string.Empty, true, emoteComponent.SocialEmote.InteractionId);
             }
         }
 
@@ -253,7 +253,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (isSocialEmote)
             {
-                if(emoteComponent.IsPlayingSocialEmoteOutcome)
+                if(emoteComponent.SocialEmote.IsPlayingOutcome)
                     StopOtherParticipant(entity, ref emoteComponent, walletAddress);
 
                 SocialEmoteInteractionsManager.Instance.StopInteraction(walletAddress);
@@ -285,13 +285,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (interaction != null)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Entities: initiator " + interaction.InitiatorEntity + " receiver " + interaction.ReceiverEntity);
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "IsReactingToSocialEmote: " + emoteComponent.IsReactingToSocialEmote + " IsPlayingSocialEmoteOutcome " + emoteComponent.IsPlayingSocialEmoteOutcome);
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "IsReactingToSocialEmote: " + emoteComponent.SocialEmote.IsReacting + " IsPlayingSocialEmoteOutcome " + emoteComponent.SocialEmote.IsPlayingOutcome);
 
                 Entity socialEmoteAvatarToStop = Entity.Null;
 
-                if (emoteComponent.IsReactingToSocialEmote) // It's the receiver
+                if (emoteComponent.SocialEmote.IsReacting) // It's the receiver
                     socialEmoteAvatarToStop = interaction.InitiatorEntity;
-                else if(emoteComponent.IsPlayingSocialEmoteOutcome) // It's the initiator
+                else if(emoteComponent.SocialEmote.IsPlayingOutcome) // It's the initiator
                     socialEmoteAvatarToStop = interaction.ReceiverEntity;
 
                 if (socialEmoteAvatarToStop != Entity.Null)
@@ -389,7 +389,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteIntent.EmoteAsset == null)
                 return;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - Is reacting? " + emoteIntent.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - Is reacting? " + emoteIntent.SocialEmote.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
@@ -398,7 +398,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
                 if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
-                    (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
+                    (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.SocialEmote.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
                     return;
 
                 if (emoteComponent.Metadata != null)
@@ -416,15 +416,15 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     // It's a different emote OR it was playing the outcome phase and now it wants to play the start phase of the same emote interaction
                     // (triggered the same social emote again while the previous interaction didn't finish yet, it cancels it)
-                    if (isPlayingDifferentEmote || (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation))
+                    if (isPlayingDifferentEmote || (emoteComponent.SocialEmote.IsPlayingOutcome && !emoteIntent.SocialEmote.UseOutcomeAnimation))
                     {
-                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "DIFFERENT PHASE? " + emoteIntent.WalletAddress + " " + (emoteComponent.IsPlayingSocialEmoteOutcome && !emoteIntent.UseSocialEmoteOutcomeAnimation));
+                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "DIFFERENT PHASE? " + emoteIntent.WalletAddress + " " + (emoteComponent.SocialEmote.IsPlayingOutcome && !emoteIntent.SocialEmote.UseOutcomeAnimation));
                         StopEmote(entity, ref emoteComponent, avatarView, emoteIntent.WalletAddress);
                     }
 
                     // Playing a social emote for a different interaction, it could happen if the initiator plays the same start animation
-                    if (emoteComponent.SocialEmoteInteractionId != emoteIntent.SocialEmoteInteractionId &&
-                        SocialEmoteInteractionsManager.Instance.InteractionExists(emoteComponent.SocialEmoteInitiatorWalletAddress))
+                    if (emoteComponent.SocialEmote.InteractionId != emoteIntent.SocialEmote.InteractionId &&
+                        SocialEmoteInteractionsManager.Instance.InteractionExists(emoteComponent.SocialEmote.InitiatorWalletAddress))
                     {
                         ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Cancels social emote and resets transforms of initiator");
                         StopEmote(entity, ref emoteComponent, avatarView, emoteIntent.WalletAddress);
@@ -449,7 +449,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             IEmote emote = emoteIntent.EmoteAsset;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - Is reacting? " + emoteIntent.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - Is reacting? " + emoteIntent.SocialEmote.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
@@ -462,7 +462,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
                 if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
-                    (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
+                    (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.SocialEmote.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
                     return;
 
                 BodyShape bodyShape = avatarShapeComponent.BodyShape;
@@ -475,21 +475,21 @@ namespace DCL.AvatarRendering.Emotes.Play
                 StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                 AudioClip? audioClip = audioAssetResult?.Asset;
 
-                emoteComponent.IsPlayingSocialEmoteOutcome = emoteIntent.UseSocialEmoteOutcomeAnimation;
-                emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
-                emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
-                emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.SocialEmoteInitiatorWalletAddress;
-                emoteComponent.SocialEmoteInteractionId = emoteIntent.SocialEmoteInteractionId;
-                emoteComponent.TargetAvatarWalletAddress = emoteIntent.TargetAvatarWalletAddress;
+                emoteComponent.SocialEmote.IsPlayingOutcome = emoteIntent.SocialEmote.UseOutcomeAnimation;
+                emoteComponent.SocialEmote.CurrentOutcome = emoteIntent.SocialEmote.OutcomeIndex;
+                emoteComponent.SocialEmote.IsReacting = emoteIntent.SocialEmote.UseOutcomeReactionAnimation;
+                emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.SocialEmote.InitiatorWalletAddress;
+                emoteComponent.SocialEmote.InteractionId = emoteIntent.SocialEmote.InteractionId;
+                emoteComponent.SocialEmote.TargetAvatarWalletAddress = emoteIntent.SocialEmote.TargetAvatarWalletAddress;
 
                 if (emoteComponent.Metadata.IsSocialEmote &&
                     emoteIntent.TriggerSource != TriggerSource.PREVIEW &&
-                    emoteComponent.IsPlayingSocialEmoteOutcome &&
-                    emoteComponent.CurrentSocialEmoteOutcome < emote.SocialEmoteOutcomeAudioAssetResults.Count) // TODO: This IF step should never be true
+                    emoteComponent.SocialEmote.IsPlayingOutcome &&
+                    emoteComponent.SocialEmote.CurrentOutcome < emote.SocialEmoteOutcomeAudioAssetResults.Count) // TODO: This IF step should never be true
                 {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AUDIO for outcome " + emoteComponent.CurrentSocialEmoteOutcome);
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AUDIO for outcome " + emoteComponent.SocialEmote.CurrentOutcome);
 
-                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.CurrentSocialEmoteOutcome].Asset;
+                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].Asset;
                 }
 
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PLAY USER: " + emoteIntent.WalletAddress);
@@ -527,23 +527,23 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 if (emoteComponent.Metadata!.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                 {
-                    if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                    if (emoteComponent.SocialEmote.IsPlayingOutcome)
                     {
-                        if (SocialEmoteInteractionsManager.Instance.InteractionExists(emoteIntent.SocialEmoteInitiatorWalletAddress) && // When the outcome is a loop, it may receive an emote intent when the interaction has just finished locally
-                            emoteComponent.IsReactingToSocialEmote)
+                        if (SocialEmoteInteractionsManager.Instance.InteractionExists(emoteIntent.SocialEmote.InitiatorWalletAddress) && // When the outcome is a loop, it may receive an emote intent when the interaction has just finished locally
+                            emoteComponent.SocialEmote.IsReacting)
                         {
                             // Reacting to the interaction
-                            SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, entity, emoteComponent.CurrentSocialEmoteOutcome, emoteIntent.SocialEmoteInitiatorWalletAddress);
+                            SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, entity, emoteComponent.SocialEmote.CurrentOutcome, emoteIntent.SocialEmote.InitiatorWalletAddress);
                         }
                     }
                     else
                     {
                         // Starting interaction
-                        SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmoteInteractionId, emoteIntent.TargetAvatarWalletAddress);
-                        emoteComponent.SocialEmoteInitiatorWalletAddress = emoteIntent.WalletAddress;
+                        SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmote.InteractionId, emoteIntent.SocialEmote.TargetAvatarWalletAddress);
+                        emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.WalletAddress;
 
                         // Directed social emote
-                        if (emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address)
+                        if (emoteIntent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity!.Address)
                         {
                             // The outline of the initiator blinks
                             if (!World.Has<PlayAvatarHighlightBlinkingAnimationIntent>(entity))
@@ -554,17 +554,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                         }
                     }
                 }
-                else if (!emoteComponent.Metadata.IsSocialEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address)
+                else if (!emoteComponent.Metadata.IsSocialEmote && emoteIntent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity!.Address)
                 {
                     // Directed normal emote
                     // Notification displayed
                     ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
                 }
 
-                if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.UseOutcomeReactionAnimation)
+                if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.SocialEmote.UseOutcomeReactionAnimation)
                 {
                     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added Animate");
-                    PrepareToAdjustReceiverBeforeOutcomeAnimation(emoteIntent.SocialEmoteInitiatorWalletAddress);
+                    PrepareToAdjustReceiverBeforeOutcomeAnimation(emoteIntent.SocialEmote.InitiatorWalletAddress);
 
                     // The rotation of the avatar has to coincide with initiator avatar's when the emote starts, which occurs at least 1 frame later
                     World.Add(entity, new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity));
@@ -645,7 +645,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.IsPlayingSocialEmoteOutcome, emoteComponent.CurrentSocialEmoteOutcome, emoteComponent.IsReactingToSocialEmote, emoteComponent.SocialEmoteInitiatorWalletAddress, emoteComponent.TargetAvatarWalletAddress, false, emoteComponent.SocialEmoteInteractionId);
+            messageBus.Send(emoteComponent.EmoteUrn, true, emoteComponent.SocialEmote.IsPlayingOutcome, emoteComponent.SocialEmote.CurrentOutcome, emoteComponent.SocialEmote.IsReacting, emoteComponent.SocialEmote.InitiatorWalletAddress, emoteComponent.SocialEmote.TargetAvatarWalletAddress, false, emoteComponent.SocialEmote.InteractionId);
         }
 
         [Query]

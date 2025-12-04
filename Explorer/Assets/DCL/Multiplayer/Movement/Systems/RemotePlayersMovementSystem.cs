@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // Remote characters ignore any movement message while playing an outcome animation
             // This way the avatar does not move due to the other client (owner) has already finished the animation, unless the emote is cancelled
-            if (emoteComponent.IsPlayingSocialEmoteOutcome && playerInbox.Count > 0)
+            if (emoteComponent.SocialEmote.IsPlayingOutcome && playerInbox.Count > 0)
             {
                 if (!playerInbox.First.isInstant)
                 {

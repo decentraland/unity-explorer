@@ -12,18 +12,22 @@ namespace DCL.AvatarRendering.Emotes
 
     public struct CharacterEmoteIntent
     {
+        public struct SocialEmoteData
+        {
+            public bool UseOutcomeAnimation;
+            public int OutcomeIndex;
+            public bool UseOutcomeReactionAnimation;
+            public string InitiatorWalletAddress;
+            public string TargetAvatarWalletAddress;
+            public bool IsRepeating;
+            public int InteractionId;
+        }
+
         public string WalletAddress;
         public URN EmoteId;
         public bool Spatial;
         public TriggerSource TriggerSource;
-        // TODO: Put all the fields of the social emote into an inner class SocialEmote
-        public bool UseSocialEmoteOutcomeAnimation;
-        public int SocialEmoteOutcomeIndex;
-        public bool UseOutcomeReactionAnimation;
-        public string SocialEmoteInitiatorWalletAddress;
-        public string TargetAvatarWalletAddress;
-        public bool IsRepeating;
-        public int SocialEmoteInteractionId;
+        public SocialEmoteData SocialEmote;
 
         /// <summary>
         ///
@@ -41,13 +45,13 @@ namespace DCL.AvatarRendering.Emotes
             this.EmoteId = emoteId;
             this.Spatial = true;
             this.TriggerSource = TriggerSource.REMOTE;
-            this.UseSocialEmoteOutcomeAnimation = false;
-            this.SocialEmoteOutcomeIndex = -1;
-            this.UseOutcomeReactionAnimation = false;
-            this.SocialEmoteInitiatorWalletAddress = string.Empty;
-            this.TargetAvatarWalletAddress = string.Empty;
-            this.IsRepeating = false;
-            this.SocialEmoteInteractionId = 0;
+            this.SocialEmote.UseOutcomeAnimation = false;
+            this.SocialEmote.OutcomeIndex = -1;
+            this.SocialEmote.UseOutcomeReactionAnimation = false;
+            this.SocialEmote.InitiatorWalletAddress = string.Empty;
+            this.SocialEmote.TargetAvatarWalletAddress = string.Empty;
+            this.SocialEmote.IsRepeating = false;
+            this.SocialEmote.InteractionId = 0;
             this.EmoteAsset = null;
         }
     }

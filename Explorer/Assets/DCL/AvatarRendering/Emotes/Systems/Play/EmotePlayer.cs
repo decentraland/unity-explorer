@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "MainAsset: " + mainAsset.name + " IsPlayingSocialEmoteOutcome: " + emoteComponent.IsPlayingSocialEmoteOutcome);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "MainAsset: " + mainAsset.name + " IsPlayingSocialEmoteOutcome: " + emoteComponent.SocialEmote.IsPlayingOutcome);
 
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
@@ -51,13 +51,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                 emotesInUse[emoteInUse] == pools[mainAsset] &&
                 emoteComponent.EmoteLoop &&
                 isLooping &&
-                !emoteComponent.IsPlayingSocialEmoteOutcome)
+                !emoteComponent.SocialEmote.IsPlayingOutcome)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Emote Already Playing - Skips emote");
                 return true;
             }
 
-            if(emoteComponent.HasOutcomeAnimationStarted)
+            if(emoteComponent.SocialEmote.HasOutcomeAnimationStarted)
                 return true;
 
             if (emoteInUse != null)
@@ -130,8 +130,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.IsPlayingSocialEmoteOutcome);
-            emoteComponent.HasOutcomeAnimationStarted = emoteComponent.IsPlayingSocialEmoteOutcome;
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.SocialEmote.IsPlayingOutcome);
+            emoteComponent.SocialEmote.HasOutcomeAnimationStarted = emoteComponent.SocialEmote.IsPlayingOutcome;
 
             return true;
         }
@@ -255,18 +255,18 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteComponent.Metadata!.IsSocialEmote)
             {
-                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                if (emoteComponent.SocialEmote.IsPlayingOutcome)
                 {
-                    if (emoteComponent.IsReactingToSocialEmote)
+                    if (emoteComponent.SocialEmote.IsReacting)
                     {
-                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].OtherAvatarAnimation;
-                        isLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.CurrentSocialEmoteOutcome].loop;
+                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].OtherAvatarAnimation;
+                        isLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
                         armatureNameOverride = "Armature_Other";
                     }
                     else
                     {
-                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].LocalAvatarAnimation;
-                        isLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.CurrentSocialEmoteOutcome].loop;
+                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].LocalAvatarAnimation;
+                        isLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
                     }
                 }
                 else
@@ -300,7 +300,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
             // This flag makes the animator choose a different transition to Emote, which does not have an interpolation between animations
-            view.SetAnimatorBool(AnimationHashes.IS_SOCIAL_EMOTE_OUTCOME, emoteComponent.IsReactingToSocialEmote);
+            view.SetAnimatorBool(AnimationHashes.IS_SOCIAL_EMOTE_OUTCOME, emoteComponent.SocialEmote.IsReacting);
 
             // Prop
             AnimationClip? propClip = null;
@@ -309,14 +309,14 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteComponent.Metadata.IsSocialEmote)
             {
-                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                if (emoteComponent.SocialEmote.IsPlayingOutcome)
                 {
-                    propClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].PropAnimation;
+                    propClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].PropAnimation;
 
                     if (propClip != null)
                     {
-                        isPropLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.CurrentSocialEmoteOutcome].loop;
-                        propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.CurrentSocialEmoteOutcome].PropAnimationHash;
+                        isPropLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
+                        propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.SocialEmote.CurrentOutcome].PropAnimationHash;
                     }
                 }
                 else

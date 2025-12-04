@@ -6,6 +6,17 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct CharacterEmoteComponent
     {
+        public struct SocialEmoteData
+        {
+            public bool IsPlayingOutcome;
+            public int CurrentOutcome;
+            public bool IsReacting;
+            public string InitiatorWalletAddress;
+            public bool HasOutcomeAnimationStarted;
+            public string TargetAvatarWalletAddress;
+            public int InteractionId;
+        }
+
         public URN EmoteUrn;
         public bool EmoteLoop;
         public EmoteReferences? CurrentEmoteReference;
@@ -13,15 +24,8 @@ namespace DCL.AvatarRendering.Emotes
         // TODO: Replace StopEmote with component StopEmoteIntent
         public bool StopEmote;
         public EmoteDTO.EmoteMetadataDto? Metadata;
-        // TODO: Put all the fields of the social emote into an inner class SocialEmote
         // TODO: Is it redundant to store this here when the interaction state can be checked from anywhere using the Profile.UserId?
-        public bool IsPlayingSocialEmoteOutcome;
-        public int CurrentSocialEmoteOutcome;
-        public bool IsReactingToSocialEmote;
-        public string SocialEmoteInitiatorWalletAddress;
-        public bool HasOutcomeAnimationStarted;
-        public string TargetAvatarWalletAddress;
-        public int SocialEmoteInteractionId;
+        public SocialEmoteData SocialEmote;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
@@ -56,13 +60,13 @@ namespace DCL.AvatarRendering.Emotes
             EmoteLoop = false;
             StopEmote = false;
             Metadata = null;
-            IsPlayingSocialEmoteOutcome = false;
-            CurrentSocialEmoteOutcome = -1;
-            IsReactingToSocialEmote = false;
-            SocialEmoteInitiatorWalletAddress = string.Empty;
-            HasOutcomeAnimationStarted = false;
-            TargetAvatarWalletAddress = string.Empty;
-            SocialEmoteInteractionId = 0;
+            SocialEmote.IsPlayingOutcome = false;
+            SocialEmote.CurrentOutcome = -1;
+            SocialEmote.IsReacting = false;
+            SocialEmote.InitiatorWalletAddress = string.Empty;
+            SocialEmote.HasOutcomeAnimationStarted = false;
+            SocialEmote.TargetAvatarWalletAddress = string.Empty;
+            SocialEmote.InteractionId = 0;
             // These fields are not reset, on purpose (old code depends on it)
             //        CurrentEmoteReference = null;
             //        CurrentAnimationTag = 0;

@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (socialEmoteInteraction is { AreInteracting: true } &&
-                socialEmoteInteraction.InitiatorWalletAddress == profile.UserId && !emoteComponent.HasOutcomeAnimationStarted)
+                socialEmoteInteraction.InitiatorWalletAddress == profile.UserId && !emoteComponent.SocialEmote.HasOutcomeAnimationStarted)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "CharacterEmoteIntent Initiator outcome animation " + profile.UserId);
 
@@ -66,11 +66,14 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                     TriggerSource = TriggerSource.SELF,
                     Spatial = true,
                     WalletAddress = profile.UserId,
-                    SocialEmoteOutcomeIndex = socialEmoteInteraction.OutcomeIndex,
-                    UseOutcomeReactionAnimation = false,
-                    SocialEmoteInitiatorWalletAddress = profile.UserId,
-                    UseSocialEmoteOutcomeAnimation = true,
-                    SocialEmoteInteractionId = socialEmoteInteraction.Id
+                    SocialEmote = new CharacterEmoteIntent.SocialEmoteData()
+                    {
+                        OutcomeIndex = socialEmoteInteraction.OutcomeIndex,
+                        UseOutcomeReactionAnimation = false,
+                        InitiatorWalletAddress = profile.UserId,
+                        UseOutcomeAnimation = true,
+                        InteractionId = socialEmoteInteraction.Id
+                    }
                 });
             }
         }
@@ -191,7 +194,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         private void InitiatorLooksAtSocialEmoteTarget(in CharacterTransform targetTransform, Profile targetProfile)
         {
             CharacterEmoteComponent playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
-            string targetWalletAddress = playerEmoteComponent.TargetAvatarWalletAddress;
+            string targetWalletAddress = playerEmoteComponent.SocialEmote.TargetAvatarWalletAddress;
 
             if (targetWalletAddress == targetProfile.UserId && playerEmoteComponent.IsPlayingEmote)
                 World.Add(playerEntity, new PlayerLookAtIntent(targetTransform.Position));
