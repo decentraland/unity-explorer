@@ -35,7 +35,6 @@ namespace DCL.UI.Skybox
             sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
 
             if (!viewInstance) return;
-            viewInstance.CloseButton.onClick.RemoveAllListeners();
             viewInstance.TimeSlider.onValueChanged.RemoveAllListeners();
             viewInstance.TimeProgressionToggle.onValueChanged.RemoveAllListeners();
         }
