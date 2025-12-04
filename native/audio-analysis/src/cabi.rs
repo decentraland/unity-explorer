@@ -6,7 +6,6 @@ const BANDS_COUNT: usize = 8;
 pub struct AudioAnalysis {
     pub amplitude: f32,
     pub bands: [f32; BANDS_COUNT],
-
     // Internal and experimental
     // pub spectral_centroid: f32,
     // pub spectral_flux: f32,
@@ -23,7 +22,8 @@ pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
     len: usize,
     sample_rate: f32,
 
-    // onset_treshold: f32, // assumed to be 2.5 by default
+    amplitude_gain: f32,
+    bands_gain: f32, // onset_treshold: f32, // assumed to be 2.5 by default
 ) -> AudioAnalysis {
     if buffer.is_null() || len < 2 || sample_rate <= 0.0 {
         return AudioAnalysis {
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
     let samples = &samples_full[..n];
 
     // Amplitude (RMS)
-    let amplitude = rms(samples);
+    let amplitude_raw = rms(samples);
 
     // FFT via FunDSP (fundsp::fft::real_fft)
     // Output length = n/2 + 1 Complex32 bins
@@ -61,7 +61,13 @@ pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
         .collect();
 
     // 8 frequency bands
-    let bands = compute_bands(&spectrum, sample_rate);
+    let bands_raw = compute_bands(&spectrum, sample_rate);
+
+    let amplitude = normalize_log(amplitude_raw, amplitude_gain); // assumed to be 40.0 by default from C# side
+    let mut bands = [0.0; BANDS_COUNT];
+    for i in 0..BANDS_COUNT {
+        bands[i] = normalize_log(bands_raw[i], bands_gain); // assumed to be 80.0 by default from C# side
+    }
 
     // Spectral centroid
     // let spectral_centroid = compute_centroid(&spectrum, sample_rate);
@@ -131,6 +137,13 @@ fn freq_to_bin(freq: f32, sample_rate: f32, bins: usize) -> usize {
     // bins cover 0..=Nyquist
     let bin_f = freq / nyquist * (bins as f32 - 1.0);
     bin_f.round().clamp(0.0, bins as f32 - 1.0) as usize
+}
+
+#[inline]
+fn normalize_log(x: f32, gain: f32) -> f32 {
+    // log10(x * gain + 1)
+    // Clamped to [0,1] to avoid NaN or overshoot
+    (x * gain + 1.0).log10().clamp(0.0, 1.0)
 }
 
 /* Beyond MVP

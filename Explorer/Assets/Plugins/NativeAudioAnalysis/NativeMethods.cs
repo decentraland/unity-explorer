@@ -8,8 +8,10 @@ namespace Plugins.NativeAudioAnalysis
     [StructLayout(LayoutKind.Sequential)]
     public struct AudioAnalysis
     {
+        // Logarithmic
         public float amplitude;
 
+        // Logarithmic
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = NativeMethods.BANDS)]
         public float[] bands;
 
@@ -26,7 +28,11 @@ namespace Plugins.NativeAudioAnalysis
     public static class NativeMethods
     {
         public const int BANDS = 8;
-        public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
+        public const float DEFAULT_AMPLITUDE_GAIN = 40f;
+        public const float DEFAULT_BANDS_GAIN = 80f;
+
+        // Beyond MVP
+        // public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
 
         private const string LIBRARY_NAME = "audio-analysis";
 
@@ -34,17 +40,32 @@ namespace Plugins.NativeAudioAnalysis
         internal extern static unsafe AudioAnalysis audio_analysis_analyze_audio_buffer(
             float* buffer,
             UIntPtr len,
-            float sample_rate
+            float sample_rate,
+
+            float amplitude_gain,
+            float bands_gain
+
             // float onset_threshold = DEFAULT_ONSET_THRESHOLD
         );
 
-        public static AudioAnalysis AnalyzeAudioBuffer(float[] data, float sampleRate) 
+        public static AudioAnalysis AnalyzeAudioBuffer(
+            float[] data, 
+            float sampleRate,
+            float amplitudeGain = DEFAULT_AMPLITUDE_GAIN,
+            float bandsGain = DEFAULT_BANDS_GAIN
+        ) 
         {
             unsafe 
             {
                 fixed (float* ptr = data)
                 {
-                    return NativeMethods.audio_analysis_analyze_audio_buffer(ptr, (UIntPtr) data.Length, sampleRate);
+                    return NativeMethods.audio_analysis_analyze_audio_buffer(
+                        ptr, 
+                        (UIntPtr) data.Length, 
+                        sampleRate,
+                        amplitudeGain,
+                        bandsGain
+                    );
                 }
             }
         }
