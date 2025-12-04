@@ -163,7 +163,7 @@ namespace DCL.PluginSystem.Global
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
 
-            SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus, socialEmotesSettings);
+            SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus, socialEmotesSettings, playerEntity);
 
             SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
 

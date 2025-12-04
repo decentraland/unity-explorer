@@ -45,6 +45,7 @@ namespace DCL.Interaction.Systems
         private HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private HoverFeedbackComponent.Tooltip socialEmoteInteractionTooltip;
         private Profile? currentProfileHovered;
+        private Entity currentEntityHovered;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
         private readonly IWeb3IdentityCache identityCache;
@@ -55,6 +56,8 @@ namespace DCL.Interaction.Systems
         private readonly SocialEmotesSettings socialEmotesSettings;
 
         private GenericContextMenu contextMenuConfiguration;
+
+        private bool wasCursorLockedWhenMenuOpened;
 
         private ProcessOtherAvatarsInteractionSystem(
             World world,
@@ -98,8 +101,6 @@ namespace DCL.Interaction.Systems
             contextMenuTask.TrySetResult();
         }
 
-        private bool wasLocked;
-
         [Query]
         private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities,
             ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
@@ -115,19 +116,19 @@ namespace DCL.Interaction.Systems
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
                 return;
 
-            Entity entityRef = entityInfo.Value.EntityReference;
+            currentEntityHovered = entityInfo.Value.EntityReference;
 
-            if (!World.IsAlive(entityRef)
-                || !World!.TryGet(entityRef, out Profile? profile)
-                || World.Has<HiddenPlayerComponent>(entityRef)
-                || World.Has<IgnoreInteractionComponent>(entityRef))
+            if (!World.IsAlive(currentEntityHovered)
+                || !World!.TryGet(currentEntityHovered, out Profile? profile)
+                || World.Has<HiddenPlayerComponent>(currentEntityHovered)
+                || World.Has<IgnoreInteractionComponent>(currentEntityHovered))
                 return;
 
             currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
 
-            Vector3 otherPosition = World.Get<CharacterTransform>(entityRef).Position;
+            Vector3 otherPosition = World.Get<CharacterTransform>(currentEntityHovered).Position;
             Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
 
             float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
@@ -151,8 +152,8 @@ namespace DCL.Interaction.Systems
                 bool isCloseEnoughToInteract = sqrDistanceToAvatar < socialEmotesSettings.InteractionDistance * socialEmotesSettings.InteractionDistance;
 
                 // Avatar highlight
-                if (!World.Has<ShowAvatarHighlightIntent>(entityRef) && socialEmotesSettings.EnabledOutline)
-                    World.Add(entityRef, new ShowAvatarHighlightIntent(socialEmotesSettings.AvatarOutlineThickness, isCloseEnoughToInteract ? socialEmotesSettings.InteractableAvatarOutlineColor : socialEmotesSettings.NonInteractableAvatarOutlineColor));
+                if (!World.Has<ShowAvatarHighlightIntent>(currentEntityHovered) && socialEmotesSettings.EnabledOutline)
+                    World.Add(currentEntityHovered, new ShowAvatarHighlightIntent(socialEmotesSettings.AvatarOutlineThickness, isCloseEnoughToInteract ? socialEmotesSettings.InteractableAvatarOutlineColor : socialEmotesSettings.NonInteractableAvatarOutlineColor));
             }
             else
             {
@@ -171,7 +172,7 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            wasLocked = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
+            wasCursorLockedWhenMenuOpened = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
             ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
 
@@ -182,14 +183,14 @@ namespace DCL.Interaction.Systems
 
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(50, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, isOpenedOnWorldAvatar: true, onHide: OnHide);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(50, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, isOpenedOnWorldAvatar: true, onHide: OnContextMenuClosed);
         }
 
-        private void OnHide()
+        private void OnContextMenuClosed()
         {
             ReportHub.Log(ReportCategory.EMOTE_DEBUG, "HIDDEN");
 
-            if (wasLocked)
+            if (wasCursorLockedWhenMenuOpened)
             {
                 ReportHub.Log(ReportCategory.EMOTE_DEBUG, "--> LOCKED");
                 World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState = CursorState.Locked;
@@ -243,12 +244,12 @@ namespace DCL.Interaction.Systems
                         contextMenuConfiguration,
                         currentPositionHovered!.Value,
                         closeTask: contextMenuTask.Task,
-                        actionOnHide: OnHide
+                        actionOnHide: OnContextMenuClosed
                     );
 
                     ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
 
-                    wasLocked = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
+                    wasCursorLockedWhenMenuOpened = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
                     if(cursor.CursorState == CursorState.Locked)
                         World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));

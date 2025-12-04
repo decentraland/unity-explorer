@@ -552,8 +552,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                             // Notification displayed
                             ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedSocialEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
                         }
-
-                        //TODO: The initiator has to look at the receiver
                     }
                 }
                 else if (!emoteComponent.Metadata.IsSocialEmote && emoteIntent.TargetAvatarWalletAddress == identityCache.Identity!.Address)

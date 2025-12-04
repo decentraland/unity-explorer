@@ -26,11 +26,13 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
     {
         private readonly IEmotesMessageBus messageBus;
         private readonly SocialEmotesSettings socialEmotesSettings;
+        private readonly Entity playerEntity;
 
-        public SocialEmoteInteractionSystem(World world, IEmotesMessageBus messageBus, SocialEmotesSettings socialEmotesSettings) : base(world)
+        public SocialEmoteInteractionSystem(World world, IEmotesMessageBus messageBus, SocialEmotesSettings socialEmotesSettings, Entity playerEntity) : base(world)
         {
             this.messageBus = messageBus;
             this.socialEmotesSettings = socialEmotesSettings;
+            this.playerEntity = playerEntity;
         }
 
         protected override void Update(float t)
@@ -40,6 +42,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             WalkToInitiatorPositionBeforePlayingOutcomeAnimationQuery(World);
             ForceAvatarToLookAtPositionQuery(World);
             InterpolateCameraTargetTowardsNewParentQuery(World);
+            InitiatorLooksAtSocialEmoteTargetQuery(World);
         }
 
         /// <summary>
@@ -180,6 +183,18 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 // Rotates the receiver
                 World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
             }
+        }
+
+        [Query]
+        [All(typeof(IAvatarView))]
+        [None(typeof(PlayerComponent))]
+        private void InitiatorLooksAtSocialEmoteTarget(in CharacterTransform targetTransform, Profile targetProfile)
+        {
+            CharacterEmoteComponent playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
+            string targetWalletAddress = playerEmoteComponent.TargetAvatarWalletAddress;
+
+            if (targetWalletAddress == targetProfile.UserId && playerEmoteComponent.IsPlayingEmote)
+                World.Add(playerEntity, new PlayerLookAtIntent(targetTransform.Position));
         }
 
         [Query]
