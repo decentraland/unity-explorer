@@ -48,7 +48,7 @@ namespace DCL.Donations
         private readonly string contractAddress;
         private readonly bool donationFeatureEnabled;
 
-        private DateTime lastManaRateQueryTime = new ();
+        private DateTime lastManaRateQueryTime;
         private decimal lastManaRate;
 
         public DonationsService(IScenesCache scenesCache,
