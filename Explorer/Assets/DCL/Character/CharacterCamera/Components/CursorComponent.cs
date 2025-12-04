@@ -7,6 +7,11 @@ namespace DCL.Character.CharacterCamera.Components
         Free,
         Locked,
         Panning,
+
+        /// <summary>
+        /// Cursor is Locked and opened a menu with which the user has to interact without unlocking.
+        /// The mouse cursor will be visible and camera will not move, so the user can click on the UI. The camera will keep the Locked position.
+        /// </summary>
         LockedWithUI
     }
 

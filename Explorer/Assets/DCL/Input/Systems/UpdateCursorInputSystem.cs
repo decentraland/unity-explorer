@@ -107,8 +107,6 @@ namespace DCL.Input.Systems
         [Query]
         private void UpdateCursor(ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
-            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "cursor....: " + cursorComponent.CursorState);
-
             Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
             IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
@@ -124,37 +122,35 @@ namespace DCL.Input.Systems
             ref CursorComponent cursorComponent,
             ref PointerLockIntention intention)
         {
-            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "POINTER LOCK " + intention.Locked);
-
-            if (intention.Locked && !intention.WithUI)
+            if (intention.Locked)
             {
-                if (cursorComponent.CursorState == CursorState.Locked)
+                if (intention.WithUI)
                 {
-                    World.Remove<PointerLockIntention>(entity);
-                    return;
+                    if (cursorComponent.CursorState == CursorState.LockedWithUI)
+                    {
+                        World.Remove<PointerLockIntention>(entity);
+                        return;
+                    }
+
+                    UpdateState(ref cursorComponent, CursorState.LockedWithUI);
                 }
-
-                // Keep the intention as pending if the cursor is over any UI
-                if (cursorComponent.IsOverUI)
-                    return;
-
-                // In editor sometimes the pointer is still visible even if its locked.
-                // This is because how the editor window focusing works (it needs a click on the game window).
-                // In the build it works 100%
-                UpdateState(ref cursorComponent, CursorState.Locked);
-            }
-            else if (intention.WithUI)
-            {
-                if (cursorComponent.CursorState == CursorState.LockedWithUI)
+                else
                 {
-                    World.Remove<PointerLockIntention>(entity);
-                    return;
-                }
+                    if (cursorComponent.CursorState == CursorState.Locked)
+                    {
+                        World.Remove<PointerLockIntention>(entity);
+                        return;
+                    }
 
-                // In editor sometimes the pointer is still visible even if its locked.
-                // This is because how the editor window focusing works (it needs a click on the game window).
-                // In the build it works 100%
-                UpdateState(ref cursorComponent, CursorState.LockedWithUI);
+                    // Keep the intention as pending if the cursor is over any UI
+                    if (cursorComponent.IsOverUI)
+                        return;
+
+                    // In editor sometimes the pointer is still visible even if its locked.
+                    // This is because how the editor window focusing works (it needs a click on the game window).
+                    // In the build it works 100%
+                    UpdateState(ref cursorComponent, CursorState.Locked);
+                }
             }
             else
             {
@@ -207,7 +203,6 @@ namespace DCL.Input.Systems
                     break;
                 case CursorState.LockedWithUI:
                     cursorStyle = CursorStyle.Interaction;
-
                     break;
             }
 
@@ -223,6 +218,7 @@ namespace DCL.Input.Systems
         {
             CursorState nextState = cursorComponent.CursorState;
 
+            // Opened a menu while locked
             if (nextState == CursorState.LockedWithUI)
             {
                 UpdateState(ref cursorComponent, nextState);
@@ -308,8 +304,6 @@ namespace DCL.Input.Systems
             }
 
             cursorComponent.CursorState = nextState;
-
-            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "CURSOR: " + cursorComponent.CursorState);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

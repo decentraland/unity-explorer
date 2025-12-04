@@ -4,93 +4,93 @@ using UnityEngine;
 namespace DCL.AvatarRendering.Emotes
 {
     /// <summary>
-    ///
+    /// Parameters that control how users interact with each other through social emotes.
     /// </summary>
     [CreateAssetMenu(fileName = "NewSocialEmotesSettings", menuName = "DCL/Settings/SocialEmotesSettings")]
     public class SocialEmotesSettings : ScriptableObject
     {
         /// <summary>
-        ///
+        /// When enabled, the receiver will jog towards the initiator of the social emote. Otherwise, it will walk.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("When enabled, the receiver will jog towards the initiator of the social emote. Otherwise, it will walk.")]
         public bool ReceiverJogs;
 
         /// <summary>
-        ///
+        /// The minimum distance between the initiator and the receiver for the interaction tooltips to appear in receiver's client.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The minimum distance between the initiator and the receiver for the interaction tooltips to appear in receiver's client.")]
         public float VisibilityDistance;
 
         /// <summary>
-        ///
+        /// The minimum distance between the initiator and the receiver for receiver to be able to react to the social emote.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The minimum distance between the initiator and the receiver for receiver to be able to react to the social emote.")]
         public float InteractionDistance;
 
         /// <summary>
-        ///
+        /// The minimum distance between the initiator and the receiver for receiver to interpolate its position / rotation to the first pose of the outcome animation.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The minimum distance between the initiator and the receiver for receiver to interpolate its position / rotation to the first pose of the outcome animation.")]
         public float OutcomeStartInterpolationRadius;
 
         /// <summary>
-        ///
+        /// The duration of the initial interpolation of the pose of the receiver, in seconds.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The duration, in seconds, of the initial interpolation of the pose of the receiver.")]
         public float OutcomeStartInterpolationDuration;
 
         /// <summary>
-        ///
+        /// The duration of the interpolation of the camera when initiating or finishing the reaction to a social emote, in seconds.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The duration of the interpolation of the camera when initiating or finishing the reaction to a social emote, in seconds.")]
         public float OutcomeCameraInterpolationDuration;
 
         [Header("Avatar Outline")]
 
         /// <summary>
-        ///
+        /// When enabled, avatar outline VFX will be computed and visible.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("When enabled, avatar outline VFX will be computed and visible.")]
         public bool EnabledOutline = true;
 
         /// <summary>
-        ///
+        /// The color of the avatar outline when the receiver is able to react.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The color of the avatar outline when the receiver is able to react.")]
         public Color InteractableAvatarOutlineColor = Color.green;
 
         /// <summary>
-        ///
+        /// The color of the avatar outline when the receiver is not able to react.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The color of the avatar outline when the receiver is not able to react.")]
         public Color NonInteractableAvatarOutlineColor = Color.red;
 
         /// <summary>
-        ///
+        /// The duration of the animation of the initiator's avatar outline that makes the outline blink when the receiver receives a directed social emote.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The duration of the animation of the initiator's avatar outline that makes the outline blink when the receiver receives a directed social emote.")]
         public float DirectedEmoteReceivedAnimationDuration = 1.0f;
 
         /// <summary>
-        ///
+        /// The amount of times the initiator's avatar outline blinks when the receiver receives a directed social emote.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The amount of times the initiator's avatar outline blinks when the receiver receives a directed social emote.")]
         public int DirectedEmoteReceivedAnimationLoops = 2;
 
         /// <summary>
-        ///
+        /// The color of the initiator's avatar outline when the receiver receives a directed social emote.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The color of the initiator's avatar outline when the receiver receives a directed social emote.")]
         public Color DirectedEmoteReceivedAnimationColor = Color.cyan;
 
         /// <summary>
-        ///
+        /// The thickness of the avatar outline.
         /// </summary>
-        [Tooltip("")]
+        [Tooltip("The thickness of the avatar outline.")]
         public float AvatarOutlineThickness = 0.1f;
 
         /// <summary>
-        ///
+        /// How fast the outline gets totally opaque or transparent (1 second / value).
         /// </summary>
         [Tooltip("")]
         public float AvatarOutlineFadingSpeed = 12.0f;
