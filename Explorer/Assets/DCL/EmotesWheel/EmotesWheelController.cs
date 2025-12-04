@@ -180,6 +180,7 @@ namespace DCL.EmotesWheel
 
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
+            view.TypeIcon.enabled = true;
             view.TypeIcon.sprite = emote.IsSocial ? viewInstance.SocialEmoteSlotIcon : viewInstance.EmoteSlotIcon;
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
@@ -193,6 +194,7 @@ namespace DCL.EmotesWheel
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
             view.EmptyContainer.SetActive(true);
+            view.TypeIcon.enabled = false;
             view.Thumbnail.gameObject.SetActive(false);
         }
 
