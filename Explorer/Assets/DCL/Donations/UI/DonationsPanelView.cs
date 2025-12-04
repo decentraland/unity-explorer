@@ -26,12 +26,14 @@ namespace DCL.Donations.UI
 
         public event Action<string, decimal>? SendDonationRequested;
         public event Action? BuyMoreRequested;
+        public event Action? ContactSupportRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button cancelButton { get; set; } = null!;
         [field: SerializeField] private Button sendButton { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingView { get; set; } = null!;
         [field: SerializeField] private DonationConfirmedView donationConfirmedView { get; set; } = null!;
+        [field: SerializeField] private DonationErrorView donationErrorView { get; set; } = null!;
 
         [field: Header("Scene")]
         [field: SerializeField] private TMP_Text sceneNameText { get; set; } = null!;
@@ -53,7 +55,7 @@ namespace DCL.Donations.UI
         [field: SerializeField] private Button BuyMoreMANAButton { get; set; }
         [field: SerializeField] private GameObject BalanceWarningIcon { get; set; }
 
-        private readonly UniTask[] closingTasks = new UniTask[2];
+        private readonly UniTask[] closingTasks = new UniTask[3];
 
         private UserWalletAddressElementController? creatorAddressController;
         private decimal manaUsdConversion;
@@ -70,6 +72,8 @@ namespace DCL.Donations.UI
             donationInputField.onValueChanged.AddListener(OnValueChanged);
             donationInputField.onEndEdit.AddListener(OnEndEdit);
             BuyMoreMANAButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
+            donationErrorView.contactSupportButton.onClick.AddListener(() => ContactSupportRequested?.Invoke());
+            donationErrorView.tryAgainButton.onClick.AddListener(() => ChangeState(State.DEFAULT));
         }
 
         public void SetLoadingState(bool active)
@@ -87,10 +91,16 @@ namespace DCL.Donations.UI
             //ChangeState(State.LOADING);
         }
 
+        public void ShowErrorModal()
+        {
+            ChangeState(State.ERROR);
+        }
+
         private void ChangeState(State newState)
         {
             loadingView.gameObject.SetActive(newState == State.DEFAULT);
             donationConfirmedView.gameObject.SetActive(newState == State.TX_CONFIRMED);
+            donationErrorView.gameObject.SetActive(newState == State.ERROR);
         }
 
         public async UniTask ShowTxConfirmedAsync(Profile? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
@@ -178,6 +188,7 @@ namespace DCL.Donations.UI
         {
             closingTasks[0] = cancelButton.OnClickAsync(ct);
             closingTasks[1] = controllerTask;
+            closingTasks[2] = donationErrorView.closeButton.OnClickAsync(ct);
 
             return closingTasks;
         }

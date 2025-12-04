@@ -19,6 +19,7 @@ namespace DCL.Donations.UI
     public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
         private const string BUY_MORE_URL = "https://decentraland.org/";
+        private const string SUPPORT_URL = "https://decentraland.org/help/";
         private static readonly URN EMOTE_MONEY_URN = new ("money");
 
         private readonly DonationsService donationsService;
@@ -62,6 +63,7 @@ namespace DCL.Donations.UI
 
             viewInstance.SendDonationRequested -= OnSendDonationRequested;
             viewInstance!.BuyMoreRequested -= OnBuyMoreRequested;
+            viewInstance!.ContactSupportRequested -= OnContactSupportRequested;
         }
 
         private void CloseController() =>
@@ -71,10 +73,14 @@ namespace DCL.Donations.UI
         {
             viewInstance!.SendDonationRequested += OnSendDonationRequested;
             viewInstance!.BuyMoreRequested += OnBuyMoreRequested;
+            viewInstance!.ContactSupportRequested += OnContactSupportRequested;
         }
 
         private void OnBuyMoreRequested() =>
             webBrowser.OpenUrl(BUY_MORE_URL);
+
+        private void OnContactSupportRequested() =>
+            webBrowser.OpenUrl(SUPPORT_URL);
 
         protected override void OnBeforeViewShow()
         {
@@ -90,20 +96,24 @@ namespace DCL.Donations.UI
             {
                 viewInstance!.ShowLoading();
 
-                bool success = true;//await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
+                bool success = false; //await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
 
                 if (success)
                 {
                     await viewInstance.ShowTxConfirmedAsync(currentCreatorProfile, creatorAddress, panelLifecycleCts.Token, profileRepositoryWrapper);
                     PlayEmoteByUrn(EMOTE_MONEY_URN);
+                    CloseController();
                 }
+                else
+                    viewInstance!.ShowErrorModal();
             }
             catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.DONATIONS); }
-            finally
+            catch (Exception e)
             {
-                CloseController();
+                ReportHub.LogException(e, ReportCategory.DONATIONS);
+                viewInstance!.ShowErrorModal();
             }
+
         }
 
         private void PlayEmoteByUrn(URN emoteUrn)
