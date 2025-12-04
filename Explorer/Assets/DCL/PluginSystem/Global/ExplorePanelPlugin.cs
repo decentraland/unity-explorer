@@ -151,7 +151,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
-        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly IVoiceChatOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
 
@@ -207,7 +207,7 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            ICommunityCallOrchestrator communityCallOrchestrator,
+            IVoiceChatOrchestrator communityCallOrchestrator,
             bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
@@ -298,7 +298,7 @@ namespace DCL.PluginSystem.Global
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
-            
+
             backpackSubPlugin = new BackpackSubPlugin(
                 featureFlags,
                 assetsProvisioner,
@@ -331,7 +331,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 eventBus,
                 smartWearableCache,
-                mvcManager
+                mvcManager,
+                decentralandUrlsSource
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

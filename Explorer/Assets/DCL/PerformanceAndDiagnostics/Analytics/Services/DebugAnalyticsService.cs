@@ -1,28 +1,24 @@
 ﻿using DCL.Diagnostics;
-using Segment.Analytics;
-using Segment.Serialization;
-using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using System.Text;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.Services
 {
     public class DebugAnalyticsService : IAnalyticsService
     {
-        private static readonly IEnumerable<KeyValuePair<string, JsonElement>> EMPTY = new Dictionary<string, JsonElement>();
-
-        public void Identify(string? userId, JsonObject? traits = null)
+        public void Identify(string? userId, JObject? traits = null)
         {
             ReportHub.Log(ReportCategory.ANALYTICS, $"Identify: userId = {userId} | traits = {traits}");
         }
 
-        public void Track(string eventName, JsonObject? properties = null)
+        public void Track(string eventName, JObject? properties = null)
         {
             var message = new StringBuilder($"Track: {eventName}");
 
             if (properties != null)
             {
-                foreach (KeyValuePair<string, JsonElement> pair in properties.Content ?? EMPTY)
-                    message.Append($" \n {pair.Key} = {pair.Value}");
+                foreach ((string? key, JToken? value) in properties)
+                    message.Append($" \n {key} = {value}");
 
                 message.Append('\n');
             }
@@ -30,10 +26,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             ReportHub.Log(ReportCategory.ANALYTICS, message.ToString());
         }
 
-        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null) =>
+        public void InstantTrackAndFlush(string eventName, JObject? properties = null) =>
             Track(eventName, properties);
 
-        public void AddPlugin(EventPlugin plugin) { }
+        public void AddPlugin(IAnalyticsPlugin plugin) { }
 
         public void Flush()
         {
