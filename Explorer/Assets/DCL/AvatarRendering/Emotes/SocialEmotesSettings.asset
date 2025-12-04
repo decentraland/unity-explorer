@@ -19,12 +19,12 @@ MonoBehaviour:
   OutcomeStartInterpolationDuration: 0.4
   OutcomeCameraInterpolationDuration: 0.4
   EnabledOutline: 1
-  InteractableAvatarOutlineColor: {r: 0, g: 1, b: 0, a: 1}
-  NonInteractableAvatarOutlineColor: {r: 1, g: 0, b: 0, a: 1}
+  InteractableAvatarOutlineColor: {r: 0, g: 1, b: 0.58431375, a: 1}
+  NonInteractableAvatarOutlineColor: {r: 1, g: 0, b: 0.36862746, a: 1}
   DirectedEmoteReceivedAnimationDuration: 1
   DirectedEmoteReceivedAnimationLoops: 2
   DirectedEmoteReceivedAnimationColor: {r: 0, g: 1, b: 1, a: 1}
-  AvatarOutlineThickness: 0.1
+  AvatarOutlineThickness: 2
   AvatarOutlineFadingSpeed: 12
   DirectedSocialEmoteEphemeralNotificationPrefab: {fileID: 7116653218615566311, guid: ed9bd6ae37fb2fb4daafdf0736f59c0e, type: 3}
   DirectedEmoteEphemeralNotificationPrefab: {fileID: 339588617696216095, guid: f55657ef46eb2ff43b5efefd92ed1788, type: 3}
