@@ -18,7 +18,7 @@ MonoBehaviour:
   OutcomeStartInterpolationRadius: 1.2
   OutcomeStartInterpolationDuration: 0.4
   OutcomeCameraInterpolationDuration: 0.4
-  EnabledOutline: 0
+  EnabledOutline: 1
   InteractableAvatarOutlineColor: {r: 0, g: 1, b: 0, a: 1}
   NonInteractableAvatarOutlineColor: {r: 1, g: 0, b: 0, a: 1}
   DirectedEmoteReceivedAnimationDuration: 1

@@ -85,7 +85,7 @@ namespace DCL.SocialEmotes.UI
             // Just applies the effect to renderers of avatars
             foreach (Renderer? rend in avatarShapeComponent.OutlineCompatibleRenderers)
                 if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
-                    RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(rend, color, avatarShapeComponent.OutlineThickness);
+                    RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(rend, color, avatarShapeComponent.OutlineThickness);
         }
     }
 }
