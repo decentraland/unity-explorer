@@ -3,12 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace Plugins.NativeAudioAnalysis
 {
+
+    [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct AudioAnalysis
     {
         public float amplitude;
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = NativeMethods.BANDS)]
         public float[] bands;
 
         public float spectral_centroid;
@@ -22,14 +24,26 @@ namespace Plugins.NativeAudioAnalysis
 
     public static class NativeMethods
     {
+    public const int BANDS = 8;
+    public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
+
         private const string LIBRARY_NAME = "audio-analysis";
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl)]
-        internal extern static unsafe bool audio_analysis_analyze_audio_buffer(
+        internal extern static unsafe AudioAnalysis audio_analysis_analyze_audio_buffer(
             float* buffer,
             UIntPtr len,
             float sample_rate,
-            float onset_threshold
+            float onset_threshold = DEFAULT_ONSET_THRESHOLD
         );
+
+        public static AudioAnalysis AnalyzeAudioBuffer(float[] data, float sampleRate) {
+
+            fixed (float* ptr = data)
+            {
+                lastAnalysis = NativeMethods.audio_analysis_analyze_audio_buffer(ptr, data.Length, sampleRate);
+            }
+
+        }
     }
 }
