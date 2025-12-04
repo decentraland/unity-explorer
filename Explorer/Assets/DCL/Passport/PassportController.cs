@@ -268,7 +268,6 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
 
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
-            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
 
             characterPreviewController = new PassportCharacterPreviewController(
                 viewInstance.CharacterPreviewView,
