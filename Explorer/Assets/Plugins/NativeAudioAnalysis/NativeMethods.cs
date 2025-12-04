@@ -37,13 +37,15 @@ namespace Plugins.NativeAudioAnalysis
             float onset_threshold = DEFAULT_ONSET_THRESHOLD
         );
 
-        public static AudioAnalysis AnalyzeAudioBuffer(float[] data, float sampleRate) {
-
-            fixed (float* ptr = data)
+        public static AudioAnalysis AnalyzeAudioBuffer(float[] data, float sampleRate) 
+        {
+            unsafe 
             {
-                lastAnalysis = NativeMethods.audio_analysis_analyze_audio_buffer(ptr, data.Length, sampleRate);
+                fixed (float* ptr = data)
+                {
+                    return NativeMethods.audio_analysis_analyze_audio_buffer(ptr, (UIntPtr) data.Length, sampleRate);
+                }
             }
-
         }
     }
 }
