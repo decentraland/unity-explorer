@@ -6,7 +6,6 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
@@ -25,7 +24,7 @@ namespace DCL.Donations.UI
         private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly decimal recommendedDonationAmount;
+        private readonly decimal[] recommendedDonationAmount;
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly IWebBrowser webBrowser;
@@ -43,7 +42,7 @@ namespace DCL.Donations.UI
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
-            decimal recommendedDonationAmount)
+            decimal[] recommendedDonationAmount)
             : base(viewFactory)
         {
             this.donationsService = donationsService;

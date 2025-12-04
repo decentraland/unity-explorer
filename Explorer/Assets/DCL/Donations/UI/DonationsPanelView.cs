@@ -22,7 +22,12 @@ namespace DCL.Donations.UI
             ERROR
         }
 
-        private const string MANA_EQUIVALENT_FORMAT = "${0:0.00}";
+        private const string MANA_EQUIVALENT_FORMAT = "${0:#.##}";
+        private const string DECIMAL_FORMAT = "#.##";
+        private const int FIRST_RECOMMENDATION_INDEX = 0;
+        private const int SECOND_RECOMMENDATION_INDEX = 1;
+        private const int THIRD_RECOMMENDATION_INDEX = 2;
+        private const int OTHER_RECOMMENDATION_INDEX = 3;
 
         public event Action<string, decimal>? SendDonationRequested;
         public event Action? BuyMoreRequested;
@@ -30,6 +35,7 @@ namespace DCL.Donations.UI
 
         [field: Header("References")]
         [field: SerializeField] private Button cancelButton { get; set; } = null!;
+        [field: SerializeField] private Button skeletonCancelButton { get; set; } = null!;
         [field: SerializeField] private Button sendButton { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingView { get; set; } = null!;
         [field: SerializeField] private DonationConfirmedView donationConfirmedView { get; set; } = null!;
@@ -49,6 +55,7 @@ namespace DCL.Donations.UI
         [field: Header("Donation")]
         [field: SerializeField] private TMP_Text currentBalanceText { get; set; } = null!;
         [field: SerializeField] private TMP_Text manaAvailableText { get; set; } = null!;
+        [field: SerializeField] private Image manaAvailableIcon { get; set; } = null!;
         [field: SerializeField] private TMP_InputField donationInputField { get; set; } = null!;
         [field: SerializeField] private Image donationBorderError { get; set; } = null!;
         [field: SerializeField] private TMP_Text usdEquivalentText { get; set; } = null!;
@@ -56,13 +63,17 @@ namespace DCL.Donations.UI
         [field: SerializeField] private Button BuyMoreMANAButton { get; set; }
         [field: SerializeField] private GameObject BalanceWarningIcon { get; set; }
 
-        private readonly UniTask[] closingTasks = new UniTask[3];
+        [field: Header("Donation recommendations")]
+        [field: SerializeField] private ButtonWithSelectableStateView[] recommendationButtons { get; set; }
+
+        private readonly UniTask[] closingTasks = new UniTask[4];
 
         private UserWalletAddressElementController? creatorAddressController;
         private decimal manaUsdConversion;
         private decimal currentBalance;
         private Color donationBorderOriginalColor;
         private Color manaAvailableOriginalColor;
+        private decimal[] suggestedDonationAmount;
 
         private void Awake()
         {
@@ -75,6 +86,27 @@ namespace DCL.Donations.UI
             BuyMoreMANAButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
             donationErrorView.contactSupportButton.onClick.AddListener(() => ContactSupportRequested?.Invoke());
             donationErrorView.tryAgainButton.onClick.AddListener(() => ChangeState(State.DEFAULT));
+
+            recommendationButtons[FIRST_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(FIRST_RECOMMENDATION_INDEX));
+            recommendationButtons[SECOND_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(SECOND_RECOMMENDATION_INDEX));
+            recommendationButtons[THIRD_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(THIRD_RECOMMENDATION_INDEX));
+            recommendationButtons[OTHER_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(OTHER_RECOMMENDATION_INDEX));
+        }
+
+        private void ManageRecommendationClick(int index)
+        {
+            donationInputField.interactable = index == OTHER_RECOMMENDATION_INDEX;
+            
+            if (donationInputField.interactable)
+                donationInputField.OnSelect(null);
+
+            for (int i = 0; i < recommendationButtons.Length; i++)
+            {
+                recommendationButtons[i].SetSelected(i == index);
+
+                if (i == index && i != OTHER_RECOMMENDATION_INDEX)
+                    donationInputField.text = suggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
+            }
         }
 
         public void SetLoadingState(bool active)
@@ -117,12 +149,13 @@ namespace DCL.Donations.UI
             string sceneCreatorAddress,
             string sceneName,
             decimal currentBalance,
-            decimal suggestedDonationAmount,
+            decimal[] suggestedDonationAmount,
             decimal manaUsdPrice,
             ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             manaUsdConversion = manaUsdPrice;
             this.currentBalance = currentBalance;
+            this.suggestedDonationAmount = suggestedDonationAmount;
             sceneNameText.text = sceneName;
 
             userNameElement.gameObject.SetActive(profile != null);
@@ -140,8 +173,13 @@ namespace DCL.Donations.UI
 
             creatorAddressController!.Setup(sceneCreatorAddress);
 
-            currentBalanceText.text = currentBalance.ToString("0.00");
-            donationInputField.text = suggestedDonationAmount.ToString("0.00");
+            currentBalanceText.text = currentBalance.ToString(DECIMAL_FORMAT);
+
+            ManageRecommendationClick(FIRST_RECOMMENDATION_INDEX);
+
+            recommendationButtons[FIRST_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[FIRST_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);;
+            recommendationButtons[SECOND_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[SECOND_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
+            recommendationButtons[THIRD_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[THIRD_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
 
             sendButton.onClick.RemoveAllListeners();
             sendButton.onClick.AddListener( () => SendDonationRequested?.Invoke(sceneCreatorAddress, decimal.Parse(donationInputField.text)));
@@ -170,21 +208,18 @@ namespace DCL.Donations.UI
                 BalanceWarningIcon.SetActive(true);
                 currentBalanceText.color = InvalidColor;
                 manaAvailableText.color = InvalidColor;
+                manaAvailableIcon.color = InvalidColor;
             }
             else
             {
                 BalanceWarningIcon.SetActive(false);
                 currentBalanceText.color = manaAvailableOriginalColor;
                 manaAvailableText.color = manaAvailableOriginalColor;
+                manaAvailableIcon.color = manaAvailableOriginalColor;
             }
 
-            if (isValid)
-            {
-                usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * manaUsdConversion);
-                donationBorderError.color = donationBorderOriginalColor;
-            }
-            else
-                donationBorderError.color = InvalidColor;
+            usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * manaUsdConversion);
+            donationBorderError.color = isValid ? donationBorderOriginalColor : InvalidColor;
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)
@@ -192,6 +227,7 @@ namespace DCL.Donations.UI
             closingTasks[0] = cancelButton.OnClickAsync(ct);
             closingTasks[1] = controllerTask;
             closingTasks[2] = donationErrorView.closeButton.OnClickAsync(ct);
+            closingTasks[3] = skeletonCancelButton.OnClickAsync(ct);
 
             return closingTasks;
         }

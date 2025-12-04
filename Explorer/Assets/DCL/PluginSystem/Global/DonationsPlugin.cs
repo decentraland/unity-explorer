@@ -18,6 +18,8 @@ namespace DCL.PluginSystem.Global
 {
     public class DonationsPlugin : IDCLGlobalPlugin<DonationsPluginSettings>
     {
+        private static readonly decimal[] DEFAULT_RECOMMENDED_TIP_AMOUNTS = { 166, 333, 500 };
+
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly DonationsService donationsService;
@@ -73,7 +75,7 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 webBrowser,
-                recommendedAmountParseSuccess ? temporalTipsJson.amount : 1);
+                recommendedAmountParseSuccess ? temporalTipsJson.amount : DEFAULT_RECOMMENDED_TIP_AMOUNTS);
 
             mvcManager.RegisterController(donationsPanelController);
         }
@@ -81,7 +83,7 @@ namespace DCL.PluginSystem.Global
         [Serializable]
         private struct DonationRecommendedAmount
         {
-            public decimal amount;
+            public decimal[] amount;
         }
     }
 
