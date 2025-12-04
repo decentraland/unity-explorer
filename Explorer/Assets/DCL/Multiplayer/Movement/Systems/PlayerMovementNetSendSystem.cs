@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private const float POSITION_MOVE_EPSILON = 0.0001f; // 1 mm
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
-        private const float HEAD_IK_EPSILON = 1; // deg/s
+        private const float HEAD_IK_EPSILON = 1; // 1 deg
 
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly MultiplayerMovementSettings settings;

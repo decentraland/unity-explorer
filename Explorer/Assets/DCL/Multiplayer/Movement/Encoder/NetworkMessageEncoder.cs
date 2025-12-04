@@ -1,7 +1,6 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
-using System;
 using UnityEngine;
 using Utility;
 
@@ -88,10 +87,10 @@ namespace DCL.Multiplayer.Movement
                    | ((long)compressedVelocityZ << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits));
         }
 
-        private int CompressHeadSyncData(bool freeLookEnabled, Vector2 headLookAt)
+        private int CompressHeadSyncData(bool headIKEnabled, Vector2 headLookAt)
         {
             int value = 0;
-            if (!freeLookEnabled) return value;
+            if (!headIKEnabled) return value;
 
             int bitCount = MessageEncodingSettings.HEAD_ROTATION_BITS;
             int yaw = FloatQuantizer.Compress(NormalizeAngle(headLookAt.x), 0f, 360f, bitCount);

@@ -47,7 +47,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "cG9zaXRpb25feBgDIAEoAhISCgpwb3NpdGlvbl95GAQgASgCEhIKCnBvc2l0",
             "aW9uX3oYBSABKAISEgoKcm90YXRpb25feBgGIAEoAhISCgpyb3RhdGlvbl95",
             "GAcgASgCEhIKCnJvdGF0aW9uX3oYCCABKAISEgoKcm90YXRpb25fdxgJIAEo",
-            "AiLNAwoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
+            "AiLGAwoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
             "X3gYAiABKAISEgoKcG9zaXRpb25feRgDIAEoAhISCgpwb3NpdGlvbl96GAQg",
             "ASgCEhIKCnZlbG9jaXR5X3gYBSABKAISEgoKdmVsb2NpdHlfeRgGIAEoAhIS",
             "Cgp2ZWxvY2l0eV96GAcgASgCEhwKFG1vdmVtZW50X2JsZW5kX3ZhbHVlGAgg",
@@ -55,30 +55,30 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "GAogASgIEhIKCmlzX2p1bXBpbmcYCyABKAgSFAoMaXNfbG9uZ19qdW1wGAwg",
             "ASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5nGA4gASgI",
             "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhISCgpp",
-            "c19pbnN0YW50GBEgASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgSHgoWaGVhZF9m",
-            "cmVlX2xvb2tfZW5hYmxlZBgTIAEoCBIQCghoZWFkX3lhdxgUIAEoAhISCgpo",
-            "ZWFkX3BpdGNoGBUgASgCIloKEk1vdmVtZW50Q29tcHJlc3NlZBIVCg10ZW1w",
-            "b3JhbF9kYXRhGAEgASgFEhUKDW1vdmVtZW50X2RhdGEYAiABKAMSFgoOaGVh",
-            "ZF9zeW5jX2RhdGEYAyABKAUiRQoLUGxheWVyRW1vdGUSFgoOaW5jcmVtZW50",
-            "YWxfaWQYASABKA0SCwoDdXJuGAIgASgJEhEKCXRpbWVzdGFtcBgDIAEoAiI1",
-            "CgpTY2VuZUVtb3RlEhcKD3NjZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3Vy",
-            "Y2UYAiABKAkiMQoWQW5ub3VuY2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxl",
-            "X3ZlcnNpb24YASABKA0iOgoOUHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgE",
-            "IAEoCRIXCg9wcm9maWxlX3ZlcnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3Bv",
-            "bnNlEhoKEnNlcmlhbGl6ZWRfcHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgC",
-            "IAEoCSJaCgRDaGF0Eg8KB21lc3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIg",
-            "ASgBEhsKDmZvcndhcmRlZF9mcm9tGAMgASgJSACIAQFCEQoPX2ZvcndhcmRl",
-            "ZF9mcm9tIicKBVNjZW5lEhAKCHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiAB",
-            "KAwiiwEKBVZvaWNlEhcKD2VuY29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRl",
-            "eBgCIAEoDRI/CgVjb2RlYxgDIAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwu",
-            "Y29tbXMucmZjNC5Wb2ljZS5Wb2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoH",
-            "VkNfT1BVUxAAYgZwcm90bzM="));
+            "c19pbnN0YW50GBEgASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgSFwoPaGVhZF9p",
+            "a19lbmFibGVkGBMgASgIEhAKCGhlYWRfeWF3GBQgASgCEhIKCmhlYWRfcGl0",
+            "Y2gYFSABKAIiWgoSTW92ZW1lbnRDb21wcmVzc2VkEhUKDXRlbXBvcmFsX2Rh",
+            "dGEYASABKAUSFQoNbW92ZW1lbnRfZGF0YRgCIAEoAxIWCg5oZWFkX3N5bmNf",
+            "ZGF0YRgDIAEoBSJFCgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgB",
+            "IAEoDRILCgN1cm4YAiABKAkSEQoJdGltZXN0YW1wGAMgASgCIjUKClNjZW5l",
+            "RW1vdGUSFwoPc2NlbmVfZW50aXR5X2lkGAEgASgJEg4KBnNvdXJjZRgCIAEo",
+            "CSIxChZBbm5vdW5jZVByb2ZpbGVWZXJzaW9uEhcKD3Byb2ZpbGVfdmVyc2lv",
+            "bhgBIAEoDSI6Cg5Qcm9maWxlUmVxdWVzdBIPCgdhZGRyZXNzGAQgASgJEhcK",
+            "D3Byb2ZpbGVfdmVyc2lvbhgDIAEoDSI/Cg9Qcm9maWxlUmVzcG9uc2USGgoS",
+            "c2VyaWFsaXplZF9wcm9maWxlGAEgASgJEhAKCGJhc2VfdXJsGAIgASgJIloK",
+            "BENoYXQSDwoHbWVzc2FnZRgBIAEoCRIRCgl0aW1lc3RhbXAYAiABKAESGwoO",
+            "Zm9yd2FyZGVkX2Zyb20YAyABKAlIAIgBAUIRCg9fZm9yd2FyZGVkX2Zyb20i",
+            "JwoFU2NlbmUSEAoIc2NlbmVfaWQYASABKAkSDAoEZGF0YRgCIAEoDCKLAQoF",
+            "Vm9pY2USFwoPZW5jb2RlZF9zYW1wbGVzGAEgASgMEg0KBWluZGV4GAIgASgN",
+            "Ej8KBWNvZGVjGAMgASgOMjAuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
+            "ZmM0LlZvaWNlLlZvaWNlQ29kZWMiGQoKVm9pY2VDb2RlYxILCgdWQ19PUFVT",
+            "EABiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting", "HeadFreeLookEnabled", "HeadYaw", "HeadPitch" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting", "HeadIkEnabled", "HeadYaw", "HeadPitch" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData", "HeadSyncData" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
@@ -1402,7 +1402,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       rotationY_ = other.rotationY_;
       isInstant_ = other.isInstant_;
       isEmoting_ = other.isEmoting_;
-      headFreeLookEnabled_ = other.headFreeLookEnabled_;
+      headIkEnabled_ = other.headIkEnabled_;
       headYaw_ = other.headYaw_;
       headPitch_ = other.headPitch_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -1645,18 +1645,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
-    /// <summary>Field number for the "head_free_look_enabled" field.</summary>
-    public const int HeadFreeLookEnabledFieldNumber = 19;
-    private bool headFreeLookEnabled_;
+    /// <summary>Field number for the "head_ik_enabled" field.</summary>
+    public const int HeadIkEnabledFieldNumber = 19;
+    private bool headIkEnabled_;
     /// <summary>
-    /// head-sync (local-space yaw and pitch angles, in degrees)
+    /// head-sync (world-space yaw and pitch angles, in degrees)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HeadFreeLookEnabled {
-      get { return headFreeLookEnabled_; }
+    public bool HeadIkEnabled {
+      get { return headIkEnabled_; }
       set {
-        headFreeLookEnabled_ = value;
+        headIkEnabled_ = value;
       }
     }
 
@@ -1717,7 +1717,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RotationY, other.RotationY)) return false;
       if (IsInstant != other.IsInstant) return false;
       if (IsEmoting != other.IsEmoting) return false;
-      if (HeadFreeLookEnabled != other.HeadFreeLookEnabled) return false;
+      if (HeadIkEnabled != other.HeadIkEnabled) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadYaw, other.HeadYaw)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadPitch, other.HeadPitch)) return false;
       return Equals(_unknownFields, other._unknownFields);
@@ -1745,7 +1745,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
       if (IsInstant != false) hash ^= IsInstant.GetHashCode();
       if (IsEmoting != false) hash ^= IsEmoting.GetHashCode();
-      if (HeadFreeLookEnabled != false) hash ^= HeadFreeLookEnabled.GetHashCode();
+      if (HeadIkEnabled != false) hash ^= HeadIkEnabled.GetHashCode();
       if (HeadYaw != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadYaw);
       if (HeadPitch != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadPitch);
       if (_unknownFields != null) {
@@ -1838,9 +1838,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(144, 1);
         output.WriteBool(IsEmoting);
       }
-      if (HeadFreeLookEnabled != false) {
+      if (HeadIkEnabled != false) {
         output.WriteRawTag(152, 1);
-        output.WriteBool(HeadFreeLookEnabled);
+        output.WriteBool(HeadIkEnabled);
       }
       if (HeadYaw != 0F) {
         output.WriteRawTag(165, 1);
@@ -1932,9 +1932,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(144, 1);
         output.WriteBool(IsEmoting);
       }
-      if (HeadFreeLookEnabled != false) {
+      if (HeadIkEnabled != false) {
         output.WriteRawTag(152, 1);
-        output.WriteBool(HeadFreeLookEnabled);
+        output.WriteBool(HeadIkEnabled);
       }
       if (HeadYaw != 0F) {
         output.WriteRawTag(165, 1);
@@ -2008,7 +2008,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsEmoting != false) {
         size += 2 + 1;
       }
-      if (HeadFreeLookEnabled != false) {
+      if (HeadIkEnabled != false) {
         size += 2 + 1;
       }
       if (HeadYaw != 0F) {
@@ -2083,8 +2083,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (other.IsEmoting != false) {
         IsEmoting = other.IsEmoting;
       }
-      if (other.HeadFreeLookEnabled != false) {
-        HeadFreeLookEnabled = other.HeadFreeLookEnabled;
+      if (other.HeadIkEnabled != false) {
+        HeadIkEnabled = other.HeadIkEnabled;
       }
       if (other.HeadYaw != 0F) {
         HeadYaw = other.HeadYaw;
@@ -2180,7 +2180,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             break;
           }
           case 152: {
-            HeadFreeLookEnabled = input.ReadBool();
+            HeadIkEnabled = input.ReadBool();
             break;
           }
           case 165: {
@@ -2279,7 +2279,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             break;
           }
           case 152: {
-            HeadFreeLookEnabled = input.ReadBool();
+            HeadIkEnabled = input.ReadBool();
             break;
           }
           case 165: {
