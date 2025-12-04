@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -28,6 +29,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
+using DCL.WebRequests;
 using ECS;
 using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
@@ -37,6 +39,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
@@ -66,6 +69,9 @@ namespace DCL.PluginSystem.Global
         private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
         private readonly IActivatableConnectiveRoom chatRoom;
         private readonly IActivatableConnectiveRoom voiceChatRoom;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urls;
+        private readonly CancellationTokenSource lifetimeCancellationTokenSource = new ();
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -89,7 +95,11 @@ namespace DCL.PluginSystem.Global
             CharacterDataPropagationUtility characterDataPropagationUtility,
             IComponentPoolsRegistry poolsRegistry,
             ThroughputBufferBunch islandThroughputBufferBunch,
-            ThroughputBufferBunch sceneThroughputBufferBunch, IActivatableConnectiveRoom voiceChatRoom)
+            ThroughputBufferBunch sceneThroughputBufferBunch,
+            IActivatableConnectiveRoom voiceChatRoom,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urls
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -114,12 +124,15 @@ namespace DCL.PluginSystem.Global
             this.islandThroughputBufferBunch = islandThroughputBufferBunch;
             this.sceneThroughputBufferBunch = sceneThroughputBufferBunch;
             this.voiceChatRoom = voiceChatRoom;
+            this.webRequestController = webRequestController;
+            this.urls = urls;
         }
 
         public void Dispose()
         {
             archipelagoIslandRoom.Dispose();
             gateKeeperSceneRoom.Dispose();
+            lifetimeCancellationTokenSource.SafeCancelAndDispose();
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -133,7 +146,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder, webRequestController, urls, lifetimeCancellationTokenSource.Token);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
