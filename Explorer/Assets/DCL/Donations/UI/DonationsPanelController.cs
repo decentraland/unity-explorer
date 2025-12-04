@@ -17,7 +17,7 @@ namespace DCL.Donations.UI
 {
     public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
-        private const string BUY_MORE_URL = "https://decentraland.org/";
+        private const string BUY_MORE_URL = "https://decentraland.org/account";
         private const string SUPPORT_URL = "https://decentraland.org/help/";
         private static readonly URN EMOTE_MONEY_URN = new ("money");
 

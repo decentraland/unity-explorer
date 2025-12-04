@@ -96,7 +96,7 @@ namespace DCL.Donations.UI
         private void ManageRecommendationClick(int index)
         {
             donationInputField.interactable = index == OTHER_RECOMMENDATION_INDEX;
-            
+
             if (donationInputField.interactable)
                 donationInputField.OnSelect(null);
 
