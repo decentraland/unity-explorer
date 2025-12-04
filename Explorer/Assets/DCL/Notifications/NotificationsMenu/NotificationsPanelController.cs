@@ -74,7 +74,6 @@ namespace DCL.Notifications.NotificationsMenu
         protected override void OnViewInstantiated()
         {
             viewInstance!.LoopList.InitListView(0, OnGetItemByIndex);
-            viewInstance.CloseButton.onClick.AddListener(ClosePanel);
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             viewInstance.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
@@ -95,10 +94,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationThumbnailCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
-            viewInstance?.CloseButton.onClick.RemoveListener(ClosePanel);
         }
-
-        private void ClosePanel() => closeViewTask?.TrySetResult();
 
         protected override void OnViewShow()
         {
