@@ -34,6 +34,7 @@ namespace DCL.Donations.UI
         [field: SerializeField] private SkeletonLoadingView loadingView { get; set; } = null!;
         [field: SerializeField] private DonationConfirmedView donationConfirmedView { get; set; } = null!;
         [field: SerializeField] private DonationErrorView donationErrorView { get; set; } = null!;
+        [field: SerializeField] private DonationLoadingView donationLoadingView { get; set; } = null!;
 
         [field: Header("Scene")]
         [field: SerializeField] private TMP_Text sceneNameText { get; set; } = null!;
@@ -86,9 +87,10 @@ namespace DCL.Donations.UI
                 loadingView.HideLoading();
         }
 
-        public void ShowLoading()
+        public void ShowLoading(Profile? profile, string creatorAddress, decimal donationAmount, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
-            //ChangeState(State.LOADING);
+            ChangeState(State.LOADING);
+            donationLoadingView.ConfigurePanel(profile, creatorAddress, donationAmount, profileRepositoryWrapper);
         }
 
         public void ShowErrorModal()
@@ -101,6 +103,7 @@ namespace DCL.Donations.UI
             loadingView.gameObject.SetActive(newState == State.DEFAULT);
             donationConfirmedView.gameObject.SetActive(newState == State.TX_CONFIRMED);
             donationErrorView.gameObject.SetActive(newState == State.ERROR);
+            donationLoadingView.gameObject.SetActive(newState == State.LOADING);
         }
 
         public async UniTask ShowTxConfirmedAsync(Profile? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)

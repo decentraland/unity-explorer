@@ -94,8 +94,9 @@ namespace DCL.Donations.UI
         {
             try
             {
-                viewInstance!.ShowLoading();
+                viewInstance!.ShowLoading(currentCreatorProfile, creatorAddress, amount, profileRepositoryWrapper);
 
+                await UniTask.Delay(5000, cancellationToken: panelLifecycleCts.Token);
                 bool success = false; //await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
 
                 if (success)
