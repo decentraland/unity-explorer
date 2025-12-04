@@ -54,8 +54,7 @@ namespace DCL.UI
 
             if (hideImageWhileLoading)
                 view.Image.enabled = false;
-
-            // restart the token for the new request
+            
             cts = cts.SafeRestart();
 
             RequestImageAsync(uri, useKtx, targetColor, cts.Token, fitAndCenterImage, defaultSprite).Forget();
@@ -77,7 +76,8 @@ namespace DCL.UI
                 view.IsLoading = true;
 
                 // Define the Intention
-                // The Cache system uses this Intention to check if the asset is already loaded or downloading.
+                // The Cache system uses this Intention to
+                // check if the asset is already loaded or downloading.
                 var intention = new GetTextureIntention(
                     url: uri,
                     fileHash: string.Empty,
@@ -104,7 +104,6 @@ namespace DCL.UI
 
                 if (promise.TryGetResult(world, out var result) && result.Succeeded)
                 {
-                    // 5. Create Sprite from cached Texture
                     var texture = result.Asset!.EnsureTexture2D();
 
                     var sprite = Sprite.Create(
@@ -133,7 +132,7 @@ namespace DCL.UI
             }
             catch (OperationCanceledException)
             {
-                // Request cancelled, likely by a new RequestImage call
+                
             }
             catch (Exception e)
             {
@@ -144,7 +143,7 @@ namespace DCL.UI
             {
                 view.IsLoading = false;
 
-                // If cancelled mid-flight, clean up the entity
+                // If canceled  clean up the entity
                 // immediately to avoid hanging references
                 if (ct.IsCancellationRequested)
                     CleanUpCurrentEntity();
