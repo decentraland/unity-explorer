@@ -23,6 +23,8 @@ namespace DCL.Donations.UI
         }
 
         private const string MANA_EQUIVALENT_FORMAT = "${0:#.##}";
+        private const string MANA_AVAILABLE_NORMAL = "available";
+        private const string MANA_AVAILABLE_ERROR = "insufficient MANA";
         private const string DECIMAL_FORMAT = "#.##";
         private const int FIRST_RECOMMENDATION_INDEX = 0;
         private const int SECOND_RECOMMENDATION_INDEX = 1;
@@ -50,7 +52,7 @@ namespace DCL.Donations.UI
         [field: SerializeField] private SimpleUserNameElement userNameElement { get; set; } = null!;
         [field: Space(5)]
         [field: SerializeField] private UserWalletAddressElement creatorAddressElement { get; set; } = null!;
-        [field: SerializeField] private Color NoProfileColor { get; set; }
+        [field: SerializeField] private Color noProfileColor { get; set; }
 
         [field: Header("Donation")]
         [field: SerializeField] private TMP_Text currentBalanceText { get; set; } = null!;
@@ -59,9 +61,11 @@ namespace DCL.Donations.UI
         [field: SerializeField] private TMP_InputField donationInputField { get; set; } = null!;
         [field: SerializeField] private Image donationBorderError { get; set; } = null!;
         [field: SerializeField] private TMP_Text usdEquivalentText { get; set; } = null!;
-        [field: SerializeField] private Color InvalidColor { get; set; }
-        [field: SerializeField] private Button BuyMoreMANAButton { get; set; }
-        [field: SerializeField] private GameObject BalanceWarningIcon { get; set; }
+        [field: SerializeField] private Color invalidColor { get; set; }
+        [field: SerializeField] private Button buyMoreManaButton { get; set; } = null!;
+        [field: SerializeField] private GameObject balanceWarningIcon { get; set; } = null!;
+        [field: SerializeField] private GameObject balanceManaIcon { get; set; } = null!;
+        [field: SerializeField] private GameObject donationErrorTip { get; set; } = null!;
 
         [field: Header("Donation recommendations")]
         [field: SerializeField] private ButtonWithSelectableStateView[] recommendationButtons { get; set; }
@@ -83,7 +87,7 @@ namespace DCL.Donations.UI
 
             donationInputField.onValueChanged.AddListener(OnValueChanged);
             donationInputField.onEndEdit.AddListener(OnEndEdit);
-            BuyMoreMANAButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
+            buyMoreManaButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
             donationErrorView.contactSupportButton.onClick.AddListener(() => ContactSupportRequested?.Invoke());
             donationErrorView.tryAgainButton.onClick.AddListener(() => ChangeState(State.DEFAULT));
 
@@ -167,7 +171,7 @@ namespace DCL.Donations.UI
             }
             else
             {
-                profilePictureView.SetBackgroundColor(NoProfileColor);
+                profilePictureView.SetBackgroundColor(noProfileColor);
                 profilePictureView.SetDefaultThumbnail();
             }
 
@@ -203,23 +207,30 @@ namespace DCL.Donations.UI
             bool isValid = decimal.TryParse(value, out decimal number) && number >= 1 && number <= currentBalance;
             sendButton.interactable = isValid;
 
+            donationErrorTip.gameObject.SetActive(number <= 0);
+            usdEquivalentText.gameObject.SetActive(!donationErrorTip.gameObject.activeInHierarchy);
+
             if (number >= currentBalance)
             {
-                BalanceWarningIcon.SetActive(true);
-                currentBalanceText.color = InvalidColor;
-                manaAvailableText.color = InvalidColor;
-                manaAvailableIcon.color = InvalidColor;
+                balanceWarningIcon.SetActive(true);
+                balanceManaIcon.SetActive(false);
+                currentBalanceText.color = invalidColor;
+                manaAvailableText.color = invalidColor;
+                manaAvailableIcon.color = invalidColor;
+                manaAvailableText.text = MANA_AVAILABLE_ERROR;
             }
             else
             {
-                BalanceWarningIcon.SetActive(false);
+                balanceWarningIcon.SetActive(false);
+                balanceManaIcon.SetActive(true);
                 currentBalanceText.color = manaAvailableOriginalColor;
                 manaAvailableText.color = manaAvailableOriginalColor;
                 manaAvailableIcon.color = manaAvailableOriginalColor;
+                manaAvailableText.text = MANA_AVAILABLE_NORMAL;
             }
 
             usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * manaUsdConversion);
-            donationBorderError.color = isValid ? donationBorderOriginalColor : InvalidColor;
+            donationBorderError.color = isValid ? donationBorderOriginalColor : invalidColor;
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)
