@@ -13,7 +13,7 @@ pub struct AudioAnalysis {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn analyze_audio_buffer_fundsp(
+pub extern "C" fn audio_analysis_analyze_audio_buffer(
     buffer: *const f32,
     len: usize,
     sample_rate: f32,
