@@ -61,7 +61,7 @@ namespace DCL.Donations.UI
 
             if (viewInstance == null) return;
 
-            viewInstance.SendDonationRequested -= OnSendDonationRequested;
+            viewInstance.SendDonationRequested -= OnSendDonationRequestedAsync;
             viewInstance!.BuyMoreRequested -= OnBuyMoreRequested;
             viewInstance!.ContactSupportRequested -= OnContactSupportRequested;
         }
@@ -71,7 +71,7 @@ namespace DCL.Donations.UI
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.SendDonationRequested += OnSendDonationRequested;
+            viewInstance!.SendDonationRequested += OnSendDonationRequestedAsync;
             viewInstance!.BuyMoreRequested += OnBuyMoreRequested;
             viewInstance!.ContactSupportRequested += OnContactSupportRequested;
         }
@@ -90,7 +90,7 @@ namespace DCL.Donations.UI
             LoadDataAsync(panelLifecycleCts.Token).Forget();
         }
 
-        private async void OnSendDonationRequested(string creatorAddress, decimal amount)
+        private async void OnSendDonationRequestedAsync(string creatorAddress, decimal amount)
         {
             try
             {

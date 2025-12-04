@@ -65,7 +65,7 @@ namespace DCL.Donations
             this.placesAPIService = placesAPIService;
 
             contractAddress = dclEnvironment == DecentralandEnvironment.Org ? POLYGON_CONTRACT_ADDRESS : SEPOLIA_NET_CONTRACT_ADDRESS;
-            donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor;
+            donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor || true; //TODO: remove '|| true' when feature is ready to be shipped
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
