@@ -356,7 +356,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: eba1ec01989f04b62990a57a2299cd96, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 13fedfdefda0a42a1808ab86286530e6, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2570,7 +2570,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: eba1ec01989f04b62990a57a2299cd96, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 13fedfdefda0a42a1808ab86286530e6, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6675,7 +6675,7 @@ PrefabInstance:
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: eba1ec01989f04b62990a57a2299cd96, type: 3}
+      objectReference: {fileID: 21300000, guid: 13fedfdefda0a42a1808ab86286530e6, type: 3}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -7217,7 +7217,7 @@ PrefabInstance:
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: eba1ec01989f04b62990a57a2299cd96, type: 3}
+      objectReference: {fileID: 21300000, guid: 13fedfdefda0a42a1808ab86286530e6, type: 3}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -8004,7 +8004,7 @@ PrefabInstance:
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: eba1ec01989f04b62990a57a2299cd96, type: 3}
+      objectReference: {fileID: 21300000, guid: 13fedfdefda0a42a1808ab86286530e6, type: 3}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Color.b
       value: 1
