@@ -48,24 +48,6 @@ namespace DCL.AvatarRendering.Emotes
         [Header("Avatar Outline")]
 
         /// <summary>
-        /// When enabled, avatar outline VFX will be computed and visible.
-        /// </summary>
-        [Tooltip("When enabled, avatar outline VFX will be computed and visible.")]
-        public bool EnabledOutline = true;
-
-        /// <summary>
-        /// The color of the avatar outline when the receiver is able to react.
-        /// </summary>
-        [Tooltip("The color of the avatar outline when the receiver is able to react.")]
-        public Color InteractableAvatarOutlineColor = Color.green;
-
-        /// <summary>
-        /// The color of the avatar outline when the receiver is not able to react.
-        /// </summary>
-        [Tooltip("The color of the avatar outline when the receiver is not able to react.")]
-        public Color NonInteractableAvatarOutlineColor = Color.red;
-
-        /// <summary>
         /// The duration of the animation of the initiator's avatar outline that makes the outline blink when the receiver receives a directed social emote.
         /// </summary>
         [Tooltip("The duration of the animation of the initiator's avatar outline that makes the outline blink when the receiver receives a directed social emote.")]
@@ -84,16 +66,10 @@ namespace DCL.AvatarRendering.Emotes
         public Color DirectedEmoteReceivedAnimationColor = Color.cyan;
 
         /// <summary>
-        /// The thickness of the avatar outline.
+        /// The thickness of the avatar outline when the receiver receives a directed social emote.
         /// </summary>
         [Tooltip("The thickness of the avatar outline.")]
-        public float AvatarOutlineThickness = 0.1f;
-
-        /// <summary>
-        /// How fast the outline gets totally opaque or transparent (1 second / value).
-        /// </summary>
-        [Tooltip("")]
-        public float AvatarOutlineFadingSpeed = 12.0f;
+        public float DirectedEmoteReceivedAnimationThickness = 2.0f;
 
         [Header("Ephemeral notification prefabs")]
 

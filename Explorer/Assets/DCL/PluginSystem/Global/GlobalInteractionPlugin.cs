@@ -11,6 +11,8 @@ using DCL.Interaction.HoverCanvas.UI;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
+using DCL.Interaction.Settings;
+using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
 using DCL.SocialEmotes.UI;
 using DCL.Utilities;
@@ -108,6 +110,7 @@ namespace DCL.PluginSystem.Global
             ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, identityCache, cameraEntityProxy, playerEntity, settings.socialEmoteOutcomesContextMenuSettings, settings.socialEmoteSettings);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
+            AvatarHighlightSystem.InjectToWorld(ref builder, settings.interactionSettings);
         }
 
         [Serializable]
@@ -118,6 +121,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
             [field: SerializeField] internal SocialEmoteOutcomesContextMenuSettings socialEmoteOutcomesContextMenuSettings { get; private set; }
             [field: SerializeField] internal SocialEmotesSettings socialEmoteSettings { get; private set; }
+            [field: SerializeField] internal InteractionSettingsData interactionSettings { get; private set; }
         }
     }
 }

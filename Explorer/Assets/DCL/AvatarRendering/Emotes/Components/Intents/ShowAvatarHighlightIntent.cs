@@ -1,6 +1,4 @@
 
-using UnityEngine;
-
 namespace DCL.AvatarRendering.Emotes
 {
     /// <summary>
@@ -8,13 +6,14 @@ namespace DCL.AvatarRendering.Emotes
     /// </summary>
     public readonly struct ShowAvatarHighlightIntent
     {
-        public readonly float Thickness;
-        public readonly Color OutlineColor;
+        /// <summary>
+        /// Whether the user can interact with the avatar.
+        /// </summary>
+        public readonly bool CanInteract;
 
-        public ShowAvatarHighlightIntent(float thickness, Color outlineColor)
+        public ShowAvatarHighlightIntent(bool canInteract)
         {
-            Thickness = thickness;
-            OutlineColor = outlineColor;
+            CanInteract = canInteract;
         }
     }
 }

@@ -13,7 +13,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
-using DCL.InWorldCamera;
 using DCL.Profiles;
 using DCL.SocialEmotes.UI;
 using DCL.UI;
@@ -140,8 +139,8 @@ namespace DCL.Interaction.Systems
             bool isCloseEnoughToInteract = sqrDistanceToAvatar < socialEmotesSettings.InteractionDistance * socialEmotesSettings.InteractionDistance;
 
             // Avatar highlight
-            if (!World.Has<ShowAvatarHighlightIntent>(currentEntityHovered) && socialEmotesSettings.EnabledOutline)
-                World.Add(currentEntityHovered, new ShowAvatarHighlightIntent(socialEmotesSettings.AvatarOutlineThickness, isCloseEnoughToInteract ? socialEmotesSettings.InteractableAvatarOutlineColor : socialEmotesSettings.NonInteractableAvatarOutlineColor));
+            if (!World.Has<ShowAvatarHighlightIntent>(currentEntityHovered))
+                World.Add(currentEntityHovered, new ShowAvatarHighlightIntent(isCloseEnoughToInteract));
 
             // Tooltips
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
