@@ -37,7 +37,7 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string OPTIONS_TOOLTIP = "Options...";
+        private const string OPTIONS_TOOLTIP = "Interact";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
@@ -124,10 +124,6 @@ namespace DCL.Interaction.Systems
                 || World.Has<IgnoreInteractionComponent>(currentEntityHovered))
                 return;
 
-            currentPositionHovered = Mouse.current.position.ReadValue();
-            currentProfileHovered = profile;
-            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
-
             Vector3 otherPosition = World.Get<CharacterTransform>(currentEntityHovered).Position;
             Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
 
@@ -136,6 +132,16 @@ namespace DCL.Interaction.Systems
             // Distance limit
             if(sqrDistanceToAvatar > socialEmotesSettings.VisibilityDistance * socialEmotesSettings.VisibilityDistance)
                 return;
+
+            currentPositionHovered = Mouse.current.position.ReadValue();
+            currentProfileHovered = profile;
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
+
+            bool isCloseEnoughToInteract = sqrDistanceToAvatar < socialEmotesSettings.InteractionDistance * socialEmotesSettings.InteractionDistance;
+
+            // Avatar highlight
+            if (!World.Has<ShowAvatarHighlightIntent>(currentEntityHovered) && socialEmotesSettings.EnabledOutline)
+                World.Add(currentEntityHovered, new ShowAvatarHighlightIntent(socialEmotesSettings.AvatarOutlineThickness, isCloseEnoughToInteract ? socialEmotesSettings.InteractableAvatarOutlineColor : socialEmotesSettings.NonInteractableAvatarOutlineColor));
 
             // Tooltips
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
@@ -148,12 +154,6 @@ namespace DCL.Interaction.Systems
                 hoverFeedbackComponent.Add(viewProfileTooltip);
                 socialEmoteInteractionTooltip = new HoverFeedbackComponent.Tooltip(socialEmoteInteraction.Emote.Model.Asset!.metadata.name, dclInput.Player.Pointer);
                 hoverFeedbackComponent.Add(socialEmoteInteractionTooltip);
-
-                bool isCloseEnoughToInteract = sqrDistanceToAvatar < socialEmotesSettings.InteractionDistance * socialEmotesSettings.InteractionDistance;
-
-                // Avatar highlight
-                if (!World.Has<ShowAvatarHighlightIntent>(currentEntityHovered) && socialEmotesSettings.EnabledOutline)
-                    World.Add(currentEntityHovered, new ShowAvatarHighlightIntent(socialEmotesSettings.AvatarOutlineThickness, isCloseEnoughToInteract ? socialEmotesSettings.InteractableAvatarOutlineColor : socialEmotesSettings.NonInteractableAvatarOutlineColor));
             }
             else
             {
