@@ -25,7 +25,7 @@ namespace DCL.Donations
     {
         // https://contracts.decentraland.org/addresses.json
         private const string POLYGON_CONTRACT_ADDRESS = "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4";
-        private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xFa04D2e2BA9aeC166c93dFEEba7427B2303beFa9";
+        private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xfa04d2e2ba9aec166c93dfeeba7427b2303befa9";
 
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
         private const string TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
@@ -112,9 +112,33 @@ namespace DCL.Donations
             }
         }
 
+        private static string LeftPad64(string hex)
+        {
+            // Ensure no 0x prefix before padding
+            string s = hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
+
+            if (s.Length > 64)
+                throw new ArgumentException($"Argument too large: {s.Length} chars. Max 64 hex chars allowed.");
+
+            // Pad with zeros on the left to reach 64 characters
+            return s.PadLeft(64, '0').ToLowerInvariant();
+        }
+
+        private static string NormalizeAddress(string addr)
+        {
+            // Remove '0x' prefix if present
+            string s = addr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? addr[2..] : addr;
+
+            if (s.Length != 40)
+                throw new ArgumentException($"Invalid address length: {s.Length}. Expected 40 hex characters.");
+
+            return s.ToLowerInvariant();
+        }
+
         public async UniTask<decimal> GetCurrentBalanceAsync(CancellationToken ct)
         {
-            return 100;
+            string address = LeftPad64(NormalizeAddress(ViewDependencies.CurrentIdentity?.Address));
+
             var request = new EthApiRequest
             {
                 id = Guid.NewGuid().GetHashCode(),
@@ -124,7 +148,7 @@ namespace DCL.Donations
                     new JObject
                     {
                         ["to"] = contractAddress,
-                        ["data"] = $"{MANA_BALANCE_FUNCTION_SELECTOR}000000000000000000000000{ViewDependencies.CurrentIdentity?.Address.ToString()[2..]}"
+                        ["data"] = $"{MANA_BALANCE_FUNCTION_SELECTOR}{address}"
                     },
                     "latest"
                 }
@@ -140,7 +164,8 @@ namespace DCL.Donations
         public async UniTask<bool> SendDonationAsync(string toAddress, decimal amountInMana, CancellationToken ct)
         {
             BigInteger value = new BigInteger(decimal.Round(amountInMana * WEI_FACTOR, 0, MidpointRounding.AwayFromZero));
-            string to = toAddress[2..];
+            string to = LeftPad64(NormalizeAddress(toAddress));
+            string weiAmountString = LeftPad64(value.ToString("x"));
 
             var request = new EthApiRequest
             {
@@ -153,7 +178,7 @@ namespace DCL.Donations
                         ["from"] = ViewDependencies.CurrentIdentity?.Address.ToString(),
                         ["to"] = contractAddress,
                         ["value"] = "0x0",
-                        ["data"] = $"{TRANSFER_FUNCTION_SELECTOR}000000000000000000000000{to}{value.ToString("x")}"
+                        ["data"] = $"{TRANSFER_FUNCTION_SELECTOR}{to}{weiAmountString}"
                     }
                 }
             };

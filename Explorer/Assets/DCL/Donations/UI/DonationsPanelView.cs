@@ -114,7 +114,7 @@ namespace DCL.Donations.UI
             ChangeState(State.DEFAULT);
 
             if (active)
-                loadingView.ShowLoading();
+                loadingView.ShowLoading(true);
             else
                 loadingView.HideLoading();
         }

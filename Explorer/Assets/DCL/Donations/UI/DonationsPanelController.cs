@@ -12,6 +12,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Arch;
+using Random = UnityEngine.Random;
 
 namespace DCL.Donations.UI
 {
@@ -95,8 +96,9 @@ namespace DCL.Donations.UI
             {
                 viewInstance!.ShowLoading(currentCreatorProfile, creatorAddress, amount, profileRepositoryWrapper);
 
-                await UniTask.Delay(5000, cancellationToken: panelLifecycleCts.Token);
-                bool success = false; //await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
+                // await UniTask.Delay(5000, cancellationToken: panelLifecycleCts.Token);
+                // bool success = Random.Range(0, 100) > 49;
+                bool success = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
 
                 if (success)
                 {
@@ -113,7 +115,6 @@ namespace DCL.Donations.UI
                 ReportHub.LogException(e, ReportCategory.DONATIONS);
                 viewInstance!.ShowErrorModal();
             }
-
         }
 
         private void PlayEmoteByUrn(URN emoteUrn)
