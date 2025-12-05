@@ -10,7 +10,7 @@ namespace DCL.Donations.UI
 {
     public class DonationsPanelView : ViewBase, IView
     {
-        private enum State
+        private enum SubViews
         {
             DEFAULT,
             LOADING,
@@ -35,14 +35,14 @@ namespace DCL.Donations.UI
             donationDefaultView.buyMoreManaButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
 
             donationErrorView.contactSupportButton.onClick.AddListener(() => ContactSupportRequested?.Invoke());
-            donationErrorView.tryAgainButton.onClick.AddListener(() => ChangeState(State.DEFAULT));
+            donationErrorView.tryAgainButton.onClick.AddListener(() => ShowSubView(SubViews.DEFAULT));
 
             donationDefaultView.SendDonationRequested += (address, amount) => SendDonationRequested?.Invoke(address, amount);
         }
 
         public void SetDefaultLoadingState(bool active)
         {
-            ChangeState(State.DEFAULT);
+            ShowSubView(SubViews.DEFAULT);
 
             if (active)
                 donationDefaultView.loadingView.ShowLoading(true);
@@ -52,26 +52,26 @@ namespace DCL.Donations.UI
 
         public void ShowLoading(Profile? profile, string creatorAddress, decimal donationAmount, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
-            ChangeState(State.LOADING);
+            ShowSubView(SubViews.LOADING);
             donationLoadingView.ConfigurePanel(profile, creatorAddress, donationAmount, profileRepositoryWrapper);
         }
 
         public void ShowErrorModal()
         {
-            ChangeState(State.ERROR);
+            ShowSubView(SubViews.ERROR);
         }
 
-        private void ChangeState(State newState)
+        private void ShowSubView(SubViews newSubView)
         {
-            donationDefaultView.gameObject.SetActive(newState == State.DEFAULT);
-            donationConfirmedView.gameObject.SetActive(newState == State.TX_CONFIRMED);
-            donationErrorView.gameObject.SetActive(newState == State.ERROR);
-            donationLoadingView.gameObject.SetActive(newState == State.LOADING);
+            donationDefaultView.gameObject.SetActive(newSubView == SubViews.DEFAULT);
+            donationConfirmedView.gameObject.SetActive(newSubView == SubViews.TX_CONFIRMED);
+            donationErrorView.gameObject.SetActive(newSubView == SubViews.ERROR);
+            donationLoadingView.gameObject.SetActive(newSubView == SubViews.LOADING);
         }
 
         public async UniTask ShowTxConfirmedAsync(Profile? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
-            ChangeState(State.TX_CONFIRMED);
+            ShowSubView(SubViews.TX_CONFIRMED);
 
             await donationConfirmedView.ShowAsync(profile, creatorAddress, ct, profileRepositoryWrapper);
         }
