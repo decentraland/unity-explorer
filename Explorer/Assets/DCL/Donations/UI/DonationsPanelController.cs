@@ -131,7 +131,7 @@ namespace DCL.Donations.UI
         {
             try
             {
-                viewInstance!.SetLoadingState(true);
+                viewInstance!.SetDefaultLoadingState(true);
 
                 string creatorAddress;
                 Vector2Int baseParcel;
@@ -165,7 +165,7 @@ namespace DCL.Donations.UI
                 if (creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
 
-                viewInstance!.ConfigurePanel(creatorProfile, creatorAddress,
+                viewInstance!.ConfigureDefaultPanel(creatorProfile, creatorAddress,
                     sceneName, currentBalance,
                     recommendedDonationAmount, manaPriceUsd,
                     profileRepositoryWrapper);
@@ -179,7 +179,7 @@ namespace DCL.Donations.UI
                 ReportHub.LogException(e, ReportCategory.DONATIONS);
                 CloseController();
             }
-            finally { viewInstance!.SetLoadingState(false); }
+            finally { viewInstance!.SetDefaultLoadingState(false); }
         }
 
         protected override void OnViewClose()
