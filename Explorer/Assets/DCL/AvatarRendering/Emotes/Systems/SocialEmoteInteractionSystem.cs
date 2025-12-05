@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             WalkToInitiatorPositionBeforePlayingOutcomeAnimationQuery(World);
             ForceAvatarToLookAtPositionQuery(World);
             InterpolateCameraTargetTowardsNewParentQuery(World);
-            
+
             CharacterEmoteComponent playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
             InitiatorLooksAtSocialEmoteTargetQuery(World, playerEmoteComponent.SocialEmote.TargetAvatarWalletAddress, playerEmoteComponent.IsPlayingEmote);
         }
@@ -151,7 +151,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (isCloseEnoughToInitiator ||
                 movementInput.HasPlayerPressed ||  // If player presses any movement input, the process is canceled
                 jumpInputComponent.IsPressed ||  // If player jumps, the process is canceled
-                moveIntent.HasBeenCancelled)
+                moveIntent.HasBeenCancelled ||
+                UnityEngine.Time.time - moveIntent.StartTime >= socialEmotesSettings.ReactionTimeout) // Timeout, the process is canceled (the avatar got stuck for some reason and did not reach the initiator)
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
 

@@ -45,6 +45,12 @@ namespace DCL.AvatarRendering.Emotes
         [Tooltip("The duration of the interpolation of the camera when initiating or finishing the reaction to a social emote, in seconds.")]
         public float OutcomeCameraInterpolationDuration;
 
+        /// <summary>
+        /// The maximum amount of time, in seconds, an avatar can be walking towards the initiator of a social emote. Once it times out, the reaction is cancelled.
+        /// </summary>
+        [Tooltip("The maximum amount of time, in seconds, an avatar can be walking towards the initiator of a social emote. Once it times out, the reaction is cancelled.")]
+        public float ReactionTimeout = 3.0f;
+
         [Header("Avatar Outline")]
 
         /// <summary>
