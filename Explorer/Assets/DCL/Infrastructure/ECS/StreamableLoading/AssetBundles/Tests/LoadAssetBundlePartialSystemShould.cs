@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             var totalBudget = 15;
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.TEST, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 

@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
         {
             var buffer = new EntityEventBuffer<NftShapeRendererComponent>(1);
 
-            IWebRequestController webRequestController = IWebRequestController.DEFAULT;
+            IWebRequestController webRequestController = IWebRequestController.TEST;
 
             origin = new DemoWorld(
                 world,
