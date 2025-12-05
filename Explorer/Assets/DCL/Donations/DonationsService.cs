@@ -29,6 +29,9 @@ namespace DCL.Donations
         // Test Amoy MANA contract
         private const string AMOY_NET_CONTRACT_ADDRESS = "0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0";
 
+        private const string MATIC_NETWORK = "matic";
+        private const string AMOY_NETWORK = "amoy";
+
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
         private const string TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
         private const decimal WEI_FACTOR = 1_000_000_000_000_000_000;
@@ -48,6 +51,7 @@ namespace DCL.Donations
         private readonly IRealmData realmData;
         private readonly IPlacesAPIService placesAPIService;
         private readonly string contractAddress;
+        private readonly string networkName;
         private readonly bool donationFeatureEnabled;
 
         private DateTime lastManaRateQueryTime;
@@ -66,7 +70,19 @@ namespace DCL.Donations
             this.realmData = realmData;
             this.placesAPIService = placesAPIService;
 
-            contractAddress = dclEnvironment == DecentralandEnvironment.Org ? MATIC_CONTRACT_ADDRESS : AMOY_NET_CONTRACT_ADDRESS;
+            switch (dclEnvironment)
+            {
+                case DecentralandEnvironment.Org:
+                case DecentralandEnvironment.Today:
+                        contractAddress = MATIC_CONTRACT_ADDRESS;
+                        networkName = MATIC_NETWORK;
+                        break;
+                default:
+                        contractAddress = AMOY_NET_CONTRACT_ADDRESS;
+                        networkName = AMOY_NETWORK;
+                        break;
+            }
+
             donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor || true; //TODO: remove '|| true' when feature is ready to be shipped
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
@@ -143,6 +159,7 @@ namespace DCL.Donations
 
             var request = new EthApiRequest
             {
+                readonlyNetwork = networkName,
                 id = Guid.NewGuid().GetHashCode(),
                 method = "eth_call",
                 @params = new object[]

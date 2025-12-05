@@ -248,7 +248,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(GetNetworkId(), ct);
+                await ConnectToRpcAsync(request.readonlyNetwork ?? GetNetworkId(), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
