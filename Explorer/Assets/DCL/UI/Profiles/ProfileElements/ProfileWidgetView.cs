@@ -2,14 +2,13 @@ using DCL.UI.Buttons;
 using MVC;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.ProfileElements
 {
     public class ProfileWidgetView : ViewBase, IView
     {
         [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator OpenProfileButton { get; private set; } = null!;
+        [field: SerializeField] public HoverableButton OpenProfileButton { get; private set; } = null!;
 
         [Header("Can be Null")]
         [field: SerializeField] public TMP_Text? NameLabel { get; private set; }

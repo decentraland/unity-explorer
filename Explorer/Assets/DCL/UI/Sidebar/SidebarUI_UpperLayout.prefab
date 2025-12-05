@@ -237,6 +237,10 @@ PrefabInstance:
       propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3356999425294958559, guid: 473caa26b0a58264087419a420af49c7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3479763710354263847, guid: 473caa26b0a58264087419a420af49c7, type: 3}
       propertyPath: m_Name
       value: SidebarMapButton
@@ -320,6 +324,14 @@ PrefabInstance:
     - target: {fileID: 6376657949799980949, guid: 473caa26b0a58264087419a420af49c7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8228361190549845326, guid: 473caa26b0a58264087419a420af49c7, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 56.66
+      objectReference: {fileID: 0}
+    - target: {fileID: 8228361190549845326, guid: 473caa26b0a58264087419a420af49c7, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -643,11 +655,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6415193753656441350, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
+      propertyPath: <OpenProfileButton>k__BackingField
+      value: 
+      objectReference: {fileID: 4548800795641847927}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
+--- !u!114 &4548800795641847927 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1777022774592104991, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
+  m_PrefabInstance: {fileID: 2849044589181422184}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0946983c1bce487d8ca44232d02836eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7953449017702476265 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5325934593394451329, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
@@ -1157,6 +1184,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 5604293973387185170}
     m_Modifications:
     - target: {fileID: 290599697974945711, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Name
+      value: SidebarConfigPanelView
+      objectReference: {fileID: 0}
+    - target: {fileID: 290599697974945711, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
@@ -1184,9 +1215,13 @@ PrefabInstance:
       propertyPath: <canvas>k__BackingField
       value: 
       objectReference: {fileID: 2808110500974110732}
+    - target: {fileID: 2601026016110483493, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: <raycaster>k__BackingField
+      value: 
+      objectReference: {fileID: 5609494195097449872}
     - target: {fileID: 4466871651195778395, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_Name
-      value: SidebarSettingsButton
+      value: SidebarConfigButton
       objectReference: {fileID: 0}
     - target: {fileID: 4694019954775888957, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_IgnoreParentGroups
