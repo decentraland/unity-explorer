@@ -208,7 +208,7 @@ namespace MVC
             finally
             {
                 // Pop the stack
-                PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller);
+                PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller, windowsStackManager.GetControllerClosure(controller)?.Task.Status != UniTaskStatus.Succeeded);
 
                 if (popupPopInfo.NewTopMostController != null)
                 {

@@ -29,7 +29,7 @@ using Global.AppArgs;
 using Unity.Mathematics;
 using Utility;
 
- namespace Global.Dynamic
+namespace Global.Dynamic
 {
     public class RealmController : IGlobalRealmController
     {
@@ -43,7 +43,8 @@ using Utility;
                                                                          .WithNone<DeleteEntityIntention, ISceneFacade>();
 
         private static readonly QueryDescription INVALIDATE_PARTITIONS = new QueryDescription()
-           .WithAll<PartitionComponent, ISceneFacade>();
+                                                                        .WithAll<PartitionComponent, ISceneFacade>()
+                                                                        .WithNone<PortableExperienceComponent, SmartWearableId>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -303,10 +304,7 @@ using Utility;
         private void InvalidateScenePartitions(World world)
         {
             world.Query(in INVALIDATE_PARTITIONS,
-                (ref PartitionComponent partitionComponent) =>
-                {
-                    partitionComponent.Bucket = byte.MaxValue;
-                });
+                (ref PartitionComponent partitionComponent) => { partitionComponent.Bucket = byte.MaxValue; });
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
