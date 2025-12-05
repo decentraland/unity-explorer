@@ -2,7 +2,7 @@
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 using Utility;
@@ -53,7 +53,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 Identify(identityCache.Identity);
         }
 
-        public void Track(string eventName, JsonObject? properties = null, bool isInstant = false)
+        public void Track(string eventName, JObject? properties = null, bool isInstant = false)
         {
             if (!isInstant)
                 analytics.Track(eventName, properties);
@@ -67,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 analytics.Flush();
 
-                analytics.Identify(identity.Address, new JsonObject
+                analytics.Identify(identity.Address, new JObject
                     {
                         ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
                         ["auth_chain"] = identity.AuthChain != null ? identity.AuthChain.ToString() : UNDEFINED,
@@ -80,7 +80,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void TrackSystemInfo()
         {
-            Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
+            Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JObject
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
                 ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"
