@@ -6,6 +6,9 @@ using DCL.Browser;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.FeatureFlags;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -48,12 +51,24 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.world = world;
             this.webBrowser = webBrowser;
+
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.TIP_RECEIVED, OnTipReceivedNotificationClicked);
         }
 
         public void Dispose()
         {
             donationsPanelController?.Dispose();
             donationsService.Dispose();
+        }
+
+        private void OnTipReceivedNotificationClicked(object[] parameters)
+        {
+            if (parameters.Length == 0 || parameters[0] is not TipReceivedNotification)
+                return;
+
+            TipReceivedNotification notification = (TipReceivedNotification)parameters[0];
+
+            mvcManager.ShowAndForget(PassportController.IssueCommand(new PassportParams(notification.Metadata.Sender.Address)));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
