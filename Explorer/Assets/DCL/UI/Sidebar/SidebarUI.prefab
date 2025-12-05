@@ -83,8 +83,8 @@ MonoBehaviour:
   <SkyboxMenuView>k__BackingField: {fileID: 8821864330962428420}
   <smartWearablesButton>k__BackingField: {fileID: 5578694286419332628}
   <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
-  <sidebarSettingsButton>k__BackingField: {fileID: 1441228183698799381}
-  <SidebarSettingsWidgetView>k__BackingField: {fileID: 9165167233262662817}
+  <sidebarConfigButton>k__BackingField: {fileID: 7076015699362886066}
+  <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
   <autoHideToggle>k__BackingField: {fileID: 6705180925666095888}
   <emotesWheelButton>k__BackingField: {fileID: 7515730619705325338}
   <helpButton>k__BackingField: {fileID: 2978611201982790949}
@@ -436,6 +436,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5781603626118713232, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_Name
+      value: SidebarConfigPanelView
+      objectReference: {fileID: 0}
     - target: {fileID: 6202596173415039667, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_SortingLayer
       value: 0
@@ -488,6 +492,10 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 16.75
       objectReference: {fileID: 0}
+    - target: {fileID: 7622781240046919012, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_Name
+      value: SidebarConfigButton
+      objectReference: {fileID: 0}
     - target: {fileID: 7953449017702476265, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -504,6 +512,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8083038146609803290, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: <raycaster>k__BackingField
+      value: 
+      objectReference: {fileID: 4811359616083849515}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -536,17 +548,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 544297384457663125, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1441228183698799381 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1953940129153662894, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2307622500487672837 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3394549892427051198, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
@@ -591,6 +592,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4811359616083849515 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5609494195097449872, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
 --- !u!224 &4817722374049450153 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5604293973387185170, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
@@ -605,6 +617,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7076015699362886066 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7867368112766383369, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &7310006030576766240 stripped

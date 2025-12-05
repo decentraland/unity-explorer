@@ -168,7 +168,7 @@ namespace DCL.UI.Sidebar
             viewInstance.NotificationsButton.Button.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettingsPanel);
             viewInstance.ProfileWidget.OpenProfileButton.Button.onClick.AddListener(OpenProfilePanel);
-            viewInstance.sidebarSettingsButton.Button.onClick.AddListener(OpenSidebarSettings);
+            viewInstance.sidebarConfigButton.Button.onClick.AddListener(OpenSidebarSettings);
 
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
@@ -347,7 +347,7 @@ namespace DCL.UI.Sidebar
 
         private void OnMarketplaceCreditsButtonClicked()
         {
-            OpenPanelAsync(viewInstance!.sidebarSettingsButton,
+            OpenPanelAsync(viewInstance!.sidebarConfigButton,
                 mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)))).Forget();
         }
 
@@ -364,7 +364,7 @@ namespace DCL.UI.Sidebar
 
         private void OpenSidebarSettings()
         {
-            OpenPanelAsync(viewInstance!.sidebarSettingsButton, mvcManager.ShowAsync(SidebarSettingsWidgetController.IssueCommand())).Forget();
+            OpenPanelAsync(viewInstance!.sidebarConfigButton, mvcManager.ShowAsync(SidebarSettingsWidgetController.IssueCommand())).Forget();
         }
 
         private void OpenProfilePanel()
