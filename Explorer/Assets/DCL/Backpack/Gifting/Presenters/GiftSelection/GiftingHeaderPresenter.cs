@@ -15,6 +15,7 @@ namespace DCL.Backpack.Gifting.Presenters
 {
     public class GiftingHeaderPresenter : IDisposable
     {
+        private const string TITLE_FORMAT = "Send a Gift to <color=#{0}>{1}</color>";
         private const int SEARCH_DEBOUNCE_MS = 500;
 
         public event Action<string>? OnSearchChanged;
@@ -76,20 +77,21 @@ namespace DCL.Backpack.Gifting.Presenters
             
             var userNameColor = profile.UserNameColor;
             string? userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
-            view.Title.text = $"Send a Gift to <color=#{userNameColorHex}>{profile.Name}</color>";
+            view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Name);
 
-            var faceUrl = profile.Avatar.FaceSnapshotUrl;
-            var vmWithColor = profileThumbnail.Value.SetColor(userNameColor);
-            profileThumbnail.UpdateValue(vmWithColor);
+            profileThumbnail.UpdateValue(profileThumbnail.Value.SetLoading(userNameColor));
 
-            var sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(faceUrl, ct);
-            if (sprite != null)
-            {
-                var loadedViewModel = ProfileThumbnailViewModel.FromLoaded(sprite, true);
-                var finalViewModel = profileThumbnail.Value.SetProfile(loadedViewModel);
-                profileThumbnail.UpdateValue(finalViewModel);
-                CurrentRecipientAvatarSprite = sprite;
-            }
+            string faceUrl = profile.Avatar.FaceSnapshotUrl;
+
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(
+                profileThumbnail,
+                null,
+                userId,
+                faceUrl,
+                ct);
+
+            if (profileThumbnail.Value.Thumbnail.Sprite != null)
+                CurrentRecipientAvatarSprite = profileThumbnail.Value.Thumbnail.Sprite;
 
             walletAddressController.Setup(profile);
         }
