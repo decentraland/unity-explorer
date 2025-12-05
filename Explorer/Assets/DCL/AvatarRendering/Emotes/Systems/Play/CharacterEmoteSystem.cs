@@ -9,6 +9,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
@@ -73,8 +74,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
-            CancelEmotesOnMovePlayerToInvokedQuery(World);
-            CancelEmotesByMovementQuery(World);
+            CancelEmotesByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World);
             CancelEmotesByDeletionQuery(World);
@@ -93,29 +93,12 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
-        /// Doesn't handle movePlayerTo calls.
-        /// </summary>
-        [Query]
-        [All(typeof(PlayerTeleportIntent))]
-        [None(typeof(CharacterEmoteIntent), typeof(MovePlayerToInfo))]
-        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
-            StopEmote(ref emoteComponent, avatarView);
-        }
-
-        /// <summary>
-        /// Stops emote playback when movePlayerTo is invoked.<br/>
-        /// Will not cancel a scene emote that was triggered the same frame movePlayerTo was invoked.
         /// </summary>
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesOnMovePlayerToInvoked(Entity entity, in MovePlayerToInfo movePlayerTo, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            if (World.TryGet(entity, out CharacterWaitingSceneEmoteLoading waitingEmote) &&
-                movePlayerTo.FrameCount == waitingEmote.FrameCount)
-                return;
-
             StopEmote(ref emoteComponent, avatarView);
         }
 
@@ -160,35 +143,24 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-        /// <summary>
-        /// Cancel the emote whenever:
-        /// - Moving horizontally
-        /// - OR moving up
-        /// - OR falling, which can only be true if the character is NOT grounded
-        ///
-        /// The falling flag is computed that way because it's possible to accumulate large vertical speed after teleporting
-        /// even if the character is actually grounded and not moving down
-        ///
-        /// The JustTeleport tag check is needed because the grounded flag is set to false while we are in that 'just teleported' state.
-        /// </summary>
+        // Related issues:
+        // https://github.com/decentraland/unity-explorer/issues/6246
+        // https://github.com/decentraland/unity-explorer/issues/4306
+        // Following how it works on alternative clients, we should only cancel emotes given on the user's input
+        // and not by the physics velocity. This prevents undesired interruptions like movePlayerTo + triggerEmote simultaneously
+        // or random jumps due to physics imprecision
+        // This is a base on which we can keep growing how scenes may interact with the avatar's emotes
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported))]
-        private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
+        private void CancelEmotesByMovementInput(ref CharacterEmoteComponent emoteComponent,
+            in IAvatarView avatarView,
+            ref JumpInputComponent jumpInputComponent,
+            ref MovementInputComponent movementInputComponent)
         {
-            // The seemingly strange 0.447f value is because we were previously only using the squared threshold, and it was 0.2f
-            // The value 0.447^2 is approximately 0.2f
-            const float SPEED_THRESHOLD = 0.447f;
-            const float SPEED_THRESHOLD_SQ = SPEED_THRESHOLD * SPEED_THRESHOLD;
+            const float HORIZONTAL_THRESHOLD_SQ = 0.1f * 0.1f;
 
-            float horizontalSpeedSq = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
-            float verticalSpeed = rigidTransform.GravityVelocity.y;
-
-            bool shouldCancelEmote = horizontalSpeedSq > SPEED_THRESHOLD_SQ ||
-                                     // If going up (v speed > 0), cancel the emote
-                                     // Otherwise, we only cancel the emote if not grounded
-                                     // This is because we always have some vertical velocity, even when grounded
-                                     // See ApplyGravity.Execute(), all code paths ultimately add to CharacterRigidTransform.GravityVelocity
-                                     (Mathf.Abs(verticalSpeed) > SPEED_THRESHOLD && (verticalSpeed > 0 || !rigidTransform.IsGrounded));
+            float horizontalSpeedSq = movementInputComponent.Axes.sqrMagnitude;
+            bool shouldCancelEmote = horizontalSpeedSq > HORIZONTAL_THRESHOLD_SQ || jumpInputComponent.IsPressed;
 
             if (shouldCancelEmote) StopEmote(ref emoteComponent, avatarView);
         }
