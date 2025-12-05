@@ -6,6 +6,7 @@ using DCL.Browser;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly Arch.Core.World world;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -41,7 +43,8 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Entity playerEntity,
             Arch.Core.World world,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -51,6 +54,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.world = world;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.TIP_RECEIVED, OnTipReceivedNotificationClicked);
         }
@@ -90,6 +94,7 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 webBrowser,
+                decentralandUrlsSource,
                 recommendedAmountParseSuccess ? temporalTipsJson.amount : DEFAULT_RECOMMENDED_TIP_AMOUNTS);
 
             mvcManager.RegisterController(donationsPanelController);

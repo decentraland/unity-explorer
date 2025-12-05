@@ -968,7 +968,8 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     playerEntity,
                     globalWorld,
-                    webBrowser),
+                    webBrowser,
+                    bootstrapContainer.DecentralandUrlsSource),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

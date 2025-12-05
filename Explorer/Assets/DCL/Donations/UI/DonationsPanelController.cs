@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -18,8 +19,6 @@ namespace DCL.Donations.UI
 {
     public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
-        private const string BUY_MORE_URL = "https://decentraland.org/account";
-        private const string SUPPORT_URL = "https://decentraland.org/help/";
         private static readonly URN EMOTE_MONEY_URN = new ("money");
 
         private readonly DonationsService donationsService;
@@ -29,6 +28,7 @@ namespace DCL.Donations.UI
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -43,6 +43,7 @@ namespace DCL.Donations.UI
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
             decimal[] recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -52,6 +53,7 @@ namespace DCL.Donations.UI
             this.world = world;
             this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -77,10 +79,10 @@ namespace DCL.Donations.UI
         }
 
         private void OnBuyMoreRequested() =>
-            webBrowser.OpenUrl(BUY_MORE_URL);
+            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.Account));
 
         private void OnContactSupportRequested() =>
-            webBrowser.OpenUrl(SUPPORT_URL);
+            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.Help));
 
         protected override void OnBeforeViewShow()
         {

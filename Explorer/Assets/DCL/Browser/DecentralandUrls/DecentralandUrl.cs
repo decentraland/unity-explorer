@@ -51,6 +51,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         NotificationRead,
 
         Help,
+        Account,
         MinimumSpecs,
 
         FeatureFlags,
