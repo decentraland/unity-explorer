@@ -79,7 +79,8 @@ namespace DCL.SocialEmotes.UI
             if(emoteComponent.IsPlayingEmote &&
                emoteComponent.Metadata != null &&
                emoteComponent.Metadata.IsSocialEmote &&
-               !emoteComponent.SocialEmote.IsPlayingOutcome)
+               !emoteComponent.SocialEmote.IsPlayingOutcome &&
+               (string.IsNullOrEmpty(emoteComponent.SocialEmote.TargetAvatarWalletAddress) || emoteComponent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity.Address))
                 World.Add(entity, pinsPool.Get());
         }
 
