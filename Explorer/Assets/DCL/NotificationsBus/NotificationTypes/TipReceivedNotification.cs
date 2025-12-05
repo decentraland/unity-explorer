@@ -7,7 +7,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class TipReceivedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "New tip received";
-        private const string NOTIFICATION_TITLE = "tipped your scene <b>{0}</b> with <b>{1} MANA</b>";
+        private const string NOTIFICATION_TITLE = "tipped your scene <b>{0}</b> with <b>{1:#.##} MANA</b>";
 
         [JsonProperty("metadata")]
         public TipReceivedNotificationMetadata Metadata { get; set; }
@@ -29,7 +29,7 @@ namespace DCL.NotificationsBus.NotificationTypes
         public FriendRequestProfile Sender { get; set; }
 
         [JsonProperty("tipAmount")]
-        public string TipAmount { get; set; }
+        public decimal TipAmount { get; set; }
 
         [JsonProperty("sceneName")]
         public string SceneName { get; set; }
