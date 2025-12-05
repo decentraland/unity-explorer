@@ -42,7 +42,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             WalkToInitiatorPositionBeforePlayingOutcomeAnimationQuery(World);
             ForceAvatarToLookAtPositionQuery(World);
             InterpolateCameraTargetTowardsNewParentQuery(World);
-            InitiatorLooksAtSocialEmoteTargetQuery(World);
+            
+            CharacterEmoteComponent playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
+            InitiatorLooksAtSocialEmoteTargetQuery(World, playerEmoteComponent.SocialEmote.TargetAvatarWalletAddress, playerEmoteComponent.IsPlayingEmote);
         }
 
         /// <summary>
@@ -191,12 +193,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [Query]
         [All(typeof(IAvatarView))]
         [None(typeof(PlayerComponent))]
-        private void InitiatorLooksAtSocialEmoteTarget(in CharacterTransform targetTransform, Profile targetProfile)
+        private void InitiatorLooksAtSocialEmoteTarget([Data] string targetWalletAddress, [Data] bool isInitiatorPlayingEmote, in CharacterTransform targetTransform, Profile targetProfile)
         {
-            CharacterEmoteComponent playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
-            string targetWalletAddress = playerEmoteComponent.SocialEmote.TargetAvatarWalletAddress;
-
-            if (targetWalletAddress == targetProfile.UserId && playerEmoteComponent.IsPlayingEmote)
+            if (targetWalletAddress == targetProfile.UserId && isInitiatorPlayingEmote)
                 World.Add(playerEntity, new PlayerLookAtIntent(targetTransform.Position));
         }
 
