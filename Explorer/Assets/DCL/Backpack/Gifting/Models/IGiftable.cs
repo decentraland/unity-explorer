@@ -1,4 +1,6 @@
-﻿namespace DCL.Backpack.Gifting.Models
+﻿using DCL.AvatarRendering.Loading.Components;
+
+namespace DCL.Backpack.Gifting.Models
 {
     public enum GiftableKind { Wearable, Emote }
 
@@ -12,5 +14,7 @@
         string? RarityOrNull { get; }
 
         object Raw { get; }
+
+        IAvatarAttachment GetAttachment(); 
     }
 }

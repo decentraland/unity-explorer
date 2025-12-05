@@ -13,6 +13,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
         bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry);
-        Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
+        IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
     }
 }

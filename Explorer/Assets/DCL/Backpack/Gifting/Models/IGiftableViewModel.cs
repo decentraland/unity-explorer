@@ -3,16 +3,10 @@
 namespace DCL.Backpack.Gifting.Models
 {
     public enum ThumbnailState { NotLoaded, Loading, Loaded, Error }
-
-    /// <summary>
-    ///     ViewModel the grid & cell need. It is UI-facing and agnostic to the
-    ///     underlying SDK types (IWearable, IEmote). Everything specific lives
-    ///     behind IGiftableAttachment.
-    /// </summary>
+    
     public interface IGiftableItemViewModel
     {
-        /// <summary>Unified attachment wrapper (Wearable or Emote).</summary>
-        IGiftable Giftable { get; }
+        public GiftableAvatarAttachment Giftable { get; } 
 
         /// <summary>
         ///     Is item giftable?

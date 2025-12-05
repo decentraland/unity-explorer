@@ -13,6 +13,7 @@ using Runtime.Wearables;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Utility;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
@@ -80,13 +81,13 @@ namespace DCL.AvatarRendering.Wearables
             requestParameters.Add((ORDER_BY, sortingField.ToString()));
             requestParameters.Add((ORDER_DIRECTION, GetDirectionParamValue(orderBy)));
 
-            if (collectionType.HasFlag(IWearablesProvider.CollectionType.Base))
+            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.Base))
                 requestParameters.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
 
-            if (collectionType.HasFlag(IWearablesProvider.CollectionType.OnChain))
+            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.OnChain))
                 requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
 
-            if (collectionType.HasFlag(IWearablesProvider.CollectionType.ThirdParty))
+            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.ThirdParty))
                 requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
 
             if (smartWearablesOnly)

@@ -588,7 +588,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 throw new NotImplementedException();
             }
 
-            public Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
+            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
         }
 
         public class MockEmote : IEmote

@@ -14,6 +14,11 @@ namespace DCL.Backpack.Gifting.Models
         public string? RarityOrNull => Emote.DTO.Metadata.rarity;
         public object Raw => Emote;
 
+        public IAvatarAttachment GetAttachment()
+        {
+            return Emote;
+        }
+
         public EmoteGiftable(IEmote e)
         {
             Emote = e;

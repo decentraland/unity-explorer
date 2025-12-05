@@ -6,21 +6,18 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public class MemoryEmotesStorage : IEmoteStorage
+    public class MemoryEmotesStorage : AvatarElementNftRegistry, IEmoteStorage
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
             URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
-
-        public Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; } = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
-            URNIgnoreCaseEqualityComparer.Default);
-
-        private readonly object lockObject = new ();
+        
 
         public List<URN> EmbededURNs { get; } = new ();
 
@@ -87,107 +84,6 @@ namespace DCL.AvatarRendering.Emotes
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
                 }
-            }
-        }
-
-        public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
-        {
-            lock (lockObject)
-            {
-                if (!AllOwnedNftRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
-                {
-                    ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
-                        URNIgnoreCaseEqualityComparer.Default);
-
-                    AllOwnedNftRegistry[nftUrn] = ownedWearableRegistry;
-                }
-
-                ownedWearableRegistry[entry.Urn] = entry;
-            }
-        }
-
-        public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
-        {
-            lock (lockObject)
-            {
-                bool result = AllOwnedNftRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
-                registry = r;
-                return result;
-            }
-        }
-
-        public int GetOwnedNftCount(URN nftUrn)
-        {
-            lock (lockObject)
-            {
-                if (AllOwnedNftRegistry.TryGetValue(nftUrn, out var registry))
-                {
-                    return registry.Count;
-                }
-
-                return 0;
-            }
-        }
-
-        public void ClearOwnedNftRegistry()
-        {
-            lock (lockObject)
-            {
-                AllOwnedNftRegistry.Clear();
-            }
-        }
-
-        public bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt)
-        {
-            lock (lockObject)
-            {
-                if (!AllOwnedNftRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> registry) || registry.Count == 0)
-                {
-                    latestTransferredAt = default;
-                    return false;
-                }
-
-                DateTime latestDate = DateTime.MinValue;
-                
-                foreach (var entry in registry.Values)
-                {
-                    if (entry.TransferredAt > latestDate)
-                    {
-                        latestDate = entry.TransferredAt;
-                    }
-                }
-                
-                latestTransferredAt = latestDate;
-                return true;
-            }
-        }
-
-        public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
-        {
-            lock (lockObject)
-            {
-                entry = default;
-
-                if (!AllOwnedNftRegistry.TryGetValue(nftUrn, out var registry) || registry.Count == 0)
-                    return false;
-
-                NftBlockchainOperationEntry best = default;
-                bool hasBest = false;
-
-                foreach (var e in registry.Values)
-                {
-                    if (!hasBest || e.TransferredAt > best.TransferredAt)
-                    {
-                        best = e;
-                        hasBest = true;
-                    }
-                }
-
-                if (!hasBest)
-                    return false;
-
-                entry = best;
-                return true;
             }
         }
 

@@ -20,16 +20,11 @@ namespace DCL.Backpack.Gifting.Commands
             this.eventBus = eventBus;
         }
 
-        public async UniTask ExecuteAsync(IGiftable giftable, string urn, CancellationToken ct)
+        public async UniTask ExecuteAsync(GiftableAvatarAttachment giftable, string urn, CancellationToken ct)
         {
             try
             {
-                var sprite = giftable switch
-                {
-                    WearableGiftable wg => await thumbnailProvider.GetAsync(wg.Wearable, ct),
-                    EmoteGiftable eg => await thumbnailProvider.GetAsync(eg.Emote, ct),
-                    _ => throw new NotSupportedException($"Unsupported giftable type: {giftable?.GetType().Name}")
-                };
+                var sprite = await thumbnailProvider.GetAsync(giftable.Attachment, ct);
 
                 if (ct.IsCancellationRequested) return;
 

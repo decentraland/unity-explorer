@@ -314,9 +314,9 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         }
 
         // Abstract Requirements
-        protected abstract UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
-        protected abstract TViewModel CreateViewModel(IGiftable item, int amount, bool isEquipped, bool isGiftable);
-        protected abstract int GetItemAmount(IGiftable item);
+        protected abstract UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
+        protected abstract TViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable);
+        protected abstract int GetItemAmount(GiftableAvatarAttachment item);
         protected abstract void UpdateEmptyState(bool isEmpty);
         protected abstract TViewModel UpdateViewModelState(TViewModel vm, ThumbnailState state, Sprite? sprite);
         public abstract bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style);

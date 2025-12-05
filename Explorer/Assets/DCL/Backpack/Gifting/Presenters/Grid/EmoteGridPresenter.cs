@@ -18,7 +18,7 @@ using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters.Grid
 {
-    public class EmoteGridPresenter : GiftingGridPresenterBase<EmoteViewModel>
+    public class EmoteGridPresenter : GiftingGridPresenterBase<GiftItemViewModel>
     {
         private readonly IEmoteProvider emoteProvider;
         private readonly IWeb3IdentityCache identityCache;
@@ -27,7 +27,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
 
         public EmoteGridPresenter(
             GiftingGridView view,
-            SuperScrollGridAdapter<EmoteViewModel> adapter,
+            SuperScrollGridAdapter<GiftItemViewModel> adapter,
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IAvatarEquippedStatusProvider equippedStatusProvider,
@@ -53,7 +53,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             adapter.UseWearableStyling(stylingCatalog);
         }
 
-        protected override async UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int pageItemCount, int page, string search, CancellationToken ct)
+        protected override async UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int pageItemCount, int page, string search, CancellationToken ct)
         {
             ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Emotes] Request Page {page} search='{search}'");
 
@@ -73,22 +73,22 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 requestOptions,
                 pageEmotes);
 
-            var giftables = new List<IGiftable>(pageEmotes.Count);
+            var giftables = new List<GiftableAvatarAttachment>(pageEmotes.Count);
             foreach (var e in pageEmotes)
-                giftables.Add(new EmoteGiftable(e));
+                giftables.Add(new GiftableAvatarAttachment(e));
 
             return (giftables, total);
         }
 
-        protected override EmoteViewModel CreateViewModel(IGiftable item, int amount, bool isEquipped, bool isGiftable)
+        protected override GiftItemViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable)
         {
             // Safe cast because FetchDataAsync only produces EmoteGiftable
-            return new EmoteViewModel((EmoteGiftable)item, amount, isEquipped, isGiftable);
+            return new GiftItemViewModel (item, amount, isEquipped, isGiftable);
         }
 
-        protected override int GetItemAmount(IGiftable item)
+        protected override int GetItemAmount(GiftableAvatarAttachment item)
         {
-            return ((EmoteGiftable)item).Emote.Amount;
+            return item.Amount;
         }
 
         protected override void UpdateEmptyState(bool isEmpty)
@@ -97,7 +97,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             view.NoResultsContainer.SetActive(isEmpty);
         }
 
-        protected override EmoteViewModel UpdateViewModelState(EmoteViewModel vm, ThumbnailState state, Sprite? sprite)
+        protected override GiftItemViewModel UpdateViewModelState(GiftItemViewModel vm, ThumbnailState state, Sprite? sprite)
         {
             return vm.WithState(state, sprite);
         }

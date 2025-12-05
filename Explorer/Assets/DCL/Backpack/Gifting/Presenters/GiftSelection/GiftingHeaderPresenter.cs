@@ -7,13 +7,12 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters
 {
-    public enum GiftableType { Wearables, Emotes }
-
     public class GiftingHeaderPresenter : IDisposable
     {
         private const int SEARCH_DEBOUNCE_MS = 500;
@@ -26,12 +25,15 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly UserWalletAddressElementController walletAddressController;
         private readonly IInputBlock inputBlock;
 
+        private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> profileThumbnail =
+            new(new ProfileThumbnailViewModel.WithColor());
+        
         private CancellationTokenSource? searchCts;
 
         public Sprite? CurrentRecipientAvatarSprite
         {
             get;
-            set;
+            private set;
         }
 
         public GiftingHeaderPresenter(GiftingHeaderView view,
@@ -46,6 +48,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
             walletAddressController = new UserWalletAddressElementController(view.UserProfileWallet);
 
+            view.UserProfileImage.Bind(profileThumbnail);
             view.SearchBar.inputField.onSelect.AddListener(OnSearchSelected);
             view.SearchBar.inputField.onDeselect.AddListener(OnSearchDeselected);
             view.SearchBar.inputField.onValueChanged.AddListener(DebounceSearch);
@@ -68,27 +71,26 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
         {
-            // Fetch the full profile of the person we are gifting to
             var profile = await profileRepository.GetAsync(userId, 0, ct: ct);
             if (profile == null) return;
-
-            // Set the main title text
+            
             var userNameColor = profile.UserNameColor;
             string? userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
             view.Title.text = $"Send a Gift to <color=#{userNameColorHex}>{profile.Name}</color>";
 
-            // Use the existing ProfilePictureView's setup logic
-            // Note: The 'Setup' method is obsolete, but we follow the existing pattern for now.
-            // You will need a reference to a ProfileRepositoryWrapper if that's what your project uses.
-            // Let's assume you can get one or adapt this call to the modern `Bind` method later.
-            view.UserProfileImage.Setup(profileRepositoryWrapper,
-                profile.UserNameColor,
-                profile.Avatar.FaceSnapshotUrl);
+            var faceUrl = profile.Avatar.FaceSnapshotUrl;
+            var vmWithColor = profileThumbnail.Value.SetColor(userNameColor);
+            profileThumbnail.UpdateValue(vmWithColor);
 
-            // Aleary cached
-            CurrentRecipientAvatarSprite =  profileRepositoryWrapper.GetProfileThumbnail(profile.Avatar.FaceSnapshotUrl);
+            var sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(faceUrl, ct);
+            if (sprite != null)
+            {
+                var loadedViewModel = ProfileThumbnailViewModel.FromLoaded(sprite, true);
+                var finalViewModel = profileThumbnail.Value.SetProfile(loadedViewModel);
+                profileThumbnail.UpdateValue(finalViewModel);
+                CurrentRecipientAvatarSprite = sprite;
+            }
 
-            // Delegate the wallet address logic to its dedicated controller
             walletAddressController.Setup(profile);
         }
 

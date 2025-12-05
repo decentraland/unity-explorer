@@ -13,6 +13,11 @@ namespace DCL.Backpack.Gifting.Models
         public string? RarityOrNull => Wearable.DTO.Metadata.rarity;
         public object Raw => Wearable;
 
+        public IAvatarAttachment GetAttachment()
+        {
+            return Wearable;
+        }
+
         public WearableGiftable(IWearable w)
         {
             Wearable = w;

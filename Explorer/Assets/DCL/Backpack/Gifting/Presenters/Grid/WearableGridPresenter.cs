@@ -19,7 +19,7 @@ using Utility;
 
 namespace DCL.Backpack.Gifting.Presenters
 {
-    public class WearableGridPresenter : GiftingGridPresenterBase<WearableViewModel>
+    public class WearableGridPresenter : GiftingGridPresenterBase<GiftItemViewModel>
     {
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStylingCatalog stylingCatalog;
@@ -29,7 +29,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public WearableGridPresenter(
             GiftingGridView view,
-            SuperScrollGridAdapter<WearableViewModel> adapter,
+            SuperScrollGridAdapter<GiftItemViewModel> adapter,
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IAvatarEquippedStatusProvider equippedStatusProvider,
@@ -52,7 +52,7 @@ namespace DCL.Backpack.Gifting.Presenters
             adapter.UseWearableStyling(stylingCatalog);
         }
 
-        protected override async UniTask<(IEnumerable<IGiftable> items, int total)> FetchDataAsync(int itemPageCount, int page, string search, CancellationToken ct)
+        protected override async UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int itemPageCount, int page, string search, CancellationToken ct)
         {
             resultsBuffer.Clear();
 
@@ -72,23 +72,22 @@ namespace DCL.Backpack.Gifting.Presenters
                 includeAmount: true
             );
 
-            // Map to IGiftable. We create a new list because resultsBuffer is cleared every request.
-            var giftables = new List<IGiftable>(wearables.Count);
+
+            var giftables = new List<GiftableAvatarAttachment>(wearables.Count);
             foreach (var w in wearables)
-                giftables.Add(new WearableGiftable(w));
+                giftables.Add(new GiftableAvatarAttachment(w));
             
             return (giftables, total);
         }
 
-        protected override WearableViewModel CreateViewModel(IGiftable item, int amount, bool isEquipped, bool isGiftable)
+        protected override GiftItemViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable)
         {
-            // Safe cast because FetchDataAsync only produces WearableGiftable
-            return new WearableViewModel((WearableGiftable)item, amount, isEquipped, isGiftable);
+            return new GiftItemViewModel(item, amount, isEquipped, isGiftable);
         }
 
-        protected override int GetItemAmount(IGiftable item)
+        protected override int GetItemAmount(GiftableAvatarAttachment item)
         {
-            return ((WearableGiftable)item).Wearable.Amount;
+            return item.Amount;
         }
 
         protected override void UpdateEmptyState(bool isEmpty)
@@ -97,7 +96,7 @@ namespace DCL.Backpack.Gifting.Presenters
             view.NoResultsContainer.SetActive(isEmpty);
         }
 
-        protected override WearableViewModel UpdateViewModelState(WearableViewModel vm, ThumbnailState state, Sprite? sprite)
+        protected override GiftItemViewModel  UpdateViewModelState(GiftItemViewModel vm, ThumbnailState state, Sprite? sprite)
         {
             return vm.WithState(state, sprite);
         }

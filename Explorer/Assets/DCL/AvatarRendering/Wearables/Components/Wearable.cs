@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     }
 
     [Serializable]
-    public class Wearable : IWearable
+    public class  Wearable : IWearable
     {
         public int Amount { get; set; }
 

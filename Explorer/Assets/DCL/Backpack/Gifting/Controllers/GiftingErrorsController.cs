@@ -36,7 +36,7 @@ namespace DCL.Passport
         {
             errorNotification.Text.text = message;
 
-            errorNotification.Show(CancellationToken.None);
+            errorNotification.Show(ct);
             
             await UniTask.Delay(HIDE_TIME_MS, cancellationToken: ct);
 

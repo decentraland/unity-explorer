@@ -47,8 +47,8 @@ namespace DCL.Backpack.Gifting.Factory
             out IGiftingGridPresenter wearablesPresenter,
             out IGiftingGridPresenter emotesPresenter)
         {
-            var wAdapter = new SuperScrollGridAdapter<WearableViewModel>(view.WearablesGrid?.Grid);
-            var eAdapter = new SuperScrollGridAdapter<EmoteViewModel>(view.EmotesGrid?.Grid);
+            var wAdapter = new SuperScrollGridAdapter<GiftItemViewModel>(view.WearablesGrid?.Grid);
+            var eAdapter = new SuperScrollGridAdapter<GiftItemViewModel>(view.EmotesGrid?.Grid);
 
             wearablesPresenter = gridFactory.CreateWearablesPresenter(view.WearablesGrid, wAdapter);
             emotesPresenter = gridFactory.CreateEmotesPresenter(view.EmotesGrid, eAdapter);

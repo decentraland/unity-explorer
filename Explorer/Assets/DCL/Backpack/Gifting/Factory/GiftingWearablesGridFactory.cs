@@ -18,8 +18,8 @@ namespace DCL.Backpack.Gifting.Factory
 {
     public interface IGiftingGridPresenterFactory
     {
-        IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter);
-        IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<EmoteViewModel> adapter);
+        IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<GiftItemViewModel> adapter);
+        IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<GiftItemViewModel> adapter);
     }
 
     public sealed class GiftingGridPresenterFactory : IGiftingGridPresenterFactory
@@ -60,8 +60,8 @@ namespace DCL.Backpack.Gifting.Factory
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
         }
-        
-        public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<WearableViewModel> adapter)
+
+        public IGiftingGridPresenter CreateWearablesPresenter(GiftingGridView view, SuperScrollGridAdapter<GiftItemViewModel> adapter)
         {
             adapter.UseWearableStyling(wearableStylingCatalog);
 
@@ -78,7 +78,7 @@ namespace DCL.Backpack.Gifting.Factory
                 emoteStorage);
         }
 
-        public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<EmoteViewModel> adapter)
+        public IGiftingGridPresenter CreateEmotesPresenter(GiftingGridView view, SuperScrollGridAdapter<GiftItemViewModel> adapter)
         {
             adapter.UseWearableStyling(wearableStylingCatalog);
 

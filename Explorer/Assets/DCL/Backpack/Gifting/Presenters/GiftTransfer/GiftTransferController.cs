@@ -7,7 +7,6 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.Web3.Authenticators;
 using MVC;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
@@ -51,12 +50,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
         }
-
-        protected override void OnViewInstantiated()
-        {
-            if (viewInstance == null) return;
-        }
-
+        
         protected override void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
@@ -105,18 +99,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            if (viewInstance == null)
-            {
-                await UniTask.Never(ct);
-                return;
-            }
-
-            var closeTasks = new[]
-            {
-                viewInstance.BackButton.OnClickAsync(ct), viewInstance.CloseButton.OnClickAsync(ct)
-            };
-
-            await UniTask.WhenAny(closeTasks);
+            await UniTask.WhenAny(viewInstance.BackButton.OnClickAsync(ct),
+                viewInstance.CloseButton.OnClickAsync(ct));
         }
 
         private async UniTask ProcessTransferFlowAsync(CancellationToken ct)

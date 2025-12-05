@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using MVC;
 using Utility;
 
@@ -19,11 +20,6 @@ namespace DCL.Backpack.Gifting.Presenters
         public GiftTransferSuccessController(ViewFactoryMethod viewFactory) : base(viewFactory)
         {
             
-        }
-
-        protected override void OnViewInstantiated()
-        {
-            if (viewInstance == null) return;
         }
 
         protected override void OnViewShow()
@@ -48,19 +44,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private async UniTask PlayAnimationAsync(CancellationToken ct)
         {
-            try
-            {
-                await PlayShowAnimationAsync(ct);
-            }
-            catch (OperationCanceledException)
-            {
-                // user closed / navigated away, ignore
-            }
-            catch (Exception e)
-            {
-                // if you have gifting logging here, you can log
-                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
-            }
+            await PlayShowAnimationAsync(ct)
+                .SuppressToResultAsync(ReportCategory.GIFTING);
         }
 
         protected override void OnViewClose()
@@ -70,18 +55,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            if (viewInstance == null)
-            {
-                await UniTask.Never(ct);
-                return;
-            }
-
-            var closeTasks = new[]
-            {
-                viewInstance.OkButton.OnClickAsync(ct), viewInstance.CloseButton.OnClickAsync(ct)
-            };
-
-            await UniTask.WhenAny(closeTasks);
+            await UniTask.WhenAny( viewInstance.OkButton.OnClickAsync(ct), viewInstance.CloseButton.OnClickAsync(ct));
             await PlayHideAnimationAsync(CancellationToken.None);
         }
 

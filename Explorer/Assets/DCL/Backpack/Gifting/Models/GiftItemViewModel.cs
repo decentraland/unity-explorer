@@ -2,10 +2,9 @@
 
 namespace DCL.Backpack.Gifting.Models
 {
-    public readonly struct WearableViewModel : IGiftableItemViewModel
+    public readonly struct GiftItemViewModel : IGiftableItemViewModel
     {
-        public IGiftable Giftable { get; }
-        public bool IsGiftable { get; }
+        public GiftableAvatarAttachment Giftable { get; }
         public string Urn => Giftable.Urn;
         public string DisplayName { get; }
         public string? CategoryId { get; }
@@ -14,22 +13,23 @@ namespace DCL.Backpack.Gifting.Models
         public Sprite? Thumbnail { get; }
         public bool IsEquipped { get; }
         public int NftCount { get; }
+        public bool IsGiftable { get; }
 
-        public WearableViewModel(WearableGiftable giftable, int amount, bool isEquipped = false, bool isGiftable = false)
+        public GiftItemViewModel(GiftableAvatarAttachment giftable, int amount, bool isEquipped, bool isGiftable)
         {
             Giftable = giftable;
             DisplayName = giftable.Name;
-            CategoryId = giftable.Wearable.DTO.Metadata.AbstractData.category;
-            RarityId = giftable.Wearable.DTO.Metadata.rarity;
+            CategoryId = giftable.Category;
+            RarityId = giftable.Rarity;
             ThumbnailState = ThumbnailState.NotLoaded;
             Thumbnail = null;
+            NftCount = amount;
             IsEquipped = isEquipped;
             IsGiftable = isGiftable;
-            NftCount = amount;
         }
-        
-        private WearableViewModel(
-            IGiftable giftable,
+
+        private GiftItemViewModel(
+            GiftableAvatarAttachment giftable,
             string displayName,
             string? categoryId,
             string? rarityId,
@@ -45,19 +45,17 @@ namespace DCL.Backpack.Gifting.Models
             RarityId = rarityId;
             ThumbnailState = state;
             Thumbnail = thumbnail;
+            NftCount = amount;
             IsEquipped = isEquipped;
             IsGiftable = isGiftable;
-            NftCount = amount;
         }
 
-        public WearableViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
+        public GiftItemViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
         {
-            return new WearableViewModel(
-                Giftable,
+            return new GiftItemViewModel(Giftable,
                 DisplayName,
                 CategoryId,
-                RarityId,
-                newState,
+                RarityId, newState,
                 newSprite ?? Thumbnail,
                 NftCount,
                 IsEquipped,

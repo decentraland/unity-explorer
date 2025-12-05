@@ -121,7 +121,6 @@ namespace DCL.Backpack.Gifting.Presenters
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
             }
         }
 

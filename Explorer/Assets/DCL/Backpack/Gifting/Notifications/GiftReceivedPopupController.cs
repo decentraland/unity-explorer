@@ -133,6 +133,10 @@ namespace DCL.Backpack.Gifting.Notifications
                     viewInstance.GiftItemView.SetLoadedState();
                 }
             }
+            catch (OperationCanceledException)
+            {
+                /* Expected */
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.GIFTING);
