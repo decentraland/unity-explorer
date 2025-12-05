@@ -45,7 +45,7 @@ namespace DCL.Interaction.Systems
                 return;
 
             // While there is no intent, the opacity decreases
-            avatarShapeComponent.OutlineVfxOpacity -= t * settings.AvatarOutlineFadingSpeed;
+            avatarShapeComponent.OutlineVfxOpacity = Mathf.Clamp01(avatarShapeComponent.OutlineVfxOpacity - t * settings.AvatarOutlineFadingSpeed);
         }
 
         [Query]
@@ -81,7 +81,7 @@ namespace DCL.Interaction.Systems
             float previousOpacity = avatarShapeComponent.PreviousOutlineVfxOpacity;
             avatarShapeComponent.PreviousOutlineVfxOpacity = avatarShapeComponent.OutlineVfxOpacity;
 
-            if(avatarShapeComponent.OutlineVfxOpacity != previousOpacity && avatarShapeComponent.OutlineVfxOpacity == 0.0f)
+            if(avatarShapeComponent.OutlineVfxOpacity == previousOpacity && avatarShapeComponent.OutlineVfxOpacity == 0.0f)
                 return;
 
             Color color = avatarShapeComponent.OutlineColor;
