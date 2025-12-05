@@ -320,7 +320,7 @@ namespace DCL.Passport
                 passportErrorsController,
                 webRequestController,
                 selfProfile,
-                badge3DPreviewCamera);
+                badge3DPreviewCamera, world);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,

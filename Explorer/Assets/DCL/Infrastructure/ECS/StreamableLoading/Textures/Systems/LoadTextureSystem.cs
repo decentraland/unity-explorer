@@ -55,6 +55,9 @@ namespace ECS.StreamableLoading.Textures
                 result = await TryResolveAvatarTextureAsync(profile.Avatar.FaceSnapshotUrl, intention, ct);
             }
             else
+
+                ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TextureSystem] processing request for {intention.CommonArguments.URL}");
+            
                 // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
                 result = await webRequestController.GetTextureAsync(
                     intention.CommonArguments,

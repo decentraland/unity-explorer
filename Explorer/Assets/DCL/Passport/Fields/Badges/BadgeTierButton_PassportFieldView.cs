@@ -1,6 +1,6 @@
+using Arch.Core;
 using DCL.BadgesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -38,18 +38,18 @@ namespace DCL.Passport.Fields.Badges
 
         public TierData Model { get; private set; }
 
-        private ImageController? imageController;
+        private StreamableImageController? streamableImageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(World webRequestController)
         {
-            if (imageController != null)
+            if (streamableImageController != null)
                 return;
 
-            imageController = new ImageController(TierImage, webRequestController);
+            streamableImageController = new StreamableImageController(TierImage, webRequestController);
         }
 
         public void StopLoadingImage() =>
-            imageController?.StopLoading();
+            streamableImageController?.StopLoading();
 
         public void SetAsSelected(bool isSelected) =>
             SelectedOutline.SetActive(isSelected);
@@ -70,9 +70,9 @@ namespace DCL.Passport.Fields.Badges
         {
             Color tierImageColor = string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor;
             TierImage.ImageColor = tierImageColor;
-            imageController?.SetImage(DefaultTierSprite);
+            streamableImageController?.SetImage(DefaultTierSprite);
             if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
-                imageController?.RequestImage(tierData.assets.textures2d.normal, tierImageColor, hideImageWhileLoading: true);
+                streamableImageController?.RequestImage(tierData.assets.textures2d.normal, tierImageColor, hideImageWhileLoading: true);
         }
     }
 }
