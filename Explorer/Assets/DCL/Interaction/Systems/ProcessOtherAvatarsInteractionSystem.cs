@@ -22,6 +22,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -77,6 +78,8 @@ namespace DCL.Interaction.Systems
             this.contextMenuSettings = contextMenuSettings;
             this.socialEmotesSettings = socialEmotesSettings;
 
+            dclInput.Player.Movement.performed += OnPlayerMoved;
+            dclInput.Player.Jump.performed += OnPlayerMoved;
             dclInput.Player.Pointer!.performed += OpenEmoteOutcomeContextMenu;
             dclInput.Player.RightPointer!.performed += OpenOptionsContextMenu;
 
@@ -97,6 +100,8 @@ namespace DCL.Interaction.Systems
             cts.SafeCancelAndDispose();
             dclInput.Player.Pointer!.performed -= OpenEmoteOutcomeContextMenu;
             dclInput.Player.RightPointer!.performed -= OpenOptionsContextMenu;
+            dclInput.Player.Movement.performed -= OnPlayerMoved;
+            dclInput.Player.Jump.performed -= OnPlayerMoved;
             contextMenuTask.TrySetResult();
         }
 
@@ -295,6 +300,12 @@ namespace DCL.Interaction.Systems
                 // When reacting to a social emote, the camera mode is forced to be third person
                 World.Get<CameraComponent>(cameraEntityProxy.Object).Mode = CameraMode.ThirdPerson;
             }
+        }
+
+        private void OnPlayerMoved(InputAction.CallbackContext obj)
+        {
+            // Moving the avatar closes the menus
+            contextMenuTask.TrySetResult();
         }
     }
 }
