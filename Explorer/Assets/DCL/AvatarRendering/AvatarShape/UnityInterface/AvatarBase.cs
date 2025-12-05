@@ -47,6 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [field: Header("HANDS IK")]
         [field: SerializeField] public Rig HandsIKRig { get; private set; }
+
         [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; }
 
         // IK target position and rotation, its called subTarget because the real target has a parent constraint based on this transform to fix some offsets
@@ -71,6 +72,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }
+
         [field: SerializeField] public Transform HeadAnchorPoint { get; private set; }
         [field: SerializeField] public Transform NeckAnchorPoint { get; private set; }
         [field: SerializeField] public Transform SpineAnchorPoint { get; private set; }
@@ -81,11 +83,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftArmAnchorPoint { get; private set; }
         [field: SerializeField] public Transform LeftForearmAnchorPoint { get; private set; }
         [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
+        [field: SerializeField] public HandFingerBones LeftHandFingers { get; private set; }
+        // TODO: Remap this finger to above struct
         [field: SerializeField] public Transform LeftHandIndexAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightShoulderAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightArmAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightForearmAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
+        [field: SerializeField] public HandFingerBones RightHandFingers { get; private set; }
         [field: SerializeField] public Transform RightHandIndexAnchorPoint { get; private set; }
         [field: SerializeField] public Transform LeftUpLegAnchorPoint { get; private set; }
         [field: SerializeField] public Transform LeftLegAnchorPoint { get; private set; }
@@ -100,8 +105,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;
+
         [SerializeField] [Tooltip("Offset when nametag is higher than allowed max (means wearable is broken), [m]")]
         private float nametagBoundedOffset = 1f;
+
         [SerializeField] [Tooltip("Small buffer to have some air/space between nametag and head, [m]")]
         private float nametagBuffer = 0.025f;
 
@@ -235,6 +242,31 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
                 cachedHeadWearableOffset = nametagBoundedOffset;
             }
+        }
+
+        [Serializable]
+        public struct HandFingerBones
+        {
+            // Thumb
+            [field: SerializeField] public Transform ThumbProximalAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform ThumbIntermediateAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform ThumbDistalAnchorPoint { get; private set; }
+            // Index
+            [field: SerializeField] public Transform IndexProximalAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform IndexIntermediateAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform IndexDistalAnchorPoint { get; private set; }
+            // Middle
+            [field: SerializeField] public Transform MiddleProximalAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform MiddleIntermediateAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform MiddleDistalAnchorPoint { get; private set; }
+            // Ring
+            [field: SerializeField] public Transform RingProximalAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform RingIntermediateAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform RingDistalAnchorPoint { get; private set; }
+            // Little (Pinky)
+            [field: SerializeField] public Transform LittleProximalAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform LittleIntermediateAnchorPoint { get; private set; }
+            [field: SerializeField] public Transform LittleDistalAnchorPoint { get; private set; }
         }
     }
 

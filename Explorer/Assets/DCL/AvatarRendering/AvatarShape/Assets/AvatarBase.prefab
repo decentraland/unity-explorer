@@ -3561,11 +3561,43 @@ MonoBehaviour:
   <LeftArmAnchorPoint>k__BackingField: {fileID: 3008215921542459096}
   <LeftForearmAnchorPoint>k__BackingField: {fileID: 3856210754195295245}
   <LeftHandAnchorPoint>k__BackingField: {fileID: 8257500666133283372}
+  <LeftHandFingers>k__BackingField:
+    <ThumbProximalAnchorPoint>k__BackingField: {fileID: 45275187742236875}
+    <ThumbIntermediateAnchorPoint>k__BackingField: {fileID: 6243969802991372202}
+    <ThumbDistalAnchorPoint>k__BackingField: {fileID: 6958258360134760659}
+    <IndexProximalAnchorPoint>k__BackingField: {fileID: 1640689886514143526}
+    <IndexIntermediateAnchorPoint>k__BackingField: {fileID: 2220084985539663103}
+    <IndexDistalAnchorPoint>k__BackingField: {fileID: 8140999891905002335}
+    <MiddleProximalAnchorPoint>k__BackingField: {fileID: 8014162938499356398}
+    <MiddleIntermediateAnchorPoint>k__BackingField: {fileID: 4870545843641189216}
+    <MiddleDistalAnchorPoint>k__BackingField: {fileID: 735144289303089628}
+    <RingProximalAnchorPoint>k__BackingField: {fileID: 7244107487504864432}
+    <RingIntermediateAnchorPoint>k__BackingField: {fileID: 3756317394378017027}
+    <RingDistalAnchorPoint>k__BackingField: {fileID: 1607259773198851135}
+    <LittleProximalAnchorPoint>k__BackingField: {fileID: 7896220301738774644}
+    <LittleIntermediateAnchorPoint>k__BackingField: {fileID: 5238083309255791126}
+    <LittleDistalAnchorPoint>k__BackingField: {fileID: 88948773154462144}
   <LeftHandIndexAnchorPoint>k__BackingField: {fileID: 1640689886514143526}
   <RightShoulderAnchorPoint>k__BackingField: {fileID: 3066867467205636775}
   <RightArmAnchorPoint>k__BackingField: {fileID: 4407208937942704870}
   <RightForearmAnchorPoint>k__BackingField: {fileID: 2461261742225218745}
   <RightHandAnchorPoint>k__BackingField: {fileID: 481221082041237366}
+  <RightHandFingers>k__BackingField:
+    <ThumbProximalAnchorPoint>k__BackingField: {fileID: 6895892909859786742}
+    <ThumbIntermediateAnchorPoint>k__BackingField: {fileID: 7658276660484254656}
+    <ThumbDistalAnchorPoint>k__BackingField: {fileID: 2672447139929442821}
+    <IndexProximalAnchorPoint>k__BackingField: {fileID: 5572700364798881516}
+    <IndexIntermediateAnchorPoint>k__BackingField: {fileID: 9110400911454054366}
+    <IndexDistalAnchorPoint>k__BackingField: {fileID: 8407886190982791947}
+    <MiddleProximalAnchorPoint>k__BackingField: {fileID: 16891749866655720}
+    <MiddleIntermediateAnchorPoint>k__BackingField: {fileID: 718389474739597134}
+    <MiddleDistalAnchorPoint>k__BackingField: {fileID: 5342758403647033269}
+    <RingProximalAnchorPoint>k__BackingField: {fileID: 1219673437948273723}
+    <RingIntermediateAnchorPoint>k__BackingField: {fileID: 1896233197063850632}
+    <RingDistalAnchorPoint>k__BackingField: {fileID: 7523053994515750901}
+    <LittleProximalAnchorPoint>k__BackingField: {fileID: 6779696320139402681}
+    <LittleIntermediateAnchorPoint>k__BackingField: {fileID: 7929275583346640849}
+    <LittleDistalAnchorPoint>k__BackingField: {fileID: 2534329830265749728}
   <RightHandIndexAnchorPoint>k__BackingField: {fileID: 5572700364798881516}
   <LeftUpLegAnchorPoint>k__BackingField: {fileID: 7094745639504999080}
   <LeftLegAnchorPoint>k__BackingField: {fileID: 3457471958813412090}

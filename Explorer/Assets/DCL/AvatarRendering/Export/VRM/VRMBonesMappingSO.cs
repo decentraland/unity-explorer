@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Export
         
         public void Dispose()
         {
-            dclToFbx.Clear();
+            dclToFbx?.Clear();
         }
 
         public bool TryGetFBXBone(string dclBoneName, out string fbxBoneName)
