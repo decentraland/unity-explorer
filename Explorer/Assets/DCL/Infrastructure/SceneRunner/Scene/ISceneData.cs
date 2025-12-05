@@ -42,6 +42,16 @@ namespace SceneRunner.Scene
         /// </remarks>
         bool IsWearableBuilderCollectionPreview => false;
 
+        /// <summary>
+        ///     Get the creator address from scene metadata if set
+        /// </summary>
+        /// <remarks>
+        ///     This is used from creators to be able to receive donations
+        /// </remarks>
+        string? GetCreatorAddress() =>
+            //SceneEntityDefinition.metadata.creator;
+            "0x31d4f4DD8615ec45bbB6330DA69F60032Aca219F";
+
         bool HasRequiredPermission(string permission);
 
         /// <summary>

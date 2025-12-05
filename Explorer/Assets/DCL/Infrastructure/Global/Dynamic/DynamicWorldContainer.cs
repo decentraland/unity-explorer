@@ -25,6 +25,7 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -472,7 +473,7 @@ namespace Global.Dynamic
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
-            
+
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -540,6 +541,7 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
+            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService, bootstrapContainer.Environment);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
@@ -560,7 +562,8 @@ namespace Global.Dynamic
                 roomHub,
                 staticContainer.LoadingStatus,
                 includeBannedUsersFromScene,
-                homePlaceEventBus
+                homePlaceEventBus,
+                donationsService
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -857,7 +860,8 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     homePlaceEventBus,
-                    staticContainer.SmartWearableCache
+                    staticContainer.SmartWearableCache,
+                    donationsService
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -955,7 +959,17 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
                     mvcManager,
-                    thumbnailProvider)
+                    thumbnailProvider),
+                new DonationsPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    donationsService,
+                    staticContainer.ProfilesContainer.Repository,
+                    profileRepositoryWrapper,
+                    playerEntity,
+                    globalWorld,
+                    webBrowser,
+                    bootstrapContainer.DecentralandUrlsSource),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

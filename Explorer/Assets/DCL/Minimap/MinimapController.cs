@@ -24,6 +24,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Donations;
+using DCL.Donations.UI;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
@@ -32,6 +34,7 @@ using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -72,6 +75,7 @@ namespace DCL.Minimap
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly DonationsService donationsService;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -82,6 +86,8 @@ namespace DCL.Minimap
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings homeToggleSettings;
         private CancellationTokenSource showBannedTooltipCts;
+        private GenericContextMenuElement? donateToCreatorMenuElement;
+        private GenericContextMenuElement? donateToCreatorSeparatorMenuElement;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -107,7 +113,8 @@ namespace DCL.Minimap
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
-            HomePlaceEventBus homePlaceEventBus) 
+            HomePlaceEventBus homePlaceEventBus,
+            DonationsService donationsService)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -128,8 +135,11 @@ namespace DCL.Minimap
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.donationsService = donationsService;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
+
+            donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorMenuElement;
         }
 
         public override void Dispose()
@@ -138,6 +148,8 @@ namespace DCL.Minimap
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+
+            donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorMenuElement;
 
             if (includeBannedUsersFromScene)
             {
@@ -163,6 +175,14 @@ namespace DCL.Minimap
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
+        private void EvaluateDonateToCreatorMenuElement((bool enabled, string? creatorAddress, Vector2Int? baseParcel) donationStatus)
+        {
+            if (donateToCreatorMenuElement == null || donateToCreatorSeparatorMenuElement == null) return;
+
+            donateToCreatorMenuElement.Enabled = donationStatus.enabled;
+            donateToCreatorSeparatorMenuElement.Enabled = donationStatus.enabled;
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
@@ -185,14 +205,13 @@ namespace DCL.Minimap
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
             contextMenu = new GenericContextMenu()
-                          // Add title control to prevent incorrect layout height when the context menu has a single control
-                          // May be removed if a new control is added
-                         .AddControl(new TextContextMenuControlSettings("Scene's Options"))
-                         .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
+                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink))
+                         .AddControl(donateToCreatorSeparatorMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings()))
+                         .AddControl(donateToCreatorMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings("Donate to creator", viewInstance.contextMenuConfig.donateIcon, OpenDonateToCreatorPanel)));
 
+            EvaluateDonateToCreatorMenuElement(donationsService.DonationsEnabledCurrentScene.Value);
             SetInitialHomeToggleValue();
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
 
@@ -224,11 +243,14 @@ namespace DCL.Minimap
                 homePlaceEventBus.SetAsHome(previousParcelPosition);
             else
                 homePlaceEventBus.UnsetHome();
-            
-            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
+
+            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
             OnFocus();
         }
+
+        private void OpenDonateToCreatorPanel() =>
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Empty));
 
         private void CopyJumpInLink()
         {
@@ -340,22 +362,22 @@ namespace DCL.Minimap
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
             RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
-            
+
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
             // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
         }
-        
+
         private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
             PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
-    
+
             if (realmData.ScenesAreFixed)
                 viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
             else
                 viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
-    
+
             viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
         }
 
@@ -367,7 +389,7 @@ namespace DCL.Minimap
             {
                 if (realmData.ScenesAreFixed)
                     return null;
-        
+
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct);
             }
             catch (NotAPlaceException notAPlaceException)

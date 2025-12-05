@@ -19,7 +19,7 @@ namespace DCL.UI
             loadingCanvasGroup.interactable = false;
         }
 
-        public void ShowLoading()
+        public void ShowLoading(bool interactableLoading = false)
         {
             loadedCanvasGroup.alpha = 0f;
             loadedCanvasGroup.blocksRaycasts = false;
@@ -27,6 +27,7 @@ namespace DCL.UI
 
             loadingCanvasGroup.alpha = 1f;
             loadingCanvasGroup.blocksRaycasts = true;
+            loadingCanvasGroup.interactable = interactableLoading;
 
             foreach (var bone in bones)
             {
@@ -42,6 +43,7 @@ namespace DCL.UI
         {
             loadingCanvasGroup.alpha = 0f;
             loadingCanvasGroup.blocksRaycasts = false;
+            loadingCanvasGroup.interactable = false;
 
             foreach (var bone in bones)
                 bone.DOKill();

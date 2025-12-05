@@ -101,6 +101,7 @@ namespace DCL.Minimap
         public struct ContextMenuConfig
         {
             public Sprite copyLinkIcon;
+            public Sprite donateIcon;
             public Button button;
         }
     }

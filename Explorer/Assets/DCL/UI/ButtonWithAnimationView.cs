@@ -38,12 +38,16 @@ namespace DCL.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (!Button.interactable) return;
+
             ButtonAnimator.SetTrigger(UIAnimationHashes.HOVER);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoverAudio);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (!Button.interactable) return;
+
             ButtonAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
         }
 

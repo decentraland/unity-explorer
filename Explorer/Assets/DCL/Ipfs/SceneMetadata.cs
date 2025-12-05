@@ -23,6 +23,7 @@ namespace DCL.Ipfs
         public SkyboxConfigData? skyboxConfig;
         public bool authoritativeMultiplayer;
         public FeatureToggles featureToggles;
+        public string? creator;
 
         /// <summary>
         /// Configuration specific to Decentraland Worlds (Realms).

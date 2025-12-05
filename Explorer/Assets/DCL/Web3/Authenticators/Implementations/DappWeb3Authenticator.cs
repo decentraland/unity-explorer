@@ -248,7 +248,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(GetNetworkId(), ct);
+                await ConnectToRpcAsync(request.readonlyNetwork ?? GetNetworkId(), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -260,15 +260,15 @@ namespace DCL.Web3.Authenticators
             }
             catch (Exception)
             {
-                await DisconnectFromRpcAsync(ct);
+                await DisconnectFromRpcAsync(CancellationToken.None);
                 throw;
             }
             finally
             {
                 if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
-                    await UniTask.SwitchToMainThread(ct);
+                    await UniTask.SwitchToMainThread(CancellationToken.None);
 
                 mutex.Release();
                 rpcPendingOperations--;
@@ -376,9 +376,9 @@ namespace DCL.Web3.Authenticators
             finally
             {
                 if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
-                    await UniTask.SwitchToMainThread(ct);
+                    await UniTask.SwitchToMainThread(CancellationToken.None);
 
                 mutex.Release();
                 authApiPendingOperations--;

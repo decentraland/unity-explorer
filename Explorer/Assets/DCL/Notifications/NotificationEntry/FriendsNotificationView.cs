@@ -77,6 +77,15 @@ namespace DCL.Notifications.NotificationEntry
             NotificationType = notification.Type;
         }
 
+        public void ConfigureFromTipReceivedNotificationData(TipReceivedNotification notification)
+        {
+            Color userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
+            SetTitleText(notification, notification.Metadata.Sender, userColor);
+            NotificationImageBackground.color = userColor;
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
+
         public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
         {
             Color userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
