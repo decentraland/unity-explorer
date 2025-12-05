@@ -72,28 +72,48 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
         {
-            var profile = await profileRepository.GetAsync(userId, 0, ct: ct);
-            if (profile == null) return;
-            
-            var userNameColor = profile.UserNameColor;
-            string? userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
-            view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Name);
+            try
+            {
+                ct.ThrowIfCancellationRequested();
 
-            profileThumbnail.UpdateValue(profileThumbnail.Value.SetLoading(userNameColor));
+                var profile = await profileRepository.GetAsync(userId, 0, ct: ct);
+                if (profile == null || ct.IsCancellationRequested)
+                    return;
 
-            string faceUrl = profile.Avatar.FaceSnapshotUrl;
+                var userNameColor = profile.UserNameColor;
+                string userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(
-                profileThumbnail,
-                null,
-                userId,
-                faceUrl,
-                ct);
+                if (ct.IsCancellationRequested)
+                    return;
 
-            if (profileThumbnail.Value.Thumbnail.Sprite != null)
-                CurrentRecipientAvatarSprite = profileThumbnail.Value.Thumbnail.Sprite;
+                view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Name);
 
-            walletAddressController.Setup(profile);
+                profileThumbnail.UpdateValue(profileThumbnail.Value.SetLoading(userNameColor));
+
+                string faceUrl = profile.Avatar.FaceSnapshotUrl;
+
+                if (!string.IsNullOrEmpty(faceUrl))
+                {
+                    await GetProfileThumbnailCommand.Instance.ExecuteAsync(
+                        profileThumbnail,
+                        null,
+                        userId,
+                        faceUrl,
+                        ct);
+                }
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (profileThumbnail.Value.Thumbnail.Sprite != null)
+                    CurrentRecipientAvatarSprite = profileThumbnail.Value.Thumbnail.Sprite;
+
+                walletAddressController.Setup(profile);
+            }
+            catch (OperationCanceledException)
+            {
+                //Ignore
+            }
         }
 
         private void DebounceSearch(string newText)
