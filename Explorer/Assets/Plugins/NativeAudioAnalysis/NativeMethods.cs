@@ -7,14 +7,13 @@ namespace Plugins.NativeAudioAnalysis
 
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
-    public struct AudioAnalysis
+    public unsafe struct AudioAnalysis
     {
         // Logarithmic
         public float amplitude;
 
         // Logarithmic
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = NativeMethods.BANDS)]
-        public float[] bands;
+        public fixed float bands[NativeMethods.BANDS];
 
         // Will be covered beyond MVP
         // public float spectral_centroid;

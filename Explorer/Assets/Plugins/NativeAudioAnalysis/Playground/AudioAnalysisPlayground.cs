@@ -48,7 +48,6 @@ namespace Plugins.NativeAudioAnalysis.Playground
 
             mainCamera = Camera.main;
             sampleRate = AudioSettings.outputSampleRate;
-            medianAnalysis.bands = new float[NativeMethods.BANDS];
 
             Assert.IsTrue(TryGetComponent<AudioSource>(out AudioSource source), "AudioSource is not attached");
             Assert.IsNotNull(source.clip, "Clip is not selected");
@@ -65,13 +64,18 @@ namespace Plugins.NativeAudioAnalysis.Playground
             }
 
             // Bands intensity
-            int iterations = Mathf.Min(bars.Length, lastAnalysis.bands.Length);
-            for (int i = 0; i < iterations; i++)
-            {
-                Transform bar = bars[i].transform;
-                Vector3 scale = bar.localScale;
-                scale.y = lastAnalysis.bands[i];
-                bar.localScale = scale;
+            unsafe {
+                fixed (float* ptr = lastAnalysis.bands)
+                {
+                    int iterations = Mathf.Min(bars.Length, NativeMethods.BANDS);
+                    for (int i = 0; i < iterations; i++)
+                    {
+                        Transform bar = bars[i].transform;
+                        Vector3 scale = bar.localScale;
+                        scale.y = ptr[i];
+                        bar.localScale = scale;
+                    }
+                }
             }
 
             // Amplitude
