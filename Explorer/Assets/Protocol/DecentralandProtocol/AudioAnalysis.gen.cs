@@ -25,20 +25,21 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXVkaW9fYW5hbHlzaXMu",
-            "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyKZAgoPUEJBdWRp",
+            "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyLFAgoPUEJBdWRp",
             "b0FuYWx5c2lzEj4KBG1vZGUYASABKA4yMC5kZWNlbnRyYWxhbmQuc2RrLmNv",
-            "bXBvbmVudHMuUEJBdWRpb0FuYWx5c2lzTW9kZRIWCg5hbXBsaXR1ZGVfZ2Fp",
-            "bhhkIAEoAhISCgpiYW5kc19nYWluGGUgASgCEhIKCWFtcGxpdHVkZRjIASAB",
-            "KAISDwoGYmFuZF8wGMkBIAEoAhIPCgZiYW5kXzEYygEgASgCEg8KBmJhbmRf",
-            "MhjLASABKAISDwoGYmFuZF8zGMwBIAEoAhIPCgZiYW5kXzQYzQEgASgCEg8K",
-            "BmJhbmRfNRjOASABKAISDwoGYmFuZF82GM8BIAEoAhIPCgZiYW5kXzcY0AEg",
-            "ASgCKjkKE1BCQXVkaW9BbmFseXNpc01vZGUSDAoITU9ERV9SQVcQABIUChBN",
-            "T0RFX0xPR0FSSVRITUlDEAFCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90",
-            "bzM="));
+            "bXBvbmVudHMuUEJBdWRpb0FuYWx5c2lzTW9kZRIbCg5hbXBsaXR1ZGVfZ2Fp",
+            "bhhkIAEoAkgAiAEBEhcKCmJhbmRzX2dhaW4YZSABKAJIAYgBARISCglhbXBs",
+            "aXR1ZGUYyAEgASgCEg8KBmJhbmRfMBjJASABKAISDwoGYmFuZF8xGMoBIAEo",
+            "AhIPCgZiYW5kXzIYywEgASgCEg8KBmJhbmRfMxjMASABKAISDwoGYmFuZF80",
+            "GM0BIAEoAhIPCgZiYW5kXzUYzgEgASgCEg8KBmJhbmRfNhjPASABKAISDwoG",
+            "YmFuZF83GNABIAEoAkIRCg9fYW1wbGl0dWRlX2dhaW5CDQoLX2JhbmRzX2dh",
+            "aW4qOQoTUEJBdWRpb0FuYWx5c2lzTW9kZRIMCghNT0RFX1JBVxAAEhQKEE1P",
+            "REVfTE9HQVJJVEhNSUMQAUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.PBAudioAnalysisMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioAnalysis), global::DCL.ECSComponents.PBAudioAnalysis.Parser, new[]{ "Mode", "AmplitudeGain", "BandsGain", "Amplitude", "Band0", "Band1", "Band2", "Band3", "Band4", "Band5", "Band6", "Band7" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioAnalysis), global::DCL.ECSComponents.PBAudioAnalysis.Parser, new[]{ "Mode", "AmplitudeGain", "BandsGain", "Amplitude", "Band0", "Band1", "Band2", "Band3", "Band4", "Band5", "Band6", "Band7" }, new[]{ "AmplitudeGain", "BandsGain" }, null, null, null)
           }));
     }
     #endregion
@@ -60,6 +61,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBAudioAnalysis> _parser = new pb::MessageParser<PBAudioAnalysis>(() => new PBAudioAnalysis());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBAudioAnalysis> Parser { get { return _parser; } }
@@ -87,6 +89,7 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBAudioAnalysis(PBAudioAnalysis other) : this() {
+      _hasBits0 = other._hasBits0;
       mode_ = other.mode_;
       amplitudeGain_ = other.amplitudeGain_;
       bandsGain_ = other.bandsGain_;
@@ -132,10 +135,23 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float AmplitudeGain {
-      get { return amplitudeGain_; }
+      get { if ((_hasBits0 & 1) != 0) { return amplitudeGain_; } else { return 0F; } }
       set {
+        _hasBits0 |= 1;
         amplitudeGain_ = value;
       }
+    }
+    /// <summary>Gets whether the "amplitude_gain" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasAmplitudeGain {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "amplitude_gain" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearAmplitudeGain() {
+      _hasBits0 &= ~1;
     }
 
     /// <summary>Field number for the "bands_gain" field.</summary>
@@ -147,10 +163,23 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float BandsGain {
-      get { return bandsGain_; }
+      get { if ((_hasBits0 & 2) != 0) { return bandsGain_; } else { return 0F; } }
       set {
+        _hasBits0 |= 2;
         bandsGain_ = value;
       }
+    }
+    /// <summary>Gets whether the "bands_gain" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBandsGain {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "bands_gain" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBandsGain() {
+      _hasBits0 &= ~2;
     }
 
     /// <summary>Field number for the "amplitude" field.</summary>
@@ -302,8 +331,8 @@ namespace DCL.ECSComponents {
     public override int GetHashCode() {
       int hash = 1;
       if (Mode != global::DCL.ECSComponents.PBAudioAnalysisMode.ModeRaw) hash ^= Mode.GetHashCode();
-      if (AmplitudeGain != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(AmplitudeGain);
-      if (BandsGain != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BandsGain);
+      if (HasAmplitudeGain) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(AmplitudeGain);
+      if (HasBandsGain) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(BandsGain);
       if (Amplitude != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Amplitude);
       if (Band0 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Band0);
       if (Band1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Band1);
@@ -335,11 +364,11 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(8);
         output.WriteEnum((int) Mode);
       }
-      if (AmplitudeGain != 0F) {
+      if (HasAmplitudeGain) {
         output.WriteRawTag(165, 6);
         output.WriteFloat(AmplitudeGain);
       }
-      if (BandsGain != 0F) {
+      if (HasBandsGain) {
         output.WriteRawTag(173, 6);
         output.WriteFloat(BandsGain);
       }
@@ -393,11 +422,11 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(8);
         output.WriteEnum((int) Mode);
       }
-      if (AmplitudeGain != 0F) {
+      if (HasAmplitudeGain) {
         output.WriteRawTag(165, 6);
         output.WriteFloat(AmplitudeGain);
       }
-      if (BandsGain != 0F) {
+      if (HasBandsGain) {
         output.WriteRawTag(173, 6);
         output.WriteFloat(BandsGain);
       }
@@ -450,10 +479,10 @@ namespace DCL.ECSComponents {
       if (Mode != global::DCL.ECSComponents.PBAudioAnalysisMode.ModeRaw) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mode);
       }
-      if (AmplitudeGain != 0F) {
+      if (HasAmplitudeGain) {
         size += 2 + 4;
       }
-      if (BandsGain != 0F) {
+      if (HasBandsGain) {
         size += 2 + 4;
       }
       if (Amplitude != 0F) {
@@ -498,10 +527,10 @@ namespace DCL.ECSComponents {
       if (other.Mode != global::DCL.ECSComponents.PBAudioAnalysisMode.ModeRaw) {
         Mode = other.Mode;
       }
-      if (other.AmplitudeGain != 0F) {
+      if (other.HasAmplitudeGain) {
         AmplitudeGain = other.AmplitudeGain;
       }
-      if (other.BandsGain != 0F) {
+      if (other.HasBandsGain) {
         BandsGain = other.BandsGain;
       }
       if (other.Amplitude != 0F) {
