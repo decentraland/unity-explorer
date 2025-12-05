@@ -58,6 +58,8 @@ namespace DCL.SocialEmotes.UI
 
             RemoveDeletedEntityPinsQuery(World);
             CreatePinQuery(World, mainCameraComponent);
+            float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(mainCameraComponent.Camera.fieldOfView, 1.0f);
+            ScalePinToLookTheSameOnCameraQuery(World, mainCameraComponent, fovScaleFactor);
             UpdatePinPositionQuery(World);
             AddNametagHeightToPinPositionQuery(World);
             MakePinFaceCameraQuery(World, mainCameraComponent);
@@ -97,6 +99,13 @@ namespace DCL.SocialEmotes.UI
         private void MakePinFaceCamera([Data] CameraComponent camera, in SocialEmotePin emotePin)
         {
             emotePin.transform.LookAt(emotePin.transform.position + camera.Camera.transform.forward, camera.Camera.transform.up);
+        }
+
+        [Query]
+        private void ScalePinToLookTheSameOnCamera([Data] CameraComponent camera, [Data] float fovScaleFactor, in SocialEmotePin emotePin)
+        {
+            float distance = Vector3.Distance(camera.Camera.transform.position, emotePin.transform.position);
+            emotePin.transform.localScale = distance * fovScaleFactor * 0.003f * Vector3.one;
         }
 
         [Query]
