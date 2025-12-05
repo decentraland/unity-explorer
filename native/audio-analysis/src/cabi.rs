@@ -13,6 +13,12 @@ pub struct AudioAnalysis {
     // pub bpm: f32,
 }
 
+#[repr(u8)]
+pub enum Mode {
+    Raw,
+    Logarithmic,
+}
+
 /// # Safety
 ///
 /// Pass valid pointer and length parameters
@@ -22,6 +28,9 @@ pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
     len: usize,
     sample_rate: f32,
 
+    mode: Mode,
+
+    // gain values are used only in the logarithmic mode
     amplitude_gain: f32,
     bands_gain: f32, // onset_treshold: f32, // assumed to be 2.5 by default
 ) -> AudioAnalysis {
@@ -63,12 +72,23 @@ pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
     // 8 frequency bands
     let bands_raw = compute_bands(&spectrum, sample_rate);
 
-    let amplitude = normalize_log(amplitude_raw, amplitude_gain); // assumed to be 40.0 by default from C# side
-    let mut bands = [0.0; BANDS_COUNT];
-    for i in 0..BANDS_COUNT {
-        bands[i] = normalize_log(bands_raw[i], bands_gain); // assumed to be 80.0 by default from C# side
+    match mode {
+        Mode::Raw => AudioAnalysis {
+            amplitude: amplitude_raw,
+            bands: bands_raw,
+        },
+        Mode::Logarithmic => {
+            let amplitude = normalize_log(amplitude_raw, amplitude_gain);
+            let mut bands = [0.0; BANDS_COUNT];
+            for i in 0..BANDS_COUNT {
+                bands[i] = normalize_log(bands_raw[i], bands_gain);
+            }
+
+            AudioAnalysis { amplitude, bands }
+        }
     }
 
+    /*
     // Spectral centroid
     // let spectral_centroid = compute_centroid(&spectrum, sample_rate);
 
@@ -89,6 +109,7 @@ pub unsafe extern "C" fn audio_analysis_analyze_audio_buffer(
         // onset,
         // bpm,
     }
+    */
 }
 
 fn largest_power_of_two(n: usize) -> usize {

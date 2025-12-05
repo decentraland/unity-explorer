@@ -7,6 +7,13 @@ namespace Plugins.NativeAudioAnalysis.Playground
 {
     public class AudioAnalysisPlayground : MonoBehaviour
     {
+        [SerializeField]
+        private AnalysisResultMode analysisMode = AnalysisResultMode.Logarithmic;
+        [SerializeField]
+        private float amplitudeGain = 5;
+        [SerializeField]
+        private float bandsGain = 0.05f;
+        [Space]
         [SerializeField] private AudioAnalysis medianAnalysis = default(AudioAnalysis);
         [SerializeField] private AudioAnalysis lastAnalysis = default(AudioAnalysis);
         [Space]
@@ -101,7 +108,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
             // Couple of frames won't bring big impact and mutex sync is not required
             if (enableAnalysis) 
             {
-                lastAnalysis = NativeMethods.AnalyzeAudioBuffer(data, sampleRate);
+                lastAnalysis = NativeMethods.AnalyzeAudioBuffer(data, sampleRate, analysisMode, amplitudeGain, bandsGain);
             }
         }
     }

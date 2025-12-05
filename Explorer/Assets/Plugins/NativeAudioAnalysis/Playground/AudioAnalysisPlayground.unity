@@ -5379,13 +5379,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f6f9f1e56e549e3afdb50892482802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AudioAnalysis.asmdef::Plugins.NativeAudioAnalysis.Playground.AudioAnalysisPlayground
+  amplitudeGain: 5
+  bandsGain: 0.05
+  medianAnalysis:
+    amplitude: 0
+    bands: []
   lastAnalysis:
     amplitude: 0
     bands: []
-    spectral_centroid: 0
-    spectral_flux: 0
-    onset: 0
-    bpm: 0
   bars:
   - {fileID: 1665079858}
   - {fileID: 735318156}
@@ -5412,7 +5413,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: dc30c212218e14e83b9a8861110111d0, type: 3}
+  m_Resource: {fileID: 8300000, guid: 460650477dbfe49e9bd0254b977512f5, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -6414,7 +6415,7 @@ Transform:
   m_GameObject: {fileID: 1910830233}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 4.14, z: 0}
+  m_LocalPosition: {x: 0, y: 14.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6523,8 +6524,8 @@ Transform:
   m_GameObject: {fileID: 2089209847}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.5, y: -0.63, z: 3}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -3.5, y: 0.82, z: 3}
+  m_LocalScale: {x: 1, y: 13.25, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1665079859}

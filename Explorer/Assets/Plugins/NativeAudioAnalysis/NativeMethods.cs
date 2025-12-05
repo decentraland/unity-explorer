@@ -25,11 +25,17 @@ namespace Plugins.NativeAudioAnalysis
         // public float bpm;
     }
 
+    public enum AnalysisResultMode : byte
+    {
+        Raw = 0,
+        Logarithmic = 1
+    }
+
     public static class NativeMethods
     {
         public const int BANDS = 8;
-        public const float DEFAULT_AMPLITUDE_GAIN = 40f;
-        public const float DEFAULT_BANDS_GAIN = 80f;
+        public const float DEFAULT_AMPLITUDE_GAIN = 5f;
+        public const float DEFAULT_BANDS_GAIN = 0.05f;
 
         // Beyond MVP
         // public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
@@ -42,6 +48,9 @@ namespace Plugins.NativeAudioAnalysis
             UIntPtr len,
             float sample_rate,
 
+            AnalysisResultMode mode,
+
+            // gain values are used only in the logarithmic mode
             float amplitude_gain,
             float bands_gain
 
@@ -51,6 +60,7 @@ namespace Plugins.NativeAudioAnalysis
         public static AudioAnalysis AnalyzeAudioBuffer(
             float[] data, 
             float sampleRate,
+            AnalysisResultMode mode = AnalysisResultMode.Logarithmic,
             float amplitudeGain = DEFAULT_AMPLITUDE_GAIN,
             float bandsGain = DEFAULT_BANDS_GAIN
         ) 
