@@ -40,7 +40,6 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateAfter(typeof(RemoteEmotesSystem))]
     [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
-    [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
