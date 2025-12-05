@@ -148,6 +148,11 @@ namespace DCL.Multiplayer.SDK.Tests
             public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
 
+            public int GetOwnedNftCount(URN nftUrn)
+            {
+                return 1;
+            }
+
             public void ClearOwnedNftRegistry()
             {
                 throw new NotImplementedException();
@@ -162,6 +167,13 @@ namespace DCL.Multiplayer.SDK.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
         }
     }
 }

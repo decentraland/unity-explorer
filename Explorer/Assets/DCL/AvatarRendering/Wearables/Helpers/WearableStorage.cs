@@ -4,19 +4,16 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
+using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public partial class WearableStorage : IWearableStorage
+    public partial class WearableStorage : AvatarElementNftRegistry, IWearableStorage
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
-
-        private readonly object lockObject = new ();
 
         internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
@@ -77,65 +74,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
                 }
-            }
-        }
-
-        public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
-        {
-            lock (lockObject)
-            {
-                if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
-                {
-                    ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
-                        URNIgnoreCaseEqualityComparer.Default);
-
-                    ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
-                }
-
-                ownedWearableRegistry[entry.Urn] = entry;
-            }
-        }
-
-        public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
-        {
-            lock (lockObject)
-            {
-                bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
-                registry = r;
-                return result;
-            }
-        }
-
-        public void ClearOwnedNftRegistry()
-        {
-            lock (lockObject)
-            {
-                ownedNftsRegistry.Clear();
-            }
-        }
-
-        public bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt)
-        {
-            lock (lockObject)
-            {
-                if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> registry) || registry.Count == 0)
-                {
-                    latestTransferredAt = default;
-                    return false;
-                }
-
-                DateTime latestDate = DateTime.MinValue;
-                
-                foreach (var entry in registry.Values)
-                {
-                    if (entry.TransferredAt > latestDate)
-                    {
-                        latestDate = entry.TransferredAt;
-                    }
-                }
-                
-                latestTransferredAt = latestDate;
-                return true;
             }
         }
 

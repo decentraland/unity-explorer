@@ -16,6 +16,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
 using Utility.Multithreading;
 
@@ -107,10 +108,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         private async UniTask<TAvatarElement> ProcessElementAsync(ILambdaResponseElement<TAvatarElementDTO> element, IPartitionComponent partition, CancellationToken ct)
         {
             TAvatarElementDTO elementDTO = element.Entity;
-            TAvatarElement wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
-
+            var avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO);
+            
             // Run the asset bundle fallback check in parallel
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.DTO, partition, ct);
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, avatarElement.DTO, partition, ct);
 
             // Process individual data (this part needs to remain sequential per element for thread safety)
             foreach (ElementIndividualDataDto individualData in element.IndividualData)
@@ -134,7 +135,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
             }
 
-            return wearable;
+            int ownedAmount = avatarElementStorage.GetOwnedNftCount(elementDTO.Metadata.id);
+            avatarElement.SetAmount(ownedAmount);
+
+
+            return avatarElement;
         }
 
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)

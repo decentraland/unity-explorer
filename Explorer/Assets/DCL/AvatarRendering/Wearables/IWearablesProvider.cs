@@ -11,20 +11,26 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize,
+        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
+            int pageSize,
             int pageNumber,
             CancellationToken ct,
-            SortingField sortingField = SortingField.Date,
-            OrderBy orderBy = OrderBy.Descending,
+            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
+            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
-            CollectionType collectionType = CollectionType.All,
+            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             bool smartWearablesOnly = false,
             string? name = null,
             List<IWearable>? results = null,
+            string? network = null,
+            bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
-            bool needsBuilderAPISigning = false);
-
-        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers, BodyShape bodyShape, CancellationToken ct);
+            bool needsBuilderAPISigning = false
+        );
+        
+        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            CancellationToken ct);
 
         public enum SortingField
         {
@@ -45,7 +51,8 @@ namespace DCL.AvatarRendering.Wearables
             Base = 1 << 0,
             OnChain = 1 << 1,
             ThirdParty = 1 << 2,
-            All = -1,
+            All = Base | OnChain | ThirdParty,
+            None = 0
         }
     }
 }

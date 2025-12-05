@@ -110,12 +110,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Translation;
+using DCL.Web3.Authenticators;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -333,6 +337,10 @@ namespace Global.Dynamic
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
+            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
+            IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
+            IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
+            
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
 
@@ -859,6 +867,25 @@ namespace Global.Dynamic
                     homePlaceEventBus,
                     staticContainer.SmartWearableCache
                 ),
+                new GiftingPlugin(assetsProvisioner,
+                    mvcManager,
+                    pendingTransferService,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    equippedStatusProvider,
+                    profileRepositoryWrapper,
+                    profilesRepository,
+                    staticContainer.InputBlock,
+                    wearablesProvider,
+                    wearableCatalog,
+                    emotesCache,
+                    emoteProvider,
+                    identityCache,
+                    thumbnailProvider,
+                    eventBus,
+                    webBrowser,
+                    bootstrapContainer.VerifiedEthereumApi,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    sharedSpaceManager),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
@@ -900,7 +927,8 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     notificationsRequestController,
-                    identityCache),
+                    identityCache,
+                    profilesRepository),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
