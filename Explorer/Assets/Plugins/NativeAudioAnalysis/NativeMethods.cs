@@ -73,6 +73,7 @@ namespace Plugins.NativeAudioAnalysis
                         ptr, 
                         (UIntPtr) data.Length, 
                         sampleRate,
+                        mode,
                         amplitudeGain,
                         bandsGain
                     );
