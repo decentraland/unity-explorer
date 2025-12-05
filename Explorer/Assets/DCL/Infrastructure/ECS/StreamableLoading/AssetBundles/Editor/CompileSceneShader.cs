@@ -15,9 +15,14 @@ namespace DCL.Rendering.Menus
     {
         private const string ASSET_BUNDLE_DIRECTORY = "Assets/StreamingAssets/AssetBundles";
 
-        private static readonly string[] ASSET_NAMES =
+        private static readonly string[] SCENE_SHADER_ASSET_NAMES =
         {
-            "Scene.shader", "SceneVariants.shadervariants",
+            "Scene.shader", "SceneVariants.shadervariants"
+        };
+
+        private static readonly string[] SCENE_TEXARRAY_SHADER_ASSET_NAMES =
+        {
+            "Scene_TexArray.shader", "Scene_TexArrayVariants.shadervariants"
         };
 
         // Add file extensions to copy when copying shader folder
@@ -27,7 +32,7 @@ namespace DCL.Rendering.Menus
         };
 
         [MenuItem("Decentraland/Shaders/Compile \"Scene\" Shader Variants")]
-        public static void ExecuteMenuItem()
+        public static void CompileSceneShaderMenuItem()
         {
             string sPlatform = PlatformUtils.GetCurrentPlatform();
             BuildTarget bt = BuildTarget.StandaloneWindows64; // default
@@ -46,7 +51,30 @@ namespace DCL.Rendering.Menus
                 }
             }
 
-            CompileTheSceneShader(bt);
+            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES, bt);
+        }
+
+        [MenuItem("Decentraland/Shaders/Compile \"Scene_TexArray\" Shader Variants")]
+        public static void CompileSceneTexArrayShaderMenuItem()
+        {
+            string sPlatform = PlatformUtils.GetCurrentPlatform();
+            BuildTarget bt = BuildTarget.StandaloneWindows64; // default
+
+            switch (sPlatform)
+            {
+                case "_windows":
+                {
+                    bt = BuildTarget.StandaloneWindows64;
+                    break;
+                }
+                case "_mac":
+                {
+                    bt = BuildTarget.StandaloneOSX;
+                    break;
+                }
+            }
+
+            CompileTheSceneShader("lods/dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES, bt);
         }
 
         [MenuItem("Decentraland/Shaders/Force Recompile \"Scene\" Shader Variants")]
@@ -69,14 +97,11 @@ namespace DCL.Rendering.Menus
                 }
             }
 
-            CompileTheSceneShader(bt, forceRecompile: true);
+            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES, bt, forceRecompile: true);
         }
 
-        public static void CompileTheSceneShader(BuildTarget bt, bool forceRecompile = false)
+        public static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, BuildTarget bt, bool forceRecompile = false)
         {
-            // Set the name of the asset bundle
-            var bundleName = "dcl/scene_ignore";
-
             switch (bt)
             {
                 case BuildTarget.StandaloneWindows64:
@@ -105,8 +130,9 @@ namespace DCL.Rendering.Menus
             List<string> searchPaths = new List<string>
             {
                 // Check if shaders have been copied to Assets for local editing
-                "Assets/Shaders/Scene/SceneRendering/",
+                //"Assets/Shaders/Scene/SceneRendering/",
                 "Assets/DCL/Shaders/Scene/SceneRendering/",
+                "Assets/DCL/Shaders/Scene/SceneRendering/TexArray",
 
                 // Check embedded/local package in Packages folder
                 "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/Scene/SceneRendering/",
