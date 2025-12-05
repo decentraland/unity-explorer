@@ -149,6 +149,8 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string SDK_AUDIO_SOURCES = nameof(SDK_AUDIO_SOURCES);
 
+        public const string SDK_AUDIO_ANALYSIS = nameof(SDK_AUDIO_ANALYSIS);
+
         /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
         /// </summary>
