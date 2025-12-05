@@ -34,8 +34,5 @@ namespace DCL.NotificationsBus.NotificationTypes
         [JsonProperty("sceneName")]
         public string SceneName { get; set; }
 
-        [JsonProperty("requestId")]
-        public string RequestId { get; set; }
-
     }
 }
