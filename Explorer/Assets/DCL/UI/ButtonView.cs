@@ -1,4 +1,6 @@
 using DCL.Audio;
+using DCL.UI.Buttons;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -6,35 +8,25 @@ using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectableButton
     {
         [field: SerializeField]
         public Button Button { get; private set;}
 
-        [field: Header("Audio")]
-        [field: SerializeField]
-        public AudioClipConfig ButtonPressedAudio { get; private set; }
-        [field: SerializeField]
-        public AudioClipConfig ButtonHoverAudio { get; private set; }
-
         [field: Header("Interactable Properties")]
-        [field: SerializeField]
-        private Image[] images { get; set; }
-        [field: SerializeField]
-        private TMP_Text text { get; set; }
-        [field: SerializeField]
-        private Color interactableColor = new Color(1f, 1f, 1f, 1f);
-        [field: SerializeField]
-        private Color hoverColor = new Color(0.54f, 0.54f, 0.54f);
+        [field: SerializeField] private Image[] images { get; set; } = null!;
+        [field: SerializeField] private TMP_Text text { get; set; } = null!;
+        [field: SerializeField] private Color interactableColor = new Color(1f, 1f, 1f, 1f);
+        [field: SerializeField] private Color hoverColor = new Color(0.54f, 0.54f, 0.54f);
 
-        private void OnEnable()
+        [field: Header("Audio")]
+        [field: SerializeField] public AudioClipConfig ButtonPressedAudio { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig ButtonHoverAudio { get; private set; } = null!;
+
+
+        private void Awake()
         {
             Button.onClick.AddListener(OnClick);
-        }
-
-        private void OnDisable()
-        {
-            Button.onClick.RemoveListener(OnClick);
         }
 
         private void OnClick()
@@ -57,11 +49,19 @@ namespace DCL.UI
 
         public void SetText(string value) => text.text = value;
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
+        public void OnPointerEnter(PointerEventData eventData) =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoverAudio);
-        }
 
         public void OnPointerExit(PointerEventData eventData) { }
+
+        public void Select()
+        {
+            Button.OnSelect(null!);
+        }
+
+        public void Deselect()
+        {
+            Button.OnDeselect(null!);
+        }
     }
 }

@@ -25,11 +25,6 @@ namespace DCL.UI.Buttons
             Button.onClick.AddListener(OnButtonPressed);
         }
 
-        private void OnDestroy()
-        {
-            Button.onClick.RemoveListener(OnButtonPressed);
-        }
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoveredAudio);
@@ -39,7 +34,7 @@ namespace DCL.UI.Buttons
         public void OnPointerExit(PointerEventData eventData) =>
             OnButtonUnhover?.Invoke();
 
-        internal void OnButtonPressed()
+        private void OnButtonPressed()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }

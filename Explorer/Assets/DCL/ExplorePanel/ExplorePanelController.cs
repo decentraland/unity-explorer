@@ -154,7 +154,7 @@ namespace DCL.ExplorePanel
                 );
             }
 
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowProfileMenuAsync);
+            viewInstance.ProfileWidget.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenuAsync);
         }
 
         protected override void OnViewShow()

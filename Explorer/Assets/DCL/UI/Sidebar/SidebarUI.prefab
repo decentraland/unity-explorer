@@ -78,15 +78,15 @@ MonoBehaviour:
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
-  <skyboxButton>k__BackingField: {fileID: 5031247465953263118}
+  <friendsButton>k__BackingField: {fileID: 920916011785825721}
+  <skyboxButton>k__BackingField: {fileID: 2422352902479167266}
   <SkyboxMenuView>k__BackingField: {fileID: 8821864330962428420}
-  <SmartWearablesButton>k__BackingField: {fileID: 5578694286419332628}
+  <smartWearablesButton>k__BackingField: {fileID: 5578694286419332628}
   <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
   <sidebarSettingsButton>k__BackingField: {fileID: 1441228183698799381}
   <SidebarSettingsWidgetView>k__BackingField: {fileID: 9165167233262662817}
   <autoHideToggle>k__BackingField: {fileID: 6705180925666095888}
-  <emotesWheelButton>k__BackingField: {fileID: 865329829398820406}
-  <friendsButton>k__BackingField: {fileID: 7532474831575772309}
+  <emotesWheelButton>k__BackingField: {fileID: 7515730619705325338}
   <helpButton>k__BackingField: {fileID: 2978611201982790949}
   <controlsButton>k__BackingField: {fileID: 2642532882811586268}
   <unreadMessagesButton>k__BackingField: {fileID: 6088716717838591032}
@@ -1098,15 +1098,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e5c38d507004bf49d3a9b1c9cc0b2bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &865329829398820406 stripped
+--- !u!114 &920916011785825721 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3178538336644050074, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3231872696665650965, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
   m_PrefabInstance: {fileID: 2314334691772897964}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &1734187727223042766 stripped
@@ -1120,6 +1120,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2422352902479167266 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 109148530472691086, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &3554301536170617574 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1246724455828271178, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
@@ -1129,17 +1140,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e9f221c091987054795693b12d9106d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &5031247465953263118 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7335448767573189794, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
-  m_PrefabInstance: {fileID: 2314334691772897964}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &5578694286419332628 stripped
@@ -1180,15 +1180,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec1c006ee7e24398b1c8859e8a4f6104, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &7532474831575772309 stripped
+--- !u!114 &7515730619705325338 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5230529442473342521, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_CorrespondingSourceObject: {fileID: 5211533444750994870, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
   m_PrefabInstance: {fileID: 2314334691772897964}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &8821864330962428420 stripped

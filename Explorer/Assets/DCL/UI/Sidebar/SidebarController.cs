@@ -27,6 +27,7 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
+using DCL.UI.Buttons;
 using Runtime.Wearables;
 using Utility;
 
@@ -54,7 +55,6 @@ namespace DCL.UI.Sidebar
         private readonly SmartWearableCache smartWearablesCache;
 
         private bool includeMarketplaceCredits;
-        private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
@@ -127,7 +127,7 @@ namespace DCL.UI.Sidebar
             mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
             viewInstance!.backpackNotificationIndicator.SetActive(false);
-            viewInstance.skyboxButton.interactable = true;
+            viewInstance.skyboxButton.Button.interactable = true;
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
             viewInstance.cameraReelButton.gameObject.SetActive(includeCameraReel);
             viewInstance.InWorldCameraButton.gameObject.SetActive(includeCameraReel);
@@ -159,25 +159,27 @@ namespace DCL.UI.Sidebar
             viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
             viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
             viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
-            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
-            viewInstance.NotificationsButton.Button.onClick.AddListener(OpenNotificationsPanelAsync);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
-            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
+
+            viewInstance.emotesWheelButton.Button.onClick.AddListener(OnEmotesWheelButtonClicked);
+            viewInstance.NotificationsButton.Button.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettingsPanel);
+            viewInstance.ProfileWidget.OpenProfileButton.Button.onClick.AddListener(OpenProfilePanel);
+            viewInstance.sidebarSettingsButton.Button.onClick.AddListener(OpenSidebarSettings);
+
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
-            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
-            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+            viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
+            viewInstance.smartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
             if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
-            if (includeFriends) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
+            if (includeFriends) viewInstance.friendsButton.Button.onClick.AddListener(OnFriendsButtonClickedAsync);
         }
 
         private void OnSettingsButtonClicked()
@@ -234,20 +236,26 @@ namespace DCL.UI.Sidebar
 
         private void OnMvcManagerViewClosed(IController closedController)
         {
+            //When panels are closed through shortcuts we need to be able to de-select the buttons
+            //Do we care WHICH button was selected?? we can just try to deselect all?
+
             // Panels that are controllers and can be opened using shortcuts
-            if (closedController is EmotesWheelController)
+            /*if (closedController is EmotesWheelController)
                 viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             else if (closedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
+                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);*/
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
         {
-            // Panels that are controllers and can be opened using shortcuts
-            if (showedController is EmotesWheelController)
+            // Panels that are controllers and can be opened using shortcuts,
+            // should we listen for the shortcuts instead??
+            // the problem there is that if we open the panel from anywhere else it wont get selected...
+
+            /*if (showedController is EmotesWheelController)
                 viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             else if (showedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
+                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);*/
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
@@ -283,16 +291,8 @@ namespace DCL.UI.Sidebar
 
         protected override void OnViewShow()
         {
-            profileWidgetCts = profileWidgetCts.SafeRestart();
-
             //We load the data into the profile widget
             profileButtonPresenter.LoadProfile();
-        }
-
-        protected override void OnViewClose()
-        {
-            base.OnViewClose();
-            profileWidgetCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -316,7 +316,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             if (includeMarketplaceCredits)
-                viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+                viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
         }
 
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
@@ -333,11 +333,9 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true)).Forget();
         }
 
-        private async void OnEmotesWheelButtonClickedAsync()
+        private void OnEmotesWheelButtonClicked()
         {
-            await mvcManager.ShowAsync(EmotesWheelController.IssueCommand());
-
-            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+            OpenPanelAsync(viewInstance!.emotesWheelButton, mvcManager.ShowAsync(EmotesWheelController.IssueCommand())).Forget();
         }
 
         private async void OnFriendsButtonClickedAsync()
@@ -347,11 +345,10 @@ namespace DCL.UI.Sidebar
             //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
         }
 
-        private async void OnMarketplaceCreditsButtonClickedAsync()
+        private void OnMarketplaceCreditsButtonClicked()
         {
-            await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)));
-
-            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.MarketplaceCredits, new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false));
+            OpenPanelAsync(viewInstance!.sidebarSettingsButton,
+                mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)))).Forget();
         }
 
         private void OnHelpButtonClicked()
@@ -365,75 +362,49 @@ namespace DCL.UI.Sidebar
             mvcManager.ShowAndForget(ControlsPanelController.IssueCommand());
         }
 
-        private async void OpenSidebarSettingsAsync()
+        private void OpenSidebarSettings()
         {
-            if (viewInstance == null) return;
-
-            viewInstance.BlockSidebar();
-
-            await mvcManager.ShowAsync(SidebarSettingsWidgetController.IssueCommand());
-            viewInstance.UnblockSidebar();
-
-            viewInstance.sidebarSettingsButton.OnDeselect(null);
+            OpenPanelAsync(viewInstance!.sidebarSettingsButton, mvcManager.ShowAsync(SidebarSettingsWidgetController.IssueCommand())).Forget();
         }
 
-        private async void OpenProfileMenuAsync()
+        private void OpenProfilePanel()
         {
-            viewInstance!.BlockSidebar();
-            await mvcManager.ShowAsync(ProfileMenuController.IssueCommand());
-            viewInstance.UnblockSidebar();
-
-            //viewInstance!.ProfileMenuView.gameObject.SetActive(true);
-            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
+            //We don't "select" the profile button as it doesn't have any visual change of state.
+            OpenPanelAsync(null, mvcManager.ShowAsync(ProfileMenuController.IssueCommand())).Forget();
         }
 
-        private async void OpenSkyboxSettingsAsync()
+        private void OpenSkyboxSettingsPanel()
         {
-            if (viewInstance == null) return;
+            OpenPanelAsync(viewInstance!.skyboxButton, mvcManager.ShowAsync(SkyboxMenuController.IssueCommand())).Forget();
+        }
+
+        private async UniTaskVoid OpenPanelAsync(ISelectableButton? button, UniTask showTask)
+        {
+            //TODO FRAN: DO we need a cancellation token and error handling?
+
+            if (!viewInstance) return;
 
             viewInstance.BlockSidebar();
-            viewInstance.skyboxButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
-
-            if (skyboxMenuController.State is not (ControllerState.ViewFocused or ControllerState.ViewBlurred or ControllerState.ViewShowing))
-                await mvcManager.ShowAsync(SkyboxMenuController.IssueCommand());
-
-            //TODO FRAN: Add proper cancellation  + handle errors on async calls
-            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-
-            viewInstance.skyboxButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
+            button?.Select();
+            await showTask;
+            button?.Deselect();
             viewInstance.UnblockSidebar();
         }
 
-        private async void OpenNotificationsPanelAsync()
+        private void OpenNotificationsPanel()
         {
-            if (viewInstance == null) return;
-
-            viewInstance.BlockSidebar();
-            viewInstance.NotificationsButton.OnSelect(null);
-            //animator.SetTrigger(UIAnimationHashes.ACTIVE));
-
-            await mvcManager.ShowAsync(NotificationsPanelController.IssueCommand());
-
-            //TODO FRAN: REMOVE THIS
-            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance.NotificationsButton.OnDeselect(null);
-            //viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
-            viewInstance.UnblockSidebar();
+            OpenPanelAsync(viewInstance!.NotificationsButton, mvcManager.ShowAsync(NotificationsPanelController.IssueCommand())).Forget();
         }
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
-            // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
+            // Note: The buttons of these options (map, backpack, etc.) are not selected because they are not visible anyway, same reason we dont lock the sidebar.
             await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection)));
-
-            //await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection), PanelsSharingSpace.Chat);
         }
 
         private void OnSmartWearablesButtonHover()
         {
-            mvcManager.ShowAndForget(SmartWearablesSideBarTooltipController.IssueCommand());
-            //TODO FRAN: REMOVE THIS
-            //sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
+            OpenPanelAsync(viewInstance!.smartWearablesButton, mvcManager.ShowAsync(SmartWearablesSideBarTooltipController.IssueCommand())).Forget();
         }
 
         private void OnSmartWearablesButtonUnhover()

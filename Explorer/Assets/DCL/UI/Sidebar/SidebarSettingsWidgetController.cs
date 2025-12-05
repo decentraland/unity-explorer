@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace DCL.UI.Sidebar
 {
-    public class SidebarSettingsWidgetController : ControllerBase<SidebarSettingsWidgetView>
+    public class SidebarSettingsWidgetController : ControllerBase<SidebarConfigPanelView>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 

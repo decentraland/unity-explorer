@@ -39,25 +39,23 @@ namespace DCL.UI.Sidebar
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; } = null!;
         [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; } = null!;
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator friendsButton { get; private set; } = null!;
 
         [field: Header("Skybox")]
-        [field: SerializeField] internal Button skyboxButton { get; private set; } = null!;
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator skyboxButton { get; private set; } = null!;
         [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; } = null!;
 
         [field: Header("Smart Wearables")]
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator SmartWearablesButton { get; private set; }
-        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; }
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator smartWearablesButton { get; private set; } = null!;
+        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
 
         [field: Header("Sidebar Settings")]
-        [field: SerializeField] internal Button sidebarSettingsButton { get; private set; } = null!;
-        [field: SerializeField] public SidebarSettingsWidgetView SidebarSettingsWidgetView { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView sidebarSettingsButton { get; private set; } = null!;
+        [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
         [field: SerializeField] internal Toggle autoHideToggle { get; private set; } = null!;
 
         [field: Header("Emotes")]
-        [field: SerializeField] internal Button emotesWheelButton { get; private set; } = null!;
-
-        [field: Header("Friends")]
-        [field: SerializeField] internal Button friendsButton { get; private set; } = null!;
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator emotesWheelButton { get; private set; } = null!;
 
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; } = null!;
