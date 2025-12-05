@@ -124,6 +124,9 @@ namespace DCL.AvatarRendering.AvatarShape
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
+
+            avatarBase.RigBuilder.enabled = true;
+
             return avatarBase;
         }
 
@@ -134,11 +137,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
-            if (avatarBase != null)
-            {
-                avatarBase.RigBuilder.enabled = true;
-                mainPlayerAvatarBaseProxy.SetObject(avatarBase);
-            }
+            if (avatarBase != null) mainPlayerAvatarBaseProxy.SetObject(avatarBase);
         }
 
         [Query]

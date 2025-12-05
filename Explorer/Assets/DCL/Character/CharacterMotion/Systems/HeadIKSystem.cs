@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
@@ -13,11 +14,10 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
-using DCL.Utilities;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.InputSystem;
 #if UNITY_EDITOR
 using DCL.AvatarRendering.DemoScripts.Components;
 #endif
@@ -77,6 +77,7 @@ namespace DCL.CharacterMotion.Systems
             UpdatePreviewAvatarIKQuery(World, t);
 
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
+            UpdateRemoteIKQuery(World, t);
         }
 
         [Query]
@@ -148,38 +149,55 @@ namespace DCL.CharacterMotion.Systems
         // This prevents all random avatars from moving the head when the player's camera is moved
         [None(typeof(RandomAvatar))]
 #endif
-        private void UpdateIK(
-            [Data] float dt,
+        [None(typeof(RemotePlayerMovementComponent))]
+        private void UpdateIK([Data] float dt,
             [Data] in CameraComponent cameraComponent,
             [Data] bool inWorldCameraActive,
             ref HeadIKComponent headIK,
             ref AvatarBase avatarBase,
-            in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
             in CharacterEmoteComponent emoteComponent,
-            in CharacterPlatformComponent platformComponent
-        )
+            in CharacterPlatformComponent platformComponent)
         {
-            bool isFeatureAndComponentEnabled = headIKIsEnabled && headIK.IsEnabled;
+            headIK.IsEnabled = headIKIsEnabled
+                               && rigidTransform is { IsGrounded: true, IsOnASteepSlope: false }
+                               && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
+                               && !stunComponent.IsStunned
+                               && !emoteComponent.IsPlayingEmote
+                               && !platformComponent.PositionChanged;
 
-            bool isEnabled = !stunComponent.IsStunned
-                             && rigidTransform.IsGrounded
-                             && !rigidTransform.IsOnASteepSlope
-                             && isFeatureAndComponentEnabled
-                             && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
-                             && !emoteComponent.IsPlayingEmote
-                             && !platformComponent.PositionChanged;
-
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
+            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, headIK.IsEnabled, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
-            if (!isEnabled || inWorldCameraActive) return;
+            if (!headIK.IsEnabled || inWorldCameraActive) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
-            Vector3 targetDirection = cameraComponent.Camera.transform.forward;
+            headIK.LookAt = cameraComponent.Camera.transform.forward;
 
-            ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings);
+            ApplyHeadLookAt.Execute(headIK.LookAt, avatarBase, dt, settings);
         }
+
+        [Query]
+        [All(typeof(RemotePlayerMovementComponent))]
+        private void UpdateRemoteIK([Data] float dt, ref HeadIKComponent headIK, ref AvatarBase avatarBase)
+        {
+            // Head IK enabled flag and look-at vector are received from the remote client
+
+            bool isEnabled = headIKIsEnabled && headIK.IsEnabled;
+
+            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, isEnabled, settings.HeadIKWeightChangeSpeed * dt);
+
+            if (!isEnabled) return;
+
+            Vector3 lookAt = headIK.LookAt.sqrMagnitude > 0.0001f
+                ? headIK.LookAt
+                : avatarBase.HeadIKRig.transform.forward;
+
+            ApplyHeadLookAt.Execute(lookAt, avatarBase, dt, settings, useFrontalReset: false);
+        }
+
+        private float UpdateIKWeight(float current, bool isEnabled, float maxDelta) =>
+            Mathf.MoveTowards(current, isEnabled ? 1 : 0, maxDelta);
     }
 }

@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -21,6 +22,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private const float POSITION_MOVE_EPSILON = 0.0001f; // 1 mm
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
+        private const float HEAD_IK_EPSILON = 1; // 1 deg
 
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly MultiplayerMovementSettings settings;
@@ -51,8 +53,8 @@ namespace DCL.Multiplayer.Movement.Systems
             ref CharacterAnimationComponent anim,
             ref StunComponent stun,
             ref MovementInputComponent move,
-            in JumpInputComponent jump,
-            in CharacterEmoteComponent emote
+            in CharacterEmoteComponent emote,
+            in HeadIKComponent headIK
         )
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
@@ -61,7 +63,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, isInstant: true);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, isInstant: true);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -73,29 +75,37 @@ namespace DCL.Multiplayer.Movement.Systems
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
                 return;
             }
 
-            bool isMoving = IsMoving(playerMovement);
+            bool anythingChanged = AnythingChanged(playerMovement, headIK);
 
-            if (isMoving && sendRate > settings.MoveSendRate)
+            if (anythingChanged && sendRate > settings.MoveSendRate)
                 sendRate = settings.MoveSendRate;
 
             if (timeDiff > sendRate)
             {
-                if (!isMoving && sendRate < settings.StandSendRate)
+                if (!anythingChanged && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
             }
 
             return;
 
-            bool IsMoving(PlayerMovementNetworkComponent playerMovement) =>
-                Mathf.Abs(playerMovement.LastSentMessage.rotationY - playerMovement.Character.transform.eulerAngles.y) > 0.1f ||
-                Vector3.SqrMagnitude(playerMovement.LastSentMessage.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
-                Vector3.SqrMagnitude(playerMovement.LastSentMessage.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON;
+            bool AnythingChanged(PlayerMovementNetworkComponent playerMovement, in HeadIKComponent headIK)
+            {
+                NetworkMovementMessage snapshot = playerMovement.LastSentMessage;
+                Vector2 currentHeadYawAndPitch = headIK.GetHeadYawAndPitch();
+
+                return Mathf.Abs(snapshot.rotationY - playerMovement.Character.transform.eulerAngles.y) > 0.1f ||
+                       Vector3.SqrMagnitude(snapshot.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
+                       Vector3.SqrMagnitude(snapshot.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON ||
+                       snapshot.headIKEnabled != headIK.IsEnabled ||
+                       Math.Abs(snapshot.headYawAndPitch.x - currentHeadYawAndPitch.x) > HEAD_IK_EPSILON ||
+                       Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON;
+            }
         }
 
         private static void UpdateMessagePerSecondTimer(float t, ref PlayerMovementNetworkComponent playerMovement)
@@ -113,6 +123,7 @@ namespace DCL.Multiplayer.Movement.Systems
             in CharacterAnimationComponent animation,
             in StunComponent playerStunComponent,
             in MovementInputComponent input,
+            in HeadIKComponent headIK,
             bool isEmoting,
             bool isInstant)
         {
@@ -124,6 +135,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 
+            Vector3 headYawAndPitch = headIK.GetHeadYawAndPitch();
+
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
@@ -132,6 +145,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
 
                 rotationY = playerMovement.Character.transform.eulerAngles.y,
+
+                headIKEnabled = headIK.IsEnabled,
+                headYawAndPitch = headYawAndPitch,
+
                 velocityTier = velocityTier,
 
                 isStunned = playerStunComponent.IsStunned,
