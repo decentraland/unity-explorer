@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.Nametags;
 using DCL.Web3.Identities;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -55,6 +56,7 @@ namespace DCL.SocialEmotes.UI
             if(identityCache.Identity == null)
                 return;
 
+            RemoveDeletedEntityPinsQuery(World);
             CreatePinQuery(World, mainCameraComponent);
             UpdatePinPositionQuery(World);
             AddNametagHeightToPinPositionQuery(World);
@@ -110,6 +112,14 @@ namespace DCL.SocialEmotes.UI
                 pinsPool.Release(pin);
                 World.Remove<SocialEmotePin>(entity);
             }
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void RemoveDeletedEntityPins(Entity entity, in SocialEmotePin pin)
+        {
+            pinsPool.Release(pin);
+            World.Remove<SocialEmotePin>(entity);
         }
     }
 }
