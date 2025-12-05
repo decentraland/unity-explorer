@@ -1,5 +1,6 @@
 using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
+using System;
 using System.IO;
 
 namespace SceneRuntime.Factory.WebSceneSource.Cache
@@ -13,9 +14,12 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
             this.directoryPath = directoryPath;
         }
 
-        public void Cache(string path, string sourceCode)
+        public void Cache(string path, ReadOnlySpan<byte> sourceCode)
         {
-            File.WriteAllText(FilePath(path), sourceCode);
+            using var stream = new FileStream(path, FileMode.Create,
+                FileAccess.Write, FileShare.None);
+
+            stream.Write(sourceCode);
         }
 
         public bool TryGet(string path, out string? sourceCode)
