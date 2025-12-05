@@ -1,6 +1,5 @@
 using DCL.Audio;
 using DCL.UI.Buttons;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;

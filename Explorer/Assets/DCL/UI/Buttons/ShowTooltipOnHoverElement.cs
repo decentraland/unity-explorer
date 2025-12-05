@@ -5,22 +5,13 @@ namespace DCL.UI.Buttons
     [RequireComponent(typeof(HoverableButton))]
     public class ShowTooltipOnHoverElement : MonoBehaviour
     {
-        [field: SerializeField]
-        private GameObject tooltip { get; set; }
-
-        [field: SerializeField]
-        private HoverableButton hoverableButton { get; set; }
+        [field: SerializeField] private GameObject tooltip { get; set; } = null!;
+        [field: SerializeField] private HoverableButton hoverableButton { get; set; } = null!;
 
         private void Awake()
         {
             hoverableButton.OnButtonHover += ShowTooltip;
             hoverableButton.OnButtonUnhover += HideTooltip;
-        }
-
-        private void OnDestroy()
-        {
-            hoverableButton.OnButtonHover -= ShowTooltip;
-            hoverableButton.OnButtonUnhover -= HideTooltip;
         }
 
         private void ShowTooltip()
