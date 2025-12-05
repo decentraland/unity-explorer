@@ -24,8 +24,10 @@ namespace DCL.Donations
     public class DonationsService : IDisposable
     {
         // https://contracts.decentraland.org/addresses.json
-        private const string POLYGON_CONTRACT_ADDRESS = "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4";
-        private const string SEPOLIA_NET_CONTRACT_ADDRESS = "0xfa04d2e2ba9aec166c93dfeeba7427b2303befa9";
+        // Prod Matic MANA contract
+        private const string MATIC_CONTRACT_ADDRESS = "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4";
+        // Test Amoy MANA contract
+        private const string AMOY_NET_CONTRACT_ADDRESS = "0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0";
 
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
         private const string TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
@@ -64,7 +66,7 @@ namespace DCL.Donations
             this.realmData = realmData;
             this.placesAPIService = placesAPIService;
 
-            contractAddress = dclEnvironment == DecentralandEnvironment.Org ? POLYGON_CONTRACT_ADDRESS : SEPOLIA_NET_CONTRACT_ADDRESS;
+            contractAddress = dclEnvironment == DecentralandEnvironment.Org ? MATIC_CONTRACT_ADDRESS : AMOY_NET_CONTRACT_ADDRESS;
             donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor || true; //TODO: remove '|| true' when feature is ready to be shipped
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
@@ -156,7 +158,9 @@ namespace DCL.Donations
 
             EthApiResponse response = await ethereumApi.SendAsync(request, ct);
 
-            BigInteger weiValue = BigInteger.Parse(response.result.ToString()[2..], NumberStyles.HexNumber);
+            string weiString = response.result.ToString()[2..];
+
+            BigInteger weiValue = BigInteger.Parse(string.IsNullOrEmpty(weiString) ? "0" : weiString, NumberStyles.HexNumber);
 
             return (decimal)weiValue / WEI_FACTOR;
         }
