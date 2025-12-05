@@ -17,8 +17,7 @@ namespace DCL.Profiles
             var jToken = JToken.Load(reader);
             Profile.CompactInfo compactInfo = ReadJson(jToken);
 
-            // TODO confirm format
-            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jToken["snapshots"]?["face256"]?.Value<string>() ?? "");
+            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jToken["thumbnailUrl"]?.Value<string>() ?? "");
             return compactInfo;
         }
 

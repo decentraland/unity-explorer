@@ -24,6 +24,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 {
     [TestFixture("https://asset-bundle-registry.decentraland.zone/")]
     [TestFixture("https://asset-bundle-registry-test.decentraland.zone/")]
+    [TestFixture("https://gateway.decentraland.zone/asset-bundle-registry/")]
     public class AssetBundleRegistryPerformanceTests
     {
         [SetUp]
