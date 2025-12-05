@@ -5341,6 +5341,7 @@ GameObject:
   - component: {fileID: 540129979}
   - component: {fileID: 540129980}
   - component: {fileID: 540129981}
+  - component: {fileID: 540129982}
   m_Layer: 0
   m_Name: Playground
   m_TagString: Untagged
@@ -5379,6 +5380,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f6f9f1e56e549e3afdb50892482802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AudioAnalysis.asmdef::Plugins.NativeAudioAnalysis.Playground.AudioAnalysisPlayground
+  analysisMode: 1
   amplitudeGain: 5
   bandsGain: 0.05
   medianAnalysis:
@@ -5499,6 +5501,18 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &540129982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540129978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93684a70152494b738917a946523503e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AudioAnalysis.asmdef::Plugins.NativeAudioAnalysis.ThreadSafeLastAudioFrameReadFilter
 --- !u!1 &735318156
 GameObject:
   m_ObjectHideFlags: 0

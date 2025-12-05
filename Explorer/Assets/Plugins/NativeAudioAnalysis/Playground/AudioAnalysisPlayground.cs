@@ -38,7 +38,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
         private Camera mainCamera = null!;
         private int sampleRate;
 
-        private bool enableAnalysis;
+        private ThreadSafeLastAudioFrameReadFilter lastAudioFrame = null!;
 
         private void Start() {
             Assert.AreEqual(bars.Length, NativeMethods.BANDS, "Bar count is not equls to band count");
@@ -48,14 +48,21 @@ namespace Plugins.NativeAudioAnalysis.Playground
 
             mainCamera = Camera.main;
             sampleRate = AudioSettings.outputSampleRate;
-            enableAnalysis = true;
             medianAnalysis.bands = new float[NativeMethods.BANDS];
 
             Assert.IsTrue(TryGetComponent<AudioSource>(out AudioSource source), "AudioSource is not attached");
             Assert.IsNotNull(source.clip, "Clip is not selected");
+
+            lastAudioFrame = GetComponent<ThreadSafeLastAudioFrameReadFilter>();
+            Assert.IsNotNull(lastAudioFrame, "ThreadSafeLastAudioFrameReadFilter is not found");
         }
 
-        private void Update() {
+        private void Update() 
+        {
+            if (lastAudioFrame.TryConsume(out float[]? output, out int outChannels, out int outSampleRate))
+            {
+                lastAnalysis = NativeMethods.AnalyzeAudioBuffer(output!, outSampleRate, analysisMode, amplitudeGain, bandsGain);
+            }
 
             // Bands intensity
             int iterations = Mathf.Min(bars.Length, lastAnalysis.bands.Length);
@@ -95,21 +102,6 @@ namespace Plugins.NativeAudioAnalysis.Playground
                 medianAnalysis.bands[i] = (medianAnalysis.bands[i] + lastAnalysis.bands[i]) / 2;
             }
             */
-        }
-
-        private void OnDisable()
-        {
-            enableAnalysis = false;
-        }
-
-        private void OnAudioFilterRead(float[] data, int channels) 
-        {
-            // It's ok for this case, possibility of race condition is acceptable in this case
-            // Couple of frames won't bring big impact and mutex sync is not required
-            if (enableAnalysis) 
-            {
-                lastAnalysis = NativeMethods.AnalyzeAudioBuffer(data, sampleRate, analysisMode, amplitudeGain, bandsGain);
-            }
         }
     }
 }
