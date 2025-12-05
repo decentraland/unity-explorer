@@ -57,5 +57,6 @@ namespace DCL.ECS7
         public const int PRIMARY_POINTER_INFO = 1209;
         public const int SKYBOX_TIME = 1210;
         public const int AVATAR_LOCOMOTION_SETTINGS = 1211;
+        public const int AUDIO_ANALYSIS = 1212;
     }
 }
