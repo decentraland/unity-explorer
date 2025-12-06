@@ -619,7 +619,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // Makes sure the avatar of the initiator is looking at the receiver's
             IAvatarView initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
-            initiatorAvatar.GetTransform().forward = (avatarView.GetTransform().position - initiatorAvatar.GetTransform().position).normalized;
+            Vector3 initiatorForward = avatarView.GetTransform().position - initiatorAvatar.GetTransform().position;
+            initiatorForward.y = 0.0f;
+            initiatorAvatar.GetTransform().forward = initiatorForward.normalized;
 
             // Rotates the reacting avatar to coincide with the initiator's avatar, because the animation of the reaction occurs at the same place with same pose
             avatarView.GetTransform().rotation = initiatorAvatar.GetTransform().rotation;

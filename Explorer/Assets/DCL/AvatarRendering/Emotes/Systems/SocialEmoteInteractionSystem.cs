@@ -100,6 +100,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             // Since the outcome emote has already started to play, the avatar is moving its position, but we need to create the illusion of the avatar not moving at all
             Vector3 currentHipToOriginalPosition = moveIntent.OriginalAvatarPosition - ((AvatarBase)avatarView).HipAnchorPoint.position;
             Vector3 originalPositionWithCurrentOffset = avatarView.GetTransform().position + new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
+            originalPositionWithCurrentOffset.y = moveIntent.InitiatorWorldPosition.y; // In order to avoid the avatar from leaning, due to the other avatar being at a different height, we move the reacting avatar to the initiator's height
             avatarView.GetTransform().position = Vector3.Lerp(originalPositionWithCurrentOffset, moveIntent.InitiatorWorldPosition, interpolation);
 
             Debug.DrawRay(avatarView.GetTransform().position, UnityEngine.Vector3.up, Color.yellow, 3.0f);
@@ -205,7 +206,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         private void ForceAvatarToLookAtPosition(Entity entity, IAvatarView avatarView, LookAtPositionIntention lookAtPositionIntention)
         {
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward before: " + avatarView.GetTransform().forward);
-            avatarView.GetTransform().forward = (lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position).normalized;
+            Vector3 avatarForward = lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position;
+            avatarForward.y = 0.0f;
+            avatarView.GetTransform().forward = avatarForward.normalized;
             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward after: " + avatarView.GetTransform().forward);
             World.Remove<LookAtPositionIntention>(entity);
         }
