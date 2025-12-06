@@ -328,7 +328,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            List<EmoteOutcomeAnimationPose>? outcomeAnimationPoses = null;
+
+            if (result.Asset.SocialEmoteOutcomeAnimationStartPoses != null)
+            {
+                outcomeAnimationPoses = AttachmentRegularAsset.OUTCOME_ANIMATION_POSE_POOL.Get();
+
+                foreach (AssetBundleMetadata.SocialEmoteOutcomeAnimationPose outcomeAnimationPose in result.Asset.SocialEmoteOutcomeAnimationStartPoses)
+                    outcomeAnimationPoses.Add(new EmoteOutcomeAnimationPose(outcomeAnimationPose.Position, outcomeAnimationPose.Rotation));
+            }
+
+            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset, outcomeAnimationPoses);
             return true;
         }
 
@@ -345,7 +355,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset, null);
             return true;
         }
 

@@ -27,8 +27,14 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
+        private class SocialEmoteOutcomeAnimationPosesInJson
+        {
+            public AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? Poses;
+        }
+
         private const string METADATA_FILENAME = "metadata.json";
         private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
+        private const string EMOTE_DATA_FILENAME = "EmoteData.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -80,12 +86,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 string? metadataJSON;
                 string? sceneDescriptoJSON;
+                string? emoteDataJSON;
 
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
                     metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
                     sceneDescriptoJSON = assetBundle.LoadAsset<TextAsset>(STATIC_SCENE_DESCRIPTOR_FILENAME)?.text;
+                    emoteDataJSON = assetBundle.LoadAsset<TextAsset>(EMOTE_DATA_FILENAME)?.text;
                 }
 
                 // Switch to thread pool to parse JSONs
@@ -95,10 +103,15 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
+                SocialEmoteOutcomeAnimationPosesInJson? socialEmoteOutcomeAnimationStartPoses = null;
                 InitialSceneStateMetadata? initialSceneState = null;
 
                 if (!string.IsNullOrEmpty(sceneDescriptoJSON))
                     initialSceneState = JsonUtility.FromJson<InitialSceneStateMetadata>(sceneDescriptoJSON);
+
+                if (!string.IsNullOrEmpty(emoteDataJSON))
+                    // Note: The order of the outcomes is the same as the order in which they appear in the Emote DTO metadata
+                    socialEmoteOutcomeAnimationStartPoses = JsonUtility.FromJson<SocialEmoteOutcomeAnimationPosesInJson>(emoteDataJSON);
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -119,7 +132,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 // if the type was not specified don't load any assets
                 return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.IsDependency, intention.LookForDependencies, ct);
+                    source, intention.IsDependency, intention.LookForDependencies, socialEmoteOutcomeAnimationStartPoses?.Poses, ct);
             }
             catch (Exception e)
             {
@@ -130,6 +143,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 if (assetBundle)
                     assetBundle.Unload(true);
+
+                ReportHub.LogError(ReportCategory.ASSET_BUNDLES, "An error occurred when loading an asset bundle: " + assetBundle?.name + ". " + e.Message);
 
                 throw;
             }
@@ -144,6 +159,7 @@ namespace ECS.StreamableLoading.AssetBundles
             string source,
             bool isDependency,
             bool lookForDependencies,
+            AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? socialEmoteOutcomeAnimationStartPoses,
             CancellationToken ct)
         {
             if (isDependency)
@@ -162,7 +178,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, initialSceneState, asset, expectedObjType, dependencies,
                 version: version,
-                source: source));
+                source: source,
+                socialEmoteOutcomeAnimationStartPoses: socialEmoteOutcomeAnimationStartPoses));
         }
 
         private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type? objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory, CancellationToken ct)
@@ -179,8 +196,13 @@ namespace ECS.StreamableLoading.AssetBundles
             //If no asset type or name was specified, we need to load all
                 asyncOp = assetBundle.LoadAllAssetsAsync();
 
+
             await asyncOp.WithCancellation(ct);
             Object[]? assets = asyncOp.allAssets;
+
+            // This forces the runtimeAnimatorController to be loaded
+            if (objectType == typeof(GameObject) && assets.Length > 0 && ((GameObject)assets[0]).TryGetComponent(out Animator animator))
+                animator.runtimeAnimatorController = animator.runtimeAnimatorController;
 
             return assets;
         }

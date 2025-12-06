@@ -11,12 +11,47 @@ namespace DCL.AvatarRendering.Emotes
     public class EmoteDTO : AvatarAttachmentDTO<EmoteDTO.EmoteMetadataDto>
     {
         [Serializable]
+        public class EmoteOutcomeDTO
+        {
+            public string title;
+            public bool loop;
+            public EmoteOutcomeClipsDTO? clips;
+            public string? audio;
+        }
+
+        [Serializable]
+        public class EmoteAnimationDTO
+        {
+            public string animation;
+        }
+
+        [Serializable]
+        public class EmoteOutcomeClipsDTO
+        {
+            public EmoteAnimationDTO? Armature;
+            public EmoteAnimationDTO? Armature_Other;
+            public EmoteAnimationDTO? Armature_Prop;
+        }
+
+        [Serializable]
+        public class EmoteStartClipsDTO
+        {
+            public bool loop;
+            public EmoteAnimationDTO? Armature;
+            public EmoteAnimationDTO? Armature_Prop;
+            public string? audio;
+        }
+
+        [Serializable]
         public class EmoteMetadataDto : MetadataBase
         {
+            public bool IsSocialEmote => data is { outcomes: { Length: > 0 } };
+
             // emotes DTO fetched from builder-API use the normal 'data' property
             // emotes DTO fetched from realm use 'emoteDataADR74' property...
-            public Data emoteDataADR74;
-            public Data data
+            public Data? emoteDataADR74;
+
+            public Data? data
             {
                 get => emoteDataADR74;
                 set
@@ -25,12 +60,15 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            public override DataBase AbstractData => emoteDataADR74;
+            public override DataBase AbstractData => emoteDataADR74!;
 
             [Serializable]
             public class Data : DataBase
             {
                 public bool loop;
+                public bool randomizeOutcomes;
+                public EmoteStartClipsDTO? startAnimation;
+                public EmoteOutcomeDTO[]? outcomes;
             }
         }
     }

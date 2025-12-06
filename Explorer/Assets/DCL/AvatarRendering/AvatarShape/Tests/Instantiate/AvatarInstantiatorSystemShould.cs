@@ -159,7 +159,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             var rendererInfo = new AttachmentRegularAsset.RendererInfo(fakeABMaterial);
 
-            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null);
+            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null, null);
             wearableAsset.AddReference();
 
             return (mockWearable, wearableAsset);

@@ -1,8 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Systems;
 using DCL.SDKComponents.InputModifier.Components;
@@ -33,6 +36,8 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void UpdateInput(ref MovementInputComponent inputToUpdate, in InputModifierComponent inputModifierComponent)
         {
+            inputToUpdate.HasPlayerPressed = false;
+
             if (!movementAxis.enabled || inputModifierComponent is { DisableAll: true } or { DisableWalk: true, DisableJog: true, DisableRun: true })
             {
                 inputToUpdate.Axes = Vector2.zero;
@@ -45,6 +50,8 @@ namespace DCL.CharacterMotion.Systems
                 inputToUpdate.Kind = MovementKind.IDLE;
             else
             {
+                inputToUpdate.HasPlayerPressed = true;
+
                 bool runPressed = sprintAction.IsPressed();
                 bool walkPressed = walkAction.IsPressed();
 

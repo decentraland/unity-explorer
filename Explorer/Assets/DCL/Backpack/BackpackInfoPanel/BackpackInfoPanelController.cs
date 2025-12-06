@@ -22,6 +22,7 @@ namespace DCL.Backpack
         private const string DEFAULT_DESCRIPTION = "This wearable does not have a description set.";
         private const int MINIMUM_WAIT_TIME = 500;
         private const string EMOTE_CATEGORY = "emote";
+        private const string SOCIAL_EMOTE_CATEGORY = "social_emote";
 
         private readonly BackpackInfoPanelView view;
         private readonly IBackpackEventBus backpackEventBus;
@@ -82,7 +83,10 @@ namespace DCL.Backpack
             view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
             view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? DEFAULT_DESCRIPTION : wearable.GetDescription();
-            view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetType() == typeof(Emote) ? EMOTE_CATEGORY : wearable.GetCategory());
+            bool isEmote = wearable.GetType() == typeof(Emote);
+            bool isSocialEmote = isEmote && ((EmoteDTO)wearable.DTO).metadata.IsSocialEmote;
+            string category = isSocialEmote ? SOCIAL_EMOTE_CATEGORY : isEmote ? EMOTE_CATEGORY : wearable.GetCategory();
+            view.CategoryImage.sprite = categoryIcons.GetTypeImage(category);
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
             view.RarityName.text = wearable.GetRarity();

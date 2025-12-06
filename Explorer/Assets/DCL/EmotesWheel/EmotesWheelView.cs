@@ -15,7 +15,7 @@ namespace DCL.EmotesWheel
         // 0.05f make sure that graphic raycaster and emote emotes works almost immediately, so emote can be played even
         // while panel is not open all the way.
         private const float ANIMATION_LOCK_DURATION = 0.05f;
-        
+
         public event Action? Closed;
 
         [SerializeField]
@@ -39,6 +39,21 @@ namespace DCL.EmotesWheel
 
         [field: SerializeField]
         public AudioClipConfig CloseAudio { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text SocialEmoteNameWithUser { get; private set; }
+
+        [field: SerializeField]
+        public string SocialEmoteNameAndUserText { get; private set; } = "Invite <color=#{0}>{1}</color> to {2} with you";
+
+        [field: SerializeField]
+        public Sprite SocialEmoteSlotIcon { get; private set; }
+
+        [field: SerializeField]
+        public Sprite EmoteSlotIcon { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text OpenInviteWarning { get; private set; }
 
         private void Awake()
         {

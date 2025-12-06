@@ -121,7 +121,7 @@ namespace DCL.AvatarRendering.Emotes
             foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(renderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(glb, rendererInfos, IStreamableRefCountData.Null.INSTANCE);
+            return new AttachmentRegularAsset(glb, rendererInfos, IStreamableRefCountData.Null.INSTANCE, null);
         }
     }
 }

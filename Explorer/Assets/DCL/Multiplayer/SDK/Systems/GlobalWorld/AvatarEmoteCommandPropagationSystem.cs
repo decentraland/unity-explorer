@@ -8,6 +8,7 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using UnityEngine;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
@@ -33,9 +34,15 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [None(typeof(DeleteEntityIntention))]
         private void UpdateEmoteCommandDataComponent(in PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
         {
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "UpdateEmoteCommandDataComponent " + playerCRDTEntity.CRDTEntity.Id + " " + playerCRDTEntity.CRDTEntity.EntityNumber + " " + playerCRDTEntity.CRDTEntity.EntityVersion);
             if (!playerCRDTEntity.AssignedToScene) return;
 
             if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
+
+            if (emote.IsLoading)
+                return;
+
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "UpdateEmoteCommandDataComponent 2");
 
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;

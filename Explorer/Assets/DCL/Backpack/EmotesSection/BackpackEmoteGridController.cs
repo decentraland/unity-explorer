@@ -32,6 +32,7 @@ namespace DCL.Backpack.EmotesSection
     {
         private const int CURRENT_PAGE_SIZE = 16;
         private const string EMOTE_CATEGORY = "emote";
+        private const string SOCIAL_EMOTE_CATEGORY = "social_emote";
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
@@ -292,7 +293,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
-                backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(EMOTE_CATEGORY);
+                backpackItemView.CategoryImage.sprite = emotes[i].IsSocial ? categoryIcons.GetTypeImage(SOCIAL_EMOTE_CATEGORY) : categoryIcons.GetTypeImage(EMOTE_CATEGORY);
 
                 int equippedSlot = equippedEmotes.SlotOf(emotes[i]);
                 bool isEquipped = equippedSlot != -1;

@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -9,6 +10,9 @@ namespace DCL.AvatarRendering.Emotes
     {
         StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
         StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
+        List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; }
+
+        bool IsSocial { get; }
 
         bool IsLooping();
 

@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Input.Component;
 using ECS.Abstract;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -65,6 +66,9 @@ namespace DCL.Input.Systems
                         case InputMapComponent.Kind.VOICE_CHAT:
                             SetActionMapEnabled(isActive, DCLInput.Instance.VoiceChat);
                             break;
+                        case InputMapComponent.Kind.SOCIAL_EMOTE_OUTCOME_SELECTION:
+                            SetActionMapEnabled(isActive, DCLInput.Instance.SocialEmoteOutcomes);
+                            break;
                     }
                 }
             }
@@ -73,7 +77,6 @@ namespace DCL.Input.Systems
         private static void SetActionMapEnabled(bool enabled, InputActionMap map)
         {
             if (map.enabled == enabled) return;
-
             if (enabled) map.Enable();
             else map.Disable();
         }

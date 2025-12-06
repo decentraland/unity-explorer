@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ReturnToPool()
         {
-            var asset = new AttachmentRegularAsset(new GameObject("ORIGINAL"), new List<AttachmentRegularAsset.RendererInfo>(), null);
+            var asset = new AttachmentRegularAsset(new GameObject("ORIGINAL"), new List<AttachmentRegularAsset.RendererInfo>(), null, null);
 
             for (var i = 0; i < 2; i++)
                 cache.Release(new CachedAttachment(asset, new GameObject("INSTANCE" + i), true));
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void GetPooledObject()
         {
-            var asset = new AttachmentRegularAsset(new GameObject("ORIGINAL"), new List<AttachmentRegularAsset.RendererInfo>(), null);
+            var asset = new AttachmentRegularAsset(new GameObject("ORIGINAL"), new List<AttachmentRegularAsset.RendererInfo>(), null, null);
 
             for (var i = 0; i < 2; i++)
                 cache.Release(new CachedAttachment(asset, new GameObject("INSTANCE" + i), true));

@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             // Common mock assets
             mockGameObject = new GameObject("MockAsset");
             mockStreamableData = new MockStreamableDataWithURN(new URN("urn:mock:asset"));
-            mockAttachmentAsset = new AttachmentRegularAsset(mockGameObject, new List<AttachmentRegularAsset.RendererInfo>(), mockStreamableData);
+            mockAttachmentAsset = new AttachmentRegularAsset(mockGameObject, new List<AttachmentRegularAsset.RendererInfo>(), mockStreamableData, null);
         }
 
         [TearDown]
@@ -585,6 +585,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public URN Urn { get; }
             public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
             public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
+            public List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; }
+            public bool IsSocial { get; }
             public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
             public EmoteDTO DTO { get; private set; }
             public bool IsLoading { get; set; }

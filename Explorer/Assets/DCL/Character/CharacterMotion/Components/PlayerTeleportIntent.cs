@@ -20,6 +20,17 @@ namespace DCL.CharacterMotion.Components
             }
         }
 
+        /// <summary>
+        /// Used when moving the CharacterController to a different position in the current scene, without interpolating.
+        /// </summary>
+        public struct JustTeleportedLocally
+        {
+            /// <summary>
+            /// Indicates whether the messge of the last movement was already sent, marked with IsInstance = true and that it is safe to remove the component.
+            /// </summary>
+            public bool IsConsumed;
+        }
+
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromMinutes(2);
         private readonly float creationTime;
 

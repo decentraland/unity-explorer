@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
@@ -22,12 +23,13 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IControllerInSharedSpace<EmotesWheelView>
+    public class EmotesWheelController : ControllerBase<EmotesWheelView, EmotesWheelParams>, IControllerInSharedSpace<EmotesWheelView, EmotesWheelParams>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly SelfProfile selfProfile;
         private readonly IEmoteStorage emoteStorage;
         private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly NftTypeIconSO emoteTypeIcons;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -89,7 +91,9 @@ namespace DCL.EmotesWheel
         {
             viewInstance!.Closed += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpackAsync);
-            viewInstance.CurrentEmoteName.text = "";
+
+            viewInstance.SocialEmoteNameWithUser.text = string.Empty;
+            viewInstance.CurrentEmoteName.text = string.Empty;
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
             {
@@ -105,6 +109,10 @@ namespace DCL.EmotesWheel
         {
             UnblockUnwantedInputs();
             cursor.Unlock();
+
+            viewInstance.CurrentEmoteName.gameObject.SetActive(!inputData.IsDirectedEmote);
+            viewInstance.SocialEmoteNameWithUser.gameObject.SetActive(inputData.IsDirectedEmote);
+
             fetchProfileCts = fetchProfileCts.SafeRestart();
             InitializeEverythingAsync(fetchProfileCts.Token).Forget();
             return;
@@ -172,6 +180,8 @@ namespace DCL.EmotesWheel
 
             EmoteWheelSlotView view = viewInstance!.Slots[slot];
 
+            view.TypeIcon.enabled = true;
+            view.TypeIcon.sprite = emote.IsSocial ? viewInstance.SocialEmoteSlotIcon : viewInstance.EmoteSlotIcon;
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             view.EmptyContainer.SetActive(false);
 
@@ -184,6 +194,7 @@ namespace DCL.EmotesWheel
 
             view.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(EMPTY_IMAGE_TYPE);
             view.EmptyContainer.SetActive(true);
+            view.TypeIcon.enabled = false;
             view.Thumbnail.gameObject.SetActive(false);
         }
 
@@ -203,13 +214,29 @@ namespace DCL.EmotesWheel
         {
             if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
+            else if (inputData.IsDirectedEmote)
+            {
+                viewInstance.OpenInviteWarning.gameObject.SetActive(false);
+                viewInstance!.SocialEmoteNameWithUser.text = string.Format(viewInstance.SocialEmoteNameAndUserText, ColorUtility.ToHtmlStringRGBA(inputData.TargetUsernameColor), inputData.TargetUsername, emote.GetName());
+            }
             else
+            {
+                // Social and not directed, shows warning message
+                if(emote.IsSocial)
+                    viewInstance.OpenInviteWarning.gameObject.SetActive(true);
+
                 viewInstance!.CurrentEmoteName.text = emote.GetName();
+            }
         }
 
         private void ClearCurrentEmote(int slot)
         {
-            viewInstance!.CurrentEmoteName.text = string.Empty;
+            if(inputData.IsDirectedEmote)
+                viewInstance!.SocialEmoteNameWithUser.text = string.Empty;
+            else
+                viewInstance!.CurrentEmoteName.text = string.Empty;
+
+            viewInstance.OpenInviteWarning.gameObject.SetActive(false);
         }
 
         private void PlayEmote(int slot)
@@ -217,7 +244,11 @@ namespace DCL.EmotesWheel
             if (State == ControllerState.ViewHidden || State == ControllerState.ViewHiding)
                 return;
 
-            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
+            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent
+            {
+                Slot = slot,
+                TargetAvatarWalletAddress = inputData.IsDirectedEmote ? inputData.TargetWalletAddress : string.Empty
+            });
 
             Close();
         }

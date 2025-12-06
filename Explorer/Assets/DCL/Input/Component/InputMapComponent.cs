@@ -15,7 +15,8 @@ namespace DCL.Input.Component
             Kind.CAMERA,
             Kind.SHORTCUTS,
             Kind.PLAYER,
-            Kind.VOICE_CHAT
+            Kind.VOICE_CHAT,
+            Kind.SOCIAL_EMOTE_OUTCOME_SELECTION
         };
 
 
@@ -31,6 +32,7 @@ namespace DCL.Input.Component
             SHORTCUTS = 1 << 5,
             IN_WORLD_CAMERA = 1 << 6,
             VOICE_CHAT = 1 << 7,
+            SOCIAL_EMOTE_OUTCOME_SELECTION = 1 << 8,
         }
 
         private Kind active;

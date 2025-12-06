@@ -345,5 +345,8 @@ namespace DCL.Diagnostics
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
 
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
+
+        // TODO: Remove this category along with all the Log calls
+        public const string EMOTE_DEBUG = nameof(EMOTE_DEBUG);
     }
 }
