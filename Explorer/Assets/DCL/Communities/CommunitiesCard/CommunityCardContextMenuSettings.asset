@@ -20,6 +20,9 @@ MonoBehaviour:
     m_Right: 15
     m_Top: 20
     m_Bottom: 25
+  <CommunityNotificationsSprite>k__BackingField: {fileID: 21300000, guid: b68a1845513e146bbbbb9b209ce4120d, type: 3}
+  <CommunityNotificationsText>k__BackingField: Notifications
+  <CommunityNotificationsSeparatorHeight>k__BackingField: 20
   <LeaveCommunitySprite>k__BackingField: {fileID: 21300000, guid: 5f39f01f09cd04a7c9a041960e0e0484, type: 3}
   <LeaveCommunityText>k__BackingField: Leave Community
   <DeleteCommunitySprite>k__BackingField: {fileID: 21300000, guid: ac4ebefc5fac7475ba19ac778feacfa8, type: 3}
@@ -27,3 +30,4 @@ MonoBehaviour:
   <DeleteCommunityTextColor>k__BackingField: {r: 1, g: 0, b: 0, a: 1}
   <CopyCommunityLinkSprite>k__BackingField: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}
   <CopyCommunityLinkText>k__BackingField: Copy Link
+  <CopyCommunityLinkSeparatorHeight>k__BackingField: 20
