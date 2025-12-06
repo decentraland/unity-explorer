@@ -25,12 +25,19 @@ namespace DCL.AvatarRendering.Emotes
         /// <summary>
         ///
         /// </summary>
+        public float LocalHeight;
+
+        /// <summary>
+        ///
+        /// </summary>
         /// <param name="startPosition"></param>
         /// <param name="target"></param>
-        public InterpolateCameraTargetTowardsNewParentIntent(Vector3 startPosition, Transform target)
+        /// <param name="localHeight"></param>
+        public InterpolateCameraTargetTowardsNewParentIntent(Vector3 startPosition, Transform target, float localHeight)
         {
             StartPosition = startPosition;
             Target = target;
+            LocalHeight = localHeight;
             StartTime = UnityEngine.Time.time;
         }
     }

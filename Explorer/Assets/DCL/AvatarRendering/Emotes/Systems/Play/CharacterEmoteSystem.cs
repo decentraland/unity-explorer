@@ -75,6 +75,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly EphemeralNotificationsController ephemeralNotificationsController;
         private readonly SocialEmotesSettings socialEmotesSettings;
 
+        // The local height of the Camera Focus object in the character controller, used to interpolate the position
+        // of the camera when starting or finishing a social emote interaction
+        private float cameraFocusHeight = 1.75f;
+
         public CharacterEmoteSystem(
             World world,
             IEmoteStorage emoteStorage,
@@ -760,7 +764,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
 
                     // Interpolates the position of the object the camera is looking at, from current position to original position in the controller
-                    World.Add(entity, new InterpolateCameraTargetTowardsNewParentIntent(cameraFocusCurrentPosition, characterController.transform));
+                    World.Add(entity, new InterpolateCameraTargetTowardsNewParentIntent(cameraFocusCurrentPosition, characterController.transform, cameraFocusHeight));
                 }
 
                 if(isLocal)
@@ -821,7 +825,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // Interpolates the position of the object the camera is looking at, from current position to the position of the avatar's head
             if (World.TryGet(interaction.ReceiverEntity, out PlayerComponent playerComponent))
-                World.Add(interaction.ReceiverEntity, new InterpolateCameraTargetTowardsNewParentIntent(playerComponent.CameraFocus.position, receiverAvatar.GetTransform()));
+            {
+                cameraFocusHeight = playerComponent.CameraFocus.localPosition.y;
+                World.Add(interaction.ReceiverEntity, new InterpolateCameraTargetTowardsNewParentIntent(playerComponent.CameraFocus.position, receiverAvatar.GetTransform(), cameraFocusHeight));
+            }
         }
 
         // Comes from the animator's state machine behaviour

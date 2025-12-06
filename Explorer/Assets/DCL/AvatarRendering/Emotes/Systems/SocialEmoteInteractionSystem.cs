@@ -226,7 +226,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#559933>CAMERA INTERPOLATION: {interpolation.ToString("F6")}</color>");
 
                 Vector3 targetPositionWithHeight = interpolateIntent.Target.position;
-                targetPositionWithHeight.y = interpolateIntent.StartPosition.y;
+                targetPositionWithHeight.y = interpolateIntent.Target.position.y + interpolateIntent.LocalHeight;
 
                 player.CameraFocus.position = Vector3.Lerp(interpolateIntent.StartPosition, targetPositionWithHeight, interpolation);
             }
@@ -243,7 +243,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
                     // Re-parents the camera focus object
                     player.CameraFocus.parent = interpolateIntent.Target;
-                    player.CameraFocus.localPosition = new Vector3(0.0f, player.CameraFocus.localPosition.y, 0.0f);
+                    player.CameraFocus.localPosition = new Vector3(0.0f, interpolateIntent.LocalHeight, 0.0f);
                     player.CameraFocus.localRotation = Quaternion.identity;
 
                     World.Remove<InterpolateCameraTargetTowardsNewParentIntent>(entity);
