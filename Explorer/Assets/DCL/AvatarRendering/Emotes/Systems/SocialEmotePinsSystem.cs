@@ -106,7 +106,7 @@ namespace DCL.SocialEmotes.UI
         private void ScalePinToLookTheSameOnCamera([Data] CameraComponent camera, [Data] float fovScaleFactor, in SocialEmotePin emotePin)
         {
             float distance = Vector3.Distance(camera.Camera.transform.position, emotePin.transform.position);
-            emotePin.transform.localScale = distance * fovScaleFactor * 0.003f * Vector3.one;
+            emotePin.transform.localScale = distance * fovScaleFactor * 0.002f * Vector3.one;
         }
 
         [Query]
