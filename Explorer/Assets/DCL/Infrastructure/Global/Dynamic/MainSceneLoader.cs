@@ -9,7 +9,6 @@ using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -53,16 +52,11 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.WebRequests.ChromeDevtool;
-using DCL.Settings.ModuleControllers;
 using DCL.UI.ErrorPopup;
-using DCL.Utility;
-using DCL.Utility.Types;
-using System.Collections.Generic;
-using TMPro;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
@@ -102,6 +96,8 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
+            DisableAllSelectableTransitions();
+
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
@@ -127,6 +123,11 @@ namespace Global.Dynamic
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
+        private void OnApplicationQuit()
+        {
+            DisableAllSelectableTransitions();
+        }
+
         public void ApplyConfig(IAppArgs applicationParametersParser)
         {
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
@@ -138,7 +139,6 @@ namespace Global.Dynamic
             if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
                 decentralandEnvironment = env;
         }
-
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
@@ -619,6 +619,27 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
             return input.SelectedOption;
+        }
+
+        /// <summary>
+        /// Required to fix crash on exit, ticket - https://github.com/decentraland/unity-explorer/issues/6180
+        /// </summary>
+        private static void DisableAllSelectableTransitions()
+        {
+            DOTween.KillAll();
+            Selectable[] all = FindObjectsByType<UnityEngine.UI.Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
+
+            foreach (var s in all)
+            {
+                // Prevent Unity from executing DestroyTween / StartTween during shutdown
+                s.transition = Selectable.Transition.None;
+
+                // Disable any graphic tween still in progress
+                Graphic? g = s.targetGraphic;
+
+                if (g != null)
+                    g.CrossFadeColor(g.color, 0f, false, false); // instantly settle
+            }
         }
 
         [Serializable]
