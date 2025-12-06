@@ -114,7 +114,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             else
                 PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
 
-            if (audioAsset != null)
+            if (audioAsset != null &&
+                (!emoteComponent.Metadata.IsSocialEmote || !emoteComponent.SocialEmote.IsReacting)) // If it's a social emote, only the initiator plays the sound, otherwise there would be 2 sounds at the same time
             {
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing sound: " + audioAsset.name);
 
@@ -297,10 +298,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE);
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
 
-            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
-            view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
             // This flag makes the animator choose a different transition to Emote, which does not have an interpolation between animations
             view.SetAnimatorBool(AnimationHashes.IS_SOCIAL_EMOTE_OUTCOME, emoteComponent.SocialEmote.IsPlayingOutcome);
+
+            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
+            view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
             // Prop
             AnimationClip? propClip = null;
@@ -311,12 +313,15 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 if (emoteComponent.SocialEmote.IsPlayingOutcome)
                 {
-                    propClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].PropAnimation;
-
-                    if (propClip != null)
+                    if (!emoteComponent.SocialEmote.IsReacting) // Only the initiator plays the props, otherwise there would be 2 props at the same place
                     {
-                        isPropLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
-                        propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.SocialEmote.CurrentOutcome].PropAnimationHash;
+                        propClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].PropAnimation;
+
+                        if (propClip != null)
+                        {
+                            isPropLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
+                            propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.SocialEmote.CurrentOutcome].PropAnimationHash;
+                        }
                     }
                 }
                 else

@@ -50,6 +50,19 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
+        /// <summary>
+        /// Tells the system that the avatar has to be rotated so it coincides with the initiator, before playing a social emote.
+        /// </summary>
+        private struct RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent
+        {
+            public readonly Entity InitiatorEntity;
+
+            public RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(Entity initiatorEntity)
+            {
+                InitiatorEntity = initiatorEntity;
+            }
+        }
+
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
@@ -582,17 +595,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-// TODO: Use state machine events instead of a query
-        private struct RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent
-        {
-            public readonly Entity InitiatorEntity;
-
-            public RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(Entity initiatorEntity)
-            {
-                InitiatorEntity = initiatorEntity;
-            }
-        }
-
         // It just removes the intent once it has been consumed in PlayerMovementNetSendSystem
         [Query]
         [All(typeof(PlayerTeleportIntent.JustTeleportedLocally))]
@@ -635,7 +637,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             int currentTag = avatarView.GetAnimatorCurrentStateTag();
 
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
-                && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
+                && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE))
+                return;
 
             ReportHub.Log(ReportCategory.EMOTE_DEBUG, "Looping " + profile.UserId + " " + prevTag + " hash " + emoteComponent.GetHashCode());
 
@@ -716,6 +719,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 Debug.DrawRay(hipsWorldPosition, newCharacterForward, Color.magenta, 3.0f);
 
             Vector3 cameraFocusCurrentPosition = Vector3.zero;
+
+            // Below, the CharacterController or CharacterTransform will be placed where the avatar is,
+            // and the avatar, which is its child, will reset its local transform to coincide with its parent
 
             try
             {

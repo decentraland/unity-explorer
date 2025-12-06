@@ -30,12 +30,12 @@ namespace DCL.AvatarRendering.Emotes
         public SocialEmoteData SocialEmote;
 
         /// <summary>
-        ///
+        /// The emote that could be loaded and is ready to be played.
         /// </summary>
         public IEmote? EmoteAsset;
 
         /// <summary>
-        ///
+        /// Whether the emote was finally played.
         /// </summary>
         public bool HasPlayedEmote;
 
