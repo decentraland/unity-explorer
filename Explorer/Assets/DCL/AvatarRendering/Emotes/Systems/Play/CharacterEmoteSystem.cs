@@ -571,7 +571,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                         }
                     }
                 }
-                else if (!emoteComponent.Metadata.IsSocialEmote && emoteIntent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity!.Address)
+                else if (!emoteComponent.Metadata.IsSocialEmote &&
+                         emoteIntent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity!.Address &&
+                         !emoteIntent.IsRepeating)
                 {
                     // Directed normal emote
                     // Notification displayed

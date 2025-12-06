@@ -19,7 +19,6 @@ namespace DCL.AvatarRendering.Emotes
             public bool UseOutcomeReactionAnimation;
             public string InitiatorWalletAddress;
             public string TargetAvatarWalletAddress;
-            public bool IsRepeating;
             public int InteractionId;
         }
 
@@ -27,6 +26,7 @@ namespace DCL.AvatarRendering.Emotes
         public URN EmoteId;
         public bool Spatial;
         public TriggerSource TriggerSource;
+        public bool IsRepeating;
         public SocialEmoteData SocialEmote;
 
         /// <summary>
@@ -50,9 +50,10 @@ namespace DCL.AvatarRendering.Emotes
             this.SocialEmote.UseOutcomeReactionAnimation = false;
             this.SocialEmote.InitiatorWalletAddress = string.Empty;
             this.SocialEmote.TargetAvatarWalletAddress = string.Empty;
-            this.SocialEmote.IsRepeating = false;
+            this.IsRepeating = false;
             this.SocialEmote.InteractionId = 0;
             this.EmoteAsset = null;
+            this.HasPlayedEmote = false;
         }
     }
 }
