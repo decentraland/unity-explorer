@@ -176,6 +176,48 @@ jobs:
           fail-on-empty: true
           use-actions-summary: true
 
+      # C# Linting using JetBrains ReSharper CLI
+
+      - name: Generate solution inside Unity Docker container
+        run: |
+          docker run --rm \
+           -v "${{ github.workspace }}:/workspace" \
+           -w /workspace \
+           ${{ steps.img.outputs.ghcr }} \
+           unity-editor \
+           -batchmode \
+           -nographics \
+           -projectPath /workspace/Explorer \
+           -executeMethod UnityEditor.SyncVS.SyncSolution \
+           -quit \
+           -logFile -
+
+      - name: Download ReSharper Command Line Tools
+        run: |
+          wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
+          unzip -q rsharp.zip -d rsharp
+          chmod +x rsharp/*.sh
+
+      - name: Run ReSharper InspectCode (static analysis)
+        run: |
+          rsharp/inspectcode.sh Explorer/Explorer.sln \
+            --no-build \
+            --verbosity=INFO \
+            --properties:Configuration=Debug \
+            --disable-settings-layers:SolutionPersonal \
+            --output=InspectCodeReport.json
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: csharp-lint-reports
+          path: |
+            InspectCodeReport.json
+#            CodeStyleReport.xml
+
+
+      # END: C# Linting using JetBrains ReSharper CLI
+
       # Upload artifact
       - uses: actions/upload-artifact@v4
         if: always()

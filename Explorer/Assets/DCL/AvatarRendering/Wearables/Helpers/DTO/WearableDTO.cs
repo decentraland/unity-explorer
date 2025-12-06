@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Ipfs;
+using DCL.Utilities.Extensions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -38,18 +39,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         [Serializable]
         public class LambdaResponseElementDto : ILambdaResponseElement<WearableDTO>
         {
-            public string type;
-            public string urn;
-            public string name;
-            public string category;
-            public WearableDTO entity;
-            public ElementIndividualDataDto[] individualData;
+            public string? type;
+            public string? urn;
+            public string? name;
+            public string? category;
+            public WearableDTO? entity;
+            public ElementIndividualDataDto[]? individualData;
 
             [JsonIgnore]
-            public WearableDTO Entity => entity;
+            public WearableDTO Entity => entity.EnsureNotNull("entity != null");
 
             [JsonIgnore]
-            public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
+            public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData ?? Array.Empty<ElementIndividualDataDto>();
         }
     }
 
@@ -69,8 +70,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         [Serializable]
         public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement<BuilderWearableDTO>
         {
-            public Dictionary<string, string> contents;
-            public string type;
+            public Dictionary<string, string>? contents;
+            public string? type;
 
             [JsonIgnore]
             public IReadOnlyDictionary<string, string> Contents => contents;
