@@ -1,5 +1,5 @@
 ﻿using DCL.PerformanceAndDiagnostics.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
@@ -38,7 +38,7 @@ namespace DCL.Analytics.Systems
         {
             if (newParcel == oldParcel) return;
 
-            analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JsonObject
+            analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JObject
             {
                 { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
                 { "new_parcel", newParcel.ToString() },

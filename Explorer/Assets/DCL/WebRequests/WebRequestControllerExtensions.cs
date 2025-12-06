@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.CustomDownloadHandlers;
+using DCL.WebRequests.Dumper;
 using System.Buffers;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -97,35 +98,35 @@ namespace DCL.WebRequests
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
-            GenericPutArguments arguments,
+            GenericPostArguments arguments,
             CancellationToken ct,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPutRequest, TResult> =>
-            controller.SendAsync<GenericPutRequest, GenericPutArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            controller.SendAsync<GenericPutRequest, GenericPostArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
         public static UniTask<TResult> DeleteAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
-            GenericDeleteArguments arguments,
+            GenericPostArguments arguments,
             CancellationToken ct,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
         ) where TOp: struct, IWebRequestOp<GenericDeleteRequest, TResult> =>
-            controller.SendAsync<GenericDeleteRequest, GenericDeleteArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            controller.SendAsync<GenericDeleteRequest, GenericPostArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
         public static UniTask<TResult> PatchAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
-            GenericPatchArguments arguments,
+            GenericPostArguments arguments,
             CancellationToken ct,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPatchRequest, TResult> =>
-            controller.SendAsync<GenericPatchRequest, GenericPatchArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            controller.SendAsync<GenericPatchRequest, GenericPostArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
         public static UniTask<TResult> HeadAsync<TOp, TResult>(
             this IWebRequestController controller,
@@ -230,9 +231,7 @@ namespace DCL.WebRequests
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
 
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget)
-        {
-            return new BudgetedWebRequestController(origin, totalBudget, debugBudget);
-        }
+        public static IWebRequestController WithDump(this IWebRequestController origin) =>
+            new WebRequestDumpRecorder(origin);
     }
 }

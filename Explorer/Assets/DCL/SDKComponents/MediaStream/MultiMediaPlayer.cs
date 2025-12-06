@@ -22,6 +22,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             this.AvProMediaPlayer = avProMediaPlayer;
             this.MediaPlayerCustomPool = mediaPlayerCustomPool;
+
+            if (AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
+                AvProMediaPlayer.SetAudioSource(audioSource);
         }
     }
 
@@ -82,6 +85,17 @@ namespace DCL.SDKComponents.MediaStream
             },
             static _ => new Vector2(1, -1)
         );
+
+        public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),
+            static _ => false);
+
+        public float SpatialMaxDistance => Match(
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE,
+            static _ => 0f);
+
+        public float SpatialMinDistance => Match(
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.minDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE,
+            static _ => 0f);
 
         public void Dispose(MediaAddress address)
         {
@@ -257,6 +271,21 @@ namespace DCL.SDKComponents.MediaStream
                 static avPro => avPro.AvProMediaPlayer.Control.GetLastError(),
                 static _ => ErrorCode.None
             );
+        }
+
+        public void UpdateSpatialAudio(bool isSpatial, float minDistance, float maxDistance)
+        {
+            Match((isSpatial, minDistance, maxDistance),
+                static (args, avPro) =>
+                {
+                    AudioSource audioSource = avPro.AvProMediaPlayer.AudioSource;
+                    if (audioSource == null) return;
+                    audioSource.spatialBlend = args.isSpatial ? 1f : 0f;
+                    audioSource.minDistance = args.minDistance;
+                    audioSource.maxDistance = args.maxDistance;
+                    audioSource.rolloffMode = AudioRolloffMode.Linear;
+                },
+                static (_, _) => { });
         }
     }
 }

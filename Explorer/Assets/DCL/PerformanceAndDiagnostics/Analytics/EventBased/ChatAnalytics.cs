@@ -1,5 +1,5 @@
 ﻿using DCL.ChatArea;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -28,7 +28,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_CLOSED);
 
         private void OnConversationOpened(bool wasAlreadyOpen) =>
-            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JsonObject
+            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JObject
             {
                 { "was_already_open", wasAlreadyOpen },
             });

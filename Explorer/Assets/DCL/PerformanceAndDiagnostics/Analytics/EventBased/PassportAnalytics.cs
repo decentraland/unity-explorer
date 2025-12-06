@@ -1,5 +1,5 @@
 ﻿using DCL.Passport;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
-            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
             {
                 {"receiver_id", targetAddress},
                 {"friend_position", parcel.ToString()},
@@ -40,7 +40,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnBadgeSelected(string id, bool isOwnPassport)
         {
-            analytics.Track(AnalyticsEvents.Profile.BADGE_UI_CLICK, new JsonObject
+            analytics.Track(AnalyticsEvents.Profile.BADGE_UI_CLICK, new JObject
             {
                 { "badge_id", id }, {"own_passport", isOwnPassport}
             });
@@ -48,7 +48,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnBadgesSectionOpened(string userId, bool isOwnPassport, string origin)
         {
-            analytics.Track(AnalyticsEvents.Profile.BADGES_TAB_OPENED, new JsonObject
+            analytics.Track(AnalyticsEvents.Profile.BADGES_TAB_OPENED, new JObject
             {
                 { "receiver_id", userId }, {"own_passport", isOwnPassport}, {"origin", origin},
             });
@@ -58,7 +58,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             string eventName = isOwnPassport ? AnalyticsEvents.Profile.OWN_PROFILE_OPENED : AnalyticsEvents.Profile.PASSPORT_OPENED;
 
-            analytics.Track(eventName, new JsonObject
+            analytics.Track(eventName, new JObject
             {
                 { "receiver_id", userId },
             }, isInstant: eventName == AnalyticsEvents.Profile.PASSPORT_OPENED);

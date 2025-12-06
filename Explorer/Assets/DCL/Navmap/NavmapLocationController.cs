@@ -1,8 +1,8 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap.FilterPanel;
-using System;
 using UnityEngine;
 using Utility;
 
@@ -15,24 +15,30 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private CharacterTransform playerTransformComponent;
 
+        private readonly NavmapLocationView view;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly NavmapFilterPanelController navmapFilterPanelController;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         public NavmapLocationController(
             NavmapLocationView view,
             World world,
             Entity playerEntity,
             NavmapFilterPanelController navmapFilterPanelController,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            HomePlaceEventBus homePlaceEventBus)
         {
+            this.view = view;
             this.world = world;
             this.playerEntity = playerEntity;
             this.navmapFilterPanelController = navmapFilterPanelController;
+            this.homePlaceEventBus = homePlaceEventBus;
             world.TryGet(playerEntity, out playerTransformComponent);
 
-            view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
-            view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
+            this.view.CenterToHomeButton.onClick.AddListener(CenterToHome);
+            this.view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
+            this.view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
 
             navmapBus.OnMoveCameraTo += MoveCameraTo;
         }
@@ -51,17 +57,20 @@ namespace DCL.Navmap
         {
             this.cameraController = controller;
 
-            if (TryGetCoordinates(out var coordinates))
+            if (TryGetPlayerCoordinates(out var coordinates))
                 cameraController.SetPosition(coordinates);
         }
 
+        private void CenterToHome() => 
+            homePlaceEventBus.DisplayPlacesInfoPanel(homePlaceEventBus.CurrentHomeCoordinates ?? Vector2Int.zero);
+
         private void CenterToPlayer()
         {
-            if (TryGetCoordinates(out var coordinates))
+            if (TryGetPlayerCoordinates(out var coordinates))
                 cameraController.TranslateTo(coordinates, TRANSITION_TIME);
         }
 
-        private bool TryGetCoordinates(out Vector2 coordinates)
+        private bool TryGetPlayerCoordinates(out Vector2 coordinates)
         {
             if (world.TryGet(playerEntity, out playerTransformComponent))
             {

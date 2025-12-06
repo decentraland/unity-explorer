@@ -21,9 +21,9 @@ namespace DCL.WebRequests
         public readonly bool SuppressErrors;
         public readonly bool IgnoreIrrecoverableErrors;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
-        private readonly TWebRequestArgs args;
+        internal readonly TWebRequestArgs args;
         private readonly DownloadHandler? customDownloadHandler;
-        private readonly WebRequestHeadersInfo headersInfo;
+        internal readonly WebRequestHeadersInfo headersInfo;
         internal readonly WebRequestSignInfo? signInfo;
         private readonly ISet<long>? responseCodeIgnores;
 

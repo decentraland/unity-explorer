@@ -1,4 +1,4 @@
-using Segment.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics;
 
 namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
 {
@@ -6,6 +6,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.ContextSources
     {
         string ContextJson();
 
-        void Register(EventPlugin plugin);
+        void Register(IAnalyticsPlugin plugin);
     }
 }

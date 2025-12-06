@@ -19,6 +19,12 @@ namespace DCL.UI.Controls
             RegisterListener(settings.callback, settings.data);
         }
 
+        public override bool IsInteractable
+        {
+            get => ButtonComponent.interactable;
+            set => ButtonComponent.interactable = value;
+        }
+
         public override void UnregisterListeners() =>
             ButtonComponent.onClick.RemoveAllListeners();
 

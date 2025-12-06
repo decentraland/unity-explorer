@@ -57,6 +57,8 @@ namespace DCL.UI.Controls
         private CancellationTokenSource copyAnimationCts = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
 
+        public override bool IsInteractable { get; set; }
+
         public override void UnregisterListeners()
         {
             CopyNameButton.onClick.RemoveAllListeners();

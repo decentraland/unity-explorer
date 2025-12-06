@@ -148,10 +148,12 @@ namespace MVC
             topController = null;
         }
 
-        public PopupPopInfo PopPopup(IController controller)
+        public PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true)
         {
             RemovePopup(controller);
-            TryGracefulClose(controller);
+
+            if(shouldGracefullyClose)
+                TryGracefulClose(controller);
 
             if (popupStack.Count == 0)
             {

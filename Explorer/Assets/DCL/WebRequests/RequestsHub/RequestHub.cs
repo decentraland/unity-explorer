@@ -32,22 +32,24 @@ namespace DCL.WebRequests.RequestsHub
                 new (typeof(T), typeof(TWebRequest));
         }
 
+        private readonly bool disableABCache;
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
-        public RequestHub(IDecentralandUrlsSource urlsSource)
+        public RequestHub(IDecentralandUrlsSource urlsSource, bool disableABCache = false)
         {
+            this.disableABCache = disableABCache;
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
             Add<GenericGetArguments, GenericGetRequest>(mutableMap, GenericGetRequest.Initialize);
             Add<GenericPostArguments, GenericPostRequest>(mutableMap, GenericPostRequest.Initialize);
-            Add<GenericPutArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
-            Add<GenericDeleteArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
-            Add<GenericPatchArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
+            Add<GenericPostArguments, GenericPutRequest>(mutableMap, GenericPutRequest.Initialize);
+            Add<GenericPostArguments, GenericDeleteRequest>(mutableMap, GenericDeleteRequest.Initialize);
+            Add<GenericPostArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-            Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
+            Add(mutableMap, (in CommonArguments arguments, GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(arguments, abArgs, disableABCache));
             Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
             Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
         }

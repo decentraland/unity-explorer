@@ -24,13 +24,11 @@ using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
-using Segment.Analytics;
 using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace Global.Dynamic
 {

@@ -2,7 +2,7 @@
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utility.Types;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -35,7 +35,7 @@ namespace DCL.RealmNavigation.LoadingOperation
             if (result.Success == false)
                 analyticsController.Track(
                     AnalyticsEvents.General.LOADING_ERROR,
-                    new JsonObject
+                    new JObject
                     {
                         ["type"] = reportedOpType,
                         ["message"] = result.AsResult().ErrorMessage,

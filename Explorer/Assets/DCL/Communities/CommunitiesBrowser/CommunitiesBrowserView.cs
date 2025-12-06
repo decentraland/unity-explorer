@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -19,6 +20,11 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string, string>? CommunityInvitationAccepted;
         public event Action<string, string>? CommunityInvitationRejected;
         public event Action? CreateCommunityButtonClicked;
+        public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
+        public event Action<ICommunityMemberData>? OpenUserChatRequested;
+        public event Action<ICommunityMemberData>? CallUserRequested;
+        public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<string, ICommunityMemberData, InviteRequestIntention>? ManageRequestReceivedRequested;
 
         public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
         public CommunitiesBrowserRightSectionMainView RightSectionView => rightSectionView;
@@ -64,6 +70,11 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.RequestToJoinCommunityCanceled += OnCommunityRequestToJoinCanceled;
             invitesAndRequestsView.CommunityInvitationAccepted += OnCommunityInvitationAccepted;
             invitesAndRequestsView.CommunityInvitationRejected += OnCommunityInvitationRejected;
+            invitesAndRequestsView.OpenProfilePassportRequested += OnOpenProfilePassport;
+            invitesAndRequestsView.OpenUserChatRequested += OnOpenUserChat;
+            invitesAndRequestsView.CallUserRequested += OnCallUser;
+            invitesAndRequestsView.BlockUserRequested += OnBlockUser;
+            invitesAndRequestsView.ManageRequestReceivedRequested += OnManageRequestReceived;
         }
 
         private void OnDestroy()
@@ -80,6 +91,11 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.RequestToJoinCommunityCanceled -= OnCommunityRequestToJoinCanceled;
             invitesAndRequestsView.CommunityInvitationAccepted -= OnCommunityInvitationAccepted;
             invitesAndRequestsView.CommunityInvitationRejected -= OnCommunityInvitationRejected;
+            invitesAndRequestsView.OpenProfilePassportRequested -= OnOpenProfilePassport;
+            invitesAndRequestsView.OpenUserChatRequested -= OnOpenUserChat;
+            invitesAndRequestsView.CallUserRequested -= OnCallUser;
+            invitesAndRequestsView.BlockUserRequested -= OnBlockUser;
+            invitesAndRequestsView.ManageRequestReceivedRequested -= OnManageRequestReceived;
         }
 
         public void SetViewActive(bool isActive) =>
@@ -140,6 +156,21 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetActionLoadingActive(true);
             CommunityInvitationRejected?.Invoke(communityId, invitationId);
         }
+
+        private void OnOpenProfilePassport(ICommunityMemberData profile) =>
+            OpenProfilePassportRequested?.Invoke(profile);
+
+        private void OnOpenUserChat(ICommunityMemberData profile) =>
+            OpenUserChatRequested?.Invoke(profile);
+
+        private void OnCallUser(ICommunityMemberData profile) =>
+            CallUserRequested?.Invoke(profile);
+
+        private void OnBlockUser(ICommunityMemberData profile) =>
+            BlockUserRequested?.Invoke(profile);
+
+        private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
+            ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Text.RegularExpressions;
 
 namespace CommunicationData.URLHelpers
@@ -11,6 +12,7 @@ namespace CommunicationData.URLHelpers
         public static readonly URLAddress EMPTY = new (string.Empty);
         public readonly string Value;
 
+        [JsonConstructor]
         internal URLAddress(string value)
         {
             Value = value;

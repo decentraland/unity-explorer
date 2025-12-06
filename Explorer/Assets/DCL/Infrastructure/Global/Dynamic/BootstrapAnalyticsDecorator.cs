@@ -11,10 +11,10 @@ using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Versioning;
+using Newtonsoft.Json.Linq;
 using SceneRunner.Debugging;
-using Segment.Serialization;
 using System;
-using System.Collections.Generic;
+using System.Text.Json.Nodes;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
@@ -40,7 +40,7 @@ namespace Global.Dynamic
 
         public UniTask PreInitializeSetupAsync(CancellationToken ct)
         {
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "0 - started" },
             });
@@ -63,7 +63,7 @@ namespace Global.Dynamic
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "1 - static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
@@ -85,7 +85,7 @@ namespace Global.Dynamic
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
                     settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "3 - dynamic container loaded" },
                 { RESULT_KEY, result.Item2 ? "success" : "failure" },
@@ -100,7 +100,7 @@ namespace Global.Dynamic
 
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
-            var enabledFeatureFlags = new JsonArray();
+            var enabledFeatureFlags = new JArray();
 
             foreach (string flag in configuration.AllEnabledFlags)
             {
@@ -113,12 +113,12 @@ namespace Global.Dynamic
                 enabledFeatureFlags.Add(name);
             }
 
-            analytics.Track(FeatureFlags.ENABLED_FEATURES, new JsonObject
+            analytics.Track(FeatureFlags.ENABLED_FEATURES, new JObject
             {
                 { "featureFlags", enabledFeatureFlags },
             });
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "2 - feature flag initialized" },
             });
@@ -131,7 +131,7 @@ namespace Global.Dynamic
         {
             bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, analytics, ct);
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "4 - plugins initialized" },
                 { RESULT_KEY, !anyFailure ? "success" : "failure" },
@@ -148,7 +148,7 @@ namespace Global.Dynamic
         {
             GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity);
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "5 - global world and player created" },
             });
@@ -160,7 +160,7 @@ namespace Global.Dynamic
         {
             await core.LoadStartingRealmAsync(dynamicWorldContainer, ct);
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "6 - realm loaded" },
             });
@@ -184,7 +184,7 @@ namespace Global.Dynamic
         {
             await core.UserInitializationAsync(dynamicWorldContainer, bootstrapContainer, globalWorld, playerEntity, ct);
 
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "8 - end" },
             });

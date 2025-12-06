@@ -1,4 +1,4 @@
-﻿using Segment.Serialization;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -26,7 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             var e = (Exception)args.ExceptionObject;
 
-            analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
+            analytics.Track(AnalyticsEvents.General.ERROR, new JObject
             {
                 { "type", e.GetType().ToString() },
                 { "message", TrimToPayloadLimit(e.Message) },

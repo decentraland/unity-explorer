@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -25,8 +26,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, string> CommunityUserBanned;
         public event Action<string, string, bool> CommunityRequestedToJoin;
         public event Action<string, bool> CommunityInviteRequestCancelled;
-        public event Action<string, bool> CommunityInviteRequestAccepted;
-        public event Action<string, bool> CommunityInviteRequestRejected;
+        public event Action<string, string, bool> CommunityInviteRequestAccepted;
+        public event Action<string, string, bool> CommunityInviteRequestRejected;
+        public event Action<string> CommunityOwnershipTransferred;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -84,23 +86,24 @@ namespace DCL.Communities.CommunitiesDataProvider
             }
 
             return response;
+        }
 
-            async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken cancellationToken)
+        public async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken cancellationToken)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/requests";
+
+            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, cancellationToken)
+                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            int totalRequests = 0;
+
+            foreach (GetCommunityInviteRequestResponse.CommunityInviteRequestData request in response.data.results)
             {
-                var url = $"{communitiesBaseUrl}/{communityId}/requests";
-
-                GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, cancellationToken)
-                                                                                       .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
-
-                int totalRequests = 0;
-                foreach (var request in response.data.results)
-                {
-                    if (request.type == InviteRequestAction.request_to_join)
-                        totalRequests++;
-                }
-
-                return totalRequests;
+                if (request.type == InviteRequestAction.request_to_join)
+                    totalRequests++;
             }
+
+            return totalRequests;
         }
 
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility, CancellationToken ct)
@@ -162,7 +165,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             {
                 // Updating an existing community
                 var communityEditionUrl = $"{communitiesBaseUrl}/{communityId}";
-                response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPutArguments.CreateMultipartForm(formData), string.Empty, ct)
+
+                response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
                 response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
@@ -305,9 +309,12 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
 
-            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (result.Success && newRole == CommunityMemberRole.owner)
+                CommunityOwnershipTransferred?.Invoke(communityId);
 
             return result.Success;
         }
@@ -350,17 +357,17 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests/{requestId}";
 
-            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             switch (intention)
             {
                 case InviteRequestIntention.accepted:
-                    CommunityInviteRequestAccepted?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestAccepted?.Invoke(communityId, requestId, result.Success);
                     break;
                 case InviteRequestIntention.rejected:
-                    CommunityInviteRequestRejected?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestRejected?.Invoke(communityId, requestId, result.Success);
                     break;
                 case InviteRequestIntention.cancelled:
                     CommunityInviteRequestCancelled?.Invoke(communityId, result.Success);
@@ -399,6 +406,60 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                                                     .CreateFromJson<GetInvitableCommunityListResponse>(WRJsonParser.Newtonsoft);
 
             return response;
+        }
+
+        public async UniTask<GetCommunityPostsResponse> GetCommunityPostsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
+            GetCommunityPostsResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                           .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
+        }
+
+        public async UniTask<CreateCommunityPostResponse> CreateCommunityPostAsync(string communityId, string content, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts";
+            string jsonBody = JsonUtility.ToJson(new CreateCommunityPostBody { content = content });
+
+            var response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                     .CreateFromJson<CreateCommunityPostResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
+        }
+
+        public async UniTask<bool> DeleteCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> LikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
+
+            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> UnlikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
         }
 
         // TODO: Pending to implement these methods:

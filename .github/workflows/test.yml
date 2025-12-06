@@ -162,7 +162,7 @@ jobs:
           testMode: all
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64
+          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results

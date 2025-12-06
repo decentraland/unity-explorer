@@ -280,7 +280,7 @@ namespace Global.Dynamic
 
         public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 

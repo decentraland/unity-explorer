@@ -60,22 +60,23 @@ namespace DCL.WebRequests.Analytics
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
+
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
             var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
             var requestHub = new RequestHub(urlsSource);
 
-            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient)
+            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(coreBudget, coreAvailableBudget))
+                                                            .WithDump()
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                             .WithLog()
-                                                            .WithArtificialDelay(options)
-                                                            .WithBudget(coreBudget, coreAvailableBudget);
+                                                            .WithArtificialDelay(options);
 
-            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient)
+            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
+                                                             .WithDump()
                                                              .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                              .WithLog()
-                                                             .WithArtificialDelay(options)
-                                                             .WithBudget(sceneBudget, sceneAvailableBudget);
+                                                             .WithArtificialDelay(options);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();

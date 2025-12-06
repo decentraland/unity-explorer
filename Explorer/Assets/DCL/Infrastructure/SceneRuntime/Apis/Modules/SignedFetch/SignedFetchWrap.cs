@@ -219,7 +219,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             response = await webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
                                 request.url,
                                 new FlatFetchResponse<GenericPutRequest>(),
-                                GenericPutArguments.CreateJsonOrDefault(request.init?.body),
+                                GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                                 disposeCts.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
@@ -230,7 +230,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
                                 request.url,
                                 new FlatFetchResponse<GenericDeleteRequest>(),
-                                GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
+                                GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                                 disposeCts.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,

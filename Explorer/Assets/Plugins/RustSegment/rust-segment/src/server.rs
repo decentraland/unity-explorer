@@ -1,27 +1,39 @@
+use anyhow::{anyhow, Context};
 use core::str;
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-    Arc,
-};
-
-use segment::{
-    message::{BatchMessage, User}, Client, HttpClient
+use std::{
+    ffi::CString,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
 };
 use tokio::sync::Mutex;
 
-use crate::{operations, queue_batcher::QueueBatcher, FfiCallbackFn, OperationHandleId, Response};
+use segment::{
+    message::{BatchMessage, User},
+    queue::{
+        event_queue::{CombinedAnalyticsEventQueue, CombinedAnalyticsEventQueueNewResult},
+        event_send_daemon::AnalyticsEventSendDaemon,
+    },
+    Client, HttpClient,
+};
 
-pub struct Context {
-    pub batcher: QueueBatcher,
+use crate::{operations, FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, Response};
+use segment::queue::queued_batcher::QueuedBatcher;
+
+pub struct AppContext {
+    pub batcher: QueuedBatcher,
+    pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
+    pub daemon: Arc<Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     pub segment_client: segment::HttpClient,
     pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
+    error_fn: Box<dyn Fn(&str) + Send + Sync>,
 }
 
 pub struct SegmentServer {
-    context: Arc<Mutex<Context>>,
+    context: Arc<Mutex<AppContext>>,
     next_id: AtomicU64,
-    unflushed_count_cache: AtomicU64,
 }
 
 pub enum ServerState {
@@ -49,7 +61,14 @@ impl Default for Server {
 }
 
 impl Server {
-    pub fn initialize(&self, writer_key: String, callback_fn: FfiCallbackFn) -> bool {
+    pub fn initialize(
+        &self,
+        queue_file_path: String,
+        queue_count_limit: u32,
+        writer_key: String,
+        callback_fn: FfiCallbackFn,
+        error_fn: Option<FfiErrorCallbackFn>,
+    ) -> bool {
         let state_lock = self.state.lock();
         if state_lock.is_err() {
             return false;
@@ -60,7 +79,14 @@ impl Server {
         match *state {
             ServerState::Ready(_) => false,
             ServerState::Disposed => {
-                let server = SegmentServer::new(writer_key, callback_fn);
+                let server = SegmentServer::new(
+                    queue_file_path,
+                    queue_count_limit,
+                    writer_key,
+                    callback_fn,
+                    error_fn,
+                    &self.async_runtime,
+                );
                 *state = ServerState::Ready(Arc::new(server));
                 true
             }
@@ -104,20 +130,6 @@ impl Server {
             }
         }
     }
-
-    pub fn unflushed_batches_count(&self) -> u64 {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return 0;
-        }
-
-        let state = state_lock.unwrap();
-
-        match &*state {
-            ServerState::Disposed => 0,
-            ServerState::Ready(server) => server.unflushed_count_cache.load(Ordering::Relaxed),
-        }
-    }
 }
 
 impl SegmentServer {
@@ -125,24 +137,66 @@ impl SegmentServer {
         self.next_id.fetch_add(1, Ordering::Relaxed)
     }
 
-    fn new(writer_key: String, callback_fn: FfiCallbackFn) -> Self {
+    fn new(
+        queue_file_path: String,
+        queue_count_limit: u32,
+        writer_key: String,
+        callback_fn: FfiCallbackFn,
+        error_fn: Option<FfiErrorCallbackFn>,
+        async_runtime: &tokio::runtime::Runtime,
+    ) -> Self {
+        let error_fn = Box::new(move |message: &str| {
+            if let Some(cb) = error_fn {
+                if let Ok(cstr) = CString::new(message) {
+                    unsafe {
+                        cb(cstr.as_ptr());
+                    }
+                };
+            };
+        });
+
+        let event_queue: CombinedAnalyticsEventQueueNewResult =
+            CombinedAnalyticsEventQueue::new(queue_file_path, Some(queue_count_limit));
+        let event_queue: CombinedAnalyticsEventQueue = match event_queue {
+            CombinedAnalyticsEventQueueNewResult::Persistent(e) => e,
+            CombinedAnalyticsEventQueueNewResult::FallbackToInMemory(e, err) => {
+                let error_message =
+                    format!("Cannot create persistent queue, fallback to in memory queue: {err}");
+                error_fn(&error_message);
+                e
+            }
+        };
+        let event_queue = Arc::new(Mutex::new(event_queue));
+
+        let queue_batcher = QueuedBatcher::new(event_queue.clone(), None);
+
         let client = HttpClient::default();
-        let queue_batcher = QueueBatcher::new(client, writer_key.clone());
-        
+        let send_daemon =
+            AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
+        let send_daemon = Arc::new(Mutex::new(send_daemon));
+
+        let moved_error_fn = error_fn.clone();
+        let moved_send_daemon = send_daemon.clone();
+        async_runtime.spawn(async move {
+            let mut guard = moved_send_daemon.lock().await;
+            guard.start(moved_error_fn);
+        });
         let direct_client = HttpClient::default();
 
-        let context = Context {
+        let context = AppContext {
             batcher: queue_batcher,
+            queue: event_queue,
+            daemon: send_daemon,
             segment_client: direct_client,
             write_key: writer_key,
             callback_fn: Box::new(move |id, response| unsafe {
                 callback_fn(id, response);
             }),
+            error_fn,
         };
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
-            unflushed_count_cache: AtomicU64::new(0),
             context: Arc::new(Mutex::new(context)),
         }
     }
@@ -155,17 +209,27 @@ impl SegmentServer {
         properties_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_track(user, event_name, properties_json, context_json);
+        let msg = operations::new_track(user.clone(), event_name, properties_json, context_json)
+            .with_context(|| format!("Cannot create new track: id - {id}, user - {user}, event_name - {event_name}, properties_json - {properties_json}, context_json - {context_json}"));
         match msg {
-            Some(m) => {
-                let guard = instance.context.lock().await;
-                let key = guard.write_key.clone();
-                let result = guard.segment_client.send(key, m.into()).await;
-                let response = SegmentServer::result_as_response_code(result);
-                guard.call_callback(id, response);
-            },
-            None => {
-                instance.call_callback(id, Response::ErrorDeserialize).await;
+            Ok(m) => {
+                let context = instance.context.lock().await;
+                let key = context.write_key.clone();
+                match context.segment_client.send(key, m.into()).await {
+                    Ok(()) => {
+                        context.report_success(id);
+                    }
+                    Err(e) => {
+                        context.report_error(Some(id), e.to_string());
+                    }
+                }
+            }
+            Err(e) => {
+                instance
+                    .context
+                    .lock()
+                    .await
+                    .report_error(Some(id), e.to_string());
             }
         }
     }
@@ -178,8 +242,11 @@ impl SegmentServer {
         properties_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_track(user, event_name, properties_json, context_json);
-        instance.enqueue_if_ok(id, msg).await;
+        let msg = operations::new_track(user.clone(), event_name, properties_json, context_json)
+            .with_context(|| {
+                format!("Failed new_track: {user}, {event_name}, {properties_json}, {context_json}")
+            });
+        instance.try_enqueue(id, msg).await;
     }
 
     pub async fn enqueue_identify(
@@ -189,68 +256,83 @@ impl SegmentServer {
         traits_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_identify(user, traits_json, context_json);
-        instance.enqueue_if_ok(id, msg).await;
+        let msg = operations::new_identify(user.clone(), traits_json, context_json)
+            .with_context(|| format!("Failed new_track: {user}, {traits_json}, {context_json}"));
+        instance.try_enqueue(id, msg).await;
     }
 
     pub async fn enqueue(&self, id: OperationHandleId, msg: impl Into<BatchMessage>) {
-        let arc = self.context.clone();
-        let mut context = arc.lock().await;
+        if let Err(e) = self.enqueue_internal(msg).await {
+            self.context
+                .lock()
+                .await
+                .report_error(Some(id), format!("Cannot enqueue: {}", e.to_string()));
+        } else {
+            self.context.lock().await.report_success(id);
+        }
+    }
 
-        let result = context.batcher.push(msg).await;
-
-        let response_code = Self::result_as_response_code(result);
-        self.update_unflushed_count_cache(&context, &response_code);
-        context.call_callback(id, response_code);
+    async fn enqueue_internal(&self, msg: impl Into<BatchMessage>) -> anyhow::Result<()> {
+        let mut context = self.context.lock().await;
+        match context.batcher.push(msg) {
+            Ok(option) => {
+                // if something returned then it has not been enqued
+                if let Some(msg) = option {
+                    context.batcher.flush().await?;
+                    context
+                        .batcher
+                        .push(msg)
+                        .context("Cannot push message even after flush:")?;
+                }
+                Ok(())
+            }
+            Err(e) => Err(anyhow!("Cannot push message to batcher: {e}")),
+        }
     }
 
     pub async fn flush(instance: Arc<Self>, id: OperationHandleId) {
-        let arc = instance.context.clone();
-        let mut context = arc.lock().await;
+        let mut context = instance.context.lock().await;
 
-        let result = context.batcher.flush().await;
-
-        let response_code = Self::result_as_response_code(result);
-        instance.update_unflushed_count_cache(&context, &response_code);
-        context.call_callback(id, response_code);
+        if let Err(e) = context.batcher.flush().await {
+            context.report_error(Some(id), format!("Cannot flush: {}", e.to_string()));
+        } else {
+            context.report_success(id);
+        }
     }
 
-    async fn enqueue_if_ok(&self, id: OperationHandleId, msg: Option<impl Into<BatchMessage>>) {
+    async fn try_enqueue(
+        &self,
+        id: OperationHandleId,
+        msg: anyhow::Result<impl Into<BatchMessage>>,
+    ) {
         match msg {
-            Some(m) => self.enqueue(id, m).await,
-            None => {
-                self.call_callback(id, Response::ErrorDeserialize).await;
+            Ok(m) => self.enqueue(id, m).await,
+            Err(e) => {
+                self.context
+                    .lock()
+                    .await
+                    .report_error(Some(id), e.to_string());
             }
-        }
-    }
-
-    async fn call_callback(&self, id: OperationHandleId, code: Response) {
-        let arc = self.context.clone();
-        let context = arc.lock().await;
-        context.call_callback(id, code);
-    }
-
-    fn result_as_response_code(result: Result<(), segment::Error>) -> Response {
-        match result {
-            Ok(_) => Response::Success,
-            Err(error) => match error {
-                segment::Error::MessageTooLarge => Response::ErrorMessageTooLarge,
-                segment::Error::DeserializeError(_) => Response::ErrorDeserialize,
-                segment::Error::NetworkError(_) => Response::ErrorNetwork,
-            },
-        }
-    }
-
-    fn update_unflushed_count_cache(&self, context: &Context, response: &Response) {
-        if matches!(response, Response::Success) {
-            let len = context.batcher.len() as u64;
-            self.unflushed_count_cache.store(len, Ordering::Relaxed);
         }
     }
 }
 
-impl Context {
-    pub fn call_callback(&self, id: OperationHandleId, code: Response) {
-        self.callback_fn.as_ref()(id, code);
+impl AppContext {
+    pub fn report_success(&self, id: OperationHandleId) {
+        self.callback_fn.as_ref()(id, Response::Success);
+    }
+
+    pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
+        let message = match id {
+            Some(id) => {
+                format!("Operation {} failed: {}", id, message)
+            }
+            None => message,
+        };
+        self.error_fn.as_ref()(message.as_str());
+
+        if let Some(id) = id {
+            self.callback_fn.as_ref()(id, Response::Error);
+        };
     }
 }

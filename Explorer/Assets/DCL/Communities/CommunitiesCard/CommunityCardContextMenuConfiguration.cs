@@ -16,5 +16,9 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Sprite DeleteCommunitySprite { get; private set; } = null!;
         [field: SerializeField] public string DeleteCommunityText { get; private set; } = "Delete Community";
         [field: SerializeField] public Color DeleteCommunityTextColor { get; private set; } = Color.red;
+
+        [field: SerializeField] public Sprite CopyCommunityLinkSprite { get; private set; } = null!;
+        [field: SerializeField] public string CopyCommunityLinkText { get; private set; } = "Copy Link";
+        [field: SerializeField] public int CopyCommunityLinkSeparatorHeight { get; private set; } = 20;
     }
 }

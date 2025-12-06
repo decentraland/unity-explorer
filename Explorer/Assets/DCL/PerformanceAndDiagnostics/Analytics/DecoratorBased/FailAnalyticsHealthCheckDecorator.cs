@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Utility.Types;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System.Threading;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -25,7 +25,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (result.Success == false)
                 analytics.Track(
                     EVENT_NAME,
-                    new JsonObject
+                    new JObject
                     {
                         ["message"] = result.ErrorMessage,
                     }

@@ -1,7 +1,7 @@
 ﻿using System;
 using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using Utility;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Analytics
@@ -28,12 +28,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Analytics
 
         private void OnSaveOutfit(OutfitsEvents.SaveOutfitEvent evt)
         {
-            var wearablesArray = new JsonArray();
+            var wearablesArray = new JArray();
 
             foreach (string? urn in evt.WearablesUrns)
                 wearablesArray.Add(urn);
 
-            var payload = new JsonObject
+            var payload = new JObject
             {
                 {
                     "wearables_urn", wearablesArray

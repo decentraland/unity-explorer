@@ -1,5 +1,6 @@
 using DCL.Profiling;
 using System;
+using UnityEngine;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
@@ -8,6 +9,9 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly ulong totalBudgetAvailable;
         private readonly IBudgetProfiler profiler;
         private readonly Func<bool> isLoadingScreenOn;
+
+        private int cachedFrameNumber = -1;
+        private bool cachedIsLoadingScreenOn;
 
         public FrameTimeCapBudget(float budgetCapInMS, IBudgetProfiler profiler, Func<bool> isLoadingScreenOn) : this(
             TimeSpan.FromMilliseconds(budgetCapInMS),
@@ -33,7 +37,15 @@ namespace DCL.Optimization.PerformanceBudgeting
         public bool TrySpendBudget()
         {
             //Behind loading screen we dont care about hiccups
-            if (isLoadingScreenOn.Invoke())
+            //Check only on frame change to avoid multiple calls per frame (checking the loading screen status can be expensive)
+            int currentFrame = Time.frameCount;
+            if (cachedFrameNumber != currentFrame)
+            {
+                cachedIsLoadingScreenOn = isLoadingScreenOn.Invoke();
+                cachedFrameNumber = currentFrame;
+            }
+
+            if (cachedIsLoadingScreenOn)
                 return true;
 
             return profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;

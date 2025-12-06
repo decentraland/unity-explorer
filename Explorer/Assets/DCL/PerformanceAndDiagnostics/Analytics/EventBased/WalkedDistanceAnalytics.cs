@@ -2,7 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.Utilities;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -76,7 +76,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             if (StepCount == 0) return;
 
-            analytics.Track(AnalyticsEvents.Badges.WALKED_DISTANCE, new JsonObject
+            analytics.Track(AnalyticsEvents.Badges.WALKED_DISTANCE, new JObject
             {
                 { "step_count", StepCount },
             });

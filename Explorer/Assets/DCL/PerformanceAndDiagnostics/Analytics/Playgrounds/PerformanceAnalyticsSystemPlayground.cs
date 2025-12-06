@@ -16,6 +16,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
     public class PerformanceAnalyticsSystemPlayground : MonoBehaviour
     {
         [SerializeField] private AnalyticsConfiguration analyticsConfiguration = null!;
+        [SerializeField] private BuildData buildData = null!;
 
         private PerformanceAnalyticsSystem system = null!;
 
@@ -28,7 +29,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     new ApplicationParametersParser(),
                     analyticsConfiguration.EnsureNotNull(),
                     new LauncherTraits(),
-                    new BuildData(),
+                    buildData.EnsureNotNull(),
                     DCLVersion.Mock()
                 ),
                 new LoadingStatus(),

@@ -1,5 +1,4 @@
 ﻿using DCL.Diagnostics;
-using Segment.Analytics;
 using System;
 using UnityEngine;
 
@@ -81,7 +80,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private bool TryCreateSegmentConfiguration(out Configuration configuration)
         {
-            try { segmentConfiguration = new Configuration(segmentWriteKey, new SegmentErrorHandler(), flushSize, flushInterval); }
+            try { segmentConfiguration = new Configuration(segmentWriteKey, flushSize, flushInterval); }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key (incorrect key?). Exception {e.Message}.");
@@ -96,5 +95,25 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SetWriteKey(string writeKey) =>
             segmentWriteKey = writeKey;
+    }
+
+    public class Configuration
+    {
+        public string WriteKey { get; }
+
+        public int FlushAt { get; }
+
+        public int FlushInterval { get; }
+
+        public Configuration(
+            string writeKey,
+            int flushAt = 20,
+            int flushInterval = 30
+        )
+        {
+            WriteKey = writeKey;
+            FlushAt = flushAt;
+            FlushInterval = flushInterval;
+        }
     }
 }

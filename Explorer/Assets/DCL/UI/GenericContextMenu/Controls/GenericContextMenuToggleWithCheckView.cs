@@ -12,6 +12,12 @@ namespace DCL.UI.Controls
         [SerializeField] protected Toggle toggleComponent;
         [SerializeField] protected TMP_Text textComponent;
 
+        public override bool IsInteractable
+        {
+            get => toggleComponent.interactable;
+            set => toggleComponent.interactable = value;
+        }
+
         public override void UnregisterListeners() =>
             toggleComponent.onValueChanged.RemoveAllListeners();
 

@@ -2,7 +2,7 @@ using System;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Translation;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -34,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationRequested>(_ =>
             {
-                analytics.Track(AnalyticsEvents.AutoTranslate.TRANSLATE_MESSAGE_MANUALLY, new JsonObject
+                analytics.Track(AnalyticsEvents.AutoTranslate.TRANSLATE_MESSAGE_MANUALLY, new JObject
                 {
                     { "language_chosen", translationSettings.PreferredLanguage.ToString() },
                 });
@@ -52,7 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             if (eventId != TRANSLATION_SETTINGS_CHANGE_EVENT)
                 return;
 
-            analytics.Track(AnalyticsEvents.AutoTranslate.CHOOSE_PREFERRED_LANGUAGE, new JsonObject
+            analytics.Track(AnalyticsEvents.AutoTranslate.CHOOSE_PREFERRED_LANGUAGE, new JObject
             {
                 { "language_chosen", translationSettings.PreferredLanguage.ToString() },
             });
@@ -68,7 +68,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             ChatChannel.ChatChannelType scope = ResolveScope(evt.ConversationId);
 
-            var props = new JsonObject
+            var props = new JObject
             {
                 { "enabled", evt.IsEnabled },
                 { "scope", scope.ToString() },

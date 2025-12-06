@@ -36,6 +36,6 @@ namespace MVC
         ///     Returns the previous controller in the stack.
         ///     Controller can be popped from the middle?
         /// </summary>
-        PopupPopInfo PopPopup(IController controller);
+        PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true);
     }
 }

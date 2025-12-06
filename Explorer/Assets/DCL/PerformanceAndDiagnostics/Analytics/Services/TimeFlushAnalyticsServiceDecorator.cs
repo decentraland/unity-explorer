@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
-using Segment.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 
@@ -19,22 +18,22 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             FlushLoopAsync(token).Forget();
         }
 
-        public void Identify(string? userId, JsonObject? traits = null)
+        public void Identify(string? userId, JObject? traits = null)
         {
             origin.Identify(userId, traits);
         }
 
-        public void Track(string eventName, JsonObject? properties = null)
+        public void Track(string eventName, JObject? properties = null)
         {
             origin.Track(eventName, properties);
         }
 
-        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        public void InstantTrackAndFlush(string eventName, JObject? properties = null)
         {
             origin.InstantTrackAndFlush(eventName, properties);
         }
 
-        public void AddPlugin(EventPlugin plugin)
+        public void AddPlugin(IAnalyticsPlugin plugin)
         {
             origin.AddPlugin(plugin);
         }
