@@ -34,6 +34,9 @@ namespace DCL.CharacterMotion.Settings
         float EdgeSlipSpeed { get; }
         float EdgeSlipSafeDistance { get; }
         float RotationSpeed { get; }
+        float MovAnimBlendMaxWalkSpeed { get; }
+        float MovAnimBlendMaxJogSpeed { get; }
+        float MovAnimBlendMaxRunSpeed { get; }
         float MovAnimBlendSpeed { get; }
         float JumpPadForce { get; }
         float AnimationSpeed { get; }

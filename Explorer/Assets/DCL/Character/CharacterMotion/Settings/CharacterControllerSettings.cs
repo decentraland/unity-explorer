@@ -46,7 +46,6 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float SlideAnimationBlendSpeed { get; private set; } = 7;
         [field: SerializeField] public float MinSlopeAngle { get; private set; } = 50;
         [field: SerializeField] public float MaxSlopeAngle { get; private set; } = 80;
-
         [field: SerializeField] public bool EnableCharacterRotationBySlope { get; private set; }
         [field: SerializeField] public float SlopeCharacterRotationDelay { get; private set; } = 0.25f;
         [field: SerializeField] public AnimationCurve SlopeVelocityModifier { get; private set; }
@@ -54,7 +53,11 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
         [field: SerializeField] public float HeadIKWeightChangeSpeed { get; private set; } = 2;
+
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
+        [field: SerializeField] public float MovAnimBlendMaxWalkSpeed { get; private set; } = 1f;
+        [field: SerializeField] public float MovAnimBlendMaxJogSpeed { get; private set; } = 3f;
+        [field: SerializeField] public float MovAnimBlendMaxRunSpeed { get; private set; } = 5f;
         [field: SerializeField] public float MovAnimBlendSpeed { get; private set; } = 3f;
         [field: SerializeField] public float AnimationFallSpeed { get; private set; } = -5f;
         [field: SerializeField] public float AnimationLongFallSpeed { get; private set; } = -12f;
@@ -71,7 +74,6 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float IKPositionSpeed { get; set; } = 1f;
         [field: SerializeField] public Vector2 FeetIKVerticalAngleLimits { get; set; } = new (-50, 20);
         [field: SerializeField] public Vector2 FeetIKTwistAngleLimits { get; set; } = new (-30, 15);
-
         [field: SerializeField] public Vector3 FeetIKLeftOffset { get; set; }
         [field: SerializeField] public Vector3 FeetIKRightOffset { get; set; }
         [field: SerializeField] public Vector3 FeetIKLeftRotationOffset { get; set; }
