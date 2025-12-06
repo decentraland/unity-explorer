@@ -29,6 +29,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName ROOM_SCENE = "Room: Scene".AsWidgetName();
             public static readonly WidgetName ROOM_THROUGHPUT = "Room: Throughput".AsWidgetName();
             public static readonly WidgetName PERFORMANCE = "Performance".AsWidgetName();
+            public static readonly WidgetName RENDERING = "Rendering System".AsWidgetName();
             public static readonly WidgetName CRASH = "Crash".AsWidgetName();
             public static readonly WidgetName MEMORY = "Memory".AsWidgetName();
             public static readonly WidgetName CURRENT_SCENE = "Current scene".AsWidgetName();
