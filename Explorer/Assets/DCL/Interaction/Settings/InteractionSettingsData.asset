@@ -16,7 +16,7 @@ MonoBehaviour:
   <InvalidColor>k__BackingField: {r: 1, g: 0.17647058, b: 0.49867108, a: 1}
   <Thickness>k__BackingField: 4
   EnableAvatarOutline: 1
-  InteractableAvatarOutlineColor: {r: 0.23921569, g: 0.8862745, b: 0.4509804, a: 1}
-  NonInteractableAvatarOutlineColor: {r: 1, g: 0.1764706, b: 0.49803922, a: 1}
+  InteractableAvatarOutlineColor: {r: 0, g: 1, b: 0.32727265, a: 1}
+  NonInteractableAvatarOutlineColor: {r: 1, g: 0, b: 0.39047623, a: 1}
   AvatarOutlineThickness: 3
   AvatarOutlineFadingSpeed: 12
