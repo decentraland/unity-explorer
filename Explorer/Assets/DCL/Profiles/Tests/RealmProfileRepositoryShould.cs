@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
@@ -36,7 +37,7 @@ namespace DCL.Profiles.Tests
         {
             webRequestController = Substitute.For<IWebRequestController>();
             profileCache = Substitute.For<IProfileCache>();
-            repository = new RealmProfileRepository(webRequestController, Substitute.For<IRealmData>(), profileCache, ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()));
+            repository = new RealmProfileRepository(webRequestController, Substitute.For<IRealmData>(), Substitute.For<IDecentralandUrlsSource>(), profileCache, ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()), false);
 
             dtos = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
         }

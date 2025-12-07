@@ -69,13 +69,11 @@ namespace DCL.WebRequests.Analytics
             IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(coreBudget, coreAvailableBudget))
                                                             .WithDump()
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                                                            .WithLog()
                                                             .WithArtificialDelay(options);
 
             IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
                                                              .WithDump()
                                                              .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                                                             .WithLog()
                                                              .WithArtificialDelay(options);
 
             CreateStressTestUtility();

@@ -1,6 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Utilities;
 using DCL.Web3;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using UnityEngine;
 
@@ -54,6 +56,8 @@ namespace DCL.Profiles
             private string name;
             private string userId;
             private bool hasClaimedName;
+
+            public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
             public CompactInfo(string userId) : this()
             {

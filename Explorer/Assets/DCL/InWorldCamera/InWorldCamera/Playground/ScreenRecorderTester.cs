@@ -7,14 +7,17 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.Dynamic.LaunchModes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -88,7 +91,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()))
+                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()), false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

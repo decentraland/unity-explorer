@@ -12,6 +12,6 @@ namespace DCL.Profiles
         /// </summary>
         public ProfileTier? ResolveProfile(string userId, ProfileTier? profile);
 
-        public URLAddress PostUrl(URLDomain fromCatalyst, ProfileTier.Kind tier);
+        public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier);
     }
 }

@@ -26,9 +26,14 @@ namespace DCL.Ipfs
         public URLDomain ContentBaseUrl { get; }
         public URLDomain LambdasBaseUrl { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
-        public URLDomain AssetBundleRegistry { get; }
+        /// <summary>
+        ///     TODO Asset-bundle-registry has nothing to with IpfsRealm (as it's realm-independent)
+        /// </summary>
+        public URLDomain AssetBundleRegistryEntitiesActive { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;
+
+        private static readonly URLSubdirectory ENTITIES_ACTIVE_DIR = URLSubdirectory.FromString("entities/active");
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
@@ -52,8 +57,6 @@ namespace DCL.Ipfs
                 //Note: Content url requires the subdirectory content, but the actives endpoint requires the base one.
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
                 ContentBaseUrl = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("contents/"));
-
-                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
             else
             {
@@ -61,8 +64,9 @@ namespace DCL.Ipfs
                 entitiesBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/"));
                 ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
                 EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
-                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
+
+            AssetBundleRegistryEntitiesActive = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : URLBuilder.Combine(assetBundleRegistry, ENTITIES_ACTIVE_DIR);
         }
 
         public bool Equals(IpfsRealm other)

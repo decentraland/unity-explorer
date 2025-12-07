@@ -75,6 +75,7 @@ namespace DCL.WebRequests
             "GenericPostArguments:"
             + $"\nMultipartFormSections: {MultipartFormSections}"
             + $"\nWWWForm: {WebFormToString(WWWForm)}"
+            + $"\nUploadHandler: {(UploadHandler == null ? "" : Encoding.UTF8.GetString(UploadHandler.data))}"
             + $"\nPostData: {PostData}"
             + $"\nContentType: {ContentType}";
 

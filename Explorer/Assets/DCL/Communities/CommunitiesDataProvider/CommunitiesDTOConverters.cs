@@ -53,6 +53,8 @@ namespace DCL.Communities.CommunitiesDataProvider
         [Preserve]
         public class GetCommunityMembersResponseMemberDataConverter : JsonConverter<GetCommunityMembersResponse.MemberData>
         {
+            private static readonly JsonSerializer DEFAULT_SERIALIZER = new ();
+
             public override bool CanWrite => false;
 
             public override void WriteJson(JsonWriter writer, GetCommunityMembersResponse.MemberData? value, JsonSerializer serializer) =>
@@ -65,9 +67,10 @@ namespace DCL.Communities.CommunitiesDataProvider
 
                 var jObject = JObject.Load(reader);
 
-                GetCommunityMembersResponse.MemberData? instance = jObject.ToObject<GetCommunityMembersResponse.MemberData>();
+                // Create instance first, then populate to avoid triggering converter recursion
+                GetCommunityMembersResponse.MemberData instance = existingValue ?? new GetCommunityMembersResponse.MemberData();
 
-                if (instance == null) return null;
+                using (JsonReader jObjectReader = jObject.CreateReader()) { DEFAULT_SERIALIZER.Populate(jObjectReader, instance); }
 
                 instance.Profile = new Profile.CompactInfo(
                     jObject["memberAddress"]!.Value<string>()!,
@@ -76,13 +79,15 @@ namespace DCL.Communities.CommunitiesDataProvider
                     jObject["profilePictureUrl"]!.Value<string>()!
                 );
 
-                return existingValue;
+                return instance;
             }
         }
 
         [Preserve]
         public class CommunityInviteRequestDataConverter : JsonConverter<GetCommunityInviteRequestResponse.CommunityInviteRequestData>
         {
+            private static readonly JsonSerializer DEFAULT_SERIALIZER = new ();
+
             public override bool CanWrite => false;
 
             public override void WriteJson(JsonWriter writer, GetCommunityInviteRequestResponse.CommunityInviteRequestData? value, JsonSerializer serializer) =>
@@ -95,9 +100,10 @@ namespace DCL.Communities.CommunitiesDataProvider
 
                 var jObject = JObject.Load(reader);
 
-                GetCommunityInviteRequestResponse.CommunityInviteRequestData? instance = jObject.ToObject<GetCommunityInviteRequestResponse.CommunityInviteRequestData>();
+                // Create instance first, then populate to avoid triggering converter recursion
+                GetCommunityInviteRequestResponse.CommunityInviteRequestData instance = existingValue ?? new GetCommunityInviteRequestResponse.CommunityInviteRequestData();
 
-                if (instance == null) return null;
+                using (JsonReader jObjectReader = jObject.CreateReader()) { DEFAULT_SERIALIZER.Populate(jObjectReader, instance); }
 
                 instance.Profile = new Profile.CompactInfo(
                     jObject["memberAddress"]!.Value<string>()!,
@@ -106,7 +112,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                     jObject["profilePictureUrl"]!.Value<string>()!
                 );
 
-                return existingValue;
+                return instance;
             }
         }
     }

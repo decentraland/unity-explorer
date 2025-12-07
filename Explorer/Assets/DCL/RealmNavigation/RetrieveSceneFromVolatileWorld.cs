@@ -44,7 +44,7 @@ namespace DCL.RealmNavigation
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                 new GetSceneDefinitionList(targetCollection.Value, pointersList.Value,
-                    new CommonLoadingArguments(realmIpfs.AssetBundleRegistry)),
+                    new CommonLoadingArguments(realmIpfs.AssetBundleRegistryEntitiesActive)),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(World, cancellationToken: ct);

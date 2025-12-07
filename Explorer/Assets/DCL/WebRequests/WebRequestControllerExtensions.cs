@@ -223,9 +223,6 @@ namespace DCL.WebRequests
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);
 
-        public static IWebRequestController WithLog(this IWebRequestController origin) =>
-            new LogWebRequestController(origin);
-
         public static IWebRequestController WithDebugMetrics(this IWebRequestController origin,
             ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric) =>
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,

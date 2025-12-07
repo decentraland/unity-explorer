@@ -35,13 +35,6 @@ namespace DCL.Profiles
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     public partial class LoadProfilesBatchSystem : LoadSystemBase<ProfilesBatchResult, GetProfilesBatchIntent>
     {
-        // JSON structure overhead for {"ids":[...]}
-        private const int BASE_JSON_OVERHEAD = 10; // {"ids":[]}
-
-        // Per-string overhead in JSON
-        private const int QUOTES_PER_STRING = 2; // Opening and closing quotes
-        private const int COMMA_SEPARATOR = 1; // Comma between array elements
-
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
 
         private static readonly ThreadSafeListPool<Profile> FULL_PROFILE_BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
@@ -63,53 +56,9 @@ namespace DCL.Profiles
             // Clean up resolves requests
             World.Destroy(COMPLETED_BATCHES);
 
-        /// <summary>
-        ///     Calculates the exact buffer size needed for a JSON payload with ETH wallet IDs.
-        ///     Format: {"ids":["0x1234...","0x5678...",...]}.
-        /// </summary>
-        /// <param name="idCount">Number of ETH wallet addresses</param>
-        /// <returns>Exact byte size needed for the JSON payload</returns>
-        private static int CalculateExactSize(int idCount)
-        {
-            if (idCount <= 0)
-                return BASE_JSON_OVERHEAD; // Empty array: {"ids":[]}
-
-            // Base structure: {"ids":[]}
-            int totalSize = BASE_JSON_OVERHEAD;
-
-            // Each ID contributes:
-            // - 2 bytes for quotes: ""
-            // - addressLength bytes for the actual address
-            // - 1 byte for comma (except last element)
-            int bytesPerId = QUOTES_PER_STRING + Web3Address.ETH_ADDRESS_LENGTH;
-            totalSize += bytesPerId * idCount;
-
-            // Add commas between elements (idCount - 1 commas)
-            totalSize += (idCount - 1) * COMMA_SEPARATOR;
-
-            return totalSize;
-        }
-
         protected override async UniTask<StreamableLoadingResult<ProfilesBatchResult>> FlowInternalAsync(GetProfilesBatchIntent intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             using GetProfilesBatchIntent _ = intention;
-
-            using var uploadHandler = new BufferedStringUploadHandler(CalculateExactSize(intention.Ids.Count));
-
-            uploadHandler.WriteString("{\"ids\":[");
-
-            int i = 0;
-
-            foreach (string id in intention.Ids)
-            {
-                uploadHandler.WriteJsonString(id);
-
-                if (i != intention.Ids.Count - 1)
-                    uploadHandler.WriteChar(',');
-                i++;
-            }
-
-            uploadHandler.WriteString("]}");
 
             int pointersCount = intention.Ids.Count;
 
@@ -119,7 +68,7 @@ namespace DCL.Profiles
                 {
                     using PooledObject<List<Profile.CompactInfo>> __ = COMPACT_PROFILE_BATCH_POOL.Get(out List<Profile.CompactInfo> batch);
 
-                    Result<List<Profile.CompactInfo>> result = await ExecuteRequest(batch);
+                    Result<IList<Profile.CompactInfo>> result = await ExecuteRequest(batch);
 
                     // Keep processing on the thread pool
 
@@ -138,7 +87,7 @@ namespace DCL.Profiles
                 {
                     using PooledObject<List<Profile>> __ = FULL_PROFILE_BATCH_POOL.Get(out List<Profile> batch);
 
-                    Result<List<Profile>> result = await ExecuteRequest(batch);
+                    Result<IList<Profile>> result = await ExecuteRequest(batch);
 
                     // Keep processing on the thread pool
 
@@ -167,14 +116,8 @@ namespace DCL.Profiles
 
             return new StreamableLoadingResult<ProfilesBatchResult>(new ProfilesBatchResult());
 
-            UniTask<Result<List<T>>> ExecuteRequest<T>(List<T> batch) =>
-                webRequestController.PostAsync(
-                                         intention.CommonArguments.URL,
-                                         GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
-                                         ct,
-                                         ReportCategory.PROFILE)
-                                    .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                    .SuppressToResultAsync(ReportCategory.PROFILE);
+            UniTask<Result<IList<T>>> ExecuteRequest<T>(List<T> batch) =>
+                ProfilesRequest.PostAsync(webRequestController, intention.CommonArguments.URL, intention.Ids, batch, ct);
         }
     }
 }

@@ -78,11 +78,11 @@ namespace DCL.Ipfs
             }
         }
 
-        public URLDomain AssetBundleRegistry
+        public URLDomain AssetBundleRegistryEntitiesActive
         {
             get
             {
-                var result = origin.AssetBundleRegistry;
+                URLDomain result = origin.AssetBundleRegistryEntitiesActive;
                 ReportHub
                     .WithReport(ReportCategory.REALM)
                     .Log($"IpfsRealm AssetBundleRegistry requested, result: {result}");

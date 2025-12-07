@@ -2,6 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
@@ -9,6 +12,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using Newtonsoft.Json;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -16,6 +20,7 @@ using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Pool;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
 namespace DCL.Profiles
@@ -26,9 +31,11 @@ namespace DCL.Profiles
 
         private readonly int batchMaxSize;
 
+        private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesDebug profilesDebug;
         private readonly IRealmData realm;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
@@ -49,13 +56,17 @@ namespace DCL.Profiles
         public RealmProfileRepository(
             IWebRequestController webRequestController,
             IRealmData realm,
+            IDecentralandUrlsSource urlsSource,
             IProfileCache profileCache,
-            ProfilesDebug profilesDebug)
+            ProfilesDebug profilesDebug,
+            bool useCentralizedProfiles)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
+            this.urlsSource = urlsSource;
             this.profileCache = profileCache;
             this.profilesDebug = profilesDebug;
+            this.useCentralizedProfiles = useCentralizedProfiles;
         }
 
         public IEnumerable<ProfilesBatchRequest> ConsumePendingBatch()
@@ -215,6 +226,9 @@ namespace DCL.Profiles
             }
         }
 
+        private static readonly ThreadSafeListPool<Profile> SINGLE_PROFILE_POOL = new (1, PoolConstants.AVATARS_COUNT);
+        private static readonly ThreadSafeObjectPool<string[]> SINGLE_PROFILE_ID_POOL = new (() => new string[1], maxSize: PoolConstants.AVATARS_COUNT);
+
         public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
             bool delayBatchResolution,
             bool getFromCacheIfPossible,
@@ -223,6 +237,10 @@ namespace DCL.Profiles
             IPartitionComponent? partition = null)
         {
             Assert.IsTrue(version == 0 || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
+
+            // Compact Tiers are not supported on catalysts
+            if (!useCentralizedProfiles)
+                tier = ProfileTier.Kind.Full;
 
             try
             {
@@ -262,7 +280,7 @@ namespace DCL.Profiles
             }
             finally { await UniTask.SwitchToMainThread(); }
 
-            UniTask<ProfileTier?> EnforceSingleGetAsync()
+            async UniTask<ProfileTier?> EnforceSingleGetAsync()
             {
                 // Add directly to the ongoing batch as it's dispatch immediately
                 // It's needed if the same profile is requested again (Single or in the batch) so it will wait for the existing request
@@ -270,7 +288,7 @@ namespace DCL.Profiles
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
-                return ExecuteSingleGetAsync(id, fromCatalyst, ct);
+                return await ExecuteSingleGetAsync(id, fromCatalyst, ct);
             }
         }
 
@@ -306,16 +324,28 @@ namespace DCL.Profiles
         {
             try
             {
-                URLAddress url = GetUrl(id, fromCatalyst);
+                ProfileTier? profile;
 
-                // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+                // Centralized endpoint doesn't support GET
+                if (useCentralizedProfiles)
+                {
+                    using PooledObject<List<Profile>> _ = SINGLE_PROFILE_POOL.Get(out List<Profile> tempProfiles);
+                    using PooledObject<string[]> __ = SINGLE_PROFILE_ID_POOL.Get(out string[] tempIds);
+                    tempIds[0] = id;
+                    Result<IList<Profile>> result = await ProfilesRequest.PostAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), tempIds, tempProfiles, ct);
 
-                var profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
-                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
-                    serializerSettings: SERIALIZER_SETTINGS);
+                    profile = result.Value?.ElementAtOrDefault(0);
 
-                profilesDebug.AddNonAggregated();
+                    profilesDebug.AddNonCombined(1);
+                }
+                else
+                {
+                    URLAddress url = GetUrl(id, fromCatalyst);
+
+                    profile = await ProfilesRequest.GetAsync(webRequestController, url, id, ct);
+
+                    profilesDebug.AddNonAggregated();
+                }
 
                 return ResolveProfile(id, profile);
             }
@@ -360,13 +390,14 @@ namespace DCL.Profiles
             return urlBuilder.Build();
         }
 
-        public URLAddress PostUrl(URLDomain fromCatalyst, ProfileTier.Kind tier)
+        public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier)
         {
             urlBuilder.Clear();
 
-            // Warning: putting a trailing slash break the backend routing!
-            urlBuilder.AppendDomain(fromCatalyst)
-                      .AppendPath(URLPath.FromString("profiles"));
+            // TODO remove hardcoded URL
+            urlBuilder.AppendDomain(useCentralizedProfiles ? URLDomain.FromString("https://asset-bundle-registry.decentraland.today") /*URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))*/ : fromCatalyst ?? realm.Ipfs.LambdasBaseUrl);
+
+            urlBuilder.AppendSubDirectory(URLSubdirectory.FromString("profiles"));
 
             if (tier == ProfileTier.Kind.Compact)
                 urlBuilder.AppendPath(URLPath.FromString("metadata"));

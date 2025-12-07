@@ -13,8 +13,6 @@ namespace DCL.Profiles
 {
     public partial class Profile : IDirtyMarker, IDisposable
     {
-        public static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
-
         private static readonly ThreadSafeObjectPool<Profile> POOL = new (
             () => new Profile(),
             actionOnRelease: profile => profile.Clear());
@@ -23,6 +21,7 @@ namespace DCL.Profiles
         internal List<string>? interests;
         internal List<LinkJsonDto>? links;
 
+        // TODO it's not unified with SpriteCache from where UI requests profile thumbnails
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
         public bool HasConnectedWeb3 { get; set; }

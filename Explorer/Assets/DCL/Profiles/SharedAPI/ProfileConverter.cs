@@ -53,15 +53,25 @@ namespace DCL.Profiles
 
             var jObject = JObject.Load(reader);
             existingValue ??= Profile.Create();
-            DeserializeProfileList(jObject["avatars"], existingValue);
+            DeserializeProfileList(jObject, existingValue);
             return existingValue;
         }
 
-        private void DeserializeProfileList(JToken? root, Profile profile)
+        private void DeserializeProfileList(JToken root, Profile profile)
         {
-            if (root is { Type: JTokenType.Array })
+            // Temporary support two schemes: from catalyst and centralized
+            // TODO remove before releasing
+
+            JToken? metadata = root["metadata"];
+
+            if (metadata != null)
+                root = metadata;
+
+            JToken? avatars = root["avatars"];
+
+            if (avatars is { Type: JTokenType.Array })
             {
-                foreach (JToken? item in root.Children())
+                foreach (JToken? item in avatars.Children())
                 {
                     DeserializeProfile(item, profile);
 
@@ -71,6 +81,8 @@ namespace DCL.Profiles
             }
             else
                 throw new ArgumentException("\"avatars\" is not a JSON array");
+
+
         }
 
         private void DeserializeProfile(JToken? jObject, Profile profile)

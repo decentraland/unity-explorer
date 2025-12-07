@@ -38,7 +38,6 @@ namespace DCL.Profiles
             tier.Value.IsFull(out Profile? fullProfile) ? fullProfile! : throw new ArgumentException($"Profile Tier is {tier.Value.GetKind()}, expected: {ProfileTier.Kind.Full}");
 
         public static Profile.CompactInfo? ToCompact(this ProfileTier? tier) =>
-            tier == null ? null :
-            tier.Value.IsCompact(out Profile.CompactInfo compact) ? compact : throw new ArgumentException($"Profile Tier is {tier.Value.GetKind()}, expected: {ProfileTier.Kind.Full}");
+            tier;
     }
 }

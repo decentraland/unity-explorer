@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests;
@@ -22,7 +23,7 @@ namespace DCL.Profiles
 
         public IProfileRepository Repository { get; }
 
-        public ProfilesContainer(IWebRequestController webRequestController, IRealmData realmData, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilesContainer(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, IRealmData realmData, IDebugContainerBuilder debugContainerBuilder)
         {
             this.webRequestController = webRequestController;
             Cache = new DefaultProfileCache();
@@ -30,7 +31,7 @@ namespace DCL.Profiles
             profilesDebug = ProfilesDebug.Create(debugContainerBuilder);
 
             Repository = new LogProfileRepository(
-                repository = new RealmProfileRepository(webRequestController, realmData, Cache, profilesDebug)
+                repository = new RealmProfileRepository(webRequestController, realmData, urlsSource, Cache, profilesDebug, true)
             );
         }
 
