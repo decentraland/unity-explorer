@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ProperlyCountReferenceWhenAddReferenceCalled(int refCount)
         {
             // Arrange
-            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), null, null);
+            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), null);
 
             // Act
             for (var i = 0; i < refCount; i++)
@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ProperlyRemoveReferenceWhenDereferenced(int initialRefs, int derefs, int remainedRefs)
         {
             // Arrange
-            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), null, null);
+            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), null);
 
             for (var i = 0; i < initialRefs; i++)
                 wearableAsset.AddReference();

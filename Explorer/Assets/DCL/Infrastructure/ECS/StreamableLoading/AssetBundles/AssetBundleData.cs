@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -17,8 +16,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly string AssetBundleName;
 
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-        // Note: The order of the outcomes is the same as the order in which they appear in the Emote DTO metadata
-        public readonly AssetBundleMetadata.SocialEmoteOutcomeAnimationPose[]? SocialEmoteOutcomeAnimationStartPoses;
 
         private readonly string description;
 
@@ -41,7 +38,6 @@ namespace ECS.StreamableLoading.AssetBundles
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
 
-            SocialEmoteOutcomeAnimationStartPoses = socialEmoteOutcomeAnimationStartPoses;
             UnloadAB();
         }
 

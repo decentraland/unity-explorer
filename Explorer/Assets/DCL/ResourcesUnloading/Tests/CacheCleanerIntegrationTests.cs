@@ -158,7 +158,7 @@ namespace DCL.ResourcesUnloading.Tests
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
 
-            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), assetBundleData, null);
+            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), assetBundleData);
             assetBundleData.AddReference();
 
             var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
@@ -213,7 +213,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleData.AddReference();
             gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset); // add to cache
 
-            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(10), assetBundleData, null);
+            var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset) } };
             wearableStorage.AddWearable(hashID, wearable, true); // add to cache

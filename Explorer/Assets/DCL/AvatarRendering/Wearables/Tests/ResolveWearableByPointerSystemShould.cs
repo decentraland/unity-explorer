@@ -41,9 +41,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             wearableStorage = new WearableStorage();
 
-            mockedAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null, null));
+            mockedAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
-            mockedDefaultAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentRegularAsset(null, null, null));
 
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
 

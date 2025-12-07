@@ -288,7 +288,6 @@ namespace DCL.Interaction.Systems
 
                 World.Add(playerEntity, new MoveBeforePlayingSocialEmoteIntent(
                     initiatorTransform.position,
-                    initiatorTransform.rotation,
                     interaction.InitiatorEntity,
                     new TriggerEmoteReactingToSocialEmoteIntent(
                         interaction.Emote.DTO.Metadata.id,

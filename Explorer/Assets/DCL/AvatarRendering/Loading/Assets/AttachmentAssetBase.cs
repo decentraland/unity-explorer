@@ -1,7 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading;
-using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,38 +26,19 @@ namespace DCL.AvatarRendering.Loading.Assets
         }
     }
 
-    /// <summary>
-    ///
-    /// </summary>
-    public class EmoteOutcomeAnimationPose
-    {
-        public readonly Vector3 Position;
-        public readonly Quaternion Rotation;
-
-        public EmoteOutcomeAnimationPose(Vector3 position, Quaternion rotation)
-        {
-            Position = position;
-            Rotation = rotation;
-        }
-    }
-
     public class AttachmentRegularAsset : AttachmentAssetBase
     {
         public static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
-        public static readonly ListObjectPool<EmoteOutcomeAnimationPose> OUTCOME_ANIMATION_POSE_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 200);
 
         private readonly List<RendererInfo> rendererInfos;
         public readonly GameObject MainAsset;
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public IReadOnlyList<EmoteOutcomeAnimationPose>? SocialEmoteOutcomeAnimationStartPoses;
-
-        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, IStreamableRefCountData streamableData, List<EmoteOutcomeAnimationPose>? socialEmoteOutcomeAnimationStartPose) : base(streamableData)
+        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, IStreamableRefCountData streamableData) : base(streamableData)
         {
             MainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
-            this.SocialEmoteOutcomeAnimationStartPoses = socialEmoteOutcomeAnimationStartPose;
 
             if (mainAsset == null)
                 ProfilingCounters.EmptyWearablesAssetsAmount.Value++;

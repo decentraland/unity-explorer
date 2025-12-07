@@ -14,11 +14,6 @@ namespace DCL.AvatarRendering.Emotes
         public readonly Vector3 InitiatorWorldPosition;
 
         /// <summary>
-        /// The world rotation of the initiator's avatar.
-        /// </summary>
-        public readonly Quaternion InitiatorWorldRotation;
-
-        /// <summary>
         /// The entity ID of the initiator's avatar.
         /// </summary>
         public readonly Entity InitiatorEntityId;
@@ -47,13 +42,11 @@ namespace DCL.AvatarRendering.Emotes
         /// Default constructor.
         /// </summary>
         /// <param name="initiatorWorldPosition">The world position of the initiator's avatar.</param>
-        /// <param name="initiatorWorldRotation">The world rotation of the initiator's avatar.</param>
         /// <param name="initiatorEntityId">The entity ID of the initiator's avatar.</param>
         /// <param name="triggerEmoteIntent">The data sent by the player when reacted to the social emote.</param>
-        public MoveBeforePlayingSocialEmoteIntent(Vector3 initiatorWorldPosition, Quaternion initiatorWorldRotation, Entity initiatorEntityId, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent)
+        public MoveBeforePlayingSocialEmoteIntent(Vector3 initiatorWorldPosition, Entity initiatorEntityId, TriggerEmoteReactingToSocialEmoteIntent triggerEmoteIntent)
         {
             InitiatorWorldPosition = initiatorWorldPosition;
-            InitiatorWorldRotation = initiatorWorldRotation;
             TriggerEmoteIntent = triggerEmoteIntent;
             InitiatorEntityId = initiatorEntityId;
             AreAvatarsLookingAtEachOther = false;

@@ -10,24 +10,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
     public struct InterpolateToOutcomeStartPoseIntent
     {
         /// <summary>
-        /// Where the avatar will end up at the end of the interpolation.
-        /// </summary>
-        public readonly Vector3 TargetAvatarPosition;
-
-        /// <summary>
-        /// What rotation the avatar will have at the end of the interpolation.
-        /// </summary>
-        public readonly Quaternion TargetAvatarRotation;
-
-        /// <summary>
         /// The position of the avatar when the interpolation started.
         /// </summary>
         public readonly Vector3 OriginalAvatarPosition;
-
-        /// <summary>
-        /// The rotation of the avatar when the interpolation started.
-        /// </summary>
-        public readonly Quaternion OriginalAvatarRotation;
 
         /// <summary>
         /// The instant when the interpolation started.
@@ -48,16 +33,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// Default constructor.
         /// </summary>
         /// <param name="originalAvatarPosition">The position of the avatar when the interpolation started.</param>
-        /// <param name="originalAvatarRotation">The rotation of the avatar when the interpolation started.</param>
-        /// <param name="targetAvatarPosition">Where the avatar will end up at the end of the interpolation.</param>
-        /// <param name="targetAvatarRotation">What rotation the avatar will have at the end of the interpolation.</param>
         /// <param name="initiatorWorldPosition">The world position of the initiator's avatar.</param>
-        public InterpolateToOutcomeStartPoseIntent(Vector3 originalAvatarPosition, Quaternion originalAvatarRotation, Vector3 targetAvatarPosition, Quaternion targetAvatarRotation, Vector3 initiatorWorldPosition)
+        public InterpolateToOutcomeStartPoseIntent(Vector3 originalAvatarPosition, Vector3 initiatorWorldPosition)
         {
-            TargetAvatarPosition = targetAvatarPosition;
-            TargetAvatarRotation = targetAvatarRotation;
             OriginalAvatarPosition = originalAvatarPosition;
-            OriginalAvatarRotation = originalAvatarRotation;
             MovementStartTime = Time.time;
             InitiatorWorldPosition = initiatorWorldPosition;
             HasBeenCancelled = false;

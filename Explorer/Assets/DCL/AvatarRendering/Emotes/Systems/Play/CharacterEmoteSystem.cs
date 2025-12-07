@@ -792,36 +792,17 @@ namespace DCL.AvatarRendering.Emotes.Play
             URN emoteUrn = interaction.Emote.GetUrn().Shorten();
             emoteStorage.TryGetElement(emoteUrn, out emote);
 
-            Vector3 targetAvatarHipRelativePosition = Vector3.zero;
-
-            IReadOnlyList<EmoteOutcomeAnimationPose>? socialEmoteOutcomeAnimationStartPoses = emote.AssetResults[BodyShape.MALE]!.Value.Asset!.SocialEmoteOutcomeAnimationStartPoses;
-
-            if(socialEmoteOutcomeAnimationStartPoses != null && socialEmoteOutcomeAnimationStartPoses.Count > 0) // All social emotes should have this info, this protection is added just to prevent old test emotes from failing
-                targetAvatarHipRelativePosition = socialEmoteOutcomeAnimationStartPoses[interaction.OutcomeIndex].Position;
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>target hip: " + targetAvatarHipRelativePosition.ToString("F6") + "</color>");
-
             AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
             AvatarBase initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
 
             // Calculates the pose of the receiver avatar when the outcome animation starts, to be used as target in the interpolation
             Vector3 originalAvatarPosition = receiverAvatar.GetTransform().position;
-            Vector3 originalHipRelativePosition = Vector3.Scale(receiverAvatar.HipAnchorPoint.localPosition, receiverAvatar.HipAnchorPoint.parent.localScale);
-            Vector3 targetAvatarPosition = initiatorAvatar.GetTransform().position
-                                           + initiatorAvatar.GetTransform().rotation * new Vector3(targetAvatarHipRelativePosition.x, 0.0f, targetAvatarHipRelativePosition.z)
-                                           // Small adjustment to make current position of the hips in the current animation with the future position of the hips
-                                           - receiverAvatar.GetTransform().rotation * new Vector3(originalHipRelativePosition.x, 0.0f, originalHipRelativePosition.y);
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>Movement: {originalAvatarPosition.ToString("F3")} -> {targetAvatarPosition.ToString("F3")}</color>");
-
-            GizmoDrawer.Instance.DrawWireSphere(3, targetAvatarPosition, 0.2f, Color.magenta);
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>Movement: {originalAvatarPosition.ToString("F3")} -> {initiatorAvatar.GetTransform().position.ToString("F3")}</color>");
 
             // Adjustment interpolation
             World.Add(interaction.ReceiverEntity, new InterpolateToOutcomeStartPoseIntent(
                 originalAvatarPosition,
-                receiverAvatar.GetTransform().rotation,
-                targetAvatarPosition,
-                initiatorAvatar.GetTransform().rotation,
                 initiatorAvatar.GetTransform().position));
 
             // Interpolates the position of the object the camera is looking at, from current position to the position of the avatar's head
