@@ -18,12 +18,15 @@ using UnityEngine.Pool;
 
 namespace DCL.SocialEmotes.UI
 {
+    /// <summary>
+    /// Manages the pins (small banners) that appear atop the avatr of the initiators of social emotes
+    /// when the player can interact with them.
+    /// </summary>
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateAfter(typeof(NametagPlacementSystem))]
     [LogCategory(ReportCategory.EMOTE)]
     public partial class SocialEmotePinsSystem : BaseUnityLoopSystem
     {
-        // TODO: Put this in a settings file
         private const float MAX_DISTANCE = 40;
         private const float MAX_DISTANCE_SQR = MAX_DISTANCE * MAX_DISTANCE;
 
