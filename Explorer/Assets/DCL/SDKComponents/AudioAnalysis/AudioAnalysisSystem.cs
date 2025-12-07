@@ -6,14 +6,18 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using CRDT;
 using Plugins.NativeAudioAnalysis;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
-    [UpdateInGroup(typeof(SDKAudioSourceGroup))]
+    // (LIKELY) Synced group is required to propagate the result back to the scene
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.SDK_AUDIO_ANALYSIS)]
     [ThrottlingEnabled]
     public partial class AudioAnalysisSystem : BaseUnityLoopSystem
@@ -22,10 +26,16 @@ namespace DCL.SDKComponents.AudioSources
         public const float DEFAULT_BANDS_GAIN = 0.05f;
 
         private readonly IPerformanceBudget frameTimeBudgetProvider;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        internal AudioAnalysisSystem(World world, IPerformanceBudget frameTimeBudgetProvider) : base(world)
+        internal AudioAnalysisSystem(
+            World world, 
+            IPerformanceBudget frameTimeBudgetProvider,
+            IECSToCRDTWriter ecsToCRDTWriter
+        ) : base(world)
         {
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
@@ -34,7 +44,11 @@ namespace DCL.SDKComponents.AudioSources
         }
 
         [Query]
-        private void HandleAudioAnalysisComponent(ref AudioSourceComponent audioSourceComponent, ref PBAudioAnalysis sdkComponent)
+        private void HandleAudioAnalysisComponent(
+            CRDTEntity entity,
+            ref AudioSourceComponent audioSourceComponent, 
+            ref PBAudioAnalysis sdkComponent
+        )
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
@@ -70,6 +84,9 @@ namespace DCL.SDKComponents.AudioSources
                     sdkComponent.Band6 = result.bands[6];
                     sdkComponent.Band7 = result.bands[7];
                 }
+
+                sdkComponent.IsDirty = false;
+                ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
             }
         }
     }

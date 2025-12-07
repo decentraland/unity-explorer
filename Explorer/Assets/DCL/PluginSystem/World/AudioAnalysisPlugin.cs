@@ -15,6 +15,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
+using CrdtEcsBridge.ECSToCRDTWriter;
 
 namespace DCL.PluginSystem.World
 {
@@ -31,7 +32,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            AudioAnalysisSystem.InjectToWorld(ref builder, frameTimeBudgetProvider);
+            AudioAnalysisSystem.InjectToWorld(ref builder, frameTimeBudgetProvider, sharedDependencies.EcsToCRDTWriter);
 
             finalizeWorldSystems.Add(CleanUpAudioAnalysisSystem.InjectToWorld(ref builder));
         }
