@@ -14,20 +14,51 @@ namespace DCL.AvatarRendering.Emotes
     {
         public struct SocialEmoteData
         {
+            /// <summary>
+            /// Whether the avatar has to play an outcome animation of the emote.
+            /// </summary>
             public bool UseOutcomeAnimation;
+
+            /// <summary>
+            /// The index of the outcome animation to be played. -1 means no outcome will play.
+            /// </summary>
             public int OutcomeIndex;
+
+            /// <summary>
+            /// Whether the avatar has to play the reaction outcome animation of the emote (the animation of the receiver).
+            /// </summary>
             public bool UseOutcomeReactionAnimation;
+
+            /// <summary>
+            /// The wallet address of the initiator's player.
+            /// </summary>
             public string InitiatorWalletAddress;
+
+            /// <summary>
+            /// When a directed emote is sent, it is the wallet address of the player whose avatar will be able to react to the emote.
+            /// </summary>
             public string TargetAvatarWalletAddress;
+
+            /// <summary>
+            /// The ID of the current interaction, set when an avatar starts a social emote.
+            /// </summary>
             public int InteractionId;
         }
 
-        public string WalletAddress;
         public URN EmoteId;
         public bool Spatial;
         public TriggerSource TriggerSource;
-        public bool IsRepeating;
         public SocialEmoteData SocialEmote;
+
+        /// <summary>
+        /// The wallet address of the player who is playing the emote.
+        /// </summary>
+        public string WalletAddress;
+
+        /// <summary>
+        /// Whether this is a repetition of a looping emote (true) or it is the first shot (false).
+        /// </summary>
+        public bool IsRepeating;
 
         /// <summary>
         /// The emote that could be loaded and is ready to be played.
@@ -45,12 +76,12 @@ namespace DCL.AvatarRendering.Emotes
             this.EmoteId = emoteId;
             this.Spatial = true;
             this.TriggerSource = TriggerSource.REMOTE;
+            this.IsRepeating = false;
             this.SocialEmote.UseOutcomeAnimation = false;
             this.SocialEmote.OutcomeIndex = -1;
             this.SocialEmote.UseOutcomeReactionAnimation = false;
             this.SocialEmote.InitiatorWalletAddress = string.Empty;
             this.SocialEmote.TargetAvatarWalletAddress = string.Empty;
-            this.IsRepeating = false;
             this.SocialEmote.InteractionId = 0;
             this.EmoteAsset = null;
             this.HasPlayedEmote = false;

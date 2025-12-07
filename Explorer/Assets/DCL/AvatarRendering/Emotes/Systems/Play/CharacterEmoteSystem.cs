@@ -822,7 +822,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 receiverAvatar.GetTransform().rotation,
                 targetAvatarPosition,
                 initiatorAvatar.GetTransform().rotation,
-                new TriggerEmoteReactingToSocialEmoteIntent(emoteUrn, interaction.OutcomeIndex, initiatorWalletAddress, interaction.Id),
                 initiatorAvatar.GetTransform().position));
 
             // Interpolates the position of the object the camera is looking at, from current position to the position of the avatar's head

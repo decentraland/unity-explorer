@@ -108,6 +108,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [SerializeField] private Transform[] potentialHighestBones;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
 
+        // The name of the Armature object before it was renamed, used when restoring it
         private string originalArmatureName;
 
         private void Awake()
