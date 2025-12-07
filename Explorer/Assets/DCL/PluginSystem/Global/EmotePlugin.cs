@@ -68,7 +68,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
-        private readonly SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWeb3IdentityCache identityCache;
         private readonly EphemeralNotificationsController ephemeralNotificationsController;
@@ -99,7 +98,6 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
-            SocialEmoteOutcomeMenuController socialEmoteOutcomeMenuController,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWeb3IdentityCache identityCache,
             EphemeralNotificationsController ephemeralNotificationsController)
@@ -125,7 +123,6 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
             this.componentPoolsRegistry = componentPoolsRegistry;
-            this.socialEmoteOutcomeMenuController = socialEmoteOutcomeMenuController;
             this.identityCache = identityCache;
             this.ephemeralNotificationsController = ephemeralNotificationsController;
 
@@ -194,8 +191,6 @@ namespace DCL.PluginSystem.Global
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 
             mvcManager.RegisterController(emotesWheelController);
-
-            mvcManager.RegisterController(socialEmoteOutcomeMenuController);
 
             await CreateSocialEmotePinPoolAsync(settings, ct);
         }

@@ -544,8 +544,6 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
-            SocialEmoteOutcomeMenuController outcomeMenuController = new SocialEmoteOutcomeMenuController(() => mainUIView.SocialEmoteOutcomeMenuView.EnsureNotNull(), globalWorld, staticContainer.InputBlock, playerEntity);
-
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
                 mapRendererContainer.MapRenderer,
@@ -742,7 +740,7 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, outcomeMenuController, staticContainer.ComponentsContainer.ComponentPoolsRegistry, identityCache, ephemeralNotificationsController),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, staticContainer.ComponentsContainer.ComponentPoolsRegistry, identityCache, ephemeralNotificationsController),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,

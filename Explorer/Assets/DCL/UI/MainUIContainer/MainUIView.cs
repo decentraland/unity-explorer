@@ -21,7 +21,6 @@ namespace DCL.UI.MainUI
         [field: SerializeField] public SidebarView SidebarView { get; private set; }
         [field: SerializeField] public ControlsPanelView ControlsPanelView { get; private set; }
         [field: SerializeField] public WarningNotificationView WarningNotification { get; private set; }
-        [field: SerializeField] public SocialEmoteOutcomeMenuView SocialEmoteOutcomeMenuView { get; private set; }
         [field: SerializeField] public EphemeralNotificationsView EphemeralNotificationsView { get; private set; }
         [field: SerializeField] internal PointerDetectionArea pointerDetectionArea { get; private set; }
         [field: SerializeField] internal LayoutElement sidebarLayoutElement { get; private set; }

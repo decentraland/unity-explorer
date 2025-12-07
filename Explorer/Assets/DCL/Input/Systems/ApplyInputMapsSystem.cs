@@ -66,9 +66,6 @@ namespace DCL.Input.Systems
                         case InputMapComponent.Kind.VOICE_CHAT:
                             SetActionMapEnabled(isActive, DCLInput.Instance.VoiceChat);
                             break;
-                        case InputMapComponent.Kind.SOCIAL_EMOTE_OUTCOME_SELECTION:
-                            SetActionMapEnabled(isActive, DCLInput.Instance.SocialEmoteOutcomes);
-                            break;
                     }
                 }
             }
