@@ -41,40 +41,40 @@ namespace DCL.AvatarRendering.Emotes
                 {
                     foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
                     {
-                        SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.SocialEmoteInitiatorWalletAddress);
+                        SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress);
 
                         // Ignores reaction messages when the initiator started the same social emote again, while they were interacting (which cancels the emote for both)
-                        if (remoteEmoteIntention.IsReactingToSocialEmote &&
+                        if (remoteEmoteIntention.SocialEmote.IsReacting &&
                             interaction != null &&
-                            interaction.Id != remoteEmoteIntention.SocialEmoteInteractionId)
+                            interaction.Id != remoteEmoteIntention.SocialEmote.InteractionId)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED LOOP DIFFERENT ID " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " id1: " + interaction.Id + " id2: " + remoteEmoteIntention.SocialEmoteInteractionId + "</color>");
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED LOOP DIFFERENT ID " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " id1: " + interaction.Id + " id2: " + remoteEmoteIntention.SocialEmote.InteractionId + "</color>");
                             return;
                         }
 
                         // Ignores start interaction message when, for the same interaction, avatars are already using outcome animations
                         if (interaction != null &&
-                            !remoteEmoteIntention.IsUsingSocialOutcomeAnimation &&
+                            !remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
                             interaction.AreInteracting &&
-                            interaction.Id == remoteEmoteIntention.SocialEmoteInteractionId)
+                            interaction.Id == remoteEmoteIntention.SocialEmote.InteractionId)
                         {
                             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED LOOP " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
                             return;
                         }
 
                         // Ignores messages of reaction to social emote of the interaction for incoming message, which does not exist currently (may occur when a third player connects while 2 avatars are already interacting)
-                        if (!string.IsNullOrEmpty(remoteEmoteIntention.SocialEmoteInitiatorWalletAddress) &&
-                            !SocialEmoteInteractionsManager.Instance.InteractionExists(remoteEmoteIntention.SocialEmoteInitiatorWalletAddress) &&
-                            remoteEmoteIntention.IsReactingToSocialEmote)
+                        if (!string.IsNullOrEmpty(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
+                            !SocialEmoteInteractionsManager.Instance.InteractionExists(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
+                            remoteEmoteIntention.SocialEmote.IsReacting)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>DISCARDED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation: " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation + " Initiator: " + remoteEmoteIntention.SocialEmoteInitiatorWalletAddress + " interaction? " + (interaction != null) + "</color>");
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>DISCARDED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation: " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation + " Initiator: " + remoteEmoteIntention.SocialEmote.InitiatorWalletAddress + " interaction? " + (interaction != null) + "</color>");
                             continue;
                         }
 
                         // Ignores repeated social emote messages for the same interaction
                         if (interaction != null &&
-                            interaction.AreInteracting == remoteEmoteIntention.IsUsingSocialOutcomeAnimation &&
-                            interaction.Id == remoteEmoteIntention.SocialEmoteInteractionId)
+                            interaction.AreInteracting == remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
+                            interaction.Id == remoteEmoteIntention.SocialEmote.InteractionId)
                         {
                             ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED REPEATED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
                             return;
@@ -82,10 +82,10 @@ namespace DCL.AvatarRendering.Emotes
 
                         // Ignores reaction messages to non-existing interactions, unless it's the first time they are processed (when a third player connects while other 2 are interacting)
                         if (interaction == null &&
-                            remoteEmoteIntention.IsUsingSocialOutcomeAnimation &&
-                            SocialEmoteInteractionsManager.Instance.HasInteractionExisted(remoteEmoteIntention.SocialEmoteInteractionId))
+                            remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
+                            SocialEmoteInteractionsManager.Instance.HasInteractionExisted(remoteEmoteIntention.SocialEmote.InteractionId))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>DISCARDED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation: " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation + " Initiator: " + remoteEmoteIntention.SocialEmoteInitiatorWalletAddress + " interaction? " + (interaction != null) + "</color>");
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>DISCARDED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation: " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation + " Initiator: " + remoteEmoteIntention.SocialEmote.InitiatorWalletAddress + " interaction? " + (interaction != null) + "</color>");
                             continue;
                         }
 
@@ -93,7 +93,7 @@ namespace DCL.AvatarRendering.Emotes
                         // The entity was not created yet, so we wait until its created to be able to consume the intent
                         if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
-                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions +1   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
+                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions +1   isOutcome? " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation);
                             savedIntentions!.Add(remoteEmoteIntention);
                             continue;
                         }
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Emotes
                         // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
                         if (interpolationExists && (EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp) || !intComp.Enabled))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation + " IsReactingToSocialEmote " + remoteEmoteIntention.IsReactingToSocialEmote + " repeating? " + remoteEmoteIntention.IsRepeating + " id: " + remoteEmoteIntention.SocialEmoteInteractionId);
+                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation + " IsReactingToSocialEmote " + remoteEmoteIntention.SocialEmote.IsReacting + " repeating? " + remoteEmoteIntention.IsRepeating + " id: " + remoteEmoteIntention.SocialEmote.InteractionId);
 
                             if(interaction != null)
                                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY++: interaction emote " + interaction.Emote.DTO.Metadata.id + " intention shorten: " + remoteEmoteIntention.EmoteId.Shorten());
@@ -121,17 +121,17 @@ namespace DCL.AvatarRendering.Emotes
                             ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                             intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                             intention.WalletAddress = remoteEmoteIntention.WalletId;
-                            intention.SocialEmote.OutcomeIndex = remoteEmoteIntention.SocialEmoteOutcomeIndex;
-                            intention.SocialEmote.UseOutcomeReactionAnimation = remoteEmoteIntention.IsReactingToSocialEmote;
-                            intention.SocialEmote.UseOutcomeAnimation = remoteEmoteIntention.IsUsingSocialOutcomeAnimation;
-                            intention.SocialEmote.InitiatorWalletAddress = remoteEmoteIntention.SocialEmoteInitiatorWalletAddress;
-                            intention.SocialEmote.TargetAvatarWalletAddress = remoteEmoteIntention.TargetAvatarWalletAddress;
-                            intention.SocialEmote.InteractionId = remoteEmoteIntention.SocialEmoteInteractionId;
+                            intention.SocialEmote.OutcomeIndex = remoteEmoteIntention.SocialEmote.OutcomeIndex;
+                            intention.SocialEmote.UseOutcomeReactionAnimation = remoteEmoteIntention.SocialEmote.IsReacting;
+                            intention.SocialEmote.UseOutcomeAnimation = remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation;
+                            intention.SocialEmote.InitiatorWalletAddress = remoteEmoteIntention.SocialEmote.InitiatorWalletAddress;
+                            intention.SocialEmote.TargetAvatarWalletAddress = remoteEmoteIntention.SocialEmote.TargetAvatarWalletAddress;
+                            intention.SocialEmote.InteractionId = remoteEmoteIntention.SocialEmote.InteractionId;
                             intention.IsRepeating = remoteEmoteIntention.IsRepeating;
                         }
                         else
                         {
-                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions ++2 (" + emoteIntentions.Collection().Count + ")   isOutcome? " + remoteEmoteIntention.IsUsingSocialOutcomeAnimation);
+                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions ++2 (" + emoteIntentions.Collection().Count + ")   isOutcome? " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation);
                             savedIntentions.Add(remoteEmoteIntention);
                         }
                     }

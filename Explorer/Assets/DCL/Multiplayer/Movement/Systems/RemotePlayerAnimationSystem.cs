@@ -48,20 +48,6 @@ namespace DCL.Multiplayer.Movement.Systems
             if (remotePlayerMovement.WasPassedThisFrame)
             {
                 remotePlayerMovement.WasPassedThisFrame = false;
-
-      /*          if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
-                {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "STOP EMOTE MOVED Outcome? " + emote.IsPlayingSocialEmoteOutcome);
-                    emote.StopEmote = true;
-                    emote.CurrentEmoteReference?.animatorComp?.ResetTrigger(emote.CurrentEmoteReference.propClipHash);
-                    view.AvatarAnimator.SetTrigger(AnimationHashes.EMOTE_STOP);
-                    view.RestoreArmatureName();
-                }
-                else
-                {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=cyan>NOT STOP EMOTE MOVED emote.IsPlayingEmote? " + emote.IsPlayingEmote + " remotePlayerMovement.PastMessage.isEmoting? " + remotePlayerMovement.PastMessage.isEmoting + "</color>");
-                }
-*/
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
             }
 
