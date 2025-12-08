@@ -24,7 +24,7 @@ namespace DCL.PlacesAPIService
         public class PlaceInfo : ISerializationCallbackReceiver
         {
             private const string EMPTY_PLACE_ID = "fake_id";
-            
+
             public string id;
             public string title;
             public string description;
@@ -162,7 +162,6 @@ namespace DCL.PlacesAPIService
 
                 string[] splitBasePosition = base_position.Split(',');
                 base_position_processed = new Vector2Int(int.Parse(splitBasePosition[0]), int.Parse(splitBasePosition[1]));
-                scene_creator = "0x18ffae2fc8a5b2aeb0afafa03d73d93f72fcef9a";
             }
 
             [Serializable]

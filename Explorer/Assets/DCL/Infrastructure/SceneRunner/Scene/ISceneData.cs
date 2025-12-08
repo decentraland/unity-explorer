@@ -49,8 +49,7 @@ namespace SceneRunner.Scene
         ///     This is used from creators to be able to receive donations
         /// </remarks>
         string? GetCreatorAddress() =>
-            //SceneEntityDefinition.metadata.creator;
-            "0x31d4f4DD8615ec45bbB6330DA69F60032Aca219F";
+            SceneEntityDefinition.metadata.creator;
 
         bool HasRequiredPermission(string permission);
 
