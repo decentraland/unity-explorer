@@ -163,7 +163,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             var promise = EmotesFromRealmPromise.Create(
                 World!,
                 new GetEmotesByPointersFromRealmIntention(missingPointers.ToList(),
-                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)
+                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)
                 ),
                 partitionComponent
             );

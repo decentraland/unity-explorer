@@ -155,7 +155,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
-                new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry, cancellationTokenSource: intention.CancellationTokenSource));
+                new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
 
