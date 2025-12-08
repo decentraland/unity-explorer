@@ -16,7 +16,7 @@ MonoBehaviour:
   VisibilityDistance: 12
   InteractionDistance: 8
   OutcomeStartInterpolationRadius: 1.2
-  OutcomeStartInterpolationDuration: 1
+  OutcomeStartInterpolationDuration: 0.1
   OutcomeCameraInterpolationDuration: 0.2
   ReactionTimeout: 3
   DirectedEmoteReceivedAnimationDuration: 1
