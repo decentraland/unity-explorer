@@ -13,11 +13,14 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
         private const float PLAY_CHECK_THRESHOLD = 0.5f;
+        public const float DEFAULT_SPATIAL_MIN_DISTANCE = 0f;
+        public const float DEFAULT_SPATIAL_MAX_DISTANCE = 60f;
 
         private float lastVideoTime;
         private float frozenTimestamp;
         private float lastPlayTimestamp;
         private bool isFrozen;
+        private bool isSpatial;
 
         public readonly MultiMediaPlayer MediaPlayer;
         public readonly bool IsFromContentServer;
@@ -29,6 +32,10 @@ namespace DCL.SDKComponents.MediaStream
         public float LastPropagatedVideoTime;
         public CancellationTokenSource? Cts;
         public OpenMediaPromise? OpenMediaPromise;
+
+        public bool IsSpatial => MediaPlayer.IsSpatial;
+        public float SpatialMaxDistance => MediaPlayer.SpatialMaxDistance;
+        public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
 
         public MediaPlayerComponent(MultiMediaPlayer mediaPlayer, bool isFromContentServer) : this()
         {
@@ -122,5 +129,10 @@ namespace DCL.SDKComponents.MediaStream
             MediaPlayer.Dispose(MediaAddress);
             Cts.SafeCancelAndDispose();
         }
+
+        public void UpdateSpatialAudio(bool isSpatial, float? minDistance, float? maxDistance) =>
+            MediaPlayer.UpdateSpatialAudio(isSpatial,
+                minDistance ?? DEFAULT_SPATIAL_MIN_DISTANCE,
+                maxDistance ?? DEFAULT_SPATIAL_MAX_DISTANCE);
     }
 }

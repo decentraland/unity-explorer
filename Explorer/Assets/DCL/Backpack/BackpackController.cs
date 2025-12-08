@@ -3,20 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables;
-using DCL.Backpack.BackpackBus;
-using DCL.Backpack.CharacterPreview;
-using DCL.Backpack.EmotesSection;
-using DCL.CharacterPreview;
-using DCL.Input;
-using DCL.Profiles;
-using DCL.UI;
-using ECS.StreamableLoading.Common;
-using Runtime.Wearables;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits;
@@ -25,12 +11,25 @@ using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.BackpackBus;
+using DCL.Backpack.CharacterPreview;
+using DCL.Backpack.EmotesSection;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.Web3.Identities;
+using DCL.UI;
 using DCL.WebRequests;
 using ECS;
+using ECS.StreamableLoading.Common;
+using Runtime.Wearables;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -55,12 +54,12 @@ namespace DCL.Backpack
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly BackpackSections currentSection = BackpackSections.Avatar;
         private readonly IRealmData realmData;
-        private BackpackSections lastShownSection;
 
+        private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
-        private BackpackSections currentSection = BackpackSections.Avatar;
         private bool isAvatarLoaded;
         private bool instantSectionToggle;
 
@@ -92,7 +91,8 @@ namespace DCL.Backpack
             IWearablesProvider wearablesProvider,
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
-            Sprite deleteIcon)
+            Sprite deleteIcon,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -163,7 +163,8 @@ namespace DCL.Backpack
                 backpackGridController,
                 categoriesPresenter,
                 outfitsPresenter,
-                thumbnailProvider);
+                thumbnailProvider,
+                decentralandUrlsSource);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
