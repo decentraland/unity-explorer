@@ -473,6 +473,29 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
+        public async UniTask<bool> DeleteCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{subscriptionsBaseUrl}/subscription/opt-outs/community/{communityId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> CreateCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{subscriptionsBaseUrl}/subscription/opt-outs";
+            string jsonBody = JsonUtility.ToJson(new CreateCommunityNotificationOptOutPostBody { scope = "community", scopeId = communityId });
+
+            var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
         // TODO: Pending to implement these methods:
         //       public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
         //       public UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)

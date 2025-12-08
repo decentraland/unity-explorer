@@ -58,7 +58,9 @@ namespace DCL.Communities.CommunitiesCard
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
         private const string COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE = "Link successfully copied!";
-        private const string CHECK_NOTIFICATIONS_OP_OUT_STATUS_ERROR_MESSAGE = "There was an error checking the notifications opt-out status. Please try again.";
+        private const string CHECK_NOTIFICATIONS_OPT_OUT_STATUS_ERROR_MESSAGE = "There was an error checking the notifications opt-out status. Please try again.";
+        private const string CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error unsubscribing notifications for this community. Please try again.";
+        private const string DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error subscribing notifications for this community. Please try again.";
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -92,6 +94,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
+        private CancellationTokenSource communityNotificationsToggleCancellationTokenSource = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
@@ -192,6 +195,7 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
+            communityNotificationsToggleCancellationTokenSource.SafeCancelAndDispose();
 
             if (cameraReelGalleryController != null)
                 cameraReelGalleryController.ThumbnailClicked -= OnThumbnailClicked;
@@ -536,7 +540,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!checkCommunityNotificationOptOutResult.Success)
                 {
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CHECK_NOTIFICATIONS_OP_OUT_STATUS_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CHECK_NOTIFICATIONS_OPT_OUT_STATUS_ERROR_MESSAGE));
                     return true;
                 }
 
@@ -549,6 +553,7 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
+            communityNotificationsToggleCancellationTokenSource.SafeCancelAndDispose();
             spriteCache = null;
 
             RestoreInput();
@@ -771,7 +776,36 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnNotificationsToggleChanged(bool isEnabled)
         {
-            // TODO (santi): Implement this!
+            communityNotificationsToggleCancellationTokenSource = communityNotificationsToggleCancellationTokenSource.SafeRestart();
+            CreateOrDeleteCommunityNotificationsOptOutAsync(communityData.id, isEnabled, communityNotificationsToggleCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CreateOrDeleteCommunityNotificationsOptOutAsync(string communityId, bool isSubscribedToNotifications, CancellationToken ct)
+            {
+                Result<bool> response;
+
+                if (isSubscribedToNotifications)
+                    response = await communitiesDataProvider.DeleteCommunityNotificationOptOutAsync(communityId, ct)
+                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                else
+                    response = await communitiesDataProvider.CreateCommunityNotificationOptOutAsync(communityId, ct)
+                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success || !response.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
+                        isSubscribedToNotifications ?
+                            DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE :
+                            CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE));
+
+                    return;
+                }
+
+                viewInstance!.SetNotificationsToggleInitialValue(isSubscribedToNotifications);
+            }
         }
 
         private void OnCopyCommunityLinkRequested()

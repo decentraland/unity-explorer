@@ -398,8 +398,8 @@ namespace DCL.Communities.CommunitiesCard
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, CommunityThumbnail, defaultCommunityImage, cancellationToken, true).Forget();
 
+            SetNotificationsToggleInitialValue(communityData.isSubscribedToNotifications);
             communityNotificationsContextMenuElement!.Enabled = communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member;
-            communityNotificationsContextMenuControlSettings!.SetInitialValue(communityData.isSubscribedToNotifications);
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
             communityNotificationsSeparatorContextMenuElement!.Enabled = communityNotificationsContextMenuElement!.Enabled && (deleteCommunityContextMenuElement!.Enabled || leaveCommunityContextMenuElement!.Enabled);
@@ -422,5 +422,8 @@ namespace DCL.Communities.CommunitiesCard
             foreach (GameObject go in ObjectsToShowWhenAccessIsNotAllowed)
                 go.SetActive(!isAllowed);
         }
+
+        public void SetNotificationsToggleInitialValue(bool value) =>
+            communityNotificationsContextMenuControlSettings!.SetInitialValue(value);
     }
 }
