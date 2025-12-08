@@ -36,7 +36,6 @@ namespace DCL.SDKComponents.AvatarLocomotion
         {
             SetupAvatarLocomotionOverridesSystem.InjectToWorld(ref builder);
             ApplyAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, settings, scenesCache);
-            ClearAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, scenesCache);
         }
 
         public class Settings : IDCLPluginSettings

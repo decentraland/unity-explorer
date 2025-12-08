@@ -28,7 +28,6 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
         protected override void Update(float t)
         {
             // If there is no current scene, we need to clear the overrides
-            // Normally it's the current scene that does it (see PropagateAvatarLocomotionOverridesSystem)
             if (scenesCache.CurrentScene.Value == null) ClearOverridesQuery(World);
 
             ApplyOverridesQuery(World);
