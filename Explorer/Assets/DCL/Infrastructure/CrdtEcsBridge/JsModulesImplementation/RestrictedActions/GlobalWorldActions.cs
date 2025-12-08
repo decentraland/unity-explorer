@@ -12,7 +12,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;

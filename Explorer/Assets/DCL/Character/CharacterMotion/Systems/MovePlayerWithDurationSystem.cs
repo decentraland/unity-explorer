@@ -134,13 +134,12 @@ namespace DCL.CharacterMotion.Systems
             characterTransform.Transform.rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
         }
 
+        // TODO: Do we want this easing??
         /// <summary>
         /// Smooth step function for easing (ease-in-out)
         /// </summary>
         private static float SmoothStep(float t)
-        {
-            return t * t * (3f - 2f * t);
-        }
+            => t * t * (3f - (2f * t));
     }
 }
 
