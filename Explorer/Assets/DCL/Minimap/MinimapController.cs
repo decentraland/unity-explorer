@@ -87,8 +87,6 @@ namespace DCL.Minimap
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings homeToggleSettings;
-        private GenericContextMenuElement? donateToCreatorMenuElement;
-        private GenericContextMenuElement? donateToCreatorSeparatorMenuElement;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -140,7 +138,7 @@ namespace DCL.Minimap
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
 
-            donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorMenuElement;
+            donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorButton;
         }
 
         public override void Dispose()
@@ -151,7 +149,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
 
-            donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorMenuElement;
+            donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
 
             if (includeBannedUsersFromScene)
             {
@@ -164,8 +162,10 @@ namespace DCL.Minimap
             sceneRestrictionsController?.Dispose();
 
             if (viewInstance == null) return;
+
             viewInstance.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
             viewInstance.favoriteButton.OnButtonClicked -= OnFavoriteButtonClicked;
+            viewInstance.donateButton.onClick.RemoveAllListeners();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -180,12 +180,11 @@ namespace DCL.Minimap
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
-        private void EvaluateDonateToCreatorMenuElement((bool enabled, string? creatorAddress, Vector2Int? baseParcel) donationStatus)
+        private void EvaluateDonateToCreatorButton((bool enabled, string? creatorAddress, Vector2Int? baseParcel) donationStatus)
         {
-            if (donateToCreatorMenuElement == null || donateToCreatorSeparatorMenuElement == null) return;
+            if (viewInstance == null) return;
 
-            donateToCreatorMenuElement.Enabled = donationStatus.enabled;
-            donateToCreatorSeparatorMenuElement.Enabled = donationStatus.enabled;
+            viewInstance.donateButton.gameObject.SetActive(donationStatus.enabled);
         }
 
         protected override void OnViewInstantiated()
@@ -195,6 +194,7 @@ namespace DCL.Minimap
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
             viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
+            viewInstance.donateButton.onClick.AddListener(OpenDonateToCreatorPanel);
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -213,11 +213,9 @@ namespace DCL.Minimap
             contextMenu = new GenericContextMenu()
                          .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink))
-                         .AddControl(donateToCreatorSeparatorMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings()))
-                         .AddControl(donateToCreatorMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings("Donate to creator", viewInstance.contextMenuConfig.donateIcon, OpenDonateToCreatorPanel)));
+                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
-            EvaluateDonateToCreatorMenuElement(donationsService.DonationsEnabledCurrentScene.Value);
+            EvaluateDonateToCreatorButton(donationsService.DonationsEnabledCurrentScene.Value);
             SetInitialHomeToggleValue();
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
 
