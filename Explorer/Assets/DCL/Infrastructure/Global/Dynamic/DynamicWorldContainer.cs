@@ -541,7 +541,10 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
-            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, placesAPIService, bootstrapContainer.Environment);
+            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
+                staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
+                placesAPIService, bootstrapContainer.Environment,
+                appArgs);
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
@@ -960,7 +963,10 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider),
-                new DonationsPlugin(
+            };
+
+            if (donationsService.DonationFeatureEnabled)
+                globalPlugins.Add(new DonationsPlugin(
                     mvcManager,
                     assetsProvisioner,
                     donationsService,
@@ -969,8 +975,7 @@ namespace Global.Dynamic
                     playerEntity,
                     globalWorld,
                     webBrowser,
-                    bootstrapContainer.DecentralandUrlsSource),
-            };
+                    bootstrapContainer.DecentralandUrlsSource));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))

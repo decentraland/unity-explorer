@@ -9,6 +9,7 @@ using DCL.Web3;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
+using Global.AppArgs;
 using MVC;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
@@ -62,7 +63,8 @@ namespace DCL.Donations
             IWebRequestController webRequestController,
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            IAppArgs appArgs)
         {
             this.scenesCache = scenesCache;
             this.ethereumApi = ethereumApi;
@@ -83,7 +85,7 @@ namespace DCL.Donations
                         break;
             }
 
-            donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || Application.isEditor || true; //TODO: remove '|| true' when feature is ready to be shipped
+            donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI));
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
