@@ -30,7 +30,7 @@ namespace DCL.Donations
         // Test Amoy MANA contract
         private const string AMOY_NET_CONTRACT_ADDRESS = "0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0";
 
-        private const string MATIC_NETWORK = "matic";
+        private const string MATIC_NETWORK = "polygon";
         private const string AMOY_NETWORK = "amoy";
 
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
