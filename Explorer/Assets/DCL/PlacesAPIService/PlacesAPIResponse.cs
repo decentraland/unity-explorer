@@ -23,6 +23,8 @@ namespace DCL.PlacesAPIService
         [Serializable]
         public class PlaceInfo : ISerializationCallbackReceiver
         {
+            private const string EMPTY_PLACE_ID = "fake_id";
+            
             public string id;
             public string title;
             public string description;
@@ -62,9 +64,11 @@ namespace DCL.PlacesAPIService
 
             [SerializeField] private string[] positions;
 
+            public bool IsEmptyPlace => id == EMPTY_PLACE_ID;
+
             public PlaceInfo(Vector2Int position)
             {
-                id = "fake_id";
+                id = EMPTY_PLACE_ID;
                 title = "Empty place";
                 description = "No description";
                 image = "https://peer.decentraland.org/content/contents/bafkreidj26s7aenyxfthfdibnqonzqm5ptc4iamml744gmcyuokewkr76y";
