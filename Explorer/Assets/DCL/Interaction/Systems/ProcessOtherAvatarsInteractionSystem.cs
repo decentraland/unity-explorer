@@ -269,6 +269,10 @@ namespace DCL.Interaction.Systems
         {
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(interactingUserWalletAddress);
 
+            // The social emote interaction may have been cancelled since the context menu was open
+            if(interaction == null)
+                return;
+
             // Checks if the current emote has an outcome for the given index
             int outcomeCount = interaction!.Emote.Model.Asset!.metadata.data!.outcomes!.Length;
 
