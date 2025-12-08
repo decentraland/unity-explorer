@@ -82,7 +82,12 @@ namespace DCL.CharacterMotion.Systems
                     + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
-            bool hasGroundedFlag = /*deltaMovement.y <= 0 && */EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6246
+            // Decreasing Y doesn't mean you are falling, nor you are not grounded.
+            // For example, a scene might set a teleport location below the current player's Y.
+            // That provokes an incorrect fall animation if the player was already on ground
+            bool hasGroundedFlag = /*deltaMovement.y <= 0 && */
+                EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
