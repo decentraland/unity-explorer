@@ -27,7 +27,18 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
+            InterruptMovementOnInputQuery(World);
             MovePlayerQuery(World, t);
+        }
+
+        [Query]
+        [All(typeof(PlayerMoveToWithDurationIntent))]
+        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent)
+        {
+            if (movementInputComponent.Kind == MovementKind.IDLE || movementInputComponent.Axes == Vector2.zero)
+                return;
+
+            World.Remove<PlayerMoveToWithDurationIntent>(entity);
         }
 
         [Query]
