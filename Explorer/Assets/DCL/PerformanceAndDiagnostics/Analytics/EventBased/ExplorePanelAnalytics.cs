@@ -3,7 +3,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.Settings;
 using DCL.Settings.Settings;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
@@ -49,7 +49,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnJumpIn(Vector2Int parcel)
         {
-            analytics.Track(AnalyticsEvents.Map.JUMP_IN, new JsonObject
+            analytics.Track(AnalyticsEvents.Map.JUMP_IN, new JObject
             {
                 { "parcel", parcel.ToString() },
             });
@@ -63,7 +63,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings visibility)
         {
-            analytics.Track(AnalyticsEvents.Settings.CHAT_BUBBLES_VISIBILITY_CHANGED, new JsonObject
+            analytics.Track(AnalyticsEvents.Settings.CHAT_BUBBLES_VISIBILITY_CHANGED, new JObject
             {
                 { "visibility",  visibility == ChatBubbleVisibilitySettings.NONE ? "none" : visibility == ChatBubbleVisibilitySettings.NEARBY_ONLY ? "nearby" : "all"},
             });
