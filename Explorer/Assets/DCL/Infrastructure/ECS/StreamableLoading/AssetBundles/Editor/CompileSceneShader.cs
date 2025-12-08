@@ -74,7 +74,7 @@ namespace DCL.Rendering.Menus
                 }
             }
 
-            CompileTheSceneShader("lods/dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES, bt);
+            CompileTheSceneShader("dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES, bt);
         }
 
         [MenuItem("Decentraland/Shaders/Force Recompile \"Scene\" Shader Variants")]
