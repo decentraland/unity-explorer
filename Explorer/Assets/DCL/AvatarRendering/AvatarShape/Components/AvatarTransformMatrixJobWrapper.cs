@@ -13,6 +13,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public class AvatarTransformMatrixJobWrapper : IDisposable
     {
+        private bool disposed;
+
         private const int INNER_LOOP_BATCH_COUNT = 128; // Each iteration is lightweight. Reduces overhead from frequent job switching.
 
         internal const int AVATAR_ARRAY_SIZE = 100;
@@ -119,10 +121,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             bonesCombined.Dispose();
             updateAvatar.Dispose();
             job.Dispose();
+            disposed = true;
         }
 
         public void ReleaseAvatar(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {
+            if (disposed) return;
+
             if (avatarTransformMatrixComponent.IndexInGlobalJobArray == -1)
                 return;
 
