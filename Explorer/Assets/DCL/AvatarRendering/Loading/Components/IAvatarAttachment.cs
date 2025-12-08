@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.Loading.Components
         /// </summary>
         StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
-        AvatarAttachmentDTO DTO { get; }
+        AvatarAttachmentDTO? DTO { get; }
 
         public string ToString() =>
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
