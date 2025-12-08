@@ -38,6 +38,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -57,6 +58,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
         private const string COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE = "Link successfully copied!";
+        private const string CHECK_NOTIFICATIONS_OP_OUT_STATUS_ERROR_MESSAGE = "There was an error checking the notifications opt-out status. Please try again.";
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -464,6 +466,9 @@ namespace DCL.Communities.CommunitiesCard
 
                 communityData = getCommunityResult.Value.data;
 
+                // Check notifications opt-out status
+                communityData.isSubscribedToNotifications = await CheckCommunityNotificationOptOutAsync(communityId, ct);
+
                 // Check if we have a pending invite to the community
                 bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
 
@@ -519,6 +524,23 @@ namespace DCL.Communities.CommunitiesCard
                     }
 
                 return false;
+            }
+
+            async UniTask<bool> CheckCommunityNotificationOptOutAsync(string commId, CancellationToken ct)
+            {
+                var checkCommunityNotificationOptOutResult = await communitiesDataProvider.CheckCommunityNotificationOptOutAsync(commId, ct)
+                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return true;
+
+                if (!checkCommunityNotificationOptOutResult.Success)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CHECK_NOTIFICATIONS_OP_OUT_STATUS_ERROR_MESSAGE));
+                    return true;
+                }
+
+                return !checkCommunityNotificationOptOutResult.Value.optedOut;
             }
         }
 

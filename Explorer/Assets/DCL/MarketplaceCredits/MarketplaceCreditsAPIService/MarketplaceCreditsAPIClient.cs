@@ -23,7 +23,7 @@ namespace DCL.MarketplaceCredits
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.MarketplaceCredits);
-        private string emailSubscriptionsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.EmailSubscriptions);
+        private string emailSubscriptionsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Subscriptions);
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {

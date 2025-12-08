@@ -36,6 +36,7 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
         private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
+        private string subscriptionsBaseUrl => urlsSource.Url(DecentralandUrl.Subscriptions);
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
@@ -460,6 +461,16 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
+        }
+
+        public async UniTask<CheckCommunityNotificationOptOutResponse> CheckCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{subscriptionsBaseUrl}/subscription/opt-outs/community/{communityId}";
+
+            CheckCommunityNotificationOptOutResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                          .CreateFromJson<CheckCommunityNotificationOptOutResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
         }
 
         // TODO: Pending to implement these methods:

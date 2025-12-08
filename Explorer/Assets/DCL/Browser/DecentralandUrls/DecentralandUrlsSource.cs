@@ -120,7 +120,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
-                DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
+                DecentralandUrl.Subscriptions => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.decentraland.{ENV}/social/communities/{{0}}/raw-thumbnail.png",
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
