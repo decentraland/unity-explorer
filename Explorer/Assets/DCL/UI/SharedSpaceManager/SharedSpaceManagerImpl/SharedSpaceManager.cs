@@ -4,8 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Chat.ControllerShowParams;
 using DCL.Communities;
 using DCL.Diagnostics;
-using DCL.ExplorePanel;
-using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
 using MVC;
 using System;
@@ -41,7 +39,7 @@ namespace DCL.UI.SharedSpaceManager
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
         private float lastQuickEmoteTime;
 
-        private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
+        //private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
         private bool isChatBlockerVisible { get; set; }
 
         public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled,
@@ -64,8 +62,8 @@ namespace DCL.UI.SharedSpaceManager
 
         private void OnQuickActionEmotePlayed()
         {
-            if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
-                lastQuickEmoteTime = UnityEngine.Time.time;
+            //if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
+              //  lastQuickEmoteTime = UnityEngine.Time.time;
         }
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
@@ -189,39 +187,6 @@ namespace DCL.UI.SharedSpaceManager
 
                         break;
                     }
-                    case PanelsSharingSpace.Skybox:
-                    case PanelsSharingSpace.EmotesWheel:
-                    case PanelsSharingSpace.Explore:
-                    case PanelsSharingSpace.SidebarProfile:
-                    case PanelsSharingSpace.MarketplaceCredits:
-                    case PanelsSharingSpace.Controls:
-                    case PanelsSharingSpace.SmartWearables:
-                    {
-                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
-                        {
-                            await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
-
-                            await UniTask.WaitUntil(() => !panelInSharedSpace.IsVisibleInSharedSpace, PlayerLoopTiming.Update, cts.Token);
-                        }
-                        else
-                            isTransitioning = false;
-
-                        break;
-                    }
-                    case PanelsSharingSpace.Notifications:
-                    case PanelsSharingSpace.SidebarSettings:
-                    {
-                        if (!panelInSharedSpace.IsVisibleInSharedSpace)
-                        {
-                            await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token);
-
-                            await UniTask.WaitUntil(() => !panelInSharedSpace.IsVisibleInSharedSpace, PlayerLoopTiming.Update, cts.Token);
-                        }
-                        else
-                            isTransitioning = false;
-
-                        break;
-                    }
                 }
             }
             catch (Exception ex)
@@ -338,8 +303,8 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible && !isChatBlockerVisible)
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            //if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible && !isChatBlockerVisible)
+              //  await ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
         }
 
 #region Registration
@@ -441,13 +406,13 @@ namespace DCL.UI.SharedSpaceManager
                 return;
             }
 
-            if (!isExplorePanelVisible)
-                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
+            //if (!isExplorePanelVisible)
+                //await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
         }
 
         private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)
         {
-            var panel = PanelsSharingSpace.Controls;
+            /*var panel = PanelsSharingSpace.Controls;
 
             // For hiding the panel, use standard logic.
             if (registrations[panel].panel.IsVisibleInSharedSpace)
@@ -458,19 +423,19 @@ namespace DCL.UI.SharedSpaceManager
             {
                 await ShowAsync(PanelsSharingSpace.Controls, new ControllerNoData(),
                     PanelsSharingSpace.Chat, PanelsSharingSpace.Explore);
-            }
+            }*/
         }
 
         private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (!isExplorePanelVisible && isFriendsFeatureEnabled)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
+            /*if (!isExplorePanelVisible && isFriendsFeatureEnabled)
+                await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());*/
         }
 
         private async void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (!isExplorePanelVisible && isCommunitiesFeatureEnabled)
-                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Communities));
+            /*if (!isExplorePanelVisible && isCommunitiesFeatureEnabled)
+                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Communities));*/
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
@@ -496,9 +461,9 @@ namespace DCL.UI.SharedSpaceManager
         /// </summary>
         private bool IsEmoteWheelLocked()
         {
-            bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
-
-            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > UnityEngine.Time.time;
+            /*bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
+            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > UnityEngine.Time.time;*/
+            return false;
         }
     }
 }

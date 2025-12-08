@@ -35,7 +35,6 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private readonly IMVCManager mvcManager;
         private bool includeCommunities;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -68,7 +67,7 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController communitiesBrowserController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            ISharedSpaceManager sharedSpaceManager, IMVCManager mvcManager)
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -82,7 +81,6 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.mvcManager = mvcManager;
             CommunitiesBrowserController = communitiesBrowserController;
         }
@@ -97,8 +95,8 @@ namespace DCL.ExplorePanel
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
         {
-            if(State == ControllerState.ViewHidden)
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(sectionToShow));
+            if (State == ControllerState.ViewHidden)
+                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
             else
                 ShowSection(sectionToShow);
         }

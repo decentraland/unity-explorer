@@ -53,7 +53,6 @@ namespace DCL.MarketplaceCredits
         private readonly Animator sidebarCreditsButtonAnimator;
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
@@ -83,7 +82,6 @@ namespace DCL.MarketplaceCredits
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter) : base(viewFactory)
@@ -98,7 +96,6 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
@@ -313,7 +310,7 @@ namespace DCL.MarketplaceCredits
             if (!isFeatureActivated)
                 return;
 
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: true));
+            mvcManager.ShowAndForget(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: true)));
         }
 
         private void CheckForSidebarButtonState()
@@ -346,7 +343,7 @@ namespace DCL.MarketplaceCredits
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
                     await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
-                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
+                    await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: false)), ct);
                 }
 
                 web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;

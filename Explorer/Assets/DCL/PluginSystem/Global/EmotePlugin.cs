@@ -15,7 +15,6 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
-using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -56,7 +55,6 @@ namespace DCL.PluginSystem.Global
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
         private readonly bool localSceneDevelopment;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -78,7 +76,6 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             string builderContentURL,
             bool localSceneDevelopment,
-            ISharedSpaceManager sharedSpaceManager,
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
@@ -99,7 +96,6 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
@@ -131,7 +127,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -159,9 +155,7 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
-                inputBlock, cursor, sharedSpaceManager);
-
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
+                inputBlock, cursor, mvcManager);
 
             mvcManager.RegisterController(emotesWheelController);
         }

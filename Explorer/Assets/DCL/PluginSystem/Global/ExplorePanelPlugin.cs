@@ -157,6 +157,7 @@ namespace DCL.PluginSystem.Global
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
         private CommunitiesBrowserController? communitiesBrowserController;
+        private ExplorePanelController explorePanelController;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -291,6 +292,7 @@ namespace DCL.PluginSystem.Global
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
             upscalingController.Dispose();
+            explorePanelController?.Dispose();
 
             dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -488,13 +490,12 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 chatEventBus);
 
-            ExplorePanelController explorePanelController = new
+            explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                    communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager, mvcManager);
+                    communitiesBrowserController, inputBlock, includeCameraReel, mvcManager);
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);
         }
 

@@ -33,6 +33,13 @@ using Utility;
 
 namespace DCL.UI.Sidebar
 {
+    public class SidebarPanelsShortcutsHandler : IDisposable
+    {
+        public void Dispose()
+        {
+        }
+    }
+
     public class SidebarController : ControllerBase<SidebarView>
     {
         private readonly IMVCManager mvcManager;
@@ -138,12 +145,6 @@ namespace DCL.UI.Sidebar
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
 
             //chatView.FoldingChanged += OnChatViewFoldingChanged;
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();

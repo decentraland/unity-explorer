@@ -20,7 +20,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -63,7 +62,6 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -73,6 +71,7 @@ namespace DCL.Minimap
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
 
+        private SideMenuPresenter? sideMenuPresenter;
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
@@ -99,7 +98,6 @@ namespace DCL.Minimap
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             Vector2Int startParcelInGenesis,
-            ISharedSpaceManager sharedSpaceManager,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrls,
             IChatMessagesBus chatMessagesBus,
@@ -107,7 +105,7 @@ namespace DCL.Minimap
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
-            HomePlaceEventBus homePlaceEventBus) 
+            HomePlaceEventBus homePlaceEventBus)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -119,7 +117,6 @@ namespace DCL.Minimap
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.systemClipboard = systemClipboard;
             this.decentralandUrls = decentralandUrls;
             this.chatMessagesBus = chatMessagesBus;
@@ -135,6 +132,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             placesApiCts.SafeCancelAndDispose();
+            sideMenuPresenter?.Dispose();
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
@@ -167,12 +165,12 @@ namespace DCL.Minimap
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
-            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
+            viewInstance.minimapRendererButton.Button.onClick.AddListener(OnMinimapRendererButtonClicked);
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
-            new SideMenuController(viewInstance.sideMenuView);
+            sideMenuPresenter = new SideMenuPresenter(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetGenesisMode(realmData.IsGenesis());
             realmData.RealmType.OnUpdate += OnRealmChanged;
@@ -204,6 +202,11 @@ namespace DCL.Minimap
             }
         }
 
+        private void OnMinimapRendererButtonClicked()
+        {
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
+        }
+
         private void SetInitialHomeToggleValue()
         {
             bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
@@ -224,8 +227,8 @@ namespace DCL.Minimap
                 homePlaceEventBus.SetAsHome(previousParcelPosition);
             else
                 homePlaceEventBus.UnsetHome();
-            
-            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
+
+            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
             OnFocus();
         }
@@ -340,22 +343,22 @@ namespace DCL.Minimap
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
             RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
-            
+
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
             // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
         }
-        
+
         private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
             PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
-    
+
             if (realmData.ScenesAreFixed)
                 viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
             else
                 viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
-    
+
             viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
         }
 
@@ -367,7 +370,7 @@ namespace DCL.Minimap
             {
                 if (realmData.ScenesAreFixed)
                     return null;
-        
+
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct);
             }
             catch (NotAPlaceException notAPlaceException)

@@ -382,7 +382,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT), PanelsSharingSpace.Chat).Forget();
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT)));
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {

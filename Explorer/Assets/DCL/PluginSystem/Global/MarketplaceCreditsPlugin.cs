@@ -5,12 +5,10 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBus;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
-using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -31,9 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
-        private readonly NotificationsBusController notificationBusController;
         private readonly IRealmData realmData;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
@@ -51,7 +47,6 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter)
@@ -64,7 +59,6 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
             this.realmData = realmData;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
@@ -98,12 +92,10 @@ namespace DCL.PluginSystem.Global
                 mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
                 mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
                 realmData,
-                sharedSpaceManager,
                 web3IdentityCache,
                 loadingStatus,
                 textFormatter);
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
         }
 
