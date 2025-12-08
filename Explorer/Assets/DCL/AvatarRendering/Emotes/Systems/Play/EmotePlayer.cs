@@ -81,7 +81,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             EmoteReferences? emoteReferences = pools[mainAsset]!.Get();
-            if (!emoteReferences) return false;
+
+            if (emoteReferences == null)
+                return false;
 
             Transform avatarTransform = view.GetTransform();
             Transform emoteTransform = emoteReferences!.transform;
@@ -206,7 +208,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
-            references.Initialize(avatarClip, propClip, outcomes, animatorComp, animationComp, propClipHash, legacy);
+            references.Initialize(avatarClip, propClip, outcomes, animatorComp, animationComp, propClipHash, legacy, GetPropInstanceFromMainGameObject(mainGameObject));
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
@@ -253,6 +255,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             // Avatar
             AnimationClip? avatarClip;
             string? armatureNameOverride = null;
+            bool usesProp = true;
 
             if (emoteComponent.Metadata!.IsSocialEmote)
             {
@@ -260,27 +263,34 @@ namespace DCL.AvatarRendering.Emotes.Play
                 {
                     if (emoteComponent.SocialEmote.IsReacting)
                     {
+                        // Is receiver, playing outcome
+                        usesProp = false; // Only the initiator plays the prop animation
                         avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].OtherAvatarAnimation;
                         isLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
                         armatureNameOverride = "Armature_Other";
                     }
                     else
                     {
+                        // Is initiator, playing outcome
                         avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.SocialEmote.CurrentOutcome].LocalAvatarAnimation;
                         isLooping = emoteComponent.Metadata.data!.outcomes![emoteComponent.SocialEmote.CurrentOutcome].loop;
                     }
                 }
                 else
                 {
+                    // Is initiator, playing start
                     avatarClip = emoteReferences.avatarClip;
                     isLooping = emoteComponent.Metadata.data!.startAnimation!.loop;
                 }
             }
             else
             {
+                // Is non-social emote
                 avatarClip = emoteReferences.avatarClip;
                 view.RestoreArmatureName();
             }
+
+            emoteReferences.propInstance?.gameObject.SetActive(usesProp);
 
             if (avatarClip != null)
             {
@@ -453,6 +463,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             legacy = avatarClip != null && avatarClip.legacy;
+        }
+
+        public static Transform? GetPropInstanceFromMainGameObject(GameObject mainAsset)
+        {
+            return mainAsset.transform.Find("Armature_Prop");
         }
     }
 }

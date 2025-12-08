@@ -226,6 +226,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported), typeof(MoveBeforePlayingSocialEmoteIntent))]
         private void CancelEmotesByMovement(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView, in Profile profile)
         {
+            if(!emoteComponent.IsPlayingEmote)
+                return;
+
             const float XZ_CUTOFF_LIMIT = 0.01f;
             // The seemingly strange 0.447f value is because we were previously only using the squared threshold, and it was 0.2f
             // The value 0.447^2 is approximately 0.2f

@@ -19,10 +19,11 @@ namespace DCL.AvatarRendering.Emotes
         public Animation? animationComp { get; private set; }
         public bool legacy { get; private set; }
         public EmoteOutcome[]? socialEmoteOutcomes { get; private set; }
+        public Transform? propInstance { get; private set; }
 
         public AudioSource? audioSource;
 
-        public void Initialize(AnimationClip? animationClip, AnimationClip? propCLip, EmoteOutcome[]? socialEmoteOutcomes, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
+        public void Initialize(AnimationClip? animationClip, AnimationClip? propCLip, EmoteOutcome[]? socialEmoteOutcomes, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy, Transform? propInstance)
         {
             this.avatarClip = animationClip;
             this.propClip = propCLip;
@@ -31,6 +32,7 @@ namespace DCL.AvatarRendering.Emotes
             this.propClipHash = propClipHash;
             this.legacy = legacy;
             this.socialEmoteOutcomes = socialEmoteOutcomes;
+            this.propInstance = propInstance;
         }
     }
 }
