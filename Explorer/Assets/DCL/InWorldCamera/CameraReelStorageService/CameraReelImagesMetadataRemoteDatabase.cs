@@ -202,7 +202,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             urlBuilder.Clear();
 
             await webRequestController
-                 .SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ct)
+                 .SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ct)
                  .WithNoOpAsync();
         }
 

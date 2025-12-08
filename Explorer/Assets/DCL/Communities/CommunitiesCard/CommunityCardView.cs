@@ -297,6 +297,11 @@ namespace DCL.Communities.CommunitiesCard
             ToggleSection(CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? Sections.ANNOUNCEMENTS : Sections.MEMBERS, invokeEvent);
         }
 
+        public void ClearCurrentSection()
+        {
+            currentSection = null;
+        }
+
         public void SetLoadingState(bool isLoading)
         {
             communityName.enabled = !isLoading;
