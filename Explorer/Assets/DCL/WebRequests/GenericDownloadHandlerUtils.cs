@@ -34,30 +34,30 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) =>
             new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
-        public static Adapter<GenericDeleteRequest, GenericDeleteArguments> DeleteAsync(
+        public static Adapter<GenericDeleteRequest, GenericPostArguments> DeleteAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericDeleteArguments arguments,
+            GenericPostArguments arguments,
             CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
             new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
-        public static Adapter<GenericPutRequest, GenericPutArguments> PutAsync(
+        public static Adapter<GenericPutRequest, GenericPostArguments> PutAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericPutArguments arguments,
+            GenericPostArguments arguments,
             CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
             new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, false);
 
-        public static Adapter<GenericPatchRequest, GenericPatchArguments> PatchAsync(
+        public static Adapter<GenericPatchRequest, GenericPostArguments> PatchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericPatchArguments arguments,
+            GenericPostArguments arguments,
             CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,

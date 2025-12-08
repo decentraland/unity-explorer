@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
@@ -43,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard
             PHOTOS,
             MEMBERS,
             PLACES,
+            ANNOUNCEMENTS,
         }
 
         [Serializable]
@@ -64,6 +66,7 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? CancelRequestToJoinCommunity;
         public event Action? AcceptInvite;
         public event Action? RejectInvite;
+        public event Action? CopyCommunityLinkRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
@@ -103,6 +106,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button membersButton { get; set; } = null!;
         [field: SerializeField] private Button placesButton { get; set; } = null!;
         [field: SerializeField] private Button placesWithSignButton { get; set; } = null!;
+        [field: SerializeField] private Button announcementsButton { get; set; } = null!;
         [field: SerializeField] private Button placesShortcutButton { get; set; } = null!;
         [field: SerializeField] private Button membersTextButton { get; set; } = null!;
 
@@ -111,12 +115,14 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject membersSectionSelection { get; set; } = null!;
         [field: SerializeField] private GameObject placesSectionSelection { get; set; } = null!;
         [field: SerializeField] private GameObject placesWithSignSectionSelection { get; set; } = null!;
+        [field: SerializeField] private GameObject announcementsSelection { get; set; } = null!;
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; } = null!;
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
+        [field: SerializeField] public AnnouncementsSectionView AnnouncementsSectionView { get; private set; } = null!;
 
         [field: Header("Restricted Access")]
         [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsAllowed { get; private set; }
@@ -127,6 +133,8 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
+        private GenericContextMenuElement? copyLinkContextMenuElement;
+        private GenericContextMenuElement? copyLinkSeparatorContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
         private Sections? currentSection;
@@ -169,17 +177,29 @@ namespace DCL.Communities.CommunitiesCard
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
 
+            bool isAnnouncementsFeatureEnabled = CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled();
+            announcementsButton.gameObject.SetActive(isAnnouncementsFeatureEnabled);
+            if (isAnnouncementsFeatureEnabled)
+                announcementsButton.onClick.AddListener(() => ToggleSection(Sections.ANNOUNCEMENTS));
+
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget,
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+                         .AddControl(copyLinkContextMenuElement = new GenericContextMenuElement(
+                              new ButtonContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkText, contextMenuSettings.CopyCommunityLinkSprite, OnCopyCommunityLinkRequested)))
+                         .AddControl(copyLinkSeparatorContextMenuElement = new GenericContextMenuElement(
+                              new SeparatorContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested,
                                   textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
+
+        private void OnCopyCommunityLinkRequested() =>
+            CopyCommunityLinkRequested?.Invoke();
 
         private void OnDeleteCommunityRequested()
         {
@@ -260,8 +280,11 @@ namespace DCL.Communities.CommunitiesCard
             backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        public void ResetToggle(bool invokeEvent) =>
-            ToggleSection(Sections.MEMBERS, invokeEvent);
+        public void ResetToggle(bool invokeEvent)
+        {
+            currentSection = null;
+            ToggleSection(CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? Sections.ANNOUNCEMENTS : Sections.MEMBERS, invokeEvent);
+        }
 
         public void ClearCurrentSection()
         {
@@ -274,6 +297,11 @@ namespace DCL.Communities.CommunitiesCard
             communityMembersNumber.enabled = !isLoading;
             communityDescription.enabled = !isLoading;
             EventListView.SetLoadingStateActive(isLoading);
+
+            announcementsButton.interactable = !isLoading;
+            membersButton.interactable = !isLoading;
+            placesButton.interactable = !isLoading;
+            photosButton.interactable = !isLoading;
 
             if (isLoading)
                 loadingObject.ShowLoading();
@@ -291,10 +319,12 @@ namespace DCL.Communities.CommunitiesCard
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
             placesSectionSelection.SetActive(section == Sections.PLACES);
             placesWithSignSectionSelection.SetActive(section == Sections.PLACES);
+            announcementsSelection.SetActive(section == Sections.ANNOUNCEMENTS);
 
             CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
             PlacesSectionView.SetActive(section == Sections.PLACES);
+            AnnouncementsSectionView.SetActive(section == Sections.ANNOUNCEMENTS);
 
             if (invokeEvent)
                 SectionChanged?.Invoke(section);
@@ -304,13 +334,15 @@ namespace DCL.Communities.CommunitiesCard
         {
             openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
-            openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             requestToJoinButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.none);
             cancelRequestButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.request_to_join);
             acceptInviteButton.gameObject.SetActive(communityData.pendingActionType == InviteRequestAction.invite);
             rejectInviteButton.gameObject.SetActive(communityData.pendingActionType == InviteRequestAction.invite);
+
+            if (!CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
         }
 
         public void SetDefaults()
@@ -322,7 +354,6 @@ namespace DCL.Communities.CommunitiesCard
 
             openChatButton.gameObject.SetActive(false);
             openWizardButton.gameObject.SetActive(false);
-            openContextMenuButton.gameObject.SetActive(false);
             joinedButton.gameObject.SetActive(false);
             joinButton.gameObject.SetActive(false);
             requestToJoinButton.gameObject.SetActive(false);
@@ -331,6 +362,10 @@ namespace DCL.Communities.CommunitiesCard
             rejectInviteButton.gameObject.SetActive(false);
             placesWithSignButton.gameObject.SetActive(false);
             placesButton.gameObject.SetActive(true);
+
+            if (!CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                openContextMenuButton.gameObject.SetActive(false);
+
             SetCommunityAccessAsAllowed(true);
         }
 
@@ -354,6 +389,8 @@ namespace DCL.Communities.CommunitiesCard
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
+            copyLinkContextMenuElement!.Enabled = CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled();
+            copyLinkSeparatorContextMenuElement!.Enabled = copyLinkContextMenuElement.Enabled && (deleteCommunityContextMenuElement.Enabled || leaveCommunityContextMenuElement.Enabled);
 
             ConfigureInteractionButtons(communityData);
 
