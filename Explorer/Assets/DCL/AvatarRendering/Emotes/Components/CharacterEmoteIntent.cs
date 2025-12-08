@@ -43,6 +43,12 @@ namespace DCL.AvatarRendering.Emotes
             /// The ID of the current interaction, set when an avatar starts a social emote.
             /// </summary>
             public int InteractionId;
+
+            /// <summary>
+            /// Whether the outcome animation of the initiator has to be on hold until a message of a receiver playing the same outcome animation for the same interaction arrives.
+            /// See explanation at RemoteEmotesSystem.
+            /// </summary>
+            public bool IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop;
         }
 
         public URN EmoteId;
@@ -83,6 +89,7 @@ namespace DCL.AvatarRendering.Emotes
             this.SocialEmote.InitiatorWalletAddress = string.Empty;
             this.SocialEmote.TargetAvatarWalletAddress = string.Empty;
             this.SocialEmote.InteractionId = 0;
+            this.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false;
             this.EmoteAsset = null;
             this.HasPlayedEmote = false;
         }

@@ -33,7 +33,6 @@ using Global.AppArgs;
 using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -113,6 +112,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             BeforePlayingCheckEmoteAssetQuery(World);
+            SynchronizeRemoteInteractionBeforePlayingQuery(World);
             BeforePlayingStopCurrentEmoteQuery(World);
             PlayNewEmoteQuery(World);
             AfterPlayingUpdateSocialEmoteInteractionsQuery(World);
@@ -455,18 +455,57 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
+        // This is a corner case that happens if 2 avatars are playing a looping social emote and a new avatar joins the scene. The third will receive the messages
+        // of both players when they iterate the animation loop, but those messages arrive in an unknown order. So if the initiator comes first, it has to wait for the receiver's
+        // and this flag is set until it arrives.
+        // If the message of the receiver comes first, it's ignored (the message is discarded in a condition at RemoteEmotesSystem). It will be handled when the initiator's is already there waiting.
+        // Once both have arrived, both emotes play at the same time.
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void SynchronizeRemoteInteractionBeforePlaying(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent, ref CharacterTransform characterTransform)
+        {
+            if(emoteIntent.EmoteAsset == null || !emoteIntent.EmoteAsset.IsSocial)
+                return;
+
+            if (emoteIntent.SocialEmote.UseOutcomeReactionAnimation)
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Simulating receiver " + emoteIntent.WalletAddress);
+
+                SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.SocialEmote.InitiatorWalletAddress);
+
+                // The message of the receiver arrived and there is already an initiator waiting for that interaction...
+                if(interaction != null &&
+                   World.TryGet(interaction.InitiatorEntity, out CharacterEmoteIntent initiatorIntent) &&
+                   initiatorIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Initiator UNLOCKED " + initiatorIntent.WalletAddress);
+                    initiatorIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false;
+
+                    World.Set(interaction.InitiatorEntity, initiatorIntent);
+                }
+            }
+            else if(emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
+            {
+                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Simulating initiator " + emoteIntent.WalletAddress);
+
+                // Starting interaction (no emote is played yet)
+                SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emoteIntent.EmoteAsset, characterTransform.Transform, emoteIntent.SocialEmote.InteractionId, emoteIntent.SocialEmote.TargetAvatarWalletAddress);
+                emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.WalletAddress;
+            }
+        }
+
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void PlayNewEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent,
             in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(emoteIntent.EmoteAsset == null)
+            if(emoteIntent.EmoteAsset == null || emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
                 return;
 
             IEmote emote = emoteIntent.EmoteAsset;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - Is reacting? " + emoteIntent.SocialEmote.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
+            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Consuming emote - address: " + emoteIntent.WalletAddress +  "Is reacting? " + emoteIntent.SocialEmote.UseOutcomeReactionAnimation + " mov: " + avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND));
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
@@ -511,7 +550,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "PLAY USER: " + emoteIntent.WalletAddress);
 
-                if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                bool playedSuccessfully = emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent);
+
+                if (!playedSuccessfully)
                 {
                     ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteIntent.EmoteId} cant be played.");
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -552,6 +593,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                             // Reacting to the interaction
                             SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, entity, emoteComponent.SocialEmote.CurrentOutcome, emoteIntent.SocialEmote.InitiatorWalletAddress);
                         }
+                   /*     else if (!SocialEmoteInteractionsManager.Instance.InteractionExists(emoteIntent.SocialEmote.InitiatorWalletAddress) &&
+                                 !emoteComponent.SocialEmote.IsReacting)
+                        {
+                            // A spectator entered DCL while 2 avatars were interacting and playing a looping outcome animation
+                            // Starting interaction
+                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmote.InteractionId, emoteIntent.SocialEmote.TargetAvatarWalletAddress);
+                            emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.WalletAddress;
+                        }*/
                     }
                     else
                     {
@@ -788,10 +837,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress)!;
 
             // Since the avatar is reacting, the emote is already available
-            IEmote emote;
-            URN emoteUrn = interaction.Emote.GetUrn().Shorten();
-            emoteStorage.TryGetElement(emoteUrn, out emote);
-
             AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
             AvatarBase initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
 

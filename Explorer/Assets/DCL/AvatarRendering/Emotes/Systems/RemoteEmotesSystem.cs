@@ -41,6 +41,14 @@ namespace DCL.AvatarRendering.Emotes
                 {
                     foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
                     {
+                        // The entity was not created yet, so we wait until its created to be able to consume the intent
+                        if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                        {
+                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions +1   isOutcome? " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation);
+                            savedIntentions!.Add(remoteEmoteIntention);
+                            continue;
+                        }
+
                         SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress);
 
                         // Ignores reaction messages when the initiator started the same social emote again, while they were interacting (which cancels the emote for both)
@@ -62,7 +70,7 @@ namespace DCL.AvatarRendering.Emotes
                             return;
                         }
 
-                        // Ignores messages of reaction to social emote of the interaction for incoming message, which does not exist currently (may occur when a third player connects while 2 avatars are already interacting)
+                        // Ignores messages of reaction to social emote when the interaction does not exist yet (may occur when a third player connects while 2 avatars are already interacting)
                         if (!string.IsNullOrEmpty(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
                             !SocialEmoteInteractionsManager.Instance.InteractionExists(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
                             remoteEmoteIntention.SocialEmote.IsReacting)
@@ -89,15 +97,6 @@ namespace DCL.AvatarRendering.Emotes
                             continue;
                         }
 
-                        // TODO: Should this be moved to the top?
-                        // The entity was not created yet, so we wait until its created to be able to consume the intent
-                        if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
-                        {
-                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions +1   isOutcome? " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation);
-                            savedIntentions!.Add(remoteEmoteIntention);
-                            continue;
-                        }
-
                         ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
                         ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
@@ -118,16 +117,34 @@ namespace DCL.AvatarRendering.Emotes
                             if(interaction != null)
                                 ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY++: interaction emote " + interaction.Emote.DTO.Metadata.id + " intention shorten: " + remoteEmoteIntention.EmoteId.Shorten());
 
+                            bool isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false;
+
+                            // This is a corner case that happens if 2 avatars are playing a looping social emote and a new avatar joins the scene. The third will receive the messages
+                            // of both players when they iterate the animation loop, but those messages arrive in an unknown order. So if the initiator comes first, it has to wait for the receiver's
+                            // and this flag is set until it arrives.
+                            // If the message of the receiver comes first, it's ignored (the message is discarded in a previous condition). It will be handled when the initiator's is already there waiting.
+                            // Once both have arrived, both emotes play at the same time (see SynchronizeRemoteInteractionBeforePlaying).
+                            if (!remoteEmoteIntention.SocialEmote.IsReacting &&
+                                remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
+                                interaction == null &&
+                                !string.IsNullOrEmpty(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
+                                !SocialEmoteInteractionsManager.Instance.HasInteractionExisted(remoteEmoteIntention.SocialEmote.InteractionId))
+                            {
+                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>REBUILD INTERACTION! " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
+                                isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = true;
+                            }
+
                             ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                             intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                             intention.WalletAddress = remoteEmoteIntention.WalletId;
+                            intention.IsRepeating = remoteEmoteIntention.IsRepeating;
                             intention.SocialEmote.OutcomeIndex = remoteEmoteIntention.SocialEmote.OutcomeIndex;
                             intention.SocialEmote.UseOutcomeReactionAnimation = remoteEmoteIntention.SocialEmote.IsReacting;
                             intention.SocialEmote.UseOutcomeAnimation = remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation;
                             intention.SocialEmote.InitiatorWalletAddress = remoteEmoteIntention.SocialEmote.InitiatorWalletAddress;
                             intention.SocialEmote.TargetAvatarWalletAddress = remoteEmoteIntention.SocialEmote.TargetAvatarWalletAddress;
                             intention.SocialEmote.InteractionId = remoteEmoteIntention.SocialEmote.InteractionId;
-                            intention.IsRepeating = remoteEmoteIntention.IsRepeating;
+                            intention.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop;
                         }
                         else
                         {
