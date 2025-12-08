@@ -21,6 +21,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(PlayerMoveToWithDurationIntent))]
         private void UpdateAnimation(
             [Data] float dt,
             ref CharacterAnimationComponent animationComponent,

@@ -16,6 +16,11 @@ namespace DCL.CharacterMotion.Components
         public float Duration;
         public float ElapsedTime;
 
+        /// <summary>
+        /// Tracks the position from the last frame for animation speed calculation.
+        /// </summary>
+        public Vector3 LastFramePosition;
+
         public PlayerMoveToWithDurationIntent(
             Vector3 startPosition,
             Vector3 targetPosition,
@@ -29,6 +34,7 @@ namespace DCL.CharacterMotion.Components
             AvatarTarget = avatarTarget;
             Duration = duration;
             ElapsedTime = 0f;
+            LastFramePosition = startPosition;
         }
 
         public float Progress => Duration > 0f ? Mathf.Clamp01(ElapsedTime / Duration) : 1f;
