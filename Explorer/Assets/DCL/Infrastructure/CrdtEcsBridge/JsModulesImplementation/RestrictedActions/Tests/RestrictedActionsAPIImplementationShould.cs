@@ -80,7 +80,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             globalWorldActions.Received(1).MoveAndRotatePlayer(
                 sceneData.Geometry.BaseParcelPosition + testNewRelativePosition,
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,
-                testAvatarTarget);
+                testAvatarTarget,
+                0f);
 
             globalWorldActions.Received(1).RotateCamera(
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,
@@ -169,7 +170,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             // Should not call MoveAndRotatePlayer because position is invalid
-            globalWorldActions.DidNotReceive().MoveAndRotatePlayer(Arg.Any<Vector3>(), Arg.Any<Vector3?>(), Arg.Any<Vector3?>());
+            globalWorldActions.DidNotReceive().MoveAndRotatePlayer(Arg.Any<Vector3>(), Arg.Any<Vector3?>(), Arg.Any<Vector3?>(), Arg.Any<float>());
         }
 
         [Test]
@@ -189,7 +190,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             globalWorldActions.Received(1).MoveAndRotatePlayer(
                 positionOutsideScene,
                 null,
-                null);
+                null,
+                0f);
         }
 
         [Test]
@@ -209,7 +211,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             globalWorldActions.Received(1).MoveAndRotatePlayer(
                 positionInsideScene,
                 null,
-                null);
+                null,
+                0f);
         }
     }
 }

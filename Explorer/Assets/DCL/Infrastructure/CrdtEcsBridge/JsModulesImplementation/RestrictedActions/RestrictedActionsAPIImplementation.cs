@@ -54,7 +54,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget)
+        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget, float duration = 0f)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
@@ -69,7 +69,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
             }
 
-            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget).Forget();
+            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget, duration).Forget();
         }
 
         public void TryTeleportTo(Vector2Int coords)
@@ -144,11 +144,11 @@ namespace CrdtEcsBridge.RestrictedActions
             CopyToClipboardAsync(text).Forget();
         }
 
-        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Vector3? newAbsoluteAvatarTarget)
+        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Vector3? newAbsoluteAvatarTarget, float duration = 0f)
         {
             await UniTask.SwitchToMainThread();
 
-            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget);
+            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget, duration);
             globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 

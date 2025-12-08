@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -47,22 +48,36 @@ namespace CrdtEcsBridge.RestrictedActions
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
-        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
+        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration = 0f)
         {
-            // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
-            world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
-            world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
-
-            // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
-            if (newAvatarTarget != null)
+            if (duration > 0f)
             {
-                Vector3 lookAtDirection = newAvatarTarget.Value - newPlayerPosition;
-                lookAtDirection.y = 0;
-                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
+                // Smooth movement over duration (through MovePlayerWithDurationSystem)
+                Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Transform.position;
+                world.AddOrSet(playerEntity, new PlayerMoveToWithDurationIntent(
+                    startPosition,
+                    newPlayerPosition,
+                    newCameraTarget,
+                    newAvatarTarget,
+                    duration));
             }
-            else if (newCameraTarget != null)
+            else
             {
-                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
+                // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
+                world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
+                world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
+
+                // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
+                if (newAvatarTarget != null)
+                {
+                    Vector3 lookAtDirection = newAvatarTarget.Value - newPlayerPosition;
+                    lookAtDirection.y = 0;
+                    world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
+                }
+                else if (newCameraTarget != null)
+                {
+                    world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
+                }
             }
         }
 
