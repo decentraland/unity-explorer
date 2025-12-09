@@ -1,18 +1,12 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
-using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Arch.Core;
 using DCL.UI;
-using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Textures;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -31,12 +25,12 @@ namespace DCL.Passport.Modules.Badges
         private static readonly int HRM = Shader.PropertyToID("_hrm");
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
-        private readonly World world; 
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
         private readonly List<BadgeTierButton_PassportFieldView> instantiatedBadgeTierButtons = new ();
-
+        private readonly UITextureProvider textureProvider;
+        
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
         private IReadOnlyList<TierData> currentTiers = Array.Empty<TierData>();
@@ -46,22 +40,22 @@ namespace DCL.Passport.Modules.Badges
         private readonly Animator badge3DImageAnimator;
         private readonly Material badge3DMaterial;
 
-        private Entity baseColorEntity = Entity.Null;
-        private Entity normalEntity = Entity.Null;
-        private Entity hrmEntity = Entity.Null;
+        private Texture2DRef? baseColorRef;
+        private Texture2DRef? normalRef;
+        private Texture2DRef? hrmRef;
 
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             BadgePreviewCameraView badge3DPreviewCamera,
-            World world,
             UITextureProvider textureProvider)
         {
-            this.world = world;
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
+            this.textureProvider  = textureProvider;
+            
             badge3DImageAnimator = badge3DPreviewCamera.badge3DAnimator;
             badge3DMaterial = badge3DPreviewCamera.badge3DRenderer.sharedMaterial;
             badgeInfoModuleView.Badge3DImage.texture = badge3DPreviewCamera.badge3DCamera.targetTexture;
@@ -107,7 +101,7 @@ namespace DCL.Passport.Modules.Badges
         public void Clear()
         {
             loadBadge3DImageCts.SafeCancelAndDispose();
-            CleanUp3DImageEntities();
+            Dispose3DTextures();
             ClearTiers();
         }
 
@@ -282,7 +276,7 @@ namespace DCL.Passport.Modules.Badges
 
         private async UniTask LoadBadge3DImageAsync(BadgeAssetsData? assets, CancellationToken ct)
         {
-            CleanUp3DImageEntities();
+            Dispose3DTextures();
 
             try
             {
@@ -295,80 +289,47 @@ namespace DCL.Passport.Modules.Badges
                 string normalUrl = assets.textures3d.normal ?? string.Empty;
                 string hrmUrl = assets.textures3d.hrm ?? string.Empty;
 
-                var baseTask = LoadTextureViaECS(baseColorUrl, TextureType.Albedo, ct);
-                var normalTask = LoadTextureViaECS(normalUrl, TextureType.Albedo, ct); // Keeping Albedo based on original code, though NormalMap is preferred for normals
-                var hrmTask = LoadTextureViaECS(hrmUrl, TextureType.Albedo, ct);
+                var baseTask = textureProvider.LoadTextureAsync(baseColorUrl, ct);
+                var normalTask = textureProvider.LoadTextureAsync(normalUrl, ct);
+                var hrmTask = textureProvider.LoadTextureAsync(hrmUrl, ct);
 
-                var (baseEnt, baseTex) = await baseTask;
-                var (normalEnt, normalTex) = await normalTask;
-                var (hrmEnt, hrmTex) = await hrmTask;
+                var (baseTexRef, normalTexRef, hrmTexRef) =
+                    await UniTask.WhenAll(baseTask, normalTask, hrmTask);
 
-                baseColorEntity = baseEnt;
-                normalEntity = normalEnt;
-                hrmEntity = hrmEnt;
+                baseColorRef = baseTexRef;
+                normalRef = normalTexRef;
+                hrmRef = hrmTexRef;
 
-                if (baseTex != null && normalTex != null && hrmTex != null)
-                    Set3DImage(baseTex, normalTex, hrmTex);
+                if (baseColorRef.HasValue && normalRef.HasValue && hrmRef.HasValue)
+                {
+                    Set3DImage(baseColorRef.Value.Texture, normalRef.Value.Texture, hrmRef.Value.Texture);
+                }
 
                 SetBadgeInfoViewAsLoading(false);
             }
             catch (OperationCanceledException)
             {
-                CleanUp3DImageEntities();
+                Dispose3DTextures();
             }
             catch (Exception e)
             {
-                CleanUp3DImageEntities();
+                Dispose3DTextures();
                 
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
-        private async UniTask<(Entity, Texture2D?)> LoadTextureViaECS(string url, TextureType textureType, CancellationToken ct)
+        private void Dispose3DTextures()
         {
-            if (string.IsNullOrEmpty(url)) return (Entity.Null, null);
+            baseColorRef?.Dispose();
+            baseColorRef = null;
 
-            var intention = new GetTextureIntention(
-                url: url,
-                fileHash: string.Empty,
-                wrapMode: TextureWrapMode.Clamp,
-                filterMode: FilterMode.Bilinear,
-                textureType: textureType,
-                reportSource: "Badge3D"
-            );
+            normalRef?.Dispose();
+            normalRef = null;
 
-            // Create Entity with Promise
-            var promise = AssetPromise<TextureData, GetTextureIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-
-            // Wait without destroying. We need the entity to persist to hold the RefCount.
-            promise = await promise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: ct);
-
-            if (promise.TryGetResult(world, out var result) && result.Succeeded)
-                return (promise.Entity, result.Asset!.EnsureTexture2D());
-
-            if (world.IsAlive(promise.Entity))
-                world.Add(promise.Entity, new DeleteEntityIntention());
-
-            return (Entity.Null, null);
-        }
-
-        private void CleanUp3DImageEntities()
-        {
-            DeleteEntity(ref baseColorEntity);
-            DeleteEntity(ref normalEntity);
-            DeleteEntity(ref hrmEntity);
-        }
-
-        private void DeleteEntity(ref Entity entity)
-        {
-            if (entity != Entity.Null && world.IsAlive(entity))
-            {
-                // This triggers the ECS Cleanup systems which handles promise cancellation and resource dereferencing
-                world.Add(entity, new DeleteEntityIntention());
-            }
-
-            entity = Entity.Null;
+            hrmRef?.Dispose();
+            hrmRef = null;
         }
         
         private void SetBadgeInfoViewAsLoading(bool isLoading)

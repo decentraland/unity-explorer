@@ -58,11 +58,10 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                badge3DPreviewCamera,
-                world, textureProvider);
+                badge3DPreviewCamera, textureProvider);
 
             badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view,
-                webRequestController,
+                textureProvider,
                 badgesCategoriesController,
                 badgeInfoController);
 

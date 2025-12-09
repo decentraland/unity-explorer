@@ -65,18 +65,18 @@ namespace DCL.Passport.Fields.Badges
 
         public bool IsSelected { get; private set; }
 
-        private ImageController? imageController;
+        private StreamableImageController? streamableImageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(UITextureProvider textureProvider)
         {
-            if (imageController != null)
+            if (streamableImageController != null)
                 return;
 
-            imageController = new ImageController(BadgeImage, webRequestController);
+            streamableImageController = new StreamableImageController(BadgeImage, textureProvider);
         }
 
         public void StopLoadingImage() =>
-            imageController?.StopLoading();
+            streamableImageController?.StopLoading();
 
         public void SetInvisible(bool isInvisible) =>
             SubContainerTransform.gameObject.SetActive(!isInvisible);
@@ -155,14 +155,14 @@ namespace DCL.Passport.Fields.Badges
         {
             Color badgeColor = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
             BadgeImage.ImageColor = badgeColor;
-            imageController?.SetImage(DefaultBadgeSprite);
+            streamableImageController?.SetImage(DefaultBadgeSprite);
 
             string imageToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierImage) ?
                 badgeInfo.data.progress.lastCompletedTierImage :
                 badgeInfo.data.assets is { textures2d: not null } ? badgeInfo.data.assets.textures2d.normal : "";
 
             if (!string.IsNullOrEmpty(imageToLoad))
-                imageController?.RequestImage(imageToLoad, badgeColor, hideImageWhileLoading: true);
+                streamableImageController?.RequestImage(imageToLoad, badgeColor, hideImageWhileLoading: true);
         }
     }
 }
