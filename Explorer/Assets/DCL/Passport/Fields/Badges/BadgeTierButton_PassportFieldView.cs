@@ -40,12 +40,12 @@ namespace DCL.Passport.Fields.Badges
 
         private StreamableImageController? streamableImageController;
 
-        public void ConfigureImageController(World webRequestController)
+        public void ConfigureImageController(UITextureProvider textureProvider)
         {
             if (streamableImageController != null)
                 return;
 
-            streamableImageController = new StreamableImageController(TierImage, webRequestController);
+            streamableImageController = new StreamableImageController(TierImage, textureProvider);
         }
 
         public void StopLoadingImage() =>

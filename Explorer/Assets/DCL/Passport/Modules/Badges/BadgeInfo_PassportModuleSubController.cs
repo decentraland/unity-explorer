@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Arch.Core;
+using DCL.UI;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -54,7 +55,8 @@ namespace DCL.Passport.Modules.Badges
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             BadgePreviewCameraView badge3DPreviewCamera,
-            World world)
+            World world,
+            UITextureProvider textureProvider)
         {
             this.world = world;
             this.badgeInfoModuleView = badgeInfoModuleView;
@@ -69,7 +71,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeTierButton =>
                 {
-                    badgeTierButton.ConfigureImageController(world);
+                    badgeTierButton.ConfigureImageController(textureProvider);
                     badgeTierButton.gameObject.SetActive(true);
                     badgeTierButton.SetAsSelected(false);
                     badgeTierButton.transform.SetAsLastSibling();
