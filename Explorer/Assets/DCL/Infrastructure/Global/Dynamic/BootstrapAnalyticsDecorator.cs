@@ -65,7 +65,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "1 - static container loaded" },
+                { STAGE_KEY, "2 - static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
             });
 
@@ -94,9 +94,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
+            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, ct);
 
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
@@ -120,7 +120,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "2 - feature flag initialized" },
+                { STAGE_KEY, "1 - feature flag initialized" },
             });
         }
 

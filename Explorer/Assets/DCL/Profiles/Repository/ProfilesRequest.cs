@@ -12,6 +12,16 @@ namespace DCL.Profiles
 {
     public static class ProfilesRequest
     {
+        // JSON structure overhead for {"ids":[...]}
+        private const int BASE_JSON_OVERHEAD = 10; // {"ids":[]}
+
+        // Per-string overhead in JSON
+        private const int QUOTES_PER_STRING = 2; // Opening and closing quotes
+        private const int COMMA_SEPARATOR = 1; // Comma between array elements
+
+        /// <summary>
+        ///     Execute GET a single profile from the catalyst
+        /// </summary>
         public static async UniTask<ProfileTier?> GetAsync(IWebRequestController webRequestController, URLAddress url, string id, CancellationToken ct)
         {
             // Suppress logging errors here as we have very custom errors handling below
@@ -46,19 +56,12 @@ namespace DCL.Profiles
 
             return await webRequestController.PostAsync(
                                                   url,
-                                                  GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
+                                                  GenericPostArguments.CreateStringUploadHandler(uploadHandler, GenericPostArguments.JSON),
                                                   ct,
                                                   ReportCategory.PROFILE)
                                              .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
                                              .SuppressToResultAsync(ReportCategory.PROFILE);
         }
-
-        // JSON structure overhead for {"ids":[...]}
-        private const int BASE_JSON_OVERHEAD = 10; // {"ids":[]}
-
-        // Per-string overhead in JSON
-        private const int QUOTES_PER_STRING = 2; // Opening and closing quotes
-        private const int COMMA_SEPARATOR = 1; // Comma between array elements
 
         /// <summary>
         ///     Calculates the exact buffer size needed for a JSON payload with ETH wallet IDs.

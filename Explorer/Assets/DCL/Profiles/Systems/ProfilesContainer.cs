@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -31,7 +32,10 @@ namespace DCL.Profiles
             profilesDebug = ProfilesDebug.Create(debugContainerBuilder);
 
             Repository = new LogProfileRepository(
-                repository = new RealmProfileRepository(webRequestController, realmData, urlsSource, Cache, profilesDebug, true)
+                repository = new RealmProfileRepository(webRequestController, realmData, urlsSource, Cache, profilesDebug,
+
+                    // TODO remove hardcode
+                    true || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
             );
         }
 

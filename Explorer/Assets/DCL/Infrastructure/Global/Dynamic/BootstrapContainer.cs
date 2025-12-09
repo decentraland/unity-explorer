@@ -149,7 +149,8 @@ namespace Global.Dynamic
         {
             container.enableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
+                new HttpFeatureFlagsProvider(webRequestsContainer.WebRequestController), world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

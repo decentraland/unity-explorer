@@ -29,6 +29,9 @@ namespace DCL.Profiles
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
+        private static readonly ThreadSafeListPool<Profile> SINGLE_PROFILE_POOL = new (1, PoolConstants.AVATARS_COUNT);
+        private static readonly ThreadSafeObjectPool<string[]> SINGLE_PROFILE_ID_POOL = new (() => new string[1], maxSize: PoolConstants.AVATARS_COUNT);
+
         private readonly int batchMaxSize;
 
         private readonly bool useCentralizedProfiles;
@@ -226,9 +229,6 @@ namespace DCL.Profiles
             }
         }
 
-        private static readonly ThreadSafeListPool<Profile> SINGLE_PROFILE_POOL = new (1, PoolConstants.AVATARS_COUNT);
-        private static readonly ThreadSafeObjectPool<string[]> SINGLE_PROFILE_ID_POOL = new (() => new string[1], maxSize: PoolConstants.AVATARS_COUNT);
-
         public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
             bool delayBatchResolution,
             bool getFromCacheIfPossible,
@@ -324,7 +324,7 @@ namespace DCL.Profiles
         {
             try
             {
-                ProfileTier? profile;
+                ProfileTier? profile = null;
 
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles)
@@ -332,11 +332,32 @@ namespace DCL.Profiles
                     using PooledObject<List<Profile>> _ = SINGLE_PROFILE_POOL.Get(out List<Profile> tempProfiles);
                     using PooledObject<string[]> __ = SINGLE_PROFILE_ID_POOL.Get(out string[] tempIds);
                     tempIds[0] = id;
-                    Result<IList<Profile>> result = await ProfilesRequest.PostAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), tempIds, tempProfiles, ct);
 
-                    profile = result.Value?.ElementAtOrDefault(0);
+                    // We need a special repeating policy based on the result as it can return an empty array instead of the error
 
-                    profilesDebug.AddNonCombined(1);
+                    int attemptNumber = 0;
+                    (bool shouldRepeat, TimeSpan delay) repeatValues = (shouldRepeat: true, delay: TimeSpan.Zero);
+
+                    while (repeatValues.shouldRepeat)
+                    {
+                        attemptNumber++;
+
+                        if (repeatValues.delay > TimeSpan.Zero)
+                            await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
+
+                        Result<IList<Profile>> result = await ProfilesRequest.PostAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), tempIds, tempProfiles, ct);
+
+                        profile = result.Value?.ElementAtOrDefault(0);
+
+                        repeatValues = profile == null
+                            ? WebRequestUtils.CanBeRepeated(attemptNumber, CentralizedProfileRetryPolicy.VALUE, true, null)
+                            : (false, TimeSpan.Zero);
+                    }
+
+                    if (profile == null)
+                        profilesDebug.AddMissing(id);
+                    else
+                        profilesDebug.AddNonCombined(1);
                 }
                 else
                 {
