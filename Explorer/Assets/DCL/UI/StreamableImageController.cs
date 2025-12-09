@@ -50,13 +50,12 @@ namespace DCL.UI
             {
                 view.Image.color = LOADING_COLOR;
                 view.IsLoading = true;
-
-                // Load via Service
+                
                 var textureRef = await textureProvider.LoadTextureAsync(uri, ct);
 
                 if (textureRef.HasValue)
                 {
-                    currentTextureRef = textureRef; // Store handle
+                    currentTextureRef = textureRef;
                     
                     var sprite = Sprite.Create(
                         textureRef.Value.Texture,

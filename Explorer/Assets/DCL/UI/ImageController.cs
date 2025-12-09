@@ -16,11 +16,20 @@ namespace DCL.UI
 
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
+        private readonly UITextureProvider? textureProvider;
         private readonly IWebRequestController? webRequestController;
         private readonly Color defaultColor = Color.white;
+        private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
 
+        public ImageController(ImageView view, UITextureProvider textureProvider)
+        {
+            this.view = view;
+            this.textureProvider = textureProvider;
+            webRequestController = null;
+        }
+        
         /// <summary>
         /// Use this constructor if the sprite does not need to be cached.
         /// </summary>
@@ -30,6 +39,7 @@ namespace DCL.UI
         {
             this.view = view;
             this.webRequestController = webRequestController;
+            textureProvider = null;
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
@@ -56,8 +66,10 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
+        private async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
+            DisposeCurrentTexture();
+            
             try
             {
                 view.Image.color = LOADING_COLOR;
@@ -66,9 +78,29 @@ namespace DCL.UI
 
                 Sprite? sprite = null;
 
-                if (webRequestController != null)
+                if (textureProvider != null)
                 {
-                    //TODO potential memory leak, due no CacheCleaner
+                    var textureRef = await textureProvider.LoadTextureAsync(uri, ct);
+
+                    if (textureRef.HasValue)
+                    {
+                        currentTextureRef = textureRef;
+
+                        sprite = Sprite.Create(
+                            textureRef.Value.Texture,
+                            new Rect(0, 0, textureRef.Value.Texture.width, textureRef.Value.Texture.height),
+                            VectorUtilities.OneHalf,
+                            PIXELS_PER_UNIT,
+                            0,
+                            SpriteMeshType.FullRect,
+                            Vector4.one,
+                            false
+                        );
+                    }
+                }
+                else if (webRequestController != null)
+                {
+                    // NOTE: This path does NOT cache and does NOT release memory automatically.
                     var ownedTexture = await webRequestController.GetTextureAsync(
                         new CommonArguments(URLAddress.FromString(uri)),
                         new GetTextureArguments(TextureType.Albedo, useKtx),
@@ -83,7 +115,7 @@ namespace DCL.UI
                 }
                 else
                 {
-                    ReportHub.LogError(ReportCategory.UI, "The image controller was not configured properly. It requires either a web request controller or a sprite cache.");
+                    ReportHub.LogError(ReportCategory.UI, "ImageController missing provider configuration.");
                 }
 
                 if (sprite != null)
@@ -107,7 +139,16 @@ namespace DCL.UI
             {
                 view.IsLoading = false;
                 view.Image.enabled = true;
+
+                if (ct.IsCancellationRequested)
+                    DisposeCurrentTexture();
             }
+        }
+
+        private void DisposeCurrentTexture()
+        {
+            currentTextureRef?.Dispose();
+            currentTextureRef = null;
         }
 
         private void TryApplyDefaultSprite(Sprite? defaultSprite, bool fitAndCenterImage)
