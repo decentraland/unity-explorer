@@ -23,6 +23,8 @@ namespace ECS.SceneLifeCycle.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadSmartWearablePreviewSceneSystem : BaseUnityLoopSystem
     {
+        private static readonly ISet<long> IGNORE_ERROR_CODES = new HashSet<long> { 404 };
+
         private readonly IWebRequestController webRequestController;
 
         public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController) : base(world)
@@ -61,15 +63,11 @@ namespace ECS.SceneLifeCycle.Systems
             string url = URLBuilder.Combine(ipfs.CatalystBaseUrl, URLSubdirectory.FromString("preview-wearables")).Value;
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
-            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
+            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, ignoreErrorCodes: IGNORE_ERROR_CODES)
                                                      .CreateFromJson<PreviewWearablesResponse>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-            if (ct.IsCancellationRequested) return;
 
-            if (!response.ok)
-            {
-                ReportHub.LogError(GetReportCategory(), "The request to the /preview-wearables endpoint failed");
-                return;
-            }
+
+            if (ct.IsCancellationRequested || !response.ok) return;
 
             // If no wearables are returned, it just means we are not previewing a wearable, no need to log an error
             if (response.data.Count == 0)  return;
@@ -123,18 +121,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             sceneJsonUrl = string.Empty;
             return false;
-        }
-
-        /// <summary>
-        ///     Attached to the realm entity.
-        ///     Signals to the system that scene loading has started and stores a reference to the loaded scene entity.
-        /// </summary>
-        private struct SmartWearablePreviewScene
-        {
-            /// <summary>
-            ///     The scene entity that was loaded.
-            /// </summary>
-            public Entity Value;
         }
 
         /// <summary>
