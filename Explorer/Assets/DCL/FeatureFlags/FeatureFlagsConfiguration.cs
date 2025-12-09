@@ -21,7 +21,6 @@ namespace DCL.FeatureFlags
 
         public bool IsEnabled(string id)
         {
-            if (FeatureFlagsStrings.GIFTING_ENABLED == id) return true;
             return result.flags.GetValueOrDefault(id, false);
         }
 
