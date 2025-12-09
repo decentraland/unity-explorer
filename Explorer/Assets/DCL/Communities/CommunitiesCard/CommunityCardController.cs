@@ -451,8 +451,8 @@ namespace DCL.Communities.CommunitiesCard
                 var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(communityId, ct)
                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested)
-                    return;
+                    if (ct.IsCancellationRequested)
+                        return;
 
                 if (!getCommunityResult.Success)
                 {

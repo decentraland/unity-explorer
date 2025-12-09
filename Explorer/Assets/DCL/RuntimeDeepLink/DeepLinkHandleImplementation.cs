@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.Communities;
 using DCL.RealmNavigation;
 using DCL.Utility.Types;
 using Global.AppArgs;
@@ -14,12 +15,14 @@ namespace DCL.RuntimeDeepLink
         private readonly StartParcel startParcel;
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
+        private readonly CommunityDataService communityDataService;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
+            this.communityDataService = communityDataService;
         }
 
         public string Name => "Real Implementation";
@@ -28,6 +31,7 @@ namespace DCL.RuntimeDeepLink
         {
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
+            string? communityId = CommunityFrom(deeplink);
 
             if (realm.HasValue)
             {
@@ -44,6 +48,12 @@ namespace DCL.RuntimeDeepLink
                 else
                     startParcel.Assign(parcel);
 
+                return Result.SuccessResult();
+            }
+
+            if (!string.IsNullOrEmpty(communityId))
+            {
+                communityDataService.ShowCommunityDeepLinkNotification(communityId);
                 return Result.SuccessResult();
             }
 
@@ -72,6 +82,12 @@ namespace DCL.RuntimeDeepLink
             if (int.TryParse(parts[1], out int y) == false) return null;
 
             return new Vector2Int(x, y);
+        }
+
+        private static string? CommunityFrom(DeepLink deepLink)
+        {
+            string? rawCommunity = deepLink.ValueOf(AppArgsFlags.COMMUNITY);
+            return rawCommunity ?? null;
         }
     }
 }
