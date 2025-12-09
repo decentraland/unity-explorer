@@ -159,8 +159,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = input.Kind,
             };
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=green>SENT " + playerMovement.LastSentMessage.timestamp.ToString("F6") + " Instant? " + playerMovement.LastSentMessage.isInstant + " position: " + playerMovement.Character.transform.position.ToString("F6") + "</color>");
-
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running

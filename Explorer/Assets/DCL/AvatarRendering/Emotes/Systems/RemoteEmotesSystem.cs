@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.Emotes
                         // The entity was not created yet, so we wait until its created to be able to consume the intent
                         if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
-                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions +1   isOutcome? " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation);
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "RemoteEmotesSystem.Update() <color=magenta>The entity was not created yet, so we wait until its created to be able to consume the intent " + remoteEmoteIntention.WalletId + "</color>");
                             savedIntentions!.Add(remoteEmoteIntention);
                             continue;
                         }
@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes
                             interaction != null &&
                             interaction.Id != remoteEmoteIntention.SocialEmote.InteractionId)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED LOOP DIFFERENT ID " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " id1: " + interaction.Id + " id2: " + remoteEmoteIntention.SocialEmote.InteractionId + "</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores reaction messages when the initiator started the same social emote again, while they were interacting (which cancels the emote for both) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} interaction id1: {interaction.Id} interaction id2: {remoteEmoteIntention.SocialEmote.InteractionId}</color>");
                             return;
                         }
 
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Emotes
                             interaction.AreInteracting &&
                             interaction.Id == remoteEmoteIntention.SocialEmote.InteractionId)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED LOOP " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores start interaction message when, for the same interaction, avatars are already using outcome animations emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
                             return;
                         }
 
@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.Emotes
                             !SocialEmoteInteractionsManager.Instance.InteractionExists(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
                             remoteEmoteIntention.SocialEmote.IsReacting)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>DISCARDED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation: " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation + " Initiator: " + remoteEmoteIntention.SocialEmote.InitiatorWalletAddress + " interaction? " + (interaction != null) + "</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores messages of reaction to social emote when the interaction does not exist yet (may occur when a third player connects while 2 avatars are already interacting) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation: {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} Initiator: {remoteEmoteIntention.SocialEmote.InitiatorWalletAddress} interaction? {(interaction != null)}</color>");
                             continue;
                         }
 
@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.Emotes
                             interaction.AreInteracting == remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
                             interaction.Id == remoteEmoteIntention.SocialEmote.InteractionId)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>IGNORED REPEATED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores repeated social emote messages for the same interaction emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
                             return;
                         }
 
@@ -93,7 +93,7 @@ namespace DCL.AvatarRendering.Emotes
                             remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
                             SocialEmoteInteractionsManager.Instance.HasInteractionExisted(remoteEmoteIntention.SocialEmote.InteractionId))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>DISCARDED " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation: " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation + " Initiator: " + remoteEmoteIntention.SocialEmote.InitiatorWalletAddress + " interaction? " + (interaction != null) + "</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores reaction messages to non-existing interactions, unless it's the first time they are processed (when a third player connects while other 2 are interacting) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation: {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} Initiator: {remoteEmoteIntention.SocialEmote.InitiatorWalletAddress} interaction? {(interaction != null)}</color>");
                             continue;
                         }
 
@@ -102,20 +102,15 @@ namespace DCL.AvatarRendering.Emotes
 
                         if (remoteEmoteIntention.IsStopping)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=cyan>STOP SIGNAL " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=cyan>STOP SIGNAL emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
                             World.Add(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
                             return;
                         }
 
-                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "interpolation " + interpolationExists + " " + EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp));
-
                         // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
                         if (interpolationExists && (EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp) || !intComp.Enabled))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY: " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + " IsUsingSocialOutcomeAnimation " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation + " IsReactingToSocialEmote " + remoteEmoteIntention.SocialEmote.IsReacting + " repeating? " + remoteEmoteIntention.IsRepeating + " id: " + remoteEmoteIntention.SocialEmote.InteractionId);
-
-                            if(interaction != null)
-                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "REMOTE PLAY++: interaction emote " + interaction.Emote.DTO.Metadata.id + " intention shorten: " + remoteEmoteIntention.EmoteId.Shorten());
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() REMOTE PLAY emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} IsReactingToSocialEmote {remoteEmoteIntention.SocialEmote.IsReacting} repeating? {remoteEmoteIntention.IsRepeating} interaction id: {remoteEmoteIntention.SocialEmote.InteractionId}");
 
                             bool isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false;
 
@@ -130,7 +125,7 @@ namespace DCL.AvatarRendering.Emotes
                                 !string.IsNullOrEmpty(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
                                 !SocialEmoteInteractionsManager.Instance.HasInteractionExisted(remoteEmoteIntention.SocialEmote.InteractionId))
                             {
-                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>REBUILD INTERACTION! " + remoteEmoteIntention.EmoteId + " " + remoteEmoteIntention.WalletId + "</color>");
+                                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Initiator outcome animation waiting for receiver's animation. Emote: {remoteEmoteIntention.EmoteId} Wallet: {remoteEmoteIntention.WalletId}</color>");
                                 isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = true;
                             }
 
@@ -148,7 +143,6 @@ namespace DCL.AvatarRendering.Emotes
                         }
                         else
                         {
-                            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "savedIntentions ++2 (" + emoteIntentions.Collection().Count + ")   isOutcome? " + remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation);
                             savedIntentions.Add(remoteEmoteIntention);
                         }
                     }
@@ -171,7 +165,7 @@ namespace DCL.AvatarRendering.Emotes
                     {
                         if (entityParticipantTable.TryGet(lookAtPositionIntention.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added look at (remote)." + lookAtPositionIntention.WalletAddress + " pos: " + lookAtPositionIntention.TargetPosition.ToString("F6"));
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (remote) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
                             World.Add(entry.Entity, lookAtPositionIntention);
                         }
                         else
@@ -208,7 +202,7 @@ namespace DCL.AvatarRendering.Emotes
                     {
                         if (profile.UserId == lookAtPositionIntention.WalletAddress)
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Added look at (local)." + lookAtPositionIntention.WalletAddress + " pos: " + lookAtPositionIntention.TargetPosition.ToString("F6"));
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (local) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
                             World.Add(entity, lookAtPositionIntention);
                         }
                         else

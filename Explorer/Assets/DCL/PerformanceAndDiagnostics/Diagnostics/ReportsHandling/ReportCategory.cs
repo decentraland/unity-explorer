@@ -346,7 +346,6 @@ namespace DCL.Diagnostics
 
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
 
-        // TODO: Remove this category along with all the Log calls
-        public const string EMOTE_DEBUG = nameof(EMOTE_DEBUG);
+        public const string SOCIAL_EMOTE = nameof(SOCIAL_EMOTE);
     }
 }

@@ -82,7 +82,6 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Reset()
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "-emote Reset- " + EmoteUrn);
             EmoteUrn = default;
             EmoteLoop = false;
             StopEmote = false;

@@ -64,8 +64,6 @@ namespace DCL.Multiplayer.Movement.Systems
                     // Filter out non instant
                     while (playerInbox.Count > 0 && !playerInbox.First.isInstant)
                         playerInbox.Dequeue();
-
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=magenta>---> SKIP MOVEMENT MESSAGE</color>");
                 }
                 else // Keeps the instantaneous message in the queue to be processed once the animation finishes
                     return;
@@ -121,8 +119,6 @@ namespace DCL.Multiplayer.Movement.Systems
             ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=green>RECEIVED " + remote.timestamp.ToString("F6") + " is Instant? " + remote.isInstant + " position: " + remote.position.ToString("F6") + "</color>");
 
             var isBlend = false;
 

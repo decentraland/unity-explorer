@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "MainAsset: " + mainAsset.name + " IsPlayingSocialEmoteOutcome: " + emoteComponent.SocialEmote.IsPlayingOutcome);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() MainAsset: " + mainAsset.name);
 
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 isLooping &&
                 !emoteComponent.SocialEmote.IsPlayingOutcome)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Emote Already Playing - Skips emote");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() Emote Already Playing - Skips emote");
                 return true;
             }
 
@@ -62,12 +62,12 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteInUse != null)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Stopping emoteInUse " + emoteInUse.avatarClip?.name??"" + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() Stopping emoteInUse " + emoteInUse.avatarClip?.name?? string.Empty + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
                 Stop(emoteInUse);
             }
             else
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteInUse is null PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() emoteInUse is null PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
             }
 
             if (!pools.ContainsKey(mainAsset))
@@ -119,7 +119,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (audioAsset != null &&
                 (!emoteComponent.Metadata.IsSocialEmote || !emoteComponent.SocialEmote.IsReacting)) // If it's a social emote, only the initiator plays the sound, otherwise there would be 2 sounds at the same time
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing sound: " + audioAsset.name);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() Playing sound: " + audioAsset.name);
 
                 AudioSource audioSource = audioSourcePool.Get();
                 audioSource.clip = audioAsset;
@@ -133,8 +133,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.SocialEmote.IsPlayingOutcome);
             emoteComponent.SocialEmote.HasOutcomeAnimationStarted = emoteComponent.SocialEmote.IsPlayingOutcome;
+
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() emoteComponent.HasOutcomeAnimationStarted = " + emoteComponent.SocialEmote.HasOutcomeAnimationStarted);
 
             return true;
         }
@@ -250,7 +251,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Playing mecanim emote: " + emoteReferences.avatarClip?.name?? "" + " " + ((AvatarBase)view).name);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() " + emoteReferences.avatarClip?.name?? string.Empty + " " + ((AvatarBase)view).name);
 
             // Avatar
             AnimationClip? avatarClip;
@@ -294,7 +295,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (avatarClip != null)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Replacing animation with " + avatarClip.name + " override armature: " + armatureNameOverride?? "");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() Replacing animation with " + avatarClip.name + " override armature: " + armatureNameOverride?? "");
                 view.ReplaceEmoteAnimation(avatarClip, armatureNameOverride);
                 emoteComponent.EmoteLoop = isLooping;
 
@@ -354,7 +355,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (propClip != null && emoteReferences.animatorComp != null)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "prop playing: " + propClip.name);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() prop playing: " + propClip.name);
                 emoteReferences.animatorComp.SetTrigger(propClipHash);
                 emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, isPropLooping);
             }
@@ -362,14 +363,12 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         public void Stop(EmoteReferences emoteReference)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteReferences back to pool... " + emoteReference.transform.parent.name);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Stop() emoteReferences back to pool... " + emoteReference.transform.parent.name);
 
             if (!emotesInUse.Remove(emoteReference, out GameObjectPool<EmoteReferences>? pool))
                 return;
 
             pool!.Release(emoteReference);
-
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "emoteReferences released.");
         }
 
         private static void ExtractClips(

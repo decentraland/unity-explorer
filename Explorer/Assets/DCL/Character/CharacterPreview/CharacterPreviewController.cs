@@ -153,8 +153,6 @@ namespace DCL.CharacterPreview
         {
             var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW };
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>----PLAY EMOTE IN PREVIEW----</color>");
-
             if (globalWorld.Has<CharacterEmoteIntent>(characterPreviewEntity))
                 globalWorld.Set(characterPreviewEntity, intent);
             else

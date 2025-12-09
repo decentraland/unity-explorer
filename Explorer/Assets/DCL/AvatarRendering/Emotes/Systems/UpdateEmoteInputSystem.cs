@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
@@ -12,7 +11,6 @@ using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -88,7 +86,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (!string.IsNullOrEmpty(emoteUrn)) // It's a reaction to a social emote
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>--------TRIGGER EMOTE----------</color>");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- reaction to a social emote. wallet: {profile.UserId} emoteUrn: {emoteUrn}</color>");
 
                 SendEmoteMessage(emoteUrn, profile.UserId, entity, socialEmoteOutcomeIndexForTrigger, true, true, socialEmoteInitiatorWalletAddressForTrigger, triggeredEmoteTargetWalletAddress, socialEmoteInteractionIdForTrigger);
             }
@@ -101,7 +99,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (emoteIndex < 0 || emoteIndex >= emotes.Count)
                     return;
 
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=red>--------TRIGGER EMOTE----------</color>");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- Normal emotes, or social emote start animation. wallet: {profile.UserId} emoteUrn: {emoteUrn}</color>");
 
                 URN emoteId = emotes[emoteIndex];
 

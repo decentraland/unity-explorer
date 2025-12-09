@@ -98,7 +98,7 @@ namespace DCL.SocialEmotes
         /// <param name="targetWalletAddress">Optional. The wallet address of the player whom the emote is directed. Only that player can be added to the interaction.</param>
         public void StartInteraction(string initiatorWalletAddress, Entity initiatorEntity, IEmote emote, Transform initiatorTransform, int interactionId, string targetWalletAddress = "")
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>START INTERACTION " + initiatorWalletAddress + " id: " + interactionId + " target: " + targetWalletAddress + "</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "SocialEmoteInteractionsManager.StartInteraction() <color=yellow>START INTERACTION " + initiatorWalletAddress + " id: " + interactionId + " target: " + targetWalletAddress + "</color>");
 
             if (participantInteractions.ContainsKey(initiatorWalletAddress))
                 return;
@@ -127,14 +127,14 @@ namespace DCL.SocialEmotes
         /// <param name="initiatorWalletAddress">The wallet address of the player whose interaction the new participant is reacting to.</param>
         public void AddParticipantToInteraction(string participantWalletAddress, Entity participantEntity, int outcomeIndex, string initiatorWalletAddress)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>Add to Interaction " + participantWalletAddress + "</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "SocialEmoteInteractionsManager.AddParticipantToInteraction() <color=yellow>Add to Interaction " + participantWalletAddress + "</color>");
 
             if (participantInteractions.ContainsKey(participantWalletAddress))
                 return;
 
             SocialEmoteInteraction? interaction = participantInteractions[initiatorWalletAddress];
             interaction!.AreInteracting = true;
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "AreInteracting = true, id = " + interaction.Id);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "SocialEmoteInteractionsManager.AddParticipantToInteraction() AreInteracting = true, id = " + interaction.Id);
             interaction.ReceiverWalletAddress = participantWalletAddress;
             interaction.ReceiverEntity = participantEntity;
             interaction.OutcomeIndex = outcomeIndex;
@@ -148,7 +148,7 @@ namespace DCL.SocialEmotes
         /// <param name="participantWalletAddress">The wallet addres of one of the players that participated in the interaction.</param>
         public void StopInteraction(string participantWalletAddress)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=yellow>StopInteraction " + participantWalletAddress + "</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "SocialEmoteInteractionsManager <color=yellow>StopInteraction " + participantWalletAddress + "</color>");
 
             if(string.IsNullOrEmpty(participantWalletAddress))
                 return;
@@ -158,7 +158,7 @@ namespace DCL.SocialEmotes
 
             SocialEmoteInteraction? interaction = participantInteractions[participantWalletAddress];
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "interaction Id: " + interaction.Id);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "SocialEmoteInteractionsManager.StopInteraction() interaction Id: " + interaction.Id);
 
             participantInteractions.Remove(interaction!.InitiatorWalletAddress);
 

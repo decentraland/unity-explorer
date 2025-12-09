@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(RotateCharacterSystem))]
-    [LogCategory(ReportCategory.EMOTE)]
+    [LogCategory(ReportCategory.SOCIAL_EMOTE)]
     public partial class SocialEmoteInteractionSystem : BaseUnityLoopSystem
     {
         private readonly IEmotesMessageBus messageBus;
@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             if (socialEmoteInteraction is { AreInteracting: true } &&
                 socialEmoteInteraction.InitiatorWalletAddress == profile.UserId && !emoteComponent.SocialEmote.HasOutcomeAnimationStarted)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "CharacterEmoteIntent Initiator outcome animation " + profile.UserId);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayInitiatorOutcomeAnimation() CharacterEmoteIntent Initiator outcome animation " + profile.UserId);
 
                 World.Add(entity, new CharacterEmoteIntent()
                 {
@@ -89,13 +89,14 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         {
             if (moveIntent.HasBeenCancelled)
             {
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() " + ((AvatarBase)avatarView).name);
                 World.Remove<InterpolateToOutcomeStartPoseIntent>(entity);
                 return;
             }
 
             float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / socialEmotesSettings.OutcomeStartInterpolationDuration;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Emote tag?: {avatarView.AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == AnimationHashes.EMOTE} Speed: {avatarView.AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND).ToString("F6")}</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() <color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Wallet: {((AvatarBase)avatarView).name}</color>");
 
             // Since the outcome emote has already started to play, the avatar is moving its position, but we need to create the illusion of the avatar not moving at all
             Vector3 currentHipToOriginalPosition = moveIntent.OriginalAvatarPosition - ((AvatarBase)avatarView).HipAnchorPoint.position;
@@ -112,7 +113,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
             if (interpolation >= 1.0f)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>INTERPOLATION FINISHED</color>");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() <color=#FF9933>INTERPOLATION FINISHED Wallet: {((AvatarBase)avatarView).name}</color>");
                 World.Remove<InterpolateToOutcomeStartPoseIntent>(entity);
             }
         }
@@ -131,6 +132,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             // If the avatar is playing an emote, it must cancel that emote before moving to the initiator
             if (emoteComponent.IsPlayingEmote && !emoteComponent.EmoteUrn.IsNullOrEmpty())
             {
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "WalkToInitiatorPositionBeforePlayingOutcomeAnimation() Cancelling emote before moving Initiator: " + moveIntent.TriggerEmoteIntent.InitiatorWalletAddress);
+
                 World.Add(entity, new StopEmoteIntent(emoteComponent.EmoteUrn));
 
                 // Sends stop signal to other clients
@@ -153,7 +156,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 moveIntent.HasBeenCancelled ||
                 UnityEngine.Time.time - moveIntent.StartTime >= socialEmotesSettings.ReactionTimeout) // Timeout, the process is canceled (the avatar got stuck for some reason and did not reach the initiator)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED TO INITIATOR or CANCELED</color>");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"WalkToInitiatorPositionBeforePlayingOutcomeAnimation() <color=#FF9933>ARRIVED TO INITIATOR {moveIntent.TriggerEmoteIntent.InitiatorWalletAddress} or CANCELED</color>");
 
                 // The avatar has to stop walking, otherwise it will spend some time to blend
                 animationComponent.States.MovementBlendValue = 0.0f;
@@ -161,7 +164,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
                 if (isCloseEnoughToInitiator && !moveIntent.HasBeenCancelled)
                 {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>ARRIVED -> Playing emote</color>");
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"WalkToInitiatorPositionBeforePlayingOutcomeAnimation() <color=#FF9933>ARRIVED TO {moveIntent.TriggerEmoteIntent.InitiatorWalletAddress} -> Playing emote</color>");
 
                     // Emote playing
                     World.Add(entity, moveIntent.TriggerEmoteIntent);
@@ -203,11 +206,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [All(typeof(LookAtPositionIntention))]
         private void ForceAvatarToLookAtPosition(Entity entity, IAvatarView avatarView, LookAtPositionIntention lookAtPositionIntention)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward before: " + avatarView.GetTransform().forward);
             Vector3 avatarForward = lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position;
             avatarForward.y = 0.0f;
             avatarView.GetTransform().forward = avatarForward.normalized;
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Forward after: " + avatarView.GetTransform().forward);
             World.Remove<LookAtPositionIntention>(entity);
         }
 
@@ -221,7 +222,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             {
                 player.CameraFocus.parent = null;
 
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, $"<color=#559933>CAMERA INTERPOLATION: {interpolation.ToString("F6")}</color>");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateCameraTargetTowardsNewParent() <color=#559933>CAMERA INTERPOLATION: {interpolation.ToString("F6")}</color>");
 
                 Vector3 targetPositionWithHeight = interpolateIntent.Target.position;
                 targetPositionWithHeight.y = interpolateIntent.Target.position.y + interpolateIntent.LocalHeight;
@@ -230,14 +231,14 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.EMOTE);
+                ReportHub.LogException(e, ReportCategory.SOCIAL_EMOTE);
                 interpolation = 1.0f;
             }
             finally
             {
                 if (interpolation >= 1.0f)
                 {
-                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#559933>CAMERA INTERPOLATION FINISHED</color>");
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "InterpolateCameraTargetTowardsNewParent() <color=#559933>CAMERA INTERPOLATION FINISHED</color>");
 
                     // Re-parents the camera focus object
                     player.CameraFocus.parent = interpolateIntent.Target;

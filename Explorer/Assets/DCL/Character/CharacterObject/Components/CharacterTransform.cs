@@ -34,7 +34,6 @@ namespace DCL.Character.Components
 
         public void SetPositionAndRotationWithDirtyCheck(Vector3 position, Quaternion rotation)
         {
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "SetPositionAndRotationWithDirtyCheck " + position.ToString("F6"));
             Transform.SetPositionAndRotation(position, rotation);
             TrySetDirty(position);
         }

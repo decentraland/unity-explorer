@@ -159,12 +159,8 @@ namespace DCL.AvatarRendering.Emotes
             if (!promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AudioClipData> result))
                 return;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> AUDIO PROMISE");
-
             if (result.Succeeded)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> success");
-
                 if (emote.IsSocial)
                 {
                     // Stores the audio clips of the outcomes
@@ -172,20 +168,15 @@ namespace DCL.AvatarRendering.Emotes
 
                     for (int i = 0; i < emote.Model.Asset!.metadata.data!.outcomes!.Length; ++i)
                     {
-                        ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> outcome " + i);
-
                         if (emote.Model.Asset!.metadata.data!.outcomes![i].audio != null)
                         {
                             outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.outcomes![i].audio);
 
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contained in? " + promise.LoadingIntention.CommonArguments.URL.Value);
                             string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
                             // If the current result corresponds to the outcome at current position...
                             if (audioURL.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> outcomeAudioHash " + outcomeAudioHash);
-
                                 // This check is necessary because otherwise it will add more than one of each audio clip
                                 bool alreadyContainsAudio = false;
 
@@ -200,7 +191,7 @@ namespace DCL.AvatarRendering.Emotes
 
                                 if (!alreadyContainsAudio)
                                 {
-                                    ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> ADDED" + outcomeAudioHash);
+                                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Added outcome audio " + outcomeAudioHash);
 
                                     result.Asset!.Asset.name = audioURL;
                                     emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
@@ -211,7 +202,7 @@ namespace DCL.AvatarRendering.Emotes
                         }
                         else
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> NULL");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() NULL");
                             emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
                         }
                     }
@@ -225,7 +216,7 @@ namespace DCL.AvatarRendering.Emotes
                         // If the current result corresponds to the start animation...
                         if (audioHash != null && audioURL.Contains(audioHash, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> START AUDIO SET " + audioHash);
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Added start audio " + audioHash);
 
                             result.Asset!.Asset.name = audioURL;
                             emote.AudioAssetResults[bodyShape] = result;
@@ -247,12 +238,8 @@ namespace DCL.AvatarRendering.Emotes
             string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
             string contentName = shape + "/" + audioFileName;
 
-            ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> contentName " + contentName);
-
             for (int i = 0; i < emote.Model.Asset!.content.Length; ++i)
             {
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "xx--> comparing: " + emote.Model.Asset.content[i].file);
-
                 if (string.Compare(emote.Model.Asset.content[i].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
                 {
                     // Found the outcome sound in the content list, we can get the hash

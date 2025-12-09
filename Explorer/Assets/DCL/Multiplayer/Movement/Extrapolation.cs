@@ -25,8 +25,6 @@ namespace DCL.Multiplayer.Movement
                     ext.Velocity.y = 0;
                 }
 
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, ":: New position: " + newPosition.ToString("F6"));
-
                 transComp.Transform.position = newPosition;
             }
         }

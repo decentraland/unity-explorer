@@ -67,9 +67,6 @@ namespace DCL.Optimization.Pools
 
         private void HandleGet(T component)
         {
-            if(component is AudioSource)
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG,"AUDIO GOT! " + (component as AudioSource).clip?.name);
-
             if (UnityObjectUtils.IsQuitting)
             {
                 ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
@@ -82,9 +79,6 @@ namespace DCL.Optimization.Pools
 
         private void HandleRelease(T component)
         {
-            if(component is AudioSource)
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG,"AUDIO RELEASED! " + (component as AudioSource).clip.name);
-
             if (component == null || UnityObjectUtils.IsQuitting)
                 return;
 

@@ -24,7 +24,7 @@ namespace DCL.SocialEmotes.UI
     /// </summary>
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateAfter(typeof(NametagPlacementSystem))]
-    [LogCategory(ReportCategory.EMOTE)]
+    [LogCategory(ReportCategory.SOCIAL_EMOTE)]
     public partial class SocialEmotePinsSystem : BaseUnityLoopSystem
     {
         private const float MAX_DISTANCE = 40;

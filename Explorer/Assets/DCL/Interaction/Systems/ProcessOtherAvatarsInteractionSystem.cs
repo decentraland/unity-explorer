@@ -22,7 +22,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -192,11 +191,11 @@ namespace DCL.Interaction.Systems
 
         private void OnContextMenuClosed()
         {
-            ReportHub.Log(ReportCategory.EMOTE_DEBUG, "HIDDEN");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ProcessOtherAvatarsInteractionSystemOnContextMenuClosed()");
 
             if (wasCursorLockedWhenMenuOpened)
             {
-                ReportHub.Log(ReportCategory.EMOTE_DEBUG, "--> LOCKED");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ProcessOtherAvatarsInteractionSystemOnContextMenuClosed() Cursor LOCKED");
                 World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState = CursorState.Locked;
             }
         }
@@ -225,11 +224,11 @@ namespace DCL.Interaction.Systems
 
                 if (interaction.Emote.Model.Asset!.metadata.data!.randomizeOutcomes)
                 {
-                    OnOutcomePerformed(Random.Range(0, outcomes.Length), currentProfileHovered.UserId, playerEntity);
+                    OnOutcomePerformed(Random.Range(0, outcomes.Length), currentProfileHovered.UserId);
                 }
                 else if (outcomes.Length == 1)
                 {
-                    OnOutcomePerformed(0, currentProfileHovered.UserId, playerEntity);
+                    OnOutcomePerformed(0, currentProfileHovered.UserId);
                 }
                 else
                 {
@@ -238,7 +237,7 @@ namespace DCL.Interaction.Systems
                         int outcomeIndex = i;
                         string initiatorWalletAddress = currentProfileHovered.UserId;
                         contextMenuConfiguration.AddControl(new ButtonContextMenuControlSettings(outcomes[i].title, contextMenuSettings.EmoteIcon,
-                                                            () => OnOutcomePerformed(outcomeIndex, initiatorWalletAddress, playerEntity)));
+                                                            () => OnOutcomePerformed(outcomeIndex, initiatorWalletAddress)));
                     }
 
                     contextMenuTask.TrySetResult();
@@ -265,8 +264,10 @@ namespace DCL.Interaction.Systems
             }
         }
 
-        private void OnOutcomePerformed(int outcomeIndex, string interactingUserWalletAddress, Entity playerEntity)
+        private void OnOutcomePerformed(int outcomeIndex, string interactingUserWalletAddress)
         {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed()");
+
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(interactingUserWalletAddress);
 
             // The social emote interaction may have been cancelled since the context menu was open
@@ -287,7 +288,6 @@ namespace DCL.Interaction.Systems
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
 
-                ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "<color=#FF9933>MOVING --> TO INITIATOR</color>");
                 Transform initiatorTransform = World.Get<CharacterTransform>(interaction.InitiatorEntity).Transform;
 
                 World.Add(playerEntity, new MoveBeforePlayingSocialEmoteIntent(
@@ -302,6 +302,8 @@ namespace DCL.Interaction.Systems
 
                 // When reacting to a social emote, the camera mode is forced to be third person
                 World.Get<CameraComponent>(cameraEntityProxy.Object).Mode = CameraMode.ThirdPerson;
+
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed() <color=#FF9933>MOVING --> TO INITIATOR outcome: {outcomeIndex}</color>");
             }
         }
 
