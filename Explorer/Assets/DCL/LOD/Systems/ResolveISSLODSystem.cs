@@ -108,6 +108,12 @@ namespace DCL.LOD.Systems
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
+            if (assetBundleResult.IsConsumed)
+            {
+                World.Destroy(entity);
+                return;
+            }
+
             if (assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 if (Result.Succeeded)
