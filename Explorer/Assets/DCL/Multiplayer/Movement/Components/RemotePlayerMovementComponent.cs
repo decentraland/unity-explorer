@@ -3,6 +3,7 @@
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Settings;
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -28,6 +29,9 @@ namespace DCL.Multiplayer.Movement
 
         public float InitialCooldownTime;
 
+        public bool HeadIKEnabled;
+        public float2 TargetYawAndPitch;
+
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.queuePool = queuePool;
@@ -41,6 +45,9 @@ namespace DCL.Multiplayer.Movement
             WasPassedThisFrame = false;
 
             InitialCooldownTime = 0;
+
+            HeadIKEnabled = false;
+            TargetYawAndPitch = float2.zero;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -67,6 +74,12 @@ namespace DCL.Multiplayer.Movement
             WasTeleported = wasTeleported;
 
             WasPassedThisFrame = true;
+        }
+
+        public void UpdateHeadIK(in NetworkMovementMessage message)
+        {
+            HeadIKEnabled = message.headIKEnabled;
+            TargetYawAndPitch = message.headYawAndPitch;
         }
 
         public void Dispose()

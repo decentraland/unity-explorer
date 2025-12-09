@@ -1,4 +1,6 @@
 ﻿using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
@@ -67,6 +69,17 @@ namespace DCL.Multiplayer.Movement
                        InterpolationType.FullMonotonicHermite => InterpolationSpline.FullMonotonicHermite(start, end, time, totalDuration),
                        _ => InterpolationSpline.Linear(start, end, time, totalDuration),
                    };
+        }
+
+        public static Vector2 InterpolateHeadIK(in HeadIKComponent headIK, float2 targetYawAndPitch, float interpolationFactor)
+        {
+            var currentRotation = Quaternion.LookRotation(headIK.LookAt);
+            var targetRotation = Quaternion.Euler(targetYawAndPitch.y, targetYawAndPitch.x, 0);
+
+            var interpolatedRotation = Quaternion.Slerp(currentRotation, targetRotation, interpolationFactor * Time.deltaTime);
+            Vector3 interpolatedYawAndPitch = interpolatedRotation.eulerAngles;
+
+            return new Vector2(interpolatedYawAndPitch.y, interpolatedYawAndPitch.x);
         }
     }
 }

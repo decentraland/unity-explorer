@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Character.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
@@ -194,7 +193,7 @@ namespace DCL.CharacterMotion.Systems
                 ? headIK.LookAt
                 : avatarBase.HeadIKRig.transform.forward;
 
-            ApplyHeadLookAt.Execute(lookAt, avatarBase, dt, settings, useFrontalReset: false);
+            ApplyHeadLookAt.Execute(lookAt, avatarBase, dt, settings);
         }
 
         private float UpdateIKWeight(float current, bool isEnabled, float maxDelta) =>

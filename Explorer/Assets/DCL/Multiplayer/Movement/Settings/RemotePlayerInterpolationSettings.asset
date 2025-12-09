@@ -21,3 +21,4 @@ MonoBehaviour:
   <UseBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 5
+  <HeadIKInterpolationFactor>k__BackingField: 12
