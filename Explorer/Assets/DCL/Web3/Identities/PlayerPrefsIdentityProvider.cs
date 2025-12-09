@@ -42,7 +42,7 @@ namespace DCL.Web3.Identities
             }
         }
 
-        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, DecentralandEnvironment dclEnv = DecentralandEnvironment.Org)
+        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, DecentralandEnvironment dclEnv)
         {
             this.identitySerializer = identitySerializer;
             this.dclEnv = dclEnv;
