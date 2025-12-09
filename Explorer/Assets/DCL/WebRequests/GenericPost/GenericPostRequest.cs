@@ -19,7 +19,7 @@ namespace DCL.WebRequests
             if (arguments.UploadHandler != null)
             {
                 var request = new UnityWebRequest(commonArguments.URL, UnityWebRequest.kHttpVerbPOST);
-                request.uploadHandler = arguments.UploadHandler;
+                request.uploadHandler = arguments.UploadHandler.Value.CreateUploadHandler();
                 request.SetRequestHeader("Content-Type", arguments.ContentType);
                 request.downloadHandler = new DownloadHandlerBuffer();
                 return new GenericPostRequest(request);

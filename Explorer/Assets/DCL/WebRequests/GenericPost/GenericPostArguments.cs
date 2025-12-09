@@ -11,7 +11,7 @@ namespace DCL.WebRequests
         public readonly WWWForm? WWWForm;
         public readonly string PostData;
         public readonly string? ContentType;
-        public readonly UploadHandler? UploadHandler;
+        public readonly BufferedStringUploadHandler? UploadHandler;
 
         public const string JSON = "application/json";
         private const string JSON_UTF8 = "application/json; charset=utf-8";
@@ -34,7 +34,7 @@ namespace DCL.WebRequests
             WWWForm = form;
         }
 
-        private GenericPostArguments(UploadHandler uploadHandler, string contentType) : this()
+        private GenericPostArguments(BufferedStringUploadHandler uploadHandler, string contentType) : this()
         {
             UploadHandler = uploadHandler;
             ContentType = contentType;
@@ -43,7 +43,7 @@ namespace DCL.WebRequests
 
         public static GenericPostArguments Empty => new (string.Empty, JSON);
 
-        public static GenericPostArguments CreateUploadHandler(UploadHandler uploadHandler, string contentType) =>
+        public static GenericPostArguments CreateStringUploadHandler(BufferedStringUploadHandler uploadHandler, string contentType) =>
             new (uploadHandler, contentType);
 
         public static GenericPostArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
@@ -75,7 +75,7 @@ namespace DCL.WebRequests
             "GenericPostArguments:"
             + $"\nMultipartFormSections: {MultipartFormSections}"
             + $"\nWWWForm: {WebFormToString(WWWForm)}"
-            + $"\nUploadHandler: {(UploadHandler == null ? "" : Encoding.UTF8.GetString(UploadHandler.data))}"
+            + $"\nUploadHandler: {UploadHandler?.ToString() ?? ""}"
             + $"\nPostData: {PostData}"
             + $"\nContentType: {ContentType}";
 
