@@ -1,11 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.CharacterCamera;
-using DCL.Communities;
-using DCL.ExplorePanel;
 using DCL.FeatureFlags;
-using ECS.Abstract;
 using MVC;
 using System;
 using System.Threading;
@@ -15,14 +11,8 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarPanelsShortcutsHandler : IDisposable
     {
-        private const float QUICK_EMOTE_LOCK_TIME = 0.5f;
-
-        private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
-        private readonly EmotesBus emotesBus;
         private readonly World world;
-        private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
-        private SingleInstanceEntity? cameraInternal;
 
         private float lastQuickEmoteTime;
         private bool isCommunitiesFeatureEnabled;
@@ -33,12 +23,9 @@ namespace DCL.UI.Sidebar
             EmotesBus emotesBus,
             World world)
         {
-            this.mvcManager = mvcManager;
             this.dclInput = dclInput;
-            this.emotesBus = emotesBus;
             this.world = world;
 
-            //TODO FRAN: Add proper CT here
             ConfigureShortcutsAsync(CancellationToken.None).Forget();
         }
 
@@ -47,14 +34,9 @@ namespace DCL.UI.Sidebar
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS))
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
 
-            //dclInput.Shortcuts.EmoteWheel.canceled += OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
-
-            if (isCommunitiesFeatureEnabled)
-                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
         }
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
@@ -69,40 +51,10 @@ namespace DCL.UI.Sidebar
         }
 
 
-        private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
-        {
-            if (IsEmoteWheelLocked())
-            {
-                // Reset time, we only want to stop one action.
-                lastQuickEmoteTime = 0;
-                return;
-            }
-
-            //mvcManager.ToggleAsync(EmotesWheelController.IssueCommand()).Forget();
-        }
-
-
         private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
         {
             /*if (!isExplorePanelVisible && isFriendsFeatureEnabled)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());*/
-        }
-
-        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj)
-        {
-            if (isCommunitiesFeatureEnabled)
-                mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
-        }
-
-        /// <summary>
-        /// Emote wheel is locked when quick emote action was executed, but not when wheel is already visible, in that
-        /// case we want to hide it.
-        /// </summary>
-        private bool IsEmoteWheelLocked()
-        {
-            /*bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
-            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > UnityEngine.Time.time;*/
-            return false;
         }
 
 

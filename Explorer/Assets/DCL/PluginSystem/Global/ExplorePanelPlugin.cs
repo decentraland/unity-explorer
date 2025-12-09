@@ -41,6 +41,7 @@ using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
@@ -497,6 +498,11 @@ namespace DCL.PluginSystem.Global
                     communitiesBrowserController, inputBlock, includeCameraReel, mvcManager);
 
             mvcManager.RegisterController(explorePanelController);
+
+            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+
+            if (isCommunitiesFeatureEnabled)
+                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -543,12 +549,12 @@ namespace DCL.PluginSystem.Global
 
         private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _)
         {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
         }
 
         private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _)
         {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
         }
 
         private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
@@ -560,6 +566,12 @@ namespace DCL.PluginSystem.Global
         {
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
         }
+
+        private void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
+        }
+
 
         private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
         {
