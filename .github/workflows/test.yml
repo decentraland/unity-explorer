@@ -40,6 +40,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - name: Move Docker data-root to /mnt/docker
+        run: |
+          sudo systemctl stop docker
+          sudo mkdir -p /mnt/docker
+          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
+          docker info | sed -n '1,40p'
+          df -h /mnt /mnt/docker
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
