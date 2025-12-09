@@ -159,7 +159,7 @@ namespace DCL.Donations.UI
             bool isValid = decimal.TryParse(value, out decimal number) && number >= 1 && number <= currentBalance;
             sendButton.interactable = isValid;
 
-            donationErrorTip.gameObject.SetActive(number <= 0);
+            donationErrorTip.gameObject.SetActive(number < 1);
 
             if (number >= currentBalance)
             {

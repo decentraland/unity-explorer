@@ -975,7 +975,8 @@ namespace Global.Dynamic
                     playerEntity,
                     globalWorld,
                     webBrowser,
-                    bootstrapContainer.DecentralandUrlsSource));
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.InputBlock));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))

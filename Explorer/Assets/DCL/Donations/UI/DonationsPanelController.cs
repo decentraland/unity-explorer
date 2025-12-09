@@ -4,6 +4,8 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -13,13 +15,19 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Arch;
-using Random = UnityEngine.Random;
 
 namespace DCL.Donations.UI
 {
     public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
         private static readonly URN EMOTE_MONEY_URN = new ("money");
+        private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS =
+        {
+            InputMapComponent.Kind.PLAYER,
+            InputMapComponent.Kind.SHORTCUTS,
+            InputMapComponent.Kind.CAMERA,
+            InputMapComponent.Kind.IN_WORLD_CAMERA,
+        };
 
         private readonly DonationsService donationsService;
         private readonly IProfileRepository profileRepository;
@@ -29,6 +37,7 @@ namespace DCL.Donations.UI
         private readonly World world;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -44,6 +53,7 @@ namespace DCL.Donations.UI
             Entity playerEntity,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
+            IInputBlock inputBlock,
             decimal[] recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -54,6 +64,7 @@ namespace DCL.Donations.UI
             this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.inputBlock = inputBlock;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -184,8 +195,12 @@ namespace DCL.Donations.UI
             finally { viewInstance!.SetDefaultLoadingState(false); }
         }
 
+        protected override void OnViewShow() =>
+            inputBlock.Disable(BLOCKED_INPUTS);
+
         protected override void OnViewClose()
         {
+            inputBlock.Enable(BLOCKED_INPUTS);
             panelLifecycleCts.SafeCancelAndDispose();
         }
 
