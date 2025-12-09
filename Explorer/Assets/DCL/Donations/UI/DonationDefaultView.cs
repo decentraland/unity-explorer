@@ -11,7 +11,6 @@ namespace DCL.Donations.UI
 {
     public class DonationDefaultView : MonoBehaviour
     {
-        private const string MANA_EQUIVALENT_FORMAT = "{0:0.##} USD";
         private const string MANA_AVAILABLE_NORMAL = "Available";
         private const string MANA_AVAILABLE_ERROR = "Insufficient MANA";
         private const string DECIMAL_FORMAT = "0.##";
@@ -42,9 +41,9 @@ namespace DCL.Donations.UI
         [field: SerializeField] private TMP_Text currentBalanceText { get; set; } = null!;
         [field: SerializeField] private TMP_Text manaAvailableText { get; set; } = null!;
         [field: SerializeField] private Image manaAvailableIcon { get; set; } = null!;
-        [field: SerializeField] private TMP_InputField donationInputField { get; set; } = null!;
-        [field: SerializeField] private Image donationBorderError { get; set; } = null!;
-        [field: SerializeField] private TMP_Text usdEquivalentText { get; set; } = null!;
+        [field: SerializeField] private TMP_InputField donationInputFieldMana { get; set; } = null!;
+        [field: SerializeField] private TMP_InputField donationInputFieldUsd { get; set; } = null!;
+        [field: SerializeField] private Image[] donationBorderError { get; set; } = null!;
         [field: SerializeField] private Color invalidColor { get; set; }
         [field: SerializeField] internal Button buyMoreManaButton { get; set; } = null!;
         [field: SerializeField] private GameObject balanceWarningIcon { get; set; } = null!;
@@ -64,11 +63,11 @@ namespace DCL.Donations.UI
         private void Awake()
         {
             creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
-            donationBorderOriginalColor = donationBorderError.color;
+            donationBorderOriginalColor = donationBorderError[0].color;
             manaAvailableOriginalColor = manaAvailableText.color;
 
-            donationInputField.onValueChanged.AddListener(OnValueChanged);
-            donationInputField.onEndEdit.AddListener(OnEndEdit);
+            donationInputFieldMana.onValueChanged.AddListener(OnManaValueChanged);
+            donationInputFieldUsd.onValueChanged.AddListener(OnUsdValueChanged);
 
             recommendationButtons[FIRST_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(FIRST_RECOMMENDATION_INDEX));
             recommendationButtons[SECOND_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(SECOND_RECOMMENDATION_INDEX));
@@ -113,45 +112,54 @@ namespace DCL.Donations.UI
             recommendationButtons[THIRD_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[THIRD_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
 
             sendButton.onClick.RemoveAllListeners();
-            sendButton.onClick.AddListener( () => SendDonationRequested?.Invoke(sceneCreatorAddress, decimal.Parse(donationInputField.text)));
+            sendButton.onClick.AddListener( () => SendDonationRequested?.Invoke(sceneCreatorAddress, decimal.Parse(donationInputFieldMana.text)));
         }
 
         private void ManageRecommendationClick(int index)
         {
-            donationInputField.interactable = index == OTHER_RECOMMENDATION_INDEX;
+            donationInputFieldMana.interactable = index == OTHER_RECOMMENDATION_INDEX;
+            donationInputFieldUsd.interactable = index == OTHER_RECOMMENDATION_INDEX;
 
-            if (donationInputField.interactable)
-                donationInputField.OnSelect(null);
+            if (donationInputFieldMana.interactable)
+                donationInputFieldMana.OnSelect(null);
 
             for (int i = 0; i < recommendationButtons.Length; i++)
             {
                 recommendationButtons[i].SetSelected(i == index);
 
                 if (i == index && i != OTHER_RECOMMENDATION_INDEX)
-                    donationInputField.text = suggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
+                    donationInputFieldMana.text = suggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
             }
         }
 
-        private void OnValueChanged(string value)
+        private void OnManaValueChanged(string value)
         {
-            if (value.Contains("-"))
-                donationInputField.text = value.Replace("-", "");
+            string newValue = value.Replace("-", "");
+            bool parsedValueSuccess = decimal.TryParse(newValue, out decimal parsedValue);
 
-            Validate(value);
+            donationInputFieldMana.SetTextWithoutNotify(newValue);
+            donationInputFieldUsd.SetTextWithoutNotify((parsedValueSuccess ? parsedValue * manaUsdConversion : 0).ToString(DECIMAL_FORMAT));
+
+            ValidateManaValue(donationInputFieldMana.text);
         }
 
-        private void OnEndEdit(string value)
+        private void OnUsdValueChanged(string value)
         {
-            Validate(value);
+            string newValue = value.Replace("-", "");
+            bool parsedValueSuccess = decimal.TryParse(newValue, out decimal parsedValue);
+
+            donationInputFieldUsd.SetTextWithoutNotify(newValue);
+            donationInputFieldMana.SetTextWithoutNotify((parsedValueSuccess ? parsedValue / manaUsdConversion : 0).ToString(DECIMAL_FORMAT));
+
+            ValidateManaValue(donationInputFieldMana.text);
         }
 
-        private void Validate(string value)
+        private void ValidateManaValue(string value)
         {
             bool isValid = decimal.TryParse(value, out decimal number) && number >= 1 && number <= currentBalance;
             sendButton.interactable = isValid;
 
             donationErrorTip.gameObject.SetActive(number <= 0);
-            usdEquivalentText.gameObject.SetActive(!donationErrorTip.gameObject.activeInHierarchy);
 
             if (number >= currentBalance)
             {
@@ -172,8 +180,8 @@ namespace DCL.Donations.UI
                 manaAvailableText.text = MANA_AVAILABLE_NORMAL;
             }
 
-            usdEquivalentText.text = string.Format(MANA_EQUIVALENT_FORMAT, number * manaUsdConversion);
-            donationBorderError.color = isValid ? donationBorderOriginalColor : invalidColor;
+            foreach (var border in donationBorderError)
+                border.color = isValid ? donationBorderOriginalColor : invalidColor;
         }
     }
 }
