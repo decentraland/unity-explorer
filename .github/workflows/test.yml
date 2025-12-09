@@ -138,19 +138,19 @@ jobs:
       - name: Generate solution inside Unity Docker container
         run: |
           docker run --rm \
-           -v "${{ github.workspace }}:/workspace" \
-           -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
-           -v /tmp/ssh-unity:/root/.ssh \
-           -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
-           -w /workspace \
-           ${{ steps.img-lint.outputs.ghcr }} \
-           unity-editor \
-           -batchmode \
-           -nographics \
-           -projectPath /workspace/Explorer \
-           -executeMethod UnityEditor.SyncVS.SyncSolution \
-           -quit \
-           -logFile -
+            -v "${{ github.workspace }}:/workspace" \
+            -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+            -v /home/runner/.ssh:/root/.ssh \
+            -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+            -w /workspace \
+            ${{ steps.img-lint.outputs.ghcr }} \
+            unity-editor \
+            -batchmode \
+            -nographics \
+            -projectPath /workspace/Explorer \
+            -executeMethod UnityEditor.SyncVS.SyncSolution \
+            -quit \
+            -logFile -
 
       - name: Download ReSharper Command Line Tools
         run: |
