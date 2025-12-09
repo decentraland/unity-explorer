@@ -127,6 +127,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarBase.RigBuilder.enabled = true;
 
+            // Notice that Hands / Feet IK components are not added to remote entities
+            // We still disable the rigs to ensure no cpu time is wasted
+            // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
+            avatarBase.HandsIKRig.enabled = false;
+            avatarBase.FeetIKRig.enabled = false;
+
             return avatarBase;
         }
 
@@ -137,7 +143,13 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
-            if (avatarBase != null) mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+            if (avatarBase != null)
+            {
+                avatarBase.HandsIKRig.enabled = true;
+                avatarBase.FeetIKRig.enabled = true;
+
+                mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+            }
         }
 
         [Query]
