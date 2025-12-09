@@ -11,9 +11,9 @@ namespace DCL.Donations.UI
 {
     public class DonationDefaultView : MonoBehaviour
     {
-        private const string MANA_EQUIVALENT_FORMAT = "${0:0.##}";
-        private const string MANA_AVAILABLE_NORMAL = "available";
-        private const string MANA_AVAILABLE_ERROR = "insufficient MANA";
+        private const string MANA_EQUIVALENT_FORMAT = "{0:0.##} USD";
+        private const string MANA_AVAILABLE_NORMAL = "Available";
+        private const string MANA_AVAILABLE_ERROR = "Insufficient MANA";
         private const string DECIMAL_FORMAT = "0.##";
         private const int FIRST_RECOMMENDATION_INDEX = 0;
         private const int SECOND_RECOMMENDATION_INDEX = 1;
