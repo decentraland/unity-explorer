@@ -107,7 +107,7 @@ namespace DCL.Donations.UI
 
             ManageRecommendationClick(FIRST_RECOMMENDATION_INDEX);
 
-            recommendationButtons[FIRST_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[FIRST_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);;
+            recommendationButtons[FIRST_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[FIRST_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
             recommendationButtons[SECOND_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[SECOND_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
             recommendationButtons[THIRD_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[THIRD_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
 
@@ -115,10 +115,27 @@ namespace DCL.Donations.UI
             sendButton.onClick.AddListener( () => SendDonationRequested?.Invoke(sceneCreatorAddress, decimal.Parse(donationInputFieldMana.text)));
         }
 
+        public void ManaOverlayInputClicked()
+        {
+            if (donationInputFieldMana.interactable) return;
+
+            ManageRecommendationClick(OTHER_RECOMMENDATION_INDEX);
+        }
+
+        public void UsdOverlayInputClicked()
+        {
+            if (donationInputFieldUsd.interactable) return;
+
+            ManageRecommendationClick(OTHER_RECOMMENDATION_INDEX);
+        }
+
         private void ManageRecommendationClick(int index)
         {
             donationInputFieldMana.interactable = index == OTHER_RECOMMENDATION_INDEX;
             donationInputFieldUsd.interactable = index == OTHER_RECOMMENDATION_INDEX;
+
+            foreach (var border in donationBorderError)
+                border.gameObject.SetActive(index == OTHER_RECOMMENDATION_INDEX);
 
             if (donationInputFieldMana.interactable)
                 donationInputFieldMana.OnSelect(null);

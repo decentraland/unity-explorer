@@ -37,7 +37,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -10, y: 8.5}
-  m_SizeDelta: {x: 191.24, y: 17}
+  m_SizeDelta: {x: 0, y: 17}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &2641858506814575776
 MonoBehaviour:
@@ -464,10 +464,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 455167124806667237}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 28, y: -17}
-  m_SizeDelta: {x: 163.24, y: 17}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &3719082423854895313
 CanvasRenderer:
@@ -1708,7 +1708,6 @@ MonoBehaviour:
   <donationBorderError>k__BackingField:
   - {fileID: 2546298716698741582}
   - {fileID: 1226034723027934668}
-  <usdEquivalentText>k__BackingField: {fileID: 0}
   <invalidColor>k__BackingField: {r: 0.8784314, g: 0, b: 0, a: 1}
   <buyMoreManaButton>k__BackingField: {fileID: 795214992950550699}
   <balanceWarningIcon>k__BackingField: {fileID: 3083124929459689975}
@@ -2845,6 +2844,7 @@ GameObject:
   - component: {fileID: 8945785747269360246}
   - component: {fileID: 9174116805218875056}
   - component: {fileID: 7345855694667146167}
+  - component: {fileID: 6538708975758185747}
   m_Layer: 0
   m_Name: DonationInputUSD
   m_TagString: Untagged
@@ -3013,6 +3013,35 @@ MonoBehaviour:
   isAlert: 0
   m_InputValidator: {fileID: 0}
   m_ShouldActivateOnSelect: 1
+--- !u!114 &6538708975758185747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4310387322962509035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 9160844953472204291}
+          m_TargetAssemblyTypeName: DCL.Donations.UI.DonationDefaultView, DCL.Social
+          m_MethodName: UsdOverlayInputClicked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &4317777056829238581
 GameObject:
   m_ObjectHideFlags: 0
@@ -5624,6 +5653,7 @@ GameObject:
   - component: {fileID: 6421455015700232991}
   - component: {fileID: 396451124143400322}
   - component: {fileID: 441023536818280857}
+  - component: {fileID: 5510614918308860304}
   m_Layer: 0
   m_Name: DonationInputMANA
   m_TagString: Untagged
@@ -5793,6 +5823,35 @@ MonoBehaviour:
   isAlert: 0
   m_InputValidator: {fileID: 0}
   m_ShouldActivateOnSelect: 1
+--- !u!114 &5510614918308860304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8088540831010473685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 9160844953472204291}
+          m_TargetAssemblyTypeName: DCL.Donations.UI.DonationDefaultView, DCL.Social
+          m_MethodName: ManaOverlayInputClicked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &8151343881072109385
 GameObject:
   m_ObjectHideFlags: 0
@@ -6205,10 +6264,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 455167124806667237}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 9, y: -17}
-  m_SizeDelta: {x: 18, y: 17}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &7006836249150901353
 CanvasRenderer:
