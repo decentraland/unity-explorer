@@ -13,7 +13,6 @@ using MVC;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 using CancellationTokenSource = System.Threading.CancellationTokenSource;
 
@@ -30,14 +29,13 @@ namespace DCL.InWorldCamera.UI
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
 
-        private SingleInstanceEntity? cameraInternal;
-
         private bool shortcutPanelIsOpen;
 
         private CancellationTokenSource ctx;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
+        private SingleInstanceEntity? cameraInternal;
 
         public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
 

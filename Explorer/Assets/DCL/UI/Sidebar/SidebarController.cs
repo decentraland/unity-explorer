@@ -61,9 +61,9 @@ namespace DCL.UI.Sidebar
         private readonly URLBuilder urlBuilder = new ();
         private readonly SmartWearableCache smartWearablesCache;
         private readonly SidebarPanelsShortcutsHandler sidebarPanelsShortcutsHandler;
-        private readonly World world;
+        private readonly World globalWorld;
 
-        private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
+        private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
         private bool includeMarketplaceCredits;
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
@@ -115,6 +115,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.globalWorld = globalWorld;
             smartWearablesCache = smartWearableCache;
 
             sidebarPanelsShortcutsHandler = new SidebarPanelsShortcutsHandler(mvcManager, DCLInput.Instance, emotesBus, globalWorld);
@@ -152,8 +153,6 @@ namespace DCL.UI.Sidebar
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-
-            //chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
@@ -195,34 +194,34 @@ namespace DCL.UI.Sidebar
 
         private void OnOpenCameraButtonClicked()
         {
-            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
+            if (globalWorld.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !globalWorld.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 
         private void OnSettingsButtonClicked()
         {
-            OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget();
+            OpenExplorePanelInSection(ExploreSections.Settings);
         }
 
         private void OnCommunitiesButtonClicked()
         {
-            OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget();
+            OpenExplorePanelInSection(ExploreSections.Communities);
         }
 
         private void OnMapButtonClicked()
         {
-            OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget();
+            OpenExplorePanelInSection(ExploreSections.Navmap);
         }
 
         private void OnBackpackButtonClicked()
         {
             viewInstance!.backpackNotificationIndicator.SetActive(false);
-            OpenExplorePanelInSectionAsync(ExploreSections.Backpack).Forget();
+            OpenExplorePanelInSection(ExploreSections.Backpack);
         }
 
         private void OnCameraReelButtonClicked()
         {
-            OpenExplorePanelInSectionAsync(ExploreSections.CameraReel).Forget();
+            OpenExplorePanelInSection(ExploreSections.CameraReel);
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -389,7 +388,8 @@ namespace DCL.UI.Sidebar
 
         private void OnControlsButtonClicked()
         {
-            mvcManager.ShowAndForget(ControlsPanelController.IssueCommand());
+            //We don't "select" the controls button as it doesn't have any visual change of state.
+            OpenPanelAsync(null, mvcManager.ShowAsync(ControlsPanelController.IssueCommand())).Forget();
         }
 
         private void OpenSidebarSettings()
@@ -428,10 +428,10 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.NotificationsButton, mvcManager.ShowAsync(NotificationsPanelController.IssueCommand())).Forget();
         }
 
-        private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
+        private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
-            // Note: The buttons of these options (map, backpack, etc.) are not selected because they are not visible anyway, same reason we dont lock the sidebar.
-            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection)));
+            // Note: The buttons of these options (map, backpack, etc.) are not selected because they are not visible anyway, same reason we don't lock the sidebar.
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection)));
         }
 
         private void OnSmartWearablesButtonHover()

@@ -68,15 +68,7 @@ namespace DCL.UI.SharedSpaceManager
         {
             if (isFriendsFeatureEnabled)
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
-
-            dclInput.Shortcuts.EmoteWheel.canceled += OnInputShortcutsEmoteWheelPerformedAsync;
-            dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
-
-            if (isCameraReelFeatureEnabled)
-            {
-                dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
-            }
         }
 
         public void Dispose()
@@ -426,7 +418,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
         {
             // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            if (isTransitioning)
+            /*if (isTransitioning)
                 return;
 
             Entity camera = ecsWorld.CacheCamera();
@@ -436,7 +428,7 @@ namespace DCL.UI.SharedSpaceManager
 
             const string SOURCE_SHORTCUT = "Shortcut";
             ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
-            // Clue: It is handled by ToggleInWorldCameraActivitySystem
+            // Clue: It is handled by ToggleInWorldCameraActivitySystem*/
         }
 #endregion
 

@@ -11,11 +11,9 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
 using DCL.UI.InputFieldFormatting;
-using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using JetBrains.Annotations;
 using MVC;
 using System;
 using System.Threading;
@@ -24,7 +22,7 @@ using Utility;
 
 namespace DCL.MarketplaceCredits
 {
-    public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
+    public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
@@ -37,7 +35,6 @@ namespace DCL.MarketplaceCredits
         private MarketplaceCreditsSection? currentSection;
         private bool isCreditsUnlockedPanelOpen;
 
-        [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
 
         private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID = Animator.StringToHash("isAlert");
@@ -170,7 +167,6 @@ namespace DCL.MarketplaceCredits
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
         }
 

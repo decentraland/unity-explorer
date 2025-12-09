@@ -1050,7 +1050,8 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     identityCache,
                     thumbnailProvider,
-                    galleryEventBus));
+                    galleryEventBus
+                    ));
 
             if (includeMarketplaceCredits)
             {

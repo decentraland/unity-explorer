@@ -3,12 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
 using DCL.Communities;
-using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
-using DCL.InWorldCamera;
-using DCL.InWorldCamera.UI;
-using DCL.UI.Controls;
 using ECS.Abstract;
 using MVC;
 using System;
@@ -20,18 +16,16 @@ namespace DCL.UI.Sidebar
     public class SidebarPanelsShortcutsHandler : IDisposable
     {
         private const float QUICK_EMOTE_LOCK_TIME = 0.5f;
-        private const string SOURCE_SHORTCUT = "Shortcut";
-
 
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
         private readonly EmotesBus emotesBus;
         private readonly World world;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
+        private SingleInstanceEntity? cameraInternal;
 
         private float lastQuickEmoteTime;
         private bool isCommunitiesFeatureEnabled;
-        private SingleInstanceEntity? cameraInternal;
 
         public SidebarPanelsShortcutsHandler(
             IMVCManager mvcManager,
@@ -61,9 +55,6 @@ namespace DCL.UI.Sidebar
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
-
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
-                dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggled;
         }
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
@@ -101,15 +92,6 @@ namespace DCL.UI.Sidebar
         {
             if (isCommunitiesFeatureEnabled)
                 mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
-        }
-
-
-        private void OnInputInWorldCameraToggled(InputAction.CallbackContext obj)
-        {
-            // Note: The following comment was in the original code and I preserved it because I agree, opening a window should not require adding a component...
-            // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_SHORTCUT });
         }
 
         /// <summary>

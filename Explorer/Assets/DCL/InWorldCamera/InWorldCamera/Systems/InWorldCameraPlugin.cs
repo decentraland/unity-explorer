@@ -25,6 +25,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using ECS;
+using ECS.Abstract;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -43,6 +44,8 @@ namespace DCL.PluginSystem.Global
 {
     public class InWorldCameraPlugin : IDCLGlobalPlugin<InWorldCameraSettings>
     {
+        private const string SOURCE_SHORTCUT = "Shortcut";
+
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly SelfProfile selfProfile;
         private readonly RealmData realmData;
@@ -69,13 +72,16 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly DCLInput dclInput;
 
-        private ScreenRecorder recorder;
-        private GameObject hud;
-        private ScreenshotMetadataBuilder metadataBuilder;
-        private InWorldCameraSettings settings;
-        private InWorldCameraController inWorldCameraController;
-        private CharacterController followTarget;
+        private ScreenRecorder? recorder;
+        private GameObject? hud;
+        private ScreenshotMetadataBuilder? metadataBuilder;
+        private InWorldCameraSettings? settings;
+        private InWorldCameraController? inWorldCameraController;
+        private CharacterController? followTarget;
+        private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
+        private SingleInstanceEntity? cameraInternal;
 
         public InWorldCameraPlugin(SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
@@ -119,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
+            this.dclInput = DCLInput.Instance;
 
             factory = new InWorldCameraFactory();
             web3IdentityCache.OnIdentityChanged += FetchCameraReelStorage;
@@ -127,6 +134,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             factory.Dispose();
+            dclInput.InWorldCamera.ToggleInWorldCamera.performed -= OnShortcutToggleInWorldCameraPressed;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
@@ -173,25 +181,25 @@ namespace DCL.PluginSystem.Global
                     settings.PhotoSuccessfullySetAsPublicMessage, settings.LinkCopiedMessage),
                 galleryEventBus));
 
-
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), globalWorld, mvcManager, cameraReelStorageService);
             mvcManager.RegisterController(inWorldCameraController);
 
-            dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggled;
+            dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnShortcutToggleInWorldCameraPressed;
         }
 
-        private void OnInputInWorldCameraToggled(InputAction.CallbackContext obj)
+        private void OnShortcutToggleInWorldCameraPressed(InputAction.CallbackContext obj)
         {
             // Note: The following comment was in the original code and I preserved it because I agree, opening a window should not require adding a component...
             // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_SHORTCUT });
+            // Clue: It is handled by ToggleInWorldCameraActivitySystem
+            if (globalWorld.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !globalWorld.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_SHORTCUT });
         }
 
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, DCLInput.Instance.InWorldCamera, nametagsData);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings!.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, DCLInput.Instance.InWorldCamera, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, DCLInput.Instance.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
@@ -211,24 +219,22 @@ namespace DCL.PluginSystem.Global
         public class InWorldCameraSettings : IDCLPluginSettings
         {
             [field: Header(nameof(InWorldCameraSettings))]
-            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
-            [field: SerializeField] internal AssetReferenceGameObject FollowTarget { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceGameObject FollowTarget { get; private set; } = null!;
 
             [field: Header("Configs")]
-            [field: SerializeField] internal InWorldCameraTransitionSettings TransitionSettings { get; private set; }
-            [field: SerializeField] internal InWorldCameraMovementSettings MovementSettings { get; private set; }
+            [field: SerializeField] internal InWorldCameraTransitionSettings TransitionSettings { get; private set; } = null!;
+            [field: SerializeField] internal InWorldCameraMovementSettings MovementSettings { get; private set; } = null!;
 
             [field: Header("Photo detail")]
-            [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
-            [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
-            [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; }
-            [field: SerializeField] internal string PhotoSuccessfullySetAsPublicMessage { get; private set; }
-            [field: SerializeField] internal string LinkCopiedMessage { get; private set; }
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
-
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
-
-            [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; } = null!;
+            [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; } = null!;
+            [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; } = null!;
+            [field: SerializeField] internal string PhotoSuccessfullySetAsPublicMessage { get; private set; } = null!;
+            [field: SerializeField] internal string LinkCopiedMessage { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; } = null!;
         }
     }
 }
