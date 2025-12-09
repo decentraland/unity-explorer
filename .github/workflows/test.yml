@@ -131,6 +131,9 @@ jobs:
         run: |
           docker run --rm \
            -v "${{ github.workspace }}:/workspace" \
+           -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+           -v /home/runner/.ssh:/root/.ssh \
+           -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
            -w /workspace \
            ${{ steps.img-lint.outputs.ghcr }} \
            unity-editor \
