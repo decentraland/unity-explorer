@@ -753,7 +753,7 @@ namespace Global.Dynamic
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
-                    staticContainer.SmartWearableCache),
+                    staticContainer.SmartWearableCache, globalWorld, emotesBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -1044,12 +1044,10 @@ namespace Global.Dynamic
                     wearableCatalog,
                     wearablesProvider,
                     dclCursor,
-                    mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     globalWorld,
                     debugBuilder,
                     dynamicSettings.NametagsData,
                     profileRepositoryWrapper,
-                    sharedSpaceManager,
                     identityCache,
                     thumbnailProvider,
                     galleryEventBus));

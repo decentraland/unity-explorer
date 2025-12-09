@@ -26,11 +26,9 @@ namespace DCL.InWorldCamera.UI
     {
         private const string SOURCE_BUTTON = "Button";
 
-        private readonly Button sidebarButton;
         private readonly World world;
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private SingleInstanceEntity? cameraInternal;
 
@@ -45,26 +43,23 @@ namespace DCL.InWorldCamera.UI
 
         private UniTaskCompletionSource? closeViewTask;
 
-        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+        public InWorldCameraController(ViewFactoryMethod viewFactory, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {
             this.world = world;
             this.mvcManager = mvcManager;
             this.storageService = storageService;
-            this.sidebarButton = sidebarButton;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             ctx = new CancellationTokenSource();
             closeViewTask = new UniTaskCompletionSource();
 
             storageService.ScreenshotUploaded += OnScreenshotUploaded;
-            sidebarButton.onClick.AddListener(ToggleInWorldCamera);
         }
 
         protected override void OnViewInstantiated()
         {
             viewInstance!.CloseButton.onClick.AddListener(RequestDisableInWorldCamera);
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
-            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGalleryAsync);
+            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
         }
 
@@ -74,12 +69,11 @@ namespace DCL.InWorldCamera.UI
             {
                 viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
                 viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
-                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGalleryAsync);
+                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
                 viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
             }
 
             storageService.ScreenshotUploaded -= OnScreenshotUploaded;
-            sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
 
             base.Dispose();
         }
@@ -96,9 +90,11 @@ namespace DCL.InWorldCamera.UI
 
         public void Show()
         {
-            sidebarButton.OnSelect(null);
             mvcManager.ShowAsync(IssueCommand(new ControllerNoData()));
+        }
 
+        protected override void OnViewShow()
+        {
             AdjustToStorageSpace(storageService.StorageStatus.HasFreeSpace);
         }
 
@@ -112,7 +108,6 @@ namespace DCL.InWorldCamera.UI
         {
             ToggleShortcutsInfoAsync(toOpen: false);
 
-            sidebarButton.OnDeselect(null);
             viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
         }
 
@@ -136,14 +131,10 @@ namespace DCL.InWorldCamera.UI
             viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
-        private async void OpenCameraReelGalleryAsync()
+        private void OpenCameraReelGallery()
         {
             RequestDisableInWorldCamera();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden);
-            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
-
-            //await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
         }
 
         private void RequestTakeScreenshot()

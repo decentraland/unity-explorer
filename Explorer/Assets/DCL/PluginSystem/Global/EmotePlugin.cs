@@ -27,6 +27,7 @@ using System.Threading;
 using ECS.SceneLifeCycle;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly DCLInput dclInput;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -100,6 +102,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
+            this.dclInput = DCLInput.Instance;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -158,6 +161,16 @@ namespace DCL.PluginSystem.Global
                 inputBlock, cursor, mvcManager);
 
             mvcManager.RegisterController(emotesWheelController);
+
+            dclInput.Shortcuts.EmoteWheel.canceled += OnEmoteWheelShortcutPerformed;
+        }
+
+        private void OnEmoteWheelShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            if (emotesWheelController?.State is ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(EmotesWheelController.IssueCommand());
+            else
+                emotesWheelController?.Close();
         }
 
         [Serializable]

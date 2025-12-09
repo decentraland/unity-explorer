@@ -281,7 +281,7 @@ namespace DCL.EmotesWheel
             }
         }
 
-        private void Close() =>
+        public void Close() =>
             closeViewTask?.TrySetResult();
 
         private static string GetSlotInputName(int slot) =>

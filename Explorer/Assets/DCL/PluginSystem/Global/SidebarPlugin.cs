@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
@@ -65,6 +66,8 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly Arch.Core.World globalWorld;
+        private readonly EmotesBus emotesBus;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -102,7 +105,9 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             IEventBus eventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            Arch.Core.World globalWorld,
+            EmotesBus emotesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -131,6 +136,8 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.globalWorld = globalWorld;
+            this.emotesBus = emotesBus;
         }
 
         public void Dispose()
@@ -189,8 +196,9 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 decentralandUrls,
                 eventBus,
-                smartWearableCache
-            );
+                smartWearableCache,
+                emotesBus,
+                globalWorld);
 
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);

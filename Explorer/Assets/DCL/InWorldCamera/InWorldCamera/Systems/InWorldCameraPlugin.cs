@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Clipboard;
 using DCL.Input;
@@ -22,10 +23,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
-using DCL.Rendering.GPUInstancing;
-using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -33,10 +31,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
-using Button = UnityEngine.UI.Button;
 using CaptureScreenshotSystem = DCL.InWorldCamera.Systems.CaptureScreenshotSystem;
 using EmitInWorldCameraInputSystem = DCL.InWorldCamera.Systems.EmitInWorldCameraInputSystem;
 using MoveInWorldCameraSystem = DCL.InWorldCamera.Systems.MoveInWorldCameraSystem;
@@ -65,11 +62,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
-        private readonly Button sidebarButton;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -91,12 +86,10 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
             ICursor cursor,
-            Button sidebarButton,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
             ProfileRepositoryWrapper profileDataProvider,
-            ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             IThumbnailProvider thumbnailProvider,
             GalleryEventBus galleryEventBus)
@@ -119,12 +112,10 @@ namespace DCL.PluginSystem.Global
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
-            this.sidebarButton = sidebarButton;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
@@ -183,9 +174,20 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus));
 
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), globalWorld, mvcManager, cameraReelStorageService);
             mvcManager.RegisterController(inWorldCameraController);
+
+            dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggled;
         }
+
+        private void OnInputInWorldCameraToggled(InputAction.CallbackContext obj)
+        {
+            // Note: The following comment was in the original code and I preserved it because I agree, opening a window should not require adding a component...
+            // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_SHORTCUT });
+        }
+
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {

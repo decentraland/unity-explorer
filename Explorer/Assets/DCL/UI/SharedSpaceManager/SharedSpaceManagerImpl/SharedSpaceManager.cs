@@ -21,7 +21,6 @@ namespace DCL.UI.SharedSpaceManager
     /// </summary>
     public class SharedSpaceManager : ISharedSpaceManager, IDisposable
     {
-        private const float QUICK_EMOTE_LOCK_TIME = 0.5f;
         private readonly Dictionary<PanelsSharingSpace, PanelRegistration> registrations = new ();
 
         private readonly IMVCManager mvcManager;
@@ -31,7 +30,6 @@ namespace DCL.UI.SharedSpaceManager
 
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isCameraReelFeatureEnabled;
-        private bool isCommunitiesFeatureEnabled;
 
         private readonly CancellationTokenSource cts = new ();
         private readonly CancellationTokenSource configureShortcutsCts = new ();
@@ -75,10 +73,6 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
-            if (isCommunitiesFeatureEnabled)
-                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
-
             if (isCameraReelFeatureEnabled)
             {
                 dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
@@ -93,9 +87,6 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.EmoteWheel.canceled -= OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.Controls.performed -= OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
-
-            if (isCommunitiesFeatureEnabled)
-                dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformedAsync;
 
             mvcManager.OnViewShowed -= OnMvcViewShowed;
             mvcManager.OnViewClosed -= OnMvcViewClosed;
@@ -430,12 +421,6 @@ namespace DCL.UI.SharedSpaceManager
         {
             /*if (!isExplorePanelVisible && isFriendsFeatureEnabled)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());*/
-        }
-
-        private async void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
-        {
-            /*if (!isExplorePanelVisible && isCommunitiesFeatureEnabled)
-                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Communities));*/
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)

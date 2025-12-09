@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
@@ -20,28 +21,27 @@ using MVC;
 using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes;
+using DCL.CharacterCamera;
 using DCL.Chat.ChatStates;
 using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.InWorldCamera;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Buttons;
+using ECS.Abstract;
 using Runtime.Wearables;
 using Utility;
 
 namespace DCL.UI.Sidebar
 {
-    public class SidebarPanelsShortcutsHandler : IDisposable
-    {
-        public void Dispose()
-        {
-        }
-    }
-
     public class SidebarController : ControllerBase<SidebarView>
     {
+        private const string SOURCE_BUTTON = "Button";
+
         private readonly IMVCManager mvcManager;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly NotificationsPanelController notificationsPanelController;
@@ -60,18 +60,21 @@ namespace DCL.UI.Sidebar
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
         private readonly SmartWearableCache smartWearablesCache;
+        private readonly SidebarPanelsShortcutsHandler sidebarPanelsShortcutsHandler;
+        private readonly World world;
 
+        private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
         private bool includeMarketplaceCredits;
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
+        private SingleInstanceEntity? cameraInternal;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action? HelpOpened;
 
-        public SidebarController(
-            ViewFactoryMethod viewFactory,
+        public SidebarController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             NotificationsPanelController notificationsPanelController,
             SidebarProfileButtonPresenter profileButtonPresenter,
@@ -90,7 +93,9 @@ namespace DCL.UI.Sidebar
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             IEventBus eventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            EmotesBus emotesBus,
+            World globalWorld)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -112,6 +117,8 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             smartWearablesCache = smartWearableCache;
 
+            sidebarPanelsShortcutsHandler = new SidebarPanelsShortcutsHandler(mvcManager, DCLInput.Instance, emotesBus, globalWorld);
+
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
@@ -119,7 +126,9 @@ namespace DCL.UI.Sidebar
         {
             base.Dispose();
 
-            notificationsPanelController.Dispose(); // TODO: Does it make sense to call this here?
+            sidebarPanelsShortcutsHandler.Dispose();
+            // TODO FRAN: Does it make sense to call this here? or should we dispose on the plugin?
+            notificationsPanelController.Dispose();
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
@@ -164,6 +173,7 @@ namespace DCL.UI.Sidebar
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
+            viewInstance.InWorldCameraButton.onClick.AddListener(OnOpenCameraButtonClicked);
 
             viewInstance.emotesWheelButton.Button.onClick.AddListener(OnEmotesWheelButtonClicked);
             viewInstance.NotificationsButton.Button.onClick.AddListener(OpenNotificationsPanel);
@@ -181,6 +191,12 @@ namespace DCL.UI.Sidebar
 
             if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (includeFriends) viewInstance.friendsButton.Button.onClick.AddListener(OnFriendsButtonClickedAsync);
+        }
+
+        private void OnOpenCameraButtonClicked()
+        {
+            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 
         private void OnSettingsButtonClicked()
@@ -238,7 +254,16 @@ namespace DCL.UI.Sidebar
         private void OnMvcManagerViewClosed(IController closedController)
         {
             //When panels are closed through shortcuts we need to be able to de-select the buttons
-            //Do we care WHICH button was selected?? we can just try to deselect all?
+            //Do we care WHICH button was selected?? we can just try to deselect all!?
+            switch (closedController)
+            {
+                case EmotesWheelController:
+                    viewInstance?.emotesWheelButton.Deselect(); break;
+                case FriendsPanelController:
+                    viewInstance?.friendsButton.Deselect(); break;
+            }
+
+
 
             // Panels that are controllers and can be opened using shortcuts
             /*if (closedController is EmotesWheelController)
@@ -252,11 +277,15 @@ namespace DCL.UI.Sidebar
             // Panels that are controllers and can be opened using shortcuts,
             // should we listen for the shortcuts instead??
             // the problem there is that if we open the panel from anywhere else it wont get selected...
-
-            /*if (showedController is EmotesWheelController)
-                viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
-            else if (showedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);*/
+            switch (showedController)
+            {
+                case EmotesWheelController:
+                    viewInstance?.emotesWheelButton.Select();
+                    break;
+                case FriendsPanelController:
+                    viewInstance?.friendsButton.Select();
+                    break;
+            }
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
@@ -382,6 +411,8 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid OpenPanelAsync(ISelectableButton? button, UniTask showTask)
         {
             //TODO FRAN: DO we need a cancellation token and error handling?
+            //Instead of a UniTask maybe we can get the ShowCommand like ShowAsync??
+            //We can make all of these into commands so they can be better reused in other parts.
 
             if (!viewInstance) return;
 

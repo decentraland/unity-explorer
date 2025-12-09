@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AuthenticationScreenFlow;
-using DCL.Chat;
 using DCL.ChatArea;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
