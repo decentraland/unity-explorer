@@ -112,7 +112,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             BeforePlayingCheckEmoteAssetQuery(World);
-            SynchronizeRemoteInteractionBeforePlayingQuery(World);
+            BeforePlayingSynchronizeRemoteInteractionQuery(World);
             BeforePlayingStopCurrentEmoteQuery(World);
             PlayNewEmoteQuery(World);
             AfterPlayingUpdateSocialEmoteInteractionsQuery(World);
@@ -465,7 +465,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         // Once both have arrived, both emotes play at the same time.
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SynchronizeRemoteInteractionBeforePlaying(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent, ref CharacterTransform characterTransform)
+        private void BeforePlayingSynchronizeRemoteInteraction(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent, ref CharacterTransform characterTransform)
         {
             if(emoteIntent.EmoteAsset == null || !emoteIntent.EmoteAsset.IsSocial)
                 return;
