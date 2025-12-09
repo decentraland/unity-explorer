@@ -15,7 +15,7 @@ namespace DCL.Web3.Identities
         private string GetIdentityKey()
         {
             return dclEnv == DecentralandEnvironment.Zone
-                ? DCLPrefKeys.WEB3_IDENTITY_zone
+                ? DCLPrefKeys.WEB3_IDENTITY_ZONE
                 : DCLPrefKeys.WEB3_IDENTITY;
         }
 
@@ -36,8 +36,7 @@ namespace DCL.Web3.Identities
                     Clear();
                 else
                 {
-                    string key = GetIdentityKey();
-                    DCLPlayerPrefs.SetString(key, identitySerializer.Serialize(value));
+                    DCLPlayerPrefs.SetString(GetIdentityKey(), identitySerializer.Serialize(value));
                     OnIdentityChanged?.Invoke();
                 }
             }
@@ -56,8 +55,7 @@ namespace DCL.Web3.Identities
 
         public void Clear()
         {
-            string key = GetIdentityKey();
-            DCLPlayerPrefs.DeleteKey(key);
+            DCLPlayerPrefs.DeleteKey(GetIdentityKey());
             OnIdentityCleared?.Invoke();
         }
     }
