@@ -129,7 +129,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             ref MoveBeforePlayingSocialEmoteIntent moveIntent)
         {
             // If the avatar is playing an emote, it must cancel that emote before moving to the initiator
-            if (emoteComponent.IsPlayingEmote)
+            if (emoteComponent.IsPlayingEmote && !emoteComponent.EmoteUrn.IsNullOrEmpty())
             {
                 World.Add(entity, new StopEmoteIntent(emoteComponent.EmoteUrn));
 

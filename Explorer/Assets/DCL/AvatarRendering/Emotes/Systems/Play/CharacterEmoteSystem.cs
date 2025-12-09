@@ -596,14 +596,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                             // Reacting to the interaction
                             SocialEmoteInteractionsManager.Instance.AddParticipantToInteraction(emoteIntent.WalletAddress, entity, emoteComponent.SocialEmote.CurrentOutcome, emoteIntent.SocialEmote.InitiatorWalletAddress);
                         }
-                   /*     else if (!SocialEmoteInteractionsManager.Instance.InteractionExists(emoteIntent.SocialEmote.InitiatorWalletAddress) &&
-                                 !emoteComponent.SocialEmote.IsReacting)
-                        {
-                            // A spectator entered DCL while 2 avatars were interacting and playing a looping outcome animation
-                            // Starting interaction
-                            SocialEmoteInteractionsManager.Instance.StartInteraction(emoteIntent.WalletAddress, entity, emote, characterTransform.Transform, emoteComponent.SocialEmote.InteractionId, emoteIntent.SocialEmote.TargetAvatarWalletAddress);
-                            emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.WalletAddress;
-                        }*/
                     }
                     else
                     {
