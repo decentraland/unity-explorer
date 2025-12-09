@@ -47,17 +47,7 @@ namespace SceneRuntime.Factory.WebSceneSource
                     ReportHub.LogWarning(ReportCategory.SCENE_FACTORY,
                         $"The code of the scene at \"{path.Value}\" does not include the CommonJS module wrapper. This is suboptimal.");
 
-                    sourceCode = new SlicedOwnedMemory<byte>(
-                        SceneRuntimeFactory.COMMONJS_HEADER_UTF8.Length + data.Length +
-                        SceneRuntimeFactory.COMMONJS_FOOTER_UTF8.Length);
-
-                    SceneRuntimeFactory.COMMONJS_HEADER_UTF8.CopyTo(sourceCode.Memory);
-
-                    data.AsReadOnlySpan().CopyTo(sourceCode.Memory.Slice(
-                        SceneRuntimeFactory.COMMONJS_HEADER_UTF8.Length).Span);
-
-                    SceneRuntimeFactory.COMMONJS_FOOTER_UTF8.CopyTo(sourceCode.Memory.Slice(
-                        SceneRuntimeFactory.COMMONJS_HEADER_UTF8.Length + data.Length));
+                    sourceCode = WrapInModuleCommonJs(data.AsReadOnlySpan());
                 }
 
                 await UniTask.SwitchToMainThread();
@@ -68,6 +58,26 @@ namespace SceneRuntime.Factory.WebSceneSource
             else
                 return Result<SlicedOwnedMemory<byte>>.ErrorResult(
                     result.ErrorMessage ?? "null");
+        }
+
+        internal static SlicedOwnedMemory<byte> WrapInModuleCommonJs(
+            ReadOnlySpan<byte> code)
+        {
+            var module = new SlicedOwnedMemory<byte>(
+                SceneRuntimeFactory.COMMONJS_HEADER_UTF8.Length + code.Length +
+                SceneRuntimeFactory.COMMONJS_FOOTER_UTF8.Length);
+
+            SceneRuntimeFactory.COMMONJS_HEADER_UTF8.CopyTo(module.Memory);
+
+            code.CopyTo(module.Memory.Slice(
+                SceneRuntimeFactory.COMMONJS_HEADER_UTF8.Length).Span);
+
+            SceneRuntimeFactory.COMMONJS_FOOTER_UTF8.CopyTo(
+                module.Memory.Slice(
+                    SceneRuntimeFactory.COMMONJS_HEADER_UTF8.Length +
+                    code.Length));
+
+            return module;
         }
     }
 }

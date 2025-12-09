@@ -44,16 +44,8 @@ namespace SceneRuntime.Tests
                 new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
         }
 
-        internal static SlicedOwnedMemory<byte> CreateCode(string code)
-        {
-            int byteCount = Encoding.UTF8.GetByteCount(code);
-            var buffer = new SlicedOwnedMemory<byte>(byteCount);
-
-            int written = Encoding.UTF8.GetBytes(code.AsSpan(),
-                buffer.Memory.Span);
-
-            return buffer;
-        }
+        internal static SlicedOwnedMemory<byte> CreateCode(string code) =>
+            WebJsSources.WrapInModuleCommonJs(Encoding.UTF8.GetBytes(code));
 
         [UnityTest]
         public IEnumerator EngineApi_GetState() =>
@@ -103,7 +95,6 @@ namespace SceneRuntime.Tests
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(
                     code, new SceneShortInfo(), CancellationToken.None);
 
-                code.Dispose();
                 sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, poolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
@@ -145,7 +136,6 @@ namespace SceneRuntime.Tests
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(
                     code, new SceneShortInfo(), CancellationToken.None);
 
-                code.Dispose();
                 sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
 

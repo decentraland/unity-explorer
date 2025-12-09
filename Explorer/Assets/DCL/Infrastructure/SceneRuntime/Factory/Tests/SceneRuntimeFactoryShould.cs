@@ -41,15 +41,15 @@ namespace SceneRuntime.Factory.Tests
                 var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
                     webJsSources);
 
-                var sourceCode = SceneRuntimeShould.CreateCode(@"
-                const engineApi = require('~system/EngineApi')
-                exports.onStart = async function() {
-                    data = new Uint8Array(10)
-                    data[0] = 123
-                    await engineApi.crdtSendToRenderer({ data })
-                    test.Ok()
-                };
-                exports.onUpdate = async function(dt) {};
+                using var sourceCode = SceneRuntimeShould.CreateCode(@"
+                    const engineApi = require('~system/EngineApi')
+                    exports.onStart = async function() {
+                        data = new Uint8Array(10)
+                        data[0] = 123
+                        await engineApi.crdtSendToRenderer({ data })
+                        test.Ok()
+                    };
+                    exports.onUpdate = async function(dt) {};
                 ");
 
                 // Act
@@ -59,7 +59,6 @@ namespace SceneRuntime.Factory.Tests
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
                     new SceneShortInfo(), CancellationToken.None);
 
-                sourceCode.Dispose();
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert
@@ -99,19 +98,16 @@ namespace SceneRuntime.Factory.Tests
                 await sceneRuntime.UpdateScene(0.01f);
             });
 
-        /*[Test]
+        [Test]
         public void WrapInModuleCommonJs()
         {
-            // Arrange
-            var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, webJsSources);
-            var sourceCode = "console.log('Hello, world!');";
-
-            // Act
-            string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
+            // CreateCode does the wrapping already.
+            using var sourceCode = SceneRuntimeShould.CreateCode(
+                "console.log('Hello, world!');");
 
             // Assert: Check that the module compiles
             using var engine = engineFactory.Create(new SceneShortInfo());
-            engine.Compile(moduleWrapper);
-        }*/
+            engine.CompileScriptFromUtf8(sourceCode.Memory.Span);
+        }
     }
 }
