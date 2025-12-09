@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 1424516298699251097}
   - component: {fileID: 1489179265906348417}
   - component: {fileID: 5474596722881344901}
+  - component: {fileID: 4466966890141429064}
   m_Layer: 0
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -212,6 +213,19 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4466966890141429064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1970040329069888505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c82c9247f543467889e5afbf8a1d9662, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.UnderlineTextOnHover
+  text: {fileID: 5474596722881344901}
 --- !u!1 &2031916229084039964
 GameObject:
   m_ObjectHideFlags: 0
@@ -838,7 +852,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2545835288679838424
 RectTransform:
   m_ObjectHideFlags: 0
