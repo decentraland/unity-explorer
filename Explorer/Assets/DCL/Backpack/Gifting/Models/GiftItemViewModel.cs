@@ -5,6 +5,7 @@ namespace DCL.Backpack.Gifting.Models
     public readonly struct GiftItemViewModel : IGiftableItemViewModel
     {
         public GiftableAvatarAttachment Giftable { get; }
+        public GiftableType Type { get; }
         public string Urn => Giftable.Urn;
         public string DisplayName { get; }
         public string? CategoryId { get; }
@@ -15,11 +16,18 @@ namespace DCL.Backpack.Gifting.Models
         public int NftCount { get; }
         public bool IsGiftable { get; }
 
-        public GiftItemViewModel(GiftableAvatarAttachment giftable, int amount, bool isEquipped, bool isGiftable)
+        public GiftItemViewModel(GiftableAvatarAttachment giftable,
+            int amount,
+            bool isEquipped,
+            bool isGiftable,
+            GiftableType type)
         {
             Giftable = giftable;
+            Type = type;
             DisplayName = giftable.Name;
-            CategoryId = giftable.Category;
+
+            CategoryId = type == GiftableType.Emote ? "emote" : giftable.Category;
+            
             RarityId = giftable.Rarity;
             ThumbnailState = ThumbnailState.NotLoaded;
             Thumbnail = null;
@@ -30,6 +38,7 @@ namespace DCL.Backpack.Gifting.Models
 
         private GiftItemViewModel(
             GiftableAvatarAttachment giftable,
+            GiftableType type,
             string displayName,
             string? categoryId,
             string? rarityId,
@@ -40,6 +49,7 @@ namespace DCL.Backpack.Gifting.Models
             bool isGiftable)
         {
             Giftable = giftable;
+            Type = type;
             DisplayName = displayName;
             CategoryId = categoryId;
             RarityId = rarityId;
@@ -53,6 +63,7 @@ namespace DCL.Backpack.Gifting.Models
         public GiftItemViewModel WithState(ThumbnailState newState, Sprite? newSprite = null)
         {
             return new GiftItemViewModel(Giftable,
+                Type,
                 DisplayName,
                 CategoryId,
                 RarityId, newState,

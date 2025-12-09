@@ -83,7 +83,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected override GiftItemViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable)
         {
             // Safe cast because FetchDataAsync only produces EmoteGiftable
-            return new GiftItemViewModel (item, amount, isEquipped, isGiftable);
+            return new GiftItemViewModel (item, amount, isEquipped, isGiftable, GiftableType.Emote);
         }
 
         protected override int GetItemAmount(GiftableAvatarAttachment item)

@@ -82,7 +82,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override GiftItemViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable)
         {
-            return new GiftItemViewModel(item, amount, isEquipped, isGiftable);
+            return new GiftItemViewModel(item, amount, isEquipped, isGiftable, GiftableType.Wearable);
         }
 
         protected override int GetItemAmount(GiftableAvatarAttachment item)

@@ -3,11 +3,13 @@
 namespace DCL.Backpack.Gifting.Models
 {
     public enum ThumbnailState { NotLoaded, Loading, Loaded, Error }
+
+    public enum GiftableType { Wearable, Emote }
     
     public interface IGiftableItemViewModel
     {
-        public GiftableAvatarAttachment Giftable { get; } 
-
+        public GiftableAvatarAttachment Giftable { get; }
+        GiftableType Type { get; } 
         /// <summary>
         ///     Is item giftable?
         /// </summary>
