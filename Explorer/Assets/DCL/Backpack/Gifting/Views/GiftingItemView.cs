@@ -71,7 +71,7 @@ namespace DCL.Backpack.Gifting.Views
         /// <summary>
         ///     This is the single entry point to configure the view's state from a ViewModel.
         /// </summary>
-        public void Bind(IGiftableItemViewModel viewModel, bool isSelected)
+        public void Bind<T>(T viewModel, bool isSelected) where T : IGiftableItemViewModel
         {
             if (container != null)
             {
