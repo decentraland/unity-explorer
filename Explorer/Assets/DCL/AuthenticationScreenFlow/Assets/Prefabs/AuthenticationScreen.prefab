@@ -193,6 +193,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -486,6 +487,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -635,6 +637,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -785,6 +788,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -962,6 +966,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1139,6 +1144,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1315,6 +1321,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1527,6 +1534,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2351,6 +2359,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
   icon: {fileID: 5923838069099402321}
@@ -2972,7 +2981,8 @@ MonoBehaviour:
   countdownLabel: {fileID: 7030463916409028714}
   <LoginContainer>k__BackingField: {fileID: 5265511476716053455}
   <LoginButton>k__BackingField: {fileID: 4708745492529117082}
-  <LoadingSpinner>k__BackingField: {fileID: 7477591679164147947}
+  <CancelLoginButton>k__BackingField: {fileID: 7148045455480499345}
+  <LoadingSpinner>k__BackingField: {fileID: 101159986873043013}
   <PendingAuthentication>k__BackingField: {fileID: 9139651224223642632}
   <CancelAuthenticationProcess>k__BackingField: {fileID: 7578292249645083079}
   <FinalizeContainer>k__BackingField: {fileID: 3916047686447302749}
@@ -3448,6 +3458,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &6558392808739463091
@@ -3553,6 +3564,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3689,6 +3701,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3987,6 +4000,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -4480,6 +4494,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -5266,6 +5281,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+--- !u!1 &101159986873043013 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2031916229084039964, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+  m_PrefabInstance: {fileID: 2113795108547248985}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &512411117488763017 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 1894263104519943120, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
@@ -5292,8 +5312,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6072945466760093846, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
   m_PrefabInstance: {fileID: 2113795108547248985}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7477591679164147947 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8831571445190765490, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+--- !u!114 &7148045455480499345 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9108319191272288200, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
   m_PrefabInstance: {fileID: 2113795108547248985}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
