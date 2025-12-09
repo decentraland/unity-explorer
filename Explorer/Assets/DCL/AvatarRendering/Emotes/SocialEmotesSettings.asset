@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SocialEmotesSettings
   m_EditorClassIdentifier: DCL.Plugins::DCL.AvatarRendering.Emotes.SocialEmotesSettings
   ReceiverJogs: 1
-  VisibilityDistance: 12
+  VisibilityDistance: 8
   InteractionDistance: 8
   OutcomeStartInterpolationRadius: 1.2
   OutcomeStartInterpolationDuration: 0.1
