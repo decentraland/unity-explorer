@@ -3,8 +3,11 @@ using VRM;
 
 namespace DCL.AvatarRendering.Export
 {
-    public class VRMExporterReferences
+    public class VRMExportSettings
     {
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public string Reference { get; set; }
         public GameObject toExport;
         public Transform bonesRoot;
         public Transform meshesContainer;

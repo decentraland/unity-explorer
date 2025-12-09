@@ -139,7 +139,7 @@ namespace DCL.CharacterPreview
             }
 
             // Triggering export for test purposes
-            var exportIntention = new ExportAvatarIntention(ExportMode.DebugLog);
+            var exportIntention = new ExportAvatarIntention();
             world.Add(avatarEntity, exportIntention);
 
             return;

@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Export
         public readonly HumanBodyBones HumanBone;
         public readonly HumanBodyBones? ParentBone;
         public readonly Transform TargetTransform;
-        public readonly string SourceBoneName; // Name used in source rigs (e.g. "LeftArm", "Spine1")
+        public readonly string SourceBoneName;
 
         public ExportBoneData(HumanBodyBones humanBone, HumanBodyBones? parentBone, Transform targetTransform, string sourceBoneName)
         {

@@ -20,10 +20,10 @@ using ECS.StreamableLoading.Common;
 using UniHumanoid;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
-using UnityEngine.Pool;
 using VRM;
 using VRMShaders;
-using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
+//using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Export
 {
@@ -35,6 +35,7 @@ namespace DCL.AvatarRendering.Export
 		private readonly IWearableStorage wearableStorage;
 		private readonly UniGLTF.GltfExportSettings gltsExportSettings = new ();
 		private readonly RuntimeTextureSerializer textureSerializer = new ();
+		private readonly List<Object> disposables = new();
 
 		public ExportAvatarSystem(World world, /*IAttachmentsAssetsCache wearableAssetsCache,*/ IWearableStorage wearableStorage, VRMBonesMappingSO bonesMapping) : base(world)
 		{
@@ -49,7 +50,7 @@ namespace DCL.AvatarRendering.Export
 
 		[Query]
 		[All(typeof(ExportAvatarIntention))]
-		private void ProcessExportIntentions(in Entity entity, ref ExportAvatarIntention exportIntention, ref AvatarShapeComponent avatarShape)
+		private void ProcessExportIntentions(in Entity entity, ref AvatarShapeComponent avatarShape)
 		{
 			// Check if avatar is ready
 			if (avatarShape.IsDirty || !avatarShape.WearablePromise.IsConsumed)
@@ -71,6 +72,7 @@ namespace DCL.AvatarRendering.Export
 			DebugAvatar(entity, ref avatarShape, avatarBase);
 			Export(ref avatarShape, avatarBase).Forget();
 			World.Remove<ExportAvatarIntention>(entity);
+			World.Remove<AvatarExportData>(entity);
 		}
 
 		// private async UniTaskVoid ExportAvatar()
@@ -86,55 +88,104 @@ namespace DCL.AvatarRendering.Export
 			// - Figure out how to pass mesh references, in original PR it's not directly passed reference.
 			// - Create separate avatar, since modifying preview breaks (in asset promise?)
 			// - Pass materials
-			var exporterReferences = new VRMExporterReferences();
-			// TODO: Get this from settings as SO
-			exporterReferences.metaObject = new VRMMetaObject
-			{
-				Version = "1.0, UniVRM v0.112.0",
-				Author = "TODO: Get author name",
-				Reference = "TODO: Get asset reference"
-			};
+			var exporterReferences = new VRMExportSettings();
+			using var exportService = new VRMExportService();
 			
-			var originalWearables = avatarShape.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult);
+			try
+			{
+				// TODO: Get this from settings as SO
+				exporterReferences.metaObject = new VRMMetaObject
+				{
+					Version = "1.0, UniVRM v0.112.0",
+					Author = "TODO: Get author name",
+					Reference = "TODO: Get asset reference"
+				};
+				
+				var wearables = avatarShape.InstantiatedWearables;
+				
+				if (wearables.Count == 0)
+				{
+					ReportHub.LogWarning(GetReportCategory(), "No wearables found to export");
+					return default;
+				}
+				
+				ReportHub.Log(GetReportCategory(), "Exporting " + wearables.Count + " wearables");
+
+				byte[] vrmBytes = exportService.ExportToVRM(avatarBase, wearables, exporterReferences);
+
+				if (vrmBytes == null || vrmBytes.Length == 0)
+				{
+					ReportHub.LogError(GetReportCategory(), "VRM export produced no data");
+					return default;
+				}
+
+				string fileName = $"Avatar_{DateTime.Now:yyyyMMddhhmmss}";
+				// //string savePath = FileBrowser.Instance.SaveFile("Save avatar VRM", Application.persistentDataPath, fileName, new ExtensionFilter("vrm", "vrm"));
+				string savePath = "C://VRM/" + fileName + ".vrm";
+				if (string.IsNullOrEmpty(savePath))
+				{
+					savePath = Path.Combine(
+						Application.persistentDataPath,
+						"Exports",
+						"Avatar_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".vrm");
+				}
+
+				string directory = Path.GetDirectoryName(savePath);
+				if (!string.IsNullOrEmpty(directory))
+				{
+					Directory.CreateDirectory(directory);
+				}
+
+				File.WriteAllBytes(savePath, vrmBytes);
+
+				ReportHub.Log(GetReportCategory(), "VRM exported successfully to: " + savePath);
+			}
+			catch (Exception e)
+			{
+				ReportHub.LogException(e, GetReportCategory());
+				throw;
+			}
 			
-			HashSet<string> usedCategories = HashSetPool<string>.Get();
-			//GameObject originalAvatar = AvatarInstantiationPolymorphicBehaviour.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTextures, ref avatarShape, attachPoint)
-
-			var skeleton = DuplicateSkeletonFromAvatarBase(avatarBase);
-			CopyMeshesToSkeleton(avatarBase, skeleton);
-
-			Avatar avatar = CreateAvatarFromSkeleton(skeleton);
-			if (avatar == null || !avatar.isValid)
-			{
-				Debug.LogError("Failed to create valid avatar!");
-				UnityEngine.Object.Destroy(skeleton.Root);
-				return default;
-			}
-
-			var bonesNormalized = VRMBoneNormalizer.Execute(skeleton.Root, true);
-			var vrmNormalized = VRMExporter.Export(gltsExportSettings, bonesNormalized, textureSerializer);
-
-			string fileName = $"Avatar_{DateTime.Now:yyyyMMddhhmmss}";
-			//string savePath = FileBrowser.Instance.SaveFile("Save avatar VRM", Application.persistentDataPath, fileName, new ExtensionFilter("vrm", "vrm"));
-			string savePath = "C://VRM/" + fileName + ".vrm";
-
-			if (!string.IsNullOrEmpty(savePath))
-			{
-				try
-				{
-					Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
-					File.WriteAllBytes(savePath, vrmNormalized.ToGlbBytes());
-				}
-				catch (Exception e)
-				{
-					Console.WriteLine(e);
-					throw;
-				}
-			}
+			// var originalWearables = avatarShape.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult);
+			//
+			// HashSet<string> usedCategories = HashSetPool<string>.Get();
+			// //GameObject originalAvatar = AvatarInstantiationPolymorphicBehaviour.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTextures, ref avatarShape, attachPoint)
+			//
+			// var skeleton = DuplicateSkeletonFromAvatarBase(avatarBase);
+			// CopyMeshesToSkeleton(avatarBase, skeleton);
+			//
+			// Avatar avatar = CreateAvatarFromSkeleton(skeleton);
+			// if (avatar == null || !avatar.isValid)
+			// {
+			// 	Debug.LogError("Failed to create valid avatar!");
+			// 	UnityEngine.Object.Destroy(skeleton.Root);
+			// 	return default;
+			// }
+			//
+			// var bonesNormalized = VRMBoneNormalizer.Execute(skeleton.Root, true);
+			// var vrmNormalized = VRMExporter.Export(gltsExportSettings, bonesNormalized, textureSerializer);
+			//
+			// string fileName = $"Avatar_{DateTime.Now:yyyyMMddhhmmss}";
+			// //string savePath = FileBrowser.Instance.SaveFile("Save avatar VRM", Application.persistentDataPath, fileName, new ExtensionFilter("vrm", "vrm"));
+			// string savePath = "C://VRM/" + fileName + ".vrm";
+			//
+			// if (!string.IsNullOrEmpty(savePath))
+			// {
+			// 	try
+			// 	{
+			// 		Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
+			// 		File.WriteAllBytes(savePath, vrmNormalized.ToGlbBytes());
+			// 	}
+			// 	catch (Exception e)
+			// 	{
+			// 		Console.WriteLine(e);
+			// 		throw;
+			// 	}
+			// }
 			
 			return default;
 		}
-
+		
 		private ExportSkeletonMapping DuplicateSkeletonFromAvatarBase(AvatarBase avatarBase)
 		{
 			var armature = avatarBase.Armature;

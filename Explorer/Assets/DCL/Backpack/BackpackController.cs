@@ -267,7 +267,7 @@ namespace DCL.Backpack
 
         private void OnVRMExportClicked()
         {
-            var exportIntention = new ExportAvatarIntention(ExportMode.DebugLog);
+            var exportIntention = new ExportAvatarIntention();
             world.Add(playerEntity, exportIntention);
         }
 

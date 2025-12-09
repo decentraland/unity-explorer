@@ -19,6 +19,8 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
+using System.Linq;
+using DCL.AvatarRendering.Export;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -87,6 +89,7 @@ namespace DCL.AvatarRendering.AvatarShape
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
+            //CreateExportAvatarQuery(World);
         }
 
         [Query]
@@ -235,5 +238,65 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+
+        // [Query]
+        // [All(typeof(ExportAvatarIntention), typeof(AvatarBase))]
+        // [None(typeof(DeleteEntityIntention), typeof(AvatarExportData))]
+        // private void CreateExportAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase, ref ExportAvatarIntention exportIntention)
+        // {
+        //     if (!avatarShapeComponent.WearablePromise.IsConsumed
+        //         || !avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
+        //     
+        //     var originalAssets = avatarShapeComponent.InstantiatedWearables.Select(x => x.OriginalAsset).ToArray();
+        //     var attachPoint = new GameObject("AvatarExportObject");
+        //     var exportData = AvatarExportData.Create(attachPoint, avatarBase.Armature.localScale);
+        //     
+        //     HashSet<string> wearablesToHide = wearablesResult.Succeeded ? wearablesResult.Asset.HiddenCategories : EMPTY_STRING_HASH_SET;
+        //     HashSet<string> usedCategories = HashSetPool<string>.Get();
+        //
+        //     GameObject? bodyShape = null;
+        //
+        //     // var assets = originalAssets
+        //     //
+        //     // for (var i = 0; i < originalAssets.Length; i++)
+        //     // {
+        //     //     avatarShapeComponent.InstantiatedWearables[i].
+        //     //     IWearable resultWearable = visibleWearables[i];
+        //     //
+        //     //     GameObject? instance = Object.Instantiate(originalAssets[i].MainAsset, attachPoint.transform);
+        //     //
+        //     //     if (resultWearable.Type == WearableType.BodyShape)
+        //     //         bodyShape = instance;
+        //     // }
+        //
+        //     WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
+        //     HashSetPool<string>.Release(usedCategories);
+        //
+        //     foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
+        //     foreach (var renderer in cachedAttachment.Renderers)
+        //         renderer.enabled = false;
+        //
+        //     attachPoint.SetActive(false);
+        //     
+        //     World.Add(entity, exportData);
+        // }
+        //
+        // private GameObject? CreateUnmodifiedWearable(IWearable resultWearable, ISet<string> usedCategories, 
+        //     BodyShape bodyShape, Transform parent)
+        // {
+        //     var originalAssets = resultWearable.WearableAssetResults[bodyShape].Results;
+        //
+        //     if (originalAssets?[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]?.Asset == null)
+        //     {
+        //         ReportHub.LogError(ReportCategory.WEARABLE, $"Cannot find the asset for wearable with ID {resultWearable.DTO.id} name {resultWearable.DTO.Metadata.name} and body shape {bodyShape.Value}");
+        //         return null;
+        //     }
+        //     
+        //     var regularAsset = (AttachmentRegularAsset)originalAssets[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX].Value.Asset!;
+        //     var instantiatedWearable = Object.Instantiate(regularAsset.MainAsset, parent);
+        //     usedCategories.Add(resultWearable.GetCategory());
+        //
+        //     return instantiatedWearable;
+        // }
     }
 }
