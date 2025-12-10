@@ -1,4 +1,5 @@
 ﻿using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
