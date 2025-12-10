@@ -16,7 +16,6 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using System;
-using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -161,49 +160,37 @@ namespace DCL.AvatarRendering.Emotes
 
             if (result.Succeeded)
             {
-                if (emote.IsSocial)
+                if (emote.IsSocial && bodyShape.Value == BodyShape.MALE)
                 {
-                    // Stores the audio clips of the outcomes
-                    string? outcomeAudioHash = null;
+                    string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
+                    if (emote.SocialEmoteOutcomeAudioAssetResults == null)
+                    {
+                        emote.SocialEmoteOutcomeAudioAssetResults = new StreamableLoadingResult<AudioClipData>?[emote.Model.Asset!.metadata.data!.outcomes!.Length];
+                    }
+
+                    // Stores the audio clips of the outcomes
                     for (int i = 0; i < emote.Model.Asset!.metadata.data!.outcomes!.Length; ++i)
                     {
+                        // Several outcomes may have the same audio, in order to avoid setting the same outcome always we skip the already filled slots
+                        if(emote.SocialEmoteOutcomeAudioAssetResults[i].HasValue)
+                            continue;
+
                         if (emote.Model.Asset!.metadata.data!.outcomes![i].audio != null)
                         {
-                            outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.outcomes![i].audio);
-
-                            string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
+                            string? outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.outcomes![i].audio);
 
                             // If the current result corresponds to the outcome at current position...
                             if (audioURL.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                // This check is necessary because otherwise it will add more than one of each audio clip
-                                bool alreadyContainsAudio = false;
+                                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"FinalizeAudioClipPromise() Added outcome audio Hash: {outcomeAudioHash} File: {emote.Model.Asset!.metadata.data!.outcomes![i].audio}");
 
-                                for (int j = 0; j < emote.SocialEmoteOutcomeAudioAssetResults.Count; ++j)
-                                {
-                                    if (emote.SocialEmoteOutcomeAudioAssetResults[j].Asset!.Asset.name == audioURL)
-                                    {
-                                        alreadyContainsAudio = true;
-                                        break;
-                                    }
-                                }
-
-                                if (!alreadyContainsAudio)
-                                {
-                                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Added outcome audio " + outcomeAudioHash);
-
-                                    result.Asset!.Asset.name = audioURL;
-                                    emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
-                                }
+                                // Stores outcome audio
+                                result.Asset!.Asset.name = audioURL;
+                                emote.SocialEmoteOutcomeAudioAssetResults[i] = result;
 
                                 break;
                             }
-                        }
-                        else
-                        {
-                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() NULL");
-                            emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
                         }
                     }
 
@@ -211,7 +198,6 @@ namespace DCL.AvatarRendering.Emotes
                     if (emote.Model.Asset!.metadata.data!.startAnimation!.audio != null)
                     {
                         string? audioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.startAnimation!.audio);
-                        string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
                         // If the current result corresponds to the start animation...
                         if (audioHash != null && audioURL.Contains(audioHash, StringComparison.InvariantCultureIgnoreCase))
