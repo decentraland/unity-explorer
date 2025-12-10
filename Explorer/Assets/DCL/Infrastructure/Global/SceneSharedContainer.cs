@@ -12,6 +12,7 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
@@ -33,7 +34,8 @@ namespace Global
         /// </summary>
         public ISceneFactory SceneFactory { get; private set; }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer,
+        public static SceneSharedContainer Create(
+            in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
@@ -45,7 +47,9 @@ namespace Global
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard)
+            IAppArgs appArgs,
+            ISystemClipboard systemClipboard
+        )
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -58,28 +62,36 @@ namespace Global
             return new SceneSharedContainer
             {
                 SceneFactory = new SceneFactory(
-                    ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
-                        webJsSources),
-                    new SharedPoolsProvider(),
-                    new CRDTSerializer(),
-                    staticContainer.ComponentsContainer.SDKComponentsRegistry,
-                    sharedDependencies.EntityFactory,
-                    staticContainer.EntityCollidersGlobalCache,
-                    staticContainer.EthereumApi,
-                    mvcManager,
-                    profileRepository,
-                    web3IdentityCache,
-                    decentralandUrlsSource,
-                    webRequestController,
-                    roomHub,
-                    realmData,
-                    staticContainer.PortableExperiencesController,
-                    staticContainer.StaticSettings.SkyboxSettings,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
-                    remoteMetadata,
-                    dclEnvironment,
-                    systemClipboard),
+                    ecsWorldFactory: ecsWorldFactory,
+                    sceneRuntimeFactory: new SceneRuntimeFactory(
+                        realmData ?? new IRealmData.Fake(),
+                        new V8EngineFactory(),
+                        webJsSources
+                    ),
+                    sharedPoolsProvider: new SharedPoolsProvider(),
+                    crdtSerializer: new CRDTSerializer(),
+                    sdkComponentsRegistry: staticContainer.ComponentsContainer.SDKComponentsRegistry,
+                    entityFactory: sharedDependencies.EntityFactory,
+                    entityCollidersGlobalCache: staticContainer.EntityCollidersGlobalCache,
+                    ethereumApi: staticContainer.EthereumApi,
+                    mvcManager: mvcManager,
+                    profileRepository: profileRepository,
+                    identityCache: web3IdentityCache,
+                    decentralandUrlsSource: decentralandUrlsSource,
+                    webRequestController: webRequestController,
+                    roomHub: roomHub,
+                    realmData: realmData,
+                    portableExperiencesController: staticContainer.PortableExperiencesController,
+                    skyboxSettings: staticContainer.StaticSettings.SkyboxSettings,
+                    messagePipesHub: new SceneCommunicationPipe(
+                        messagePipesHub,
+                        roomHub.SceneRoom()
+                    ),
+                    remoteMetadata: remoteMetadata,
+                    systemClipboard: systemClipboard,
+                    dclEnvironment: dclEnvironment,
+                    appArgs: appArgs
+                ),
             };
         }
     }

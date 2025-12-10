@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Logs;
+using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -11,9 +12,11 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
+using LiveKit.RtcSources.Video;
 using System.Threading;
 using System.Threading.Tasks;
 using RichTypes;
+using System;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -30,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info { get; }
         public IVideoStreams VideoStreams { get; }
         public IAudioStreams AudioStreams { get; }
-        public IAudioTracks AudioTracks { get; }
+        public ILocalTracks LocalTracks { get; }
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -62,7 +65,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             Info = new LogRoomInfo(origin.Info);
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
             AudioStreams = new LogAudioStreams(origin.AudioStreams);
-            AudioTracks = new LogAudioTracks(origin.AudioTracks);
+            LocalTracks = new LogLocalTracks(origin.LocalTracks);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;

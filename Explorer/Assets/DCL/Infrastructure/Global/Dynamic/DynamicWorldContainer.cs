@@ -715,7 +715,9 @@ namespace Global.Dynamic
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     islandThroughputBunch,
                     sceneThroughputBunch,
-                    voiceChatRoom
+                    voiceChatRoom,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    staticContainer.WebRequestsContainer.DecentralandUrlsSource
                 ),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
