@@ -103,16 +103,10 @@ namespace DCL.LOD.Systems
 
 
         [Query]
-        private void ConvertFromAssetBundle(in Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
+        private void ConvertFromAssetBundle(Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
         {
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
-
-            if (assetBundleResult.IsConsumed)
-            {
-                World.Destroy(entity);
-                return;
-            }
 
             if (assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
