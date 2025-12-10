@@ -66,7 +66,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
 
             if (!pbSettings.IsDirty) return;
 
-            // Only apply settings if the component was added to local the player entity
+            // Only apply settings if the component was added to the local player entity
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
 
             GetLocomotionOverrides(pbSettings, out AvatarLocomotionOverrides locomotionOverrides);
