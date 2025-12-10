@@ -11,14 +11,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
 {
     public class AvatarLocomotionOverridesGlobalPlugin : IDCLGlobalPlugin<AvatarLocomotionOverridesGlobalPlugin.Settings>
     {
-        private readonly IScenesCache scenesCache;
-
         private Settings? settings;
-
-        public AvatarLocomotionOverridesGlobalPlugin(IScenesCache scenesCache)
-        {
-            this.scenesCache = scenesCache;
-        }
 
         public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
@@ -35,7 +28,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             SetupAvatarLocomotionOverridesSystem.InjectToWorld(ref builder);
-            ApplyAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, settings, scenesCache);
+            ApplyAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, settings);
         }
 
         public class Settings : IDCLPluginSettings

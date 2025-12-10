@@ -6,25 +6,21 @@ using CrdtEcsBridge.Components;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.ECSComponents;
-using DCL.Multiplayer.Profiles.RemoveIntentions;
-using DCL.Multiplayer.SDK.Components;
 using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using System;
 
 namespace DCL.SDKComponents.AvatarLocomotion.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    public partial class PropagateAvatarLocomotionOverridesSystem : BaseUnityLoopSystem
+    public partial class PropagateAvatarLocomotionOverridesSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
-        private static readonly QueryDescription GLOBAL_PLAYER_QUERY = new QueryDescription().WithAll<PlayerComponent, AvatarLocomotionOverrides>();
-
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly World globalWorld;
+        private Entity globalPlayerEntity;
 
         internal PropagateAvatarLocomotionOverridesSystem(World world, ISceneStateProvider sceneStateProvider, World globalWorld) : base(world)
         {
@@ -32,22 +28,22 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
             this.globalWorld = globalWorld;
         }
 
+        public override void Initialize() =>
+            globalPlayerEntity = globalWorld.CachePlayer();
+
         protected override void Update(float t)
         {
-            var globalPlayerEntity = globalWorld.GetSingleInstanceEntityOrNull(GLOBAL_PLAYER_QUERY);
-            if (globalPlayerEntity == Entity.Null) return;
+            if (!sceneStateProvider.IsCurrent) return;
 
-            HandleComponentRemovedQuery(World, globalPlayerEntity);
-            PropagateOverridesQuery(World, globalPlayerEntity);
+            HandleComponentRemovedQuery(World);
+            PropagateOverridesQuery(World);
         }
 
         [Query]
         [None(typeof(PBAvatarLocomotionSettings))]
         [All(typeof(AvatarLocomotionOverridesApplied))]
-        private void HandleComponentRemoved([Data] Entity globalPlayerEntity, Entity entity)
+        private void HandleComponentRemoved(Entity entity)
         {
-            if (!sceneStateProvider.IsCurrent) return;
-
             globalWorld.Set(globalPlayerEntity, AvatarLocomotionOverrides.NO_OVERRIDES);
 
             World.Remove<AvatarLocomotionOverridesApplied>(entity);
@@ -55,15 +51,8 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateOverrides([Data] Entity globalPlayerEntity, Entity entity, in CRDTEntity crdtEntity, in PBAvatarLocomotionSettings pbSettings)
+        private void PropagateOverrides(Entity entity, in CRDTEntity crdtEntity, in PBAvatarLocomotionSettings pbSettings)
         {
-            if (!sceneStateProvider.IsCurrent)
-            {
-                // We need to re-apply the overrides when coming back to the scene
-                pbSettings.IsDirty = true;
-                return;
-            }
-
             if (!pbSettings.IsDirty) return;
 
             // Only apply settings if the component was added to the local player entity
@@ -87,6 +76,20 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
             if (pbSettings.HasRunJumpHeight) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT, pbSettings.RunJumpHeight);
             if (pbSettings.HasHardLandingCooldown) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN, pbSettings.HardLandingCooldown);
         }
+
+        public void OnSceneIsCurrentChanged(bool isCurrent)
+        {
+            if (isCurrent) return;
+
+            globalWorld.Set(globalPlayerEntity, AvatarLocomotionOverrides.NO_OVERRIDES);
+
+            // We need to re-apply the overrides when coming back to the scene
+            MarkSettingsDirtyQuery(World);
+        }
+
+        [Query]
+        private void MarkSettingsDirty(ref PBAvatarLocomotionSettings pbSettings) =>
+            pbSettings.IsDirty = true;
 
         private struct AvatarLocomotionOverridesApplied
         {

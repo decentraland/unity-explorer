@@ -17,26 +17,16 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
     public partial class ApplyAvatarLocomotionOverridesSystem : BaseUnityLoopSystem
     {
         private readonly AvatarLocomotionOverridesGlobalPlugin.Settings settings;
-        private readonly IScenesCache scenesCache;
 
-        public ApplyAvatarLocomotionOverridesSystem(World world, AvatarLocomotionOverridesGlobalPlugin.Settings settings, IScenesCache scenesCache) : base(world)
+        public ApplyAvatarLocomotionOverridesSystem(World world, AvatarLocomotionOverridesGlobalPlugin.Settings settings) : base(world)
         {
             this.settings = settings;
-            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
         {
-            // If there is no current scene, we need to clear the overrides
-            if (scenesCache.CurrentScene.Value == null) ClearOverridesQuery(World);
-
             ApplyOverridesQuery(World);
         }
-
-        [Query]
-        [All(typeof(AvatarLocomotionOverrides))]
-        public void ClearOverrides(Entity entity) =>
-            World.Set(entity, AvatarLocomotionOverrides.NO_OVERRIDES);
 
         [Query]
         public void ApplyOverrides(Entity entity, ref OverridableCharacterControllerSettings settings, in AvatarLocomotionOverrides locomotionOverrides)

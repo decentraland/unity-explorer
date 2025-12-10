@@ -22,7 +22,10 @@ namespace DCL.SDKComponents.AvatarLocomotion
             in ECSWorldInstanceSharedDependencies sharedDependencies,
             in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems,
-            List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
-            PropagateAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld);
+            List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        {
+            var propagateSystem = PropagateAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld);
+            sceneIsCurrentListeners.Add(propagateSystem);
+        }
     }
 }
