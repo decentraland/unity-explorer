@@ -21,6 +21,7 @@ namespace DCL.CharacterMotion.Components
         public bool IsLongJump;
         public bool IsLongFall;
         public bool IsFalling;
+        public bool IsStunned;
 
         public override bool Equals(object obj) =>
             obj is AnimationStates states && Equals(states);
@@ -32,7 +33,8 @@ namespace DCL.CharacterMotion.Components
             IsJumping == other.IsJumping &&
             IsLongJump == other.IsLongJump &&
             IsLongFall == other.IsLongFall &&
-            IsFalling == other.IsFalling;
+            IsFalling == other.IsFalling &&
+            IsStunned == other.IsStunned;
 
         public override int GetHashCode()
         {
@@ -46,6 +48,7 @@ namespace DCL.CharacterMotion.Components
                 hash = (hash * 23) + IsLongJump.GetHashCode();
                 hash = (hash * 23) + IsLongFall.GetHashCode();
                 hash = (hash * 23) + IsFalling.GetHashCode();
+                hash = (hash * 23) + IsStunned.GetHashCode();
                 return hash;
             }
         }
