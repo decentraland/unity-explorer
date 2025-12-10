@@ -155,7 +155,7 @@ namespace DCL.Communities.CommunitiesBrowser
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
 
-            CheckCommunityDeepLinkAsync().Forget();
+            CheckCommunityAppArgAsync().Forget();
         }
 
         public void Dispose()
@@ -916,9 +916,9 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private async UniTaskVoid CheckCommunityDeepLinkAsync(CancellationToken ct = default)
+        private async UniTaskVoid CheckCommunityAppArgAsync(CancellationToken ct = default)
         {
-            if (!CommunitiesFeatureAccess.Instance.GetCommunityIdFromDeepLink(out string? communityId))
+            if (!CommunitiesFeatureAccess.Instance.GetCommunityIdFromAppArgs(out string? communityId))
                 return;
 
             await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
