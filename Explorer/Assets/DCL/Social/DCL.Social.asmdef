@@ -62,18 +62,23 @@
         "GUID:e25ef972de004615a22937e739de2def",
         "GUID:6da682aafc9e2724594f4e4bf9cc2550",
         "GUID:1087662aaf1c5462baa91fb9484296fd",
+        "GUID:41d6e40e880f44647a35627d39e77ab2",
         "GUID:2cb7f8d07642456eb6dbe8159b494591",
         "GUID:37a4d7b6b1ae9644b95acf1816d50355",
         "GUID:9e314663ce958b746873cb22d57ede55",
         "GUID:9e24947de15b9834991c9d8411ea37cf",
         "GUID:5556c2cd8a339d54ba194f39bbd30d73",
-        "GUID:e4725e82149f9428aa30a172156263ce"
+        "GUID:e4725e82149f9428aa30a172156263ce",
+        "GUID:b3ea857cc09201a4fb44cae9ca69de08",
+        "GUID:9a1625cbfe83d3842a7b140fc34eabb2"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+      "Newtonsoft.Json.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

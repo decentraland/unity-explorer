@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -83,42 +82,48 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         /// <summary>
-        /// Get an asset loaded from the asset bundle.
+        /// Try to get an asset loaded from the asset bundle without throwing exceptions.
         /// </summary>
         /// <param name="assetName">Asset to be requested. If its empty, the first asset loaded will be returned</param>
+        /// <param name="asset">The retrieved asset if successful</param>
         /// <typeparam name="T">Type of the asset to load</typeparam>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">Describes the failling situation</exception>
-        public T GetAsset<T>(string assetName = "") where T : Object
+        /// <returns>True if the asset was successfully retrieved, false otherwise</returns>
+        public bool TryGetAsset<T>(out T asset, string assetName = "") where T: Object
         {
-            AssetInfo assetInfo;
+            asset = null;
 
-            if (Assets == null)
-                throw new ArgumentException($"No assets were loaded for {AssetBundleName}");
+            if (Assets == null || Assets.Count == 0)
+            {
+                ReportHub.LogWarning($"No assets were loaded for {AssetBundleName}", ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
+
+            AssetInfo assetInfo;
 
             if (string.IsNullOrEmpty(assetName))
             {
-                if (Assets.Count == 0)
-                    throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");
-
                 if (Assets.Count > 1)
-                    throw new ArgumentException($"Requested an asset by type when there is more than one in the AB {AssetBundleName}");
+                    ReportHub.LogWarning($"Requested an asset by type when there is more than one in the AB {AssetBundleName}, the first one will be returned", ReportCategory.ASSET_BUNDLES);
 
                 assetInfo = Assets.FirstValueOrDefaultNonAlloc();
             }
             else
             {
                 if (!Assets.TryGetValue(assetName, out assetInfo))
-                    throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}");
+                {
+                    ReportHub.LogWarning($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}", ReportCategory.ASSET_BUNDLES);
+                    return false;
+                }
             }
 
-            Assert.IsNotNull(assetInfo.AssetType,
-                $"GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified for Asset Bundle {AssetBundleName}");
-
             if (assetInfo.AssetType != typeof(T))
-                throw new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}");
+            {
+                ReportHub.LogWarning($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}", ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
 
-            return (T)assetInfo.Asset!;
+            asset = (T)assetInfo.Asset!;
+            return true;
         }
 
     }

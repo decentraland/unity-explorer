@@ -6,6 +6,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
 using Microsoft.ClearScript;
 using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -29,10 +30,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         private readonly SceneShortInfo sceneShortInfo;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
 
-        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo)
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider)
         {
             this.sceneShortInfo = sceneShortInfo;
+            this.permissionsProvider = permissionsProvider;
         }
 
         public void Dispose() { }
@@ -50,6 +53,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             bool isLocalSceneDevelopment
         )
         {
+            if (!permissionsProvider.CanInvokeFetchAPI()) return default(ISimpleFetchApi.Response);
+
             try
             {
                 // if we're in LocalSceneDevelopment mode to allow connecting to unsafe websocket server to the client
@@ -76,15 +81,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PUT:
                         string putContentType = webRequestHeaders.HeaderContentType();
-                        var putArguments = GenericPutArguments.Create(body, putContentType);
+                        var putArguments = GenericPostArguments.Create(body, putContentType);
                         return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.DELETE:
                         string deleteContentType = webRequestHeaders.HeaderContentType();
-                        var deleteArguments = GenericDeleteArguments.Create(body, deleteContentType);
+                        var deleteArguments = GenericPostArguments.Create(body, deleteContentType);
                         return await webController.DeleteAsync<GenerateResponseOp<GenericDeleteRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericDeleteRequest>(), deleteArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PATCH:
                         string patchContentType = webRequestHeaders.HeaderContentType();
-                        var patchArguments = GenericPatchArguments.Create(body, patchContentType);
+                        var patchArguments = GenericPostArguments.Create(body, patchContentType);
                         return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.HEAD: throw new NotImplementedException();
                     case RequestMethod.INVALID:

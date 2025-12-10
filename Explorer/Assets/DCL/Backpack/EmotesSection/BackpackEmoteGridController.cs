@@ -32,6 +32,7 @@ namespace DCL.Backpack.EmotesSection
     {
         private const int CURRENT_PAGE_SIZE = 16;
         private const string EMOTE_CATEGORY = "emote";
+        private const string SOCIAL_EMOTE_CATEGORY = "social_emote";
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
@@ -292,7 +293,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
-                backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(EMOTE_CATEGORY);
+                backpackItemView.CategoryImage.sprite = emotes[i].IsSocial ? categoryIcons.GetTypeImage(SOCIAL_EMOTE_CATEGORY) : categoryIcons.GetTypeImage(EMOTE_CATEGORY);
 
                 int equippedSlot = equippedEmotes.SlotOf(emotes[i]);
                 bool isEquipped = equippedSlot != -1;
@@ -307,10 +308,10 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void UnEquipItem(string itemId) =>
+        private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(string itemId) =>
+        private void EquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
@@ -363,7 +364,7 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(string itemId) =>
+        private void SelectItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId));
 
         private void OnUnequip(int slot, IEmote? emote)
@@ -385,7 +386,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.text = slot.ToString();
         }
 
-        private void OnWearableEquipped(IWearable wearable)
+        private void OnWearableEquipped(IWearable wearable, bool isManuallyEquipped)
         {
             if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 

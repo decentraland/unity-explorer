@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.WebRequests;
 using System.Threading;
 using UnityEngine;
 
@@ -15,6 +16,11 @@ namespace DCL.UI.Profiles.Helpers
     /// </remarks>
     public class ProfileRepositoryWrapper
     {
+        // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
+        // It is incremental, as the time to process it varies depending on the traffic
+        private static readonly RetryPolicy RETRY_POLICY = RetryPolicy.Enforce(10, 10_000, 2, IWebRequestController.IGNORE_NOT_FOUND);
+
+
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
@@ -27,7 +33,7 @@ namespace DCL.UI.Profiles.Helpers
         }
 
         public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
-            await thumbnailCache.GetSpriteAsync(thumbnailUrl, ct);
+            await thumbnailCache.GetSpriteAsync(thumbnailUrl, RETRY_POLICY, ct);
 
         public Sprite? GetProfileThumbnail(string thumbnailUrl) =>
             thumbnailCache.GetCachedSprite(thumbnailUrl);

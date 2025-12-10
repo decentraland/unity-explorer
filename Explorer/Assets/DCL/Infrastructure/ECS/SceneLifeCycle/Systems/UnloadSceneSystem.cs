@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        [None(typeof(PortableExperienceComponent))]
+        [None(typeof(PortableExperienceComponent), typeof(SmartWearableId))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
@@ -91,7 +91,8 @@ namespace ECS.SceneLifeCycle.Systems
 
 
         [Query]
-        [All(typeof(DeleteEntityIntention), (typeof(PortableExperienceComponent)))]
+        [All(typeof(DeleteEntityIntention))]
+        [Any(typeof(PortableExperienceComponent), typeof(SmartWearableId))]
         private void UnloadLoadedPortableExperienceScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeAsync().Forget();

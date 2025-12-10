@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Essentials
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
+  - m_GUID: 000895e935900fa43b53faf506ee15fa
+    m_Address: Assets/DCL/AvatarRendering/Emotes/SocialEmotesSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 00657accebbe6c348b5208e385e5ec73
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
     m_ReadOnly: 0
@@ -140,6 +145,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79f752bc43a65384bab431cb6a44d8bd
+    m_Address: Assets/DCL/AvatarRendering/Emotes/UI/SocialEmoteOutcomesContextMenuSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7f09a2d0d9adc4e43b67879ab9cdf360
     m_Address: LightSourcePrefab
     m_ReadOnly: 0
@@ -227,6 +237,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9870b17ce36346458f07a63c096a16a
     m_Address: FaillingLODCubePivot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d08e60223593f4abe8863c64316f3476
+    m_Address: FlipLinearToGammaMaterial.mat
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

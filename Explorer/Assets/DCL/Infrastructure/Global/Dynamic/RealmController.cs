@@ -25,9 +25,10 @@ using System.Threading;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
-using UnityEngine.Networking;
+using Utility;
 
 namespace Global.Dynamic
 {
@@ -36,10 +37,15 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, EmptySceneComponent>().WithNone<PortableExperienceComponent>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, EmptySceneComponent>()
+                                                                                     .WithNone<PortableExperienceComponent, SmartWearableId>();
         private static readonly QueryDescription CLEAR_UNFINISHED_QUERY = new QueryDescription()
                                                                          .WithAll<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLoadingState>()
                                                                          .WithNone<DeleteEntityIntention, ISceneFacade>();
+
+        private static readonly QueryDescription INVALIDATE_PARTITIONS = new QueryDescription()
+                                                                        .WithAll<PartitionComponent, ISceneFacade>()
+                                                                        .WithNone<PortableExperienceComponent, SmartWearableId>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -227,16 +233,27 @@ namespace Global.Dynamic
         {
             if (staticLoadPositions.Count == 0) return null;
 
-            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
-                new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
-                    new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+            World world = GlobalWorld.EcsWorld;
 
-            promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
+            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
 
-            if (promise.TryGetResult(GlobalWorld.EcsWorld, out StreamableLoadingResult<SceneDefinitions> result) && result.Succeeded)
-                return result.Asset;
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            return null;
+            if (ct.IsCancellationRequested || !promise.TryGetResult(world, out var result) || !result.Succeeded) return null;
+
+            var sceneDefinitions = result.Asset;
+            if (world.TryGet(realmEntity, out SmartWearablePreviewScene smartWearablePreviewScene) && smartWearablePreviewScene.Value != Entity.Null)
+            {
+                // In local scene development we can be loading a Smart Wearable preview scene
+                // In that case the scene definition cannot be found at the standard active entities endpoint
+                // But, we can retrieve it from the Smart Wearable preview scene component that's already been created
+                var sceneDefinitionComponent = world.Get<SceneDefinitionComponent>(smartWearablePreviewScene.Value);
+                sceneDefinitions.Value.Add(sceneDefinitionComponent.Definition);
+            }
+
+            return sceneDefinitions;
+
         }
 
         public void DisposeGlobalWorld()
@@ -245,7 +262,7 @@ namespace Global.Dynamic
 
             if (globalWorld != null)
             {
-                RemoveUnfinishedScenes();
+                RemoveUnfinishedScenes(globalWorld.EcsWorld);
 
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
 
@@ -262,11 +279,17 @@ namespace Global.Dynamic
 
         private async UniTask UnloadCurrentRealmAsync()
         {
+            //No need to dispose if we are quitting. Pools and assets may be destroyed by Unity, creating unnecessarily null-refs on exit
+            if (UnityObjectUtils.IsQuitting)
+                return;
+
             if (globalWorld == null) return;
 
             World world = globalWorld.EcsWorld;
 
-            RemoveUnfinishedScenes();
+            RemoveUnfinishedScenes(world);
+
+            InvalidateScenePartitions(world);
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
@@ -290,6 +313,12 @@ namespace Global.Dynamic
             GC.Collect();
         }
 
+        private void InvalidateScenePartitions(World world)
+        {
+            world.Query(in INVALIDATE_PARTITIONS,
+                (ref PartitionComponent partitionComponent) => { partitionComponent.Bucket = byte.MaxValue; });
+        }
+
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
             world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
@@ -307,12 +336,8 @@ namespace Global.Dynamic
             return false;
         }
 
-        private void RemoveUnfinishedScenes()
+        private void RemoveUnfinishedScenes(World world)
         {
-            if (globalWorld == null) return;
-
-            var world = globalWorld!.EcsWorld;
-
             // See https://github.com/decentraland/unity-explorer/issues/4935
             // The scene load process it is disrupted due to internet issues remaining in an invalid state
             // We need to remove them and reload them, otherwise they will keep in an inconsistent state forever

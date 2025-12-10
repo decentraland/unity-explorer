@@ -2,42 +2,44 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Optimization.Pools;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS;
+using ECS.Prioritization.Components;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Assertions;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
 {
-    /// <summary>
-    ///     TODO: this class requires refactoring:
-    ///     <list type="bullet">
-    ///         <item>The requests should be batched as the endpoint supports an array of pointers</item>
-    ///         <item>Currently, loading nearby profiles and from chat cause an unnecessary spike of requests that can be combined into one</item>
-    ///         <item>It should be a part of the ECS to enable proper budgeting and deferring</item>
-    ///         <item>Failures should be cached (as in LoadSystemBase). Not caching failures leads to spam of the missing profiles or incorrect addresses. The catalyst they are requested from should be respected due to the replication time</item>
-    ///         <item>Concurrent requests to the same profile id should be properly handled</item>
-    ///         <item>LoadSystemBase already supports all cases needed</item>
-    ///     </list>
-    /// </summary>
-    public partial class RealmProfileRepository : IProfileRepository
+    public partial class RealmProfileRepository : IBatchedProfileRepository
     {
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
+        public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
+
+        private readonly int batchMaxSize;
 
         private readonly IWebRequestController webRequestController;
+        private readonly ProfilesDebug profilesDebug;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
 
-        private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
+        /// <summary>
+        ///     It's a simple list, not a dictionary because the number of different lambdas is very limited
+        /// </summary>
+        private readonly List<ProfilesBatchRequest> pendingBatches = new (10);
+
+        private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
+
+        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
 
         // Catalyst servers requires a face thumbnail texture of 256x256
         // Otherwise it will fail when the profile is published
@@ -46,11 +48,27 @@ namespace DCL.Profiles
         public RealmProfileRepository(
             IWebRequestController webRequestController,
             IRealmData realm,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            ProfilesDebug profilesDebug)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
             this.profileCache = profileCache;
+            this.profilesDebug = profilesDebug;
+        }
+
+        public IEnumerable<ProfilesBatchRequest> ConsumePendingBatch()
+        {
+            lock (pendingBatches)
+            lock (ongoingBatches)
+            {
+                int count = pendingBatches.Count;
+                if (count == 0) return Enumerable.Empty<ProfilesBatchRequest>();
+
+                ongoingBatches.AddRange(pendingBatches);
+                pendingBatches.Clear();
+                return ongoingBatches.TakeLast(count);
+            }
         }
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
@@ -105,62 +123,237 @@ namespace DCL.Profiles
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
 
-        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true)
+        private bool TryGetExistingRequest(string userId, out ProfilesBatchRequest.Input req) =>
+            TryGetExistingRequest(userId, ongoingBatches, out req) || TryGetExistingRequest(userId, pendingBatches, out req);
+
+        private bool TryGetExistingRequest(string userId, List<ProfilesBatchRequest> list, out ProfilesBatchRequest.Input req)
         {
-            if (string.IsNullOrEmpty(id)) return null;
+            lock (list)
+            {
+                foreach (ProfilesBatchRequest profilesBatch in list)
+                {
+                    if (profilesBatch.PendingRequests.TryGetValue(userId, out req))
+                        return true;
+                }
 
-            // if there is an ongoing request wait for it, as it will override the value from the cache (return it to the pool)
-            // that makes the object empty (unusable)
-            if (ongoingRequests.TryGetValue(id, out UniTaskCompletionSource ongoingTask))
-                await ongoingTask.Task.AttachExternalCancellation(ct);
+                req = default(ProfilesBatchRequest.Input);
+                return false;
+            }
+        }
 
-            if (getFromCacheIfPossible)
-                if (TryProfileFromCache(id, version, out Profile? profileInCache))
-                    return profileInCache;
+        private void Resolve(string userId, Profile? profile)
+        {
+            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<Profile?> continuation))
+                continuation.TrySetResult(profile);
+        }
 
-            Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
+        private void ResolveException(string userId, Exception ex)
+        {
+            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<Profile?> continuation))
+                continuation.TrySetException(ex);
+        }
 
-            ongoingTask = new UniTaskCompletionSource();
-            ongoingRequests.Add(id, ongoingTask);
+        private bool TryRemoveOngoingRequest(string userId, out UniTaskCompletionSource<Profile?> ongoingRequest)
+        {
+            lock (ongoingBatches)
+            {
+                for (int i = 0; i < ongoingBatches.Count; i++)
+                {
+                    ProfilesBatchRequest profilesBatch = ongoingBatches[i];
 
+                    if (profilesBatch.PendingRequests.Remove(userId, out ProfilesBatchRequest.Input req))
+                    {
+                        ongoingRequest = req.Cs;
+
+                        if (profilesBatch.PendingRequests.Count == 0)
+                        {
+                            profilesBatch.Dispose();
+                            ongoingBatches.RemoveAtSwapBack(i);
+                            --i;
+                        }
+
+                        return true;
+                    }
+                }
+            }
+
+            ongoingRequest = null;
+            return false;
+        }
+
+        private UniTaskCompletionSource<Profile?> AddToBatch(string userId, URLDomain? fromCatalyst,
+            List<ProfilesBatchRequest> requests, IPartitionComponent partition)
+        {
+            fromCatalyst ??= realm.Ipfs.LambdasBaseUrl;
+
+            ProfilesBatchRequest? batch = null;
+
+            lock (requests)
+            {
+                foreach (ProfilesBatchRequest profilesBatch in requests)
+                {
+                    if (profilesBatch.LambdasUrl.Value == fromCatalyst.Value.Value)
+                    {
+                        batch = profilesBatch;
+                        break;
+                    }
+                }
+
+                if (batch == null)
+                    requests.Add((batch = ProfilesBatchRequest.Create(fromCatalyst.Value)).Value);
+
+                if (batch.Value.PendingRequests.TryGetValue(userId, out ProfilesBatchRequest.Input request))
+                    return request.Cs;
+
+                var cs = new UniTaskCompletionSource<Profile?>();
+
+                batch.Value.PendingRequests.Add(userId, new ProfilesBatchRequest.Input(cs, partition));
+                return cs;
+            }
+        }
+
+        public async UniTask<List<Profile>> GetAsync(IReadOnlyList<string> ids, CancellationToken ct, URLDomain? fromCatalyst = null)
+        {
+            // Tolerate or fix this allocation?
+            var results = new List<Profile>(ids.Count);
+
+            // Pool is inside WhenAll
+            await UniTask.WhenAll(ids.Select(WaitForProfileAsync));
+
+            async UniTask WaitForProfileAsync(string id)
+            {
+                Result<Profile?> profile = await GetAsync(id, 0, fromCatalyst, ct, false, true)
+                   .SuppressToResultAsync();
+
+                if (profile is { Success: true, Value: not null })
+                    results.Add(profile.Value);
+            }
+
+            return results;
+        }
+
+        private async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
+            bool delayBatchResolution,
+            bool getFromCacheIfPossible = true,
+            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
+            IPartitionComponent? partition = null)
+        {
             try
             {
-                URLAddress url = Url(id, fromCatalyst);
+                if (string.IsNullOrEmpty(id)) return null;
 
-                // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+                // if there is an ongoing request wait for it, as it will override the value from the cache (return it to the pool)
+                // that makes the object empty (unusable)
 
-                using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
-                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
-                    serializerSettings: SERIALIZER_SETTINGS);
+                // Even if it's a single request, but it's already in a batch wait for it
 
-                ProfileJsonDto? profileDto = root?.FirstProfileDto();
+                while (TryGetExistingRequest(id, out ProfilesBatchRequest.Input request))
+                    await request.Cs.Task.AttachExternalCancellation(ct);
 
-                if (profileDto is null)
-                    return null;
+                if (getFromCacheIfPossible)
+                    if (TryProfileFromCache(id, version, out Profile? profileInCache))
+                        return profileInCache;
 
+                partition ??= PartitionComponent.TOP_PRIORITY;
+
+                // Two paths
+                switch (batchBehaviour)
+                {
+                    case IProfileRepository.BatchBehaviour.DEFAULT:
+                        // Batching is allowed
+                        Profile? result = await AddToBatch(id, fromCatalyst, pendingBatches, partition).Task!.AttachExternalCancellation<Profile>(ct);
+
+                        // Not found profiles (Catalyst replication delays) will be processed individually by GET
+                        // ⚠️ The following produces potentially a very long-living task ⚠️
+                        // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
+                        return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+
+                    case IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET:
+                        return await EnforceSingleGetAsync();
+                    default:
+                        throw new NotSupportedException($"BatchBehaviour {batchBehaviour} not supported");
+                }
+            }
+            finally { await UniTask.SwitchToMainThread(); }
+
+            UniTask<Profile?> EnforceSingleGetAsync()
+            {
+                // Add directly to the ongoing batch as it's dispatch immediately
+                // It's needed if the same profile is requested again (Single or in the batch) so it will wait for the existing request
+                AddToBatch(id, fromCatalyst, ongoingBatches, partition);
+
+                // Launch single request
+                // It still can return `null` if all atempts are exhausted
+                return ExecuteSingleGetAsync(id, fromCatalyst, ct);
+            }
+        }
+
+        public UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
+            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
+            IPartitionComponent? partition = null) =>
+            GetAsync(id, version, fromCatalyst, ct, true, getFromCacheIfPossible, batchBehaviour, partition);
+
+        /// <summary>
+        ///     Should be called from the background thread
+        /// </summary>
+        public Profile? ResolveProfile(string userId, ProfileJsonDto? profileDTO)
+        {
+            Profile? profile = null;
+
+            if (profileDTO != null)
+            {
                 // Reusing the profile in cache does not allow other systems to properly update.
                 // It impacts on the object state and does not allow to make comparisons on change.
                 // For example the multiplayer system, whenever a remote profile update comes in,
                 // it compares the version of the profile to check if it has changed. By overriding the version here,
                 // the check always fails. So its necessary to get a new instance each time
-                var profile = Profile.Create();
-                profileDto.CopyTo(profile);
+                profile = Profile.Create();
+                profileDTO.CopyTo(profile);
                 profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
 
-                profileCache.Set(id, profile);
+                profileCache.Set(userId, profile);
+            }
+            else
+                profilesDebug.AddMissing(userId);
 
-                return profile;
+            // Find the request in the batch
+            Resolve(userId, profile);
+
+            return profile;
+        }
+
+        /// <summary>
+        ///     Enforces single get without prioritization and batching
+        /// </summary>
+        /// <returns></returns>
+        private async UniTask<Profile?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
+        {
+            try
+            {
+                URLAddress url = GetUrl(id, fromCatalyst);
+
+                // Suppress logging errors here as we have very custom errors handling below
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(
+                    new CommonArguments(url, CatalystRetryPolicy.VALUE),
+                    ct,
+                    ReportCategory.PROFILE,
+                    suppressErrors: true);
+
+                using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
+                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
+                    serializerSettings: SERIALIZER_SETTINGS);
+
+                ProfileJsonDto? profileDto = root?.FirstProfileDto();
+
+                profilesDebug.AddNonAggregated();
+
+                return ResolveProfile(id, profileDto);
             }
             catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND })
             {
-                // if (profileCache.TryGet(id, out Profile cachedProfile) && cachedProfile.Version >= version)
-                // return cachedProfile;
+                ReportProfileNotFound(id, fromCatalyst);
 
-                // Report to console every time
-                // Report to Sentry only once per session (protect from spamming)
-                ReportHub.LogError(new ReportData(ReportCategory.PROFILE, new ReportDebounce(SentryStaticDebouncer.Instance)),
-                    $"Profile not found (Version: {version}, WalletId: {id})\nFrom Catalyst: {fromCatalyst}");
+                ResolveException(id, e);
 
                 return null;
             }
@@ -168,21 +361,42 @@ namespace DCL.Profiles
             {
                 // Report other exceptions normally
                 ReportHub.LogException(e, ReportCategory.PROFILE);
+
+                ResolveException(id, e);
+
                 throw;
             }
-            finally
+            catch (Exception e)
             {
-                ongoingRequests.Remove(id);
-                ongoingTask.TrySetResult();
+                ResolveException(id, e);
+                throw;
             }
         }
 
-        private URLAddress Url(string id, URLDomain? fromCatalyst)
+        private static void ReportProfileNotFound(string id, URLDomain? fromCatalyst) =>
+
+            // Report to console every time
+            // Report to Sentry only once per session (protect from spamming)
+            ReportHub.LogError(new ReportData(ReportCategory.PROFILE, new ReportDebounce(SentryStaticDebouncer.Instance)),
+                $"Profile not found, WalletId: {id})\nFrom Catalyst: {fromCatalyst}");
+
+        private URLAddress GetUrl(string id, URLDomain? fromCatalyst)
         {
             urlBuilder.Clear();
 
             urlBuilder.AppendDomain(fromCatalyst ?? realm.Ipfs.LambdasBaseUrl)
                       .AppendPath(URLPath.FromString($"profiles/{id}"));
+
+            return urlBuilder.Build();
+        }
+
+        public URLAddress PostUrl(URLDomain fromCatalyst)
+        {
+            urlBuilder.Clear();
+
+            // Warning: putting a trailing slash break the backend routing!
+            urlBuilder.AppendDomain(fromCatalyst)
+                      .AppendPath(URLPath.FromString("profiles"));
 
             return urlBuilder.Build();
         }

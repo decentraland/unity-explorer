@@ -20,7 +20,8 @@ namespace DCL.Multiplayer.Connections.Demo
                 new PlayerPrefsIdentityProvider(
                     new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                         web3AccountFactory
-                    )
+                    ),
+                    dclEnvironment
                 )
             );
 

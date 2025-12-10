@@ -15,8 +15,8 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
-using SceneRunner.Scene;
 using System;
+using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -71,31 +71,67 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeGltfLoading(
-            Entity entity,
-            ref GltfPromise promise,
-            ref IEmote emote,
-            in BodyShape bodyShape)
-        {
-            FinalizeAssetLoading<GLTFData, GetGLTFIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
-        }
-
-        [Query]
         private void FinalizeAssetBundleLoading(
             Entity entity,
             ref AssetBundlePromise promise,
             ref IEmote emote,
             in BodyShape bodyShape)
         {
-            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
+            if (IsCancellationRequested(entity, ref promise, ref emote, in bodyShape))
+                return;
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> gltfAssetResult))
+            {
+                if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
+                    AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                else
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+
+                emote.UpdateLoadingStatus(false);
+                World.Destroy(entity);
+            }
         }
 
-        private void FinalizeAssetLoading<TAsset, TLoadingIntention>(
+        [Query]
+        private void FinalizeGltfLoading(
+            Entity entity,
+            ref GltfPromise promise,
+            ref IEmote emote,
+            in BodyShape bodyShape)
+        {
+            if (IsCancellationRequested(entity, ref promise, ref emote, in bodyShape))
+                return;
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<GLTFData> gltfAssetResult))
+            {
+                if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
+                    AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                else
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
+
+                emote.UpdateLoadingStatus(false);
+                World.Destroy(entity);
+            }
+        }
+
+        private void AssignEmoteResult(IEmote emote, BodyShape bodyShape, AttachmentRegularAsset regularAssetResult)
+        {
+            var asset = new StreamableLoadingResult<AttachmentRegularAsset>(regularAssetResult);
+
+            if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
+            {
+                emote.AssetResults[BodyShape.MALE] = asset;
+                emote.AssetResults[BodyShape.FEMALE] = asset;
+            }
+            else
+                emote.AssetResults[bodyShape] = asset;
+        }
+
+        private bool IsCancellationRequested<TAsset, TLoadingIntention>(
             Entity entity,
             ref AssetPromise<TAsset, TLoadingIntention> promise,
             ref IEmote emote,
-            in BodyShape bodyShape,
-            Func<StreamableLoadingResult<TAsset>, AttachmentRegularAsset> toRegularAsset)
+            in BodyShape bodyShape)
             where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
@@ -103,27 +139,10 @@ namespace DCL.AvatarRendering.Emotes
                 ResetEmoteResultOnCancellation(emote, bodyShape);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
-                return;
+                return true;
             }
 
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<TAsset> result))
-            {
-                if (result.Succeeded)
-                {
-                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(toRegularAsset.Invoke(result));
-
-                    if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
-                    {
-                        emote.AssetResults[BodyShape.MALE] = asset;
-                        emote.AssetResults[BodyShape.FEMALE] = asset;
-                    }
-                    else
-                        emote.AssetResults[bodyShape] = asset;
-                }
-
-                emote.UpdateLoadingStatus(false);
-                World.Destroy(entity);
-            }
+            return false;
         }
 
         [Query]
@@ -141,9 +160,95 @@ namespace DCL.AvatarRendering.Emotes
                 return;
 
             if (result.Succeeded)
-                emote.AudioAssetResults[bodyShape] = result;
+            {
+                if (emote.IsSocial)
+                {
+                    // Stores the audio clips of the outcomes
+                    string? outcomeAudioHash = null;
+
+                    for (int i = 0; i < emote.Model.Asset!.metadata.data!.outcomes!.Length; ++i)
+                    {
+                        if (emote.Model.Asset!.metadata.data!.outcomes![i].audio != null)
+                        {
+                            outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.outcomes![i].audio);
+
+                            string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
+
+                            // If the current result corresponds to the outcome at current position...
+                            if (audioURL.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                // This check is necessary because otherwise it will add more than one of each audio clip
+                                bool alreadyContainsAudio = false;
+
+                                for (int j = 0; j < emote.SocialEmoteOutcomeAudioAssetResults.Count; ++j)
+                                {
+                                    if (emote.SocialEmoteOutcomeAudioAssetResults[j].Asset!.Asset.name == audioURL)
+                                    {
+                                        alreadyContainsAudio = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!alreadyContainsAudio)
+                                {
+                                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Added outcome audio " + outcomeAudioHash);
+
+                                    result.Asset!.Asset.name = audioURL;
+                                    emote.SocialEmoteOutcomeAudioAssetResults.Add(result);
+                                }
+
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() NULL");
+                            emote.SocialEmoteOutcomeAudioAssetResults.Add(new StreamableLoadingResult<AudioClipData>()); // Null audio
+                        }
+                    }
+
+                    // Stores the audio clip of the start animation
+                    if (emote.Model.Asset!.metadata.data!.startAnimation!.audio != null)
+                    {
+                        string? audioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.startAnimation!.audio);
+                        string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
+
+                        // If the current result corresponds to the start animation...
+                        if (audioHash != null && audioURL.Contains(audioHash, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Added start audio " + audioHash);
+
+                            result.Asset!.Asset.name = audioURL;
+                            emote.AudioAssetResults[bodyShape] = result;
+                        }
+                    }
+                }
+                else
+                {
+                    emote.AudioAssetResults[bodyShape] = result;
+                }
+            }
 
             World.Destroy(entity);
+        }
+
+        private string? FindAudioFileHashInContent(IEmote emote, in BodyShape bodyShape, string? audioFileName)
+        {
+            string? audioHash = null;
+            string shape = bodyShape.Value.Contains("BaseMale") ? "male" : "female";
+            string contentName = shape + "/" + audioFileName;
+
+            for (int i = 0; i < emote.Model.Asset!.content.Length; ++i)
+            {
+                if (string.Compare(emote.Model.Asset.content[i].file, contentName, StringComparison.InvariantCultureIgnoreCase) == 0)
+                {
+                    // Found the outcome sound in the content list, we can get the hash
+                    audioHash = emote.Model.Asset.content[i].hash;
+                    break;
+                }
+            }
+
+            return audioHash;
         }
 
         [Query]

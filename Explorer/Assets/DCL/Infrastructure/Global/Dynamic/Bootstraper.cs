@@ -15,7 +15,6 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -24,7 +23,6 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
-using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.LaunchModes;
@@ -35,7 +33,6 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -55,7 +52,6 @@ namespace Global.Dynamic
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
-        private readonly ObjectProxy<IProfileRepository> profileRepositoryProxy = new ();
 
         private URLDomain? startingRealm;
         private Vector2Int startingParcel;
@@ -103,7 +99,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            bool hasDebugFlag,
+            IAppArgs appArgs,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -126,10 +122,9 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
-                profileRepositoryProxy,
                 bootstrapContainer.Environment,
                 ct,
-                hasDebugFlag
+                appArgs
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
@@ -186,9 +181,6 @@ namespace Global.Dynamic
                 realmUrls,
                 ct);
 
-            if (tuple.container != null)
-                profileRepositoryProxy.SetObject(tuple.container.ProfileRepository);
-
             return tuple;
         }
 
@@ -237,11 +229,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController));
 
             if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
-            {
-                var memoryCache = new MemoryCache<string, string>();
-                staticContainer.CacheCleaner.Register(memoryCache);
-                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer()));
-            }
+                webJsSources = new CachedWebJsSources(webJsSources, diskCache);
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
@@ -285,7 +273,7 @@ namespace Global.Dynamic
 
         public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 

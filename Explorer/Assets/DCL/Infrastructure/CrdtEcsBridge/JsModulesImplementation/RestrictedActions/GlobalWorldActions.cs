@@ -11,6 +11,7 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
@@ -34,14 +35,16 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly IEmotesMessageBus messageBus;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
+        private readonly bool isBuilderCollectionPreview;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles)
+        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles, bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.messageBus = messageBus;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
@@ -79,14 +82,18 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
             world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
-            messageBus.Send(urn, isLooping);
+
+            messageBus.Send(urn, isLooping, false, -1, false, string.Empty, string.Empty, false, 0);
         }
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
             world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
 
-            if (localSceneDevelopment && !useRemoteAssetBundles)
+            bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
+                                      (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
+
+            if (loadFromLocalScene)
             {
                 // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
                 // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes

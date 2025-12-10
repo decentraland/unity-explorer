@@ -33,7 +33,8 @@
         "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:9887bf5401cdc9140916d3edbea10b69",
-        "GUID:5556c2cd8a339d54ba194f39bbd30d73"
+        "GUID:5556c2cd8a339d54ba194f39bbd30d73",
+        "GUID:d0d87470ef1844e08586dabeb6d672bd"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -43,7 +44,8 @@
         "Segment.Analytics.CSharp.dll",
         "Serialization.NET.dll",
         "Coroutine.NET.dll",
-        "Sentry.dll"
+        "Sentry.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Chat.ControllerShowParams;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
@@ -209,6 +210,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.SidebarProfile:
                     case PanelsSharingSpace.MarketplaceCredits:
                     case PanelsSharingSpace.Controls:
+                    case PanelsSharingSpace.SmartWearables:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {
@@ -484,7 +486,7 @@ namespace DCL.UI.SharedSpaceManager
             }
 
             if (!isExplorePanelVisible)
-                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
+                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
 
         private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)

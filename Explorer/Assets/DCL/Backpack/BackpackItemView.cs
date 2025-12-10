@@ -16,9 +16,11 @@ namespace DCL.Backpack
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
         private const float ANIMATION_TIME = 0.1f;
 
-        public event Action<string>? OnSelectItem;
-        public event Action<string>? OnEquip;
-        public event Action<string>? OnUnequip;
+        public event Action<int, string>? OnSelectItem;
+        public event Action<int, string>? OnEquip;
+        public event Action<int, string>? OnUnequip;
+
+        public int Slot { get; set; }
 
         [field: SerializeField]
         public string ItemId { get; set; }
@@ -67,6 +69,9 @@ namespace DCL.Backpack
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
+        [field: SerializeField]
+        public GameObject SmartWearableBadgeContainer { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig EquipWearableAudio { get; private set; }
@@ -98,13 +103,13 @@ namespace DCL.Backpack
         {
             EquipButton.onClick.AddListener(() =>
             {
-                OnEquip?.Invoke(ItemId);
+                OnEquip?.Invoke(Slot, ItemId);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
             });
 
             UnEquipButton.onClick.AddListener(() =>
             {
-                OnUnequip?.Invoke(ItemId);
+                OnUnequip?.Invoke(Slot, ItemId);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(UnEquipWearableAudio);
             });
         }
@@ -149,13 +154,13 @@ namespace DCL.Backpack
             switch (eventData.clickCount)
             {
                 case 1:
-                    OnSelectItem?.Invoke(ItemId);
+                    OnSelectItem?.Invoke(Slot, ItemId);
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
                     break;
                 case 2:
                     if (IsCompatibleWithBodyShape)
                     {
-                        OnEquip?.Invoke(ItemId);
+                        OnEquip?.Invoke(Slot, ItemId);
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
                     }
                     break;

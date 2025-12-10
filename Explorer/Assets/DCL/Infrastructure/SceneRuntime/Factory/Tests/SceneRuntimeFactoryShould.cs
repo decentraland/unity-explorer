@@ -11,6 +11,7 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.Tests;
 using System.Collections;
 using System.Threading;
 using UnityEngine;
@@ -40,23 +41,23 @@ namespace SceneRuntime.Factory.Tests
                 var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory,
                     webJsSources);
 
-                var sourceCode = @"
-                const engineApi = require('~system/EngineApi')
-                exports.onStart = async function() {
-                    data = new Uint8Array(10)
-                    data[0] = 123
-                    await engineApi.crdtSendToRenderer({ data })
-                    test.Ok()
-                };
-                exports.onUpdate = async function(dt) {};
-            ";
+                using var sourceCode = SceneRuntimeShould.CreateCode(@"
+                    const engineApi = require('~system/EngineApi')
+                    exports.onStart = async function() {
+                        data = new Uint8Array(10)
+                        data[0] = 123
+                        await engineApi.crdtSendToRenderer({ data })
+                        test.Ok()
+                    };
+                    exports.onUpdate = async function(dt) {};
+                ");
 
                 // Act
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
-                    instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                    new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.ExecuteSceneJson();
 
@@ -85,7 +86,7 @@ namespace SceneRuntime.Factory.Tests
                                      .Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), _ => { }));
 
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
-                    instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                    new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
@@ -100,16 +101,13 @@ namespace SceneRuntime.Factory.Tests
         [Test]
         public void WrapInModuleCommonJs()
         {
-            // Arrange
-            var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, webJsSources);
-            var sourceCode = "console.log('Hello, world!');";
-
-            // Act
-            string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
+            // CreateCode does the wrapping already.
+            using var sourceCode = SceneRuntimeShould.CreateCode(
+                "console.log('Hello, world!');");
 
             // Assert: Check that the module compiles
             using var engine = engineFactory.Create(new SceneShortInfo());
-            engine.Compile(moduleWrapper);
+            engine.CompileScriptFromUtf8(sourceCode.Memory.Span);
         }
     }
 }

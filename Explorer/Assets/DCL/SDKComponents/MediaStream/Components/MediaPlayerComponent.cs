@@ -12,10 +12,15 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_VOLUME = 1f;
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
+        private const float PLAY_CHECK_THRESHOLD = 0.5f;
+        public const float DEFAULT_SPATIAL_MIN_DISTANCE = 0f;
+        public const float DEFAULT_SPATIAL_MAX_DISTANCE = 60f;
 
         private float lastVideoTime;
         private float frozenTimestamp;
+        private float lastPlayTimestamp;
         private bool isFrozen;
+        private bool isSpatial;
 
         public readonly MultiMediaPlayer MediaPlayer;
         public readonly bool IsFromContentServer;
@@ -27,6 +32,10 @@ namespace DCL.SDKComponents.MediaStream
         public float LastPropagatedVideoTime;
         public CancellationTokenSource? Cts;
         public OpenMediaPromise? OpenMediaPromise;
+
+        public bool IsSpatial => MediaPlayer.IsSpatial;
+        public float SpatialMaxDistance => MediaPlayer.SpatialMaxDistance;
+        public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
 
         public MediaPlayerComponent(MultiMediaPlayer mediaPlayer, bool isFromContentServer) : this()
         {
@@ -57,22 +66,33 @@ namespace DCL.SDKComponents.MediaStream
                 state = VideoState.VsPaused;
             else if (player.IsPlaying)
             {
-                bool wasFrozen = isFrozen;
-                isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
+                state = VideoState.VsPlaying;
 
-                if (!isNowFrozen)
-                {
-                    lastVideoTime = player.CurrentTime;
-                    frozenTimestamp = UnityEngine.Time.realtimeSinceStartup;
-                    state = VideoState.VsPlaying;
-                }
-                else
-                {
-                    // Important: while PLAYING or PAUSED, MediaPlayerControl may also be BUFFERING and/or SEEKING.
-                    state = player.IsSeeking ? VideoState.VsSeeking : VideoState.VsBuffering;
+                float timestamp = UnityEngine.Time.realtimeSinceStartup;
 
-                    if (isNowFrozen != wasFrozen)
-                        frozenTimestamp = UnityEngine.Time.realtimeSinceStartup;
+                // This threshold solves the case on which it is updated many times in a row in the same frame
+                if (timestamp - lastPlayTimestamp > PLAY_CHECK_THRESHOLD)
+                {
+                    lastPlayTimestamp = timestamp;
+
+                    bool wasFrozen = isFrozen;
+                    isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
+
+                    if (!isNowFrozen)
+                    {
+                        lastVideoTime = player.CurrentTime;
+                        frozenTimestamp = timestamp;
+                    }
+                    else
+                    {
+                        if (isNowFrozen != wasFrozen)
+                            frozenTimestamp = timestamp;
+
+                        if (player.IsSeeking)
+                            state = VideoState.VsSeeking;
+                        else if (player.IsBuffering)
+                            state = VideoState.VsBuffering;
+                    }
                 }
             }
 
@@ -109,5 +129,10 @@ namespace DCL.SDKComponents.MediaStream
             MediaPlayer.Dispose(MediaAddress);
             Cts.SafeCancelAndDispose();
         }
+
+        public void UpdateSpatialAudio(bool isSpatial, float? minDistance, float? maxDistance) =>
+            MediaPlayer.UpdateSpatialAudio(isSpatial,
+                minDistance ?? DEFAULT_SPATIAL_MIN_DISTANCE,
+                maxDistance ?? DEFAULT_SPATIAL_MAX_DISTANCE);
     }
 }

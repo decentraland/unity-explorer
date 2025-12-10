@@ -57,12 +57,12 @@ namespace DCL.CharacterMotion.Systems
                 characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
             // If we are on a platform we save our local rotation
-            PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward, scenesCache.CurrentScene);
+            PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward, scenesCache.CurrentScene.Value);
         }
 
         [Query]
         [None(typeof(PBAvatarShape))]
-        private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, in PlayerLookAtIntent lookAtIntent)
+        private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, ref CharacterPlatformComponent platformComponent, in PlayerLookAtIntent lookAtIntent)
         {
             // Rotate player to look at target
             Vector3 newLookDirection = lookAtIntent.From != null
@@ -73,6 +73,11 @@ namespace DCL.CharacterMotion.Systems
 
             rigidTransform.LookDirection = newLookDirection;
             transform.Transform.forward = newLookDirection;
+
+       //     ReportHub.LogError(ReportCategory.EMOTE_DEBUG, "Rotation (look): " + transform.Transform.rotation);
+
+            // If we are on a platform we save our local rotation
+            PlatformSaveLocalRotation.Execute(ref platformComponent, transform.Transform.forward, scenesCache.CurrentScene.Value);
 
             World.Remove<PlayerLookAtIntent>(entity);
         }

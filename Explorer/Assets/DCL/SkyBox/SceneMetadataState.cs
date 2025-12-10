@@ -56,7 +56,7 @@ namespace DCL.SkyBox
         }
 
         private SceneMetadata? GetCurrentMetadata() =>
-            scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+            scenes.CurrentScene.Value?.SceneData.SceneEntityDefinition.metadata;
 
         private void TryApplySceneMetadata()
         {
@@ -85,7 +85,7 @@ namespace DCL.SkyBox
         /// </summary>
         /// <param name="metadata">The scene metadata containing skybox configuration</param>
         /// <returns>
-        /// The fixed time value if skyboxConfig exists (even if null), 
+        /// The fixed time value if skyboxConfig exists (even if null),
         /// otherwise falls back to worldConfiguration.SkyboxConfig.fixedTime for legacy scenes
         /// </returns>
         private static float? GetFixedTime(SceneMetadata metadata) =>
@@ -99,7 +99,7 @@ namespace DCL.SkyBox
         /// </summary>
         /// <param name="sceneMetadata">The scene metadata containing skybox configuration</param>
         /// <returns>
-        /// The transition mode from skyboxConfig if it exists, 
+        /// The transition mode from skyboxConfig if it exists,
         /// otherwise falls back to worldConfiguration.SkyboxConfig.transitionMode for legacy scenes,
         /// or TransitionMode.FORWARD as the final default
         /// </returns>

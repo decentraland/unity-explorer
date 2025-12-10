@@ -28,6 +28,14 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         private CancellationTokenSource disposeCts;
         private SignedFetchWrap signedFetchWrap;
 
+        private Vector2Int sceneBase;
+        private string sceneID;
+
+        private string realmName;
+        private string realmHostname;
+        private string realmProtocol;
+
+
         [SetUp]
         public void SetUp()
         {
@@ -37,22 +45,28 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             identityCache = Substitute.For<IWeb3IdentityCache>();
             disposeCts = new CancellationTokenSource();
 
+            sceneBase = new Vector2Int(10, 20);
+            sceneID = "test-scene-id";
+            realmName = "test-realm";
+            realmHostname = "test-realm-host";
+            realmProtocol = "test-realm-protocol";
             // Setup scene data
             var sceneMetadata = new SceneMetadata
             {
                 scene = new SceneMetadataScene
                 {
-                    DecodedBase = new Vector2Int(10, 20)
+                    DecodedBase = sceneBase,
                 }
             };
-            var sceneEntityDefinition = new SceneEntityDefinition("test-scene-id", sceneMetadata);
+
+            var sceneEntityDefinition = new SceneEntityDefinition(sceneID, sceneMetadata);
             sceneData.SceneEntityDefinition.Returns(sceneEntityDefinition);
-            sceneData.SceneShortInfo.Returns(new SceneShortInfo(new Vector2Int(10, 20), "test-scene-id"));
+            sceneData.SceneShortInfo.Returns(new SceneShortInfo(sceneBase, sceneID));
 
             // Setup realm data
-            realmData.Hostname.Returns("test-hostname.decentraland.org");
-            realmData.Protocol.Returns("v3");
-            realmData.RealmName.Returns("test-realm");
+            realmData.Hostname.Returns(realmHostname);
+            realmData.Protocol.Returns(realmProtocol);
+            realmData.RealmName.Returns(realmName);
 
             // Setup identity cache with a mock identity
             var mockIdentity = Substitute.For<IWeb3Identity>();
@@ -82,7 +96,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         }
 
         [Test]
-        public void UseDecentralandKernelSceneAsSignerInGetSignedHeaders()
+        public void UseCorrectMetadataWhenInvokingGetSignedHeaders()
         {
             // Arrange
             string url = "https://example.com/api";
@@ -108,16 +122,56 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             SignedFetchWrap.SignatureMetadata metadata = JsonUtility.FromJson<SignedFetchWrap.SignatureMetadata>(signatureMetadataJson);
             Assert.IsNotNull(metadata, "Signature metadata should be deserializable");
 
+            DoAssertions(metadata);
+
+
+        }
+
+        private void DoAssertions(SignedFetchWrap.SignatureMetadata metadata)
+        {
             // Assert the signer is always "decentraland-kernel-scene"
             Assert.AreEqual(
                 "decentraland-kernel-scene",
                 metadata.signer,
                 "CreateSignatureMetadata must always use 'decentraland-kernel-scene' as the signer. This is critical for security and must not be changed."
             );
+
+            // Assert the parcel has the correct coords
+            Assert.AreEqual(
+                $"{sceneBase.x},{sceneBase.y}",
+                metadata.parcel,
+                "CreateSignatureMetadata must always have the scene base in the metadata. This is critical for security and must not be changed."
+            );
+
+            // Assert the parcel has the correct Scene Base
+            Assert.AreEqual(
+                sceneID,
+                metadata.sceneId,
+                "CreateSignatureMetadata must always have the scene ID in the metadata. This is critical for security and must not be changed."
+            );
+
+            // Assert the realm name is the correct one has the correct Scene Base
+            Assert.AreEqual(
+                realmHostname,
+                metadata.realm.hostname,
+                "CreateSignatureMetadata must always have the realm hostname in the metadata. This is critical for security and must not be changed."
+            );
+
+            Assert.AreEqual(
+                realmProtocol,
+                metadata.realm.protocol,
+                "CreateSignatureMetadata must always have the realm protocol in the metadata. This is critical for security and must not be changed."
+            );
+
+            Assert.AreEqual(
+                realmName,
+                metadata.realm.serverName,
+                "CreateSignatureMetadata must always have the realm server Name in the metadata. This is critical for security and must not be changed."
+            );
         }
 
         [Test]
-        public void UseDecentralandKernelSceneAsSignerWhenCreatingSignatureMetadata()
+        public void UseCorrectMetadataWhenInvokingCreatingSignatureMetadata()
         {
             // Arrange - Test CreateSignatureMetadata directly (now internal for testing)
             string? hashPayload = null;
@@ -132,12 +186,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             SignedFetchWrap.SignatureMetadata metadata = JsonUtility.FromJson<SignedFetchWrap.SignatureMetadata>(signatureMetadataJson);
             Assert.IsNotNull(metadata, "Signature metadata should be deserializable");
 
-            // Assert the signer is always "decentraland-kernel-scene"
-            Assert.AreEqual(
-                "decentraland-kernel-scene",
-                metadata.signer,
-                "CreateSignatureMetadata must always use 'decentraland-kernel-scene' as the signer. This is critical for security and must not be changed."
-            );
+            DoAssertions(metadata);
         }
 
 

@@ -10,7 +10,6 @@ using SceneRunner.Scene;
 namespace DCL.CharacterMotion.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(RotateCharacterSystem))]
     public partial class CharacterPlatformUpdateSceneTickSystem : BaseUnityLoopSystem
     {
@@ -29,7 +28,7 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void UpdateTick(ref CharacterPlatformComponent platformComponent)
         {
-            ISceneFacade? currentScene = scenesCache.CurrentScene;
+            ISceneFacade? currentScene = scenesCache.CurrentScene.Value;
             platformComponent.LastUpdateTick = currentScene?.SceneStateProvider.TickNumber ?? 0;
         }
     }

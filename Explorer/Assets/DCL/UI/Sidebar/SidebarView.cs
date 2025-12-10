@@ -30,6 +30,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button backpackButton { get; private set; }
         [field: SerializeField] internal Button cameraReelButton { get; private set; }
         [field: SerializeField] internal Button settingsButton { get; private set; }
+        [SerializeField] internal Button marketplaceButton;
 
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; }
@@ -38,6 +39,10 @@ namespace DCL.UI.Sidebar
         [field: Header("Skybox")]
         [field: SerializeField] internal Button skyboxButton { get; private set; }
         [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; }
+
+        [field: Header("Smart Wearables")]
+        [field: SerializeField] internal HoverableButton SmartWearablesButton { get; private set; }
+        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; }
 
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; }

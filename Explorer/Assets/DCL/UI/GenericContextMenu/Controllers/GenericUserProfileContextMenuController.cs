@@ -4,6 +4,7 @@ using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.EmotesWheel.Params;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -19,10 +20,11 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -52,6 +54,7 @@ namespace DCL.UI
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeVoiceChat;
         private readonly bool includeCommunities;
+        private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -63,9 +66,14 @@ namespace DCL.UI
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> socialEmoteButtonControlSettings;
+
+        private readonly GenericContextMenuElement contextMenuMentionButton;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
+        private readonly GenericContextMenuElement contextMenuSocialEmoteButton;
+        private readonly GenericContextMenuElement invitationButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
@@ -86,7 +94,7 @@ namespace DCL.UI
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             bool includeCommunities,
-            CommunitiesDataProvider communitiesDataProvider)
+            CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -102,6 +110,7 @@ namespace DCL.UI
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.includeCommunities = includeCommunities;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -110,31 +119,35 @@ namespace DCL.UI
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
             startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
+            socialEmoteButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.SocialEmoteButtonConfig.Text, contextMenuSettings.SocialEmoteButtonConfig.Sprite, new StringDelegate(OnSocialEmoteButtonClicked));
 
+            contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, false);
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
+            contextMenuSocialEmoteButton = new GenericContextMenuElement(socialEmoteButtonControlSettings, false);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(mentionUserButtonControlSettings)
+                         .AddControl(contextMenuMentionButton)
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
                          .AddControl(contextMenuCallButton)
+                         .AddControl(contextMenuSocialEmoteButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
 
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
+                invitationButton = invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action onContextMenuShow = null)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action onContextMenuShow = null, bool isOpenedOnWorldAvatar = false)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -163,13 +176,18 @@ namespace DCL.UI
 
                     contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                                                      !isOpenedOnWorldAvatar &&
                                                       friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
                 }
             }
 
+            contextMenuSocialEmoteButton.Enabled = isOpenedOnWorldAvatar;
+
             userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
 
+            contextMenuMentionButton.Enabled = !isOpenedOnWorldAvatar;
             mentionUserButtonControlSettings.SetData(profile.MentionName);
+
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
 
@@ -187,7 +205,10 @@ namespace DCL.UI
             contextMenu.ChangeOffsetFromTarget(offset);
 
             if (includeCommunities)
+            {
+                invitationButton.Enabled = !isOpenedOnWorldAvatar;
                 invitationButtonHandler.SetUserToInvite(profile.UserId);
+            }
 
             if (ct.IsCancellationRequested) return;
 
@@ -324,8 +345,7 @@ namespace DCL.UI
         private async UniTaskVoid StartCallAsync(string userId)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-            chatEventBus.OpenPrivateConversationUsingUserId(userId);
-            chatEventBus.StartCallInCurrentConversation();
+            voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 
         private void OnBlockUserClicked(string userId)
@@ -344,11 +364,24 @@ namespace DCL.UI
             FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
         }
 
+        private void OnSocialEmoteButtonClicked(string userId)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.EmotesWheel,
+                                         new EmotesWheelParams()
+                                         {
+                                             IsDirectedEmote = true,
+                                             TargetUsername = targetProfile.ValidatedName,
+                                             TargetUsernameColor = targetProfile.UserNameColor,
+                                             TargetWalletAddress = targetProfile.UserId
+                                         });
+            closeContextMenuTask.TrySetResult();
+        }
+
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
-            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
