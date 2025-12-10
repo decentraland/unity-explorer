@@ -22,14 +22,12 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
         private readonly World globalWorld;
         private Entity globalPlayerEntity;
 
-        internal PropagateAvatarLocomotionOverridesSystem(World world, ISceneStateProvider sceneStateProvider, World globalWorld) : base(world)
+        internal PropagateAvatarLocomotionOverridesSystem(World world, ISceneStateProvider sceneStateProvider, World globalWorld, Entity globalPlayerEntity) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.globalWorld = globalWorld;
+            this.globalPlayerEntity = globalPlayerEntity;
         }
-
-        public override void Initialize() =>
-            globalPlayerEntity = globalWorld.CachePlayer();
 
         protected override void Update(float t)
         {

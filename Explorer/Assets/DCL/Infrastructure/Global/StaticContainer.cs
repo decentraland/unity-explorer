@@ -290,7 +290,7 @@ namespace Global
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
                 new SkyboxTimePlugin(),
-                new AvatarLocomotionOverridesWorldPlugin(globalWorld),
+                new AvatarLocomotionOverridesWorldPlugin(globalWorld, playerEntity),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

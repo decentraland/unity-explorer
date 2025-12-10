@@ -12,10 +12,12 @@ namespace DCL.SDKComponents.AvatarLocomotion
     public class AvatarLocomotionOverridesWorldPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly World globalWorld;
+        private readonly Entity globalPlayerEntity;
 
-        public AvatarLocomotionOverridesWorldPlugin(World globalWorld)
+        public AvatarLocomotionOverridesWorldPlugin(World globalWorld, Entity globalPlayerEntity)
         {
             this.globalWorld = globalWorld;
+            this.globalPlayerEntity = globalPlayerEntity;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
@@ -24,7 +26,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            var propagateSystem = PropagateAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld);
+            var propagateSystem = PropagateAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, globalWorld, globalPlayerEntity);
             sceneIsCurrentListeners.Add(propagateSystem);
         }
     }
