@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         [Serializable]
-        public class LambdaResponseElementDto : ILambdaResponseElement<WearableDTO>
+        public class  LambdaResponseElementDto : ILambdaResponseElement<WearableDTO>
         {
             public string type;
             public string urn;
@@ -44,6 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public string category;
             public WearableDTO entity;
             public ElementIndividualDataDto[] individualData;
+            public int amount;
 
             [JsonIgnore]
             public WearableDTO Entity => entity;

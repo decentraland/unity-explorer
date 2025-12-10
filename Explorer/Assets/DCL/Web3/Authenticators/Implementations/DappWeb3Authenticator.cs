@@ -221,6 +221,15 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
             await DisconnectFromAuthApiAsync();
 
+        public void CancelCurrentWeb3Operation()
+        {
+            // Cancel the task waiting for the browser signature
+            signatureOutcomeTask?.TrySetCanceled();
+
+            // Also cancel code verification if that's what was hanging (during Login)
+            codeVerificationTask?.TrySetCanceled();
+        }
+        
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             codeVerificationCallback = callback;
 
@@ -265,10 +274,13 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+                // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
+                // If the token is cancelled, the await will throw an OperationCanceledException immediately.
+                // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
                 if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
-                    await UniTask.SwitchToMainThread(ct);
+                    await UniTask.SwitchToMainThread();
 
                 mutex.Release();
                 rpcPendingOperations--;
@@ -375,10 +387,13 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+                // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
+                // If the token is cancelled, the await will throw an OperationCanceledException immediately.
+                // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
                 if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
-                    await UniTask.SwitchToMainThread(ct);
+                    await UniTask.SwitchToMainThread();
 
                 mutex.Release();
                 authApiPendingOperations--;
