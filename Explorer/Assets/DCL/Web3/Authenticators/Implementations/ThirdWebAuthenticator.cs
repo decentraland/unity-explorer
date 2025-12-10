@@ -10,7 +10,6 @@ using System.Numerics;
 using System.Threading;
 using Thirdweb;
 using ThirdWebUnity;
-using ThirdWebUnity.Playground;
 using UnityEngine;
 
 namespace DCL.Web3.Authenticators
@@ -109,10 +108,10 @@ namespace DCL.Web3.Authenticators
         {
             Debug.Log("Login via OTP");
 
-            var walletOptions = new ThirdWebManager.WalletOptions(
-                ThirdWebManager.WalletProvider.InAppWallet,
+            var walletOptions = new WalletOptions(
+                WalletProvider.InAppWallet,
                 EnvChainsUtils.GetChainIdAsInt(environment),
-                new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.Default, email: email)
+                new InAppWalletOptions(authprovider: AuthProvider.Default, email: email)
             );
 
             InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
@@ -121,22 +120,6 @@ namespace DCL.Web3.Authenticators
 
             string otp = await otpRequestCallback!.Invoke(ct);
             _ = await wallet.LoginWithOtp(otp);
-            return wallet;
-        }
-
-        private async UniTask<InAppWallet> LoginViaJWT(string email, string password)
-        {
-            string? jwt = await ThirdWebCustomJWTAuth.GetJWT(email, password);
-
-            var walletOptions = new ThirdWebManager.WalletOptions(
-                ThirdWebManager.WalletProvider.InAppWallet,
-                EnvChainsUtils.GetChainIdAsInt(environment),
-                new ThirdWebManager.InAppWalletOptions(authprovider: AuthProvider.JWT, jwtOrPayload: jwt)
-            );
-
-            InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
-            await wallet.LoginWithJWT(walletOptions.InAppWalletOptions.JwtOrPayload);
-
             return wallet;
         }
 

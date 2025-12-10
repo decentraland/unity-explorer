@@ -30,7 +30,6 @@ using DCL.Prefs;
 using DCL.Utility;
 using Sentry;
 using ThirdWebUnity;
-using ThirdWebUnity.Playground;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -184,15 +183,9 @@ namespace DCL.AuthenticationScreenFlow
         private void SendRegistration()
         {
             // If we're waiting for OTP input, complete the task with the entered code
-            if (otpCompletionSource != null)
-            {
-                string otp = viewInstance!.PasswordInputField.text;
-                otpCompletionSource.TrySetResult(otp);
-                return;
-            }
-
-            // Otherwise, proceed with normal registration flow
-            _ = ThirdWebCustomJWTAuth.Register(viewInstance!.EmailInputField.text, viewInstance.PasswordInputField.text);
+            if (otpCompletionSource == null) return;
+            string otp = viewInstance!.PasswordInputField.text;
+            otpCompletionSource.TrySetResult(otp);
         }
 
         private UniTask<string> RequestOtpFromUserAsync(CancellationToken ct)
