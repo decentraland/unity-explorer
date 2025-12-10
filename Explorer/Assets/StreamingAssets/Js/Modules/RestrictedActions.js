@@ -4,6 +4,7 @@
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
+    const duration = message.duration != undefined
     
     UnityRestrictedActionsApi.MovePlayerTo(
         message.newRelativePosition.x,
@@ -14,7 +15,8 @@ module.exports.movePlayerTo = async function(message) {
         cameraTarget ? message.cameraTarget.z : null,
         avatarTarget ? message.avatarTarget.x : null,
         avatarTarget ? message.avatarTarget.y : null,
-        avatarTarget ? message.avatarTarget.z : null)
+        avatarTarget ? message.avatarTarget.z : null,
+        duration ? message.duration : null)
     
     return {};
 }

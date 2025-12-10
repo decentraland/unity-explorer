@@ -8,7 +8,7 @@ namespace CrdtEcsBridge.RestrictedActions
 {
     public interface IGlobalWorldActions
     {
-        void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget);
+        void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration = 0f);
         void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition);
         UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct);
         void TriggerEmote(URN urn, bool isLooping = false);

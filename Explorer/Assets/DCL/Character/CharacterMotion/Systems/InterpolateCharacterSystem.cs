@@ -40,7 +40,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
+        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported), typeof(PlayerMoveToWithDurationIntent))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
