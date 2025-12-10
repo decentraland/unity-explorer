@@ -97,6 +97,7 @@ namespace DCL.Notifications.NewNotification
 
         private void QueueNewNotification(INotification newNotification)
         {
+            ReportHub.Log(ReportCategory.GIFTING, $"{newNotification.Type}");
             notificationQueue.Enqueue(newNotification);
 
             if (!isDisplaying) { DisplayNewNotificationAsync().Forget(); }
