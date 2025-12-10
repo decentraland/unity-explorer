@@ -36,7 +36,7 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
         private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
-        private string subscriptionsBaseUrl => urlsSource.Url(DecentralandUrl.Subscriptions);
+        private string subscriptionsBaseUrl => urlsSource.Url(DecentralandUrl.Notifications);
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
