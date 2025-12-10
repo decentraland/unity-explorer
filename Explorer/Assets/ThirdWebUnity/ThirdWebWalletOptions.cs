@@ -63,11 +63,11 @@ namespace ThirdWebUnity
         [JsonProperty("ecosystemWalletOptions", NullValueHandling = NullValueHandling.Ignore)]
         public EcosystemWalletOptions EcosystemWalletOptions;
 
-        [JsonProperty("smartWalletOptions", NullValueHandling = NullValueHandling.Ignore)]
-        public SmartWalletOptions SmartWalletOptions;
-
-        [JsonProperty("reownOptions", NullValueHandling = NullValueHandling.Ignore)]
-        public ReownOptions ReownOptions;
+        // [JsonProperty("smartWalletOptions", NullValueHandling = NullValueHandling.Ignore)]
+        // public SmartWalletOptions SmartWalletOptions;
+        //
+        // [JsonProperty("reownOptions", NullValueHandling = NullValueHandling.Ignore)]
+        // public ReownOptions ReownOptions;
 
         [JsonProperty("chainId")]
         public BigInteger ChainId;
@@ -76,17 +76,19 @@ namespace ThirdWebUnity
             WalletProvider provider,
             BigInteger chainId,
             InAppWalletOptions inAppWalletOptions = null,
-            EcosystemWalletOptions ecosystemWalletOptions = null,
-            SmartWalletOptions smartWalletOptions = null,
-            ReownOptions reownOptions = null
+            EcosystemWalletOptions ecosystemWalletOptions = null
+
+            // SmartWalletOptions smartWalletOptions = null,
+            // ReownOptions reownOptions = null
         )
         {
             Provider = provider;
             ChainId = chainId;
             InAppWalletOptions = inAppWalletOptions ?? new InAppWalletOptions();
-            SmartWalletOptions = smartWalletOptions;
             EcosystemWalletOptions = ecosystemWalletOptions;
-            ReownOptions = reownOptions ?? new ReownOptions();
+
+            // SmartWalletOptions = smartWalletOptions;
+            // ReownOptions = reownOptions ?? new ReownOptions();
         }
     }
 
@@ -154,109 +156,109 @@ namespace ThirdWebUnity
         }
     }
 
-    [Serializable]
-    public class SmartWalletOptions
-    {
-        [JsonProperty("sponsorGas")]
-        public bool SponsorGas;
-
-        [JsonProperty("factoryAddress")]
-        public string FactoryAddress;
-
-        [JsonProperty("accountAddressOverride")]
-        public string AccountAddressOverride;
-
-        [JsonProperty("entryPoint")]
-        public string EntryPoint;
-
-        [JsonProperty("bundlerUrl")]
-        public string BundlerUrl;
-
-        [JsonProperty("paymasterUrl")]
-        public string PaymasterUrl;
-
-        [JsonProperty("tokenPaymaster")]
-        public TokenPaymaster TokenPaymaster;
-
-        public SmartWalletOptions(
-            bool sponsorGas,
-            string factoryAddress = null,
-            string accountAddressOverride = null,
-            string entryPoint = null,
-            string bundlerUrl = null,
-            string paymasterUrl = null,
-            TokenPaymaster tokenPaymaster = TokenPaymaster.NONE
-        )
-        {
-            SponsorGas = sponsorGas;
-            FactoryAddress = factoryAddress;
-            AccountAddressOverride = accountAddressOverride;
-            EntryPoint = entryPoint;
-            BundlerUrl = bundlerUrl;
-            PaymasterUrl = paymasterUrl;
-            TokenPaymaster = tokenPaymaster;
-        }
-    }
-
-    [Serializable]
-    public class ReownOptions
-    {
-        [JsonProperty("projectId")]
-        public string ProjectId;
-
-        [JsonProperty("name")]
-        public string Name;
-
-        [JsonProperty("description")]
-        public string Description;
-
-        [JsonProperty("url")]
-        public string Url;
-
-        [JsonProperty("iconUrl")]
-        public string IconUrl;
-
-        [JsonProperty("includedWalletIds")]
-        public string[] IncludedWalletIds;
-
-        [JsonProperty("excludedWalletIds")]
-        public string[] ExcludedWalletIds;
-
-        [JsonProperty("featuredWalletIds")]
-        public string[] FeaturedWalletIds;
-
-        [JsonProperty("singleWalletId")]
-        public string SingleWalletId;
-
-        [JsonProperty("tryResumeSession")]
-        public bool TryResumeSession;
-
-        public ReownOptions(
-            string projectId = null,
-            string name = null,
-            string description = null,
-            string url = null,
-            string iconUrl = null,
-            string[] includedWalletIds = null,
-            string[] excludedWalletIds = null,
-            string[] featuredWalletIds = null,
-            string singleWalletId = null,
-            bool tryResumeSession = true
-        )
-        {
-            if (singleWalletId != null && (includedWalletIds != null || excludedWalletIds != null || featuredWalletIds != null))
-                throw new ArgumentException("singleWalletId cannot be used with includedWalletIds, excludedWalletIds, or featuredWalletIds.");
-
-            ProjectId = projectId ?? "35603765088f9ed24db818100fdbb6f9";
-            Name = name ?? "thirdweb";
-            Description = description ?? "thirdweb powered game";
-            Url = url ?? "https://thirdweb.com";
-            IconUrl = iconUrl ?? "https://thirdweb.com/favicon.ico";
-            IncludedWalletIds = includedWalletIds;
-            ExcludedWalletIds = excludedWalletIds;
-            FeaturedWalletIds = featuredWalletIds;
-            SingleWalletId = singleWalletId;
-            TryResumeSession = tryResumeSession;
-        }
-    }
+    // [Serializable]
+    // public class SmartWalletOptions
+    // {
+    //     [JsonProperty("sponsorGas")]
+    //     public bool SponsorGas;
+    //
+    //     [JsonProperty("factoryAddress")]
+    //     public string FactoryAddress;
+    //
+    //     [JsonProperty("accountAddressOverride")]
+    //     public string AccountAddressOverride;
+    //
+    //     [JsonProperty("entryPoint")]
+    //     public string EntryPoint;
+    //
+    //     [JsonProperty("bundlerUrl")]
+    //     public string BundlerUrl;
+    //
+    //     [JsonProperty("paymasterUrl")]
+    //     public string PaymasterUrl;
+    //
+    //     [JsonProperty("tokenPaymaster")]
+    //     public TokenPaymaster TokenPaymaster;
+    //
+    //     public SmartWalletOptions(
+    //         bool sponsorGas,
+    //         string factoryAddress = null,
+    //         string accountAddressOverride = null,
+    //         string entryPoint = null,
+    //         string bundlerUrl = null,
+    //         string paymasterUrl = null,
+    //         TokenPaymaster tokenPaymaster = TokenPaymaster.NONE
+    //     )
+    //     {
+    //         SponsorGas = sponsorGas;
+    //         FactoryAddress = factoryAddress;
+    //         AccountAddressOverride = accountAddressOverride;
+    //         EntryPoint = entryPoint;
+    //         BundlerUrl = bundlerUrl;
+    //         PaymasterUrl = paymasterUrl;
+    //         TokenPaymaster = tokenPaymaster;
+    //     }
+    // }
+    //
+    // [Serializable]
+    // public class ReownOptions
+    // {
+    //     [JsonProperty("projectId")]
+    //     public string ProjectId;
+    //
+    //     [JsonProperty("name")]
+    //     public string Name;
+    //
+    //     [JsonProperty("description")]
+    //     public string Description;
+    //
+    //     [JsonProperty("url")]
+    //     public string Url;
+    //
+    //     [JsonProperty("iconUrl")]
+    //     public string IconUrl;
+    //
+    //     [JsonProperty("includedWalletIds")]
+    //     public string[] IncludedWalletIds;
+    //
+    //     [JsonProperty("excludedWalletIds")]
+    //     public string[] ExcludedWalletIds;
+    //
+    //     [JsonProperty("featuredWalletIds")]
+    //     public string[] FeaturedWalletIds;
+    //
+    //     [JsonProperty("singleWalletId")]
+    //     public string SingleWalletId;
+    //
+    //     [JsonProperty("tryResumeSession")]
+    //     public bool TryResumeSession;
+    //
+    //     public ReownOptions(
+    //         string projectId = null,
+    //         string name = null,
+    //         string description = null,
+    //         string url = null,
+    //         string iconUrl = null,
+    //         string[] includedWalletIds = null,
+    //         string[] excludedWalletIds = null,
+    //         string[] featuredWalletIds = null,
+    //         string singleWalletId = null,
+    //         bool tryResumeSession = true
+    //     )
+    //     {
+    //         if (singleWalletId != null && (includedWalletIds != null || excludedWalletIds != null || featuredWalletIds != null))
+    //             throw new ArgumentException("singleWalletId cannot be used with includedWalletIds, excludedWalletIds, or featuredWalletIds.");
+    //
+    //         ProjectId = projectId ?? "35603765088f9ed24db818100fdbb6f9";
+    //         Name = name ?? "thirdweb";
+    //         Description = description ?? "thirdweb powered game";
+    //         Url = url ?? "https://thirdweb.com";
+    //         IconUrl = iconUrl ?? "https://thirdweb.com/favicon.ico";
+    //         IncludedWalletIds = includedWalletIds;
+    //         ExcludedWalletIds = excludedWalletIds;
+    //         FeaturedWalletIds = featuredWalletIds;
+    //         SingleWalletId = singleWalletId;
+    //         TryResumeSession = tryResumeSession;
+    //     }
+    // }
 }
