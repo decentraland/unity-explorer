@@ -31,7 +31,7 @@ namespace DCL.CharacterMotion.Animation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalculateBlendValue(float dt, float currentMovementBlend, MovementKind movementKind, float velocitySqrMagnitude, ICharacterControllerSettings settings)
         {
-            float animationBlendingSpeedLimit = SpeedLimit.GetAnimationBlendingSpeedLimit(settings, movementKind);
+            float animationBlendingSpeedLimit = MovementSpeedLimitHelper.GetAnimationBlendingSpeedLimit(settings, movementKind);
             float targetBlend = 0f;
 
             if (animationBlendingSpeedLimit > 0)

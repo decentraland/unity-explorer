@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCL.CharacterMotion.Utils
 {
-    public static class SpeedLimit
+    public static class MovementSpeedLimitHelper
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float GetMovementSpeedLimit(ICharacterControllerSettings settings, MovementKind movementKind) =>
