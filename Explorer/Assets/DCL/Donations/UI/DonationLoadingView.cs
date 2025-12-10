@@ -8,7 +8,7 @@ namespace DCL.Donations.UI
 {
     public class DonationLoadingView : MonoBehaviour
     {
-        private const string TITLE_FORMAT = "Preparing {0} MANA tip for";
+        private const string TITLE_FORMAT = "Preparing {0} MANA Tip for";
 
         [field: SerializeField] private TMP_Text titleText { get; set; } = null!;
         [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
