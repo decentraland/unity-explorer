@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -13,9 +14,13 @@ using DCL.EmotesWheel;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Optimization.Pools;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
+using DCL.SocialEmotes.UI;
+using DCL.UI.EphemeralNotifications;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -28,11 +33,13 @@ using System.Threading;
 using ECS.SceneLifeCycle;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
 using LoadOwnedEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadOwnedEmotesSystem;
 using LoadSceneEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadSceneEmotesSystem;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -61,6 +68,14 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly EphemeralNotificationsController ephemeralNotificationsController;
+
+        private Transform? socialPinsPoolParent = null;
+        private Transform poolParent;
+        private IObjectPool<SocialEmotePin> socialEmotePinsPool;
+        private SocialEmotesSettings socialEmotesSettings;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -82,7 +97,10 @@ namespace DCL.PluginSystem.Global
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IWeb3IdentityCache identityCache,
+            EphemeralNotificationsController ephemeralNotificationsController)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -104,6 +122,9 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
+            this.componentPoolsRegistry = componentPoolsRegistry;
+            this.identityCache = identityCache;
+            this.ephemeralNotificationsController = ephemeralNotificationsController;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -131,17 +152,23 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController, socialEmotesSettings);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
+
+            SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus, socialEmotesSettings, playerEntity);
+
+            SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            socialEmotesSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.SocialEmotesSettings, ct)).Value;
+
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
             // TODO: convert into an async operation so we don't increment the loading times at app's startup
@@ -164,6 +191,28 @@ namespace DCL.PluginSystem.Global
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 
             mvcManager.RegisterController(emotesWheelController);
+
+            await CreateSocialEmotePinPoolAsync(settings, ct);
+        }
+
+        private async UniTask CreateSocialEmotePinPoolAsync(EmoteSettings settings, CancellationToken ct)
+        {
+            SocialEmotePin pinPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SocialEmotePinPrefab, ct: ct)).Value;
+
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            poolParent = new GameObject("POOL_CONTAINER_SocialEmotePins").transform;
+            poolParent.parent = poolRoot;
+
+            socialEmotePinsPool = new ObjectPool<SocialEmotePin>(
+                () =>
+                {
+                    SocialEmotePin socialEmotePin = UnityEngine.Object.Instantiate(pinPrefab, Vector3.zero, Quaternion.identity, poolParent);
+                    socialEmotePin.gameObject.SetActive(false);
+                    return socialEmotePin;
+                },
+                actionOnRelease: pin => pin.gameObject.SetActive(false),
+                actionOnDestroy: UnityObjectUtils.SafeDestroy,
+                actionOnGet: pin => pin.gameObject.SetActive(true));
         }
 
         [Serializable]
@@ -173,6 +222,8 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+            [field: SerializeField] public SocialEmotePinRef SocialEmotePinPrefab { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<SocialEmotesSettings> SocialEmotesSettings { get; set; } = null!;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>
@@ -184,6 +235,12 @@ namespace DCL.PluginSystem.Global
             public class EmoteAudioSourceReference : AssetReferenceGameObject
             {
                 public EmoteAudioSourceReference(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class SocialEmotePinRef : ComponentReference<SocialEmotePin>
+            {
+                public SocialEmotePinRef(string guid) : base(guid) { }
             }
         }
     }

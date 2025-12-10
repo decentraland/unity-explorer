@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using System;
 
@@ -6,16 +7,25 @@ namespace DCL.Web3.Identities
     public partial class PlayerPrefsIdentityProvider : IWeb3IdentityCache
     {
         private readonly IWeb3IdentityJsonSerializer identitySerializer;
+        private readonly DecentralandEnvironment dclEnv;
 
         public event Action? OnIdentityCleared;
         public event Action? OnIdentityChanged;
+
+        private string GetIdentityKey()
+        {
+            return dclEnv == DecentralandEnvironment.Zone
+                ? DCLPrefKeys.WEB3_IDENTITY_ZONE
+                : DCLPrefKeys.WEB3_IDENTITY;
+        }
 
         public IWeb3Identity? Identity
         {
             get
             {
-                if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.WEB3_IDENTITY)) return null;
-                string json = DCLPlayerPrefs.GetString(DCLPrefKeys.WEB3_IDENTITY, string.Empty)!;
+                string key = GetIdentityKey();
+                if (!DCLPlayerPrefs.HasKey(key)) return null;
+                string json = DCLPlayerPrefs.GetString(key, string.Empty)!;
                 if (string.IsNullOrEmpty(json)) return null;
                 return identitySerializer.Deserialize(json);
             }
@@ -26,15 +36,16 @@ namespace DCL.Web3.Identities
                     Clear();
                 else
                 {
-                    DCLPlayerPrefs.SetString(DCLPrefKeys.WEB3_IDENTITY, identitySerializer.Serialize(value));
+                    DCLPlayerPrefs.SetString(GetIdentityKey(), identitySerializer.Serialize(value));
                     OnIdentityChanged?.Invoke();
                 }
             }
         }
 
-        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer)
+        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, DecentralandEnvironment dclEnv)
         {
             this.identitySerializer = identitySerializer;
+            this.dclEnv = dclEnv;
         }
 
         public void Dispose()
@@ -44,7 +55,7 @@ namespace DCL.Web3.Identities
 
         public void Clear()
         {
-            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.WEB3_IDENTITY);
+            DCLPlayerPrefs.DeleteKey(GetIdentityKey());
             OnIdentityCleared?.Invoke();
         }
     }
