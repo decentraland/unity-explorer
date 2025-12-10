@@ -335,7 +335,11 @@ namespace DCL.Profiles
                 URLAddress url = GetUrl(id, fromCatalyst);
 
                 // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy ?? CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(
+                    new CommonArguments(url, retryPolicy ?? CatalystRetryPolicy.VALUE),
+                    ct,
+                    ReportCategory.PROFILE,
+                    suppressErrors: true);
 
                 using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),

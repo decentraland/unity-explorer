@@ -390,10 +390,8 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection), PanelsSharingSpace.Chat);
         }
 
-        private void OnSmartWearablesButtonHover()
-        {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
-        }
+        private void OnSmartWearablesButtonHover() =>
+            sharedSpaceManager.ShowAsync<ControllerNoData>(PanelsSharingSpace.SmartWearables, panelsToIgnore: PanelsSharingSpace.Chat).Forget();
 
         private void OnSmartWearablesButtonUnhover()
         {
