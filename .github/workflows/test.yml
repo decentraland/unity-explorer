@@ -33,6 +33,148 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
+  lint:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Move Docker data-root to /mnt/docker
+        run: |
+          sudo systemctl stop docker
+          sudo mkdir -p /mnt/docker
+          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
+          docker info | sed -n '1,40p'
+          df -h /mnt /mnt/docker
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          submodules: recursive
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v4
+        id: lfs-cache-lint
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
+
+      - name: Fix SSH permissions for Unity
+        run: |
+          chmod 600 /home/runner/.ssh/*
+          rm -f /home/runner/.ssh/config
+
+      - name: Read Unity version from ProjectVersion.txt
+        id: unity-version-lint
+        run: |
+          verFile="Explorer/ProjectSettings/ProjectVersion.txt"
+          ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
+          echo "version=$ver" >> $GITHUB_OUTPUT
+
+      - name: Set image names
+        id: img-lint
+        run: |
+          version="${{ steps.unity-version-lint.outputs.version }}"
+          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
+          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
+          tag="ubuntu-$version-$flavor-$imgVer"
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          upstream="unityci/editor:$tag"
+          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "upstream=$upstream" >> $GITHUB_OUTPUT
+          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Restore Unity image from GHCR
+        id: restore-image-lint
+        continue-on-error: true
+        run: |
+          docker pull "${{ steps.img-lint.outputs.ghcr }}"
+
+      - name: Download from Docker Hub and upload to GHCR (if missing)
+        if: steps.restore-image-lint.outcome == 'failure'
+        run: |
+          upstream="${{ steps.img-lint.outputs.upstream }}"
+          ghcr="${{ steps.img-lint.outputs.ghcr }}"
+          docker pull $upstream
+          docker tag  $upstream $ghcr
+          docker push $ghcr
+
+      # C# Linting using JetBrains ReSharper CLI
+
+      - name: Generate solution inside Unity Docker container
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+            -v /home/runner/.ssh:/root/.ssh \
+            -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+            -w /workspace \
+            ${{ steps.img-lint.outputs.ghcr }} \
+            unity-editor \
+            -batchmode \
+            -nographics \
+            -projectPath /workspace/Explorer \
+            -executeMethod UnityEditor.SyncVS.SyncSolution \
+            -quit \
+            -logFile -
+
+      - name: Download ReSharper Command Line Tools
+        run: |
+          wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
+          unzip -q rsharp.zip -d rsharp
+          chmod +x rsharp/*.sh
+
+      - name: Run ReSharper InspectCode (static analysis)
+        run: |
+          rsharp/inspectcode.sh Explorer/Explorer.sln \
+            --no-build \
+            --verbosity=INFO \
+            --properties:Configuration=Debug \
+            --disable-settings-layers:SolutionPersonal \
+            --output=InspectCodeReport.json
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: csharp-lint-reports
+          path: |
+            InspectCodeReport.json
+            # CodeStyleReport.xml
+
+      # END: C# Linting using JetBrains ReSharper CLI
+
+
   test:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
     name: Test
@@ -183,3 +325,12 @@ jobs:
           name: Test results (play mode & edit mode)
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error
+
+  watchdog:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: |
+      needs.lint.result == 'failure' ||
+      needs.test.result == 'failure'
+    steps:
+      - run: exit 1

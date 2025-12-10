@@ -2,7 +2,8 @@
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugLongMarkerElement : DebugElementBase<DebugLongMarkerElement, DebugLongMarkerDef>, INotifyValueChanged<ulong>
+    [UxmlElement]
+    public partial class DebugLongMarkerElement : DebugElementBase<DebugLongMarkerElement, DebugLongMarkerDef>, INotifyValueChanged<ulong>
     {
         private Label cachedLabel;
 
@@ -51,7 +52,5 @@ namespace DCL.DebugUtilities.Views
                     return $"{value}";
             }
         }
-
-        public new class UxmlFactory : UxmlFactory<DebugLongMarkerElement> { }
     }
 }

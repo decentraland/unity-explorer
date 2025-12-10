@@ -17,24 +17,24 @@ namespace DCL.Landscape
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
 
+        // Late init
+        private TerrainGenerationData terrainGenData = null!;
+        private TerrainFactory factory = null!;
+        private TerrainBoundariesGenerator boundariesGenerator = null!;
+        private Transform rootGo = null!;
+        private LandscapeData landscapeData = null!;
+
         public int ParcelSize { get; private set; }
-        private TerrainGenerationData terrainGenData;
         public TreeData? Trees { get; private set; }
-
-        private TerrainFactory factory;
-        private TerrainBoundariesGenerator boundariesGenerator;
-
-        private Transform rootGo;
         public bool IsInitialized { get; private set; }
         public bool IsTerrainShown { get; private set; }
-        private LandscapeData landscapeData;
         public TerrainModel? TerrainModel { get; private set; }
         public Texture2D? OccupancyMap { get; private set; }
         public NativeArray<byte> OccupancyMapData { get; private set; }
         public int OccupancyMapSize { get; private set; }
         public int OccupancyFloor { get; private set; }
         public float MaxHeight { get; private set; }
-        public IReadOnlyList<Transform> Cliffs { get; private set; }
+        public IReadOnlyList<Transform> Cliffs { get; private set; } = Array.Empty<Transform>();
 
         public void Dispose()
         {
