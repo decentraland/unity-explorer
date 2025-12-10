@@ -8,14 +8,17 @@ namespace DCL.AuthenticationScreenFlow
     {
         [SerializeField] private TMP_Text text;
 
+        private FontStyles prevFontStyle;
+
         public void OnPointerEnter(PointerEventData eventData)
         {
-            text.SetText($"<u>{text.text}</u>");
+            prevFontStyle = text.fontStyle;
+            text.fontStyle = FontStyles.Underline;
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            text.SetText(text.text.Replace("<u>", "").Replace("</u>", ""));
+            text.fontStyle = prevFontStyle;
         }
     }
 }
