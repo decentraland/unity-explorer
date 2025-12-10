@@ -471,7 +471,7 @@ namespace DCL.Communities.CommunitiesCard
                 communityData = getCommunityResult.Value.data;
 
                 // Check notifications opt-out status
-                communityData.isSubscribedToNotifications = await CheckCommunityNotificationOptOutAsync(communityId, ct);
+                communityData.isSubscribedToNotifications = await IsSubscribedToCommunityNotificationsAsync(communityId, ct);
 
                 // Check if we have a pending invite to the community
                 bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
@@ -530,7 +530,7 @@ namespace DCL.Communities.CommunitiesCard
                 return false;
             }
 
-            async UniTask<bool> CheckCommunityNotificationOptOutAsync(string commId, CancellationToken ct)
+            async UniTask<bool> IsSubscribedToCommunityNotificationsAsync(string commId, CancellationToken ct)
             {
                 var checkCommunityNotificationOptOutResult = await communitiesDataProvider.CheckCommunityNotificationOptOutAsync(commId, ct)
                                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
