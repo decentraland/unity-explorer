@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using System;
@@ -52,7 +53,7 @@ namespace DCL.Web3.Identities
         {
             private readonly IWeb3IdentityCache origin;
 
-            public Default(IWeb3AccountFactory? web3AccountFactory = null)
+            public Default(IWeb3AccountFactory? web3AccountFactory = null, DecentralandEnvironment dclEnv = DecentralandEnvironment.Org)
             {
                 origin = new LogWeb3IdentityCache(
                     new ProxyIdentityCache(
@@ -60,7 +61,8 @@ namespace DCL.Web3.Identities
                         new PlayerPrefsIdentityProvider(
                             new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                                 web3AccountFactory ?? new Web3AccountFactory()
-                            )
+                            ),
+                            dclEnv
                         )
                     )
                 );
