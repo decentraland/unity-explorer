@@ -3,10 +3,10 @@
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
-    public struct CheckCommunityNotificationOptOutResponse
+    public readonly struct CheckCommunityNotificationOptOutResponse
     {
-        public string scope;
-        public string scopeId;
-        public bool optedOut;
+        public readonly string scope;
+        public readonly string scopeId;
+        public readonly bool optedOut;
     }
 }
