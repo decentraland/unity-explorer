@@ -160,7 +160,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (result.Succeeded)
             {
-                if (emote.IsSocial && bodyShape.Value == BodyShape.MALE)
+                if (emote.IsSocial && bodyShape.Value == BodyShape.MALE) // Note: We use male body shape only because actually there is only one version of the emote, although there are 2 copies in the metadata due to legacy code, that should be refactored
                 {
                     string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
 
