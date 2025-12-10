@@ -177,7 +177,7 @@ namespace Global.Dynamic
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
 
             var web3AccountFactory = new Web3AccountFactory();
-            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();

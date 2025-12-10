@@ -1,25 +1,27 @@
 using DCL.Optimization.PerformanceBudgeting;
+using System;
+using Unity.Collections;
 
 namespace DCL.Optimization
 {
     public interface IJsSourcesCache
     {
-        void Cache(string path, string sourceCode);
+        public void Cache(string path, ReadOnlySpan<byte> sourceCode);
 
-        bool TryGet(string path, out string? sourceCode);
+        public bool TryGet(string path, out string? sceneCode);
 
-        void Unload(IPerformanceBudget budgetToUse);
+        public void Unload(IPerformanceBudget budgetToUse);
 
-        class Null : IJsSourcesCache
+        public class Null : IJsSourcesCache
         {
-            public void Cache(string path, string sourceCode)
+            public void Cache(string path, ReadOnlySpan<byte> sourceCode)
             {
                 //ignore
             }
 
-            public bool TryGet(string path, out string? sourceCode)
+            public bool TryGet(string path, out string? sceneCode)
             {
-                sourceCode = null;
+                sceneCode = "";
                 return false;
             }
 
