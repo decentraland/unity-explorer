@@ -61,23 +61,19 @@ namespace DCL.UI.SharedSpaceManager
         private void OnQuickActionEmotePlayed()
         {
             //if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
-              //  lastQuickEmoteTime = UnityEngine.Time.time;
+            //  lastQuickEmoteTime = UnityEngine.Time.time;
         }
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
         {
             if (isFriendsFeatureEnabled)
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
+
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
         }
 
         public void Dispose()
         {
-            if (isFriendsFeatureEnabled)
-                dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
-
-            dclInput.Shortcuts.EmoteWheel.canceled -= OnInputShortcutsEmoteWheelPerformedAsync;
-            dclInput.Shortcuts.Controls.performed -= OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
 
             mvcManager.OnViewShowed -= OnMvcViewShowed;
@@ -141,6 +137,7 @@ namespace DCL.UI.SharedSpaceManager
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
                             isTransitioning = false;
+
                         break;
                     }
                     case PanelsSharingSpace.Friends:
@@ -157,13 +154,14 @@ namespace DCL.UI.SharedSpaceManager
                             // If it is transitioning, it's due to another panel was shown and that made Friends hide
                             // In order to not execute 2 code paths at the same time, it waits for new operation to finish and then
                             // continues, showing the chat
-                            if(isTransitioning)
+                            if (isTransitioning)
                                 await UniTask.WaitWhile(() => isTransitioning);
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainSharedAreaController>()
-                                    .OnShownInSharedSpaceAsync(cts.Token, new ChatMainSharedAreaControllerShowParams(false));
+                                await registrations[PanelsSharingSpace.Chat]
+                                     .GetPanel<ChatMainSharedAreaController>()
+                                     .OnShownInSharedSpaceAsync(cts.Token, new ChatMainSharedAreaControllerShowParams(false));
                         }
                         else
                             isTransitioning = false;
@@ -217,10 +215,7 @@ namespace DCL.UI.SharedSpaceManager
 
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
 
-            if (show)
-            {
-                await ShowAsync(panel, parameters);
-            }
+            if (show) { await ShowAsync(panel, parameters); }
             else
             {
                 if (panel == PanelsSharingSpace.Chat)
@@ -230,17 +225,8 @@ namespace DCL.UI.SharedSpaceManager
 
                     if (ctr != null)
                     {
-                        if (parameters is ChatMainSharedAreaControllerShowParams
-                            {
-                                ForceFocusFromShortcut: true
-                            } )
-                        {
-                            ctr.SetFocusState();
-                        }
-                        else
-                        {
-                            ctr.ToggleState();
-                        }
+                        if (parameters is ChatMainSharedAreaControllerShowParams { ForceFocusFromShortcut: true }) { ctr.SetFocusState(); }
+                        else { ctr.ToggleState(); }
                     }
 
                     return;
@@ -257,13 +243,14 @@ namespace DCL.UI.SharedSpaceManager
         {
             foreach (KeyValuePair<PanelsSharingSpace, PanelRegistration> controllerInSharedSpace in registrations)
             {
-                if(!controllerInSharedSpace.Value.panel.IsVisibleInSharedSpace)
+                if (!controllerInSharedSpace.Value.panel.IsVisibleInSharedSpace)
                     continue;
 
                 bool shouldIgnore = false;
+
                 for (int i = 0; i < panelsToIgnore.Length; i++)
                 {
-                    if(panelsToIgnore[i] != controllerInSharedSpace.Key)
+                    if (panelsToIgnore[i] != controllerInSharedSpace.Key)
                         continue;
 
                     shouldIgnore = true;
@@ -287,7 +274,7 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
             //if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible && !isChatBlockerVisible)
-              //  await ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            //  await ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
         }
 
 #region Registration
@@ -378,69 +365,6 @@ namespace DCL.UI.SharedSpaceManager
         }
 #endregion
 
-#region Shortcut handlers
 
-        private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
-        {
-            if (IsEmoteWheelLocked())
-            {
-                // Reset time, we only want to stop one action.
-                lastQuickEmoteTime = 0;
-                return;
-            }
-
-            //if (!isExplorePanelVisible)
-                //await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
-        }
-
-        private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)
-        {
-            /*var panel = PanelsSharingSpace.Controls;
-
-            // For hiding the panel, use standard logic.
-            if (registrations[panel].panel.IsVisibleInSharedSpace)
-            {
-                await ToggleVisibilityAsync(PanelsSharingSpace.Controls, new ControllerNoData());
-            }
-            else
-            {
-                await ShowAsync(PanelsSharingSpace.Controls, new ControllerNoData(),
-                    PanelsSharingSpace.Chat, PanelsSharingSpace.Explore);
-            }*/
-        }
-
-        private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
-        {
-            /*if (!isExplorePanelVisible && isFriendsFeatureEnabled)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());*/
-        }
-
-        private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)
-        {
-            // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            /*if (isTransitioning)
-                return;
-
-            Entity camera = ecsWorld.CacheCamera();
-
-            if (!ecsWorld.Has<InWorldCameraComponent>(camera))
-                await HideAllAsync(PanelsSharingSpace.Chat);
-
-            const string SOURCE_SHORTCUT = "Shortcut";
-            ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
-            // Clue: It is handled by ToggleInWorldCameraActivitySystem*/
-        }
-#endregion
-
-        /// <summary>
-        /// Emote wheel is locked when quick emote action was executed, but not when wheel is already visible, in that
-        /// case we want to hide it.
-        /// </summary>
-        private bool IsEmoteWheelLocked()
-        {
-            /*bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
-            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > UnityEngine.Time.time;*/
-            return false;
-        }
     }
-}
+    }

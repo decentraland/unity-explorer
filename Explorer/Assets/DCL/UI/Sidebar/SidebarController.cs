@@ -189,7 +189,7 @@ namespace DCL.UI.Sidebar
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
             if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
-            if (includeFriends) viewInstance.friendsButton.Button.onClick.AddListener(OnFriendsButtonClickedAsync);
+            if (includeFriends) viewInstance.friendsButton.Button.onClick.AddListener(OnFriendsButtonClicked);
         }
 
         private void OnOpenCameraButtonClicked()
@@ -261,14 +261,6 @@ namespace DCL.UI.Sidebar
                 case FriendsPanelController:
                     viewInstance?.friendsButton.Deselect(); break;
             }
-
-
-
-            // Panels that are controllers and can be opened using shortcuts
-            /*if (closedController is EmotesWheelController)
-                viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
-            else if (closedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);*/
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
@@ -367,11 +359,9 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.emotesWheelButton, mvcManager.ShowAsync(EmotesWheelController.IssueCommand())).Forget();
         }
 
-        private async void OnFriendsButtonClickedAsync()
+        private void OnFriendsButtonClicked()
         {
-            await mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)));
-
-            //await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS));
+            OpenPanelAsync(viewInstance!.friendsButton, mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)))).Forget();
         }
 
         private void OnMarketplaceCreditsButtonClicked()

@@ -5,7 +5,6 @@ using DCL.Friends.UI.Requests;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3;
@@ -21,9 +20,8 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
         private readonly IFriendsService friendsService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly FriendsPanelController friendsPanelController;
 
-        private FriendsPanelController? friendsPanelController;
         private CancellationTokenSource? friendRequestReceivedCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -34,14 +32,12 @@ namespace DCL.Friends.UI.FriendPanel
             IMVCManager mvcManager,
             IPassportBridge passportBridge,
             IFriendsService friendsService,
-            ISharedSpaceManager sharedSpaceManager,
             FriendsPanelController friendsPanelController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
             this.friendsService = friendsService;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.friendsPanelController = friendsPanelController;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
@@ -89,11 +85,10 @@ namespace DCL.Friends.UI.FriendPanel
                 switch (friendshipStatus)
                 {
                     case FriendshipStatus.FRIEND:
-                        if (friendsPanelController!.State != ControllerState.ViewHidden)
-                            friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
+                        if (friendsPanelController.State != ControllerState.ViewHidden)
+                            friendsPanelController.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
                         else
-                            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)).Forget();
-
+                            mvcManager.ShowAndForget(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)), ct);
                         break;
                     case FriendshipStatus.REQUEST_RECEIVED:
                         mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams

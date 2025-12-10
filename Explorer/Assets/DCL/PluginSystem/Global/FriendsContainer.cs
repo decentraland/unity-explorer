@@ -13,7 +13,6 @@ using DCL.Friends.UI.Requests;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connectivity;
-using DCL.NotificationsBus;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
@@ -34,6 +33,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly DCLInput dclInput;
 
         private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
@@ -108,9 +108,9 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
-            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.dclInput = DCLInput.Instance;
 
             friendsCache = new FriendsCache();
 
@@ -147,15 +147,13 @@ namespace DCL.PluginSystem.Global
                 voiceChatOrchestrator
             );
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
-
             mvcManager.RegisterController(friendsPanelController);
 
-            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
+            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(
+                () => mainUIView.SidebarView.PersistentFriendsPanelOpener,
                 mvcManager,
                 passportBridge,
                 friendsService,
-                sharedSpaceManager,
                 friendsPanelController);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
@@ -174,6 +172,7 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
             syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
+            friendsCache.Clear();
             friendsService.Dispose();
         }
 
@@ -207,6 +206,8 @@ namespace DCL.PluginSystem.Global
 
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
 
+            dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformed;
+
             if (includeUserBlocking)
                 await InitUserBlockingAsync();
 
@@ -227,6 +228,15 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(blockUserPromptController);
             }
         }
+
+        private void OnInputShortcutsFriendPanelPerformed(InputAction.CallbackContext _)
+        {
+            if (friendsPanelController.State != ControllerState.ViewHidden)
+                friendsPanelController.CloseFriendsPanel();
+            else
+                mvcManager.ShowAndForget(FriendsPanelController.IssueCommand(new FriendsPanelParameter()));
+        }
+
 
         private void PreWarmFriends(LoadingStatus.LoadingStage stage)
         {
@@ -282,7 +292,7 @@ namespace DCL.PluginSystem.Global
             {
                 LaunchSubscriptions(ct);
 
-                friendsPanelController?.Reset();
+                friendsPanelController.Reset();
             }
         }
 
@@ -302,13 +312,13 @@ namespace DCL.PluginSystem.Global
     public class FriendsPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField]
-        public FriendRequestAssetReference FriendRequestPrefab { get; private set; }
+        public FriendRequestAssetReference FriendRequestPrefab { get; private set; } = null!;
 
         [field: SerializeField]
-        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; private set; }
+        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; private set; } = null!;
 
         [field: SerializeField]
-        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; private set; }
+        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; private set; } = null!;
 
         [Serializable]
         public class FriendRequestAssetReference : ComponentReference<FriendRequestView>

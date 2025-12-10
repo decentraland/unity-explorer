@@ -21,7 +21,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
-    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IControllerInSharedSpace<FriendsPanelView, FriendsPanelParameter>, IBlocksChat
+    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IBlocksChat
     {
         public enum FriendsPanelTab
         {
@@ -51,8 +51,6 @@ namespace DCL.Friends.UI.FriendPanel
         public event Action? FriendsPanelOpened;
         public event Action<string>? OnlineFriendClicked;
         public event Action<string, Vector2Int>? JumpToFriendClicked;
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
@@ -182,9 +180,6 @@ namespace DCL.Friends.UI.FriendPanel
             chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
         }
 
-        private void CloseFriendsPanel(InputAction.CallbackContext obj) =>
-            closeTaskCompletionSource.TrySetResult();
-
         protected override void OnViewShow()
         {
             FriendsPanelOpened?.Invoke();
@@ -203,15 +198,34 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.OnViewInstantiated();
 
-            viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
-            viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
-            viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
-            viewInstance.CloseButton.onClick.AddListener(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
-            viewInstance.BackgroundCloseButton.onClick.AddListener(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
+            viewInstance!.FriendsTabButton.onClick.AddListener(OnFriendsTabButtonClicked);
+            viewInstance.RequestsTabButton.onClick.AddListener(OnRequestsTabButtonClicked);
+            viewInstance.BlockedTabButton.onClick.AddListener(OnBlockedTabButtonClicked);
+            viewInstance.CloseButton.onClick.AddListener(CloseFriendsPanel);
+            viewInstance.BackgroundCloseButton.onClick.AddListener(CloseFriendsPanel);
 
             viewInstance.BlockedTabButton.gameObject.SetActive(includeUserBlocking);
-
             ToggleTabs(FriendsPanelTab.FRIENDS);
+        }
+
+        private void OnFriendsTabButtonClicked()
+        {
+            ToggleTabs(FriendsPanelTab.FRIENDS);
+        }
+
+        private void OnRequestsTabButtonClicked()
+        {
+            ToggleTabs(FriendsPanelTab.REQUESTS);
+        }
+
+        private void OnBlockedTabButtonClicked()
+        {
+            ToggleTabs(FriendsPanelTab.BLOCKED);
+        }
+
+        public void CloseFriendsPanel()
+        {
+            closeTaskCompletionSource.TrySetResult();
         }
 
         private void FriendRequestCountChanged(int count)
@@ -222,7 +236,7 @@ namespace DCL.Friends.UI.FriendPanel
         internal void ToggleTabs(FriendsPanelTab tab)
         {
             viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
-            viewInstance!.FriendsSection.SetActive(tab == FriendsPanelTab.FRIENDS);
+            viewInstance.FriendsSection.SetActive(tab == FriendsPanelTab.FRIENDS);
             viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.REQUESTS);
             viewInstance.RequestsSection.SetActive(tab == FriendsPanelTab.REQUESTS);
             viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
@@ -231,7 +245,6 @@ namespace DCL.Friends.UI.FriendPanel
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
         }
     }

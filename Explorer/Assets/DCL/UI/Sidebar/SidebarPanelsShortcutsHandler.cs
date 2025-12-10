@@ -5,6 +5,7 @@ using DCL.FeatureFlags;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.UI.Sidebar
@@ -32,7 +33,6 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS))
-                dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
 
             dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
@@ -45,16 +45,10 @@ namespace DCL.UI.Sidebar
             //  await ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
         }
 
+
         private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)
         {
             //mvcManager.ToggleAsync(ControlsPanelController.IssueCommand()).Forget();
-        }
-
-
-        private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
-        {
-            /*if (!isExplorePanelVisible && isFriendsFeatureEnabled)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());*/
         }
 
 
