@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly DonationsService donationsService;
+        private readonly IDonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Entity playerEntity;
@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
 
         public DonationsPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
-            DonationsService donationsService,
+            IDonationsService donationsService,
             IProfileRepository profileRepository,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Entity playerEntity,

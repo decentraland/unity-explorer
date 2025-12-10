@@ -75,7 +75,7 @@ namespace DCL.Minimap
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly DonationsService donationsService;
+        private readonly IDonationsService donationsService;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -113,7 +113,7 @@ namespace DCL.Minimap
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
-            DonationsService donationsService)
+            IDonationsService donationsService)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;

@@ -29,7 +29,7 @@ namespace DCL.Donations.UI
             InputMapComponent.Kind.IN_WORLD_CAMERA,
         };
 
-        private readonly DonationsService donationsService;
+        private readonly IDonationsService donationsService;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly decimal[] recommendedDonationAmount;
@@ -46,7 +46,7 @@ namespace DCL.Donations.UI
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public DonationsPanelController(ViewFactoryMethod viewFactory,
-            DonationsService donationsService,
+            IDonationsService donationsService,
             IProfileRepository profileRepository,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
@@ -109,8 +109,6 @@ namespace DCL.Donations.UI
             {
                 viewInstance!.ShowLoading(currentCreatorProfile, creatorAddress, amount, profileRepositoryWrapper);
 
-                // await UniTask.Delay(5000, cancellationToken: panelLifecycleCts.Token);
-                // bool success = Random.Range(0, 100) > 49;
                 bool success = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
 
                 if (success)

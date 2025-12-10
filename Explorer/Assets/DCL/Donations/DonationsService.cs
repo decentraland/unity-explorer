@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace DCL.Donations
 {
-    public class DonationsService : IDisposable
+    public class DonationsService : IDonationsService
     {
         // https://contracts.decentraland.org/addresses.json
         // Prod Matic MANA contract

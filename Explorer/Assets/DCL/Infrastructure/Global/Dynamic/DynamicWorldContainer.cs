@@ -116,6 +116,7 @@ using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -541,10 +542,12 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
-            var donationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
+
+            var coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
                 staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
                 placesAPIService, bootstrapContainer.Environment,
                 appArgs);
+            IDonationsService donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),

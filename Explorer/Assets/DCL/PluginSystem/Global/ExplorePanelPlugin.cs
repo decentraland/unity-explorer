@@ -155,7 +155,7 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
-        private readonly DonationsService donationsService;
+        private readonly IDonationsService donationsService;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -217,7 +217,7 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache,
-            DonationsService donationsService)
+            IDonationsService donationsService)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;

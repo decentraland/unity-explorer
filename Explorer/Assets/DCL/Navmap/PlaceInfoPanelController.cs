@@ -52,7 +52,7 @@ namespace DCL.Navmap
         private readonly MultiStateButtonController homeButton;
         private readonly List<EventElementView> eventElements = new ();
         private readonly CameraReelGalleryController cameraReelGalleryController;
-        private readonly DonationsService donationsService;
+        private readonly IDonationsService donationsService;
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
@@ -77,7 +77,7 @@ namespace DCL.Navmap
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
-            DonationsService donationsService,
+            IDonationsService donationsService,
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
