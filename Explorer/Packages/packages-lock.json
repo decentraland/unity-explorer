@@ -88,11 +88,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/GRD",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b6856bf84e1c479803c2f36422aa024e99611c12"
+      "hash": "4f35d54009bdbd969e6617863c6d74b85d6423ab"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
