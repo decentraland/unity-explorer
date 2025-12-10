@@ -88,6 +88,16 @@ namespace DCL.Communities
             return result;
         }
 
+        public bool GetCommunityIdFromDeepLink(out string? communityId)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.COMMUNITY, out communityId) && !string.IsNullOrEmpty(communityId))
+                return true;
+
+            communityId = null;
+            return false;
+
+        }
+
         private void OnIdentityCacheChanged() =>
             storedResult = null;
     }

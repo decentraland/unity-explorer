@@ -13,6 +13,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
@@ -57,6 +58,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
+        private readonly CommunityDataService communityDataService;
+        private readonly ILoadingStatus loadingStatus;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
         private readonly CommunitiesBrowserStateService browserStateService;
@@ -90,7 +93,9 @@ namespace DCL.Communities.CommunitiesBrowser
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            CommunityDataService communityDataService,
+            ILoadingStatus loadingStatus)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -102,6 +107,8 @@ namespace DCL.Communities.CommunitiesBrowser
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.orchestrator = orchestrator;
+            this.communityDataService = communityDataService;
+            this.loadingStatus = loadingStatus;
 
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
@@ -147,6 +154,8 @@ namespace DCL.Communities.CommunitiesBrowser
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
+
+            CheckCommunityDeepLinkAsync().Forget();
         }
 
         public void Dispose()
@@ -905,6 +914,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!result.Success || !result.Value)
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MANAGE_REQUEST_RECEIVED_ERROR_TEXT));
             }
+        }
+
+        private async UniTaskVoid CheckCommunityDeepLinkAsync(CancellationToken ct = default)
+        {
+            if (!CommunitiesFeatureAccess.Instance.GetCommunityIdFromDeepLink(out string? communityId))
+                return;
+
+            await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+            communityDataService.ShowCommunityDeepLinkNotification(communityId!);
         }
     }
 
