@@ -124,7 +124,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.decentraland.{ENV}/social/communities/{{0}}/raw-thumbnail.png",
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
-                DecentralandUrl.CommunityProfileLink => $"https://decentraland.{ENV}/social/communities/{{0}}",
+                DecentralandUrl.CommunityProfileLink => $"https://decentraland.{ENV}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
                 DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
                 DecentralandUrl.DecentralandLambdasOverride => LAMBDAS_URL_OVERRIDE,
                 DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,
