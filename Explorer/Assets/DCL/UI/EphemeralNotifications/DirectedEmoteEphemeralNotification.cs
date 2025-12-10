@@ -9,9 +9,9 @@ namespace DCL.SocialEmotes.UI
         [SerializeField]
         private string textTemplate = "invited you to <b>{0}</b> with them";
 
-        public override void SetData(Profile sender, string[] textValues)
+        public override void SetData(Profile.CompactInfo compactInfo, string[] textValues)
         {
-            base.SetData(sender, textValues);
+            base.SetData(compactInfo, textValues);
 
             label.text = string.Format(textTemplate, textValues[0]);
         }

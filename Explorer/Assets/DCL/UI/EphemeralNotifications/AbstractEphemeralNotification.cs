@@ -25,7 +25,7 @@ namespace DCL.UI.EphemeralNotifications
         /// </summary>
         /// <param name="sender">Profile data of the user that sent the notification.</param>
         /// <param name="textValues">The values used to compose the label of the notification.</param>
-        public virtual void SetData(Profile sender, string[] textValues)
+        public virtual void SetData(Profile.CompactInfo sender, string[] textValues)
         {
             usernameElement.Setup(sender);
         }

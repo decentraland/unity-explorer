@@ -10,7 +10,7 @@ namespace DCL.SocialEmotes.UI
         [SerializeField]
         private ProfilePictureView profilePictureView;
 
-        public override void SetData(Profile sender, string[] textValues)
+        public override void SetData(Profile.CompactInfo sender, string[] textValues)
         {
             base.SetData(sender, textValues);
 

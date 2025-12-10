@@ -66,7 +66,7 @@ namespace DCL.Friends.UI.PushNotifications
 
             async UniTaskVoid ResolveThumbnailAndShowAsync(CancellationToken ct)
             {
-                await profileRepositoryWrapper.GetProfileThumbnailAsync(friendProfile.FacePictureUrl, ct);
+                await profileRepositoryWrapper.GetProfileThumbnailAsync(friendProfile.FaceSnapshotUrl, ct);
 
                 ephemeralNotificationsController.AddNotificationAsync("FriendOnlineEphemeralNotification", friendProfile.Address, null).Forget();
             }
