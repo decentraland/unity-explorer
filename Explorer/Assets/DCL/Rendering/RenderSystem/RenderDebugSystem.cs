@@ -18,18 +18,23 @@ namespace DCL.Rendering.RenderSystem
         private DebugRenderSystem(World world, IDebugContainerBuilder debugBuilder)
             : base(world)
         {
-            bEnableResidentDrawer = new ElementBinding<bool>(false);
-            bEnableGPUOcclusion = new ElementBinding<bool>(false);
+            UniversalRenderPipelineAsset urpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (urpAsset)
+            {
+                bEnableResidentDrawer = new ElementBinding<bool>(urpAsset.gpuResidentDrawerMode == GPUResidentDrawerMode.InstancedDrawing ? true : false);
+                bEnableGPUOcclusion = new ElementBinding<bool>(urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras);
 
-            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.RENDERING)
+                debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.RENDERING)
+                         ?
                         .AddControl(
-                             new DebugConstLabelDef("Enabled GPU Resident Drawer"),
-                             new DebugToggleDef(bEnableResidentDrawer)
-                         )
-                        .AddControl(
-                             new DebugConstLabelDef("Enabled GPU Occlusion - Requires GRD"),
-                             new DebugToggleDef(bEnableGPUOcclusion)
-                         );
+                                 new DebugConstLabelDef("Enabled GPU Resident Drawer"),
+                                 new DebugToggleDef(bEnableResidentDrawer)
+                             )
+                            .AddControl(
+                                 new DebugConstLabelDef("Enabled GPU Occlusion - Requires GRD"),
+                                 new DebugToggleDef(bEnableGPUOcclusion)
+                             );
+            }
         }
 
         protected override void Update(float t)
@@ -44,8 +49,12 @@ namespace DCL.Rendering.RenderSystem
         private bool EnableResidentDrawer(bool _bEnableResidentDrawer)
         {
             UniversalRenderPipelineAsset urpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-            urpAsset.gpuResidentDrawerMode = _bEnableResidentDrawer ? GPUResidentDrawerMode.InstancedDrawing : GPUResidentDrawerMode.Disabled;
-            return urpAsset.gpuResidentDrawerMode == GPUResidentDrawerMode.InstancedDrawing;
+            if (urpAsset)
+            {
+                urpAsset.gpuResidentDrawerMode = _bEnableResidentDrawer ? GPUResidentDrawerMode.InstancedDrawing : GPUResidentDrawerMode.Disabled;
+                return urpAsset.gpuResidentDrawerMode == GPUResidentDrawerMode.InstancedDrawing;
+            }
+            return false;
         }
 
         private void EnableGPUOcclusion(bool _bGRDEnabled, bool _bEnableGPUOcclusion)
@@ -53,7 +62,10 @@ namespace DCL.Rendering.RenderSystem
             if (_bGRDEnabled)
             {
                 UniversalRenderPipelineAsset urpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-                urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = _bEnableGPUOcclusion;
+                if (urpAsset)
+                {
+                    urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = _bEnableGPUOcclusion;
+                }
             }
         }
     }
