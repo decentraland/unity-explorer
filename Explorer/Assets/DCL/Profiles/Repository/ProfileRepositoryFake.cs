@@ -26,8 +26,9 @@ namespace DCL.Profiles
             return UniTask.CompletedTask;
         }
 
-        public UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool delayBatchResolution,
-            bool getFromCacheIfPossible, IProfileRepository.BatchBehaviour batchBehaviour, ProfileTier.Kind tier, IPartitionComponent? partition = null)
+        public UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
+            bool getFromCacheIfPossible,
+            IProfileRepository.FetchBehaviour fetchBehaviour, ProfileTier.Kind tier, IPartitionComponent? partition = null)
         {
             var key = new Key(id, version);
 

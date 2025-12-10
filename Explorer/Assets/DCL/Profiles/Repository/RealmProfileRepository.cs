@@ -21,6 +21,7 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
+using Utility;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
 namespace DCL.Profiles
@@ -28,9 +29,6 @@ namespace DCL.Profiles
     public class RealmProfileRepository : IBatchedProfileRepository
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
-
-        private static readonly ThreadSafeListPool<Profile> SINGLE_PROFILE_POOL = new (1, PoolConstants.AVATARS_COUNT);
-        private static readonly ThreadSafeObjectPool<string[]> SINGLE_PROFILE_ID_POOL = new (() => new string[1], maxSize: PoolConstants.AVATARS_COUNT);
 
         private readonly int batchMaxSize;
 
@@ -230,13 +228,16 @@ namespace DCL.Profiles
         }
 
         public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
-            bool delayBatchResolution,
             bool getFromCacheIfPossible,
-            IProfileRepository.BatchBehaviour batchBehaviour,
+            IProfileRepository.FetchBehaviour fetchBehaviour,
             ProfileTier.Kind tier,
             IPartitionComponent? partition = null)
         {
-            Assert.IsTrue(version == 0 || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
+            bool versionSpecified = version > 0;
+
+            Assert.IsTrue(!versionSpecified || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
+
+            bool delayBatchResolution = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
             // Compact Tiers are not supported on catalysts
             if (!useCentralizedProfiles)
@@ -261,21 +262,17 @@ namespace DCL.Profiles
                 partition ??= PartitionComponent.TOP_PRIORITY;
 
                 // Two paths
-                switch (batchBehaviour)
+                if (EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
+                    return await EnforceSingleGetAsync();
+                else
                 {
-                    case IProfileRepository.BatchBehaviour.DEFAULT:
-                        // Batching is allowed
-                        ProfileTier? result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
+                    // Batching is allowed
+                    ProfileTier? result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
 
-                        // Not found profiles (Catalyst replication delays) will be processed individually by GET
-                        // ⚠️ The following produces potentially a very long-living task ⚠️
-                        // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
-                        return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
-
-                    case IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET:
-                        return await EnforceSingleGetAsync();
-                    default:
-                        throw new NotSupportedException($"BatchBehaviour {batchBehaviour} not supported");
+                    // Not found profiles (Catalyst replication delays) will be processed individually by GET
+                    // ⚠️ The following produces potentially a very long-living task ⚠️
+                    // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
+                    return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
                 }
             }
             finally { await UniTask.SwitchToMainThread(); }
@@ -288,7 +285,7 @@ namespace DCL.Profiles
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
-                return await ExecuteSingleGetAsync(id, fromCatalyst, ct);
+                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, ct);
             }
         }
 
@@ -320,41 +317,18 @@ namespace DCL.Profiles
         ///     GET supports full profiles only and should be never used to retrieve compact ones
         /// </summary>
         /// <returns></returns>
-        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, URLDomain? fromCatalyst, CancellationToken ct)
+        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, int version, URLDomain? fromCatalyst, bool retryUntilResolved, CancellationToken ct)
         {
             try
             {
-                ProfileTier? profile = null;
+                ProfileTier? profile;
 
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles)
                 {
-                    using PooledObject<List<Profile>> _ = SINGLE_PROFILE_POOL.Get(out List<Profile> tempProfiles);
-                    using PooledObject<string[]> __ = SINGLE_PROFILE_ID_POOL.Get(out string[] tempIds);
-                    tempIds[0] = id;
+                    profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version, CentralizedProfileRetryPolicy.VALUE, ct);
 
-                    // We need a special repeating policy based on the result as it can return an empty array instead of the error
-
-                    int attemptNumber = 0;
-                    (bool shouldRepeat, TimeSpan delay) repeatValues = (shouldRepeat: true, delay: TimeSpan.Zero);
-
-                    while (repeatValues.shouldRepeat)
-                    {
-                        attemptNumber++;
-
-                        if (repeatValues.delay > TimeSpan.Zero)
-                            await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
-
-                        Result<IList<Profile>> result = await ProfilesRequest.PostAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), tempIds, tempProfiles, ct);
-
-                        profile = result.Value?.ElementAtOrDefault(0);
-
-                        repeatValues = profile == null
-                            ? WebRequestUtils.CanBeRepeated(attemptNumber, CentralizedProfileRetryPolicy.VALUE, true, null)
-                            : (false, TimeSpan.Zero);
-                    }
-
-                    if (profile == null)
+                    if (profile != null)
                         profilesDebug.AddMissing(id);
                     else
                         profilesDebug.AddNonCombined(1);
@@ -363,7 +337,7 @@ namespace DCL.Profiles
                 {
                     URLAddress url = GetUrl(id, fromCatalyst);
 
-                    profile = await ProfilesRequest.GetAsync(webRequestController, url, id, ct);
+                    profile = await ProfilesRequest.GetAsync(webRequestController, url, id, version, retryUntilResolved, ct);
 
                     profilesDebug.AddNonAggregated();
                 }

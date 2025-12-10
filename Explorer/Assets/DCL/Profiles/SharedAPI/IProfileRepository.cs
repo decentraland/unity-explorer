@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS.Prioritization.Components;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -10,21 +11,29 @@ namespace DCL.Profiles
 {
     public interface IProfileRepository
     {
-        public const string PROFILE_FRAGMENTATION_OBSOLESCENCE = "Should be moved to the unified POST originated from the client";
-
-        public enum BatchBehaviour : byte
+        [Flags]
+        public enum FetchBehaviour : byte
         {
             /// <summary>
             ///     Individual requests will be delayed and batched together
             /// </summary>
-            DEFAULT,
+            DEFAULT = 0,
 
             /// <summary>
             ///     Individual request will be dispatched immediately
             ///     Use it with caution to enforce a single request when "foreground" strictly requires only one profile
             /// </summary>
-            ENFORCE_SINGLE_GET,
+            ENFORCE_SINGLE_GET = 1,
+
+            /// <summary>
+            ///     The request can be delayed according to the retry policy until the required version or non-null profile is provided <br />
+            ///     The request can still return `null` as a last measure (if all attempts exceeded) <br />
+            ///     When the request is not resolved it will be repeated in a non-batched mode
+            /// </summary>
+            DELAY_UNTIL_RESOLVED = 2,
         }
+
+        public const string PROFILE_FRAGMENTATION_OBSOLESCENCE = "Should be moved to the unified POST originated from the client";
 
         public const string GUEST_RANDOM_ID = "fakeUserId";
         public const string PLAYER_RANDOM_ID = "Player";
@@ -32,9 +41,8 @@ namespace DCL.Profiles
         public UniTask SetAsync(Profile profile, CancellationToken ct);
 
         public UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
-            bool delayBatchResolution,
             bool getFromCacheIfPossible,
-            BatchBehaviour batchBehaviour,
+            FetchBehaviour fetchBehaviour,
             ProfileTier.Kind tier,
             IPartitionComponent? partition = null);
     }
@@ -48,16 +56,16 @@ namespace DCL.Profiles
         /// </returns>
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
             bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT,
+            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT,
             IPartitionComponent? partition = null) =>
-            profileRepository.GetAsync(id, version, fromCatalyst, ct, true, getFromCacheIfPossible, batchBehaviour, ProfileTier.Kind.Full, partition)
+            profileRepository.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, batchBehaviour, ProfileTier.Kind.Full, partition)
                              .ContinueWith(static pt => pt.ToProfile());
 
         /// <summary>
         ///     Compact info is requested without connection to a catalyst or to a specific version, and always with a default batching behaviour
         /// </summary>
         public static UniTask<Profile.CompactInfo?> GetCompactAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IPartitionComponent? partition = null) =>
-            profileRepository.GetAsync(id, 0, null, ct, false, true, IProfileRepository.BatchBehaviour.DEFAULT, ProfileTier.Kind.Compact, partition: partition)
+            profileRepository.GetAsync(id, 0, null, ct, true, IProfileRepository.FetchBehaviour.DEFAULT, ProfileTier.Kind.Compact, partition: partition)
                              .ContinueWith(static pt => pt.ToCompact());
 
         /// <summary>
@@ -75,7 +83,7 @@ namespace DCL.Profiles
 
             async UniTask WaitForProfileAsync(string id)
             {
-                Result<ProfileTier?> profile = await profileRepository.GetAsync(id, 0, fromCatalyst, ct, false, true, IProfileRepository.BatchBehaviour.DEFAULT, ProfileTier.Kind.Full)
+                Result<ProfileTier?> profile = await profileRepository.GetAsync(id, 0, fromCatalyst, ct, true, IProfileRepository.FetchBehaviour.DEFAULT, ProfileTier.Kind.Full)
                                                                       .SuppressToResultAsync();
 
                 if (profile is { Success: true, Value: not null })
@@ -111,11 +119,11 @@ namespace DCL.Profiles
         /// <summary>
         ///     Suppresses inner exceptions to 'Null' return value
         /// </summary>
-        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT) =>
+        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT) =>
             profileRepository.GetAsync(id, 0, null, ct, batchBehaviour: batchBehaviour).SuppressAnyExceptionWithFallback(null);
 
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT) =>
+            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT) =>
             profileRepository.GetAsync(id, version, null, ct, getFromCacheIfPossible, batchBehaviour);
     }
 }

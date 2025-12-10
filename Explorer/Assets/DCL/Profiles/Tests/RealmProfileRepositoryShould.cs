@@ -161,7 +161,7 @@ namespace DCL.Profiles.Tests
             // Created a pending batch
             ProfilesBatchRequest[] pendingBatch = repository.ConsumePendingBatch().ToArray();
 
-            Assert.That(pendingBatch.Count(), Is.EqualTo(batches));
+            Assert.That(pendingBatch.Length, Is.EqualTo(batches));
 
             int actualRequests = 0;
 
@@ -213,11 +213,11 @@ namespace DCL.Profiles.Tests
 
             string userId = dtos[0].UserId;
 
-            profileCache.TryGet(userId, out Arg.Any<Profile>())
+            profileCache.TryGet(userId, Arg.Any<ProfileTier.Kind>(), out Arg.Any<ProfileTier>())
                         .Returns(c =>
                          {
                              dtos[0].Version = 10;
-                             c[1] = dtos[0];
+                             c[2] = (ProfileTier)dtos[0];
                              return true;
                          });
 

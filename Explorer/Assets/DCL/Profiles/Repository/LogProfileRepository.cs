@@ -28,14 +28,15 @@ namespace DCL.Profiles
                .Log($"ProfileRepository: set finished for profile: {profile}");
         }
 
-        public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool delayBatchResolution,
-            bool getFromCacheIfPossible, IProfileRepository.BatchBehaviour batchBehaviour, ProfileTier.Kind tier, IPartitionComponent? partition = null)
+        public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
+            bool getFromCacheIfPossible,
+            IProfileRepository.FetchBehaviour fetchBehaviour, ProfileTier.Kind tier, IPartitionComponent? partition = null)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
-               .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}, {batchBehaviour}, {partition}");
+               .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}, {fetchBehaviour}, {partition}");
 
-            ProfileTier? result = await origin.GetAsync(id, version, fromCatalyst, ct, delayBatchResolution, getFromCacheIfPossible, batchBehaviour, tier, partition);
+            ProfileTier? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, fetchBehaviour, tier, partition);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");

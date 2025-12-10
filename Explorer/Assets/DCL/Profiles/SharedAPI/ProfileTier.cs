@@ -1,5 +1,6 @@
 ﻿using REnum;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Profiles
 {

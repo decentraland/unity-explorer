@@ -28,6 +28,6 @@ namespace DCL.Profiles
         /// <summary>
         ///     Never returns 404, returns an empty array as GET is not supported
         /// </summary>
-        public static readonly RetryPolicy VALUE = RetryPolicy.Enforce(2, 1500, 2);
+        public static readonly RetryPolicy VALUE = RetryPolicy.Enforce(3, 1500, 2);
     }
 }

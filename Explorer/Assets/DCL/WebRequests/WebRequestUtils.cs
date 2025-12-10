@@ -90,10 +90,13 @@ namespace DCL.WebRequests
                 return (false, TimeSpan.Zero);
 
             // The default scheme
-            bool errorCodeIsExpected = retryPolicy.forceRecoverableCodes?.Contains(webRequestException.ResponseCode) ?? false;
+            if (webRequestException != null)
+            {
+                bool errorCodeIsExpected = retryPolicy.forceRecoverableCodes?.Contains(webRequestException.ResponseCode) ?? false;
 
-            if (!errorCodeIsExpected && webRequestException.IsIrrecoverableError())
-                return (false, TimeSpan.Zero);
+                if (!errorCodeIsExpected && webRequestException.IsIrrecoverableError())
+                    return (false, TimeSpan.Zero);
+            }
 
             return (true, GetRetryDelay());
 

@@ -1,12 +1,17 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.Profiles
 {
@@ -19,17 +24,76 @@ namespace DCL.Profiles
         private const int QUOTES_PER_STRING = 2; // Opening and closing quotes
         private const int COMMA_SEPARATOR = 1; // Comma between array elements
 
+        private static readonly ThreadSafeListPool<Profile> SINGLE_PROFILE_POOL = new (1, PoolConstants.AVATARS_COUNT);
+        private static readonly ThreadSafeObjectPool<string[]> SINGLE_PROFILE_ID_POOL = new (() => new string[1], maxSize: PoolConstants.AVATARS_COUNT);
+
         /// <summary>
         ///     Execute GET a single profile from the catalyst
         /// </summary>
-        public static async UniTask<ProfileTier?> GetAsync(IWebRequestController webRequestController, URLAddress url, string id, CancellationToken ct)
+        public static async UniTask<ProfileTier?> GetAsync(IWebRequestController webRequestController, URLAddress url, string id, int version, bool retryUntilResolved,
+            CancellationToken ct)
         {
-            // Suppress logging errors here as we have very custom errors handling below
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+            int attemptNumber = 0;
+            (bool shouldRepeat, TimeSpan delay) repeatValues = (shouldRepeat: true, delay: TimeSpan.Zero);
 
-            Profile? profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
-                createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
-                serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
+            Profile? profile = null;
+
+            while (repeatValues.shouldRepeat)
+            {
+                attemptNumber++;
+
+                if (repeatValues.delay > TimeSpan.Zero)
+                    await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
+
+                // Suppress logging errors here as we have very custom errors handling below
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+
+                profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
+                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
+                    serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
+
+                repeatValues = (profile == null || profile.Version < version) && retryUntilResolved
+                    ? WebRequestUtils.CanBeRepeated(attemptNumber, CatalystRetryPolicy.VALUE, true, null)
+                    : (false, TimeSpan.Zero);
+            }
+
+            return profile;
+        }
+
+        /// <summary>
+        ///     Post for a single profile
+        /// </summary>
+        public static async UniTask<ProfileTier?> PostSingleAsync(IWebRequestController webRequestController, URLAddress url, string id, int version, RetryPolicy retryPolicy,
+            CancellationToken ct)
+        {
+            using PooledObject<List<Profile>> _ = SINGLE_PROFILE_POOL.Get(out List<Profile> tempProfiles);
+            using PooledObject<string[]> __ = SINGLE_PROFILE_ID_POOL.Get(out string[] tempIds);
+            tempIds[0] = id;
+
+            int attemptNumber = 0;
+            (bool shouldRepeat, TimeSpan delay) repeatValues = (shouldRepeat: true, delay: TimeSpan.Zero);
+
+            ProfileTier? profile = null;
+
+            while (repeatValues.shouldRepeat)
+            {
+                attemptNumber++;
+
+                if (repeatValues.delay > TimeSpan.Zero)
+                    await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
+
+                tempProfiles.Clear();
+
+                await PostAsync(webRequestController, url, tempIds, tempProfiles, ct);
+
+                // If batch contains incomplete data or an old version and still can be repeated, repeat the request with that data only
+                Profile? candidate = tempProfiles.FirstOrDefault();
+                profile = candidate;
+
+                repeatValues = candidate == null || candidate.Version < version
+                    ? WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, true, null)
+                    : (false, TimeSpan.Zero);
+            }
 
             return profile;
         }
