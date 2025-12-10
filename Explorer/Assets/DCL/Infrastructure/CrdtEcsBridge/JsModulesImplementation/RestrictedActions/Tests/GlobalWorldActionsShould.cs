@@ -19,6 +19,7 @@ using DCL.Multiplayer.Profiles.Bunches;
 using DCL.SceneRunner.Scene;
 using DCL.Utility;
 using ECS.StreamableLoading.InitialSceneState;
+using System;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -236,14 +237,27 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
 
-            public void Send(URN urn, bool loopCyclePassed) // Parameter name from interface
+            public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
+                throw new NotImplementedException();
+
+            public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId) // Parameter name from interface
             {
                 SentEmotes.Add((urn, loopCyclePassed));
             }
 
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
+            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new System.NotImplementedException();
+            public void OnPlayerRemoved(string walletId) => throw new System.NotImplementedException();
+            public void SaveForRetry(RemoteEmoteIntention intention) => throw new System.NotImplementedException();
+
+            public void SaveForRetry(LookAtPositionIntention intention)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private class MockSceneData : ISceneData
