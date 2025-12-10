@@ -1,16 +1,21 @@
 using CommunicationData.URLHelpers;
-using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization;
+using DCL.Utility.Types;
 using ECS;
+using ECS.StreamableLoading.Cache.Disk;
+using Microsoft.ClearScript.V8;
+using SceneRuntime.Apis;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
+using SceneRuntime.ModuleHub;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 
@@ -32,6 +37,14 @@ namespace SceneRuntime.Factory
 
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
+
+        public static readonly byte[] COMMONJS_HEADER_UTF8
+            = Encoding.UTF8.GetBytes(
+            "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {");
+
+        public static readonly byte[] COMMONJS_FOOTER_UTF8
+            = Encoding.UTF8.GetBytes(
+            "\n}).call(this, exports, require, module, __filename, __dirname); })");
 
         public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
             IWebJsSources webJsSources)
@@ -69,8 +82,7 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
-            string sourceCode,
-            IInstancePoolsProvider instancePoolsProvider,
+            SlicedOwnedMemory<byte> sourceCode,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
@@ -79,10 +91,8 @@ namespace SceneRuntime.Factory
 
             jsSourcesCache.Cache(
                 $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
-                sourceCode
+                sourceCode.Memory.Span
             );
-
-            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -90,10 +100,73 @@ namespace SceneRuntime.Factory
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-            string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            
-            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
-                engineFactory);
+
+            V8ScriptEngine engine = engineFactory.Create(sceneShortInfo);
+            var moduleHub = new SceneModuleHub(engine);
+
+            // Look at StreamingAssets/Js, find the largest file in there, add
+            // a kilobyte on top, round up, and that's the magic number.
+            const int OUR_CODE_BUFFER_SIZE = 29000;
+
+            using var ourCodeBuffer = new SlicedOwnedMemory<byte>(
+                OUR_CODE_BUFFER_SIZE);
+
+            COMMONJS_HEADER_UTF8.CopyTo(ourCodeBuffer.Memory);
+
+            foreach (string moduleName in JS_MODULE_NAMES)
+            {
+                Result<int> moduleCodeLengthResult = await LoadScriptAsync(
+                    Path.Combine(Application.streamingAssetsPath, "Js/Modules",
+                        moduleName),
+                    ourCodeBuffer.Memory.Slice(COMMONJS_HEADER_UTF8.Length));
+
+                if (!moduleCodeLengthResult.Success)
+                    throw new Exception(moduleCodeLengthResult.ErrorMessage);
+
+                if (ourCodeBuffer.Memory.Span
+                          .Slice(COMMONJS_HEADER_UTF8.Length,
+                                      COMMONJS_HEADER_UTF8.Length)
+                          .SequenceEqual(COMMONJS_HEADER_UTF8))
+                {
+                    moduleHub.LoadAndCompileJsModule(moduleName,
+                        ourCodeBuffer.Memory.Span.Slice(
+                            COMMONJS_HEADER_UTF8.Length,
+                            moduleCodeLengthResult.Value));
+                }
+                else
+                {
+                    COMMONJS_FOOTER_UTF8.CopyTo(ourCodeBuffer.Memory.Slice(
+                        COMMONJS_HEADER_UTF8.Length
+                        + moduleCodeLengthResult.Value));
+
+                    moduleHub.LoadAndCompileJsModule(moduleName,
+                        ourCodeBuffer.Memory.Span.Slice(0,
+                            COMMONJS_HEADER_UTF8.Length
+                            + moduleCodeLengthResult.Value
+                            + COMMONJS_FOOTER_UTF8.Length));
+                }
+            }
+
+            V8Script sceneScript = engine.CompileScriptFromUtf8(
+                sourceCode.Memory.Span);
+
+            var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript,
+                sceneShortInfo);
+
+            engine.AddHostObject("UnityOpsApi", unityOpsApi);
+
+            Result<int> initCodeLengthResult = await LoadScriptAsync(
+                Path.Combine(Application.streamingAssetsPath, "Js/Init.js"),
+                ourCodeBuffer.Memory);
+
+            if (!initCodeLengthResult.Success)
+                throw new Exception(initCodeLengthResult.ErrorMessage);
+
+            engine.ExecuteScriptFromUtf8(
+                ourCodeBuffer.Memory.Span.Slice(0,
+                    initCodeLengthResult.Value));
+
+            return new SceneRuntimeImpl(engine);
         }
 
         /// <summary>
@@ -101,14 +174,22 @@ namespace SceneRuntime.Factory
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
             URLAddress path,
-            IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             await EnsureCalledOnMainThreadAsync();
-            string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+
+            Result<SlicedOwnedMemory<byte>> sourceCodeResult
+                = await webJsSources.SceneSourceCodeAsync(path, ct);
+
+            if (!sourceCodeResult.Success)
+                throw new Exception(sourceCodeResult.ErrorMessage);
+
+            using SlicedOwnedMemory<byte> sourceCode = sourceCodeResult.Value;
+
+            return await CreateBySourceCodeAsync(sourceCode, sceneShortInfo,
+                ct, instantiationBehavior);
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()
@@ -120,46 +201,26 @@ namespace SceneRuntime.Factory
             }
         }
 
-        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
+        private static async UniTask<Result<int>> LoadScriptAsync(string path,
+            Memory<byte> buffer)
         {
-            string validateCode = await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
-                ct
-            );
+            await using var stream = new FileStream(path, FileMode.Open,
+                FileAccess.Read, FileShare.ReadWrite);
 
-            string initCode = await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
-                ct
-            );
+            if (stream.Length > buffer.Length)
+                Result<int>.ErrorResult(
+                    $"File \"{path}\" is larger than the buffer ({buffer.Length} bytes)");
 
-            return (validateCode, initCode);
-        }
+            int count = (int)stream.Length;
 
-        private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
-            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
+            Result readResult = await stream.ReadReliablyAsync(
+                buffer.Slice(0, count));
 
-        private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
-        {
-            var moduleDictionary = new Dictionary<string, string>();
-            foreach (string name in names) await AddModuleAsync(name, moduleDictionary, ct);
-            return moduleDictionary;
-        }
-
-        // Wrapper https://nodejs.org/api/modules.html#the-module-wrapper
-        // Wrap the source code in a CommonJS module wrapper
-        internal string WrapInModuleCommonJs(string source)
-        {
-            const string HEAD = "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {";
-            const string FOOT = "\n}).call(this, exports, require, module, __filename, __dirname); })";
-
-            if (source.StartsWith(HEAD))
-                return source;
-
-            // create a wrapper for the script
-            source = Regex.Replace(source, @"^#!.*?\n", "");
-            source = $"{HEAD}{source}{FOOT}";
-            return source;
+            if (!readResult.Success)
+                return Result<int>.ErrorResult(
+                    readResult.ErrorMessage ?? "null");
+            else
+                return Result<int>.SuccessResult(count);
         }
     }
 }
