@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Numerics;
 using Thirdweb;
 using ThirdWebUnity;
 using UnityEngine;
@@ -18,6 +20,9 @@ namespace DCL.Web3.Authenticators
     public class TestOnChainWeb3 : MonoBehaviour
     {
         [SerializeField] private ChainNetwork selectedNetwork = ChainNetwork.Amoy;
+        [SerializeField] private string cryptoReceiver = "0xb1a7fc4bbd9856bfa1f70f6b111444cd9d351592";
+        [SerializeField] private float nativeTransferAmount = 0.01f;
+        [SerializeField] private float manaTransferAmount = 1f;
 
         private int SelectedChainId => (int)selectedNetwork;
 
@@ -148,23 +153,146 @@ namespace DCL.Web3.Authenticators
             Debug.Log($"MANA Balance: {manaBalance:F6} MANA");
         }
 
-        // [ContextMenu("Test Mint Fake MANA")]
-        // public async void TestMintFakeMana()
-        // {
-        //     try
-        //     {
-        //         // например, минтим 10 MANA
-        //         decimal amount = 10m;
-        //
-        //         string txHash = await ThirdWebAuthenticator.Instance
-        //            .MintFakeManaAsync(amount, CancellationToken.None);
-        //
-        //         Debug.Log($"Fake MANA mint tx hash: {txHash}");
-        //     }
-        //     catch (System.Exception e)
-        //     {
-        //         Debug.LogError($"MintFakeMana failed: {e}");
-        //     }
-        // }
+        [ContextMenu(nameof(TestTransferNative))]
+        public async void TestTransferNative()
+        {
+            if (string.IsNullOrEmpty(cryptoReceiver))
+            {
+                Debug.LogError("Crypto receiver address is not set!");
+                return;
+            }
+
+            if (nativeTransferAmount <= 0)
+            {
+                Debug.LogError("Native transfer amount must be greater than 0!");
+                return;
+            }
+
+            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string currencyName = GetNativeCurrencyName(SelectedChainId);
+
+            // Сумма для отправки из Inspector
+            decimal amountToSend = (decimal)nativeTransferAmount;
+            string weiAmount = amountToSend.ToString().ToWei();
+
+            // Конвертируем в hex для eth_sendTransaction
+            BigInteger weiValue = BigInteger.Parse(weiAmount);
+            string hexValue = "0x" + weiValue.ToString("X");
+
+            Debug.Log($"Sending {amountToSend} {currencyName} ({weiAmount} wei) from {walletAddress} to {cryptoReceiver}");
+            Debug.Log($"Hex value: {hexValue}");
+
+            var txParams = new Dictionary<string, object>
+            {
+                { "from", walletAddress },
+                { "to", cryptoReceiver },
+                { "value", hexValue }
+            };
+
+            // Сериализуем в JSON для ThirdWebAuthenticator
+            string txParamsJson = JsonConvert.SerializeObject(txParams);
+
+            var request = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_sendTransaction",
+                @params = new object[] { txParamsJson },
+            };
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(SelectedChainId, request, destroyCancellationToken);
+                string txHash = response.result.ToString();
+
+                Debug.Log($"✅ Transaction sent successfully!");
+                Debug.Log($"Transaction Hash: {txHash}");
+                Debug.Log($"Amount: {amountToSend} {currencyName}");
+                Debug.Log($"From: {walletAddress}");
+                Debug.Log($"To: {cryptoReceiver}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"❌ Transaction failed: {ex.Message}");
+            }
+        }
+
+        [ContextMenu(nameof(TestTransferMana))]
+        public async void TestTransferMana()
+        {
+            if (string.IsNullOrEmpty(cryptoReceiver))
+            {
+                Debug.LogError("Crypto receiver address is not set!");
+                return;
+            }
+
+            if (manaTransferAmount <= 0)
+            {
+                Debug.LogError("MANA transfer amount must be greater than 0!");
+                return;
+            }
+
+            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+
+            // Получаем адрес контракта MANA
+            string? manaContractAddress = GetManaContractAddress(SelectedChainId);
+
+            if (string.IsNullOrEmpty(manaContractAddress))
+            {
+                Debug.LogError($"MANA contract address not found for Chain ID: {SelectedChainId} ({selectedNetwork})");
+                return;
+            }
+
+            // Сумма MANA для отправки из Inspector
+            decimal manaAmount = (decimal)manaTransferAmount;
+            string weiAmount = manaAmount.ToString().ToWei();
+            BigInteger weiValue = BigInteger.Parse(weiAmount);
+
+            // ERC20 transfer(address to, uint256 amount) function signature
+            string transferSignature = "0xa9059cbb"; // Keccak256("transfer(address,uint256)")[:4]
+
+            // Encode parameters: address (32 bytes) + amount (32 bytes)
+            string paddedReceiverAddress = cryptoReceiver.Substring(2).PadLeft(64, '0');
+            string paddedAmount = weiValue.ToString("X").PadLeft(64, '0');
+            string data = transferSignature + paddedReceiverAddress + paddedAmount;
+
+            Debug.Log($"Transferring {manaAmount} MANA ({weiAmount} smallest units) from {walletAddress} to {cryptoReceiver}");
+            Debug.Log($"MANA Contract: {manaContractAddress}");
+            Debug.Log($"Data: {data}");
+
+            var txParams = new Dictionary<string, object>
+            {
+                { "from", walletAddress },
+                { "to", manaContractAddress },
+                { "value", "0x0" },
+                { "data", data }
+            };
+
+            // Сериализуем в JSON для ThirdWebAuthenticator
+            string txParamsJson = JsonConvert.SerializeObject(txParams);
+
+            var request = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_sendTransaction",
+                @params = new object[] { txParamsJson },
+            };
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(SelectedChainId, request, destroyCancellationToken);
+                string txHash = response.result.ToString();
+
+                Debug.Log($"✅ MANA transfer sent successfully!");
+                Debug.Log($"Transaction Hash: {txHash}");
+                Debug.Log($"Amount: {manaAmount} MANA");
+                Debug.Log($"From: {walletAddress}");
+                Debug.Log($"To: {cryptoReceiver}");
+                Debug.Log($"Contract: {manaContractAddress}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"❌ MANA transfer failed: {ex.Message}");
+            }
+        }
     }
 }
