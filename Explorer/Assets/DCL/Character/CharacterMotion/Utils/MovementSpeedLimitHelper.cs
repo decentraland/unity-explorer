@@ -19,9 +19,9 @@ namespace DCL.CharacterMotion.Utils
         public static float GetAnimationBlendingSpeedLimit(ICharacterControllerSettings settings, MovementKind movementKind) =>
             movementKind switch
             {
-                MovementKind.RUN => settings.MovAnimBlendMaxRunSpeed,
-                MovementKind.JOG => settings.MovAnimBlendMaxJogSpeed,
-                _ => settings.MovAnimBlendMaxWalkSpeed
+                MovementKind.RUN => settings.MoveAnimBlendMaxRunSpeed,
+                MovementKind.JOG => settings.MoveAnimBlendMaxJogSpeed,
+                _ => settings.MoveAnimBlendMaxWalkSpeed
             };
     }
 }

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.CharacterMotion.Settings
 {
@@ -55,10 +56,10 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKWeightChangeSpeed { get; private set; } = 2;
 
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
-        [field: SerializeField] public float MovAnimBlendMaxWalkSpeed { get; private set; } = 1f;
-        [field: SerializeField] public float MovAnimBlendMaxJogSpeed { get; private set; } = 3f;
-        [field: SerializeField] public float MovAnimBlendMaxRunSpeed { get; private set; } = 5f;
-        [field: SerializeField] public float MovAnimBlendSpeed { get; private set; } = 3f;
+        [field: SerializeField] public float MoveAnimBlendMaxWalkSpeed { get; private set; } = 1f;
+        [field: SerializeField] public float MoveAnimBlendMaxJogSpeed { get; private set; } = 3f;
+        [field: SerializeField] public float MoveAnimBlendMaxRunSpeed { get; private set; } = 5f;
+        [field: SerializeField] public float MoveAnimBlendSpeed { get; private set; } = 3f;
         [field: SerializeField] public float AnimationFallSpeed { get; private set; } = -5f;
         [field: SerializeField] public float AnimationLongFallSpeed { get; private set; } = -12f;
 

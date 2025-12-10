@@ -125,10 +125,10 @@ MonoBehaviour:
   <StepOffset>k__BackingField: 0.35
   <HeadIKWeightChangeSpeed>k__BackingField: 2
   <RotationSpeed>k__BackingField: 400
-  <MovAnimBlendMaxWalkSpeed>k__BackingField: 1.5
-  <MovAnimBlendMaxJogSpeed>k__BackingField: 8
-  <MovAnimBlendMaxRunSpeed>k__BackingField: 10
-  <MovAnimBlendSpeed>k__BackingField: 5
+  <MoveAnimBlendMaxWalkSpeed>k__BackingField: 1.5
+  <MoveAnimBlendMaxJogSpeed>k__BackingField: 8
+  <MoveAnimBlendMaxRunSpeed>k__BackingField: 10
+  <MoveAnimBlendSpeed>k__BackingField: 5
   <AnimationFallSpeed>k__BackingField: -3
   <AnimationLongFallSpeed>k__BackingField: -8
   <PlatformRaycastLength>k__BackingField: 0.3

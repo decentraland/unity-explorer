@@ -39,8 +39,8 @@ namespace DCL.CharacterMotion.Animation
 
             // Make blend speed proportional to current delta, similar to a lerp
             // We do this because scenes can override the movement speed and blend speed must react to that
-            float blendSpeed = Mathf.Abs(currentMovementBlend - targetBlend) * settings.MovAnimBlendSpeed;
-            blendSpeed = Mathf.Max(blendSpeed, settings.MovAnimBlendSpeed);
+            float blendSpeed = Mathf.Abs(currentMovementBlend - targetBlend) * settings.MoveAnimBlendSpeed;
+            blendSpeed = Mathf.Max(blendSpeed, settings.MoveAnimBlendSpeed);
             float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * blendSpeed);
 
             return result.ClampSmallValuesToZero(BLEND_EPSILON);
