@@ -107,7 +107,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             AvatarStateMachineEventHandlerInitializationQuery(World);
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
-            CancelEmotesOnMovePlayerToInvokedQuery(World);
             CancelEmotesByMovementInputQuery(World);
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
