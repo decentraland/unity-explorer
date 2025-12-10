@@ -9,7 +9,7 @@ namespace DCL.Interaction.HoverCanvas.UI
 
         private bool initialized;
 
-        private Image inputIcon;
+        private VisualElement inputIcon;
         private Label keyName;
         private VisualElement keyRoot;
 
@@ -18,7 +18,7 @@ namespace DCL.Interaction.HoverCanvas.UI
             if (initialized)
                 return;
 
-            inputIcon = this.Q<Image>("Icon");
+            inputIcon = this.Q<VisualElement>("Icon");
             keyName = this.Q<Label>("KeyName");
             hint = this.Q<Label>("Hint");
             keyRoot = this.Q<VisualElement>("KeyRoot");

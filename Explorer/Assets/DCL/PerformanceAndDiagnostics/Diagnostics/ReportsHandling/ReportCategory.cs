@@ -346,6 +346,8 @@ namespace DCL.Diagnostics
 
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
 
+        public const string SOCIAL_EMOTE = nameof(SOCIAL_EMOTE);
+
         public const string DONATIONS = nameof(DONATIONS);
     }
 }
