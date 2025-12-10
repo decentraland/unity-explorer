@@ -82,13 +82,10 @@ jobs:
           curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
           chmod 600 /home/runner/.ssh/known_hosts
 
-      - name: Prepare SSH for Unity container
+      - name: Fix SSH permissions for Unity
         run: |
-          mkdir -p /tmp/ssh-unity
-          cp /home/runner/.ssh/known_hosts /tmp/ssh-unity/known_hosts
-          cp /home/runner/.ssh/key-* /tmp/ssh-unity/id_rsa 2>/dev/null || true
-          chmod 700 /tmp/ssh-unity
-          chmod 600 /tmp/ssh-unity/*
+          chmod 600 /home/runner/.ssh/*
+          rm -f /home/runner/.ssh/config
 
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version-lint
