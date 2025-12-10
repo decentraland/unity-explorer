@@ -1,12 +1,12 @@
 {
 	"elements": [
 		{
-			"individualData": [
-				{
-					"id": "urn:decentraland:off-chain:base-avatars:aviatorstyle"
-				}
-			],
 			"entity": {
+				"individualData": [
+					{
+						"id": "urn:decentraland:off-chain:base-avatars:aviatorstyle"
+					}
+				],
 				"id": "QmXUXheUrHtsR6j7PpnBdBzb9dyA1ew6MuQwtCZtuXKRjp",
 				"thumbnail": "QmWEr5ttPDezxMjDHU1UKPPukHjLiNEi1EjznmaUXiaHgn",
 				"metadata": {
