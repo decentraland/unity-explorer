@@ -77,6 +77,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public bool IsInAbundance()
         {
+            return false;
             if (SimulateLackOfAbundance)
                 return false;
 
