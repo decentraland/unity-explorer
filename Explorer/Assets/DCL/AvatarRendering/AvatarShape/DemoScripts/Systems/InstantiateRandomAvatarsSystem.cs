@@ -187,7 +187,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new GetWearableByParamIntention(new[]
                     {
                         ("collectionType", "base-wearable"), ("pageSize", "282"),
-                    }, "DummyUser", new List<IWearable>(), 0),
+                    }, "DummyUser", new List<ITrimmedWearable>(), 0),
                     PartitionComponent.TOP_PRIORITY),
             };
 
