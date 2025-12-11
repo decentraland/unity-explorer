@@ -184,8 +184,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
             string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
             // Required to avoid polluting Sentry with retry messages
-            string reportCategory = marshaled.Contains("(will retry)")) 
-                ? ReportCategory.ANALYTICS_INTERNAL 
+            string reportCategory = marshaled.Contains("(will retry)")
+                ? ReportCategory.ANALYTICS_INTERNAL
                 : ReportCategory.ANALYTICS;
 
             ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
