@@ -610,6 +610,8 @@ MonoBehaviour:
       Severity: 4
     - Category: SOCIAL_EMOTE
       Severity: 1
+    - Category: STREAMABLE_LOADING
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1

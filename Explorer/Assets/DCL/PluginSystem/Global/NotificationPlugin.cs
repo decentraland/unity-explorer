@@ -10,6 +10,7 @@ using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -20,7 +21,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly IWebRequestController webRequestController;
+        private readonly UITextureProvider textureProvider;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -29,13 +30,13 @@ namespace DCL.PluginSystem.Global
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.webRequestController = webRequestController;
+            this.textureProvider = textureProvider;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
         }
@@ -58,7 +59,7 @@ namespace DCL.PluginSystem.Global
                     notificationIconTypes,
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,
-                    webRequestController
+                    textureProvider
                 );
 
             mvcManager.RegisterController(newNotificationController);

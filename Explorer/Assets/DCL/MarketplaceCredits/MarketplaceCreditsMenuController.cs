@@ -18,7 +18,9 @@ using ECS;
 using JetBrains.Annotations;
 using MVC;
 using System;
+using System.Globalization;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using Utility;
 
@@ -57,6 +59,7 @@ namespace DCL.MarketplaceCredits
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
+        private readonly UITextureProvider textureProvider;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -86,7 +89,8 @@ namespace DCL.MarketplaceCredits
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ITextFormatter textFormatter) : base(viewFactory)
+            ITextFormatter textFormatter,
+            UITextureProvider textureProvider) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -102,6 +106,7 @@ namespace DCL.MarketplaceCredits
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
+            this.textureProvider = textureProvider;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
@@ -123,7 +128,8 @@ namespace DCL.MarketplaceCredits
                 webRequestController,
                 viewInstance.TotalCreditsWidget,
                 this,
-                textFormatter);
+                textFormatter,
+                textureProvider);
 
             marketplaceCreditsWeekGoalsCompletedSubController = new MarketplaceCreditsWeekGoalsCompletedSubController(
                 viewInstance.WeekGoalsCompletedSubView);
@@ -367,8 +373,8 @@ namespace DCL.MarketplaceCredits
 
             string isoString = DCLPlayerPrefs.GetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, DateTime.MinValue.ToString("o"));
 
-            if (DateTime.TryParse(isoString, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime lastShownWeek)
-                && DateTime.TryParse(creditsProgramProgressResponse.currentWeek.startDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime currentSeasonStart)
+            if (DateTime.TryParse(isoString, null, DateTimeStyles.RoundtripKind, out DateTime lastShownWeek)
+                && DateTime.TryParse(creditsProgramProgressResponse.currentWeek.startDate, null, DateTimeStyles.RoundtripKind, out DateTime currentSeasonStart)
                 && currentSeasonStart > lastShownWeek)
             {
                 DCLPlayerPrefs.SetString(DCLPrefKeys.MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START, creditsProgramProgressResponse.currentWeek.startDate);

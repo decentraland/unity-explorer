@@ -333,7 +333,7 @@ namespace Global.Dynamic
 
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
-
+            
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
@@ -873,7 +873,8 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     homePlaceEventBus,
-                    staticContainer.SmartWearableCache
+                    staticContainer.SmartWearableCache,
+                    staticContainer.TextureProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -885,7 +886,7 @@ namespace Global.Dynamic
                 new TeleportPromptPlugin(
                     assetsProvisioner,
                     mvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController,
+                    staticContainer.TextureProvider,
                     placesAPIService,
                     dclCursor,
                     chatMessagesBus
@@ -895,7 +896,7 @@ namespace Global.Dynamic
                     mvcManager,
                     dclCursor,
                     realmUrl => chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
-                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
+                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.TextureProvider, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 new MultiplayerMovementPlugin(
@@ -914,10 +915,10 @@ namespace Global.Dynamic
                 new NotificationPlugin(
                     assetsProvisioner,
                     mvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController,
+                    staticContainer.TextureProvider,
                     notificationsRequestController,
                     identityCache),
-                new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController),
+                new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.TextureProvider),
                 new PassportPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -955,7 +956,8 @@ namespace Global.Dynamic
                     galleryEventBus,
                     clipboard,
                     communitiesDataProvider,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    staticContainer.TextureProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -986,7 +988,7 @@ namespace Global.Dynamic
                         globalWorld,
                         playerEntity,
                         communitiesDataProvider,
-                        staticContainer.WebRequestsContainer.WebRequestController,
+                        staticContainer.TextureProvider,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
                         debugBuilder)
@@ -1089,7 +1091,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     identityCache,
                     staticContainer.LoadingStatus,
-                    hyperlinkTextFormatter));
+                    hyperlinkTextFormatter,
+                    staticContainer.TextureProvider));
             }
 
             if (includeCommunities)

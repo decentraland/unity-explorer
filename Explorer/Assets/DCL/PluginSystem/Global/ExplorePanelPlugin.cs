@@ -154,6 +154,7 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly UITextureProvider textureProvider;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -214,7 +215,8 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            UITextureProvider textureProvider)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -276,6 +278,7 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.textureProvider = textureProvider;
         }
 
         public void Dispose()
@@ -364,7 +367,7 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                textureProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
@@ -376,8 +379,8 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar, shareContextMenu, webBrowser);
+                navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                userCalendar, shareContextMenu, webBrowser, textureProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
@@ -390,7 +393,7 @@ namespace DCL.PluginSystem.Global
 
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    textureProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus, homePlaceEventBus: homePlaceEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
@@ -493,7 +496,7 @@ namespace DCL.PluginSystem.Global
             PlaceElementView CreatePoolElements(PlaceElementView asset)
             {
                 PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
-                placeElementView.ConfigurePlaceImageController(webRequestController);
+                placeElementView.ConfigurePlaceImageController(textureProvider);
                 return placeElementView;
             }
         }

@@ -15,7 +15,6 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -32,7 +31,7 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController : IDisposable
     {
         private readonly PlaceInfoPanelView view;
-        private readonly IWebRequestController webRequestController;
+        private readonly UITextureProvider textureProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
@@ -44,7 +43,7 @@ namespace DCL.Navmap
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly ImageController thumbnailImage;
+        private readonly ImageController? thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController homeButton;
@@ -63,7 +62,7 @@ namespace DCL.Navmap
         private Vector2Int? originParcel;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
@@ -81,7 +80,7 @@ namespace DCL.Navmap
             GalleryEventBus galleryEventBus = null)
         {
             this.view = view;
-            this.webRequestController = webRequestController;
+            this.textureProvider = textureProvider;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
@@ -94,7 +93,7 @@ namespace DCL.Navmap
             this.galleryEventBus = galleryEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
 
-            thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
+            thumbnailImage = new ImageController(view.Thumbnail, textureProvider);
 
             if (view.CameraReelGalleryView != null)
             {
@@ -152,6 +151,7 @@ namespace DCL.Navmap
 
         public void Dispose()
         {
+            thumbnailImage?.Dispose();
             cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
             cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
         }
@@ -405,7 +405,7 @@ namespace DCL.Navmap
                 foreach (EventDTO @event in events)
                 {
                     EventElementView element = eventElementPool.Get();
-                    element.Init(webRequestController);
+                    element.Init(textureProvider);
                     eventElements.Add(element);
 
                     var schedule = "";

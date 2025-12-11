@@ -19,10 +19,10 @@ namespace DCL.TeleportPrompt
     {
 
         private readonly ICursor cursor;
-        private readonly IWebRequestController webRequestController;
+        private readonly UITextureProvider textureProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IChatMessagesBus chatMessagesBus;
-        private ImageController placeImageController;
+        private ImageController? placeImageController;
         private Action<TeleportPromptResultType> resultCallback;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -30,20 +30,20 @@ namespace DCL.TeleportPrompt
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             IPlacesAPIService placesAPIService,
             IChatMessagesBus chatMessagesBus
         ) : base(viewFactory)
         {
             this.cursor = cursor;
-            this.webRequestController = webRequestController;
+            this.textureProvider = textureProvider;
             this.placesAPIService = placesAPIService;
             this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = new ImageController(viewInstance.placeImage, webRequestController);
+            placeImageController = new ImageController(viewInstance.placeImage, textureProvider);
             viewInstance.cancelButton.onClick.AddListener(Dismiss);
             viewInstance.continueButton.onClick.AddListener(Approve);
         }
@@ -63,6 +63,12 @@ namespace DCL.TeleportPrompt
 
         protected override void OnViewClose() =>
             cts.SafeCancelAndDispose();
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            placeImageController?.Dispose();
+        }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(

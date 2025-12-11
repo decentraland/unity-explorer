@@ -10,31 +10,47 @@ using UnityEngine;
 
 namespace DCL.UI
 {
-    public class ImageController
+    public class ImageController : IDisposable
     {
         private static readonly Color LOADING_COLOR = new (0, 0, 0, 0);
 
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
+        private readonly UITextureProvider? textureProvider;
         private readonly IWebRequestController? webRequestController;
         private readonly Color defaultColor = Color.white;
+        private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
 
         /// <summary>
-        /// Use this constructor if the sprite does not need to be cached.
+        ///     PREFERRED: Uses ECS Streamable Loading (Caching, Deduplication, Budgeting).
         /// </summary>
-        /// <param name="view">The view where the sprite will be presented after loaded.</param>
-        /// <param name="webRequestController">The controller to get the sprite from a server.</param>
+        public ImageController(ImageView view, UITextureProvider textureProvider)
+        {
+            this.view = view;
+            this.textureProvider = textureProvider;
+            webRequestController = null;
+        }
+        
+        /// <summary>
+        /// LEGACY: Uses direct WebRequests. No caching.
+        /// </summary>
         public ImageController(ImageView view, IWebRequestController webRequestController)
         {
             this.view = view;
             this.webRequestController = webRequestController;
+            textureProvider = null;
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
             bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
+            ReportHub.Log(
+                ReportCategory.UNSPECIFIED,
+                $"[ImageController] Instance {GetHashCode()} requesting {uri}"
+            );
+
             RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage, defaultSprite);
         }
 
@@ -56,8 +72,10 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
+        private async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
+            DisposeCurrentTexture();
+            
             try
             {
                 view.Image.color = LOADING_COLOR;
@@ -66,9 +84,29 @@ namespace DCL.UI
 
                 Sprite? sprite = null;
 
-                if (webRequestController != null)
+                if (textureProvider != null)
                 {
-                    //TODO potential memory leak, due no CacheCleaner
+                    var textureRef = await textureProvider.LoadTextureAsync(uri, ct);
+
+                    if (textureRef.HasValue)
+                    {
+                        currentTextureRef = textureRef;
+
+                        sprite = Sprite.Create(
+                            textureRef.Value.Texture,
+                            new Rect(0, 0, textureRef.Value.Texture.width, textureRef.Value.Texture.height),
+                            VectorUtilities.OneHalf,
+                            PIXELS_PER_UNIT,
+                            0,
+                            SpriteMeshType.FullRect,
+                            Vector4.one,
+                            false
+                        );
+                    }
+                }
+                else if (webRequestController != null)
+                {
+                    // NOTE: This path does NOT cache and does NOT release memory automatically.
                     var ownedTexture = await webRequestController.GetTextureAsync(
                         new CommonArguments(URLAddress.FromString(uri)),
                         new GetTextureArguments(TextureType.Albedo, useKtx),
@@ -83,12 +121,12 @@ namespace DCL.UI
                 }
                 else
                 {
-                    ReportHub.LogError(ReportCategory.UI, "The image controller was not configured properly. It requires either a web request controller or a sprite cache.");
+                    ReportHub.LogError(ReportCategory.UI, "ImageController missing provider configuration.");
                 }
 
                 if (sprite != null)
                 {
-                    SetImage(sprite, fitAndCenterImage);
+                    view.SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
                     view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
@@ -107,7 +145,31 @@ namespace DCL.UI
             {
                 view.IsLoading = false;
                 view.Image.enabled = true;
+
+                if (ct.IsCancellationRequested)
+                    DisposeCurrentTexture();
             }
+        }
+
+        private void DisposeCurrentTexture()
+        {
+            if (currentTextureRef != null)
+            {
+                ReportHub.Log(
+                    ReportCategory.UNSPECIFIED,
+                    "[ImageController] Disposing previous ref. Current RefCount should drop."
+                );
+                currentTextureRef.Value.Dispose(); // Note: .Value is required for Nullable structs
+            }
+            else
+            {
+                ReportHub.Log(
+                    ReportCategory.UNSPECIFIED,
+                    "[ImageController] Nothing to dispose (currentTextureRef is null)."
+                );
+            }
+
+            currentTextureRef = null;
         }
 
         private void TryApplyDefaultSprite(Sprite? defaultSprite, bool fitAndCenterImage)
@@ -119,13 +181,22 @@ namespace DCL.UI
             view.Image.DOColor(defaultColor, view.imageLoadingFadeDuration);
         }
 
-        public void SetImage(Sprite sprite, bool fitAndCenterImage = false) =>
+        public void SetImage(Sprite sprite, bool fitAndCenterImage = false)
+        {
+            DisposeCurrentTexture();
             view.SetImage(sprite, fitAndCenterImage);
+        }
 
         public void StopLoading()
         {
             cts.SafeCancelAndDispose();
+            DisposeCurrentTexture();
             view.IsLoading = false;
+        }
+
+        public void Dispose()
+        {
+            StopLoading();
         }
     }
 }

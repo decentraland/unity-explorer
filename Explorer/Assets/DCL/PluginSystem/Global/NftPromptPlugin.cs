@@ -9,6 +9,7 @@ using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 
 namespace DCL.PluginSystem.Global
@@ -19,7 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftMarketAPIClient nftInfoAPIClient;
-        private readonly IWebRequestController webRequestController;
+        private readonly UITextureProvider textureProvider;
         private readonly ICursor cursor;
         private NftPromptController? nftPromptController;
 
@@ -28,14 +29,14 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftMarketAPIClient nftInfoAPIClient,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.nftInfoAPIClient = nftInfoAPIClient;
-            this.webRequestController = webRequestController;
+            this.textureProvider = textureProvider;
             this.cursor = cursor;
         }
 
@@ -47,7 +48,7 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 cursor,
                 nftInfoAPIClient,
-                webRequestController
+                textureProvider
             );
 
             mvcManager.RegisterController(nftPromptController);

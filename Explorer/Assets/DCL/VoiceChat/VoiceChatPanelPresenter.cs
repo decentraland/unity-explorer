@@ -7,6 +7,7 @@ using DCL.Utilities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
+using DCL.UI;
 using Utility;
 
 namespace DCL.VoiceChat
@@ -22,7 +23,7 @@ namespace DCL.VoiceChat
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             VoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler voiceChatHandler,
             VoiceChatRoomManager roomManager,
@@ -39,7 +40,7 @@ namespace DCL.VoiceChat
             var privateVoiceChatController = new PrivateVoiceChatPresenter(view.PrivateVoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             presenterScope.Add(privateVoiceChatController);
 
-            var communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            var communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, textureProvider);
             presenterScope.Add(communitiesVoiceChatController);
 
             var sceneVoiceChatController = new SceneVoiceChatPresenter(view.SceneVoiceChatPanelView, voiceChatOrchestrator);

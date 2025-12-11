@@ -37,17 +37,19 @@ namespace DCL.Navmap
         [field: SerializeField]
         public GameObject LiveContainer { get; private set; }
 
-        private ImageController imageController;
+        private ImageController? imageController;
 
         public Vector2Int coords;
 
         public event Action<bool, Vector2Int> OnMouseHover;
 
-        public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
-            imageController = new ImageController(placeImage, webRequestController);
+        public void ConfigurePlaceImageController(UITextureProvider textureProvider)
+        {
+            imageController ??= new ImageController(placeImage, textureProvider);
+        }
 
         public void SetPlaceImage(string imageUrl) =>
-            imageController.RequestImage(imageUrl, true);
+            imageController?.RequestImage(imageUrl, true);
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -69,6 +71,11 @@ namespace DCL.Navmap
         private void OnDisable()
         {
             resultAnimator.enabled = false;
+        }
+
+        private void OnDestroy()
+        {
+            imageController?.Dispose();
         }
     }
 }

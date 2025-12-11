@@ -33,6 +33,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -77,7 +78,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-
+        private readonly UITextureProvider textureProvider;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -117,7 +118,8 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            UITextureProvider textureProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -156,6 +158,7 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.textureProvider = textureProvider;
         }
 
         public void Dispose()
@@ -220,7 +223,8 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
-                communitiesDataProvider
+                communitiesDataProvider,
+                textureProvider
             );
 
             mvcManager.RegisterController(passportController);

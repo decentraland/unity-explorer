@@ -65,14 +65,14 @@ namespace DCL.Passport.Fields.Badges
 
         public bool IsSelected { get; private set; }
 
-        private ImageController? imageController;
+        private ImageController? imageController; 
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(UITextureProvider textureProvider)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(BadgeImage, webRequestController);
+            imageController = new ImageController(BadgeImage, textureProvider);
         }
 
         public void StopLoadingImage() =>
