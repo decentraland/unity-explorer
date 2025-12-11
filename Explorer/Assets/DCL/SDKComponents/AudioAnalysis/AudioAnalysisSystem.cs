@@ -5,6 +5,7 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -40,20 +41,40 @@ namespace DCL.SDKComponents.AudioSources
 
         protected override void Update(float t)
         {
-            HandleAudioAnalysisComponentQuery(World);
+            HandleAudioSourceComponentQuery(World);
+            HandleMediaPlayerComponentQuery(World);
         }
 
         [Query]
-        private void HandleAudioAnalysisComponent(
+        private void HandleMediaPlayerComponent(
+            CRDTEntity entity,
+            ref MediaPlayerComponent mediaPlayerComponent, 
+            ref PBAudioAnalysis sdkComponent
+        )
+        {
+            HandleComponent(entity, ref mediaPlayerComponent, ref sdkComponent);
+        }
+
+        [Query]
+        private void HandleAudioSourceComponent(
             CRDTEntity entity,
             ref AudioSourceComponent audioSourceComponent, 
             ref PBAudioAnalysis sdkComponent
         )
         {
+            HandleComponent(entity, ref audioSourceComponent, ref sdkComponent);
+        }
+
+        private void HandleComponent<TComponent>(
+            CRDTEntity entity,
+            ref TComponent component, 
+            ref PBAudioAnalysis sdkComponent
+        ) where TComponent : IComponentWithAudioFrameBuffer
+        {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             ThreadSafeLastAudioFrameReadFilter output = null!;
-            if (audioSourceComponent.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false) 
+            if (component.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false) 
             {
                 ReportHub.LogError(GetReportCategory(), "Cannot attach LastAudioFrameReadFilter");
                 return;

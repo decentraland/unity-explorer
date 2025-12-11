@@ -6,7 +6,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 
 namespace DCL.SDKComponents.AudioSources
 {
-    public struct AudioSourceComponent : IDisposable
+    public struct AudioSourceComponent : IDisposable, IComponentWithAudioFrameBuffer
     {
         public string AudioClipUrl;
         public Promise ClipPromise;
@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.AudioSources
         ///     MonoBehaviour cannot be easily pooled because the ownership issue arise. 
         ///     AudioSource and ThreadSafeLastAudioFrameReadFilter share the same GameObject.
         /// </summary>
-        private ThreadSafeLastAudioFrameReadFilter? lastAudioFrameReadFilter;
+        private ThreadSafeLastAudioFrameReadFilterWrap lastAudioFrameReadFilter;
 
 
         public AudioSourceComponent(Promise promise, string audioClipUrl)
@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AudioSources
             AudioSource = null;
             AudioSourceAssigned = false;
 
-            lastAudioFrameReadFilter = null;
+            lastAudioFrameReadFilter = new ();
         }
 
         public void SetAudioSource(AudioSource audioSource, AudioMixerGroup audioMixerGroup)
@@ -47,34 +47,14 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = true;
         }
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter output) 
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
         {
-            if (lastAudioFrameReadFilter != null)
-            {
-                output = lastAudioFrameReadFilter;
-                return true;
-            }
-
-
-            if (AudioSource != null) 
-            {
-                output = lastAudioFrameReadFilter = AudioSource.gameObject.AddComponent<ThreadSafeLastAudioFrameReadFilter>();
-                return lastAudioFrameReadFilter != null;
-            }
-
-            output = null;
-            return false;
+            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(AudioSource, out output);
         }
-
 
         public void EnsureLastAudioFrameReadFilterIsRemoved() 
         {
-            if (lastAudioFrameReadFilter != null) 
-            {
-                // Can be pooled
-                UnityEngine.Object.Destroy(lastAudioFrameReadFilter);
-                lastAudioFrameReadFilter = null;
-            }
+            lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
         }
 
         public void Dispose()

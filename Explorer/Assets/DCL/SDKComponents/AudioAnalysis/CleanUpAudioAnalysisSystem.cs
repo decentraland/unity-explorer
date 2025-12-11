@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -25,33 +26,62 @@ namespace DCL.SDKComponents.AudioSources
 
         protected override void Update(float t)
         {
-            HandleEntityDestructionQuery(World);
-            HandleComponentRemovalQuery(World);
+            HandleEntityDestructionAudioQuery(World);
+            HandleComponentRemovalAudioQuery(World);
+
+            HandleEntityDestructionPlayerQuery(World);
+            HandleComponentRemovalPlayerQuery(World);
         }
 
+#region AudioSourceComponent
         [Query]
         [None(typeof(PBAudioAnalysis), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref AudioSourceComponent component)
+        private void HandleComponentRemovalAudio(ref AudioSourceComponent component)
         {
             component.EnsureLastAudioFrameReadFilterIsRemoved();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref AudioSourceComponent component)
+        private void HandleEntityDestructionAudio(ref AudioSourceComponent component)
         {
             component.EnsureLastAudioFrameReadFilterIsRemoved();
         }
 
         [Query]
-        private void FinalizeComponents(ref AudioSourceComponent component)
+        private void FinalizeComponentsAudio(ref AudioSourceComponent component)
+        {
+            component.EnsureLastAudioFrameReadFilterIsRemoved();
+        }
+#endregion
+
+
+#region MediaPlayerComponent
+        [Query]
+        [None(typeof(PBAudioAnalysis), typeof(DeleteEntityIntention))]
+        private void HandleComponentRemovalPlayer(ref MediaPlayerComponent component)
         {
             component.EnsureLastAudioFrameReadFilterIsRemoved();
         }
 
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestructionPlayer(ref MediaPlayerComponent component)
+        {
+            component.EnsureLastAudioFrameReadFilterIsRemoved();
+        }
+
+        [Query]
+        private void FinalizeComponentsPlayer(ref MediaPlayerComponent component)
+        {
+            component.EnsureLastAudioFrameReadFilterIsRemoved();
+        }
+#endregion
+
         public void FinalizeComponents(in Query query)
         {
-            FinalizeComponentsQuery(World);
+            FinalizeComponentsAudioQuery(World);
+            FinalizeComponentsPlayerQuery(World);
         }
     }
 }
