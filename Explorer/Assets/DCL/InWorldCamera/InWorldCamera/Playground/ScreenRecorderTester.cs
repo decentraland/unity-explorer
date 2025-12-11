@@ -12,6 +12,7 @@ using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
@@ -91,7 +92,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.TEST, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()), false)
+                    new RealmProfileRepository(IWebRequestController.TEST, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null), false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

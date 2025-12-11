@@ -42,13 +42,13 @@ namespace DCL.Profiles
 
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
-        private readonly ProfilesDebug profilesDebug;
+        private readonly ProfilesAnalytics profilesAnalytics;
 
-        internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController, ProfilesDebug profilesDebug) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
+        internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController, ProfilesAnalytics profilesAnalytics) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
         {
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
-            this.profilesDebug = profilesDebug;
+            this.profilesAnalytics = profilesAnalytics;
         }
 
         public override void BeforeUpdate(in float t) =>
@@ -59,8 +59,6 @@ namespace DCL.Profiles
         protected override async UniTask<StreamableLoadingResult<ProfilesBatchResult>> FlowInternalAsync(GetProfilesBatchIntent intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             using GetProfilesBatchIntent _ = intention;
-
-            int pointersCount = intention.Ids.Count;
 
             switch (intention.Tier)
             {
@@ -74,10 +72,12 @@ namespace DCL.Profiles
 
                     if (result is { Success: true })
                     {
+                        bool batched = result.Value.Count > 1;
+
                         foreach (Profile.CompactInfo dto in result.Value)
                         {
                             intention.Ids.Remove(dto.UserId);
-                            profileRepository.ResolveProfile(dto.UserId, dto);
+                            profileRepository.ResolveProfile(dto.UserId, dto, batched);
                         }
                     }
 
@@ -93,10 +93,12 @@ namespace DCL.Profiles
 
                     if (result is { Success: true })
                     {
+                        bool batched = result.Value.Count > 1;
+
                         foreach (Profile dto in result.Value)
                         {
                             intention.Ids.Remove(dto.UserId);
-                            profileRepository.ResolveProfile(dto.UserId, dto);
+                            profileRepository.ResolveProfile(dto.UserId, dto, batched);
                         }
                     }
 
@@ -104,15 +106,8 @@ namespace DCL.Profiles
                 }
             }
 
-            int successfullyResolved = pointersCount - intention.Ids.Count;
-
-            if (successfullyResolved > 1)
-                profilesDebug.AddAggregated(successfullyResolved);
-            else
-                profilesDebug.AddNonCombined(successfullyResolved);
-
             foreach (string unresolvedId in intention.Ids)
-                profileRepository.ResolveProfile(unresolvedId, null);
+                profileRepository.ResolveProfile(unresolvedId, null, false);
 
             return new StreamableLoadingResult<ProfilesBatchResult>(new ProfilesBatchResult());
 

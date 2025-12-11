@@ -10,7 +10,7 @@ namespace DCL.Profiles
         /// <summary>
         ///     Should be called from the background thread
         /// </summary>
-        public ProfileTier? ResolveProfile(string userId, ProfileTier? profile);
+        public ProfileTier? ResolveProfile(string userId, ProfileTier? profile, bool batched);
 
         public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier);
     }

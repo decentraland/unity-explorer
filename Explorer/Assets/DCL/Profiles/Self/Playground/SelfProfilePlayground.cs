@@ -12,6 +12,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -58,7 +59,7 @@ namespace DCL.Profiles.Self.Playground
                         ),
                         new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY),
                         new DefaultProfileCache(),
-                        ProfilesDebug.Create(new NullDebugContainerBuilder()),
+                        new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null),
                         false)
                 ),
                 web3IdentityCache,

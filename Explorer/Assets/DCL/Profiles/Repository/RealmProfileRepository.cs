@@ -3,16 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Optimization.Pools;
-using DCL.Optimization.ThreadSafePool;
-using DCL.Utilities.Extensions;
-using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using Newtonsoft.Json;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -20,7 +15,6 @@ using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Pool;
 using Utility;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
@@ -34,7 +28,7 @@ namespace DCL.Profiles
 
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
-        private readonly ProfilesDebug profilesDebug;
+        private readonly ProfilesAnalytics profilesAnalytics;
         private readonly IRealmData realm;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IProfileCache profileCache;
@@ -59,14 +53,14 @@ namespace DCL.Profiles
             IRealmData realm,
             IDecentralandUrlsSource urlsSource,
             IProfileCache profileCache,
-            ProfilesDebug profilesDebug,
+            ProfilesAnalytics profilesAnalytics,
             bool useCentralizedProfiles)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
             this.urlsSource = urlsSource;
             this.profileCache = profileCache;
-            this.profilesDebug = profilesDebug;
+            this.profilesAnalytics = profilesAnalytics;
             this.useCentralizedProfiles = useCentralizedProfiles;
         }
 
@@ -146,8 +140,11 @@ namespace DCL.Profiles
             }
         }
 
-        private void Resolve(string userId, ProfileTier? profile)
+        private void Resolve(string userId, ProfileTier? profile, bool batched)
         {
+            if (profile != null)
+                profilesAnalytics.OnProfileResolved(userId, batched);
+
             if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?> continuation))
                 continuation.TrySetResult(profile);
         }
@@ -261,18 +258,30 @@ namespace DCL.Profiles
 
                 partition ??= PartitionComponent.TOP_PRIORITY;
 
-                // Two paths
-                if (EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
-                    return await EnforceSingleGetAsync();
-                else
-                {
-                    // Batching is allowed
-                    ProfileTier? result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
+                profilesAnalytics.OnProfileRetrievalStarted(id);
 
-                    // Not found profiles (Catalyst replication delays) will be processed individually by GET
-                    // ⚠️ The following produces potentially a very long-living task ⚠️
-                    // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
-                    return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+                ProfileTier? result = null;
+
+                try
+                {
+                    // Two paths
+                    if (EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
+                        return await EnforceSingleGetAsync();
+                    else
+                    {
+                        // Batching is allowed
+                        result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
+
+                        // Not found profiles (Catalyst replication delays) will be processed individually by GET
+                        // ⚠️ The following produces potentially a very long-living task ⚠️
+                        // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
+                        return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+                    }
+                }
+                finally
+                {
+                    if (result == null)
+                        profilesAnalytics.OnProfileResolutionFailed(id, version);
                 }
             }
             finally { await UniTask.SwitchToMainThread(); }
@@ -292,7 +301,7 @@ namespace DCL.Profiles
         /// <summary>
         ///     Should be called from the background thread
         /// </summary>
-        public ProfileTier? ResolveProfile(string userId, ProfileTier? profile)
+        public ProfileTier? ResolveProfile(string userId, ProfileTier? profile, bool batched)
         {
             if (profile != null)
             {
@@ -303,11 +312,9 @@ namespace DCL.Profiles
                 // the check always fails. So its necessary to get a new instance each time
                 profileCache.Set(userId, profile.Value);
             }
-            else
-                profilesDebug.AddMissing(userId);
 
             // Find the request in the batch
-            Resolve(userId, profile);
+            Resolve(userId, profile, batched);
 
             return profile;
         }
@@ -329,9 +336,8 @@ namespace DCL.Profiles
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version, CentralizedProfileRetryPolicy.VALUE, ct);
 
                     if (profile != null)
-                        profilesDebug.AddMissing(id);
-                    else
-                        profilesDebug.AddNonCombined(1);
+                        profilesAnalytics.OnProfileResolved(id, false);
+
                 }
                 else
                 {
@@ -339,10 +345,10 @@ namespace DCL.Profiles
 
                     profile = await ProfilesRequest.GetAsync(webRequestController, url, id, version, retryUntilResolved, ct);
 
-                    profilesDebug.AddNonAggregated();
+                    profilesAnalytics.OnProfileResolved(id, false);
                 }
 
-                return ResolveProfile(id, profile);
+                return ResolveProfile(id, profile, false);
             }
             catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND })
             {

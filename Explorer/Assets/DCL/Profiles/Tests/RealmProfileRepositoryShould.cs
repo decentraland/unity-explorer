@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
@@ -37,7 +38,7 @@ namespace DCL.Profiles.Tests
         {
             webRequestController = Substitute.For<IWebRequestController>();
             profileCache = Substitute.For<IProfileCache>();
-            repository = new RealmProfileRepository(webRequestController, Substitute.For<IRealmData>(), Substitute.For<IDecentralandUrlsSource>(), profileCache, ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()), false);
+            repository = new RealmProfileRepository(webRequestController, Substitute.For<IRealmData>(), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()), IAnalyticsController.Null), false);
 
             dtos = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
         }
@@ -62,7 +63,7 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, dtos.Count);
 
             foreach (Profile profileJsonDto in dtos)
-                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto);
+                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto, false);
 
             await UniTask.WhenAll(tasks).Timeout(TimeSpan.FromSeconds(1));
 
@@ -80,7 +81,7 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, dtos.Count);
 
             foreach (Profile? profileJsonDto in dtos)
-                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto);
+                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto, false);
 
             List<Profile>? profiles = await task;
 
@@ -144,10 +145,10 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, 2);
 
             // The first profile to resolve
-            repository.ResolveProfile(dtos[0].UserId, dtos[0]);
+            repository.ResolveProfile(dtos[0].UserId, dtos[0], false);
 
             // The second profile to force through Single GET
-            repository.ResolveProfile(dtos[1].UserId, null);
+            repository.ResolveProfile(dtos[1].UserId, null, false);
 
             await UniTask.WhenAll(tasks).Timeout(TimeSpan.FromSeconds(1));
 
@@ -199,7 +200,7 @@ namespace DCL.Profiles.Tests
             // Newer version
             dtos[0].Version = 20;
 
-            repository.ResolveProfile(userId, dtos[0]);
+            repository.ResolveProfile(userId, dtos[0], false);
 
             await task;
 
