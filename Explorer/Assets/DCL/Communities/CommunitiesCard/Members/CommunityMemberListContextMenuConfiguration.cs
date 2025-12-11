@@ -29,7 +29,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public string AddModeratorText { get; private set; } = "Promote Moderator";
 
         [field: SerializeField] public Sprite TransferOwnershipSprite { get; private set; } = null!;
-        [field: SerializeField] public string TransferOwnershipText { get; private set; } = "Transfer Ownership";
+        [field: SerializeField] public string TransferOwnershipText { get; private set; } = "Make Community Owner";
 
         [field: SerializeField] public Sprite KickUserSprite { get; private set; } = null!;
         [field: SerializeField] public string KickUserText { get; private set; } = "Remove Member";
