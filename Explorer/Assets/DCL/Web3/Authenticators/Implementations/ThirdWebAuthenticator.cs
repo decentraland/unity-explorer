@@ -6,6 +6,7 @@ using DCL.Web3.Identities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using System.Threading;
 using Thirdweb;
@@ -22,7 +23,6 @@ namespace DCL.Web3.Authenticators
 
         private readonly HashSet<string> whitelistMethods;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly DecentralandEnvironment environment;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
 
@@ -36,7 +36,6 @@ namespace DCL.Web3.Authenticators
             Instance?.Dispose();
             Instance = this;
 
-            this.environment = environment;
             this.identityCache = identityCache;
             this.whitelistMethods = whitelistMethods;
             this.web3AccountFactory = web3AccountFactory;
@@ -108,14 +107,13 @@ namespace DCL.Web3.Authenticators
         {
             Debug.Log("Login via OTP");
 
-            var walletOptions = new WalletOptions(
-                WalletProvider.InAppWallet,
-                EnvChainsUtils.GetChainIdAsInt(environment),
-                new InAppWalletOptions(authprovider: AuthProvider.Default, email: email)
-            );
+            InAppWallet wallet = await InAppWallet.Create(
+                ThirdWebManager.Instance.Client,
+                email,
+                storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
-            InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
             await wallet.SendOTP();
+
             Debug.Log("OTP sent");
 
             string otp = await otpRequestCallback!.Invoke(ct);
@@ -271,7 +269,7 @@ namespace DCL.Web3.Authenticators
             return BigInteger.Parse(hex, System.Globalization.NumberStyles.HexNumber);
         }
 
-        // Use ThirdwebClient's RPC endpoint for low-level calls
+        // low-level calls
         private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request)
         {
             string rpcUrl = GetRpcUrl((int)chainId);
@@ -314,7 +312,7 @@ namespace DCL.Web3.Authenticators
             };
         }
 
-        // Use Thirdweb's RPC endpoints
+        // Thirdweb's RPC endpoints
         private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
 
@@ -327,76 +325,5 @@ namespace DCL.Web3.Authenticators
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback)
         {
         }
-
-        // public async UniTask<string> MintFakeManaAsync(decimal amountInMana, CancellationToken ct)
-        // {
-        //     try
-        //     {
-        //         // 1. Проверяем, что есть активный кошелёк
-        //         IThirdwebWallet? wallet = ThirdWebManager.Instance.ActiveWallet;
-        //         if (wallet == null)
-        //         {
-        //             UnityEngine.Debug.LogError("[UNSPECIFIED]: MintFakeManaAsync: ActiveWallet is null. Call LoginAsync first.");
-        //             return string.Empty;
-        //         }
-        //
-        //         // 2. Адрес получателя — текущий EOA пользователя
-        //         string toAddress = await wallet.GetAddress();
-        //
-        //         // 3. Конвертация MANA → wei (18 decimals)
-        //         // 1 MANA = 10^18, см. README про FakeMana
-        //         // https://github.com/decentraland/governance (Sepolia FakeMana)
-        //         BigInteger weiPerMana = BigInteger.Pow(10, 18);
-        //         BigInteger amountWei = new BigInteger(amountInMana * (decimal)weiPerMana);
-        //
-        //         if (amountWei <= BigInteger.Zero)
-        //         {
-        //             UnityEngine.Debug.LogError($"[UNSPECIFIED]: MintFakeManaAsync: amountInMana must be > 0, got {amountInMana}");
-        //             return string.Empty;
-        //         }
-        //
-        //         // 4. Адрес Fake MANA на Sepolia (Sepolia FakeMana из README)
-        //         const string fakeManaContractAddress = "0xFa04D2e2BA9aeC166c93dFEEba7427B2303beFa9";
-        //
-        //         // Минимальный ABI только с методом mint(address to, uint256 amount)
-        //         const string fakeManaAbi = @"[
-        //             {
-        //                 ""inputs"": [
-        //                     { ""internalType"": ""address"", ""name"": ""to"", ""type"": ""address"" },
-        //                     { ""internalType"": ""uint256"", ""name"": ""amount"", ""type"": ""uint256"" }
-        //                 ],
-        //                 ""name"": ""mint"",
-        //                 ""outputs"": [],
-        //                 ""stateMutability"": ""nonpayable"",
-        //                 ""type"": ""function""
-        //             }
-        //         ]";
-        //
-        //         // 5. Создаём контракт на Sepolia (chainId у тебя уже привязан к Sepolia)
-        //         var client = ThirdWebManager.Instance.Client;
-        //
-        //         ThirdwebContract contract = await ThirdwebContract.Create(
-        //             client: client,
-        //             address: fakeManaContractAddress,
-        //             chain: new BigInteger(11155111),          // private BigInteger chainId => EnvChainsUtils.Sepolia;
-        //             abi: fakeManaAbi
-        //         );
-        //
-        //         // 6. Пишем в контракт через ThirdwebContract.Write (без SendTransaction)
-        //         var receipt = await contract.Write(wallet, "mint", BigInteger.Zero, toAddress, amountWei);
-        //         Console.WriteLine($"Transaction receipt: {receipt}");
-        //
-        //         UnityEngine.Debug.Log(
-        //             $"[MintFakeManaAsync] Minted {amountInMana} Fake MANA to {toAddress}. TxHash: {receipt.TransactionHash}"
-        //         );
-        //
-        //         return receipt.TransactionHash;
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         UnityEngine.Debug.LogError($"[UNSPECIFIED]: MintFakeMana failed: {ex}");
-        //         return string.Empty;
-        //     }
-        // }
     }
 }
