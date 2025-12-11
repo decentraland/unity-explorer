@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests.Dumper;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
@@ -49,7 +50,7 @@ namespace DCL.WebRequests.RequestsHub
             Add<GenericPostArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(arguments, abArgs, disableABCache));
+            Add(mutableMap, (in CommonArguments arguments, GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(arguments, abArgs, disableABCache || WebRequestsDebugControl.DisableCache));
             Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
             Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
         }

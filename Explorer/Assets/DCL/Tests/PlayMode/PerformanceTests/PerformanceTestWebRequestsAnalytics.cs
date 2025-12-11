@@ -1,4 +1,5 @@
 ﻿using DCL.WebRequests.Analytics;
+using DCL.WebRequests.Analytics.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,11 +32,11 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         public bool WarmingUp { private get; set; }
 
-        public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>
-            new Dictionary<Type, Func<IRequestMetric>>();
+        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics() =>
+            new Dictionary<Type, Func<RequestMetricBase>>();
 
-        public IReadOnlyList<IRequestMetric> GetMetric(Type requestType) =>
-            Array.Empty<IRequestMetric>();
+        public IReadOnlyList<RequestMetricBase> GetMetric(Type requestType) =>
+            Array.Empty<RequestMetricBase>();
 
         public static double ToMs(long a, long b) =>
             (b - a) * (1_000_000.0 / Stopwatch.Frequency);

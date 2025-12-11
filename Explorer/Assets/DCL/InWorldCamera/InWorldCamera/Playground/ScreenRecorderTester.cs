@@ -76,7 +76,7 @@ namespace DCL.InWorldCamera.Playground
                 new LogIpfsRealm(
                     new IpfsRealm(
                         web3IdentityCache,
-                        IWebRequestController.DEFAULT,
+                        IWebRequestController.TEST,
                         URLDomain.FromString("TestRealm"),
                         URLDomain.EMPTY,
                         new ServerAbout(
@@ -91,7 +91,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()), false)
+                    new RealmProfileRepository(IWebRequestController.TEST, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()), false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

@@ -31,7 +31,7 @@ namespace DCL.WebRequests
             return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
         }
 
-        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+        IRequestHub IWebRequestController.RequestHub => origin.RequestHub;
 
         public interface IReadOnlyOptions
         {

@@ -44,7 +44,8 @@ namespace DCL.Multiplayer.Connections.Demo
             var character = new ExposedTransform();
             var totalBudget = 15;
 
-            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
+            var chromeDev = ChromeDevtoolProtocolClient.NewForTest();
+            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null), identityCache, new RequestHub(urlsSource), chromeDev, new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
             var realmData = new IRealmData.Fake();
 
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false));

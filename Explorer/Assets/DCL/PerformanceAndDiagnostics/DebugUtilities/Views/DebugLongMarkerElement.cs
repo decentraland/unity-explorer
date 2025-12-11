@@ -35,7 +35,7 @@ namespace DCL.DebugUtilities.Views
             ((INotifyValueChanged<string>)label).SetValueWithoutNotify(FormatValue(newValue, definition.MarkerUnit));
         }
 
-        private static string FormatValue(ulong value, DebugLongMarkerDef.Unit unit)
+        public static string FormatValue(ulong value, DebugLongMarkerDef.Unit unit)
         {
             switch (unit)
             {
