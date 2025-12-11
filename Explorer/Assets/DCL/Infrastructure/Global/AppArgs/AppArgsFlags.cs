@@ -18,6 +18,10 @@
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+
+        /// <summary>
+        /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
+        /// </summary>
         public const string COMMUNITY = "community";
 
         public const string FORCED_EMOTES = "self-force-emotes";
