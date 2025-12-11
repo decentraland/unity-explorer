@@ -23,6 +23,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private GameObject createAnnouncementButtonLoadingSpinner = null!;
         [SerializeField] private GameObject createAnnouncementInputOutline = null!;
         [SerializeField] private CharacterCounterView characterCounter = null!;
+        [SerializeField] private TMP_Text characterCounterText = null!;
 
         [Header("Emoji Panel Configuration")]
         [SerializeField] internal EmojiButtonView emojiButton = null!;
@@ -125,8 +126,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private void OnCreateAnnouncementButton() =>
             CreateAnnouncementButtonClicked?.Invoke(announcementInput.text);
 
-        private void UpdateCharacterCounter() =>
+        private void UpdateCharacterCounter()
+        {
             characterCounter.SetCharacterCount(announcementInput.text.Length);
+            characterCounterText.text = $"{announcementInput.text.Length}/{announcementInput.characterLimit}";
+            characterCounterText.gameObject.SetActive(announcementInput.text.Length > 0);
+        }
 
         private void UpdateCreateButtonState() =>
             createAnnouncementButton.interactable = !string.IsNullOrEmpty(announcementInput.text);
