@@ -34,7 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transferring Community Ownership to {0}";
         private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "Once you transfer ownership of a Community, you will be demoted from Owner to Moderator. This action cannot be undone by you.";
-        private const string TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK = "Community ownership can be only transferred to people who has a Claimed Name.";
+        private const string TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK = "Community ownership can only be transferred to users who own a NAME.";
         private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
         private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
         private const string TRANSFER_OWNERSHIP_CANCEL_TEXT = "CANCEL";
