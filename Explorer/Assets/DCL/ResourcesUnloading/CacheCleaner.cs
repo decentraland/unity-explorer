@@ -46,6 +46,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
+        private ITrimmedWearableStorage? trimmedWearableStorage;
         private IProfileCache? profileCache;
         private IRoadAssetPool? roadCache;
         private IEmoteStorage? emoteCache;
@@ -79,6 +80,7 @@ namespace DCL.ResourcesUnloading
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
             wearableStorage!.Unload(budgetToUse);
+            trimmedWearableStorage!.Unload(budgetToUse);
             emoteCache!.Unload(budgetToUse);
             gltfContainerAssetsCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             lodCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
@@ -125,6 +127,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IWearableStorage storage) =>
             wearableStorage = storage;
+
+        public void Register(ITrimmedWearableStorage storage) =>
+            trimmedWearableStorage = storage;
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             extendedObjectPools.Add(extendedObjectPool);
