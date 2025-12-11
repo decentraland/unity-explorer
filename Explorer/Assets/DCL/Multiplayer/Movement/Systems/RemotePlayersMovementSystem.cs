@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -54,10 +55,25 @@ namespace DCL.Multiplayer.Movement.Systems
             ref HeadIKComponent headIK,
             ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp,
-            ref ExtrapolationComponent extComp)
+            ref ExtrapolationComponent extComp,
+            in CharacterEmoteComponent emoteComponent)
         {
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
+
+            // Remote characters ignore any movement message while playing an outcome animation
+            // This way the avatar does not move due to the other client (owner) has already finished the animation, unless the emote is cancelled
+            if (emoteComponent.SocialEmote.IsPlayingOutcome && playerInbox.Count > 0)
+            {
+                if (!playerInbox.First.isInstant)
+                {
+                    // Filter out non instant
+                    while (playerInbox.Count > 0 && !playerInbox.First.isInstant)
+                        playerInbox.Dequeue();
+                }
+                else // Keeps the instantaneous message in the queue to be processed once the animation finishes
+                    return;
+            }
 
             settings.InboxCount = playerInbox.Count;
 

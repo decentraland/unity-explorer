@@ -169,7 +169,11 @@ namespace DCL.CharacterMotion.Systems
                                && !emoteComponent.IsPlayingEmote
                                && !platformComponent.PositionChanged;
 
-            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, headIK.IsEnabled, settings.HeadIKWeightChangeSpeed * dt);
+
+            if (emoteComponent.IsPlayingEmote) // IK disabled (no interpolation at all) when playing an emote
+                avatarBase.HeadIKRig.weight = 0.0f;
+            else
+                avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, headIK.IsEnabled, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
             if (!headIK.IsEnabled || inWorldCameraActive) return;

@@ -150,7 +150,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
 
                 state.PromisePerBodyShape[BodyShape.MALE] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
-                   .Create(World, new GetWearablesByPointersIntention(new List<URN>{wearable.GetUrn()}, BodyShape.MALE,
+                   .Create(World, new GetWearablesByPointersIntention(new List<URN>{ wearable.GetUrn()}, BodyShape.MALE,
                         Array.Empty<string>(), AssetSource.EMBEDDED),
                         PartitionComponent.TOP_PRIORITY);
             }
@@ -223,7 +223,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
 
                 state.PromisePerBodyShape[BodyShape.FEMALE] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
-                   .Create(World, new GetWearablesByPointersIntention(new List<URN>{wearable.GetUrn()}, BodyShape.FEMALE,
+                   .Create(World, new GetWearablesByPointersIntention(new List<URN>{ wearable.GetUrn()}, BodyShape.FEMALE,
                         Array.Empty<string>(), AssetSource.EMBEDDED),
                         PartitionComponent.TOP_PRIORITY);
             }
