@@ -75,7 +75,7 @@ namespace DCL.ResourcesUnloading
                     return;
 
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
-
+            
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);

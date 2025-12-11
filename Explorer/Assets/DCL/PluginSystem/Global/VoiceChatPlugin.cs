@@ -15,6 +15,7 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -30,7 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatPanelView voiceChatPanelView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly CommunitiesDataProvider communityDataProvider;
-        private readonly IWebRequestController webRequestController;
+        private readonly UITextureProvider  textureProvider;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -57,7 +58,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer)
@@ -69,7 +70,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
-            this.webRequestController = webRequestController;
+            this.textureProvider = textureProvider;
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
@@ -126,7 +127,7 @@ namespace DCL.PluginSystem.Global
             microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
             pluginScope.Add(microphoneAudioToggleHandler);
 
-            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
+            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, textureProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);

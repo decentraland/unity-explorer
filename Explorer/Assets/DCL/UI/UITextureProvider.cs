@@ -66,7 +66,8 @@ namespace DCL.UI
                 var texture = textureData.EnsureTexture2D();
 
                 var textureRef = new Texture2DRef(textureData, texture);
-
+                textureData.Dereference();
+                
                 if (world.IsAlive(promise.Entity))
                     world.Add(promise.Entity, new DeleteEntityIntention());
 

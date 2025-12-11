@@ -78,28 +78,12 @@ namespace ECS.StreamableLoading
 
             referenceCount++;
 
-            if (Asset is Object unityObj)
-            {
-                ReportHub.Log(
-                    ReportCategory.STREAMABLE_LOADING,
-                    $"[RefCount] ⬆ INCREASED to {referenceCount} | Asset: {unityObj.name}"
-                );
-            }
-
             LastUsedFrame = MultithreadingUtility.FrameCount;
         }
 
         public void Dereference()
         {
             referenceCount--;
-
-            if (Asset is Object unityObj)
-            {
-                ReportHub.Log(
-                    ReportCategory.STREAMABLE_LOADING,
-                    $"[RefCount] ⬇ DECREASED to {referenceCount} | Asset: {unityObj.name}"
-                );
-            }
             
             if (referenceCount < 0)
                 ReportHub.LogError(reportCategory, $"Reference count of {typeof(TAsset).Name} should never be negative!");

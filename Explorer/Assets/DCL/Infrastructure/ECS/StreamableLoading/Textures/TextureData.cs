@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.Textures
         /// </summary>
         public Texture2D EnsureTexture2D()
         {
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TextureData] Destroying/Unloading Texture: {Asset.Texture?.name}");
+            ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[TextureData] Destroying/Unloading Texture: {Asset.Texture?.name}");
             return Asset.Match(_ => throw new ArgumentException("Expected Texture2D, got VideoTexture"), texture => texture);
         }
 

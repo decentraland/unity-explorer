@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DCL.UI
 {
-    public class ImageController
+    public class ImageController : IDisposable
     {
         private static readonly Color LOADING_COLOR = new (0, 0, 0, 0);
 
@@ -46,6 +46,11 @@ namespace DCL.UI
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
             bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
+            ReportHub.Log(
+                ReportCategory.UNSPECIFIED,
+                $"[ImageController] Instance {GetHashCode()} requesting {uri}"
+            );
+
             RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage, defaultSprite);
         }
 
@@ -121,7 +126,7 @@ namespace DCL.UI
 
                 if (sprite != null)
                 {
-                    SetImage(sprite, fitAndCenterImage);
+                    view.SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
                     view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
@@ -148,7 +153,22 @@ namespace DCL.UI
 
         private void DisposeCurrentTexture()
         {
-            currentTextureRef?.Dispose();
+            if (currentTextureRef != null)
+            {
+                ReportHub.Log(
+                    ReportCategory.UNSPECIFIED,
+                    "[ImageController] Disposing previous ref. Current RefCount should drop."
+                );
+                currentTextureRef.Value.Dispose(); // Note: .Value is required for Nullable structs
+            }
+            else
+            {
+                ReportHub.Log(
+                    ReportCategory.UNSPECIFIED,
+                    "[ImageController] Nothing to dispose (currentTextureRef is null)."
+                );
+            }
+
             currentTextureRef = null;
         }
 
@@ -172,6 +192,11 @@ namespace DCL.UI
             cts.SafeCancelAndDispose();
             DisposeCurrentTexture();
             view.IsLoading = false;
+        }
+
+        public void Dispose()
+        {
+            StopLoading();
         }
     }
 }

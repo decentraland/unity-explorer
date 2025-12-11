@@ -28,10 +28,7 @@ namespace DCL.Passport.Fields.Badges
 
         public void ConfigureImageController(UITextureProvider textureProvider)
         {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(BadgeImage, textureProvider);
+            imageController ??= new ImageController(BadgeImage, textureProvider);
         }
 
         public void StopLoadingImage() =>
@@ -61,5 +58,10 @@ namespace DCL.Passport.Fields.Badges
 
         private void SetBadgeNameToastActive(bool isActive) =>
             badgeNameTooltip.SetActive(isActive);
+
+        private void OnDestroy()
+        {
+            imageController?.Dispose();
+        }
     }
 }

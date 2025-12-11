@@ -56,14 +56,11 @@ namespace DCL.MarketplaceCredits.Fields
         [field: SerializeField]
         public float AlphaValueForClaimedCredits { get; private set; }
 
-        private ImageController imageController;
+        private ImageController? imageController;
 
         public void ConfigureImageController(UITextureProvider textureProvider)
         {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(GoalImage, textureProvider);
+            imageController ??= new ImageController(GoalImage, textureProvider);
         }
 
         public void StopLoadingImage() =>
@@ -108,6 +105,11 @@ namespace DCL.MarketplaceCredits.Fields
         {
             ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(progressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             ProgressValueText.text = $"{stepsDone}/{totalSteps}";
+        }
+
+        private void OnDestroy()
+        {
+            imageController?.Dispose();
         }
     }
 }
