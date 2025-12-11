@@ -200,6 +200,7 @@ namespace ECS.Unity.AvatarShape.Tests
             dto.metadata = new EmoteDTO.EmoteMetadataDto();
             dto.metadata.id = emoteUrn;
             emote.DTO.Returns(dto);
+            emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
             var resolution = new EmotesResolution(emotes, BodyShape.MALE);
             var result = new StreamableLoadingResult<EmotesResolution>(resolution);
@@ -290,6 +291,7 @@ namespace ECS.Unity.AvatarShape.Tests
             dto.metadata = new EmoteDTO.EmoteMetadataDto();
             dto.metadata.id = emoteUrn;
             emote.DTO.Returns(dto);
+            emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
             var resolution = new EmotesResolution(emotes, BodyShape.MALE);
             var result = new StreamableLoadingResult<EmotesResolution>(resolution);
@@ -543,6 +545,7 @@ namespace ECS.Unity.AvatarShape.Tests
             dto.metadata = new EmoteDTO.EmoteMetadataDto();
             dto.metadata.id = emoteUrn;
             emote.DTO.Returns(dto);
+            emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
             var resolution = new EmotesResolution(emotes, BodyShape.MALE);
             var result = new StreamableLoadingResult<EmotesResolution>(resolution);
