@@ -603,7 +603,7 @@ namespace DCL.Friends
 
         [Obsolete(IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE)]
         private Profile.CompactInfo ToClientFriendProfile(Decentraland.SocialService.V2.FriendProfile profile) =>
-            new (profile.Name, profile.Address, profile.HasClaimedName, profile.ProfilePictureUrl);
+            new (profile.Address, profile.Name, profile.HasClaimedName, profile.ProfilePictureUrl);
 
         private BlockedProfile ToClientBlockedProfile(BlockedUserProfile profile)
         {
