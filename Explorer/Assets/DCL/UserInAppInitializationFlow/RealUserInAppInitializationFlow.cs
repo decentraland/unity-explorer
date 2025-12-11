@@ -94,7 +94,6 @@ namespace DCL.UserInAppInitializationFlow
             this.roomHub = roomHub;
         }
 
-
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);

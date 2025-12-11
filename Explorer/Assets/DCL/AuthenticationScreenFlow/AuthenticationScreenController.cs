@@ -93,6 +93,7 @@ namespace DCL.AuthenticationScreenFlow
         private StringVariable? profileNameLabel;
         private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
+        private string? currentEmail;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -378,6 +379,7 @@ namespace DCL.AuthenticationScreenFlow
                     web3Authenticator.SetOtpRequestListener(RequestOtpFromUserAsync);
 
                     string email = viewInstance!.EmailInputField.text;
+                    currentEmail = email;
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
 
                     // Clean up OTP callback
@@ -638,7 +640,7 @@ namespace DCL.AuthenticationScreenFlow
             if (identity == null)
                 throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
 
-            Profile defaultProfile = BuildDefaultProfile(identity.Address.ToString());
+            Profile defaultProfile = BuildDefaultProfile(identity.Address.ToString(), currentEmail);
             Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
 
             if (publishedProfile == null)
@@ -647,16 +649,22 @@ namespace DCL.AuthenticationScreenFlow
             return publishedProfile;
         }
 
-        private static Profile BuildDefaultProfile(string walletAddress)
+        private static Profile BuildDefaultProfile(string walletAddress, string? email)
         {
+            // Randomize body shape between MALE and FEMALE
+            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+
             var avatar = new Profiles.Avatar(
-                BodyShape.MALE,
-                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                bodyShape,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
                 WearablesConstants.DefaultColors.GetRandomSkinColor());
 
-            var profile = Profile.Create(walletAddress, IProfileRepository.PLAYER_RANDOM_ID, avatar);
+            // Extract name from email (everything before @) or use default
+            string profileName = ExtractNameFromEmail(email);
+
+            var profile = Profile.Create(walletAddress, profileName, avatar);
             profile.HasClaimedName = false;
             profile.HasConnectedWeb3 = true;
             profile.Description = string.Empty;
@@ -676,6 +684,19 @@ namespace DCL.AuthenticationScreenFlow
             profile.IsDirty = true;
 
             return profile;
+        }
+
+        private static string ExtractNameFromEmail(string? email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return IProfileRepository.PLAYER_RANDOM_ID;
+
+            int atIndex = email.IndexOf('@');
+
+            if (atIndex <= 0)
+                return IProfileRepository.PLAYER_RANDOM_ID;
+
+            return email[..atIndex];
         }
 
         private void ChangeAccount()
