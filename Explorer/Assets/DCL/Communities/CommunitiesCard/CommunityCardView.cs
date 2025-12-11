@@ -66,6 +66,7 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? CancelRequestToJoinCommunity;
         public event Action? AcceptInvite;
         public event Action? RejectInvite;
+        public event Action<bool>? NotificationsToggleChanged;
         public event Action? CopyCommunityLinkRequested;
 
         [field: Header("References")]
@@ -132,6 +133,9 @@ namespace DCL.Communities.CommunitiesCard
 
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
+        private GenericContextMenuElement? communityNotificationsContextMenuElement;
+        private ToggleWithIconContextMenuControlSettings? communityNotificationsContextMenuControlSettings;
+        private GenericContextMenuElement? communityNotificationsSeparatorContextMenuElement;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? copyLinkContextMenuElement;
         private GenericContextMenuElement? copyLinkSeparatorContextMenuElement;
@@ -187,6 +191,10 @@ namespace DCL.Communities.CommunitiesCard
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+                         .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
+                              communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
+                         .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
+                              new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(copyLinkContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkText, contextMenuSettings.CopyCommunityLinkSprite, OnCopyCommunityLinkRequested)))
                          .AddControl(copyLinkSeparatorContextMenuElement = new GenericContextMenuElement(
@@ -197,6 +205,9 @@ namespace DCL.Communities.CommunitiesCard
                               new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested,
                                   textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
+
+        private void OnToggleCommunityNotifications(bool isEnabled) =>
+            NotificationsToggleChanged?.Invoke(isEnabled);
 
         private void OnCopyCommunityLinkRequested() =>
             CopyCommunityLinkRequested?.Invoke();
@@ -387,8 +398,11 @@ namespace DCL.Communities.CommunitiesCard
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, CommunityThumbnail, defaultCommunityImage, cancellationToken, true).Forget();
 
+            SetNotificationsToggleInitialValue(communityData.isSubscribedToNotifications);
+            communityNotificationsContextMenuElement!.Enabled = communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member;
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
+            communityNotificationsSeparatorContextMenuElement!.Enabled = communityNotificationsContextMenuElement!.Enabled && (deleteCommunityContextMenuElement!.Enabled || leaveCommunityContextMenuElement!.Enabled);
             copyLinkContextMenuElement!.Enabled = CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled();
             copyLinkSeparatorContextMenuElement!.Enabled = copyLinkContextMenuElement.Enabled && (deleteCommunityContextMenuElement.Enabled || leaveCommunityContextMenuElement.Enabled);
 
@@ -408,5 +422,8 @@ namespace DCL.Communities.CommunitiesCard
             foreach (GameObject go in ObjectsToShowWhenAccessIsNotAllowed)
                 go.SetActive(!isAllowed);
         }
+
+        public void SetNotificationsToggleInitialValue(bool value) =>
+            communityNotificationsContextMenuControlSettings!.SetInitialValue(value);
     }
 }
