@@ -55,9 +55,9 @@ namespace DCL.Web3.Authenticators
                 await UniTask.SwitchToMainThread(ct);
 
                 ThirdWebManager.Instance.ActiveWallet
+                    = await LoginViaOTP(email, ct);
 
-                    //   = await LoginViaJWT(email, password);
-                    = await LoginViaOTP("popuzin@gmail.com", ct);
+                // = await LoginViaOTP("popuzin@gmail.com", ct);
 
                 string? sender = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
@@ -117,6 +117,8 @@ namespace DCL.Web3.Authenticators
             Debug.Log("OTP sent");
 
             string otp = await otpRequestCallback!.Invoke(ct);
+
+            // TODO : add try-catch for wrong OTP
             _ = await wallet.LoginWithOtp(otp);
             return wallet;
         }
