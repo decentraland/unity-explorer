@@ -141,14 +141,15 @@
         "GUID:92920c790fc0443e9a7ec2f7d1e5308f",
         "GUID:b3ea857cc09201a4fb44cae9ca69de08",
         "GUID:9a1625cbfe83d3842a7b140fc34eabb2",
-        "GUID:f737f30c55ddd1a4b9736c0edcae35d6"
+        "GUID:f737f30c55ddd1a4b9736c0edcae35d6",
+        "GUID:4fd6538c1c56b409fb53fdf0183170ec"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [
-      "Newtonsoft.Json.dll"
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
