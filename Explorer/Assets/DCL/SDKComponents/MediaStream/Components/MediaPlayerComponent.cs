@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.MediaStream
                     lastPlayTimestamp = timestamp;
 
                     bool wasFrozen = isFrozen;
-                    isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
+                    isNowFrozen = Mathf.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
 
                     if (!isNowFrozen)
                     {
