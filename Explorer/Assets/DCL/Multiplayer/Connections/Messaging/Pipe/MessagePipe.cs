@@ -197,6 +197,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.MovementCompressed => (packet.MovementCompressed as T).EnsureNotNull(),
                 Packet.MessageOneofCase.PlayerEmote => (packet.PlayerEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
+                Packet.MessageOneofCase.LookAtPosition => (packet.LookAtPosition as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => null,
                 _ => null,
             };
