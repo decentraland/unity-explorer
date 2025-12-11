@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.UI;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -23,7 +24,7 @@ namespace DCL.Passport.Modules.Badges
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeOverviewItem_PassportFieldView> badgesOverviewItemsPool;
         private readonly List<BadgeOverviewItem_PassportFieldView> instantiatedBadgesOverviewItems = new ();
-
+        
         private Profile currentProfile;
         private CancellationTokenSource fetchBadgesCts;
 
@@ -31,8 +32,7 @@ namespace DCL.Passport.Modules.Badges
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController
-        )
+            UITextureProvider textureProvider)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -43,7 +43,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
                 actionOnGet: badgeOverviewItemView =>
                 {
-                    badgeOverviewItemView.ConfigureImageController(webRequestController);
+                    badgeOverviewItemView.ConfigureImageController(textureProvider);
                     badgeOverviewItemView.gameObject.SetActive(true);
                     badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },

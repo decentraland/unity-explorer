@@ -23,6 +23,9 @@ namespace DCL.UI
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
 
+        /// <summary>
+        ///     PREFERRED: Uses ECS Streamable Loading (Caching, Deduplication, Budgeting).
+        /// </summary>
         public ImageController(ImageView view, UITextureProvider textureProvider)
         {
             this.view = view;
@@ -31,10 +34,8 @@ namespace DCL.UI
         }
         
         /// <summary>
-        /// Use this constructor if the sprite does not need to be cached.
+        /// LEGACY: Uses direct WebRequests. No caching.
         /// </summary>
-        /// <param name="view">The view where the sprite will be presented after loaded.</param>
-        /// <param name="webRequestController">The controller to get the sprite from a server.</param>
         public ImageController(ImageView view, IWebRequestController webRequestController)
         {
             this.view = view;
@@ -160,12 +161,16 @@ namespace DCL.UI
             view.Image.DOColor(defaultColor, view.imageLoadingFadeDuration);
         }
 
-        public void SetImage(Sprite sprite, bool fitAndCenterImage = false) =>
+        public void SetImage(Sprite sprite, bool fitAndCenterImage = false)
+        {
+            DisposeCurrentTexture();
             view.SetImage(sprite, fitAndCenterImage);
+        }
 
         public void StopLoading()
         {
             cts.SafeCancelAndDispose();
+            DisposeCurrentTexture();
             view.IsLoading = false;
         }
     }

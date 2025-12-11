@@ -16,6 +16,7 @@ using DCL.WebRequests;
 using ECS;
 using MVC;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
+        private readonly UITextureProvider textureProvider;
 
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
@@ -54,7 +56,8 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ITextFormatter textFormatter)
+            ITextFormatter textFormatter,
+            UITextureProvider textureProvider)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -68,6 +71,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
+            this.textureProvider = textureProvider;
 
             marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
@@ -101,7 +105,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 web3IdentityCache,
                 loadingStatus,
-                textFormatter);
+                textFormatter,
+                textureProvider);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);

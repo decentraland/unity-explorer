@@ -8,7 +8,7 @@ using Utility;
 
 namespace DCL.UI
 {
-    public class StreamableImageController : IDisposable
+    public class StreamableImageController
     {
         private static readonly Color LOADING_COLOR = new(0, 0, 0, 0);
         private const int PIXELS_PER_UNIT = 50;
@@ -115,11 +115,6 @@ namespace DCL.UI
             cts.SafeCancelAndDispose();
             DisposeCurrentTexture();
             view.IsLoading = false;
-        }
-
-        public void Dispose()
-        {
-            StopLoading();
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,

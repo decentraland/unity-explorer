@@ -42,10 +42,9 @@ namespace DCL.Passport.Modules.Badges
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController,
             ISelfProfile selfProfile,
             BadgePreviewCameraView badge3DPreviewCamera,
-            World world)
+            UITextureProvider textureProvider)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -53,8 +52,7 @@ namespace DCL.Passport.Modules.Badges
             this.selfProfile = selfProfile;
 
             badgesCategoriesController = new BadgesCategories_PassportModuleSubController(view);
-
-            var textureProvider = new UITextureProvider(world);
+            
             badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,

@@ -38,18 +38,18 @@ namespace DCL.Passport.Fields.Badges
 
         public TierData Model { get; private set; }
 
-        private StreamableImageController? streamableImageController;
+        private ImageController? imageController;
 
         public void ConfigureImageController(UITextureProvider textureProvider)
         {
-            if (streamableImageController != null)
+            if (imageController != null)
                 return;
 
-            streamableImageController = new StreamableImageController(TierImage, textureProvider);
+            imageController = new ImageController(TierImage, textureProvider);
         }
 
         public void StopLoadingImage() =>
-            streamableImageController?.StopLoading();
+            imageController?.StopLoading();
 
         public void SetAsSelected(bool isSelected) =>
             SelectedOutline.SetActive(isSelected);
@@ -70,9 +70,9 @@ namespace DCL.Passport.Fields.Badges
         {
             Color tierImageColor = string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor;
             TierImage.ImageColor = tierImageColor;
-            streamableImageController?.SetImage(DefaultTierSprite);
+            imageController?.SetImage(DefaultTierSprite);
             if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
-                streamableImageController?.RequestImage(tierData.assets.textures2d.normal, tierImageColor, hideImageWhileLoading: true);
+                imageController?.RequestImage(tierData.assets.textures2d.normal, tierImageColor, hideImageWhileLoading: true);
         }
     }
 }

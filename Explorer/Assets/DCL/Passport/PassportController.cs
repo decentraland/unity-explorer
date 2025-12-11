@@ -149,7 +149,7 @@ namespace DCL.Passport
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
-
+        private readonly UITextureProvider textureProvider;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<string, bool>? PassportOpened;
@@ -202,7 +202,8 @@ namespace DCL.Passport
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
-            CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
+            CommunitiesDataProvider communitiesDataProvider,
+            UITextureProvider textureProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -247,6 +248,7 @@ namespace DCL.Passport
             this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.textureProvider = textureProvider;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -305,22 +307,23 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController));
+                passportErrorsController,
+                textureProvider));
 
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                webRequestController));
+                textureProvider));
 
             badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(
                 viewInstance.BadgesDetailsModuleView,
                 viewInstance.BadgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                webRequestController,
                 selfProfile,
-                badge3DPreviewCamera, world);
+                badge3DPreviewCamera,
+                textureProvider);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,

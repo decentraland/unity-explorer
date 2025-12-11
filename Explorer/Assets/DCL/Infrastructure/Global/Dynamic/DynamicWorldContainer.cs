@@ -330,6 +330,8 @@ namespace Global.Dynamic
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
 
+            var textureProvider = new UITextureProvider(globalWorld);
+            
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
 
@@ -939,7 +941,8 @@ namespace Global.Dynamic
                     galleryEventBus,
                     clipboard,
                     communitiesDataProvider,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    textureProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -1072,7 +1075,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     identityCache,
                     staticContainer.LoadingStatus,
-                    hyperlinkTextFormatter));
+                    hyperlinkTextFormatter,
+                    textureProvider));
             }
 
             if (includeCommunities)

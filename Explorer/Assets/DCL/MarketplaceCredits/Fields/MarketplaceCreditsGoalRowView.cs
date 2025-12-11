@@ -58,12 +58,12 @@ namespace DCL.MarketplaceCredits.Fields
 
         private ImageController imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(UITextureProvider textureProvider)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(GoalImage, webRequestController);
+            imageController = new ImageController(GoalImage, textureProvider);
         }
 
         public void StopLoadingImage() =>

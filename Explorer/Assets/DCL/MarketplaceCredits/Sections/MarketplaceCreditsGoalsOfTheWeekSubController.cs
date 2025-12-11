@@ -6,6 +6,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.UI;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -25,6 +26,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly ITextFormatter textFormatter;
+        private readonly UITextureProvider textureProvider;
 
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
@@ -36,13 +38,15 @@ namespace DCL.MarketplaceCredits.Sections
             IWebRequestController webRequestController,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
-            ITextFormatter textFormatter)
+            ITextFormatter textFormatter,
+            UITextureProvider textureProvider)
         {
             this.subView = subView;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.textFormatter = textFormatter;
+            this.textureProvider = textureProvider;
 
             marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
             subView.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
@@ -55,7 +59,7 @@ namespace DCL.MarketplaceCredits.Sections
                 defaultCapacity: GOALS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: goalRowView =>
                 {
-                    goalRowView.ConfigureImageController(webRequestController);
+                    goalRowView.ConfigureImageController(this.textureProvider);
                     goalRowView.gameObject.SetActive(true);
                     goalRowView.transform.SetAsLastSibling();
                 },
