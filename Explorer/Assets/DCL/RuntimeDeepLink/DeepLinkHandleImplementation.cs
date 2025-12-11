@@ -33,13 +33,14 @@ namespace DCL.RuntimeDeepLink
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);
 
+            var result = Result.ErrorResult("no matches");
+
             if (realm.HasValue)
             {
                 chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position, token).Forget();
-                return Result.SuccessResult();
+                result = Result.SuccessResult();
             }
-
-            if (position.HasValue)
+            else if (position.HasValue)
             {
                 var parcel = position.Value;
 
@@ -48,16 +49,16 @@ namespace DCL.RuntimeDeepLink
                 else
                     startParcel.Assign(parcel);
 
-                return Result.SuccessResult();
+                result = Result.SuccessResult();
             }
 
             if (!string.IsNullOrEmpty(communityId))
             {
                 communityDataService.ShowCommunityDeepLinkNotification(communityId);
-                return Result.SuccessResult();
+                result = Result.SuccessResult();
             }
 
-            return Result.ErrorResult("no matches");
+            return result;
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)
