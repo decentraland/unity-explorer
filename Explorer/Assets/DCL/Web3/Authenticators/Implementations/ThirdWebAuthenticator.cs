@@ -6,6 +6,7 @@ using DCL.Web3.Identities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using System.Threading;
 using Thirdweb;
@@ -22,7 +23,6 @@ namespace DCL.Web3.Authenticators
 
         private readonly HashSet<string> whitelistMethods;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly DecentralandEnvironment environment;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
 
@@ -36,7 +36,6 @@ namespace DCL.Web3.Authenticators
             Instance?.Dispose();
             Instance = this;
 
-            this.environment = environment;
             this.identityCache = identityCache;
             this.whitelistMethods = whitelistMethods;
             this.web3AccountFactory = web3AccountFactory;
@@ -108,14 +107,13 @@ namespace DCL.Web3.Authenticators
         {
             Debug.Log("Login via OTP");
 
-            var walletOptions = new WalletOptions(
-                WalletProvider.InAppWallet,
-                EnvChainsUtils.GetChainIdAsInt(environment),
-                new InAppWalletOptions(authprovider: AuthProvider.Default, email: email)
-            );
+            InAppWallet wallet = await InAppWallet.Create(
+                ThirdWebManager.Instance.Client,
+                email,
+                storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
-            InAppWallet wallet = await ThirdWebManager.Instance.CreateInAppWallet(walletOptions);
             await wallet.SendOTP();
+
             Debug.Log("OTP sent");
 
             string otp = await otpRequestCallback!.Invoke(ct);

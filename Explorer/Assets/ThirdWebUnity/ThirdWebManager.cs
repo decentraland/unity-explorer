@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
 using Thirdweb;
 using UnityEngine;
@@ -18,7 +14,6 @@ namespace ThirdWebUnity
         [field: SerializeField]
         private string BundleId { get; set; }
 
-        private List<RpcOverride> rpcOverrides;
         public static ThirdWebManager Instance { get; private set; }
 
         public ThirdwebClient Client { get; private set; }
@@ -47,35 +42,10 @@ namespace ThirdWebUnity
                 sdkName: "UnitySDK",
                 sdkOs: Application.platform.ToString(),
                 sdkPlatform: "unity",
-                sdkVersion: THIRDWEB_UNITY_SDK_VERSION,
-                rpcOverrides: rpcOverrides == null || rpcOverrides.Count == 0
-                    ? null
-                    : rpcOverrides.ToDictionary(rpcOverride => new BigInteger(rpcOverride.ChainId), rpcOverride => rpcOverride.RpcUrl));
+                sdkVersion: THIRDWEB_UNITY_SDK_VERSION);
 
             if (Client == null)
                 Debug.LogError("VVV Failed to initialize ThirdwebManager.");
-        }
-
-        public async Task<InAppWallet> CreateInAppWallet(WalletOptions walletOptions)
-        {
-            if (walletOptions == null)
-                throw new ArgumentNullException(nameof(walletOptions));
-
-            if (walletOptions.ChainId <= 0)
-                throw new ArgumentException("ChainId must be greater than 0.");
-
-            InAppWallet wallet = await InAppWallet.Create(
-                Client,
-                walletOptions.InAppWalletOptions.Email,
-                walletOptions.InAppWalletOptions.PhoneNumber,
-                walletOptions.InAppWalletOptions.AuthProvider,
-                walletOptions.InAppWalletOptions.StorageDirectoryPath,
-                walletOptions.InAppWalletOptions.SiweSigner,
-                walletOptions.InAppWalletOptions.WalletSecret,
-                executionMode: walletOptions.InAppWalletOptions.ExecutionMode
-            );
-
-            return wallet;
         }
 
         public virtual async Task DisconnectWallet()
