@@ -209,7 +209,7 @@ namespace DCL.AvatarRendering.Emotes
                         }
                     }
                 }
-                else
+                else if(!emote.IsSocial)
                 {
                     emote.AudioAssetResults[bodyShape] = result;
                 }
