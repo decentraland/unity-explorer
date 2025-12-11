@@ -1,12 +1,13 @@
 ﻿using DCL.Utility;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline;
+using UnityEditor.PackageManager;
 using UnityEngine;
-using Utility;
 using BuildCompression = UnityEngine.BuildCompression;
 
 namespace DCL.Rendering.Menus
@@ -34,92 +35,25 @@ namespace DCL.Rendering.Menus
         [MenuItem("Decentraland/Shaders/Compile \"Scene\" Shader Variants")]
         public static void CompileSceneShaderMenuItem()
         {
-            string sPlatform = PlatformUtils.GetCurrentPlatform();
-            BuildTarget bt = BuildTarget.StandaloneWindows64; // default
-
-            switch (sPlatform)
-            {
-                case "_windows":
-                {
-                    bt = BuildTarget.StandaloneWindows64;
-                    break;
-                }
-                case "_mac":
-                {
-                    bt = BuildTarget.StandaloneOSX;
-                    break;
-                }
-            }
-
-            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES, bt);
+            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES);
         }
 
         [MenuItem("Decentraland/Shaders/Compile \"Scene_TexArray\" Shader Variants")]
         public static void CompileSceneTexArrayShaderMenuItem()
         {
-            string sPlatform = PlatformUtils.GetCurrentPlatform();
-            BuildTarget bt = BuildTarget.StandaloneWindows64; // default
-
-            switch (sPlatform)
-            {
-                case "_windows":
-                {
-                    bt = BuildTarget.StandaloneWindows64;
-                    break;
-                }
-                case "_mac":
-                {
-                    bt = BuildTarget.StandaloneOSX;
-                    break;
-                }
-            }
-
-            CompileTheSceneShader("dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES, bt);
+            CompileTheSceneShader("dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES);
         }
 
         [MenuItem("Decentraland/Shaders/Force Recompile \"Scene\" Shader Variants")]
         public static void ForceRecompileMenuItem()
         {
-            string sPlatform = PlatformUtils.GetCurrentPlatform();
-            BuildTarget bt = BuildTarget.StandaloneWindows64; // default
-
-            switch (sPlatform)
-            {
-                case "_windows":
-                {
-                    bt = BuildTarget.StandaloneWindows64;
-                    break;
-                }
-                case "_mac":
-                {
-                    bt = BuildTarget.StandaloneOSX;
-                    break;
-                }
-            }
-
-            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES, bt, forceRecompile: true);
+            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES, forceRecompile: true);
         }
 
-        public static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, BuildTarget bt, bool forceRecompile = false)
+        private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, bool forceRecompile = false)
         {
-            switch (bt)
-            {
-                case BuildTarget.StandaloneWindows64:
-                {
-                    bundleName += "_windows";
-                    break;
-                }
-                case BuildTarget.StandaloneOSX:
-                {
-                    bundleName += "_mac";
-                    break;
-                }
-                case BuildTarget.StandaloneLinux64:
-                {
-                    bundleName += "_linux";
-                    break;
-                }
-            }
+            string platformSuffix = PlatformUtils.GetCurrentPlatform();
+            bundleName += platformSuffix;
 
             // Try multiple paths in order of preference:
             // 1. Local embedded package (if you've made it local)
@@ -254,15 +188,23 @@ namespace DCL.Rendering.Menus
             for (var i = 0; i < buildInput.Length; i++)
                 buildInput[i].addressableNames = buildInput[i].assetNames.Select(Path.GetFileName).ToArray();
 
+            BuildTarget bt = platformSuffix switch
+                             {
+                                 "_windows" => BuildTarget.StandaloneWindows64,
+                                 "_mac" => BuildTarget.StandaloneOSX,
+                                 _ => BuildTarget.StandaloneWindows64,
+                             };
             BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(bt);
-            var parameters = new BundleBuildParameters(bt, group, ASSET_BUNDLE_DIRECTORY);
 
-            parameters.AppendHash = false;
-            parameters.BundleCompression = BuildCompression.Uncompressed;
-            parameters.DisableVisibleSubAssetRepresentations = true;
+            var parameters = new BundleBuildParameters(bt, group, ASSET_BUNDLE_DIRECTORY)
+            {
+                AppendHash = false,
+                BundleCompression = BuildCompression.Uncompressed,
+                DisableVisibleSubAssetRepresentations = true,
 
-            // Force rebuild
-            parameters.UseCache = !forceRecompile;
+                // Force rebuild
+                UseCache = !forceRecompile,
+            };
 
             var result = ContentPipeline.BuildAssetBundles(parameters, new BundleBuildContent(buildInput), out var buildResults);
 
@@ -348,10 +290,10 @@ namespace DCL.Rendering.Menus
             }
 
             // Method 2: Try using PackageManager to get the resolved path
-            var listRequest = UnityEditor.PackageManager.Client.List(true);
+            var listRequest = Client.List(true);
             while (!listRequest.IsCompleted) { }
 
-            if (listRequest.Status == UnityEditor.PackageManager.StatusCode.Success)
+            if (listRequest.Status == StatusCode.Success)
             {
                 foreach (var package in listRequest.Result)
                 {
@@ -477,17 +419,17 @@ namespace DCL.Rendering.Menus
             {
                 // Only copy shader-related files
                 bool shouldCopy = SHADER_FILE_EXTENSIONS.Any(ext =>
-                    file.Extension.Equals(ext, System.StringComparison.OrdinalIgnoreCase));
+                    file.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase));
 
                 // Also copy .meta files to preserve import settings
-                if (file.Extension.Equals(".meta", System.StringComparison.OrdinalIgnoreCase))
+                if (file.Extension.Equals(".meta", StringComparison.OrdinalIgnoreCase))
                 {
                     string associatedFile = file.FullName.Substring(0, file.FullName.Length - 5);
                     FileInfo associatedFileInfo = new FileInfo(associatedFile);
                     if (associatedFileInfo.Exists)
                     {
                         shouldCopy = SHADER_FILE_EXTENSIONS.Any(ext =>
-                            associatedFileInfo.Extension.Equals(ext, System.StringComparison.OrdinalIgnoreCase));
+                            associatedFileInfo.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase));
                     }
                 }
 
