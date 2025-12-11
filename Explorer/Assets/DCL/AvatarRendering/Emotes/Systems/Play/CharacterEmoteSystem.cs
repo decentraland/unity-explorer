@@ -45,7 +45,6 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateAfter(typeof(RemoteEmotesSystem))]
     [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
-    [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         /// <summary>
