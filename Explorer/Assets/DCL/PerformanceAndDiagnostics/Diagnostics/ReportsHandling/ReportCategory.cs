@@ -178,6 +178,7 @@ namespace DCL.Diagnostics
         ///     Avatar rendering
         /// </summary>
         public const string AVATAR = nameof(AVATAR);
+        public const string AVATAR_EXPORT = nameof(AVATAR_EXPORT);
 
         public const string PROFILE = nameof(PROFILE);
 

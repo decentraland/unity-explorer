@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -22,21 +23,20 @@ namespace DCL.AvatarRendering.Export
                 if (wearable.Instance == null || wearable.OriginalAsset?.MainAsset == null)
                     continue;
 
-                // Step 1: Get hierarchy paths of all enabled meshes in scene instance
                 var enabledPaths = GetEnabledMeshHierarchyPaths(wearable.Instance);
                 
                 if (enabledPaths.Count == 0)
                 {
-                    Debug.Log("No enabled meshes found in wearable instance: " + wearable.Instance.name);
+                    Debug.Log($"No enabled meshes found in wearable instance: {wearable.Instance.name}");
                     continue;
                 }
 
-                // Step 2: Instantiate the original asset to get original SkinnedMeshRenderers
+                // Instantiate the original asset to get original SkinnedMeshRenderers
                 var originalInstance = Object.Instantiate(wearable.OriginalAsset.MainAsset);
                 originalInstance.name = wearable.OriginalAsset.MainAsset.name;
                 instantiatedObjects.Add(originalInstance);
 
-                // Step 3: For each enabled path, find the corresponding renderer in original and collect it
+                // For each enabled path, find the corresponding renderer in original and collect it
                 CollectMeshesAtPaths(originalInstance, enabledPaths, collectedMeshes);
             }
 
@@ -52,7 +52,6 @@ namespace DCL.AvatarRendering.Export
             var enabledPaths = new List<string>();
             Transform root = instance.transform;
 
-            // Check SkinnedMeshRenderers
             var skinnedRenderers = instance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
             foreach (var smr in skinnedRenderers)
             {
@@ -60,24 +59,23 @@ namespace DCL.AvatarRendering.Export
                 {
                     string path = GetHierarchyPath(smr.transform, root);
                     enabledPaths.Add(path);
-                    Debug.Log("Found enabled SMR at path: " + path + " (" + smr.gameObject.name + ")");
+                    Debug.Log($"Found enabled SMR at path: {path} ({smr.gameObject.name})");
                 }
             }
 
-            // Check MeshRenderers (GPU skinned meshes in DCL)
             var meshRenderers = instance.GetComponentsInChildren<MeshRenderer>(true);
-            foreach (var mr in meshRenderers)
+            foreach (var renderer in meshRenderers)
             {
-                if (mr.enabled && mr.gameObject.activeInHierarchy)
-                {
-                    var mf = mr.GetComponent<MeshFilter>();
-                    if (mf != null && mf.sharedMesh != null)
-                    {
-                        string path = GetHierarchyPath(mr.transform, root);
-                        enabledPaths.Add(path);
-                        Debug.Log("Found enabled MR at path: " + path + " (" + mr.gameObject.name + ")");
-                    }
-                }
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) 
+                    continue;
+                
+                var filter = renderer.GetComponent<MeshFilter>();
+                
+                if (filter == null || filter.sharedMesh == null) 
+                    continue;
+                
+                string path = GetHierarchyPath(renderer.transform, root);
+                enabledPaths.Add(path);
             }
 
             return enabledPaths;
@@ -110,20 +108,20 @@ namespace DCL.AvatarRendering.Export
             if (string.IsNullOrEmpty(path))
                 return root;
 
-            var parts = path.Split('/');
+            var splitPaths = path.Split('/');
             var current = root;
 
-            foreach (var part in parts)
+            foreach (var part in splitPaths)
             {
                 if (!int.TryParse(part, out int index))
                 {
-                    Debug.LogWarning("Invalid path part: " + part);
+                    ReportHub.LogError(ReportCategory.AVATAR_EXPORT, $"Invalid path part: {part}");
                     return null;
                 }
 
                 if (index < 0 || index >= current.childCount)
                 {
-                    Debug.LogWarning("Child index " + index + " out of range at " + current.name + " (childCount: " + current.childCount + ")");
+                    ReportHub.LogError(ReportCategory.AVATAR_EXPORT, $"Child index {index} out of range at {current.name} (childCount: {current.childCount}");
                     return null;
                 }
 
@@ -146,7 +144,7 @@ namespace DCL.AvatarRendering.Export
                 
                 if (target == null)
                 {
-                    Debug.LogWarning("Could not find transform at path: " + path + " in original");
+                    ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT,$"Could not find transform at path: {path} in original");
                     continue;
                 }
 
@@ -158,7 +156,7 @@ namespace DCL.AvatarRendering.Export
                     if (meshData != null)
                     {
                         collectedMeshes.Add(meshData);
-                        Debug.Log("Collected SMR at path: " + path + " (" + target.name + ")");
+                        ReportHub.Log(ReportCategory.AVATAR_EXPORT, $"Collected SMR at path: {path} ({target.name})");
                     }
                     continue;
                 }
@@ -172,12 +170,12 @@ namespace DCL.AvatarRendering.Export
                     if (meshData != null)
                     {
                         collectedMeshes.Add(meshData);
-                        Debug.Log("Collected MR at path: " + path + " (" + target.name + ")");
+                        ReportHub.Log(ReportCategory.AVATAR_EXPORT, $"Collected MR at path: {path} ({target.name})");
                     }
                     continue;
                 }
 
-                Debug.LogWarning("No valid renderer found at path: " + path + " (" + target.name + ")");
+                ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT,$"No valid renderer found at path: {path} ({target.name})");
             }
         }
 

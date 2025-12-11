@@ -17,6 +17,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Color HairColor;
         public Color EyesColor;
         public BodyShape BodyShape;
+        public Dictionary<string, Texture> FacialFeatureMainTexturesForExport ;
+        public Dictionary<string, Texture> FacialFeatureMaskTexturesForExport;
 
         public WearablePromise WearablePromise;
 
@@ -38,6 +40,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             WearablePromise = wearablePromise;
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
+            FacialFeatureMainTexturesForExport  = new Dictionary<string, Texture>();
+            FacialFeatureMaskTexturesForExport = new Dictionary<string, Texture>();
             SkinColor = skinColor;
             HairColor = hairColor;
             EyesColor = eyesColor;

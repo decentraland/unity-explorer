@@ -25,6 +25,7 @@ namespace DCL.AvatarRendering.Export
             var bones = InstantiateBones(instantiatedWearables[0].OriginalAsset.MainAsset.transform, duplicateRoot).transform;
             bones.SetParent(duplicateRoot);
             
+            // Scale skeleton to uniform (1,1,1) scale.
             duplicateRoot.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             ApplyParentScaleToChildren(duplicateRoot);
 
@@ -64,9 +65,9 @@ namespace DCL.AvatarRendering.Export
 
         private GameObject InstantiateBones(Transform sourceRoot, Transform parent)
         {
-            string hipsName = "Avatar_Hips";
+            const string HIPS_NAME = "Avatar_Hips";
             
-            var hipsTransform = FindChildRecursive(sourceRoot, hipsName);
+            var hipsTransform = FindChildRecursive(sourceRoot, HIPS_NAME);
             var hipsInstance = Object.Instantiate(hipsTransform.gameObject, parent);
             hipsInstance.transform.localPosition = hipsTransform.localPosition;
             hipsInstance.name = hipsTransform.name;
