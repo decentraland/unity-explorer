@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Connections.Demo
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
             var totalBudget = 15;
             var chromeDev = ChromeDevtoolProtocolClient.NewForTest();
-            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), chromeDev, new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
+            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null), identityCache, new RequestHub(urlsSource), chromeDev, new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
 
             var metaDataSource = new ConstSceneRoomMetaDataSource("random-name").WithLog();
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
