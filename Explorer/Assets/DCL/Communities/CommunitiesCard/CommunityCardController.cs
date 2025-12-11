@@ -22,6 +22,7 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -36,6 +37,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -86,6 +88,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IInputBlock inputBlock;
         private readonly ISelfProfile selfProfile;
+        private readonly IAnalyticsController analytics;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -126,7 +129,8 @@ namespace DCL.Communities.CommunitiesCard
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IAnalyticsController analytics)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -151,6 +155,7 @@ namespace DCL.Communities.CommunitiesCard
             this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
             this.selfProfile = selfProfile;
+            this.analytics = analytics;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -430,6 +435,8 @@ namespace DCL.Communities.CommunitiesCard
         {
             DisableShortcutsInput();
             SetDefaultsAndLoadData(inputData.CommunityId);
+
+            analytics.Track(AnalyticsEvents.Communities.OPEN_COMMUNITY_PROFILE, new JObject { { "community_id", inputData.CommunityId } });
         }
 
         private void SetDefaultsAndLoadData(string communityId)
