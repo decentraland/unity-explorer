@@ -160,10 +160,12 @@ namespace DCL.AvatarRendering.Emotes
 
             if (result.Succeeded)
             {
+                string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
+
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Audio URL: " + audioURL + " body: " + bodyShape.Value);
+
                 if (emote.IsSocial && bodyShape.Value == BodyShape.MALE) // Note: We use male body shape only because actually there is only one version of the emote, although there are 2 copies in the metadata due to legacy code, that should be refactored
                 {
-                    string audioURL = promise.LoadingIntention.CommonArguments.URL.Value;
-
                     if (emote.SocialEmoteOutcomeAudioAssetResults == null)
                     {
                         emote.SocialEmoteOutcomeAudioAssetResults = new StreamableLoadingResult<AudioClipData>?[emote.Model.Asset!.metadata.data!.outcomes!.Length];
@@ -173,12 +175,17 @@ namespace DCL.AvatarRendering.Emotes
                     for (int i = 0; i < emote.Model.Asset!.metadata.data!.outcomes!.Length; ++i)
                     {
                         // Several outcomes may have the same audio, in order to avoid setting the same outcome always we skip the already filled slots
-                        if(emote.SocialEmoteOutcomeAudioAssetResults[i].HasValue)
+                        if (emote.SocialEmoteOutcomeAudioAssetResults[i].HasValue)
+                        {
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Next iteration " + i);
                             continue;
+                        }
 
                         if (emote.Model.Asset!.metadata.data!.outcomes![i].audio != null)
                         {
                             string? outcomeAudioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.outcomes![i].audio);
+
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() outcome audio hash " + outcomeAudioHash);
 
                             // If the current result corresponds to the outcome at current position...
                             if (audioURL.Contains(outcomeAudioHash!, StringComparison.InvariantCultureIgnoreCase))
@@ -199,6 +206,8 @@ namespace DCL.AvatarRendering.Emotes
                     {
                         string? audioHash = FindAudioFileHashInContent(emote, bodyShape, emote.Model.Asset!.metadata.data!.startAnimation!.audio);
 
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() start audio hash " + audioHash);
+
                         // If the current result corresponds to the start animation...
                         if (audioHash != null && audioURL.Contains(audioHash, StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -211,6 +220,7 @@ namespace DCL.AvatarRendering.Emotes
                 }
                 else if(!emote.IsSocial)
                 {
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() normal");
                     emote.AudioAssetResults[bodyShape] = result;
                 }
             }
