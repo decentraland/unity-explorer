@@ -79,19 +79,41 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private void UpdateTweenSequenceState(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in PBTweenSequence pbTweenSequence, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        private void UpdateTweenSequenceState(Entity entity, ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in PBTweenSequence pbTweenSequence, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             if (sdkTweenSequenceComponent.IsDirty)
             {
-                SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform);
+                Material material = null;
+                if (SequenceRequiresMaterial(pbTween, pbTweenSequence) && World.TryGet(entity, out MaterialComponent materialComponent) && materialComponent.Result != null)
+                    material = materialComponent.Result;
+
+                SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform, material);
                 UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, transformComponent);
             }
             else
             {
                 UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, transformComponent);
             }
+        }
+
+        private bool SequenceRequiresMaterial(in PBTween firstTween, in PBTweenSequence pbTweenSequence)
+        {
+            if (IsTextureTween(firstTween.ModeCase)) return true;
+
+            foreach (var tween in pbTweenSequence.Sequence)
+            {
+                if (IsTextureTween(tween.ModeCase)) return true;
+            }
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsTextureTween(PBTween.ModeOneofCase mode)
+        {
+            return mode == PBTween.ModeOneofCase.TextureMove || mode == PBTween.ModeOneofCase.TextureMoveContinuous;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,12 +132,12 @@ namespace DCL.SDKComponents.Tween
             }
         }
 
-        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform)
+        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform, Material material)
         {
             tweenerPool.ReleaseSequenceTweenerFrom(sdkTweenSequenceComponent);
 
             TweenLoop? loopType = pbTweenSequence.HasLoop ? pbTweenSequence.Loop : null;
-            sdkTweenSequenceComponent.SequenceTweener = tweenerPool.GetSequenceTweener(firstTween, pbTweenSequence.Sequence, loopType, transform);
+            sdkTweenSequenceComponent.SequenceTweener = tweenerPool.GetSequenceTweener(firstTween, pbTweenSequence.Sequence, loopType, transform, material);
 
             sdkTweenSequenceComponent.SequenceTweener.Play();
             sdkTweenSequenceComponent.TweenStateStatus = TweenStateStatus.TsActive;

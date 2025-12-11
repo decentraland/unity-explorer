@@ -44,7 +44,8 @@ namespace DCL.SDKComponents.Tween
 
         [Query]
         [None(typeof(SDKTweenSequenceComponent))]
-        private void LoadTweenSequence(Entity entity, ref PBTween pbTween, ref PBTweenSequence pbTweenSequence)
+        [All(typeof(PBTweenSequence))]
+        private void LoadTweenSequence(Entity entity, ref PBTween pbTween)
         {
             // For sequences, PBTween must exist and be valid
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;

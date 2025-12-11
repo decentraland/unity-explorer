@@ -102,10 +102,10 @@ namespace DCL.SDKComponents.Tween.Components
             sdkTweenComponent.CustomTweener = null;
         }
 
-        public ITweener GetSequenceTweener(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform)
+        public ITweener GetSequenceTweener(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material material = null)
         {
             SequenceTweener sequenceTweener = sequenceTweenerPool.Get();
-            sequenceTweener.Initialize(firstTween, additionalTweens, loopType, transform);
+            sequenceTweener.Initialize(firstTween, additionalTweens, loopType, transform, material);
             return sequenceTweener;
         }
 
