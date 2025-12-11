@@ -918,7 +918,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid CheckCommunityAppArgAsync(CancellationToken ct = default)
         {
-            if (!CommunitiesFeatureAccess.Instance.GetCommunityIdFromAppArgs(out string? communityId))
+            if (!CommunitiesFeatureAccess.Instance.TryGetCommunityIdFromAppArgs(out string? communityId))
                 return;
 
             await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);

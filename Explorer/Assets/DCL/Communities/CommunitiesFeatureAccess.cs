@@ -88,7 +88,7 @@ namespace DCL.Communities
             return result;
         }
 
-        public bool GetCommunityIdFromAppArgs(out string? communityId)
+        public bool TryGetCommunityIdFromAppArgs(out string? communityId)
         {
             if (appArgs.TryGetValue(AppArgsFlags.COMMUNITY, out communityId) && !string.IsNullOrEmpty(communityId))
                 return true;
