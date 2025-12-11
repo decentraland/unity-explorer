@@ -157,7 +157,8 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 galleryEventBus,
                 voiceChatOrchestrator,
-                inputBlock);
+                inputBlock,
+                selfProfile);
 
             mvcManager.RegisterController(communityCardController);
 

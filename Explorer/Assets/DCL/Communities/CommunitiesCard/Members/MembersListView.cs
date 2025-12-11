@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
@@ -31,8 +32,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
-        private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transfer Community Ownership";
-        private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "You are about to transfer the [{0}] community ownership to [{1}]. Once done will have Moderator permissions. This action cannot be reversed by you. Do you wish to proceed?";
+        private const string TRANSFER_OWNERSHIP_TEXT_FORMAT = "Transferring Community Ownership to {0}";
+        private const string TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT = "Once you transfer ownership of a Community, you will be demoted from Owner to Moderator. This action cannot be undone by you.";
         private const string TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK = "Community ownership can be only transferred to people who has a Claimed Name.";
         private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
         private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
@@ -100,6 +101,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
+        private ISelfProfile? selfProfile;
 
         private void Awake()
         {
@@ -176,14 +178,17 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowTransferOwnershipConfirmationDialogAsync(CancellationToken ct)
             {
+                var ownProfile = selfProfile != null ? await selfProfile.ProfileAsync(ct) : null;
+
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
-                                                                                         TRANSFER_OWNERSHIP_TEXT_FORMAT,
+                                                                                         string.Format(TRANSFER_OWNERSHIP_TEXT_FORMAT, profile.Name),
                                                                                          TRANSFER_OWNERSHIP_CANCEL_TEXT,
                                                                                          TRANSFER_OWNERSHIP_CONFIRM_TEXT,
                                                                                          transferOwnershipSprite,
                                                                                          false, false,
-                                                                                         subText: string.Format(TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT, communityName, profile.Name),
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
+                                                                                         subText: TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT,
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor()),
+                                                                                         fromUserInfo: ownProfile != null ? new ConfirmationDialogParameter.UserData(ownProfile.UserId, ownProfile.Avatar.FaceSnapshotUrl, ownProfile.UserNameColor) : default),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -278,6 +283,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             this.communitiesDataProvider = dataProvider;
         }
+
+        public void SetSelfProfile(ISelfProfile selfProfileData) =>
+            selfProfile = selfProfileData;
 
         public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)
         {

@@ -24,6 +24,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -84,6 +85,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IInputBlock inputBlock;
+        private readonly ISelfProfile selfProfile;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -123,7 +125,8 @@ namespace DCL.Communities.CommunitiesCard
             IProfileRepository profileRepository,
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ISelfProfile selfProfile)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -147,6 +150,7 @@ namespace DCL.Communities.CommunitiesCard
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
+            this.selfProfile = selfProfile;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -375,7 +379,8 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache);
+                web3IdentityCache,
+                selfProfile);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,

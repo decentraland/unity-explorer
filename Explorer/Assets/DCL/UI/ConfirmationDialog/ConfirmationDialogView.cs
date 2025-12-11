@@ -24,6 +24,8 @@ namespace DCL.UI.ConfirmationDialog
         [field: SerializeField] private GameObject quitImage { get; set; } = null!;
         [field: SerializeField] private Image rimImage { get; set; } = null!;
         [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
+        [field: SerializeField] private ProfilePictureView fromProfilePictureView { get; set; } = null!;
+        [field: SerializeField] private GameObject profilePicturesContainer { get; set; } = null!;
         [field: SerializeField] private Image profileActionIcon { get; set; } = null!;
 
         private readonly UniTask[] closeTasks = new UniTask[3];
@@ -50,8 +52,11 @@ namespace DCL.UI.ConfirmationDialog
             quitImage.SetActive(dialogData.ShowQuitImage);
 
             bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
+            bool hasFromProfileImage = !string.IsNullOrEmpty(dialogData.FromUserInfo.Address);
 
+            profilePicturesContainer.SetActive(hasProfileImage);
             profilePictureView.gameObject.SetActive(hasProfileImage);
+            fromProfilePictureView.gameObject.SetActive(hasFromProfileImage);
             profileActionIcon.sprite = dialogData.Image;
 
             if (dialogData.Image == null)
@@ -72,6 +77,10 @@ namespace DCL.UI.ConfirmationDialog
 
             profilePictureView.SetDefaultThumbnail();
             profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
+
+            fromProfilePictureView.SetDefaultThumbnail();
+            fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo.Color, dialogData.FromUserInfo.ThumbnailUrl);
+
         }
 
         public void Reset()
