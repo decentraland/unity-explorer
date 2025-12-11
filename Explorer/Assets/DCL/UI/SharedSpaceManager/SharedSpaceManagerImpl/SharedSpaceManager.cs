@@ -66,9 +66,6 @@ namespace DCL.UI.SharedSpaceManager
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
         {
-            if (isFriendsFeatureEnabled)
-                dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
-
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
         }
 

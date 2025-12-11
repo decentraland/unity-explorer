@@ -39,7 +39,7 @@ namespace DCL.Chat
         private readonly CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
 
         private CancellationTokenSource initCts = new ();
-        private bool isVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
+        private bool isVisible => chatStateMachine is { IsMinimized: false, IsHidden: false };
 
         public ChatPanelPresenter(ChatPanelView view,
             ITextFormatter textFormatter,
@@ -177,7 +177,7 @@ namespace DCL.Chat
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
-            if (!chatStateMachine.IsFocused && (isVisibleInSharedSpace || chatStateMachine.IsMinimized))
+            if (!chatStateMachine.IsFocused && (isVisible || chatStateMachine.IsMinimized))
             {
                 chatStateMachine.SetFocusState();
                 commandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
@@ -265,7 +265,7 @@ namespace DCL.Chat
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)
         {
-            chatSharedAreaEventBus.RaiseVisibilityStateChangedEvent(isVisibleInSharedSpace);
+            chatSharedAreaEventBus.RaiseVisibilityStateChangedEvent(isVisible);
         }
     }
 }

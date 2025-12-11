@@ -2,23 +2,20 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ControllerShowParams;
-using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
-using System.Collections.Generic;
 using Utility;
 
 namespace DCL.ChatArea
 {
-    public class ChatMainSharedAreaController : ControllerBase<ChatMainSharedAreaView, ChatMainSharedAreaControllerShowParams>, IControllerInSharedSpace<ChatMainSharedAreaView, ChatMainSharedAreaControllerShowParams>
+    public class ChatMainSharedAreaController : ControllerBase<ChatMainSharedAreaView, ChatMainSharedAreaControllerShowParams>
     {
         private readonly IMVCManager mvcManager;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
-        private readonly HashSet<IBlocksChat> chatBlockers = new ();
+        //private readonly HashSet<IBlocksChat> chatBlockers = new ();
         private readonly EventSubscriptionScope eventScope = new ();
 
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public readonly CommandRegistry CommandRegistry;
 
         public bool IsVisibleInSharedSpace { get; private set; }
@@ -47,6 +44,11 @@ namespace DCL.ChatArea
             // Subscribe to visibility state changes
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
             CentralizedChatClickDetectionService.Instance.Resume();
+        }
+
+        protected override void OnViewClose()
+        {
+
         }
 
         protected override void OnViewShow()
@@ -90,20 +92,18 @@ namespace DCL.ChatArea
             chatSharedAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
             CentralizedChatClickDetectionService.Instance.Resume();
 
-            ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        /*public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             CentralizedChatClickDetectionService.Instance.Pause();
             chatSharedAreaEventBus.RaiseHiddenInSharedSpaceEvent();
             await UniTask.CompletedTask;
-        }
+        }*/
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
             CentralizedChatClickDetectionService.Instance.Pause();
         }
@@ -132,24 +132,24 @@ namespace DCL.ChatArea
 
             base.Dispose();
 
-            chatBlockers.Clear();
+            //chatBlockers.Clear();
         }
 
         private void OnMvcViewShowed(IController controller)
         {
-            if (controller is not IBlocksChat blocker) return;
+            //if (controller is not IBlocksChat blocker) return;
 
-            chatBlockers.Add(blocker);
+            //chatBlockers.Add(blocker);
             chatSharedAreaEventBus.RaiseMvcViewShowedEvent();
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            if (controller is not IBlocksChat blocker) return;
+            //if (controller is not IBlocksChat blocker) return;
 
-            chatBlockers.Remove(blocker);
-             if (chatBlockers.Count == 0)
-                chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
+            //chatBlockers.Remove(blocker);
+             //if (chatBlockers.Count == 0)
+               // chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
         }
 
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)

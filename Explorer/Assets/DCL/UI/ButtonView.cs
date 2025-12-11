@@ -23,6 +23,9 @@ namespace DCL.UI
         [field: SerializeField] public AudioClipConfig ButtonHoverAudio { get; private set; } = null!;
 
 
+        // ReSharper disable once InconsistentNaming
+        public Button.ButtonClickedEvent onClick => Button.onClick;
+
         private void Awake()
         {
             Button.onClick.AddListener(OnClick);

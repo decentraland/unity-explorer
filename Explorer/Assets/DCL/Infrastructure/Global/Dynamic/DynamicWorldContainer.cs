@@ -776,7 +776,6 @@ namespace Global.Dynamic
                     chatEventBus,
                     identityCache,
                     staticContainer.LoadingStatus,
-                    sharedSpaceManager,
                     userBlockingCacheProxy,
                     socialServiceContainer.socialServicesRPC,
                     friendsEventBus,

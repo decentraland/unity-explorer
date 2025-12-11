@@ -26,7 +26,6 @@ using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using MVC;
@@ -50,6 +49,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -74,7 +74,6 @@ namespace DCL.PluginSystem.Global
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ChatMessageFactory chatMessageFactory;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IRPCSocialServices socialServiceProxy;
@@ -91,15 +90,16 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
-        private FallbackFontsProvider fallbackFontsProvider;
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly CurrentChannelService? externalCurrentChannelService;
+        private readonly DCLInput dclInput;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
+        private FallbackFontsProvider? fallbackFontsProvider;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -121,7 +121,6 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
@@ -159,7 +158,6 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -177,6 +175,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.externalCurrentChannelService = externalCurrentChannelService;
+            this.dclInput = DCLInput.Instance;
 
             pluginCts = new CancellationTokenSource();
             eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
@@ -186,8 +185,8 @@ namespace DCL.PluginSystem.Global
         {
             chatStorage?.Dispose();
             pluginScope.Dispose();
+            fallbackFontsProvider?.Dispose();
             pluginCts.SafeCancelAndDispose();
-            fallbackFontsProvider.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -371,7 +370,6 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(chatWorldBubbleService);
             pluginScope.Add(chatBusListenerService);
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatSharedAreaController);
             mvcManager.RegisterController(chatSharedAreaController);
 
             // Log out / log in
@@ -379,6 +377,7 @@ namespace DCL.PluginSystem.Global
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
 
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
+            dclInput.UI.Submit.performed += OnUISubmitPerformed;
         }
 
         private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
@@ -387,8 +386,16 @@ namespace DCL.PluginSystem.Global
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
             if (status == LoadingStatus.LoadingStage.Completed)
-                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, false)).Forget();
+                mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, false)));
         }
+
+        private void OnUISubmitPerformed(InputAction.CallbackContext _)
+        {
+            if (chatSharedAreaController?.State != ControllerState.ViewFocused)
+                chatSharedAreaController?.SetVisibility(true);
+                //mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
+        }
+
 
         private void OnIdentityCleared()
         {
@@ -435,11 +442,11 @@ namespace DCL.PluginSystem.Global
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; }
-        [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
-        [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; }
+        [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; } = null!;
+        [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; } = null!;
+        [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; } = null!;
 
         [Header("Audio")]
-        [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
+        [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; } = null!;
     }
 }

@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IPassportBridge passportBridge;
-        private readonly IEventBus eventBus;
+        private readonly IEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly Arch.Core.World globalWorld;
         private readonly EmotesBus emotesBus;
@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.Global
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
-            IEventBus eventBus,
+            IEventBus chatEventBus,
             SmartWearableCache smartWearableCache,
             Arch.Core.World globalWorld,
             EmotesBus emotesBus)
@@ -133,11 +133,11 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
-            this.eventBus = eventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
             this.globalWorld = globalWorld;
             this.emotesBus = emotesBus;
+            this.chatEventBus = chatEventBus;
         }
 
         public void Dispose()
@@ -195,10 +195,11 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus,
                 smartWearableCache,
                 emotesBus,
-                globalWorld);
+                globalWorld,
+                chatEventBus
+                );
 
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);

@@ -200,6 +200,14 @@ namespace DCL.Chat
         {
             public ChatState CurrentState;
         }
+
+        /// <summary>
+        ///     Event:          ToggleChatEvent
+        ///     Triggered By:   SidebarController
+        ///     When:           Signals the chat to toggle its state from Focused to minimized or vice versa.
+        ///     Subscribers:    ChatFsmController: Transitions the UI to the corresponding state.
+        /// </summary>
+        public struct ToggleChatEvent {}
 #endregion
 
 #region Miscellaneous Events

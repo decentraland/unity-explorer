@@ -62,6 +62,7 @@ namespace DCL.UI.Sidebar
         private readonly SmartWearableCache smartWearablesCache;
         private readonly SidebarPanelsShortcutsHandler sidebarPanelsShortcutsHandler;
         private readonly World globalWorld;
+        private readonly IEventBus chatEventBus;
 
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
         private bool includeMarketplaceCredits;
@@ -92,10 +93,10 @@ namespace DCL.UI.Sidebar
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IEventBus eventBus,
             SmartWearableCache smartWearableCache,
             EmotesBus emotesBus,
-            World globalWorld)
+            World globalWorld,
+            IEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -116,11 +117,12 @@ namespace DCL.UI.Sidebar
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
+            this.chatEventBus = chatEventBus;
             smartWearablesCache = smartWearableCache;
 
             sidebarPanelsShortcutsHandler = new SidebarPanelsShortcutsHandler(mvcManager, DCLInput.Instance, emotesBus, globalWorld);
 
-            eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
+            chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
         public override void Dispose()
@@ -171,14 +173,14 @@ namespace DCL.UI.Sidebar
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
-            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.InWorldCameraButton.onClick.AddListener(OnOpenCameraButtonClicked);
 
-            viewInstance.emotesWheelButton.Button.onClick.AddListener(OnEmotesWheelButtonClicked);
-            viewInstance.NotificationsButton.Button.onClick.AddListener(OpenNotificationsPanel);
-            viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettingsPanel);
-            viewInstance.ProfileWidget.OpenProfileButton.Button.onClick.AddListener(OpenProfilePanel);
-            viewInstance.sidebarConfigButton.Button.onClick.AddListener(OpenSidebarSettings);
+            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClicked);
+            viewInstance.NotificationsButton.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsPanel);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePanel);
+            viewInstance.sidebarConfigButton.onClick.AddListener(OpenSidebarSettings);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
 
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
@@ -189,7 +191,7 @@ namespace DCL.UI.Sidebar
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
             if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
-            if (includeFriends) viewInstance.friendsButton.Button.onClick.AddListener(OnFriendsButtonClicked);
+            if (includeFriends) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
         }
 
         private void OnOpenCameraButtonClicked()
@@ -286,8 +288,10 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
-            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
+            if (isUnfolded)
+                viewInstance?.unreadMessagesButton.Select();
+            else
+                viewInstance?.unreadMessagesButton.Deselect();
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -337,7 +341,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
 
             if (includeMarketplaceCredits)
-                viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
+                viewInstance?.marketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
         }
 
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
@@ -350,8 +354,9 @@ namespace DCL.UI.Sidebar
 #region Sidebar button handlers
         private void OnUnreadMessagesButtonClicked()
         {
+            chatEventBus.Publish(new ChatEvents.ToggleChatEvent());
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true)).Forget();
+            //sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true)).Forget();
         }
 
         private void OnEmotesWheelButtonClicked()
