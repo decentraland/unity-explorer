@@ -15,19 +15,14 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
-        {
-            return UniTask.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-
-        }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             DebugRenderSystem.InjectToWorld(ref builder, debugContainerBuilder);
         }
+
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
+            UniTask.CompletedTask;
+
+        public void Dispose() { }
     }
 }
