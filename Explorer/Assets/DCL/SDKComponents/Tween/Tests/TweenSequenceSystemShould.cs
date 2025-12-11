@@ -8,9 +8,12 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using ECS.Unity.Materials.Components;
+using ECS.Unity.Materials;
 using System.Threading.Tasks;
 using Entity = Arch.Core.Entity;
 using Quaternion = Decentraland.Common.Quaternion;
+using Vector2 = Decentraland.Common.Vector2;
 using Vector3 = Decentraland.Common.Vector3;
 
 namespace DCL.SDKComponents.Tween.Tests
@@ -311,6 +314,60 @@ namespace DCL.SDKComponents.Tween.Tests
             Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
         }
 
+        [Test]
+        public async Task TextureMoveSequenceUpdatesMaterial()
+        {
+            // Create a material
+            var material = new UnityEngine.Material(UnityEngine.Shader.Find("DCL/Universal Render Pipeline/Lit"));
+            var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(null, null, 0, UnityEngine.Color.white, false))
+            {
+                Result = material
+            };
+
+            Vector2 start = new Vector2 { X = 0, Y = 0 };
+            Vector2 mid = new Vector2 { X = 0.5f, Y = 0 };
+            Vector2 end = new Vector2 { X = 1, Y = 0 };
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateTextureMoveTween(start, mid, 500, TextureMovementType.TmtOffset),
+                CreateTextureMoveTween(mid, end, 500, TextureMovementType.TmtOffset)
+            });
+
+            world.Add(testEntity, materialComponent);
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            SDKTweenSequenceComponent comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+            Assert.IsNotNull(comp.SequenceTweener);
+
+            // Run for a short time to verify animation has started but not finished first tween
+            await RunSystemForSeconds(100, testEntity);
+
+            // Check material offset (should be > 0 and < 0.5)
+            // We use the property ID that the tweener uses
+            int propertyId = UnityEngine.Shader.PropertyToID("_BaseMap");
+            UnityEngine.Vector2 offset = material.GetTextureOffset(propertyId);
+            
+            Assert.Greater(offset.x, 0f);
+            Assert.Less(offset.x, 0.5f);
+
+            // Run for enough time to ensure completion of both tweens (500 + 500 = 1000ms total)
+            // We add extra buffer to be safe
+            await RunSystemForSeconds(1500, testEntity);
+
+            offset = material.GetTextureOffset(propertyId);
+            Assert.AreEqual(1.0f, offset.x, 0.01f);
+
+            comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
+            
+            // Clean up
+            UnityEngine.Object.DestroyImmediate(material);
+        }
+
         private Entity CreateTweenSequence(PBTween[] tweens, TweenLoop loopType)
         {
             var crdtEntity = new CRDTEntity(1);
@@ -401,6 +458,19 @@ namespace DCL.SDKComponents.Tween.Tests
                 IsDirty = true,
                 Playing = true,
                 Scale = new Scale { Start = start, End = end }
+            };
+        }
+
+        private PBTween CreateTextureMoveTween(Vector2 start, Vector2 end, int duration, TextureMovementType movementType)
+        {
+            return new PBTween
+            {
+                CurrentTime = 0,
+                Duration = duration,
+                EasingFunction = EasingFunction.EfLinear,
+                IsDirty = true,
+                Playing = true,
+                TextureMove = new TextureMove { Start = start, End = end, MovementType = movementType }
             };
         }
 
