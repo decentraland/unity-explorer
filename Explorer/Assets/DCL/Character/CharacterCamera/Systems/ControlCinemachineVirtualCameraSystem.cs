@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Audio;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
@@ -35,6 +36,7 @@ namespace DCL.Character.CharacterCamera.Systems
         public override void Initialize()
         {
             inputMap = World.CacheInputMap();
+            BlockCameraStateChangesWhileEmotingQuery(World);
             ApplyDefaultCameraModeQuery(World);
         }
 
@@ -68,6 +70,21 @@ namespace DCL.Character.CharacterCamera.Systems
             HandleSwitchStateQuery(World);
             HandleFreeFlyStateQuery(World);
             HandleOffsetQuery(World, dt);
+        }
+
+        [Query]
+        [None(typeof(InWorldCameraComponent))]
+        private void BlockCameraStateChangesWhileEmoting(ref CameraInput input, in CharacterEmoteComponent emoteComponent)
+        {
+            if (emoteComponent.IsPlayingEmote)
+            {
+                input.SwitchState = false;
+                input.ZoomIn = false;
+                input.ZoomOut = false;
+                input.SetFreeFly = false;
+                input.ChangeShoulder = false;
+            }
+
         }
 
         [Query]

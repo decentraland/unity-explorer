@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cinemachine;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
@@ -78,8 +79,10 @@ namespace DCL.CharacterCamera.Tests
             // Setup Input
             DCLInput.Instance.Enable();
 
+            Entity playerEntity = world.Create(new CharacterEmoteComponent());
+
             // Create system with free camera allowed
-            system = new ApplyCinemachineCameraInputSystem(world, true);
+            system = new ApplyCinemachineCameraInputSystem(world, true, playerEntity);
 
             // Create entity with camera components
             entity = world.Create(

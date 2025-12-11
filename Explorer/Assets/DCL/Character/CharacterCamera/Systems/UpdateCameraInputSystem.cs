@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.Input;
@@ -23,11 +24,13 @@ namespace DCL.CharacterCamera.Systems
 
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.FreeCameraActions freeCameraActions;
+        private readonly Entity playerEntity;
 
-        internal UpdateCameraInputSystem(World world) : base(world)
+        internal UpdateCameraInputSystem(World world, Entity playerEntity) : base(world)
         {
             cameraActions = DCLInput.Instance.Camera;
             freeCameraActions = DCLInput.Instance.FreeCamera;
+            this.playerEntity = playerEntity;
         }
 
         protected override void Update(float t)
@@ -49,7 +52,7 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(CameraBlockerComponent))]
-        private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent)
+        private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent, CameraComponent cameraComponent)
         {
             if (!cameraActions.enabled)
             {
@@ -59,11 +62,15 @@ namespace DCL.CharacterCamera.Systems
             }
             else
             {
-                cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
+                if (!World.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote /*&&
+                    cameraComponent.Mode == CameraMode.ThirdPerson*/) // Changing the camera is not allowed while playing an emote
+                {
+                    cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
                                      || cameraActions.ZoomIn.WasPressedThisFrame();
 
-                cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
-                                      || cameraActions.ZoomOut.WasPressedThisFrame();
+                    cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
+                                          || cameraActions.ZoomOut.WasPressedThisFrame();
+                }
 
                 Vector2 currentDelta = cameraActions.Delta.ReadValue<Vector2>();
 

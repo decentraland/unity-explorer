@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -20,10 +21,12 @@ namespace DCL.CharacterCamera.Systems
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
         private readonly bool isFreeCameraAllowed;
+        private readonly Entity playerEntity;
 
-        internal ApplyCinemachineCameraInputSystem(World world, bool isFreeCameraAllowed) : base(world)
+        internal ApplyCinemachineCameraInputSystem(World world, bool isFreeCameraAllowed, Entity playerEntity) : base(world)
         {
             this.isFreeCameraAllowed = isFreeCameraAllowed;
+            this.playerEntity = playerEntity;
         }
 
         protected override void Update(float t)
@@ -62,6 +65,10 @@ namespace DCL.CharacterCamera.Systems
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
+
+            // Changing the camera is not allowed while playing an emote
+            if(World.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote)
+                return;
 
             cameraInput.SetFreeFly = isFreeCameraAllowed && DCLInput.Instance.Camera.ToggleFreeFly!.triggered;
             cameraInput.SwitchState = DCLInput.Instance.Camera.SwitchState!.WasPressedThisFrame();
