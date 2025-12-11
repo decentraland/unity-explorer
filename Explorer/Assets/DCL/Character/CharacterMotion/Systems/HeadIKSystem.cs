@@ -30,7 +30,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HeadIKSystem : BaseUnityLoopSystem
     {
-        private bool headIKIsEnabled;
+        private bool debugHeadIKIsEnabled;
         private SingleInstanceEntity camera;
         private SingleInstanceEntity playerEntity;
         private readonly ElementBinding<float> verticalLimit;
@@ -52,7 +52,7 @@ namespace DCL.CharacterMotion.Systems
             speed = new ElementBinding<float>(0);
 
             builder.TryAddWidget("Locomotion: Head IK")
-                  ?.AddToggleField("Enabled", (evt) => { headIKIsEnabled = evt.newValue; }, true)
+                  ?.AddToggleField("Enabled", (evt) => { debugHeadIKIsEnabled = evt.newValue; }, true)
                    .AddFloatField("Vertical Limit", verticalLimit)
                    .AddFloatField("Horizontal Limit", horizontalLimit)
                    .AddFloatField("Horizontal Reset", horizontalReset)
@@ -64,7 +64,7 @@ namespace DCL.CharacterMotion.Systems
             camera = World.CacheCamera();
             playerEntity = World.CachePlayer();
 
-            headIKIsEnabled = settings.HeadIKIsEnabled;
+            debugHeadIKIsEnabled = settings.HeadIKIsEnabled;
             verticalLimit.Value = settings.HeadIKVerticalAngleLimit;
             horizontalLimit.Value = settings.HeadIKHorizontalAngleLimit;
             horizontalReset.Value = settings.HeadIKHorizontalAngleReset;
@@ -87,7 +87,7 @@ namespace DCL.CharacterMotion.Systems
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
-            bool isEnabled = emoteComponent.CurrentEmoteReference == null && headIKIsEnabled && headIK.IsEnabled;
+            bool isEnabled = emoteComponent.CurrentEmoteReference == null && debugHeadIKIsEnabled && headIK.IsEnabled;
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             if (!isEnabled) return;
@@ -162,7 +162,7 @@ namespace DCL.CharacterMotion.Systems
             in CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent)
         {
-            headIK.IsEnabled = headIKIsEnabled
+            headIK.IsEnabled = debugHeadIKIsEnabled
                                && rigidTransform is { IsGrounded: true, IsOnASteepSlope: false }
                                && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                                && !stunComponent.IsStunned
@@ -186,7 +186,7 @@ namespace DCL.CharacterMotion.Systems
         {
             // Head IK enabled flag and look-at vector are received from the remote client
 
-            bool isEnabled = headIKIsEnabled && headIK.IsEnabled;
+            bool isEnabled = debugHeadIKIsEnabled && headIK.IsEnabled;
 
             if (isEnabled)
             {

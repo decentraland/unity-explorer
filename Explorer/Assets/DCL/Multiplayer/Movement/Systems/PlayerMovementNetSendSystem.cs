@@ -7,6 +7,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Prefs;
 using ECS.Abstract;
 using System;
 using UnityEngine;
@@ -135,6 +136,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 
+            bool headSyncEnabled = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_HEAD_SYNC_ENABLED);
             Vector3 headYawAndPitch = headIK.GetHeadYawAndPitch();
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
@@ -146,7 +148,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 rotationY = playerMovement.Character.transform.eulerAngles.y,
 
-                headIKEnabled = headIK.IsEnabled,
+                headIKEnabled = headSyncEnabled && headIK.IsEnabled,
                 headYawAndPitch = headYawAndPitch,
 
                 velocityTier = velocityTier,
