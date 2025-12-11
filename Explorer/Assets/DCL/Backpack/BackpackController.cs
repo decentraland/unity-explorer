@@ -55,6 +55,7 @@ namespace DCL.Backpack
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly BackpackSections currentSection = BackpackSections.Avatar;
+        private readonly IRealmData realmData;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
@@ -224,9 +225,7 @@ namespace DCL.Backpack
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
-            backpackEmoteGridController.Dispose();
             emoteInfoPanelController.Dispose();
-
         }
 
         private void ToggleTipsContent()
