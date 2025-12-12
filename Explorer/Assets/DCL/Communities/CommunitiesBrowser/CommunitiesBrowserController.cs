@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunitiesBrowserController : ISection, IDisposable
     {
         private const int SEARCH_AWAIT_TIME = 1000;
+        private const int DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS = 2000;
 
         private const string INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading invites. Please try again.";
         private const string REQUESTS_RECEIVED_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading requests received. Please try again.";
@@ -922,6 +923,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+            await UniTask.Delay(DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS, cancellationToken: ct);
             communityDataService.ShowCommunityDeepLinkNotification(communityId!);
         }
     }
