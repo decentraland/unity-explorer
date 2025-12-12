@@ -35,8 +35,8 @@ namespace Global.Dynamic
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
         private IReportsHandlingSettings reportHandlingSettings;
-        private bool enableAnalytics;
 
+        public bool EnableAnalytics { get; private set; }
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
         public IWebBrowser WebBrowser { get; private set; }
@@ -46,7 +46,6 @@ namespace Global.Dynamic
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public IEthereumApi? EthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
-        public IWeb3Authenticator? AutoLoginAuthenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -54,7 +53,6 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-
         public DecentralandEnvironment Environment { get; private set; }
 
         public override void Dispose()
@@ -109,12 +107,11 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.EthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
+                (container.EthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
-                if (container.enableAnalytics)
+                if (container.EnableAnalytics)
                 {
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
-
                     CrashDetector.Initialize(container.Analytics);
                 }
 
@@ -147,14 +144,14 @@ namespace Global.Dynamic
             DCLVersion dclVersion,
             CancellationToken ct)
         {
-            container.enableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
+            container.EnableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
             {
-                EnableAnalytics = container.enableAnalytics,
+                EnableAnalytics = container.EnableAnalytics,
             };
 
-            if (container.enableAnalytics)
+            if (container.EnableAnalytics)
             {
                 LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
                 IAnalyticsService service = CreateAnalyticsService(
@@ -201,7 +198,7 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (IEthereumApi ethereumApi, IWeb3VerifiedAuthenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)
+        private static (IEthereumApi ethereumApi, IWeb3VerifiedAuthenticator web3Authenticator)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
@@ -210,10 +207,9 @@ namespace Global.Dynamic
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource,
                 DecentralandEnvironment dclEnvironment,
-                IAppArgs appArgs,
-                WebRequestsContainer webRequestsContainer)
+                IAppArgs appArgs)
         {
-            var web3Authenticator =
+            var authenticatorAndEthApi =
 
                 //         new ThirdWebAuthenticator(
                 //     dclEnvironment,
@@ -236,21 +232,12 @@ namespace Global.Dynamic
                     appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
                 );
 
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(web3Authenticator, identityCache);
+            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(authenticatorAndEthApi, identityCache);
 
-            IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                webRequestsContainer.WebRequestController, web3AccountFactory);
-
-            autoLoginAuthenticator = new ProxyWeb3Authenticator(autoLoginAuthenticator, identityCache);
-
-            if (container.enableAnalytics)
-            {
+            if (container.EnableAnalytics)
                 coreWeb3Authenticator = new AnalyticsDecoratorVerifiedAuthenticator(coreWeb3Authenticator, container.Analytics!);
-                autoLoginAuthenticator = new AnalyticsDecoratorAuthenticator(autoLoginAuthenticator, container.Analytics!);
-            }
 
-            return (web3Authenticator, coreWeb3Authenticator, autoLoginAuthenticator);
+            return (authenticatorAndEthApi, coreWeb3Authenticator);
         }
 
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)

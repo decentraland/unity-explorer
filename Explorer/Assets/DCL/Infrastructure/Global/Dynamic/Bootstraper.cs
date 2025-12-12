@@ -29,10 +29,12 @@ using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
+using NSubstitute.Core;
 using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -283,10 +285,20 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            // try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
-            // // Exceptions on auto-login should not block the application bootstrap
-            // catch (AutoLoginTokenNotFoundException) { }
-            // catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            var autoLogin = false;
+            if (autoLogin)
+                try
+                {
+                    await new TokenFileAuthenticator(
+                              URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                              webRequestsContainer.WebRequestController,
+                              bootstrapContainer.Web3AccountFactory)
+                         .WithIdentityCache(bootstrapContainer.IdentityCache)
+                         .WithAnalytics(bootstrapContainer.Analytics!, when: EnableAnalytics)
+                         .LoginAsync("", ct);
+                }
+                catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
