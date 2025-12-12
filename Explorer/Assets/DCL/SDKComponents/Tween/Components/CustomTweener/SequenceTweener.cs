@@ -1,6 +1,9 @@
 using CrdtEcsBridge.Components.Conversion;
 using DG.Tweening;
+using DG.Tweening.Core;
+using DG.Tweening.Plugins.Options;
 using DCL.ECSComponents;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,7 +20,7 @@ namespace DCL.SDKComponents.Tween.Components
             onCompleteCallback = OnSequenceComplete;
         }
 
-        public void Initialize(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform)
+        public void Initialize(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material? material = null)
         {
             sequence?.Kill();
             finished = false;
@@ -25,7 +28,7 @@ namespace DCL.SDKComponents.Tween.Components
             sequence.Pause();
 
             // Add the first tween from PBTween component
-            var firstDOTween = CreateTweenForPBTween(firstTween, firstTween.Duration / 1000f, transform);
+            var firstDOTween = CreateTweenForPBTween(firstTween, firstTween.Duration / 1000f, transform, material);
             if (firstDOTween != null)
             {
                 Ease firstEase = TweenSDKComponentHelper.GetEase(firstTween.EasingFunction);
@@ -36,7 +39,7 @@ namespace DCL.SDKComponents.Tween.Components
             // Add additional tweens from PBTweenSequence.sequence
             foreach (PBTween pbTween in additionalTweens)
             {
-                var tween = CreateTweenForPBTween(pbTween, pbTween.Duration / 1000f, transform);
+                var tween = CreateTweenForPBTween(pbTween, pbTween.Duration / 1000f, transform, material);
                 if (tween != null)
                 {
                     Ease ease = TweenSDKComponentHelper.GetEase(pbTween.EasingFunction);
@@ -59,7 +62,7 @@ namespace DCL.SDKComponents.Tween.Components
             sequence.Pause();
         }
 
-        private DG.Tweening.Tween? CreateTweenForPBTween(PBTween pbTween, float durationInSeconds, Transform transform)
+        private DG.Tweening.Tween? CreateTweenForPBTween(PBTween pbTween, float durationInSeconds, Transform transform, Material? material)
         {
             DG.Tweening.Tween? returnTween = null;
 
@@ -81,6 +84,31 @@ namespace DCL.SDKComponents.Tween.Components
                     returnTween = transform.DOScale(pbTween.Scale.End, durationInSeconds)
                                            .From(pbTween.Scale.Start, false)
                                            .SetAutoKill(false).Pause();
+                    break;
+
+                case PBTween.ModeOneofCase.TextureMove:
+                    if (material != null)
+                    {
+                        int propertyId = TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE;
+                        TweenerCore<Vector2, Vector2, VectorOptions> textureTweener = null;
+
+                        switch (pbTween.TextureMove.MovementType)
+                        {
+                            case TextureMovementType.TmtOffset:
+                                textureTweener = DOTween.To(() => material.GetTextureOffset(propertyId), x => material.SetTextureOffset(propertyId, x), pbTween.TextureMove.End, durationInSeconds);
+                                break;
+                            case TextureMovementType.TmtTiling:
+                                textureTweener = DOTween.To(() => material.GetTextureScale(propertyId), x => material.SetTextureScale(propertyId, x), pbTween.TextureMove.End, durationInSeconds);
+                                break;
+                        }
+
+                        if (textureTweener != null)
+                        {
+                            textureTweener.From(pbTween.TextureMove.Start, false, false);
+                            textureTweener.SetAutoKill(false).Pause();
+                            returnTween = textureTweener;
+                        }
+                    }
                     break;
             }
 
