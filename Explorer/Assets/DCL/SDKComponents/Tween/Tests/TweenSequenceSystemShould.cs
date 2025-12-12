@@ -350,7 +350,7 @@ namespace DCL.SDKComponents.Tween.Tests
             // We use the property ID that the tweener uses
             int propertyId = UnityEngine.Shader.PropertyToID("_BaseMap");
             UnityEngine.Vector2 offset = material.GetTextureOffset(propertyId);
-            
+
             Assert.Greater(offset.x, 0f);
             Assert.Less(offset.x, 0.5f);
 
@@ -363,7 +363,56 @@ namespace DCL.SDKComponents.Tween.Tests
 
             comp = world.Get<SDKTweenSequenceComponent>(testEntity);
             Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
-            
+
+            // Clean up
+            UnityEngine.Object.DestroyImmediate(material);
+        }
+
+        [Test]
+        public async Task TextureMoveTweenSequenceDoesntWriteTransformToCRDT()
+        {
+            // Create a material
+            var material = new UnityEngine.Material(UnityEngine.Shader.Find("DCL/Universal Render Pipeline/Lit"));
+            var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(null, null, 0, UnityEngine.Color.white, false))
+            {
+                Result = material
+            };
+
+            Vector2 start = new Vector2 { X = 0, Y = 0 };
+            Vector2 end = new Vector2 { X = 1, Y = 0 };
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateTextureMoveTween(start, end, 500, TextureMovementType.TmtOffset)
+            });
+
+            world.Add(testEntity, materialComponent);
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            // Clear any calls from setup
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            SDKTweenSequenceComponent comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+            Assert.IsFalse(comp.HasTransformTweens);
+
+            // Run for 250ms (halfway)
+            await RunSystemForSeconds(250, testEntity);
+
+            // Verify CRDT writer was NOT called with SDKTransform updates
+            ecsToCRDTWriter.DidNotReceive().PutMessage(
+                Arg.Any<System.Action<CrdtEcsBridge.Components.Transform.SDKTransform, CrdtEcsBridge.Components.Transform.SDKTransform>>(),
+                Arg.Any<CRDTEntity>(),
+                Arg.Any<CrdtEcsBridge.Components.Transform.SDKTransform>());
+
+            // It SHOULD write TweenState
+            ecsToCRDTWriter.Received().PutMessage(
+                Arg.Any<System.Action<PBTweenState, TweenStateStatus>>(),
+                Arg.Any<CRDTEntity>(),
+                Arg.Any<TweenStateStatus>());
+
             // Clean up
             UnityEngine.Object.DestroyImmediate(material);
         }
