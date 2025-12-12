@@ -577,7 +577,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if(emoteIntent.EmoteAsset == null || !emoteIntent.HasPlayedEmote)
                 return;
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions()");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " emote: " + emoteIntent.EmoteId);
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try

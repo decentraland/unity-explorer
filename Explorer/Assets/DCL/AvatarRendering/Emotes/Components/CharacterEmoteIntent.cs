@@ -76,10 +76,45 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         public bool HasPlayedEmote;
 
+        public CharacterEmoteIntent(URN emoteId,
+            TriggerSource triggerSource = default,
+            bool spatial = false,
+            string walletAddress = "",
+            bool isRepeating = false,
+            bool useOutcomeAnimation = false,
+            int outcomeIndex = -1,
+            bool useOutcomeReactionAnimation = false,
+            string initiatorWalletAddress = "",
+            string targetAvatarWalletAddress = "",
+            int interactionId = 0,
+            bool isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false)
+        {
+            this.WalletAddress = walletAddress;
+            this.EmoteId = emoteId;
+            this.Spatial = spatial;
+            this.TriggerSource = triggerSource;
+            this.IsRepeating = isRepeating;
+            this.SocialEmote.UseOutcomeAnimation = useOutcomeAnimation;
+            this.SocialEmote.OutcomeIndex = outcomeIndex;
+            this.SocialEmote.UseOutcomeReactionAnimation = useOutcomeReactionAnimation;
+            this.SocialEmote.InitiatorWalletAddress = initiatorWalletAddress;
+            this.SocialEmote.TargetAvatarWalletAddress = targetAvatarWalletAddress;
+            this.SocialEmote.InteractionId = interactionId;
+            this.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop;
+            this.EmoteAsset = null;
+            this.HasPlayedEmote = false;
+        }
+
         public void UpdateRemoteId(URN emoteId)
         {
-            this.WalletAddress = string.Empty;
+            this.Reset();
             this.EmoteId = emoteId;
+        }
+
+        private void Reset()
+        {
+            this.WalletAddress = string.Empty;
+            this.EmoteId = new URN();
             this.Spatial = true;
             this.TriggerSource = TriggerSource.REMOTE;
             this.IsRepeating = false;
