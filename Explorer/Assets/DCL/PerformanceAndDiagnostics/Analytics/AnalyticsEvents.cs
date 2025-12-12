@@ -136,5 +136,11 @@
             public const string EQUIP_OUTFIT = "equip_outfit";
             public const string OUTFIT_CLICK_NAME = "outfit_click_name";
         }
+
+        public static class Communities
+        {
+            public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
+            public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
+        }
     }
 }

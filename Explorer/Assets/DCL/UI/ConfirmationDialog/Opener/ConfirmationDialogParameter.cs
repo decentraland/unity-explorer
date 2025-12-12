@@ -28,12 +28,13 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public readonly bool ShowImageRim;
         public readonly bool ShowQuitImage;
         public readonly UserData UserInfo;
+        public readonly UserData FromUserInfo;
         public Action<ConfirmationResult>? ResultCallback;
 
         public ConfirmationDialogParameter(string text, string cancelButtonText, string confirmButtonText,
             Sprite? image, bool showImageRim, bool showQuitImage,
             Action<ConfirmationResult>? resultCallback = null,
-            string subText = "", UserData userInfo = default)
+            string subText = "", UserData userInfo = default, UserData fromUserInfo = default)
         {
             Text = text;
             CancelButtonText = cancelButtonText;
@@ -44,6 +45,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
             ResultCallback = resultCallback;
             SubText = subText;
             UserInfo = userInfo;
+            FromUserInfo = fromUserInfo;
         }
     }
 

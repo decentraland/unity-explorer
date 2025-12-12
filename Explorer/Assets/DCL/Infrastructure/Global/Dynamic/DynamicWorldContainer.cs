@@ -873,7 +873,8 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     homePlaceEventBus,
-                    staticContainer.SmartWearableCache
+                    staticContainer.SmartWearableCache,
+                    bootstrapContainer.Analytics!
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -1117,7 +1118,8 @@ namespace Global.Dynamic
                     profilesRepository,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
-                    voiceChatContainer.VoiceChatOrchestrator));
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.Analytics!));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
