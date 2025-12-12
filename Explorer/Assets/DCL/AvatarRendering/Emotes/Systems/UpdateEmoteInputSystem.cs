@@ -92,7 +92,7 @@ namespace DCL.AvatarRendering.Emotes
             }
             else // Normal emotes, or social emote start animation
             {
-                if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible)
+                if (inputModifier.DisableEmote)
                     return;
 
                 IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
