@@ -25,13 +25,15 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjZkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdmlzaWJpbGl0eV9jb21w",
-            "b25lbnQucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyI5ChVQ",
-            "QlZpc2liaWxpdHlDb21wb25lbnQSFAoHdmlzaWJsZRgBIAEoCEgAiAEBQgoK",
-            "CF92aXNpYmxlQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "b25lbnQucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJ3ChVQ",
+            "QlZpc2liaWxpdHlDb21wb25lbnQSFAoHdmlzaWJsZRgBIAEoCEgAiAEBEiIK",
+            "FXByb3BhZ2F0ZV90b19jaGlsZHJlbhgCIAEoCEgBiAEBQgoKCF92aXNpYmxl",
+            "QhgKFl9wcm9wYWdhdGVfdG9fY2hpbGRyZW5CFKoCEURDTC5FQ1NDb21wb25l",
+            "bnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVisibilityComponent), global::DCL.ECSComponents.PBVisibilityComponent.Parser, new[]{ "Visible" }, new[]{ "Visible" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVisibilityComponent), global::DCL.ECSComponents.PBVisibilityComponent.Parser, new[]{ "Visible", "PropagateToChildren" }, new[]{ "Visible", "PropagateToChildren" }, null, null, null)
           }));
     }
     #endregion
@@ -75,6 +77,7 @@ namespace DCL.ECSComponents {
     public PBVisibilityComponent(PBVisibilityComponent other) : this() {
       _hasBits0 = other._hasBits0;
       visible_ = other.visible_;
+      propagateToChildren_ = other.propagateToChildren_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -112,6 +115,34 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~1;
     }
 
+    /// <summary>Field number for the "propagate_to_children" field.</summary>
+    public const int PropagateToChildrenFieldNumber = 2;
+    private bool propagateToChildren_;
+    /// <summary>
+    /// default=false
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool PropagateToChildren {
+      get { if ((_hasBits0 & 2) != 0) { return propagateToChildren_; } else { return false; } }
+      set {
+        _hasBits0 |= 2;
+        propagateToChildren_ = value;
+      }
+    }
+    /// <summary>Gets whether the "propagate_to_children" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasPropagateToChildren {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "propagate_to_children" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearPropagateToChildren() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -128,6 +159,7 @@ namespace DCL.ECSComponents {
         return true;
       }
       if (Visible != other.Visible) return false;
+      if (PropagateToChildren != other.PropagateToChildren) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -136,6 +168,7 @@ namespace DCL.ECSComponents {
     public override int GetHashCode() {
       int hash = 1;
       if (HasVisible) hash ^= Visible.GetHashCode();
+      if (HasPropagateToChildren) hash ^= PropagateToChildren.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -158,6 +191,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(8);
         output.WriteBool(Visible);
       }
+      if (HasPropagateToChildren) {
+        output.WriteRawTag(16);
+        output.WriteBool(PropagateToChildren);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -172,6 +209,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(8);
         output.WriteBool(Visible);
       }
+      if (HasPropagateToChildren) {
+        output.WriteRawTag(16);
+        output.WriteBool(PropagateToChildren);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -183,6 +224,9 @@ namespace DCL.ECSComponents {
     public int CalculateSize() {
       int size = 0;
       if (HasVisible) {
+        size += 1 + 1;
+      }
+      if (HasPropagateToChildren) {
         size += 1 + 1;
       }
       if (_unknownFields != null) {
@@ -199,6 +243,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasVisible) {
         Visible = other.Visible;
+      }
+      if (other.HasPropagateToChildren) {
+        PropagateToChildren = other.PropagateToChildren;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -219,6 +266,10 @@ namespace DCL.ECSComponents {
             Visible = input.ReadBool();
             break;
           }
+          case 16: {
+            PropagateToChildren = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -236,6 +287,10 @@ namespace DCL.ECSComponents {
             break;
           case 8: {
             Visible = input.ReadBool();
+            break;
+          }
+          case 16: {
+            PropagateToChildren = input.ReadBool();
             break;
           }
         }
