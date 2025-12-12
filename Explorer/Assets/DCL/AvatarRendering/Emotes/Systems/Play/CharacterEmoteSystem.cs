@@ -337,12 +337,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent, in IAvatarView avatarView,
+        private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent,
             ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(((AvatarBase)avatarView).name == "Avatar ") // FOR TESTING ONLY
-                return;
-
             if(emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
                 return;
 
