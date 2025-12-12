@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Multiplayer.PlayMode;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,13 +13,14 @@ namespace DCL.Prefs
     /// </summary>
     public static class DCLPlayerPrefs
     {
-        private static string VECTOR2_KEY_FORMAT = "{0}_{1}";
+        private const string VECTOR2_KEY_FORMAT = "{0}_{1}";
+
         private static IDCLPrefs dclPrefs;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
         {
-            string[] playmodeTags = Unity.Multiplayer.PlayMode.CurrentPlayer.ReadOnlyTags();
+            IReadOnlyList<string> playmodeTags = CurrentPlayer.Tags;
             Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
