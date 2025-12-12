@@ -601,14 +601,6 @@ MonoBehaviour:
     - Category: EMOTE_DEBUG
       Severity: 1
     - Category: SOCIAL_EMOTE
-      Severity: 3
-    - Category: SOCIAL_EMOTE
-      Severity: 2
-    - Category: SOCIAL_EMOTE
-      Severity: 0
-    - Category: SOCIAL_EMOTE
-      Severity: 4
-    - Category: SOCIAL_EMOTE
       Severity: 1
     - Category: ANALYTICS_INTERNAL
       Severity: 0
