@@ -36,5 +36,10 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: Min(5)]
         [field: Tooltip("Maximums speed for the blending.")]
         [field: SerializeField] public float MaxBlendSpeed { get; set; } = 5;
+
+        [field: Space]
+        [field: SerializeField]
+        [field: Tooltip("Interpolation factor used for Head IK. Higher values makes transitions snappier.")]
+        public float HeadIKInterpolationFactor { get; set; } = 10;
     }
 }

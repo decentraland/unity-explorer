@@ -1,12 +1,18 @@
 ﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
+using Unity.Burst;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.IK
 {
+    [BurstCompile]
     public static class ApplyHeadLookAt
     {
+        private const float TWO_PI = math.PI * 2;
+        private const float THREE_PI = math.PI * 3;
+
         /// <summary>
         /// This method updates the head IK targets (horizontal and vertical) based on a target look-at direction
         /// </summary>
@@ -14,49 +20,81 @@ namespace DCL.CharacterMotion.IK
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings, bool useFrontalReset = true)
         {
-            Transform reference = avatarBase.HeadPositionConstraint;
-            Vector3 referenceAngle = Quaternion.LookRotation(reference.forward).eulerAngles;
-            Vector3 targetAngle = Quaternion.LookRotation(targetDirection).eulerAngles;
+            Execute(avatarBase.HeadPositionConstraint.forward,
+                targetDirection,
+                settings.HeadIKRotationSpeed * dt,
+                avatarBase.HeadLookAtTargetHorizontal.localRotation,
+                avatarBase.HeadLookAtTargetVertical.localRotation,
+                new float2(settings.HeadIKHorizontalAngleLimit, settings.HeadIKVerticalAngleLimit),
+                useFrontalReset,
+                settings.HeadIKHorizontalAngleReset,
+                out var horizontalRotationResult,
+                out var verticalRotationResult);
 
-            float horizontalAngle = Mathf.DeltaAngle(referenceAngle.y, targetAngle.y);
+            avatarBase.HeadLookAtTargetHorizontal.localRotation = horizontalRotationResult;
+            avatarBase.HeadLookAtTargetVertical.localRotation = verticalRotationResult;
+        }
 
-            Quaternion horizontalTargetRotation;
-            Quaternion verticalTargetRotation;
+        [BurstCompile]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Execute(in float3 referenceDirection,
+            in float3 targetDirection,
+            float maxDeltaDegrees,
+            in quaternion lookAtTargetHorizontal,
+            in quaternion lookAtTargetVertical,
+            in float2 angleLimitsDegrees,
+            bool useFrontalReset,
+            float angleResetDegrees,
+            out quaternion horizontalRotationResult,
+            out quaternion verticalRotationResult)
+        {
+            float3 up = math.up();
+            float3 referenceAngle = math.Euler(quaternion.LookRotation(referenceDirection, up));
+            float3 targetAngle = math.Euler(quaternion.LookRotation(targetDirection, up));
 
-            float rotationSpeed = settings.HeadIKRotationSpeed;
+            float horizontalAngle = DeltaAngle(referenceAngle.y, targetAngle.y);
 
-            //If the target horizonal angle is outside of the limits, reset the head location to look frontal
-            if (useFrontalReset && Mathf.Abs(horizontalAngle) > settings.HeadIKHorizontalAngleReset)
+            quaternion horizontalTargetRotation;
+            quaternion verticalTargetRotation;
+
+            if (useFrontalReset && math.abs(horizontalAngle) > math.radians(angleResetDegrees))
             {
-                //set horizontal rotation to 0
-                horizontalTargetRotation = Quaternion.AngleAxis(0, Vector3.up);
-
-                //set vertical rotation to 0
-                verticalTargetRotation = horizontalTargetRotation * Quaternion.AngleAxis(0, Vector3.right);
-                rotationSpeed = rotationSpeed / 3;
+                horizontalTargetRotation = quaternion.identity;
+                verticalTargetRotation = quaternion.identity;
+                maxDeltaDegrees *= 0.333333f;
             }
-            //otherwise, calculate rotation within constraints
             else
             {
-                //clamp horizontal angle and apply rotation
-                horizontalAngle = Mathf.Clamp(horizontalAngle, -settings.HeadIKHorizontalAngleLimit, settings.HeadIKHorizontalAngleLimit);
-                horizontalTargetRotation = Quaternion.AngleAxis(horizontalAngle, Vector3.up);
+                var angleLimitsRads = math.radians(angleLimitsDegrees);
 
-                //calculate vertical angle difference between reference and target, clamped to maximum angle
-                float verticalAngle = Mathf.DeltaAngle(referenceAngle.x, targetAngle.x);
-                verticalAngle = Mathf.Clamp(verticalAngle, -settings.HeadIKVerticalAngleLimit, settings.HeadIKVerticalAngleLimit);
+                horizontalAngle = math.clamp(horizontalAngle, -angleLimitsRads.x, angleLimitsRads.x);
+                horizontalTargetRotation = quaternion.AxisAngle(up, horizontalAngle);
 
-                //calculate vertical rotation
-                verticalTargetRotation = horizontalTargetRotation * Quaternion.AngleAxis(verticalAngle, Vector3.right);
+                float verticalAngle = DeltaAngle(referenceAngle.x, targetAngle.x);
+                verticalAngle = math.clamp(verticalAngle, -angleLimitsRads.y, angleLimitsRads.y);
+                verticalTargetRotation = math.mul(horizontalTargetRotation, quaternion.AxisAngle(math.right(), verticalAngle));
             }
 
-            //apply horizontal rotation
-            Quaternion newHorizontalRotation = Quaternion.RotateTowards(avatarBase.HeadLookAtTargetHorizontal.localRotation, horizontalTargetRotation, dt * rotationSpeed);
-            avatarBase.HeadLookAtTargetHorizontal.localRotation = newHorizontalRotation;
+            float maxDelta = math.radians(maxDeltaDegrees);
+            horizontalRotationResult = RotateTowards(lookAtTargetHorizontal, horizontalTargetRotation, maxDelta);
+            verticalRotationResult = RotateTowards(lookAtTargetVertical, verticalTargetRotation, maxDelta);
+        }
 
-            //apply vertical rotation
-            Quaternion newVerticalRotation = Quaternion.RotateTowards(avatarBase.HeadLookAtTargetVertical.localRotation, verticalTargetRotation, dt * rotationSpeed);
-            avatarBase.HeadLookAtTargetVertical.localRotation = newVerticalRotation;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float DeltaAngle(float referenceAngle, float targetAngle) =>
+            math.fmod(targetAngle - referenceAngle + THREE_PI, TWO_PI) - math.PI;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static quaternion RotateTowards(quaternion current, quaternion target, float maxDelta)
+        {
+            float dot = math.dot(current, target);
+            if (dot < 0)
+            {
+                target.value = -target.value;
+                dot = -dot;
+            }
+            float angle = math.acos(math.clamp(dot, -1, 1)) * 2;
+            return angle < 1e-6f ? target : math.slerp(current, target, math.min(1, maxDelta / angle));
         }
     }
 }

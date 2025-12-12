@@ -73,6 +73,7 @@ MonoBehaviour:
       - rid: 1708279571579404288
       - rid: 1708279571579404289
       - rid: 2659808844961546333
+      - rid: 5190442792534147333
   references:
     version: 2
     RefIds:
@@ -301,6 +302,22 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 10
         <Feature>k__BackingField: 10
+    - rid: 5190442792534147333
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Head Sync
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 3
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

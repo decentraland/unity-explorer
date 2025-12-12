@@ -124,6 +124,15 @@ namespace DCL.AvatarRendering.AvatarShape
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
+
+            avatarBase.RigBuilder.enabled = true;
+
+            // Notice that Hands / Feet IK components are not added to remote entities
+            // We still disable the rigs to ensure no cpu time is wasted
+            // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
+            avatarBase.HandsIKRig.enabled = false;
+            avatarBase.FeetIKRig.enabled = false;
+
             return avatarBase;
         }
 
@@ -136,7 +145,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (avatarBase != null)
             {
-                avatarBase.RigBuilder.enabled = true;
+                avatarBase.HandsIKRig.enabled = true;
+                avatarBase.FeetIKRig.enabled = true;
+
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
             }
         }
