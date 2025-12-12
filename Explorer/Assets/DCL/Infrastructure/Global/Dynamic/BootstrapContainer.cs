@@ -44,7 +44,7 @@ namespace Global.Dynamic
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
-        public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
+        public IEthereumApi? EthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IWeb3Authenticator? AutoLoginAuthenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
@@ -63,7 +63,7 @@ namespace Global.Dynamic
 
             DiagnosticsContainer?.Dispose();
             Web3Authenticator?.Dispose();
-            VerifiedEthereumApi?.Dispose();
+            EthereumApi?.Dispose();
             IdentityCache?.Dispose();
         }
 
@@ -109,7 +109,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
+                (container.EthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
 
                 if (container.enableAnalytics)
                 {

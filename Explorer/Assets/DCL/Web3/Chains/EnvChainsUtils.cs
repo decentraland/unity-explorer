@@ -4,7 +4,7 @@ using System.Numerics;
 namespace DCL.Web3.Authenticators
 {
     // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-    internal static class EnvChainsUtils
+    public static class EnvChainsUtils
     {
         private const string NETWORK_MAINNET = "mainnet";
         private const string NETWORK_SEPOLIA = "sepolia";

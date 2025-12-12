@@ -111,7 +111,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
-                bootstrapContainer.VerifiedEthereumApi,
+                bootstrapContainer.EthereumApi,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
