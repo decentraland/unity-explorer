@@ -1,6 +1,7 @@
 using System;
+using System.IO;
 using System.Linq;
-using Unity.Multiplayer.Playmode;
+using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Prefs
@@ -16,7 +17,7 @@ namespace DCL.Prefs
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
         {
-            string[] playmodeTags = CurrentPlayer.ReadOnlyTags();
+            string[] playmodeTags = Unity.Multiplayer.PlayMode.CurrentPlayer.ReadOnlyTags();
             Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
@@ -35,7 +36,7 @@ namespace DCL.Prefs
         {
             dclPrefs.SetInt(string.Format(VECTOR2_KEY_FORMAT, "X", key), value.x);
             dclPrefs.SetInt(string.Format(VECTOR2_KEY_FORMAT, "Y", key), value.y);
-            
+
             if(save)
                 Save();
         }
@@ -105,16 +106,16 @@ namespace DCL.Prefs
         }
 
 #if UNITY_EDITOR
-        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        [MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
         private static void ClearDCLPlayerPrefs()
         {
-            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+            string[] files = Directory.GetFiles(Application.persistentDataPath, "userdata_*");
 
             foreach (string file in files)
-                System.IO.File.Delete(file);
+                File.Delete(file);
         }
 
-        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        [MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
         private static bool ValidateClearDCLPlayerPrefs() =>
             !Application.isPlaying;
 #endif
