@@ -9,15 +9,15 @@ namespace DCL.UI.EphemeralNotifications
 {
     public class EphemeralNotificationsController : ControllerBase<EphemeralNotificationsView>
     {
-        private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly CancellationTokenSource cts = new ();
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public EphemeralNotificationsController(ViewFactoryMethod viewFactory, ProfileRepositoryWrapper profileRepositoryWrapper) : base(viewFactory)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
-
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
@@ -29,16 +29,18 @@ namespace DCL.UI.EphemeralNotifications
         }
 
         /// <summary>
-        /// Enqueues a notification that will be processed and shown when possible.
+        ///     Enqueues a notification that will be processed and shown when possible.
         /// </summary>
         /// <param name="notificationTypeName">The name of the type of notification (the name of the prefab).</param>
         /// <param name="senderWalletAddress">The wallet address of the user that sent the notification.</param>
         /// <param name="textValues">A list of values to be used to compose the label of the notification.</param>
-        public async UniTask AddNotificationAsync(string notificationTypeName, string senderWalletAddress, string[] textValues)
+        public async UniTaskVoid AddNotificationAsync(string notificationTypeName, string senderWalletAddress, string[] textValues)
         {
-            Profile sender = await profileRepositoryWrapper.GetProfileAsync(senderWalletAddress, cts.Token);
+            Profile.CompactInfo? sender = await profileRepositoryWrapper.GetProfileAsync(senderWalletAddress, cts.Token);
 
-            viewInstance.AddNotification(new EphemeralNotificationsView.NotificationData{NotificationTypeName = notificationTypeName, TextValues = textValues, Sender = sender});
+            if (sender == null) return;
+
+            viewInstance.AddNotification(new EphemeralNotificationsView.NotificationData { NotificationTypeName = notificationTypeName, TextValues = textValues, Sender = sender.Value });
         }
     }
 }

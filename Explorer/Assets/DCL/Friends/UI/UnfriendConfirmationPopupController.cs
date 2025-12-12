@@ -67,12 +67,12 @@ namespace DCL.Friends.UI
                 viewInstance!.ProfilePicture.SetLoadingState(true);
                 viewInstance!.DescriptionLabel.text = "Are you sure you want to unfriend?";
 
-                Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(inputData.UserId, ct);
 
                 if (profile == null) return;
 
-                viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Name}?";
-                viewInstance!.ProfilePicture.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, inputData.UserId);
+                viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Value.Name}?";
+                viewInstance!.ProfilePicture.Setup(profileRepositoryWrapper, profile.Value);
             }
         }
 

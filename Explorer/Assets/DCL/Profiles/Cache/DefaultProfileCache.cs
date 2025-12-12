@@ -3,21 +3,28 @@ using DCL.Profiling;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace DCL.Profiles
 {
     public class DefaultProfileCache : IProfileCache
     {
-        private readonly ConcurrentDictionary<string, Profile> profiles = new (StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, ProfileTier> profiles = new (StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, string> userNameToIdMap = new ();
 
-        public Profile? Get(string id) =>
-            profiles.ContainsKey(id) ? profiles[id] : null;
+        public ProfileTier? Get(string id) =>
+            profiles.GetValueOrDefault(id);
 
-        public bool TryGet(string id, out Profile profile) =>
-            profiles.TryGetValue(id, out profile);
+        public bool TryGet(string id, ProfileTier.Kind tier, out ProfileTier profile)
+        {
+            if (profiles.TryGetValue(id, out profile) && profile.GetKind() >= tier)
+                return true;
 
-        public Profile? GetByUserName(string userName)
+            profile = default(ProfileTier);
+            return false;
+        }
+
+        public ProfileTier? GetByUserName(string userName)
         {
             if (userNameToIdMap.TryGetValue(userName, out string? profileId))
                 return profiles[profileId];
@@ -25,11 +32,19 @@ namespace DCL.Profiles
             return null;
         }
 
-        public void Set(string id, Profile profile)
+        public void Set(string id, ProfileTier profile)
         {
-            if (profiles.TryGetValue(id, out Profile existingProfile))
+            if (profiles.TryGetValue(id, out ProfileTier existingProfile))
+            {
+                // The cached full profile can be never replaced by the compact version
+                Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
+
                 if (existingProfile != profile)
-                    existingProfile.Dispose();
+                    existingProfile.Match(
+                        _ => { },
+                        full => full.Dispose());
+            }
+
 
             profiles[id] = profile;
             userNameToIdMap[profile.DisplayName] = id;
@@ -46,7 +61,7 @@ namespace DCL.Profiles
 
         public void Remove(string id)
         {
-            if (profiles.TryGetValue(id, out Profile existingProfile))
+            if (profiles.TryGetValue(id, out ProfileTier existingProfile))
             {
                 userNameToIdMap.TryRemove(existingProfile.DisplayName, out _);
                 existingProfile.Dispose();

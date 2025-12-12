@@ -1,19 +1,28 @@
 ﻿using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.GenericDelete;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using NUnit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Scripting;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+
+[assembly: InternalsVisibleTo("DCL.Editor")]
 
 namespace DCL.WebRequests.Dumper
 {
@@ -31,11 +40,50 @@ namespace DCL.WebRequests.Dumper
             },
         };
 
+        internal readonly RequestMetricRecorder[] activeMetrics = new RequestMetricRecorder[MetricsRegistry.TYPES.Length];
+
         private readonly WebRequestDump dump = new ();
 
-        public bool Enabled { get; private set; }
+#if UNITY_EDITOR
+        /// <summary>
+        ///     Preserves the values across domain reload (edit mode => play mode)
+        /// </summary>
+        private bool IsEnabledFromEditorPrefs
+        {
+            get => EditorPrefs.GetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", false);
+            set => EditorPrefs.SetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", value);
+        }
+#endif
+
+        private bool isEnabled;
+
+        public bool Enabled
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return IsEnabledFromEditorPrefs;
+#else
+                return isEnabled;
+#endif
+            }
+
+            set
+            {
+#if UNITY_EDITOR
+                IsEnabledFromEditorPrefs = value;
+#else
+                isEnabled = value;
+#endif
+            }
+        }
 
         public string Filter { get; set; } = string.Empty;
+
+        public bool IsMatch(bool signed, string url) =>
+            Enabled && !signed && (string.IsNullOrEmpty(Filter) || Regex.IsMatch(url, Filter));
+
+        public WebRequestsAnalyticsContainer? AnalyticsContainer { get; set; }
 
         public int Count => dump.entries.Count;
 
@@ -72,23 +120,47 @@ namespace DCL.WebRequests.Dumper
         [Preserve]
         public class Envelope
         {
+            public enum StatusKind
+            {
+                // Request is either not sent due to budgeting or is still processing
+                NOT_CONCLUDED = 0,
+                FAILURE = 1,
+                SUCCESS = 2,
+            }
+
             public readonly object Args;
             public readonly Type ArgsType;
             public readonly CommonArguments CommonArguments;
             public readonly WebRequestHeadersInfo? HeadersInfo;
 
             public readonly Type RequestType;
+            public readonly DateTime StartTime;
+            public StatusKind Status;
+            public DateTime EndTime;
+
+            [JsonIgnore]
+            public float Duration;
 
             // Sign is not supported
 
             [JsonConstructor]
-            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo)
+            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo,
+                DateTime startTime)
             {
                 CommonArguments = commonArguments;
                 ArgsType = argsType;
                 Args = args;
                 HeadersInfo = headersInfo;
                 RequestType = requestType;
+                Status = StatusKind.NOT_CONCLUDED;
+                StartTime = startTime;
+            }
+
+            internal void Conclude(StatusKind status, DateTime time)
+            {
+                Status = status;
+                EndTime = time;
+                Duration = (float)time.Subtract(StartTime).TotalSeconds;
             }
 
             public UniTask RecreateWithNoOp(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken token)

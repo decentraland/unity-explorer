@@ -95,12 +95,12 @@ namespace DCL.Chat.ChatServices
 
             string? localPlayerAddress = web3IdentityCache.Identity?.Address;
 
-            foreach (GetCommunityMembersResponse.MemberData memberData in response.data.results)
+            foreach (ICommunityMemberData memberData in response.data.results)
             {
-                if (!string.IsNullOrEmpty(localPlayerAddress) && memberData.memberAddress == localPlayerAddress)
+                if (!string.IsNullOrEmpty(localPlayerAddress) && memberData.Address == localPlayerAddress)
                     continue;
 
-                onlineParticipants.Add(memberData.memberAddress);
+                onlineParticipants.Add(memberData.Address);
             }
 
             // Edge case - the channel is initialized AFTER the community is selected

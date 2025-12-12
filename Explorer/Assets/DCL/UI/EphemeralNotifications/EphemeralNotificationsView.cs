@@ -29,7 +29,7 @@ namespace DCL.UI.EphemeralNotifications
             /// <summary>
             /// Profile data of the user that sent the notification.
             /// </summary>
-            public Profile Sender;
+            public Profile.CompactInfo Sender;
         }
 
         [SerializeField]

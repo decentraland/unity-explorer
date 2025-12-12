@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -39,22 +40,20 @@ namespace DCL.Friends
 
     public readonly struct PaginatedFriendsResult : IDisposable
     {
-        private readonly List<FriendProfile> friends;
+        private readonly List<Profile.CompactInfo> friends;
 
-        public IReadOnlyList<FriendProfile> Friends => friends;
+        public IReadOnlyList<Profile.CompactInfo> Friends => friends;
         public int TotalAmount { get; }
 
-        public PaginatedFriendsResult(IEnumerable<FriendProfile> profiles, int totalAmount)
+        public PaginatedFriendsResult(IEnumerable<Profile.CompactInfo> profiles, int totalAmount)
         {
-            friends = ListPool<FriendProfile>.Get();
+            friends = ListPool<Profile.CompactInfo>.Get();
             friends.AddRange(profiles);
             TotalAmount = totalAmount;
         }
 
-        public void Dispose()
-        {
-            ListPool<FriendProfile>.Release(friends);
-        }
+        public void Dispose() =>
+            ListPool<Profile.CompactInfo>.Release(friends);
     }
 
     public readonly struct PaginatedBlockedProfileResult : IDisposable

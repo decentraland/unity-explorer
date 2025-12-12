@@ -80,8 +80,8 @@ namespace DCL.VoiceChat
             {
                 foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
                 {
-                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
-                    if (profileAsync != null) userName = profileAsync.Name;
+                    Profile.CompactInfo? profile = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
+                    if (profile != null) userName = profile.Value.Name;
                 }
             }
 

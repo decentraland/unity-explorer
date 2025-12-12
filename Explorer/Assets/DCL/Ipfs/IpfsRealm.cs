@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -25,9 +26,14 @@ namespace DCL.Ipfs
         public URLDomain ContentBaseUrl { get; }
         public URLDomain LambdasBaseUrl { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
-        public URLDomain AssetBundleRegistry { get; }
+        /// <summary>
+        ///     TODO Asset-bundle-registry has nothing to with IpfsRealm (as it's realm-independent)
+        /// </summary>
+        public URLDomain AssetBundleRegistryEntitiesActive { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;
+
+        private static readonly URLSubdirectory ENTITIES_ACTIVE_DIR = URLSubdirectory.FromString("entities/active");
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
@@ -51,8 +57,6 @@ namespace DCL.Ipfs
                 //Note: Content url requires the subdirectory content, but the actives endpoint requires the base one.
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
                 ContentBaseUrl = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("contents/"));
-
-                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
             else
             {
@@ -60,8 +64,9 @@ namespace DCL.Ipfs
                 entitiesBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/"));
                 ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
                 EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
-                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
+
+            AssetBundleRegistryEntitiesActive = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : URLBuilder.Combine(assetBundleRegistry, ENTITIES_ACTIVE_DIR);
         }
 
         public bool Equals(IpfsRealm other)
@@ -82,15 +87,15 @@ namespace DCL.Ipfs
         public override int GetHashCode() =>
             ContentBaseUrl.GetHashCode();
 
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
-            var form = NewForm(entity, contentFiles);
+            WWWForm form = NewForm(entity, serializerSettings, contentFiles);
             return SendFormAsync(form, ct);
         }
 
-        private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, JsonSerializerSettings? serializerSettings, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
-            string entityJson = JsonUtility.ToJson(entity);
+            string entityJson = JsonConvert.SerializeObject(entity, Formatting.None, serializerSettings);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
             string entityId = GetFileHash(entityFile);
             using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);

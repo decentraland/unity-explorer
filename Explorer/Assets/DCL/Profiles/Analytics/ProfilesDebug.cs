@@ -7,7 +7,6 @@ namespace DCL.Profiles
 {
     public class ProfilesDebug
     {
-        private readonly ElementBinding<int>? nonAggregatedCounter;
         private readonly ElementBinding<int>? nonCombinedCounter;
         private readonly ElementBinding<int>? totalPostRequests;
         private readonly ElementBinding<int>? aggregatedCounter;
@@ -15,11 +14,10 @@ namespace DCL.Profiles
 
         private readonly HashSet<string>? missingProfiles;
 
-        private ProfilesDebug(ElementBinding<int> nonAggregatedCounter, ElementBinding<int> aggregatedCounter,
+        private ProfilesDebug(ElementBinding<int> aggregatedCounter,
             ElementBinding<int> missingProfilesCounter, ElementBinding<int>? nonCombinedCounter,
             ElementBinding<int> totalPostRequests)
         {
-            this.nonAggregatedCounter = nonAggregatedCounter;
             this.aggregatedCounter = aggregatedCounter;
             this.missingProfilesCounter = missingProfilesCounter;
             this.nonCombinedCounter = nonCombinedCounter;
@@ -30,19 +28,17 @@ namespace DCL.Profiles
 
         private ProfilesDebug() { }
 
-        public void AddNonCombined(int count)
+        /// <summary>
+        ///     Requests are non-aggregated when a single id is served in a post request
+        /// </summary>
+        /// <param name="count"></param>
+        public void AddNonAggregated(int count = 1)
         {
             if (nonCombinedCounter != null)
                 nonCombinedCounter.Value += count;
 
             if (totalPostRequests != null)
                 totalPostRequests.Value++;
-        }
-
-        public void AddNonAggregated(int count = 1)
-        {
-            if (nonAggregatedCounter != null)
-                nonAggregatedCounter.Value += count;
         }
 
         public void AddAggregated(int count = 1)
@@ -81,7 +77,7 @@ namespace DCL.Profiles
                   .AddControlWithLabel("Aggregated", new DebugIntFieldDef(aggregated))
                   .AddControlWithLabel("Missing", new DebugIntFieldDef(missing));
 
-            return new ProfilesDebug(nonAggregated, aggregated, missing, nonCombined, totalPostRequests);
+            return new ProfilesDebug(aggregated, missing, nonCombined, totalPostRequests);
         }
     }
 }

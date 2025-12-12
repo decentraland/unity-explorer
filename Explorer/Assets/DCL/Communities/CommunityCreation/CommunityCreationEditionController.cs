@@ -328,13 +328,13 @@ namespace DCL.Communities.CommunityCreation
                     userIds.Value.Add(communityPlace.OwnerId);
                 }
 
-                List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
+                List<Profile.CompactInfo>? getAvatarsDetailsResult = await profileRepository.GetCompactAsync(userIds.Value, ct);
 
                 if (getAvatarsDetailsResult.Count > 0)
                 {
                     foreach (var communityPlace in currentCommunityPlaces)
                     {
-                        foreach (Profile? profile in getAvatarsDetailsResult)
+                        foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
                         {
                             if (!string.Equals(communityPlace.OwnerId, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
                                 continue;
@@ -452,7 +452,7 @@ namespace DCL.Communities.CommunityCreation
                         userIds.Value.Add(communityPlace.owner);
                     }
 
-                    List<Profile>? getAvatarsDetailsResult = await profileRepository.GetAsync(userIds.Value, ct);
+                    List<Profile.CompactInfo>? getAvatarsDetailsResult = await profileRepository.GetCompactAsync(userIds.Value, ct);
 
                     if (getAvatarsDetailsResult.Count == 0)
                     {
@@ -478,7 +478,7 @@ namespace DCL.Communities.CommunityCreation
 
                         string ownerName = string.Empty;
 
-                        foreach (Profile? profile in getAvatarsDetailsResult)
+                        foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
                         {
                             if (!string.Equals(placeInfo.owner, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
                                 continue;

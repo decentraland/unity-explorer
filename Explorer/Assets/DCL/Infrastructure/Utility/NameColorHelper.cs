@@ -10,8 +10,6 @@ namespace DCL.Utilities
     {
         private static readonly Color DEFAULT_COLOR = Color.white;
         private static IReadOnlyList<Color> nameColors = Array.Empty<Color>();
-        private static byte[] asciiValues;
-        private static int seed;
 
         public static void SetNameColors(IReadOnlyList<Color> colors)
         {
@@ -22,14 +20,18 @@ namespace DCL.Utilities
         {
             if (nameColors.Count == 0 || string.IsNullOrEmpty(username)) return DEFAULT_COLOR;
 
-            seed = 0;
-            asciiValues = Encoding.ASCII.GetBytes(username);
+            uint seed = 0;
 
-            foreach (byte value in asciiValues)
+            int size = Encoding.ASCII.GetByteCount(username);
+            Span<byte> bytes = stackalloc byte[size];
+
+            Encoding.ASCII.GetBytes(username, bytes);
+
+            foreach (byte value in bytes)
                 seed += value;
 
-            var rand1 = new Random(seed);
-            return nameColors[rand1.Next(nameColors.Count)];
+            var rand1 = new Unity.Mathematics.Random(seed);
+            return nameColors[rand1.NextInt(nameColors.Count)];
         }
     }
 }

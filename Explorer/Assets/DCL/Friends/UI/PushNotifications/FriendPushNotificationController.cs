@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI.EphemeralNotifications;
@@ -57,7 +58,7 @@ namespace DCL.Friends.UI.PushNotifications
             }
         }
 
-        private void FriendConnected(FriendProfile friendProfile)
+        private void FriendConnected(Profile.CompactInfo friendProfile)
         {
             toastAnimationCancellationTokenSource = toastAnimationCancellationTokenSource.SafeRestart();
             ResolveThumbnailAndShowAsync(toastAnimationCancellationTokenSource.Token).Forget();
@@ -65,7 +66,7 @@ namespace DCL.Friends.UI.PushNotifications
 
             async UniTaskVoid ResolveThumbnailAndShowAsync(CancellationToken ct)
             {
-                await profileRepositoryWrapper.GetProfileThumbnailAsync(friendProfile.FacePictureUrl, ct);
+                await profileRepositoryWrapper.GetProfileThumbnailAsync(friendProfile.FaceSnapshotUrl, ct);
 
                 ephemeralNotificationsController.AddNotificationAsync("FriendOnlineEphemeralNotification", friendProfile.Address, null).Forget();
             }

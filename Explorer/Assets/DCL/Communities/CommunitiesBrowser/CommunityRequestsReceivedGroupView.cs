@@ -1,6 +1,7 @@
 ﻿using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -23,7 +24,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public event Action<string>? CommunityButtonClicked;
         public event Action<string, ICommunityMemberData, InviteRequestIntention>? RequestReceivedManageButtonClicked;
-        public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
+        public event Action<Profile.CompactInfo, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
@@ -142,7 +143,7 @@ namespace DCL.Communities.CommunitiesBrowser
             lastClickedProfileCtx = profile;
             contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
-            userProfileContextMenuControlSettings!.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
 
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;

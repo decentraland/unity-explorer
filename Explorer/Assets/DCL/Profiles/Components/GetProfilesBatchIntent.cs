@@ -10,15 +10,16 @@ namespace DCL.Profiles
     public struct GetProfilesBatchIntent : ILoadingIntention, IEquatable<GetProfilesBatchIntent>, IDisposable
     {
         public readonly HashSet<string> Ids;
-
         public readonly URLDomain Lambdas;
+        public readonly ProfileTier.Kind Tier;
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public GetProfilesBatchIntent(URLAddress address, URLDomain lambdas, CancellationTokenSource cancellationTokenSource)
+        public GetProfilesBatchIntent(URLAddress address, URLDomain lambdas, ProfileTier.Kind tier, CancellationTokenSource cancellationTokenSource)
         {
             Ids = HashSetPool<string>.Get();
             CancellationTokenSource = cancellationTokenSource;
+            Tier = tier;
             Lambdas = lambdas;
 
             // It will be repeated only once but the internal request will be repeated according to the special Catalyst related logic

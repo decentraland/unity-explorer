@@ -1,7 +1,6 @@
-using DCL.Profiles.Helpers;
-using DCL.Utilities;
+using DCL.Profiles;
+using Newtonsoft.Json;
 using System;
-using UnityEngine;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -9,23 +8,19 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetCommunityInviteRequestResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
+        [JsonConverter(typeof(CommunitiesDTOConverters.CommunityInviteRequestDataConverter))]
         public class CommunityInviteRequestData : ICommunityMemberData
         {
             public string id;
+
+            public Profile.CompactInfo Profile { get; internal set; }
+
             public string communityId;
-            public string memberAddress;
             public InviteRequestAction type;
             public string status;
-            public string name;
-            public bool hasClaimedName;
-            public string profilePictureUrl;
             public FriendshipStatus friendshipStatus;
 
             public string Id => id;
-            public string Address => memberAddress;
-            public string ProfilePictureUrl => profilePictureUrl;
-            public bool HasClaimedName => hasClaimedName;
-            public string Name => name;
             public int MutualFriends => 0;
 
             public CommunityMemberRole Role
@@ -41,9 +36,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             }
 
             private CommunityMemberRole role = CommunityMemberRole.none;
-
-            public Color GetUserNameColor() =>
-                NameColorHelper.GetNameColor(name);
         }
 
         [Serializable]

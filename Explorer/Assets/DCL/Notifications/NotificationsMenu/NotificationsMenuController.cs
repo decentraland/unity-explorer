@@ -316,10 +316,10 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
+                Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
 
                 if (profile != null)
-                    return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);
+                    return await profileRepository.GetProfileThumbnailAsync(profile.Value.FaceSnapshotUrl, ct);
 
                 return null;
             }

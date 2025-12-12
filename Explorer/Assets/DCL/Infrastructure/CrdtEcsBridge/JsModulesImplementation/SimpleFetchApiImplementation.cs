@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
@@ -11,9 +12,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using UnityEngine.Networking;
+using static DCL.CrdtEcsBridge.JsModulesImplementation.SimpleFetchAdHoc;
 
-namespace CrdtEcsBridge.JsModulesImplementation
+namespace DCL.CrdtEcsBridge.JsModulesImplementation
 {
     public class SimpleFetchApiImplementation : ISimpleFetchApi
     {
@@ -31,11 +32,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private readonly SceneShortInfo sceneShortInfo;
         private readonly IJsApiPermissionsProvider permissionsProvider;
+        private readonly IProfileRepository profileRepository;
 
-        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider)
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider, IProfileRepository profileRepository)
         {
             this.sceneShortInfo = sceneShortInfo;
             this.permissionsProvider = permissionsProvider;
+            this.profileRepository = profileRepository;
         }
 
         public void Dispose() { }
@@ -78,7 +81,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     case RequestMethod.POST:
                         string postContentType = webRequestHeaders.HeaderContentType();
                         var postArguments = GenericPostArguments.Create(body, postContentType);
-                        return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, GetReportData(), webRequestHeaders);
+                        return await webController.InterceptPostAsync(profileRepository, commonArguments, postArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PUT:
                         string putContentType = webRequestHeaders.HeaderContentType();
                         var putArguments = GenericPostArguments.Create(body, putContentType);
@@ -132,35 +135,5 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private static RequestMethod ParseRequestMethod(string request) =>
             Enum.TryParse(request, true, out RequestMethod method) ? method : RequestMethod.INVALID;
-
-        private struct GenerateResponseOp<TGenericRequest> : IWebRequestOp<TGenericRequest, ISimpleFetchApi.Response>
-            where TGenericRequest: struct, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest, ITypedWebRequest
-        {
-            public async UniTask<ISimpleFetchApi.Response> ExecuteAsync(TGenericRequest request, CancellationToken ct)
-            {
-                UnityWebRequest unityWebRequest = request.UnityWebRequest;
-                string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
-                Dictionary<string, string>? responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
-                bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
-                bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
-                var requestStatus = (int)unityWebRequest.responseCode;
-                var requestStatusText = unityWebRequest.responseCode.ToString();
-                string requestUrl = unityWebRequest.url.EnsureNotNull();
-
-                var result = new ISimpleFetchApi.Response
-                {
-                    Headers = responseHeadersDictionary,
-                    Ok = requestOk,
-                    Redirected = requestRedirected,
-                    Status = requestStatus,
-                    StatusText = requestStatusText,
-                    URL = requestUrl,
-                    Data = responseData,
-                    Type = "basic", //Handle Response Types properly  type ResponseType = 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect'
-                };
-
-                return result;
-            }
-        }
     }
 }

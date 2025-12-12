@@ -28,29 +28,15 @@ namespace DCL.Profiles
                .Log($"ProfileRepository: set finished for profile: {profile}");
         }
 
-        public async UniTask<List<Profile>> GetAsync(IReadOnlyList<string> ids, CancellationToken ct, URLDomain? fromCatalyst = null)
+        public async UniTask<ProfileTier?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
+            bool getFromCacheIfPossible,
+            IProfileRepository.FetchBehaviour fetchBehaviour, ProfileTier.Kind tier, IPartitionComponent? partition = null)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
-               .Log($"ProfileRepository: get requested for ids: {string.Join(',', ids)}, from catalyst: {fromCatalyst}");
+               .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}, {fetchBehaviour}, {partition}");
 
-            List<Profile>? results = await origin.GetAsync(ids, ct, fromCatalyst);
-
-            ReportHub
-               .WithReport(ReportCategory.PROFILE)
-               .Log($"ProfileRepository: get finished for ids: {string.Join(',', ids)}, from catalyst: {fromCatalyst}, results count: {results.Count}");
-
-            return results;
-        }
-
-        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null)
-        {
-            ReportHub
-               .WithReport(ReportCategory.PROFILE)
-               .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}, {batchBehaviour}, {partition}");
-
-            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, batchBehaviour, partition);
+            ProfileTier? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, fetchBehaviour, tier, partition);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");

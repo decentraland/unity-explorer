@@ -9,6 +9,7 @@ using System;
 using System.Threading;
 using DCL.Chat.ChatServices;
 using DCL.FeatureFlags;
+using DCL.Profiles;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
@@ -77,10 +78,10 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTask<ChatTitlebarViewModel?> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
-            var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
+            Profile.CompactInfo? compactInfo = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null; // TODO can't be null
 
-            if (profile == null)
+            if (compactInfo == null)
             {
                 var item = new ChatTitlebarViewModel
                 {
@@ -93,6 +94,8 @@ namespace DCL.Chat.ChatCommands
 
             }
 
+            Profile.CompactInfo profile = compactInfo.Value;
+
             var userStatus = await getUserChatStatusCommand.ExecuteAsync(profile.UserId, ct);
             if (ct.IsCancellationRequested) return null;
 
@@ -103,7 +106,7 @@ namespace DCL.Chat.ChatCommands
                 WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus.IsConsideredOnline, IsOfficial = isOfficial,
             };
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.FaceSnapshotUrl, ct);
 
             return viewModel;
         }

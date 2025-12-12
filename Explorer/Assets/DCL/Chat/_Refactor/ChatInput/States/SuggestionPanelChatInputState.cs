@@ -25,7 +25,7 @@ namespace DCL.Chat.ChatInput
         private readonly Dictionary<string, ProfileInputSuggestionData> profileSuggestionsDictionary = new ();
         private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
 
-        private readonly List<Profile> participantProfiles = new (100);
+        private readonly List<Profile.CompactInfo> participantProfiles = new (100);
 
         private int wordMatchIndex;
         private Match lastMatch = Match.Empty;
@@ -120,7 +120,7 @@ namespace DCL.Chat.ChatInput
             List<KeyValuePair<string, ProfileInputSuggestionData>>? profileSuggestions = ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Get();
             profileSuggestions.AddRange(profileSuggestionsDictionary);
 
-            for (var index = 0; index < profileSuggestions.Count; index++)
+            for (int index = 0; index < profileSuggestions.Count; index++)
             {
                 KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
                 bool isThereProfileForSuggestion = participantProfiles.FindIndex(profile => profile.UserId == suggestion.Value.GetId()) > -1;
@@ -133,17 +133,14 @@ namespace DCL.Chat.ChatInput
             ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Release(profileSuggestions);
 
             //We add or update the remaining participants
-            foreach (Profile? profile in participantProfiles)
+            foreach (Profile.CompactInfo profile in participantProfiles)
             {
-                if (profile != null)
+                if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                 {
-                    if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
-                    {
-                        if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper);
-                    }
-                    else { profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper)); }
+                    if (!profileSuggestionData.ProfileData.Equals(profile))
+                        profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper);
                 }
+                else profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper));
             }
         }
     }

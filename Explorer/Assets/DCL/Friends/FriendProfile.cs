@@ -1,9 +1,11 @@
 using CommunicationData.URLHelpers;
 using DCL.Web3;
+using System;
 using UnityEngine;
 
 namespace DCL.Friends
 {
+    [Obsolete("Replaced by Profile.CompactInfo")]
     public class FriendProfile
     {
         public Color UserNameColor { get; }

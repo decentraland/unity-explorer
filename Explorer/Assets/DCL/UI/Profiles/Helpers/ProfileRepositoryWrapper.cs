@@ -38,8 +38,8 @@ namespace DCL.UI.Profiles.Helpers
         public Sprite? GetProfileThumbnail(string thumbnailUrl) =>
             thumbnailCache.GetCachedSprite(thumbnailUrl);
 
-        public async UniTask<Profile?> GetProfileAsync(string userId, CancellationToken ct) =>
-            await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
+        public UniTask<Profile.CompactInfo?> GetProfileAsync(string userId, CancellationToken ct) =>
+            profileRepository.GetCompactAsync(userId, ct);
 
     }
 }

@@ -53,7 +53,7 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
             var pointersList = new List<int2> { startParcel.Peek().ToInt2() };
 
             var promise = ScenePromise.Create(World,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)),
                 PartitionComponent.TOP_PRIORITY);
 
             World.Create(promise, new EarlySceneFlag());

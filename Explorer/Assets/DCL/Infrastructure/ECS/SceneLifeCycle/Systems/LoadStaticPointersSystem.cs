@@ -35,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
                 // start loading
                 staticScenePointers.Promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value,
-                        new CommonLoadingArguments(realm.Ipfs.AssetBundleRegistry)), PartitionComponent.TOP_PRIORITY);
+                        new CommonLoadingArguments(realm.Ipfs.AssetBundleRegistryEntitiesActive)), PartitionComponent.TOP_PRIORITY);
             }
             else
             {

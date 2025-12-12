@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.MediaStream
     [REnum]
     [REnumField(typeof(UrlMediaAddress))]
     [REnumField(typeof(LivekitAddress))]
-    public partial struct MediaAddress : IEquatable<MediaAddress>
+    public partial struct MediaAddress
     {
         public bool IsEmpty => Match(
             onUrlMediaAddress: static address => string.IsNullOrEmpty(address.Url),

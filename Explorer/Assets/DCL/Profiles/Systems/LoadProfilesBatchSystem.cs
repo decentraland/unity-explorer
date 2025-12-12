@@ -35,26 +35,20 @@ namespace DCL.Profiles
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     public partial class LoadProfilesBatchSystem : LoadSystemBase<ProfilesBatchResult, GetProfilesBatchIntent>
     {
-        // JSON structure overhead for {"ids":[...]}
-        private const int BASE_JSON_OVERHEAD = 10; // {"ids":[]}
-
-        // Per-string overhead in JSON
-        private const int QUOTES_PER_STRING = 2; // Opening and closing quotes
-        private const int COMMA_SEPARATOR = 1; // Comma between array elements
-
         private static readonly QueryDescription COMPLETED_BATCHES = new QueryDescription().WithAll<StreamableLoadingResult<ProfilesBatchResult>>();
 
-        private static readonly ThreadSafeListPool<GetProfileJsonRootDto> BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
+        private static readonly ThreadSafeListPool<Profile> FULL_PROFILE_BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
+        private static readonly ThreadSafeListPool<Profile.CompactInfo> COMPACT_PROFILE_BATCH_POOL = new (PoolConstants.AVATARS_COUNT, 10);
 
         private readonly RealmProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
-        private readonly ProfilesDebug profilesDebug;
+        private readonly ProfilesAnalytics profilesAnalytics;
 
-        internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController, ProfilesDebug profilesDebug) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
+        internal LoadProfilesBatchSystem(World world, RealmProfileRepository profileRepository, IWebRequestController webRequestController, ProfilesAnalytics profilesAnalytics) : base(world, NoCache<ProfilesBatchResult, GetProfilesBatchIntent>.INSTANCE)
         {
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
-            this.profilesDebug = profilesDebug;
+            this.profilesAnalytics = profilesAnalytics;
         }
 
         public override void BeforeUpdate(in float t) =>
@@ -62,93 +56,63 @@ namespace DCL.Profiles
             // Clean up resolves requests
             World.Destroy(COMPLETED_BATCHES);
 
-        /// <summary>
-        ///     Calculates the exact buffer size needed for a JSON payload with ETH wallet IDs.
-        ///     Format: {"ids":["0x1234...","0x5678...",...]}.
-        /// </summary>
-        /// <param name="idCount">Number of ETH wallet addresses</param>
-        /// <returns>Exact byte size needed for the JSON payload</returns>
-        private static int CalculateExactSize(int idCount)
-        {
-            if (idCount <= 0)
-                return BASE_JSON_OVERHEAD; // Empty array: {"ids":[]}
-
-            // Base structure: {"ids":[]}
-            int totalSize = BASE_JSON_OVERHEAD;
-
-            // Each ID contributes:
-            // - 2 bytes for quotes: ""
-            // - addressLength bytes for the actual address
-            // - 1 byte for comma (except last element)
-            int bytesPerId = QUOTES_PER_STRING + Web3Address.ETH_ADDRESS_LENGTH;
-            totalSize += bytesPerId * idCount;
-
-            // Add commas between elements (idCount - 1 commas)
-            totalSize += (idCount - 1) * COMMA_SEPARATOR;
-
-            return totalSize;
-        }
-
         protected override async UniTask<StreamableLoadingResult<ProfilesBatchResult>> FlowInternalAsync(GetProfilesBatchIntent intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             using GetProfilesBatchIntent _ = intention;
 
-            using var uploadHandler = new BufferedStringUploadHandler(CalculateExactSize(intention.Ids.Count));
-
-            uploadHandler.WriteString("{\"ids\":[");
-
-            int i = 0;
-
-            foreach (string id in intention.Ids)
+            switch (intention.Tier)
             {
-                uploadHandler.WriteJsonString(id);
-
-                if (i != intention.Ids.Count - 1)
-                    uploadHandler.WriteChar(',');
-                i++;
-            }
-
-            uploadHandler.WriteString("]}");
-
-            using PooledObject<List<GetProfileJsonRootDto>> __ = BATCH_POOL.Get(out List<GetProfileJsonRootDto> batch);
-
-            Result<List<GetProfileJsonRootDto>> result = await webRequestController.PostAsync(
-                                                                                        intention.CommonArguments.URL,
-                                                                                        GenericPostArguments.CreateUploadHandler(uploadHandler.CreateUploadHandler(), GenericPostArguments.JSON),
-                                                                                        ct,
-                                                                                        ReportCategory.PROFILE)
-                                                                                   .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                                                                   .SuppressToResultAsync(ReportCategory.PROFILE);
-
-            // Keep processing on the thread pool
-
-            if (result is { Success: true })
-            {
-                int successfullyResolved = 0;
-
-                foreach (GetProfileJsonRootDto dto in result.Value)
+                case ProfileTier.Kind.Compact:
                 {
-                    ProfileJsonDto? profileDto = dto.FirstProfileDto();
+                    using PooledObject<List<Profile.CompactInfo>> __ = COMPACT_PROFILE_BATCH_POOL.Get(out List<Profile.CompactInfo> batch);
 
-                    if (profileDto == null) continue;
+                    Result<IList<Profile.CompactInfo>> result = await ExecuteRequest(batch);
 
-                    intention.Ids.Remove(profileDto.userId);
-                    profileRepository.ResolveProfile(profileDto.userId, profileDto);
-                    successfullyResolved++;
+                    // Keep processing on the thread pool
 
-                    dto.Dispose();
+                    if (result is { Success: true })
+                    {
+                        bool batched = result.Value.Count > 1;
+
+                        foreach (Profile.CompactInfo dto in result.Value)
+                        {
+                            intention.Ids.Remove(dto.UserId);
+                            profileRepository.ResolveProfile(dto.UserId, dto, batched);
+                        }
+                    }
+
+                    break;
                 }
+                default:
+                {
+                    using PooledObject<List<Profile>> __ = FULL_PROFILE_BATCH_POOL.Get(out List<Profile> batch);
 
-                if (successfullyResolved > 1)
-                    profilesDebug.AddAggregated(successfullyResolved);
-                else
-                    profilesDebug.AddNonCombined(successfullyResolved);
+                    Result<IList<Profile>> result = await ExecuteRequest(batch);
+
+                    // Keep processing on the thread pool
+
+                    if (result is { Success: true })
+                    {
+                        bool batched = result.Value.Count > 1;
+
+                        foreach (Profile dto in result.Value)
+                        {
+                            intention.Ids.Remove(dto.UserId);
+                            profileRepository.ResolveProfile(dto.UserId, dto, batched);
+                        }
+                    }
+
+                    break;
+                }
             }
 
             foreach (string unresolvedId in intention.Ids)
-                profileRepository.ResolveProfile(unresolvedId, null);
+                profileRepository.ResolveProfile(unresolvedId, null, false);
 
             return new StreamableLoadingResult<ProfilesBatchResult>(new ProfilesBatchResult());
+
+            UniTask<Result<IList<T>>> ExecuteRequest<T>(List<T> batch) =>
+                ProfilesRequest.PostAsync(webRequestController, intention.CommonArguments.URL, intention.Ids, batch, ct);
         }
     }
 }

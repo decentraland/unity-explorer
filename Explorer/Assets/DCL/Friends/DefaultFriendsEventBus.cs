@@ -1,4 +1,5 @@
 using CodeLess.Interfaces;
+using DCL.Profiles;
 using System;
 
 namespace DCL.Friends
@@ -18,9 +19,9 @@ namespace DCL.Friends
         public event UserIdOperation? OnYouCancelledFriendRequestSentToOtherUser;
         public event UserIdOperation? OnYouAcceptedFriendRequestReceivedFromOtherUser;
         public event UserIdOperation? OnYouRejectedFriendRequestReceivedFromOtherUser;
-        public event Action<FriendProfile>? OnFriendConnected;
-        public event Action<FriendProfile>? OnFriendDisconnected;
-        public event Action<FriendProfile>? OnFriendAway;
+        public event Action<Profile.CompactInfo>? OnFriendConnected;
+        public event Action<Profile.CompactInfo>? OnFriendDisconnected;
+        public event Action<Profile.CompactInfo>? OnFriendAway;
 
         public event Action<BlockedProfile>? OnYouBlockedProfile;
         public event Action<BlockedProfile>? OnYouUnblockedProfile;
@@ -58,13 +59,13 @@ namespace DCL.Friends
         public void BroadcastThatOtherUserRemovedTheFriendship(string userId) =>
             OnOtherUserRemovedTheFriendship?.Invoke(userId);
 
-        public void BroadcastFriendConnected(FriendProfile friend) =>
+        public void BroadcastFriendConnected(Profile.CompactInfo friend) =>
             OnFriendConnected?.Invoke(friend);
 
-        public void BroadcastFriendDisconnected(FriendProfile friend) =>
+        public void BroadcastFriendDisconnected(Profile.CompactInfo friend) =>
             OnFriendDisconnected?.Invoke(friend);
 
-        public void BroadcastFriendAsAway(FriendProfile friend) =>
+        public void BroadcastFriendAsAway(Profile.CompactInfo friend) =>
             OnFriendAway?.Invoke(friend);
 
         public void BroadcastYouBlockedProfile(BlockedProfile profile) =>

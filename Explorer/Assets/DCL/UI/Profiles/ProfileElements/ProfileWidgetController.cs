@@ -88,10 +88,10 @@ namespace DCL.UI.ProfileElements
         {
             if (identityCache.Identity == null) return;
 
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity.Address, ct);
+            Profile.CompactInfo? compactInfo = await profileRepository.GetCompactAsync(identityCache.Identity.Address, ct);
 
-            if (profile == null) return;
-
+            if (compactInfo == null) return;
+            Profile.CompactInfo profile = compactInfo.Value;
             thumbnail.UpdateValue(thumbnail.Value.SetLoading(profile.UserNameColor));
 
             if (viewInstance!.NameLabel != null)
@@ -101,7 +101,7 @@ namespace DCL.UI.ProfileElements
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, identityCache.Identity.Address, profile.Avatar.FaceSnapshotUrl, ct);
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, identityCache.Identity.Address, profile.FaceSnapshotUrl, ct);
         }
     }
 }

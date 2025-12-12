@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using Utility;
 
 namespace DCL.Friends
@@ -15,9 +16,9 @@ namespace DCL.Friends
         private readonly Dictionary<string, OnlineStatus> friendsOnlineStatus = new ();
         private readonly Dictionary<string, FriendStatusDebounceInfo> debounceInfo = new ();
 
-        public event Action<FriendProfile>? OnFriendBecameOnline;
-        public event Action<FriendProfile>? OnFriendBecameAway;
-        public event Action<FriendProfile>? OnFriendBecameOffline;
+        public event Action<Profile.CompactInfo>? OnFriendBecameOnline;
+        public event Action<Profile.CompactInfo>? OnFriendBecameAway;
+        public event Action<Profile.CompactInfo>? OnFriendBecameOffline;
 
         public FriendsConnectivityStatusTracker(IFriendsEventBus friendEventBus,
             bool isConnectivityStatusEnabled)
@@ -65,27 +66,27 @@ namespace DCL.Friends
         public OnlineStatus GetFriendStatus(string friendAddress) =>
             friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.OFFLINE);
 
-        private bool FriendOnlineStatusChanged(FriendProfile friendProfile, OnlineStatus onlineStatus)
+        private bool FriendOnlineStatusChanged(Profile.CompactInfo friendProfile, OnlineStatus onlineStatus)
         {
-            if (friendsOnlineStatus.TryGetValue(friendProfile.Address, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
+            if (friendsOnlineStatus.TryGetValue(friendProfile.UserId, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
                 return false;
 
-            friendsOnlineStatus[friendProfile.Address] = onlineStatus;
+            friendsOnlineStatus[friendProfile.UserId] = onlineStatus;
             return true;
         }
 
-        private void FriendBecameOnline(FriendProfile friendProfile) =>
+        private void FriendBecameOnline(Profile.CompactInfo friendProfile) =>
             DebounceStatusChange(friendProfile, OnlineStatus.ONLINE, () => OnFriendBecameOnline?.Invoke(friendProfile));
 
-        private void FriendBecameAway(FriendProfile friendProfile) =>
+        private void FriendBecameAway(Profile.CompactInfo friendProfile) =>
             DebounceStatusChange(friendProfile, OnlineStatus.AWAY, () => OnFriendBecameAway?.Invoke(friendProfile));
 
-        private void FriendBecameOffline(FriendProfile friendProfile) =>
+        private void FriendBecameOffline(Profile.CompactInfo friendProfile) =>
             DebounceStatusChange(friendProfile, OnlineStatus.OFFLINE, () => OnFriendBecameOffline?.Invoke(friendProfile));
 
-        private void DebounceStatusChange(FriendProfile friendProfile, OnlineStatus newStatus, Action onStatusChange)
+        private void DebounceStatusChange(Profile.CompactInfo friendProfile, OnlineStatus newStatus, Action onStatusChange)
         {
-            string friendAddress = friendProfile.Address;
+            string friendAddress = friendProfile.UserId;
 
             if (debounceInfo.TryGetValue(friendAddress, out var existingInfo))
                 existingInfo.CancellationTokenSource.SafeCancelAndDispose();
@@ -104,8 +105,8 @@ namespace DCL.Friends
                 await UniTask.Delay(DEBOUNCE_DELAY_MS, cancellationToken: info.CancellationTokenSource.Token);
 
                 // Check if this is still the latest status change for this friend
-                if (debounceInfo.TryGetValue(info.FriendProfile.Address, out var currentInfo)
-                    && currentInfo == info && FriendOnlineStatusChanged(info.FriendProfile, info.NewStatus))
+                if (debounceInfo.TryGetValue(info.Profile.UserId, out FriendStatusDebounceInfo currentInfo)
+                    && currentInfo == info && FriendOnlineStatusChanged(info.Profile, info.NewStatus))
                 {
                     onStatusChange();
                 }
@@ -113,10 +114,10 @@ namespace DCL.Friends
             catch (OperationCanceledException) { }
             finally
             {
-                if (debounceInfo.TryGetValue(info.FriendProfile.Address, out var currentInfo)
+                if (debounceInfo.TryGetValue(info.Profile.UserId, out FriendStatusDebounceInfo currentInfo)
                     && currentInfo == info)
                 {
-                    debounceInfo.Remove(info.FriendProfile.Address);
+                    debounceInfo.Remove(info.Profile.UserId);
                     info.CancellationTokenSource.SafeCancelAndDispose();
                 }
             }
@@ -124,21 +125,21 @@ namespace DCL.Friends
 
         private readonly struct FriendStatusDebounceInfo : IEquatable<FriendStatusDebounceInfo>
         {
-            public readonly FriendProfile FriendProfile;
+            public readonly Profile.CompactInfo Profile;
             public readonly OnlineStatus NewStatus;
             public readonly CancellationTokenSource CancellationTokenSource;
             private readonly DateTime lastUpdateTime;
 
-            public FriendStatusDebounceInfo(FriendProfile friendProfile, OnlineStatus newStatus, CancellationTokenSource cancellationTokenSource, DateTime lastUpdateTime)
+            public FriendStatusDebounceInfo(Profile.CompactInfo profile, OnlineStatus newStatus, CancellationTokenSource cancellationTokenSource, DateTime lastUpdateTime)
             {
-                FriendProfile = friendProfile;
+                Profile = profile;
                 NewStatus = newStatus;
                 CancellationTokenSource = cancellationTokenSource;
                 this.lastUpdateTime = lastUpdateTime;
             }
 
             public bool Equals(FriendStatusDebounceInfo other) =>
-                FriendProfile.Address.Equals(other.FriendProfile.Address) &&
+                Profile.UserId.Equals(other.Profile.UserId) &&
                 NewStatus == other.NewStatus &&
                 lastUpdateTime == other.lastUpdateTime;
 
@@ -146,7 +147,7 @@ namespace DCL.Friends
                 obj is FriendStatusDebounceInfo other && Equals(other);
 
             public override int GetHashCode() =>
-                HashCode.Combine(FriendProfile.Address, NewStatus, lastUpdateTime);
+                HashCode.Combine(Profile.UserId, NewStatus, lastUpdateTime);
 
             public static bool operator ==(FriendStatusDebounceInfo left, FriendStatusDebounceInfo right) =>
                 left.Equals(right);

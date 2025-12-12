@@ -1,4 +1,5 @@
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using System;
 using TMPro;
@@ -25,7 +26,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             }
         }
 
-        public override void Configure(FriendProfile profile, ProfileRepositoryWrapper profileDataProvider)
+        public override void Configure(Profile.CompactInfo profile, ProfileRepositoryWrapper profileDataProvider)
         {
             buttons.Clear();
             buttons.Add(UnblockButton);

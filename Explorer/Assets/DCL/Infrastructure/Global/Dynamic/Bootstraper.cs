@@ -51,6 +51,7 @@ namespace Global.Dynamic
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly HttpFeatureFlagsProvider featureFlagsProvider;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -68,6 +69,7 @@ namespace Global.Dynamic
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
+            HttpFeatureFlagsProvider featureFlagsProvider,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -79,6 +81,7 @@ namespace Global.Dynamic
             this.diskCache = diskCache;
             this.partialsDiskCache = partialsDiskCache;
             this.world = world;
+            this.featureFlagsProvider = featureFlagsProvider;
         }
 
         public async UniTask PreInitializeSetupAsync(CancellationToken token)
@@ -202,9 +205,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));

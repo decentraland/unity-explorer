@@ -59,9 +59,16 @@ namespace DCL.WebRequests.Dumper
 
             writer.WritePropertyName("kind");
             writer.WriteValue((int)Kind.RAW);
-
             writer.WritePropertyName("postData");
-            writer.WriteValue(value.PostData);
+
+            if (value.UploadHandler != null)
+            {
+                // Serialized as raw as an upload handler is a memory optimization, not a different data structure
+                writer.WriteValue(value.UploadHandler.Value.ToString());
+            }
+            else { writer.WriteValue(value.PostData); }
+
+
             writer.WritePropertyName("contentType");
             writer.WriteValue(value.ContentType);
 
