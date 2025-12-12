@@ -31,7 +31,7 @@ namespace DCL.Profiles
             if (startedRequests.TryRemove(id, out DateTime startTime))
             {
                 analyticsController.Track(AnalyticsEvents.Endpoints.PROFILE_RETRIEVED,
-                    new JObject { "duration", new JValue((ulong)(DateTime.Now - startTime).TotalMilliseconds) });
+                    new JObject { { "duration", (ulong)(DateTime.Now - startTime).TotalMilliseconds } });
             }
         }
 
@@ -44,7 +44,7 @@ namespace DCL.Profiles
                 analyticsController.Track(AnalyticsEvents.Endpoints.PROFILE_RETRIEVED,
                     new JObject
                     {
-                        { "duration", new JValue((ulong)(DateTime.Now - startTime).TotalMilliseconds) },
+                        { "duration", (ulong)(DateTime.Now - startTime).TotalMilliseconds },
                         { "user_id", id },
                         { "version", version },
                     });

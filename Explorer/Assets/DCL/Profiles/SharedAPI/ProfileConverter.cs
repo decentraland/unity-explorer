@@ -40,7 +40,7 @@ namespace DCL.Profiles
             writer.WriteStartObject();
             writer.WritePropertyName("avatars");
             writer.WriteStartArray();
-            SerializeProfile(writer, (SerializationContext)serializer.Context.Context, value);
+            SerializeProfile(writer, serializer.Context.Context as SerializationContext?, value);
             writer.WriteEndArray();
             writer.WriteEndObject();
         }
@@ -224,7 +224,7 @@ namespace DCL.Profiles
             }
         }
 
-        private void SerializeProfile(JsonWriter writer, SerializationContext context, Profile profile)
+        private void SerializeProfile(JsonWriter writer, SerializationContext? context, Profile profile)
         {
             writer.WriteStartObject();
 
@@ -306,7 +306,7 @@ namespace DCL.Profiles
             writer.WriteEndObject();
         }
 
-        private void SerializeAvatar(JsonWriter writer, SerializationContext context, Profile profile)
+        private void SerializeAvatar(JsonWriter writer, SerializationContext? context, Profile profile)
         {
             Avatar avatar = profile.Avatar;
 
@@ -328,9 +328,9 @@ namespace DCL.Profiles
             writer.WriteStartObject();
 
             writer.WritePropertyName("face256");
-            writer.WriteValue(context.FaceHash);
+            writer.WriteValue(context?.FaceHash ?? profile.Avatar.FaceSnapshotUrl.Value);
             writer.WritePropertyName("body");
-            writer.WriteValue(context.BodyHash);
+            writer.WriteValue(context?.BodyHash ?? profile.Avatar.BodySnapshotUrl.Value);
             writer.WriteEndObject();
 
             writer.WritePropertyName("eyes");
