@@ -40,6 +40,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased
                 ["from"] = from,
                 ["to"] = toAddress,
                 ["mana"] = amountInMana,
+                ["usd"] = await GetCurrentManaConversionAsync(ct) * amountInMana
             };
 
             try
