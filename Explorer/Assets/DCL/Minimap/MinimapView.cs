@@ -66,6 +66,9 @@ namespace DCL.Minimap
         internal ToggleButtonWithDisabledState favoriteButton { get; private set; }
 
         [field: SerializeField]
+        internal Button donateButton { get; private set; }
+
+        [field: SerializeField]
         internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
 
         [field: SerializeField]
@@ -104,6 +107,7 @@ namespace DCL.Minimap
         public struct ContextMenuConfig
         {
             public Sprite copyLinkIcon;
+            public Sprite donateIcon;
             public Button button;
         }
     }

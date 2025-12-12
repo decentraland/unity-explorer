@@ -107,6 +107,12 @@
             public const string UNBLOCK_USER = "unblock_user";
         }
 
+        public static class Donations
+        {
+            public const string DONATION_STARTED = "donation_started";
+            public const string DONATION_ENDED = "donation_ended";
+        }
+
         public static class MarketplaceCredits
         {
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";

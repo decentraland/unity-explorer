@@ -119,6 +119,7 @@ namespace DCL.Notifications.NewNotification
                         break;
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                    case NotificationType.TIP_RECEIVED:
                         await ProcessFriendsNotificationAsync(notification);
                         break;
                     case NotificationType.CREDITS_GOAL_COMPLETED:
@@ -250,6 +251,9 @@ namespace DCL.Notifications.NewNotification
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
+                    break;
+                case TipReceivedNotification tipReceivedNotification:
+                    viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification);
                     break;
             }
         }

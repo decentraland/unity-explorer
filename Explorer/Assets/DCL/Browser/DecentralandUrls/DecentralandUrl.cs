@@ -48,6 +48,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DAO,
 
         Help,
+        Account,
         MinimumSpecs,
 
         FeatureFlags,

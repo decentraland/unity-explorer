@@ -77,7 +77,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
-                DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
+                // DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
+                DecentralandUrl.AuthSignatureWebApp => $"https://auth-git-feat-tip-changes-decentraland1.vercel.app/auth/requests", //TODO: remove me before merge
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
                 DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
@@ -97,6 +98,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
+                DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",

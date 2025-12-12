@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
@@ -44,13 +45,13 @@ namespace DCL.Profiles
         }
 
         public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null)
+            IProfileRepository.BatchBehaviour batchBehaviour = IProfileRepository.BatchBehaviour.DEFAULT, IPartitionComponent? partition = null, RetryPolicy? retryPolicy = null)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}, {batchBehaviour}, {partition}");
 
-            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, batchBehaviour, partition);
+            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, batchBehaviour, partition, retryPolicy);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");
