@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.Tween.Components
             onCompleteCallback = OnSequenceComplete;
         }
 
-        public void Initialize(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material material = null)
+        public void Initialize(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material? material = null)
         {
             sequence?.Kill();
             finished = false;
@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.Tween.Components
             sequence.Pause();
         }
 
-        private DG.Tweening.Tween? CreateTweenForPBTween(PBTween pbTween, float durationInSeconds, Transform transform, Material material)
+        private DG.Tweening.Tween? CreateTweenForPBTween(PBTween pbTween, float durationInSeconds, Transform transform, Material? material)
         {
             DG.Tweening.Tween? returnTween = null;
 

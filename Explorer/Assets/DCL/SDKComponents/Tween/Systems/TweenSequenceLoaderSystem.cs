@@ -18,9 +18,7 @@ namespace DCL.SDKComponents.Tween
     [ThrottlingEnabled]
     public partial class TweenSequenceLoaderSystem : BaseUnityLoopSystem
     {
-        public TweenSequenceLoaderSystem(World world) : base(world)
-        {
-        }
+        public TweenSequenceLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {

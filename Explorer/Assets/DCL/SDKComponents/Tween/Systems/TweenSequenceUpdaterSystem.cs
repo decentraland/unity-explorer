@@ -86,8 +86,14 @@ namespace DCL.SDKComponents.Tween
             if (sdkTweenSequenceComponent.IsDirty)
             {
                 Material material = null;
-                if (SequenceRequiresMaterial(pbTween, pbTweenSequence) && World.TryGet(entity, out MaterialComponent materialComponent) && materialComponent.Result != null)
+
+                if (SequenceRequiresMaterial(pbTween, pbTweenSequence))
+                {
+                    if (!World.TryGet(entity, out MaterialComponent materialComponent) || materialComponent.Result == null)
+                        return; // The Material Component may be configured in a future frame
+
                     material = materialComponent.Result;
+                }
 
                 SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform, material);
                 UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, transformComponent);
@@ -132,7 +138,7 @@ namespace DCL.SDKComponents.Tween
             }
         }
 
-        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform, Material material)
+        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform, Material? material)
         {
             tweenerPool.ReleaseSequenceTweenerFrom(sdkTweenSequenceComponent);
 
