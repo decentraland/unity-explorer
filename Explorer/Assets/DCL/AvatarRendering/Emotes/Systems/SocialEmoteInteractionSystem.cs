@@ -62,21 +62,17 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayInitiatorOutcomeAnimation() CharacterEmoteIntent Initiator outcome animation " + profile.UserId);
 
-                World.Add(entity, new CharacterEmoteIntent()
-                {
-                    EmoteId = socialEmoteInteraction.Emote.DTO.Metadata.id!,
-                    TriggerSource = TriggerSource.SELF,
-                    Spatial = true,
-                    WalletAddress = profile.UserId,
-                    SocialEmote = new CharacterEmoteIntent.SocialEmoteData()
-                    {
-                        OutcomeIndex = socialEmoteInteraction.OutcomeIndex,
-                        UseOutcomeReactionAnimation = false,
-                        InitiatorWalletAddress = profile.UserId,
-                        UseOutcomeAnimation = true,
-                        InteractionId = socialEmoteInteraction.Id
-                    }
-                });
+                World.Add(entity, new CharacterEmoteIntent(
+                    socialEmoteInteraction.Emote.DTO.Metadata.id!,
+                    triggerSource : TriggerSource.SELF,
+                    spatial : true,
+                    walletAddress : profile.UserId,
+                    outcomeIndex : socialEmoteInteraction.OutcomeIndex,
+                    useOutcomeReactionAnimation : false,
+                    initiatorWalletAddress : profile.UserId,
+                    useOutcomeAnimation : true,
+                    interactionId : socialEmoteInteraction.Id
+                ));
             }
         }
 
