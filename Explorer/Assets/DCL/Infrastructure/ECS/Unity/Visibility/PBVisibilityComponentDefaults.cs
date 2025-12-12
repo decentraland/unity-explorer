@@ -9,5 +9,11 @@ namespace ECS.Unity.Visibility
         /// </summary>
         public static bool GetVisible(this PBVisibilityComponent self) =>
             !self.HasVisible || self.Visible;
+
+        /// <summary>
+        /// If no data is written into the component by default returns "false"
+        /// </summary>
+        public static bool GetPropagateToChildren(this PBVisibilityComponent self) =>
+            self.HasPropagateToChildren && self.PropagateToChildren;
     }
 }

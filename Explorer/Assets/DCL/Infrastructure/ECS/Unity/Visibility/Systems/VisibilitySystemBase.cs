@@ -3,6 +3,7 @@ using Arch.System;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Unity.Visibility.Components;
 using System.Runtime.CompilerServices;
 
 namespace ECS.Unity.Visibility.Systems
@@ -20,38 +21,71 @@ namespace ECS.Unity.Visibility.Systems
 
         protected override void Update(float t)
         {
-            UpdateVisibilityQuery(World!);
+            // Primary: use ResolvedVisibilityComponent (handles propagation)
+            UpdateVisibilityFromResolvedQuery(World!);
+
+            // Fallback: direct PBVisibilityComponent for entities without resolved visibility
+            // (backwards compatibility for entities not yet processed by propagation system)
+            UpdateVisibilityFromDirectQuery(World);
+
+            // Handle newly created renderable components
             eventsBuffer.ForEach(forEachEvent);
+
+            // Handle removal
             HandleComponentRemovalQuery(World);
         }
 
         /// <summary>
-        /// Updates visibility if text component was resolved/updated this frame
+        /// Updates visibility if renderable component was resolved/updated this frame.
+        /// Checks ResolvedVisibilityComponent first (supports propagation), then falls back to PBVisibilityComponent.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="event"></param>
         private void ProcessEvent(Entity entity, TComponent @event)
         {
+            // First check ResolvedVisibilityComponent (supports propagation)
+            if (World.TryGet(entity, out ResolvedVisibilityComponent resolved))
+            {
+                UpdateVisibilityInternal(in @event, resolved.IsVisible);
+                return;
+            }
+
+            // Fallback to direct PBVisibilityComponent
             if (World.TryGet(entity, out PBVisibilityComponent? visibilityComponent))
                 UpdateVisibilityInternal(in @event, visibilityComponent!.GetVisible());
         }
 
         /// <summary>
-        ///     Updates visibility based on PBVisibilityComponent isDirty
+        /// Updates visibility based on ResolvedVisibilityComponent (supports propagation).
         /// </summary>
         [Query]
-        private void UpdateVisibility(in TComponent component, in PBVisibilityComponent visibility)
+        private void UpdateVisibilityFromResolved(in TComponent component, ref ResolvedVisibilityComponent resolved)
+        {
+            if (resolved.IsDirty)
+                UpdateVisibilityInternal(in component, resolved.IsVisible);
+        }
+
+        /// <summary>
+        /// Updates visibility based on PBVisibilityComponent for entities without ResolvedVisibility.
+        /// This provides backwards compatibility for entities that haven't been processed by propagation system.
+        /// </summary>
+        [Query]
+        [None(typeof(ResolvedVisibilityComponent))]
+        private void UpdateVisibilityFromDirect(in TComponent component, in PBVisibilityComponent visibility)
         {
             if (visibility.IsDirty)
                 UpdateVisibilityInternal(in component, visibility.GetVisible());
         }
 
+        /// <summary>
+        /// Handles removal of visibility components - reset to visible.
+        /// </summary>
         [Query]
-        [None(typeof(PBVisibilityComponent))]
-        private void HandleComponentRemoval(ref RemovedComponents removedComponents, ref TComponent primitiveMeshRendererComponent)
+        [None(typeof(PBVisibilityComponent), typeof(ResolvedVisibilityComponent))]
+        private void HandleComponentRemoval(ref RemovedComponents removedComponents, ref TComponent rendererComponent)
         {
-            if (removedComponents.Remove<PBVisibilityComponent>())
-                UpdateVisibilityInternal(in primitiveMeshRendererComponent, true);
+            // Reset to visible if visibility-related components are removed
+            if (removedComponents.Set.Contains(typeof(PBVisibilityComponent)) ||
+                removedComponents.Set.Contains(typeof(ResolvedVisibilityComponent)))
+                UpdateVisibilityInternal(in rendererComponent, true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
