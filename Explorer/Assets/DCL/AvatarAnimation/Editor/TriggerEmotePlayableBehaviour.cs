@@ -40,7 +40,7 @@ namespace DCL.AvatarAnimation
                 profile.IsDirty = true;
 
                 // It adds the emote intent (which will be consumed and removed by the CharacterEmoteSystem) if it was not already added
-                CharacterEmoteIntent emoteIntent = new (){ EmoteId =  URN, TriggerSource = TriggerSource.SELF, Spatial = true};
+                CharacterEmoteIntent emoteIntent = new (URN, TriggerSource.SELF, true);
                 GlobalWorld.ECSWorldInstance.Add(cachedEntity, emoteIntent);
             }
         }

@@ -81,7 +81,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
-            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent (urn, triggerSource: TriggerSource.SCENE, spatial: true ));
 
             messageBus.Send(urn, isLooping, false, -1, false, string.Empty, string.Empty, false, 0);
         }

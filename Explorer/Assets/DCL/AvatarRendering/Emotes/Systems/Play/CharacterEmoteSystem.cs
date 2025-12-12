@@ -337,9 +337,12 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent,
+        private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent, in IAvatarView avatarView,
             ref AvatarShapeComponent avatarShapeComponent)
         {
+            if(((AvatarBase)avatarView).name == "Avatar ") // FOR TESTING ONLY
+                return;
+
             if(emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
                 return;
 
@@ -577,7 +580,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if(emoteIntent.EmoteAsset == null || !emoteIntent.HasPlayedEmote)
                 return;
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions()");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " emote: " + emoteIntent.EmoteId);
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
