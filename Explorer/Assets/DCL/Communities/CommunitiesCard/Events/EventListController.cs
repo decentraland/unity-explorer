@@ -217,11 +217,16 @@ namespace DCL.Communities.CommunitiesCard.Events
                 placeInfoCache.Add(place.id, place);
 
             foreach (var item in eventResponse.Value.data.events)
+            {
+                if (!placeInfoCache.TryGetValue(item.place_id, out PlaceInfo? place))
+                    continue;
+
                 eventsFetchData.Items.Add(new PlaceAndEventDTO
                 {
-                    Place = placeInfoCache[item.place_id],
+                    Place = place,
                     Event = item
                 });
+            }
 
             return eventResponse.Value.data.total;
         }
