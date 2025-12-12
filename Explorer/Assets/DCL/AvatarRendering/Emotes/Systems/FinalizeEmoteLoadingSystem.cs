@@ -164,7 +164,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() Audio URL: " + audioURL + " body: " + bodyShape.Value);
 
-                if (emote.IsSocial && bodyShape.Value == BodyShape.MALE) // Note: We use male body shape only because actually there is only one version of the emote, although there are 2 copies in the metadata due to legacy code, that should be refactored
+                if (emote.IsSocial)
                 {
                     if (emote.SocialEmoteOutcomeAudioAssetResults == null)
                     {
@@ -218,7 +218,7 @@ namespace DCL.AvatarRendering.Emotes
                         }
                     }
                 }
-                else if(!emote.IsSocial)
+                else
                 {
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "FinalizeAudioClipPromise() normal");
                     emote.AudioAssetResults[bodyShape] = result;
