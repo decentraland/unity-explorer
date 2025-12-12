@@ -201,7 +201,7 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)
+        private static (IEthereumApi ethereumApi, IWeb3VerifiedAuthenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
@@ -213,29 +213,30 @@ namespace Global.Dynamic
                 IAppArgs appArgs,
                 WebRequestsContainer webRequestsContainer)
         {
-            var dappWeb3Authenticator = new ThirdWebAuthenticator(
-                dclEnvironment,
-                identityCache,
-                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-                web3AccountFactory,
-                appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
-            );
+            var web3Authenticator =
 
-            //    = new DappWeb3Authenticator(
-            //     webBrowser,
-            //     URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-            //     URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
-            //     URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
+                //         new ThirdWebAuthenticator(
+                //     dclEnvironment,
             //     identityCache,
+                //     new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
             //     web3AccountFactory,
-            //     new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-            //     new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-            //     dclEnvironment,
-            //     new AuthCodeVerificationFeatureFlag(),
             //     appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             // );
+                new DappWeb3Authenticator(
+                    webBrowser,
+                    URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                    URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
+                    identityCache,
+                    web3AccountFactory,
+                    new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                    new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+                    dclEnvironment,
+                    new AuthCodeVerificationFeatureFlag(),
+                    appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
+                );
 
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
+            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(web3Authenticator, identityCache);
 
             IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
@@ -249,7 +250,7 @@ namespace Global.Dynamic
                 autoLoginAuthenticator = new AnalyticsDecoratorAuthenticator(autoLoginAuthenticator, container.Analytics!);
             }
 
-            return (dappWeb3Authenticator, coreWeb3Authenticator, autoLoginAuthenticator);
+            return (web3Authenticator, coreWeb3Authenticator, autoLoginAuthenticator);
         }
 
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)

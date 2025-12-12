@@ -9,6 +9,6 @@ namespace DCL.Web3.Authenticators
     {
         UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct);
 
-        UniTask LogoutAsync(CancellationToken cancellationToken);
+        UniTask LogoutAsync(CancellationToken ct);
     }
 }

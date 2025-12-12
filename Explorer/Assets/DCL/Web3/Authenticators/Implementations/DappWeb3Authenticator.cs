@@ -19,7 +19,7 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IEthereumApi
     {
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
@@ -48,7 +48,8 @@ namespace DCL.Web3.Authenticators
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
         private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
-        private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
+        public delegate void VerificationDelegate(int code, DateTime expiration);
+        private VerificationDelegate? signatureVerificationCallback;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
@@ -211,7 +212,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public async UniTask LogoutAsync(CancellationToken ct) =>
             await DisconnectFromAuthApiAsync();
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
@@ -222,7 +223,7 @@ namespace DCL.Web3.Authenticators
             // Not used in Dapp flow - OTP is handled via browser, not in-app UI
         }
 
-        public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
+        public void AddVerificationListener(VerificationDelegate callback) =>
             signatureVerificationCallback = callback;
 
         private async UniTask DisconnectFromAuthApiAsync()

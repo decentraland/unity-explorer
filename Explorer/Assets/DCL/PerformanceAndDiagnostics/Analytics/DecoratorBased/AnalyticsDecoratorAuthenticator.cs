@@ -28,7 +28,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return identity;
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
-            await core.LogoutAsync(cancellationToken);
+        public async UniTask LogoutAsync(CancellationToken ct) =>
+            await core.LogoutAsync(ct);
     }
 }

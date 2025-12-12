@@ -11,10 +11,10 @@ namespace DCL.Web3.Authenticators
 {
     public partial class DappWeb3Authenticator
     {
-        public class Default : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+        public class Default : IWeb3VerifiedAuthenticator, IEthereumApi
         {
             private readonly IWeb3VerifiedAuthenticator originAuth;
-            private readonly IVerifiedEthereumApi originApi;
+            private readonly IEthereumApi originApi;
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
@@ -71,14 +71,11 @@ namespace DCL.Web3.Authenticators
             public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
                 originApi.SendAsync(request, ct);
 
-            public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
-                originApi.AddVerificationListener(callback);
-
             public UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct) =>
                 originAuth.LoginAsync(email, ct);
 
-            public UniTask LogoutAsync(CancellationToken cancellationToken) =>
-                originAuth.LogoutAsync(cancellationToken);
+            public UniTask LogoutAsync(CancellationToken ct) =>
+                originAuth.LogoutAsync(ct);
 
             public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
                 originAuth.SetVerificationListener(callback);

@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+    public class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IEthereumApi
     {
         public static ThirdWebAuthenticator Instance;
 
@@ -27,7 +27,6 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         private BigInteger chainId;
-        private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
         private IWeb3VerifiedAuthenticator.OtpRequestDelegate? otpRequestCallback;
 
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
@@ -128,7 +127,7 @@ namespace DCL.Web3.Authenticators
             LogoutAsync(CancellationToken.None).Forget();
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public async UniTask LogoutAsync(CancellationToken ct) =>
             await ThirdWebManager.Instance.DisconnectWallet();
 
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
@@ -318,14 +317,9 @@ namespace DCL.Web3.Authenticators
         private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
 
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            codeVerificationCallback = callback;
+        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) { }
 
         public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
             otpRequestCallback = callback;
-
-        public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback)
-        {
-        }
     }
 }

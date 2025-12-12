@@ -48,7 +48,7 @@ namespace DCL.Web3.Authenticators
             ).AsUniTaskResult<IWeb3Identity>();
         }
 
-        public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public UniTask LogoutAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
     }
 }

@@ -30,9 +30,9 @@ namespace DCL.Web3.Authenticators
             return identity;
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken)
+        public async UniTask LogoutAsync(CancellationToken ct)
         {
-            await authenticator.LogoutAsync(cancellationToken);
+            await authenticator.LogoutAsync(ct);
             identityCache.Clear();
         }
     }

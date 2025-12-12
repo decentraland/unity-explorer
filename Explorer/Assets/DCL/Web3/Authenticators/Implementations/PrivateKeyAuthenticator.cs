@@ -108,7 +108,7 @@ namespace DCL.Web3.Authenticators
             return authChain;
         }
 
-        public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public UniTask LogoutAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
     }
 }
