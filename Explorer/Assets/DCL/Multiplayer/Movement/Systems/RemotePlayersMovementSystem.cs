@@ -285,7 +285,7 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (distance < settings.MoveKindByDistance[MovementKind.JOG])
                 movementKind = MovementKind.JOG;
 
-            float speed = SpeedLimit.Get(characterControllerSettings, movementKind);
+            float speed = MovementSpeedLimitHelper.GetMovementSpeedLimit(characterControllerSettings, movementKind);
 
             intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
             intComp.UseMessageRotation = false;
