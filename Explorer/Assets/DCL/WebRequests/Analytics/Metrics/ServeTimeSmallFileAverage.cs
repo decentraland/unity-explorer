@@ -1,13 +1,11 @@
 ﻿using DCL.DebugUtilities;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class ServeTimePerMBAverage : RequestMetricBase
+    public class ServeTimeSmallFileAverage : RequestMetricBase
     {
-        // 10 KB, otherwise the error is too high
-        internal const int SMALL_FILE_SIZE_FLOOR = 10 * 1024;
-
         private double sum;
         private uint count;
 
@@ -23,9 +21,9 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
         {
-            if (request.UnityWebRequest.downloadedBytes < SMALL_FILE_SIZE_FLOOR) return;
+            if (request.UnityWebRequest.downloadedBytes > ServeTimePerMBAverage.SMALL_FILE_SIZE_FLOOR) return;
 
-            double elapsedMs = duration.TotalMilliseconds / BytesFormatter.Convert(request.UnityWebRequest.downloadedBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            double elapsedMs = duration.TotalMilliseconds;
             count++;
             sum += elapsedMs;
         }

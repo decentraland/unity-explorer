@@ -16,7 +16,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
     public class CameraReelRemoteServicesManualTest : MonoBehaviour
     {
         private readonly IWeb3IdentityCache.Default identity = new ();
-        private readonly IWebRequestController webRequestController = IWebRequestController.DEFAULT;
+        private readonly IWebRequestController webRequestController = IWebRequestController.TEST;
         private readonly CancellationToken ct = CancellationToken.None;
 
         public DecentralandEnvironment Env;
