@@ -62,7 +62,7 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose() { }
 
-        public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct) =>
+        public UniTask<IWeb3Identity> LoginAsync(string _, CancellationToken __) =>
             UniTask.FromResult(Login(privateKey));
 
         public static IWeb3Identity Login(string privateKey)

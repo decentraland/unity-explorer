@@ -1,5 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -10,7 +12,6 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -28,6 +29,7 @@ using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
 using Sentry;
+using ThirdWebUnity;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -87,9 +89,11 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
+        private UniTaskCompletionSource<string>? otpCompletionSource;
         private StringVariable? profileNameLabel;
         private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
+        private string? currentEmail;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -142,6 +146,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
             web3Authenticator.SetVerificationListener(null);
+            web3Authenticator.SetOtpRequestListener(null);
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
         }
 
@@ -152,6 +157,7 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
+            viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
@@ -173,6 +179,28 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
+        }
+
+        private void SendRegistration()
+        {
+            // If we're waiting for OTP input, complete the task with the entered code
+            if (otpCompletionSource == null) return;
+            string otp = viewInstance!.PasswordInputField.text;
+            otpCompletionSource.TrySetResult(otp);
+        }
+
+        private UniTask<string> RequestOtpFromUserAsync(CancellationToken ct)
+        {
+            otpCompletionSource = new UniTaskCompletionSource<string>();
+
+            // Register cancellation to clean up if cancelled
+            ct.Register(() =>
+            {
+                otpCompletionSource?.TrySetCanceled(ct);
+                otpCompletionSource = null;
+            });
+
+            return otpCompletionSource.Task;
         }
 
         protected override void OnBeforeViewShow()
@@ -205,6 +233,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance!.FinalizeContainer.SetActive(false);
             viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
+            web3Authenticator.SetOtpRequestListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
@@ -215,6 +244,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
+            // AUTO-LOGIN DISABLED: Always show login screen
+            /*
             if (storedIdentity is { IsExpired: false }
 
                 // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
@@ -275,6 +306,7 @@ namespace DCL.AuthenticationScreenFlow
                 }
             }
             else
+            */
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 SwitchState(ViewState.Login);
@@ -318,6 +350,125 @@ namespace DCL.AuthenticationScreenFlow
         {
             CancelLoginProcess();
 
+            loginCancellationToken = new CancellationTokenSource();
+            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+
+            return;
+
+            async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
+            {
+                try
+                {
+                    CurrentRequestID = string.Empty;
+
+                    viewInstance!.ErrorPopupRoot.SetActive(false);
+                    viewInstance!.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = false;
+
+                    var web3AuthSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "Web3Authentication",
+                        SpanOperation = "auth.web3_login",
+                        Depth = 1,
+                    };
+
+                    sentryTransactionManager.StartSpan(web3AuthSpan);
+
+                    // Set up OTP callback for ThirdWeb OTP flow
+                    web3Authenticator.SetOtpRequestListener(RequestOtpFromUserAsync);
+
+                    string email = viewInstance!.EmailInputField.text;
+                    currentEmail = email;
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
+
+                    // Clean up OTP callback
+                    web3Authenticator.SetOtpRequestListener(null);
+                    otpCompletionSource = null;
+
+                    var identityValidationSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "IdentityValidation",
+                        SpanOperation = "auth.identity_validation",
+                        Depth = 1,
+                    };
+
+                    sentryTransactionManager.StartSpan(identityValidationSpan);
+
+                    if (IsUserAllowedToAccessToBeta(identity))
+                    {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
+                        SwitchState(ViewState.Loading);
+
+                        var profileFetchSpan = new SpanData
+                        {
+                            TransactionName = LOADING_TRANSACTION_NAME,
+                            SpanName = "FetchProfile",
+                            SpanOperation = "auth.profile_fetch",
+                            Depth = 1,
+                        };
+
+                        sentryTransactionManager.StartSpan(profileFetchSpan);
+
+                        await FetchProfileAsync(ct);
+
+                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
+                        CurrentState.Value = AuthenticationStatus.LoggedIn;
+                        SwitchState(ViewState.Finalize);
+                    }
+                    else
+                    {
+                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
+                        SwitchState(ViewState.Login);
+                        ShowRestrictedUserPopup();
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                    SwitchState(ViewState.Login);
+                }
+                catch (SignatureExpiredException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Web3SignatureException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (CodeVerificationException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (ProfileNotFoundException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Exception e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    SwitchState(ViewState.Login);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ShowConnectionErrorPopup();
+                }
+                finally { RestoreResolutionAndScreenMode(); }
+            }
+        }
+
+        private void StartLoginFlowUntilEnd2()
+        {
+            CancelLoginProcess();
+
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
@@ -348,7 +499,7 @@ namespace DCL.AuthenticationScreenFlow
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
 
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync("", ct);
 
                     web3Authenticator.SetVerificationListener(null);
 
@@ -461,6 +612,9 @@ namespace DCL.AuthenticationScreenFlow
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
+            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                profile = await CreateAndPublishDefaultProfileAsync(ct);
+
             if (profile == null)
                 throw new ProfileNotFoundException();
 
@@ -477,6 +631,72 @@ namespace DCL.AuthenticationScreenFlow
 
             bool IsNewUser() =>
                 profile.Version == 1;
+        }
+
+        private async UniTask<Profile> CreateAndPublishDefaultProfileAsync(CancellationToken ct)
+        {
+            IWeb3Identity? identity = storedIdentityProvider.Identity;
+
+            if (identity == null)
+                throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
+
+            Profile defaultProfile = BuildDefaultProfile(identity.Address.ToString(), currentEmail);
+            Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
+
+            if (publishedProfile == null)
+                throw new ProfileNotFoundException();
+
+            return publishedProfile;
+        }
+
+        private static Profile BuildDefaultProfile(string walletAddress, string? email)
+        {
+            // Randomize body shape between MALE and FEMALE
+            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+
+            var avatar = new Profiles.Avatar(
+                bodyShape,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
+
+            // Extract name from email (everything before @) or use default
+            string profileName = ExtractNameFromEmail(email);
+
+            var profile = Profile.Create(walletAddress, profileName, avatar);
+            profile.HasClaimedName = false;
+            profile.HasConnectedWeb3 = true;
+            profile.Description = string.Empty;
+            profile.Country = string.Empty;
+            profile.EmploymentStatus = string.Empty;
+            profile.Gender = string.Empty;
+            profile.Pronouns = string.Empty;
+            profile.RelationshipStatus = string.Empty;
+            profile.SexualOrientation = string.Empty;
+            profile.Language = string.Empty;
+            profile.Profession = string.Empty;
+            profile.RealName = string.Empty;
+            profile.Hobbies = string.Empty;
+            profile.TutorialStep = 0;
+            profile.Version = 0;
+            profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
+            profile.IsDirty = true;
+
+            return profile;
+        }
+
+        private static string ExtractNameFromEmail(string? email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return IProfileRepository.PLAYER_RANDOM_ID;
+
+            int atIndex = email.IndexOf('@');
+
+            if (atIndex <= 0)
+                return IProfileRepository.PLAYER_RANDOM_ID;
+
+            return email[..atIndex];
         }
 
         private void ChangeAccount()
@@ -605,6 +825,11 @@ namespace DCL.AuthenticationScreenFlow
         {
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
+
+            // Clean up OTP waiting state
+            otpCompletionSource?.TrySetCanceled();
+            otpCompletionSource = null;
+            web3Authenticator.SetOtpRequestListener(null);
         }
 
         private void OpenOrCloseVerificationCodeHint()
