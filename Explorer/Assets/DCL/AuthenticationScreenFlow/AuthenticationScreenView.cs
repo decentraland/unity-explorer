@@ -24,6 +24,9 @@ namespace DCL.AuthenticationScreenFlow
         public Button LoginButton { get; private set; } = null!;
 
         [field: SerializeField]
+        public Button CancelLoginButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; } = null!;
 
         [field: SerializeField]
