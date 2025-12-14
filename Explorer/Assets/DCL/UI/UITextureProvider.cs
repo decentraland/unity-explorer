@@ -58,7 +58,7 @@ namespace DCL.UI
                 PartitionComponent.TOP_PRIORITY
             );
 
-            promise = await promise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: ct);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (promise.TryGetResult(world, out var result) && result.Succeeded)
             {
@@ -68,14 +68,8 @@ namespace DCL.UI
                 var textureRef = new Texture2DRef(textureData, texture);
                 textureData.Dereference();
                 
-                if (world.IsAlive(promise.Entity))
-                    world.Add(promise.Entity, new DeleteEntityIntention());
-
                 return textureRef;
             }
-
-            if (world.IsAlive(promise.Entity))
-                world.Add(promise.Entity, new DeleteEntityIntention());
 
             if (result.Exception != null && result.Exception is not OperationCanceledException)
                 ReportHub.LogException(result.Exception, ReportCategory.UI);

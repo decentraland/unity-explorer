@@ -612,6 +612,8 @@ MonoBehaviour:
       Severity: 1
     - Category: STREAMABLE_LOADING
       Severity: 3
+    - Category: SCENE_LOADING
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1

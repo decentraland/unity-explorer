@@ -10,11 +10,6 @@ namespace DCL.AvatarRendering.Wearables.Components
     {
         bool IsCompatibleWithBodyShape(string bodyShape);
 
-        /// <summary>
-        ///     If null - promise has never been created, otherwise it could contain the result or be un-initialized
-        /// </summary>
-        StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-
         TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
 
         public URLPath GetThumbnail() =>
