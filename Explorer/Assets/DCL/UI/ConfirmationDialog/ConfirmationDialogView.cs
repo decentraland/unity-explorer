@@ -68,7 +68,16 @@ namespace DCL.UI.ConfirmationDialog
                 mainImage.gameObject.SetActive(true);
                 mainImageLight.SetActive(true);
                 rimImage.gameObject.SetActive(!hasProfileImage);
-                mainImage.SetImage(dialogData.Image, true);
+
+                if (dialogData.PreserveAspect)
+                {
+                    mainImage.SetImage(dialogData.Image, fitAndCenterImage: false);
+                    mainImage.Image.preserveAspect = true;
+                }
+                else
+                {
+                    mainImage.SetImage(dialogData.Image, fitAndCenterImage: true);
+                }
             }
 
             if (!hasProfileImage) return;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
@@ -7,7 +8,10 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
+using DCL.Utility;
+using Global.AppArgs;
 using MVC;
+using UnityEngine;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
 
@@ -30,6 +34,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
 
+        private readonly IScreenModeController screenModeController;
+        
         private IDisposable? subProgress;
 
         private CancellationTokenSource? lifeCts;
@@ -40,7 +46,8 @@ namespace DCL.Backpack.Gifting.Presenters
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
-            GiftTransferRequestCommand giftTransferRequestCommand
+            GiftTransferRequestCommand giftTransferRequestCommand,
+            IScreenModeController screenModeController
         )
             : base(viewFactory)
         {
@@ -49,6 +56,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
+            this.screenModeController = screenModeController;
         }
         
         protected override void OnViewShow()
@@ -105,6 +113,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private async UniTask ProcessTransferFlowAsync(CancellationToken ct)
         {
+            screenModeController.ApplyWindowedMode();
+
             try
             {
                 var result = await giftTransferRequestCommand.ExecuteAsync(inputData, ct);
@@ -124,8 +134,12 @@ namespace DCL.Backpack.Gifting.Presenters
                 ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
                 OnFailure();
             }
+            finally
+            {
+                screenModeController.RestoreResolutionAndScreenMode();
+            }
         }
-
+        
         private void OnMarketplaceActivityLinkClicked(string _)
         {
             LinkCallback(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink));
@@ -255,7 +269,8 @@ namespace DCL.Backpack.Gifting.Presenters
                     null,
                     GiftingTextIds.ErrorDialogDescription,
                     linkText: supportLink,
-                    onLinkClickCallback: LinkCallback
+                    onLinkClickCallback: LinkCallback,
+                    preserveAspect: true
                 );
 
                 var result = await ViewDependencies

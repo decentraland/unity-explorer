@@ -31,10 +31,12 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -62,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEthereumApi ethereumApi;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IScreenModeController screenModeController;
         
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
@@ -87,7 +90,8 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IScreenModeController screenModeController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -108,6 +112,7 @@ namespace DCL.PluginSystem.Global
             this.ethereumApi = ethereumApi;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.screenModeController = screenModeController;
         }
 
         public void Dispose()
@@ -200,7 +205,8 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand
+                giftTransferRequestCommand,
+                screenModeController
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController

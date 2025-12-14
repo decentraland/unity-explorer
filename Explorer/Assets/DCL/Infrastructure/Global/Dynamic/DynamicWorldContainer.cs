@@ -118,6 +118,7 @@ using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
+using DCL.Settings.ScreenMode;
 using DCL.Translation;
 using DCL.Web3.Authenticators;
 using UnityEngine;
@@ -245,6 +246,8 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
+            var screenModeController = new ScreenModeController(appArgs);
+            
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
@@ -885,7 +888,8 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.VerifiedEthereumApi,
                     bootstrapContainer.DecentralandUrlsSource,
-                    sharedSpaceManager),
+                    sharedSpaceManager,
+                    screenModeController),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
