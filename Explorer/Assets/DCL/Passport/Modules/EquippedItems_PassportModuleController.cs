@@ -272,7 +272,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                var sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }

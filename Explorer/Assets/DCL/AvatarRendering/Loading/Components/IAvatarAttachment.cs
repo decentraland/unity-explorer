@@ -1,12 +1,13 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
-    public interface IAvatarAttachment
+    public interface IAvatarAttachment : IThumbnailAttachment
     {
         bool IsLoading { get; }
 
@@ -24,6 +25,52 @@ namespace DCL.AvatarRendering.Loading.Components
         
         public string ToString() =>
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
+
+        // IThumbnailAttachment implementation
+        URLPath IThumbnailAttachment.GetThumbnail()
+        {
+            const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
+            string thumbnailHash = DTO.Metadata.thumbnail;
+
+            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && DTO.content != null)
+            {
+                for (int i = 0; i < DTO.content.Length; i++)
+                {
+                    if (DTO.content[i].file == THUMBNAIL_DEFAULT_KEY)
+                    {
+                        thumbnailHash = DTO.content[i].hash;
+                        break;
+                    }
+                }
+            }
+
+            return new URLPath(thumbnailHash!);
+        }
+
+        URN IThumbnailAttachment.GetUrn()
+        {
+            return DTO.Metadata.id;
+        }
+
+        string IThumbnailAttachment.GetHash()
+        {
+            return DTO.GetHash();
+        }
+
+        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()
+        {
+            return DTO.assetBundleManifestVersion;
+        }
+
+        string? IThumbnailAttachment.GetContentDownloadUrl()
+        {
+            return DTO.ContentDownloadUrl;
+        }
+
+        string? IThumbnailAttachment.GetEntityId()
+        {
+            return DTO.id;
+        }
     }
 
     public interface IAvatarAttachment<TModelDTO> : IAvatarAttachment

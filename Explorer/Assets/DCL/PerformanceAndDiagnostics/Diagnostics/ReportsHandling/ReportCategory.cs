@@ -15,6 +15,11 @@ namespace DCL.Diagnostics
         public const string ANALYTICS = nameof(ANALYTICS);
 
         /// <summary>
+        ///     Everything connected analytics that is not supposed to be reported to Sentry (retries for example)
+        /// </summary>
+        public const string ANALYTICS_INTERNAL = nameof(ANALYTICS_INTERNAL);
+
+        /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>
         public const string ASSETS_PROVISION = nameof(ASSETS_PROVISION);
@@ -346,5 +351,7 @@ namespace DCL.Diagnostics
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
 
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
+
+        public const string SOCIAL_EMOTE = nameof(SOCIAL_EMOTE);
     }
 }

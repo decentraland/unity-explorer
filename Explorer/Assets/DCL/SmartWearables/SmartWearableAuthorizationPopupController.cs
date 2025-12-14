@@ -59,7 +59,7 @@ namespace Runtime.Wearables
             base.OnViewShow();
 
             var wearable = inputData.Wearable;
-            var thumbnail = wearable.ThumbnailAssetResult?.Asset.Sprite;
+            var thumbnail = ((IAvatarAttachment)wearable).ThumbnailAssetResult?.Asset.Sprite;
             var rarityBackground = rarityBackgrounds.GetTypeImage(wearable.GetRarity());
             var rarityColor = rarityColors.GetColor(wearable.GetRarity());
             var categoryIcon = categoryIcons.GetTypeImage(wearable.GetCategory());

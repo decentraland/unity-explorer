@@ -36,6 +36,7 @@ namespace DCL.AvatarRendering.Wearables
         private const string ON_CHAIN_COLLECTION_TYPE = "on-chain";
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
+        private const string TRIMMED = "trimmed";
         private const string IS_SMART_WEARABLE = "isSmartWearable";
 
         private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
@@ -51,15 +52,16 @@ namespace DCL.AvatarRendering.Wearables
             this.world = world;
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
-            int pageSize, int pageNumber, CancellationToken ct,
+        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
+            int pageNumber,
+            CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
             IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             bool smartWearablesOnly = false,
             string? name = null,
-            List<IWearable>? results = null,
+            List<ITrimmedWearable>? results = null,
             string? network = null,
             bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
@@ -68,6 +70,7 @@ namespace DCL.AvatarRendering.Wearables
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
             requestParameters.Add((PAGE_SIZE, pageSize.ToString()));
+            requestParameters.Add((TRIMMED, "true"));
 
             if (!string.IsNullOrEmpty(network))
                 requestParameters.Add((NETWORK, network));
@@ -96,7 +99,7 @@ namespace DCL.AvatarRendering.Wearables
             if (!string.IsNullOrEmpty(name))
                 requestParameters.Add((SEARCH, name));
 
-            results ??= new List<IWearable>();
+            results ??= new List<ITrimmedWearable>();
 
             var intention = new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)

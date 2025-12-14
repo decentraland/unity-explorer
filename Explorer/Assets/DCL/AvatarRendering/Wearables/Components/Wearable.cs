@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Runtime.Wearables;
@@ -22,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     }
 
     [Serializable]
-    public class  Wearable : IWearable
+    public class Wearable : IWearable
     {
         public int Amount { get; set; }
 
@@ -35,10 +36,19 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
+        StreamableLoadingResult<WearableDTO> IAvatarAttachment<WearableDTO>.Model
+        {
+            get => Model;
+            set => Model = value;
+        }
+        
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
+        public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
+        public AvatarAttachmentDTO DTO => Model.Asset!;
+        public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
         
         public WearableType Type { get; private set; }
 
@@ -63,10 +73,6 @@ namespace DCL.AvatarRendering.Wearables.Components
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
-
-        public AvatarAttachmentDTO DTO => Model.Asset!;
-
-        public int GetAmount => 0;
             
 
         public string GetCategory() =>
@@ -87,6 +93,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Model = result;
+            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(this.GetThumbnail().Value));
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;

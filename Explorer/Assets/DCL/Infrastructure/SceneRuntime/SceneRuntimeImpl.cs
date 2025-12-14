@@ -1,6 +1,5 @@
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
@@ -8,7 +7,6 @@ using Microsoft.ClearScript.V8;
 using SceneRunner.Scene;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
-using SceneRuntime.ModuleHub;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -39,38 +37,16 @@ namespace SceneRuntime
 
         CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
 
-        public SceneRuntimeImpl(
-            string sourceCode,
-            (string validateCode, string jsInitCode) initCode,
-            IReadOnlyDictionary<string, string> jsModules,
-            SceneShortInfo sceneShortInfo,
-            V8EngineFactory engineFactory
-        )
+        public SceneRuntimeImpl(V8ScriptEngine engine)
         {
             resetableSource = new JSTaskResolverResetable();
-
-            engine = engineFactory.Create(sceneShortInfo);
+            this.engine = engine;
             jsApiBunch = new JsApiBunch(engine);
-
-            var moduleHub = new SceneModuleHub(engine);
-
-            moduleHub.LoadAndCompileJsModules(jsModules);
-
-            // Compile Scene Code
-            V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
-
-            // Initialize init API
-            // TODO: This is only needed for the LifeCycle
-            var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
-            engine.AddHostObject("UnityOpsApi", unityOpsApi);
-
-            // engine.Execute(initCode.validateCode!);
-            engine.Execute(initCode.jsInitCode!);
 
             // Set global SDK configuration flags
             engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
 
-            // Setup unitask resolver
+            // Setup UniTask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
 
             arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");

@@ -23,8 +23,8 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStylingCatalog stylingCatalog;
-        
-        private readonly List<IWearable> resultsBuffer = new();
+
+        private readonly List<ITrimmedWearable> resultsBuffer = new();
         private readonly BackpackGridSort currentSort = new(NftOrderByOperation.Date, false);
 
         public WearableGridPresenter(
@@ -65,7 +65,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 sortingField: currentSort.OrderByOperation.ToSortingField(),
                 orderBy: currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
                 category: string.Empty,
-                collectionType: IWearablesProvider.CollectionType.None,
+                collectionType: IWearablesProvider.CollectionType.OnChain,
                 name: search,
                 results: resultsBuffer,
                 network: "MATIC",
@@ -75,7 +75,12 @@ namespace DCL.Backpack.Gifting.Presenters
 
             var giftables = new List<GiftableAvatarAttachment>(wearables.Count);
             foreach (var w in wearables)
-                giftables.Add(new GiftableAvatarAttachment(w));
+            {
+                if (w is IWearable fullWearable)
+                {
+                    giftables.Add(new GiftableAvatarAttachment(fullWearable));
+                }
+            }
             
             return (giftables, total);
         }

@@ -1,9 +1,11 @@
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
+using DownloadedCodeContent = UnityEngine.Networking.DownloadHandler;
 
 namespace DCL.AssetsProvision.CodeResolver
 {
@@ -19,7 +21,10 @@ namespace DCL.AssetsProvision.CodeResolver
             };
         }
 
-        public UniTask<string> GetCodeContent(URLAddress contentUrl, CancellationToken ct) =>
-            providers[AssetSource.WEB].GetJsCodeAsync(contentUrl, ct);
+        public UniTask<Result<DownloadedCodeContent>> GetCodeContent(
+            URLAddress contentUrl, CancellationToken ct)
+        {
+            return providers[AssetSource.WEB].GetJsCodeAsync(contentUrl, ct);
+        }
     }
 }

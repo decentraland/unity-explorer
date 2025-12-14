@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, IAttachmentsLoadingIntention<IWearable>
+    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, IAttachmentsLoadingIntention<ITrimmedWearable>
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public string UserID;
 
         //Used for pooling
-        public List<IWearable> Results;
+        public List<ITrimmedWearable> Results;
         public int TotalAmount { get; private set; }
 
         public void SetTotal(int total)
@@ -27,14 +27,14 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             TotalAmount = total;
         }
 
-        public void AppendToResult(IWearable resultElement)
+        public void AppendToResult(ITrimmedWearable resultElement)
         {
             Results.Add(resultElement);
         }
 
         public bool NeedsBuilderAPISigning { get; }
 
-        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results, int totalAmount, bool needsBuilderAPISigning = false)
+        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<ITrimmedWearable> results, int totalAmount, bool needsBuilderAPISigning = false)
         {
             Params = requestParams;
             UserID = userID;

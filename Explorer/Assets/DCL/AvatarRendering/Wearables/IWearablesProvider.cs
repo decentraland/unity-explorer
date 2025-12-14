@@ -11,17 +11,16 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(
-            int pageSize,
+        UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
             int pageNumber,
             CancellationToken ct,
-            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
-            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
+            SortingField sortingField = SortingField.Date,
+            OrderBy orderBy = OrderBy.Descending,
             string? category = null,
-            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            CollectionType collectionType = CollectionType.All,
             bool smartWearablesOnly = false,
             string? name = null,
-            List<IWearable>? results = null,
+            List<ITrimmedWearable>? results = null,
             string? network = null,
             bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
@@ -51,8 +50,7 @@ namespace DCL.AvatarRendering.Wearables
             Base = 1 << 0,
             OnChain = 1 << 1,
             ThirdParty = 1 << 2,
-            All = Base | OnChain | ThirdParty,
-            None = 0
+            All = -1
         }
     }
 }

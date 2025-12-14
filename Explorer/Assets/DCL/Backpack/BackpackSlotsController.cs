@@ -173,7 +173,7 @@ namespace DCL.Backpack
         {
             avatarSlotView.LoadingView.StartLoadingAnimation(avatarSlotView.NftContainer);
 
-            Sprite thumbnail = await thumbnailProvider.GetAsync(equippedWearable, ct);
+            var thumbnail = await thumbnailProvider.GetAsync(equippedWearable, ct);
 
             avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = thumbnail;
             avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.gameObject.SetActive(true);

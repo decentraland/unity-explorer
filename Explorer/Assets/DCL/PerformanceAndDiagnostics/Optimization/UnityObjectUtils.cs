@@ -2,6 +2,7 @@
 using Sentry;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEditor;
 using UnityEngine;
 
 namespace Utility
@@ -22,6 +23,22 @@ namespace Utility
 
             Application.quitting += SetQuitting;
         }
+
+        // This code fixes the following situation: enter play mode, exit play
+        // mode, run edit mode tests.
+#if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+        private static void ResetIsQuittingOnEnteredEditMode()
+        {
+            EditorApplication.playModeStateChanged +=
+                static stateChange =>
+                {
+                    if (stateChange ==
+                        PlayModeStateChange.EnteredEditMode)
+                        IsQuitting = false;
+                };
+        }
+#endif
 
         /// <summary>
         ///     Tries to destroy Game Object based on the current state of the Application
