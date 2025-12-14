@@ -88,11 +88,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#fix/GRD_Mac_Bug",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "4f35d54009bdbd969e6617863c6d74b85d6423ab"
+      "hash": "d15cacfe312395f7ccd2bd0504115af6e7d247d5"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
