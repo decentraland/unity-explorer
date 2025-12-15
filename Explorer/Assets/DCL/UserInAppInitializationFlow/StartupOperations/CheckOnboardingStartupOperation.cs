@@ -78,7 +78,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             // It the app is open from any external way, we will ignore the onboarding flow
-            if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
+            if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE) || appParameters.HasFlag(AppArgsFlags.COMMUNITY))
                 return;
 
             isProfilePendingToBeUpdated = false;
