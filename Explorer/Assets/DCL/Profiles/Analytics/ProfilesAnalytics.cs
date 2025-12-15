@@ -41,7 +41,7 @@ namespace DCL.Profiles
 
             if (startedRequests.TryRemove(id, out DateTime startTime))
             {
-                analyticsController.Track(AnalyticsEvents.Endpoints.PROFILE_RETRIEVED,
+                analyticsController.Track(AnalyticsEvents.Endpoints.PROFILE_FAILED,
                     new JObject
                     {
                         { "duration", (ulong)(DateTime.Now - startTime).TotalMilliseconds },
