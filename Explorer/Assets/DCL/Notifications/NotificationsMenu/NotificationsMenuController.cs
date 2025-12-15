@@ -191,7 +191,7 @@ namespace DCL.Notifications.NotificationsMenu
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[FRIENDS_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<FriendsNotificationView>();
                     break;
-                case NotificationType.GIFT_RECEIVED:
+                case NotificationType.TRANSFER_RECEIVED:
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[GIFT_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<GiftNotificationView>();
                     break;
@@ -210,7 +210,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notificationData.Type);
 
-            if (notificationData.Type == NotificationType.GIFT_RECEIVED)
+            if (notificationData.Type == NotificationType.TRANSFER_RECEIVED)
             {
                 notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
             }

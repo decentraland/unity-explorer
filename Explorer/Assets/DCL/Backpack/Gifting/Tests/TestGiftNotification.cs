@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using Random = UnityEngine.Random;
 
 namespace DCL.Backpack.Gifting.Tests
 {
@@ -22,7 +23,7 @@ namespace DCL.Backpack.Gifting.Tests
         [ContextMenu("Trigger Gift Notification (new payload")]
         public void TriggerNotificationNewPayload()
         {
-            string randomUri = validTokenUris[UnityEngine.Random.Range(0, validTokenUris.Length)];
+            string randomUri = validTokenUris[Random.Range(0, validTokenUris.Length)];
             
             var meta = new GiftReceivedNotificationMetadata
             {
@@ -33,8 +34,7 @@ namespace DCL.Backpack.Gifting.Tests
 
             var notification = new GiftReceivedNotification
             {
-                Id = Guid.NewGuid().ToString(),
-                Type = NotificationType.GIFT_RECEIVED,
+                Id = Guid.NewGuid().ToString(), Type = NotificationType.TRANSFER_RECEIVED,
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
                 Read = false,
                 Metadata = meta

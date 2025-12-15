@@ -14,7 +14,7 @@ namespace DCL.Backpack.Gifting.Notifications
             this.mvcManager = mvcManager;
             
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(
-                NotificationType.GIFT_RECEIVED,
+                NotificationType.TRANSFER_RECEIVED,
                 OnGiftNotificationClicked);
         }
 

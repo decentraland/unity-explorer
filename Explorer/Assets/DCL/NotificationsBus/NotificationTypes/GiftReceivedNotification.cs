@@ -15,7 +15,7 @@ namespace DCL.NotificationsBus.NotificationTypes
 
         public GiftReceivedNotification()
         {
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.GIFT_RECEIVED, GiftReceivedClick);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.TRANSFER_RECEIVED, GiftReceivedClick);
         }
 
         private void GiftReceivedClick(object[] parameters)

@@ -137,7 +137,7 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.INTERNAL_DEFAULT_SUCCESS:
                         await ProcessArrivedNotificationAsync(notification, false);
                         break;
-                    case NotificationType.GIFT_RECEIVED:
+                    case NotificationType.TRANSFER_RECEIVED:
                         await ProcessGiftNotificationAsync(notification);
                         break;
                     default:

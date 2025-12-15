@@ -64,7 +64,9 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetName()
         {
-            return "NAME_WEARABLE";
+            if (string.IsNullOrEmpty(TrimmedDTO.Metadata.name))
+                return "NAME_WEARABLE";
+            
             return TrimmedDTO.Metadata.name;
         }
 

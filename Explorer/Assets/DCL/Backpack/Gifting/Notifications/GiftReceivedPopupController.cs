@@ -68,6 +68,9 @@ namespace DCL.Backpack.Gifting.Notifications
             
             lifeCts = new CancellationTokenSource();
 
+            if (imageController != null)
+                imageController.SpriteLoaded += OnImageLoaded;
+            
             LoadFullDataAsync(inputData, lifeCts.Token)
                 .Forget();
 
