@@ -25,6 +25,7 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string id;
             public string rarity;
             public bool isSmart;
+            public string name;
         }
 
         [Serializable]

@@ -2,9 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -20,6 +18,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
         private readonly List<ITrimmedWearable> resultWearablesBuffer = new ();
+        private readonly List<IWearable> resultOwnedWearablesBuffer = new ();
         private readonly string builderDTOsUrl;
 
         public ApplicationParametersWearablesProvider(IAppArgs appArgs, IWearablesProvider source, string builderDTOsUrl)
@@ -159,6 +158,121 @@ namespace DCL.AvatarRendering.Wearables
                 includeAmount: includeAmount,
                 loadingArguments: loadingArguments,
                 needsBuilderAPISigning: needsBuilderAPISigning
+            );
+        }
+
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetOwnedWearablesAsync(
+            int pageSize, int pageNumber, CancellationToken ct,
+            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
+            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
+            string? category = null,
+            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            bool smartWearablesOnly = false,
+            string? name = null,
+            string? network = null,
+            CommonLoadingArguments? loadingArguments = null)
+        {
+            // Logic #1: AppArgs - Self Preview Wearables (Debug)
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
+            {
+                var pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => new URN(s))
+                    .ToArray();
+
+                var (maleWearables, femaleWearables) =
+                    await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
+                        RequestPointersAsync(pointers, BodyShape.FEMALE, ct));
+
+                var results = new List<IWearable>();
+
+                lock (resultOwnedWearablesBuffer)
+                {
+                    resultOwnedWearablesBuffer.Clear();
+
+                    if (maleWearables != null)
+                        resultOwnedWearablesBuffer.AddRange(maleWearables);
+
+                    if (femaleWearables != null)
+                        resultOwnedWearablesBuffer.AddRange(femaleWearables);
+
+                    int pageIndex = pageNumber - 1;
+                    results.AddRange(resultOwnedWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize));
+                    return (results, resultOwnedWearablesBuffer.Count);
+                }
+            }
+
+            // Logic #2: AppArgs - Builder Collections (Debug)
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
+            {
+                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                var results = new List<IWearable>();
+                var localBuffer = ListPool<IWearable>.Get(); // Use pool for IWearable
+
+                for (int i = 0; i < collections.Length; i++)
+                {
+                    var (collectionResults, _) = await source.GetOwnedWearablesAsync(
+                        pageSize: pageSize, pageNumber: pageNumber, ct: ct,
+                        sortingField: sortingField, orderBy: orderBy, category: category, collectionType: collectionType,
+                        smartWearablesOnly: smartWearablesOnly,
+                        name: name,
+                        network: network,
+                        loadingArguments: new CommonLoadingArguments(
+                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
+                            cancellationTokenSource: new CancellationTokenSource()
+                        )
+                    );
+
+                    localBuffer.AddRange(collectionResults);
+                }
+
+                const int OWNED_PAGE_SIZE = 200;
+                int ownedPage = 1;
+                int ownedTotal = int.MaxValue;
+
+                while (localBuffer.Count < ownedTotal)
+                {
+                    (var ownedPageResults, int ownedPageTotal) = await source.GetOwnedWearablesAsync(
+                        pageSize: OWNED_PAGE_SIZE,
+                        pageNumber: ownedPage,
+                        ct: ct,
+                        sortingField: sortingField,
+                        orderBy: orderBy,
+                        category: category,
+                        collectionType: collectionType,
+                        smartWearablesOnly: smartWearablesOnly,
+                        name: name,
+                        network: network
+                    );
+
+                    ownedTotal = ownedPageTotal;
+
+                    if (ownedPageResults.Count == 0)
+                        break;
+
+                    localBuffer.AddRange(ownedPageResults);
+                    ownedPage++;
+                }
+
+                var unified = localBuffer
+                    .GroupBy(w => w.GetUrn())
+                    .Select(g => g.First())
+                    .ToList();
+
+                int pageIndex = pageNumber - 1;
+                results.AddRange(unified.Skip(pageIndex * pageSize).Take(pageSize));
+
+                int count = unified.Count;
+
+                ListPool<IWearable>.Release(localBuffer);
+
+                return (results, count);
+            }
+
+            // Logic #3: Default Proxy Call
+            return await source.GetOwnedWearablesAsync(
+                pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType,
+                smartWearablesOnly, name, network, loadingArguments
             );
         }
 

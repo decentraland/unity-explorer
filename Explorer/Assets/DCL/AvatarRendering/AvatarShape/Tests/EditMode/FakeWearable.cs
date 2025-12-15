@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
         public AvatarAttachmentDTO DTO { get; }
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
 
-        public int Amount { get; private set; }
+        public int Amount { get; set; }
 
         public void SetAmount(int amount)
         {

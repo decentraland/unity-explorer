@@ -195,6 +195,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
                 }
 
+            int ownedAmount = avatarElementStorage.GetOwnedNftCount(elementDTO.Metadata.id);
+            wearable.SetAmount(ownedAmount);
             return wearable;
         }
 

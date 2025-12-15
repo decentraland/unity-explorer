@@ -75,7 +75,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
 
             var giftables = new List<GiftableAvatarAttachment>(pageEmotes.Count);
             foreach (var e in pageEmotes)
-                giftables.Add(new GiftableAvatarAttachment(e));
+                giftables.Add(new GiftableAvatarAttachment(e, 1));
 
             return (giftables, total);
         }

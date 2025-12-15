@@ -9,6 +9,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 {
     public interface ITrimmedWearable : IThumbnailAttachment
     {
+        public int Amount { get; set; }
         bool IsCompatibleWithBodyShape(string bodyShape);
 
         /// <summary>
@@ -59,6 +60,17 @@ namespace DCL.AvatarRendering.Wearables.Components
         string IThumbnailAttachment.GetHash()
         {
             return TrimmedDTO.GetHash();
+        }
+
+        string GetName()
+        {
+            return "NAME_WEARABLE";
+            return TrimmedDTO.Metadata.name;
+        }
+
+        public void SetAmount(int amount)
+        {
+            Amount = amount;
         }
 
         AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()

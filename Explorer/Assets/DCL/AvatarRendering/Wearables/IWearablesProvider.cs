@@ -26,6 +26,20 @@ namespace DCL.AvatarRendering.Wearables
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false
         );
+
+        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetOwnedWearablesAsync(
+            int pageSize,
+            int pageNumber,
+            CancellationToken ct,
+            SortingField sortingField = SortingField.Date,
+            OrderBy orderBy = OrderBy.Descending,
+            string? category = null,
+            CollectionType collectionType = CollectionType.All,
+            bool smartWearablesOnly = false,
+            string? name = null,
+            string? network = null,
+            CommonLoadingArguments? loadingArguments = null
+        );
         
         UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,

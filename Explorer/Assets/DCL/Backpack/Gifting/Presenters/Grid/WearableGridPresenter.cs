@@ -2,6 +2,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -23,7 +24,6 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStylingCatalog stylingCatalog;
-
         private readonly List<ITrimmedWearable> resultsBuffer = new();
         private readonly BackpackGridSort currentSort = new(NftOrderByOperation.Date, false);
 
@@ -67,21 +67,16 @@ namespace DCL.Backpack.Gifting.Presenters
                 category: string.Empty,
                 collectionType: IWearablesProvider.CollectionType.OnChain,
                 name: search,
-                results: resultsBuffer,
-                network: "MATIC",
-                includeAmount: true
+                network: "MATIC"
             );
 
-
+            
             var giftables = new List<GiftableAvatarAttachment>(wearables.Count);
             foreach (var w in wearables)
             {
-                if (w is IWearable fullWearable)
-                {
-                    giftables.Add(new GiftableAvatarAttachment(fullWearable));
-                }
+                giftables.Add(new GiftableAvatarAttachment(w, w.Amount));
             }
-            
+
             return (giftables, total);
         }
 

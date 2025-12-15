@@ -1,20 +1,37 @@
-﻿using DCL.AvatarRendering.Loading.Components;
+﻿using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 
 namespace DCL.Backpack.Gifting.Models
 {
     public readonly struct GiftableAvatarAttachment
     {
-        public readonly IAvatarAttachment Attachment;
+        public readonly string Urn;
+        public readonly string Name;
+        public readonly string Category;
+        public readonly string Rarity;
+        public readonly int Amount;
 
-        public string Urn => Attachment.GetUrn();
-        public string Name => Attachment.GetName();
-        public string Category => Attachment.GetCategory();
-        public string Rarity => Attachment.GetRarity();
-        public int Amount => Attachment.Amount;
+        public readonly IThumbnailAttachment Attachment;
 
-        public GiftableAvatarAttachment(IAvatarAttachment attachment)
+        public GiftableAvatarAttachment(ITrimmedWearable trimmed, int amount)
         {
-            Attachment = attachment;
+            Attachment = trimmed;
+            Urn = trimmed.GetUrn();
+            Name = trimmed.GetName();
+            Category = trimmed.GetCategory();
+            Rarity = trimmed.GetRarity();
+            Amount = amount;
+        }
+
+        public GiftableAvatarAttachment(IEmote trimmed, int amount)
+        {
+            Attachment = trimmed;
+            Urn = trimmed.GetUrn();
+            Name = trimmed.GetName();
+            Category = trimmed.GetCategory();
+            Rarity = trimmed.GetRarity();
+            Amount = amount;
         }
     }
 }

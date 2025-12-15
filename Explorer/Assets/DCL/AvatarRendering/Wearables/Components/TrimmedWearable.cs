@@ -17,6 +17,8 @@ namespace DCL.AvatarRendering.Wearables.Components
         public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
+        public int Amount { get; set; }
+
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
             foreach (var dataRepresentation in TrimmedDTO.Metadata.AbstractData.representations)

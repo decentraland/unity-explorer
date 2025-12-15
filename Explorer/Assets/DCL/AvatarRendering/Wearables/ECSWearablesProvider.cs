@@ -72,9 +72,13 @@ namespace DCL.AvatarRendering.Wearables
             requestParameters.Add((PAGE_SIZE, pageSize.ToString()));
             requestParameters.Add((TRIMMED, "true"));
 
+            bool requestingAmount = includeAmount ?? false;
+            if (!requestingAmount)
+                requestParameters.Add((TRIMMED, "true"));
+            
             if (!string.IsNullOrEmpty(network))
                 requestParameters.Add((NETWORK, network));
-
+            
             if (includeAmount ?? true)
                 requestParameters.Add((INCLUDE_AMOUNT, "true"));
             
@@ -122,6 +126,77 @@ namespace DCL.AvatarRendering.Wearables
                 wearablesPromise.Result.Value.Asset.TotalAmount);
         }
 
+        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetOwnedWearablesAsync(int pageSize,
+            int pageNumber,
+            CancellationToken ct,
+            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
+            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
+            string? category = null,
+            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
+            bool smartWearablesOnly = false,
+            string? name = null,
+            string? network = null,
+            CommonLoadingArguments? loadingArguments = null)
+        {
+            // Use a local list for parameters to avoid conflict if GetAsync is called simultaneously
+            var localParams = new List<(string, string)>
+            {
+                (PAGE_NUMBER, pageNumber.ToString()), (PAGE_SIZE, pageSize.ToString()), (INCLUDE_AMOUNT, "true")
+            };
+
+            if (!string.IsNullOrEmpty(network))
+                localParams.Add((NETWORK, network));
+
+            if (!string.IsNullOrEmpty(category))
+                localParams.Add((CATEGORY, category));
+
+            localParams.Add((ORDER_BY, sortingField.ToString()));
+            localParams.Add((ORDER_DIRECTION, GetDirectionParamValue(orderBy)));
+
+            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.Base))
+                localParams.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
+
+            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.OnChain))
+                localParams.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
+
+            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.ThirdParty))
+                localParams.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
+
+            if (smartWearablesOnly)
+                localParams.Add((IS_SMART_WEARABLE, "true"));
+
+            if (!string.IsNullOrEmpty(name))
+                localParams.Add((SEARCH, name));
+
+            // We need a temporary buffer because the Intention expects List<ITrimmedWearable>
+            var tempResultsBuffer = new List<ITrimmedWearable>();
+
+            var intention = new GetWearableByParamIntention(localParams, web3IdentityCache.Identity!.Address, tempResultsBuffer, 0);
+            if (loadingArguments.HasValue)
+                intention.CommonArguments = loadingArguments.Value;
+
+            var wearablesPromise = ParamPromise.Create(world!, intention, PartitionComponent.TOP_PRIORITY);
+            wearablesPromise = await wearablesPromise.ToUniTaskAsync(world!, cancellationToken: ct);
+
+            ct.ThrowIfCancellationRequested();
+
+            var typedResults = new List<IWearable>();
+
+            if (wearablesPromise.Result == null) return (typedResults, 0);
+            if (!wearablesPromise.Result.HasValue) return (typedResults, 0);
+            if (!wearablesPromise.Result!.Value.Succeeded) return (typedResults, 0);
+
+            foreach (var item in wearablesPromise.Result.Value.Asset.Wearables)
+            {
+                if (item is IWearable fullWearable)
+                {
+                    typedResults.Add(fullWearable);
+                }
+            }
+
+            return (typedResults, wearablesPromise.Result.Value.Asset.TotalAmount);
+        }
+        
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct)

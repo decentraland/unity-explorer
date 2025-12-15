@@ -2,7 +2,11 @@
 using Sentry;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
+
 using UnityEngine;
 
 namespace Utility
