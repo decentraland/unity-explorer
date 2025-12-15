@@ -11,17 +11,36 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
     public class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        private readonly List<ITypedArray<byte>> lastInput = new ();
 
         public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
             this.sceneExceptionsHandler = sceneExceptionsHandler;
         }
 
-        private void SendBinaryToParticipants(IList<ITypedArray<byte>> dataList, string? recipient)
+        protected override void DisposeInternal()
+        {
+            // clear GC references to remain objects in the list
+            lastInput.Clear();
+        }
+
+        private void SendBinaryToParticipants(IList<object> dataList, string? recipient)
         {
             try
             {
-                api.SendBinary(dataList, recipient);
+                for (int i = 0; i < dataList.Count; i++)
+                {
+                    ITypedArray<byte> item = (ITypedArray<byte>) dataList[i];
+                    if (lastInput.Count <= i) lastInput.Add(item);
+                    else lastInput[i] = item;
+                }
+
+                // Remove excess elements
+                int excess = lastInput.Count - dataList.Count;
+                // lastInput doesn't own the ITypedArray objects, disposal is not required
+                if (excess > 0) lastInput.RemoveRange(dataList.Count, excess);
+
+                api.SendBinary(lastInput, recipient);
             }
             catch (Exception e)
             {
@@ -30,11 +49,11 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         }
 
         [UsedImplicitly]
-        public object SendBinary(IList<ITypedArray<byte>> broadcastData) =>
+        public object SendBinary(IList<object> broadcastData) =>
             SendBinary(broadcastData, null);
 
         [UsedImplicitly]
-        public object SendBinary(IList<ITypedArray<byte>> broadcastData, IList<object>? peerData)
+        public object SendBinary(IList<object> broadcastData, IList<object>? peerData)
         {
             SendBinaryToParticipants(broadcastData, null);
 
@@ -46,7 +65,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     if (obj is IScriptObject perRecipientStruct)
                     {
                         var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
-                        var data = (IList<ITypedArray<byte>>)perRecipientStruct.GetProperty("data")!;
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data")!;
 
                         if (data.Count is 0)
                             continue;
