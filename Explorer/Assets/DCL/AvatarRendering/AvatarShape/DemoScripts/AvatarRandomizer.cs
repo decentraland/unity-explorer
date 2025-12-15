@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.DemoScripts
             return randomWearables;
         }
 
-        public void AddWearable(IWearable wearable)
+        public void AddWearable(ITrimmedWearable wearable)
         {
             if (wearable.GetCategory().Equals(WearableCategories.Categories.BODY_SHAPE))
                 return;
