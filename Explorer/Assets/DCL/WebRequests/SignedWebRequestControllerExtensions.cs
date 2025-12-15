@@ -99,7 +99,7 @@ namespace DCL.WebRequests
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments> SignedFetchDeleteAsync(
+        public static GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericPostArguments> SignedFetchDeleteAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             string jsonMetaData,
@@ -108,10 +108,10 @@ namespace DCL.WebRequests
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments>(
+            return new GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericPostArguments>(
                 controller,
                 commonArguments,
-                GenericDeleteArguments.Empty,
+                GenericPostArguments.Empty,
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
@@ -121,17 +121,17 @@ namespace DCL.WebRequests
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPatchArguments> SignedFetchPatchAsync(
+        public static GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPostArguments> SignedFetchPatchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericPatchArguments patchArguments,
+            GenericPostArguments patchArguments,
             string jsonMetaData,
             CancellationToken ct
         )
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPatchArguments>(
+            return new GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPostArguments>(
                 controller,
                 commonArguments,
                 patchArguments,
@@ -144,17 +144,17 @@ namespace DCL.WebRequests
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPutArguments> SignedFetchPutAsync(
+        public static GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPostArguments> SignedFetchPutAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericPutArguments putArguments,
+            GenericPostArguments putArguments,
             string jsonMetaData,
             CancellationToken ct
         )
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return new GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPutArguments>(
+            return new GenericDownloadHandlerUtils.Adapter<GenericPutRequest, GenericPostArguments>(
                 controller,
                 commonArguments,
                 putArguments,

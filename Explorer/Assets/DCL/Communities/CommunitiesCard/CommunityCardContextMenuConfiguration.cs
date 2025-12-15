@@ -10,11 +10,19 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Vector2 OffsetFromTarget { get; private set; }
         [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
 
+        [field: SerializeField] public Sprite CommunityNotificationsSprite { get; private set; } = null!;
+        [field: SerializeField] public string CommunityNotificationsText { get; private set; } = "Notifications";
+        [field: SerializeField] public int CommunityNotificationsSeparatorHeight { get; private set; } = 20;
+
         [field: SerializeField] public Sprite LeaveCommunitySprite { get; private set; } = null!;
         [field: SerializeField] public string LeaveCommunityText { get; private set; } = "Leave Community";
 
         [field: SerializeField] public Sprite DeleteCommunitySprite { get; private set; } = null!;
         [field: SerializeField] public string DeleteCommunityText { get; private set; } = "Delete Community";
         [field: SerializeField] public Color DeleteCommunityTextColor { get; private set; } = Color.red;
+
+        [field: SerializeField] public Sprite CopyCommunityLinkSprite { get; private set; } = null!;
+        [field: SerializeField] public string CopyCommunityLinkText { get; private set; } = "Copy Link";
+        [field: SerializeField] public int CopyCommunityLinkSeparatorHeight { get; private set; } = 20;
     }
 }

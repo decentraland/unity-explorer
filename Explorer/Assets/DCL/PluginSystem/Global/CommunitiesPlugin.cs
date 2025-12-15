@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
-        private readonly IRPCCommunitiesService rpcCommunitiesService;
+        private readonly RPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
         private readonly IProfileRepository profileRepository;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -156,7 +156,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileRepository,
                 galleryEventBus,
-                voiceChatOrchestrator);
+                voiceChatOrchestrator,
+                inputBlock);
 
             mvcManager.RegisterController(communityCardController);
 
@@ -186,7 +187,7 @@ namespace DCL.PluginSystem.Global
                 realmNavigator);
             mvcManager.RegisterController(eventInfoController);
 
-            rpcCommunitiesService.SubscribeToConnectivityStatusAsync(ct).Forget();
+            rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
     }
 

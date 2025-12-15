@@ -40,26 +40,19 @@ namespace DCL.AvatarRendering.Loading.DTO
         }
 
         [Serializable]
-        public abstract class MetadataBase
+        public abstract class MetadataBase : TrimmedAvatarAttachmentDTO.TrimmedMetadataBase<DataBase>
         {
-            public abstract DataBase AbstractData { get; }
-
-            //urn
-            public string id;
             public string name;
 
             public I18n[] i18n;
             public string thumbnail;
 
-            public string rarity;
             public string description;
         }
 
         [Serializable]
-        public abstract class DataBase
+        public abstract class DataBase : TrimmedAvatarAttachmentDTO.TrimmedDataBase
         {
-            public Representation[] representations;
-            public string category;
             public string[] tags;
             public string[] replaces;
             public string[] hides;
@@ -73,8 +66,6 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string code;
             public string text;
         }
-
-
     }
 
     public static class AvatarAttachmentDTOExtensions

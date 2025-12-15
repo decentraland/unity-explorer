@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         private readonly Dictionary<string, IWearable?> wearables = new ();
         private readonly HashSet<string> forceRenderCategories = new ();
         public IReadOnlyCollection<string> ForceRenderCategories => forceRenderCategories;
-        
+
         private Color hairColor;
         private Color eyesColor;
         private Color bodyshapeColor;
@@ -29,18 +29,19 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         public (Color, Color, Color) GetColors() =>
             (hairColor, eyesColor, bodyshapeColor);
 
-        public bool IsEquipped(IWearable wearable) =>
-            wearables[wearable.GetCategory()] == wearable;
+        public bool IsEquipped(ITrimmedWearable wearable) =>
+            wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
 
         public void Equip(IWearable wearable) =>
             wearables[wearable.GetCategory()] = wearable;
 
         public void UnEquip(IWearable wearable)
         {
+            IAvatarAttachment attachment = wearable;
             if (IsEquipped(wearable) == false)
-                throw new InvalidOperationException($"Trying to unequip a wearable that is not equipped. {wearable.GetCategory()}");
+                throw new InvalidOperationException($"Trying to unequip a wearable that is not equipped. {attachment.GetCategory()}");
 
-            wearables[wearable.GetCategory()] = null;
+            wearables[attachment.GetCategory()] = null;
         }
 
         public void UnEquipAll()
@@ -62,6 +63,12 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         {
             forceRenderCategories.Clear();
             foreach (string category in categories) { forceRenderCategories.Add(category); }
+        }
+
+        public void Clear()
+        {
+            wearables.Clear();
+            forceRenderCategories.Clear();
         }
 
         public IReadOnlyDictionary<string, IWearable?> Items() =>

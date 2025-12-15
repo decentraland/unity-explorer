@@ -1,11 +1,11 @@
 using AOT;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
-using Segment.Analytics;
-using Segment.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine.Device;
 using UnityEngine.Pool;
 
@@ -14,7 +14,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
     /// <summary>
     ///     This implementation is thread-safe
     /// </summary>
-    public class RustSegmentAnalyticsService : IAnalyticsService
+    public class RustSegmentAnalyticsService : IAnalyticsService, IDisposable
     {
         private enum Operation
         {
@@ -46,8 +46,11 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
+            string path = System.IO.Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
+            const int DEFAULT_LIMIT = 500;
+            using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
-            bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);
+            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, Callback, ErrorCallback);
 
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
@@ -56,7 +59,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             current = this;
         }
 
-        ~RustSegmentAnalyticsService()
+        public void Dispose()
         {
             current = null;
             bool result = NativeMethods.SegmentServerDispose();
@@ -65,7 +68,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 throw new Exception("Rust Segment dispose failed");
         }
 
-        public void Identify(string? userId, JsonObject? traits = null)
+        ~RustSegmentAnalyticsService()
+        {
+            if (current == this)
+                Dispose();
+        }
+
+        public void Identify(string? userId, JObject? traits = null)
         {
             lock (afterClean)
             {
@@ -89,7 +98,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public void Track(string eventName, JsonObject? properties = null)
+        public void Track(string eventName, JObject? properties = null)
         {
             lock (afterClean)
             {
@@ -120,7 +129,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        public void InstantTrackAndFlush(string eventName, JObject? properties = null)
         {
             lock (afterClean)
             {
@@ -151,7 +160,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public void AddPlugin(EventPlugin plugin)
+        public void AddPlugin(IAnalyticsPlugin plugin)
         {
             contextSource.Register(plugin);
         }
@@ -169,8 +178,18 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        public static ulong UnflushedCount() =>
-            NativeMethods.SegmentServerUnFlushedBatchesCount();
+        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
+        private static void ErrorCallback(IntPtr msg)
+        {
+            string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+
+            // Required to avoid polluting Sentry with retry messages
+            string reportCategory = marshaled.Contains("(will retry)")
+                ? ReportCategory.ANALYTICS_INTERNAL
+                : ReportCategory.ANALYTICS;
+
+            ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+        }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
@@ -184,10 +203,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
                 if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogError(
-                        ReportCategory.ANALYTICS,
-                        $"Segment operation {operationId} {type} failed with: {response}"
-                    );
+                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
 
                 current.CleanMemory(operationId);
             }

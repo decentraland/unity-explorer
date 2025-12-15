@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.Tween
 
         [Query]
         [None(typeof(PBTweenSequence))]
-        private static void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
             TweenSDKComponentHelper.UpdatePBTween(ref pbTween, ref sdkTweenComponent);
         }
@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private static void UpdatePBTweenSequence(ref PBTween pbTween, ref PBTweenSequence pbTweenSequence, ref SDKTweenSequenceComponent sdkTweenSequenceComponent)
+        private void UpdatePBTweenSequence(ref PBTween pbTween, ref PBTweenSequence pbTweenSequence, ref SDKTweenSequenceComponent sdkTweenSequenceComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 

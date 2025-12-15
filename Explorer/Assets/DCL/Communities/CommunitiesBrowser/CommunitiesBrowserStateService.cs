@@ -11,6 +11,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunitiesBrowserStateService : IDisposable
     {
         private readonly Dictionary<string, CommunityData> allCommunities = new();
+        private readonly List<CommunityData> myCommunities = new();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentInvitationRequests = new ();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentJoinRequests = new ();
         private readonly EventSubscriptionScope scope = new ();
@@ -26,6 +27,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public IReadOnlyList<GetUserInviteRequestData.UserInviteRequestData> CurrentJoinRequests => currentJoinRequests;
 
         public IReadOnlyList<GetUserInviteRequestData.UserInviteRequestData> CurrentInvitationRequests => currentInvitationRequests;
+        public IReadOnlyList<CommunityData> MyCommunities => myCommunities;
 
         public CommunityData GetCommunityDataById(string communityId) =>
             allCommunities.GetValueOrDefault(communityId);
@@ -113,6 +115,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (resultCommunityData.pendingActionType == InviteRequestAction.none)
                 resultCommunityData.inviteOrRequestId = null;
+        }
+
+        public void SetMyCommunities(CommunityData[] communities)
+        {
+            myCommunities.Clear();
+            myCommunities.AddRange(communities);
         }
     }
 }

@@ -41,7 +41,7 @@ namespace DCL.Communities.CommunitiesCard
             FetchNewDataAsync(cancellationToken).Forget();
         }
 
-        protected async UniTaskVoid FetchNewDataAsync(CancellationToken ct)
+        protected async UniTask FetchNewDataAsync(CancellationToken ct)
         {
             isFetching = true;
 
@@ -53,6 +53,8 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (membersData.PageNumber == 0)
                     view.SetLoadingStateActive(true);
+                else
+                    view.SetLoadingMoreBadgeActive(true);
 
                 membersData.PageNumber++;
                 membersData.TotalToFetch = await FetchDataAsync(ct);
@@ -61,6 +63,8 @@ namespace DCL.Communities.CommunitiesCard
                 view.SetLoadingStateActive(false);
 
                 view.SetEmptyStateActive(membersData.TotalToFetch == 0);
+
+                view.SetLoadingMoreBadgeActive(false);
 
                 view.RefreshGrid(currentSectionFetchData, membersData.PageNumber > 1);
             }
