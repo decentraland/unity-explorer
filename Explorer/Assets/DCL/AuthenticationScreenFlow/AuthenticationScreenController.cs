@@ -546,21 +546,22 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.MethodSelection:
-                    viewInstance.MethodSelectionContainer.SetActive(true);
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-
-                    CurrentState.Value = AuthenticationStatus.Login;
-                    break;
+                // viewInstance.MethodSelectionContainer.SetActive(true);
+                // viewInstance.LoginContainer.SetActive(false);
+                // viewInstance.PendingAuthentication.SetActive(false);
+                // viewInstance.FinalizeContainer.SetActive(false);
+                // viewInstance.LoadingSpinner.SetActive(false);
+                // viewInstance.VerificationCodeHintContainer.SetActive(false);
+                // viewInstance.RestrictedUserContainer.SetActive(false);
+                //
+                // CurrentState.Value = AuthenticationStatus.Login;
+                // break;
 
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.MethodSelectionContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
+                    compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
