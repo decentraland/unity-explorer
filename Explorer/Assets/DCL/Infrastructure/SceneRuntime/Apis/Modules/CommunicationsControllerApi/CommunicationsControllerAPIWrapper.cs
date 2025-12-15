@@ -11,8 +11,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
     public sealed class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>, IV8FastHostObject
     {
-        private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly List<PoolableByteArray> lastInput = new (10);
         private static readonly V8FastHostObjectOperations<CommunicationsControllerAPIWrapper> OPERATIONS = new();
         IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
@@ -24,63 +22,24 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 configuration.AddMethodGetter(nameof(SendBinary),
                     static (CommunicationsControllerAPIWrapper self, in V8FastArgs args, in V8FastResult result) =>
                     {
-                        var broadcastData = args.Get<IList<object>>(0);
+                        var broadcastData = args.Get<IList<ITypedArray<byte>>>(0);
                         var peerData = args.Count > 1 ? args.Get<IList<object>>(1) : null;
-                        result.Set(self.SendBinary(broadcastData, peerData));
+                        var binaryResult = self.SendBinary(broadcastData, peerData);
+                        result.Set(binaryResult);
                     });
             });
         }
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
-            this.instancePoolsProvider = instancePoolsProvider;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
         }
 
-        protected override void DisposeInternal()
-        {
-            // Release the last input buffer
-            for (var i = 0; i < lastInput.Count; i++)
-            {
-                PoolableByteArray message = lastInput[i];
-                message.ReleaseAndDispose();
-            }
-
-            lastInput.Clear();
-        }
-
-        private void SendBinaryToParticipants(IList<object> dataList, string? recipient)
+        private void SendBinaryToParticipants(IList<ITypedArray<byte>> dataList, string? recipient)
         {
             try
             {
-                for (int i = 0; i < dataList.Count; i++)
-                {
-                    var message = (ITypedArray<byte>)dataList[i];
-                    PoolableByteArray element = PoolableByteArray.EMPTY;
-
-                    if (lastInput.Count <= i)
-                    {
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                        lastInput.Add(element);
-                    }
-                    else
-                    {
-                        element = lastInput[i];
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                        lastInput[i] = element;
-                    }
-                }
-
-                // Remove excess elements
-                while (lastInput.Count > dataList.Count)
-                {
-                    int lastIndex = lastInput.Count - 1;
-                    PoolableByteArray message = lastInput[lastIndex];
-                    message.ReleaseAndDispose();
-                    lastInput.RemoveAt(lastIndex);
-                }
-
-                api.SendBinary(lastInput, recipient);
+                api.SendBinary(dataList, recipient);
             }
             catch (Exception e)
             {
@@ -91,7 +50,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         /// <param name="broadcastData">Uint8Array[]</param>
         /// <param name="peerData">PeerMessageData[]</param>
         /// <returns>Uint8Array[]</returns>
-        private ScriptObject SendBinary(IList<object> broadcastData, IList<object>? peerData)
+        private ScriptObject SendBinary(IList<ITypedArray<byte>> broadcastData, IList<object>? peerData)
         {
             SendBinaryToParticipants(broadcastData, null);
 
@@ -99,7 +58,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             {
                 foreach (ScriptObject peerMessageData in peerData)
                 {
-                    var data = (IList<object>)peerMessageData.GetProperty("data");
+                    var data = (IList<ITypedArray<byte>>)peerMessageData.GetProperty("data");
 
                     if (data.Count == 0)
                         continue;

@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Threading;
 using UnityEngine.Profiling;
+using Utility.Memory;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
@@ -111,40 +112,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             configuration.AddMethodGetter(nameof(SendBatch),
                 static (T self, in V8FastArgs _, in V8FastResult result) =>
                     result.Set(self.SendBatch()));
-        }
-
-        // Doesn't own the memory, just a view to hack some APIs when lifetime is explicitly controlled, but Span is not acceptable
-        // It's guranteed that Js has one thread and the memory cannot be reassigned from multiple threads at the time
-        public class SingleUnmanagedMemoryManager<T> : MemoryManager<T> where T: unmanaged
-        {
-            private IntPtr ptr;
-            private int length;
-
-            public void Assign(IntPtr ptr, int length)
-            {
-                this.ptr = ptr;
-                this.length = length;
-            }
-
-            public override Span<T> GetSpan()
-            {
-                unsafe 
-                {
-                    return new ((void*) ptr, length);
-                }
-            }
-
-            public override MemoryHandle Pin(int elementIndex = 0)
-            {
-                unsafe 
-                {
-                    return new ((byte*)ptr + (elementIndex * sizeof(T)));
-                }
-            }
-
-            public override void Unpin() { }
-
-            protected override void Dispose(bool disposing) { }
         }
     }
 }

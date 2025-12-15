@@ -57,40 +57,56 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
-        public void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null)
+        public void SendBinary(IEnumerable<ITypedArray<byte>> broadcastData, string? recipient = null)
         {
             // Authoritative multiplayer enforces sending messages to the special peer
             if (sceneData.SceneEntityDefinition.metadata.authoritativeMultiplayer)
                 recipient = "authoritative-server";
 
-            foreach (PoolableByteArray poolable in broadcastData)
-                if (poolable.Length > 0)
+            foreach (ITypedArray<byte> data in broadcastData)
+                if (data.Length > 0)
                 {
-                    byte firstByte = poolable.Span[0];
+                    ulong length = data.Length;
+                    var instance = this;
 
-                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)CommsMessageType.REQ_CRDT_STATE
-                        ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
-                        : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
+                    data.InvokeWithDirectAccess(
+                        static (ptr, args) => {
+                            Span<byte> span;
+                            unsafe
+                            {
+                                span = new Span<byte>(ptr.ToPointer(), (int) args.length);
+                            }
 
-                    // Filter CRDT messages before sending
-                    if (firstByte == (int)CommsMessageType.CRDT)
-                    {
-                        Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
-                        int filteredLength = FilterCRDTMessage(poolable.Memory.Span, filtered);
-                        EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, filtered.Slice(0, filteredLength), assertiveness, recipient);
-                        continue;
-                    }
+                            byte firstByte = span[0];
 
-                    // Filter RES_CRDT_STATE messages before sending
-                    if (firstByte == (int)CommsMessageType.RES_CRDT_STATE)
-                    {
-                        Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
-                        int filteredLength = FilterCRDTStateMessage(poolable.Memory.Span, filtered);
-                        EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, filtered.Slice(0, filteredLength), assertiveness, recipient);
-                        continue;
-                    }
+                            ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)CommsMessageType.REQ_CRDT_STATE
+                                ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
+                                : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
 
-                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness, recipient);
+                            // Filter CRDT messages before sending
+                            if (firstByte == (int)CommsMessageType.CRDT)
+                            {
+                                Span<byte> filtered = stackalloc byte[span.Length];
+                                int filteredLength = FilterCRDTMessage(span, filtered);
+                                args.instance.EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, filtered.Slice(0, filteredLength), assertiveness, args.recipient);
+                                return;
+                            }
+
+                            // Filter RES_CRDT_STATE messages before sending
+                            if (firstByte == (int)CommsMessageType.RES_CRDT_STATE)
+                            {
+                                Span<byte> filtered = stackalloc byte[span.Length];
+                                int filteredLength = FilterCRDTStateMessage(span, filtered);
+                                args.instance.EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, filtered.Slice(0, filteredLength), assertiveness, args.recipient);
+                                return;
+                            }
+
+                            args.instance.EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, span, assertiveness, args.recipient);
+                        }, 
+                        (instance, recipient, length)
+                    );
+
+
                 }
         }
 
