@@ -172,27 +172,28 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 
-            // Process individual data (this part needs to remain sequential per element for thread safety)
-            foreach (ElementIndividualDataDto individualData in element.IndividualData)
-            {
-                // Probably a base wearable, wrongly return individual data. Skip it
-                if (elementDTO.Metadata.id == individualData.id) continue;
+            if (element.IndividualData != null)
+                // Process individual data (this part needs to remain sequential per element for thread safety)
+                foreach (ElementIndividualDataDto individualData in element.IndividualData)
+                {
+                    // Probably a base wearable, wrongly return individual data. Skip it
+                    if (elementDTO.Metadata.id == individualData.id) continue;
 
-                long.TryParse(individualData.transferredAt, out long transferredAt);
-                decimal.TryParse(individualData.price, out decimal price);
+                    long.TryParse(individualData.transferredAt, out long transferredAt);
+                    decimal.TryParse(individualData.price, out decimal price);
 
-                avatarElementStorage.SetOwnedNft(
-                    elementDTO.Metadata.id,
-                    new NftBlockchainOperationEntry(
-                        individualData.id,
-                        individualData.tokenId,
-                        DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
-                        price
-                    )
-                );
+                    avatarElementStorage.SetOwnedNft(
+                        elementDTO.Metadata.id,
+                        new NftBlockchainOperationEntry(
+                            individualData.id,
+                            individualData.tokenId,
+                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                            price
+                        )
+                    );
 
-                ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
-            }
+                    ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
+                }
 
             return wearable;
         }
