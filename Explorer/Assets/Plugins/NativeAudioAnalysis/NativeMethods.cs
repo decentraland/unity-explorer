@@ -9,20 +9,8 @@ namespace Plugins.NativeAudioAnalysis
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct AudioAnalysis
     {
-        // Logarithmic
         public float amplitude;
-
-        // Logarithmic
         public fixed float bands[NativeMethods.BANDS];
-
-        // Will be covered beyond MVP
-        // public float spectral_centroid;
-        // public float spectral_flux;
-
-        // [MarshalAs(UnmanagedType.I1)] // Rust bool = 1 byte
-        // public bool onset;
-
-        // public float bpm;
     }
 
     public enum AnalysisResultMode : byte
@@ -40,9 +28,6 @@ namespace Plugins.NativeAudioAnalysis
         public const float DEFAULT_AMPLITUDE_GAIN = 5f;
         public const float DEFAULT_BANDS_GAIN = 0.05f;
 
-        // Beyond MVP
-        // public const float DEFAULT_ONSET_THRESHOLD = 2.5f;
-
         private const string LIBRARY_NAME = "audio-analysis";
 
         [DllImport(LIBRARY_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -56,8 +41,6 @@ namespace Plugins.NativeAudioAnalysis
                 // gain values are used only in the logarithmic mode
                 float amplitude_gain,
                 float bands_gain
-
-                // float onset_threshold = DEFAULT_ONSET_THRESHOLD
                 );
 
         public static AudioAnalysis AnalyzeAudioBuffer(

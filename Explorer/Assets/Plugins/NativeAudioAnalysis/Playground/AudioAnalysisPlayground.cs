@@ -80,32 +80,6 @@ namespace Plugins.NativeAudioAnalysis.Playground
 
             // Amplitude
             amplitudeCenter.localScale = Vector3.one * lastAnalysis.amplitude * amplitudePower;
-
-            /* Beyond MVP
-            // Spectral centroid
-            float t = Mathf.InverseLerp(200, 4000, lastAnalysis.spectral_centroid);
-            mainCamera.backgroundColor = Color.Lerp(Color.red, Color.blue, t);
-
-            // Onset
-            if (lastAnalysis.onset) {
-                print("Burst!");
-                particles.Emit(particlesCountPerBurst); // Emit burst on set
-            }
-
-            // bpm
-            bmpCenter.Rotate(0, rotateByBpmSpeed * Time.timeScale * lastAnalysis.bpm, 0);
-
-            // median
-            medianAnalysis.amplitude = (medianAnalysis.amplitude + lastAnalysis.amplitude) / 2;
-            medianAnalysis.spectral_centroid = (medianAnalysis.spectral_centroid + lastAnalysis.spectral_centroid) / 2;
-            medianAnalysis.spectral_flux = (medianAnalysis.spectral_flux + lastAnalysis.spectral_flux) / 2;
-            medianAnalysis.bpm = (medianAnalysis.bpm + lastAnalysis.bpm) / 2;
-
-            for (int i = 0; i < medianAnalysis.bands.Length; i++) 
-            {
-                medianAnalysis.bands[i] = (medianAnalysis.bands[i] + lastAnalysis.bands[i]) / 2;
-            }
-            */
         }
     }
 }

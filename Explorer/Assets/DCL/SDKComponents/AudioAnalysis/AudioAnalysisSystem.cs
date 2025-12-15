@@ -17,7 +17,6 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 
 namespace DCL.SDKComponents.AudioSources
 {
-    // (LIKELY) Synced group is required to propagate the result back to the scene
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.SDK_AUDIO_ANALYSIS)]
     [ThrottlingEnabled]
@@ -96,6 +95,7 @@ namespace DCL.SDKComponents.AudioSources
 
                     sdkComponent.Amplitude = result.amplitude;
 
+                    // Manual iteration because ProtoBuf doesn't support fixed arrays like C#, Rust, C lang do
                     sdkComponent.Band0 = result.bands[0];
                     sdkComponent.Band1 = result.bands[1];
                     sdkComponent.Band2 = result.bands[2];
