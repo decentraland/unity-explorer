@@ -797,7 +797,8 @@ namespace DCL.AuthenticationScreenFlow
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
                         CurrentState.Value = AuthenticationStatus.FetchingProfile;
-                        SwitchState(ViewState.Loading);
+
+                        // SwitchState(ViewState.Loading);
 
                         var profileFetchSpan = new SpanData
                         {
