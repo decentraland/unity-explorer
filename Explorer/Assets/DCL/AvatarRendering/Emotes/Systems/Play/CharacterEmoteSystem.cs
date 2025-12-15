@@ -336,7 +336,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ConsumeStopEmoteIntent() urn: {emoteComponent.EmoteUrn} wallet: {profile.UserId}");
 
-            if (emoteComponent.IsPlayingEmote && emoteComponent.EmoteUrn == stopEmoteIntent.EmoteUrn)
+            if (emoteComponent.EmoteUrn == default || emoteComponent.EmoteUrn.IsNullOrEmpty())
+            {
+                // Corner case: the emote was already canceled, another message from other client arrived first
+                World.Remove<StopEmoteIntent>(entity);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ConsumeStopEmoteIntent() already canceled");
+            }
+            else if (emoteComponent.IsPlayingEmote && emoteComponent.EmoteUrn == stopEmoteIntent.EmoteUrn)
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ConsumeStopEmoteIntent() stopping");
                 StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
