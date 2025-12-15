@@ -92,16 +92,16 @@ namespace DCL.AvatarRendering.Emotes
             }
             else // Normal emotes, or social emote start animation
             {
-                if (inputModifier.DisableEmote || !avatarShapeComponent.IsVisible)
+                if (inputModifier.DisableEmote)
                     return;
 
-                var emotes = profile.Avatar.Emotes;
+                IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
                 if (emoteIndex < 0 || emoteIndex >= emotes.Count)
                     return;
 
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- Normal emotes, or social emote start animation. wallet: {profile.UserId} emoteUrn: {emoteUrn}</color>");
 
-                var emoteId = emotes[emoteIndex];
+                URN emoteId = emotes[emoteIndex];
 
                 string walletAddress = profile.UserId;
                 int interactionId = UnityEngine.Time.frameCount; // Whatever is unique, increasing and positive in this client (used when playing start animation of social emote)
@@ -110,27 +110,31 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         private void SendEmoteMessage(URN emoteId,
-            string walletAddress,
-            Entity entity,
-            int socialEmoteOutcomeIndex = -1,
-            bool useOutcomeReactionAnimation = false,
-            bool useSocialEmoteOutcomeAnimation = false,
-            string socialEmoteInitiatorWalletAddress = "",
-            string targetAvatarWalletAddress = "",
-            int socialEmoteInteractionId = 0)
+                                      string walletAddress,
+                                      Entity entity,
+                                      int socialEmoteOutcomeIndex = -1,
+                                      bool useOutcomeReactionAnimation = false,
+                                      bool useSocialEmoteOutcomeAnimation = false,
+                                      string socialEmoteInitiatorWalletAddress = "",
+                                      string targetAvatarWalletAddress = "",
+                                      int socialEmoteInteractionId = 0)
         {
             if (emoteId.IsNullOrEmpty())
                 return;
 
             var newEmoteIntent = new CharacterEmoteIntent
-            {
-                EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.SELF, WalletAddress = walletAddress,
-                SocialEmote = new CharacterEmoteIntent.SocialEmoteData
-                {
-                    OutcomeIndex = socialEmoteOutcomeIndex, UseOutcomeReactionAnimation = useOutcomeReactionAnimation, UseOutcomeAnimation = useSocialEmoteOutcomeAnimation, InitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
-                    TargetAvatarWalletAddress = targetAvatarWalletAddress, InteractionId = socialEmoteInteractionId
-                }
-            };
+            (
+                emoteId,
+                triggerSource: TriggerSource.SELF,
+                spatial: true,
+                walletAddress : walletAddress,
+                outcomeIndex : socialEmoteOutcomeIndex,
+                useOutcomeReactionAnimation : useOutcomeReactionAnimation,
+                useOutcomeAnimation : useSocialEmoteOutcomeAnimation,
+                initiatorWalletAddress : socialEmoteInitiatorWalletAddress,
+                targetAvatarWalletAddress : targetAvatarWalletAddress,
+                interactionId : socialEmoteInteractionId
+            );
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 

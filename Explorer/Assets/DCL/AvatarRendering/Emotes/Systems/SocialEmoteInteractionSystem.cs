@@ -43,39 +43,41 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             ForceAvatarToLookAtPositionQuery(World);
             InterpolateCameraTargetTowardsNewParentQuery(World);
 
-            var playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
+            CharacterEmoteComponent playerEmoteComponent = World.Get<CharacterEmoteComponent>(playerEntity);
             InitiatorLooksAtSocialEmoteTargetQuery(World, playerEmoteComponent.SocialEmote.TargetAvatarWalletAddress, playerEmoteComponent.IsPlayingEmote);
         }
 
         /// <summary>
-        ///     Plays the animation of the avatar of the initiator once both avatars interact.
+        /// Plays the animation of the avatar of the initiator once both avatars interact.
         /// </summary>
         [Query]
         [All(typeof(IAvatarView))]
         [None(typeof(CharacterEmoteIntent))]
         private void PlayInitiatorOutcomeAnimation(Entity entity, Profile profile, ref CharacterEmoteComponent emoteComponent)
         {
-            var socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (socialEmoteInteraction is { AreInteracting: true } &&
                 socialEmoteInteraction.InitiatorWalletAddress == profile.UserId && !emoteComponent.SocialEmote.HasOutcomeAnimationStarted)
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayInitiatorOutcomeAnimation() CharacterEmoteIntent Initiator outcome animation " + profile.UserId);
 
-                World.Add(entity, new CharacterEmoteIntent
-                {
-                    EmoteId = socialEmoteInteraction.Emote.DTO.Metadata.id!, TriggerSource = TriggerSource.SELF, Spatial = true, WalletAddress = profile.UserId,
-                    SocialEmote = new CharacterEmoteIntent.SocialEmoteData
-                    {
-                        OutcomeIndex = socialEmoteInteraction.OutcomeIndex, UseOutcomeReactionAnimation = false, InitiatorWalletAddress = profile.UserId, UseOutcomeAnimation = true,
-                        InteractionId = socialEmoteInteraction.Id
-                    }
-                });
+                World.Add(entity, new CharacterEmoteIntent(
+                    socialEmoteInteraction.Emote.DTO.Metadata.id!,
+                    triggerSource : TriggerSource.SELF,
+                    spatial : true,
+                    walletAddress : profile.UserId,
+                    outcomeIndex : socialEmoteInteraction.OutcomeIndex,
+                    useOutcomeReactionAnimation : false,
+                    initiatorWalletAddress : profile.UserId,
+                    useOutcomeAnimation : true,
+                    interactionId : socialEmoteInteraction.Id
+                ));
             }
         }
 
         /// <summary>
-        ///     Moves and rotates the avatar to the position and rotation it will have when animation begins.
+        /// Moves and rotates the avatar to the position and rotation it will have when animation begins.
         /// </summary>
         [Query]
         [All(typeof(InterpolateToOutcomeStartPoseIntent))]
@@ -83,7 +85,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         {
             if (moveIntent.HasBeenCancelled)
             {
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "InterpolateAvatarToOutcomeStartPose() " + ((AvatarBase)avatarView).name);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() " + ((AvatarBase)avatarView).name);
                 World.Remove<InterpolateToOutcomeStartPoseIntent>(entity);
                 return;
             }
@@ -93,16 +95,16 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() <color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Wallet: {((AvatarBase)avatarView).name}</color>");
 
             // Since the outcome emote has already started to play, the avatar is moving its position, but we need to create the illusion of the avatar not moving at all
-            var currentHipToOriginalPosition = moveIntent.OriginalAvatarPosition - ((AvatarBase)avatarView).HipAnchorPoint.position;
-            var originalPositionWithCurrentOffset = avatarView.GetTransform().position + new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
+            Vector3 currentHipToOriginalPosition = moveIntent.OriginalAvatarPosition - ((AvatarBase)avatarView).HipAnchorPoint.position;
+            Vector3 originalPositionWithCurrentOffset = avatarView.GetTransform().position + new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
             originalPositionWithCurrentOffset.y = moveIntent.InitiatorWorldPosition.y; // In order to avoid the avatar from leaning, due to the other avatar being at a different height, we move the reacting avatar to the initiator's height
             avatarView.GetTransform().position = Vector3.Lerp(originalPositionWithCurrentOffset, moveIntent.InitiatorWorldPosition, interpolation);
 
-            Debug.DrawRay(avatarView.GetTransform().position, Vector3.up, Color.yellow, 3.0f);
+            Debug.DrawRay(avatarView.GetTransform().position, UnityEngine.Vector3.up, Color.yellow, 3.0f);
             GizmoDrawer.Instance.DrawWireSphere(5, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
-            Debug.DrawRay(moveIntent.OriginalAvatarPosition, Vector3.up, Color.red, 3.0f);
+            Debug.DrawRay(moveIntent.OriginalAvatarPosition, UnityEngine.Vector3.up, Color.red, 3.0f);
             GizmoDrawer.Instance.DrawWireSphere(0, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
-            Debug.DrawRay(moveIntent.InitiatorWorldPosition, Vector3.up, Color.cyan, 3.0f);
+            Debug.DrawRay(moveIntent.InitiatorWorldPosition, UnityEngine.Vector3.up, Color.cyan, 3.0f);
             GizmoDrawer.Instance.DrawWireSphere(2, moveIntent.InitiatorWorldPosition, 0.2f, Color.cyan);
 
             if (interpolation >= 1.0f)
@@ -114,7 +116,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         // Executed locally only
         /// <summary>
-        ///     Makes the receiver's character walk to the position of the initiator.
+        /// Makes the receiver's character walk to the position of the initiator.
         /// </summary>
         [Query]
         [All(typeof(MoveBeforePlayingSocialEmoteIntent))]
@@ -136,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 return;
             }
 
-            var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress);
 
             // Checks if the initiator is still available, otherwise cancel the movement
             if (interaction == null || interaction.AreInteracting || interaction.Id != moveIntent.TriggerEmoteIntent.InteractionId)
@@ -200,7 +202,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [All(typeof(LookAtPositionIntention))]
         private void ForceAvatarToLookAtPosition(Entity entity, IAvatarView avatarView, LookAtPositionIntention lookAtPositionIntention)
         {
-            var avatarForward = lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position;
+            Vector3 avatarForward = lookAtPositionIntention.TargetPosition - avatarView.GetTransform().position;
             avatarForward.y = 0.0f;
             avatarView.GetTransform().forward = avatarForward.normalized;
             World.Remove<LookAtPositionIntention>(entity);
@@ -218,7 +220,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateCameraTargetTowardsNewParent() <color=#559933>CAMERA INTERPOLATION: {interpolation.ToString("F6")}</color>");
 
-                var targetPositionWithHeight = interpolateIntent.Target.position;
+                Vector3 targetPositionWithHeight = interpolateIntent.Target.position;
                 targetPositionWithHeight.y = interpolateIntent.Target.position.y + interpolateIntent.LocalHeight;
 
                 player.CameraFocus.position = Vector3.Lerp(interpolateIntent.StartPosition, targetPositionWithHeight, interpolation);

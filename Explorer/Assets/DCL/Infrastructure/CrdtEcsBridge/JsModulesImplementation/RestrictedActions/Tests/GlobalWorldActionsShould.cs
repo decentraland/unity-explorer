@@ -140,15 +140,15 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void DoNothingWhenAvatarNotVisible()
+        public void CanPlayEmotesWhenAvatarNotVisible()
         {
             world.Add(playerEntity, new AvatarShapeComponent { IsVisible = false });
             var emoteUrn = new URN("urn:emote:id");
 
             globalWorldActions.TriggerEmote(emoteUrn, false);
 
-            Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(playerEntity));
+            Assert.AreEqual(1, mockMessageBus.SentEmotes.Count);
         }
 
         [Test]
