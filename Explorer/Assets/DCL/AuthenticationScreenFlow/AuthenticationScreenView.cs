@@ -18,9 +18,12 @@ namespace DCL.AuthenticationScreenFlow
 
         private StringVariable? countdownLabelParameter;
 
-        [field: Header("Method Selection")]
+        [field: Header("Login")]
         [field: SerializeField]
-        public GameObject MethodSelectionContainer { get; private set; } = null!;
+        public GameObject LoginContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginButton { get; private set; } = null!;
 
         [field: SerializeField]
         public TMP_InputField EmailInputField { get; private set; } = null!;
@@ -28,28 +31,11 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button LoginWithOtpButton { get; private set; } = null!;
 
-        [field: SerializeField]
-        public Button LoginWithWalletButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button LoginWithGoogleButton { get; private set; } = null!;
-
-        [field: Header("LoginWithOtp")]
-        [field: SerializeField]
-        public GameObject LoginWithOtpContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public TMP_InputField PasswordInputField { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button RegisterButton { get; private set; } = null!;
-
-        [field: Header("Login")]
-        [field: SerializeField]
-        public GameObject LoginContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button LoginButton { get; private set; } = null!;
+        // [field: SerializeField]
+        // public TMP_InputField PasswordInputField { get; private set; } = null!;
+        //
+        // [field: SerializeField]
+        // public Button RegisterButton { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; } = null!;
