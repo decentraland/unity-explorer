@@ -14,7 +14,8 @@ namespace DCL.Multiplayer.Movement
 
         public float rotationY;
 
-        public bool headIKEnabled;
+        public bool headIKYawEnabled;
+        public bool headIKPitchEnabled;
         public Vector2 headYawAndPitch;
 
         public MovementKind movementKind;
@@ -45,7 +46,8 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(velocityTier);
             hashCode.Add(isInstant);
             hashCode.Add(isEmoting);
-            hashCode.Add(headIKEnabled);
+            hashCode.Add(headIKYawEnabled);
+            hashCode.Add(headIKPitchEnabled);
             hashCode.Add(headYawAndPitch);
             return hashCode.ToHashCode();
         }
@@ -63,7 +65,8 @@ namespace DCL.Multiplayer.Movement
             && velocityTier == other.velocityTier
             && isInstant == other.isInstant
             && isEmoting == other.isEmoting
-            && headIKEnabled == other.headIKEnabled
+            && headIKYawEnabled == other.headIKYawEnabled
+            && headIKPitchEnabled == other.headIKPitchEnabled
             && headYawAndPitch.Equals(other.headYawAndPitch);
 
         public override bool Equals(object obj) =>

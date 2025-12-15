@@ -162,13 +162,14 @@ namespace DCL.CharacterMotion.Systems
             in CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent)
         {
-            headIK.IsEnabled = debugHeadIKIsEnabled
-                               && rigidTransform is { IsGrounded: true, IsOnASteepSlope: false }
-                               && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
-                               && !stunComponent.IsStunned
-                               && !emoteComponent.IsPlayingEmote
-                               && !platformComponent.PositionChanged;
-
+            bool pitchEnabled = debugHeadIKIsEnabled &&
+                                rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
+                                !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
+                                !stunComponent.IsStunned &&
+                                !emoteComponent.IsPlayingEmote &&
+                                !platformComponent.PositionChanged;
+            bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
+            headIK.SetEnabled(yawEnabled, pitchEnabled);
 
             if (emoteComponent.IsPlayingEmote) // IK disabled (no interpolation at all) when playing an emote
                 avatarBase.HeadIKRig.weight = 0.0f;
@@ -207,7 +208,7 @@ namespace DCL.CharacterMotion.Systems
                 ? headIK.LookAt
                 : avatarBase.HeadIKRig.transform.forward;
 
-            ApplyHeadLookAt.Execute(lookAt, avatarBase, dt, settings);
+            ApplyHeadLookAt.Execute(lookAt, headIK.YawEnabled, headIK.PitchEnabled, avatarBase, dt, settings);
         }
 
         private float UpdateIKWeight(float current, bool isEnabled, float maxDelta) =>

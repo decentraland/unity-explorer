@@ -29,8 +29,9 @@ namespace DCL.Multiplayer.Movement
 
         public float InitialCooldownTime;
 
-        public bool HeadIKEnabled;
-        public float2 TargetYawAndPitch;
+        public bool HeadIKYawEnabled;
+        public bool HeadIKPitchEnabled;
+        public float2 HeadIKYawAndPitch;
 
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
@@ -46,8 +47,9 @@ namespace DCL.Multiplayer.Movement
 
             InitialCooldownTime = 0;
 
-            HeadIKEnabled = false;
-            TargetYawAndPitch = float2.zero;
+            HeadIKYawEnabled = false;
+            HeadIKPitchEnabled = false;
+            HeadIKYawAndPitch = float2.zero;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -78,8 +80,9 @@ namespace DCL.Multiplayer.Movement
 
         public void UpdateHeadIK(in NetworkMovementMessage message)
         {
-            HeadIKEnabled = message.headIKEnabled;
-            TargetYawAndPitch = message.headYawAndPitch;
+            HeadIKYawEnabled = message.headIKYawEnabled;
+            HeadIKPitchEnabled = message.headIKPitchEnabled;
+            HeadIKYawAndPitch = message.headYawAndPitch;
         }
 
         public void Dispose()

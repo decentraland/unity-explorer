@@ -18,10 +18,12 @@ namespace DCL.CharacterMotion.IK
         /// </summary>
         /// <param name="useFrontalReset"> If the target horizonal angle is outside of the limits, reset the head location to look frontal </param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings, bool useFrontalReset = true)
+        public static void Execute(Vector3 targetDirection, bool yawEnabled, bool pitchEnabled, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings, bool useFrontalReset = true)
         {
             Execute(avatarBase.HeadPositionConstraint.forward,
                 targetDirection,
+                yawEnabled,
+                pitchEnabled,
                 settings.HeadIKRotationSpeed * dt,
                 avatarBase.HeadLookAtTargetHorizontal.localRotation,
                 avatarBase.HeadLookAtTargetVertical.localRotation,
@@ -35,10 +37,16 @@ namespace DCL.CharacterMotion.IK
             avatarBase.HeadLookAtTargetVertical.localRotation = verticalRotationResult;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings, bool useFrontalReset = true)
+            => Execute(targetDirection, true, true, avatarBase, dt, settings, useFrontalReset);
+
         [BurstCompile]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Execute(in float3 referenceDirection,
             in float3 targetDirection,
+            bool yawEnabled,
+            bool pitchEnabled,
             float maxDeltaDegrees,
             in quaternion lookAtTargetHorizontal,
             in quaternion lookAtTargetVertical,
@@ -54,30 +62,32 @@ namespace DCL.CharacterMotion.IK
 
             float horizontalAngle = DeltaAngle(referenceAngle.y, targetAngle.y);
 
-            quaternion horizontalTargetRotation;
-            quaternion verticalTargetRotation;
+            quaternion horizontalTargetRotation = quaternion.identity;
+            quaternion verticalTargetRotation =  quaternion.identity;
 
             if (useFrontalReset && math.abs(horizontalAngle) > math.radians(angleResetDegrees))
-            {
-                horizontalTargetRotation = quaternion.identity;
-                verticalTargetRotation = quaternion.identity;
                 maxDeltaDegrees *= 0.333333f;
-            }
             else
             {
                 var angleLimitsRads = math.radians(angleLimitsDegrees);
 
-                horizontalAngle = math.clamp(horizontalAngle, -angleLimitsRads.x, angleLimitsRads.x);
-                horizontalTargetRotation = quaternion.AxisAngle(up, horizontalAngle);
+                if (yawEnabled)
+                {
+                    horizontalAngle = math.clamp(horizontalAngle, -angleLimitsRads.x, angleLimitsRads.x);
+                    horizontalTargetRotation = quaternion.AxisAngle(up, horizontalAngle);
+                }
 
-                float verticalAngle = DeltaAngle(referenceAngle.x, targetAngle.x);
-                verticalAngle = math.clamp(verticalAngle, -angleLimitsRads.y, angleLimitsRads.y);
-                verticalTargetRotation = math.mul(horizontalTargetRotation, quaternion.AxisAngle(math.right(), verticalAngle));
+                if (pitchEnabled)
+                {
+                    float verticalAngle = DeltaAngle(referenceAngle.x, targetAngle.x);
+                    verticalAngle = math.clamp(verticalAngle, -angleLimitsRads.y, angleLimitsRads.y);
+                    verticalTargetRotation = math.mul(horizontalTargetRotation, quaternion.AxisAngle(math.right(), verticalAngle));
+                }
             }
 
             float maxDelta = math.radians(maxDeltaDegrees);
-            horizontalRotationResult = RotateTowards(lookAtTargetHorizontal, horizontalTargetRotation, maxDelta);
-            verticalRotationResult = RotateTowards(lookAtTargetVertical, verticalTargetRotation, maxDelta);
+            horizontalRotationResult = yawEnabled ? RotateTowards(lookAtTargetHorizontal, horizontalTargetRotation, maxDelta) : quaternion.identity;
+            verticalRotationResult = pitchEnabled ? RotateTowards(lookAtTargetVertical, verticalTargetRotation, maxDelta) : quaternion.identity;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

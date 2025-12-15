@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Movement.Systems
             ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
-            ApplyHeadIK(ref headIK, firstRemote.headIKEnabled, firstRemote.headYawAndPitch);
+            ApplyHeadIK(ref headIK, firstRemote.headIKYawEnabled, firstRemote.headIKPitchEnabled, firstRemote.headYawAndPitch);
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.UpdateHeadIK(firstRemote);
@@ -92,8 +92,8 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             var headYawAndPitch = Vector2.zero;
-            if (remotePlayerMovement.HeadIKEnabled) headYawAndPitch = Interpolation.InterpolateHeadIK(headIK, remotePlayerMovement.TargetYawAndPitch, settings.InterpolationSettings.HeadIKInterpolationFactor);
-            ApplyHeadIK(ref headIK, remotePlayerMovement.HeadIKEnabled, headYawAndPitch);
+            if (remotePlayerMovement.HeadIKYawEnabled || remotePlayerMovement.HeadIKPitchEnabled) headYawAndPitch = Interpolation.InterpolateHeadIK(headIK, remotePlayerMovement.HeadIKYawAndPitch, settings.InterpolationSettings.HeadIKInterpolationFactor);
+            ApplyHeadIK(ref headIK, remotePlayerMovement.HeadIKYawEnabled, remotePlayerMovement.HeadIKPitchEnabled, headYawAndPitch);
 
             if (intComp.Enabled)
             {
@@ -309,9 +309,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 intComp.End.movementKind, intComp.End.velocitySqrMagnitude, characterControllerSettings);
         }
 
-        private static void ApplyHeadIK(ref HeadIKComponent headIK, bool enabled, Vector2 angles)
+        private static void ApplyHeadIK(ref HeadIKComponent headIK, bool yawEnabled, bool pitchEnabled, Vector2 angles)
         {
-            headIK.IsEnabled = enabled;
+            headIK.SetEnabled(yawEnabled, pitchEnabled);
             headIK.LookAt = angles.sqrMagnitude > 0.0001f ? Quaternion.Euler(angles.y, angles.x, 0) * Vector3.forward : Vector3.forward;
         }
     }

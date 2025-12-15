@@ -107,7 +107,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 return Mathf.Abs(snapshot.rotationY - playerMovement.Character.transform.eulerAngles.y) > 0.1f ||
                        Vector3.SqrMagnitude(snapshot.position - playerMovement.Character.transform.position) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
                        Vector3.SqrMagnitude(snapshot.velocity - playerMovement.Character.velocity) > VELOCITY_MOVE_EPSILON * VELOCITY_MOVE_EPSILON ||
-                       snapshot.headIKEnabled != headIK.IsEnabled ||
+                       snapshot.headIKYawEnabled != headIK.YawEnabled ||
+                       snapshot.headIKPitchEnabled != headIK.PitchEnabled ||
                        Math.Abs(snapshot.headYawAndPitch.x - currentHeadYawAndPitch.x) > HEAD_IK_EPSILON ||
                        Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON;
             }
@@ -140,7 +141,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 
-            bool headSyncEnabled = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_HEAD_SYNC_ENABLED);
+            bool headSyncEnabledPref = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_HEAD_SYNC_ENABLED);
             Vector3 headYawAndPitch = headIK.GetHeadYawAndPitch();
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
@@ -152,7 +153,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 rotationY = playerMovement.Character.transform.eulerAngles.y,
 
-                headIKEnabled = headSyncEnabled && headIK.IsEnabled,
+                headIKYawEnabled = headSyncEnabledPref && headIK.YawEnabled,
+                headIKPitchEnabled = headSyncEnabledPref && headIK.PitchEnabled,
                 headYawAndPitch = headYawAndPitch,
 
                 velocityTier = velocityTier,
