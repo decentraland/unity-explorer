@@ -183,10 +183,9 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
 
-            // Method selection buttons
+            // ThirdWeb buttons
             viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
-            // viewInstance.LoginWithWalletButton.onClick.AddListener(SelectDappWalletMethod);
-            // viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
+            viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
         }
 
 #region MainFlow
@@ -464,6 +463,11 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowVerification(int code, DateTime expiration, string requestID)
         {
+            viewInstance!.PasswordInputField.gameObject.SetActive(false);
+            viewInstance!.RegisterButton.gameObject.SetActive(false);
+            viewInstance!.VerificationDescriptionsLabel.gameObject.SetActive(true);
+            viewInstance!.VerificationCodeLabel.gameObject.SetActive(true);
+
             viewInstance!.VerificationCodeLabel.text = code.ToString();
             CurrentRequestID = requestID;
 
@@ -751,6 +755,29 @@ namespace DCL.AuthenticationScreenFlow
 
                     string email = viewInstance!.EmailInputField.text;
                     currentEmail = email;
+
+                    viewInstance!.PasswordInputField.gameObject.SetActive(true);
+                    viewInstance!.RegisterButton.gameObject.SetActive(true);
+                    viewInstance!.VerificationDescriptionsLabel.gameObject.SetActive(false);
+                    viewInstance!.VerificationCodeLabel.gameObject.SetActive(false);
+
+                    // var verificationSpan = new SpanData
+                    // {
+                    //     TransactionName = LOADING_TRANSACTION_NAME,
+                    //     SpanName = "CodeVerification",
+                    //     SpanOperation = "auth.code_verification",
+                    //     Depth = 1
+                    // };
+                    // sentryTransactionManager.StartSpan(verificationSpan);
+                    // CancelVerificationCountdown();
+                    // verificationCountdownCancellationToken = new CancellationTokenSource();
+                    // viewInstance.StartVerificationCountdownAsync(expiration,
+                    //                  verificationCountdownCancellationToken.Token)
+                    //             .Forget();
+
+                    CurrentState.Value = AuthenticationStatus.VerificationInProgress;
+                    SwitchState(ViewState.LoginInProgress);
+
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
 
                     // Clean up OTP callback
@@ -840,7 +867,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             // If we're waiting for OTP input, complete the task with the entered code
             if (otpCompletionSource == null) return;
-            var otp = "a"; //viewInstance!.PasswordInputField.text;
+            string? otp = viewInstance!.PasswordInputField.text;
             otpCompletionSource.TrySetResult(otp);
         }
 

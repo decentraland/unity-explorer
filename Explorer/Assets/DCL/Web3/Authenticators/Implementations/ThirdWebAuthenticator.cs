@@ -56,8 +56,6 @@ namespace DCL.Web3.Authenticators
                 ThirdWebManager.Instance.ActiveWallet
                     = await LoginViaOTP(email, ct);
 
-                // = await LoginViaOTP("popuzin@gmail.com", ct);
-
                 string? sender = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
@@ -113,12 +111,16 @@ namespace DCL.Web3.Authenticators
 
             await wallet.SendOTP();
 
-            Debug.Log("OTP sent");
-
+            Debug.Log("OTP sent to email");
             string otp = await otpRequestCallback!.Invoke(ct);
+            Debug.Log($"passing OTP {otp}");
 
-            // TODO : add try-catch for wrong OTP
-            _ = await wallet.LoginWithOtp(otp);
+            try { _ = await wallet.LoginWithOtp(otp); }
+            catch (Exception e) { Debug.LogException(e); }
+
+            Debug.Log($"ThirdWeb logged in as wallet {wallet.WalletId}");
+
+            ThirdWebManager.Instance.ActiveWallet = wallet;
             return wallet;
         }
 

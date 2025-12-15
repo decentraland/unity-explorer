@@ -47,6 +47,9 @@ namespace DCL.AuthenticationScreenFlow
         public Animator VerificationAnimator { get; private set; } = null!;
 
         [field: SerializeField]
+        public TMP_Text VerificationDescriptionsLabel { get; private set; } = null!;
+
+        [field: SerializeField]
         public TMP_Text VerificationCodeLabel { get; private set; } = null!;
 
         [field: SerializeField]
