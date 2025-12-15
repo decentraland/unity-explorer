@@ -213,5 +213,16 @@ namespace DCL.SDKComponents.MediaStream
         {
             audioSource.transform.position = position;
         }
+
+        /// <summary>
+        /// MUST be used in place, caller doesn't take ownership of the referene.
+        /// </summary>
+        public AudioSource? ExposedAudioSource()
+        {
+            // Could be cached in LivekitAudioSource in future 
+            // Strongly NOT RECOMMENDED to cache it here (LivekitPlayer.cs)
+            // to avoid implementation coupling and possiblity of caching bugs
+            return audioSource.gameObject.GetComponent<AudioSource>();
+        }
     }
 }
