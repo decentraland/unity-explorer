@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Credentials;
 using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -65,6 +66,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private readonly IObjectPool<IRoom> roomPool;
 
         private CancellationTokenSource? cancellationTokenSource;
+        private bool isDuplicateIdentityDetected;
 
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
 
@@ -98,6 +100,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public void Dispose()
         {
+            room.ConnectionUpdated -= OnConnectionUpdated;
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
@@ -117,8 +120,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
+            isDuplicateIdentityDetected = false;
             attemptToConnectState.Set(AttemptToConnectState.NONE);
             roomState.Set(IConnectiveRoom.State.Starting);
+            room.ConnectionUpdated += OnConnectionUpdated;
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
             return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
@@ -129,11 +134,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
 
+            room.ConnectionUpdated -= OnConnectionUpdated;
             roomState.Set(IConnectiveRoom.State.Stopping);
             await room.ResetRoom(roomPool, CancellationToken.None);
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
+            isDuplicateIdentityDetected = false;
         }
 
         protected virtual void OnForbiddenAccess() =>
@@ -153,13 +160,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             await ExecuteWithRecoveryAsync(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
 
-            while (token.IsCancellationRequested == false)
+            while (token.IsCancellationRequested == false && !isDuplicateIdentityDetected)
             {
                 await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
             }
 
-            connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+            if (isDuplicateIdentityDetected)
+            {
+                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity detected, stopping reconnection loop");
+                connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+                attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
+            }
+            else
+            {
+                connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+            }
         }
 
         private async UniTask ExecuteWithRecoveryAsync(Func<CancellationToken, UniTask> func, string funcName, IConnectiveRoom.ConnectionLoopHealth enterState, IConnectiveRoom.ConnectionLoopHealth stateOnException, CancellationToken ct)
@@ -276,6 +292,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             await room.SwapRoomsAsync(roomSelection, previous, newRoom, roomsPool, ct);
 
             return (connectResult, roomSelection);
+        }
+
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        {
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity)
+            {
+                isDuplicateIdentityDetected = true;
+                cancellationTokenSource?.SafeCancelAndDispose();
+                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity disconnect reason received, interrupting reconnection attempts");
+            }
         }
     }
 }
