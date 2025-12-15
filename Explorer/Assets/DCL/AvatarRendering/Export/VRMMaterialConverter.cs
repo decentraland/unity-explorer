@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DCL.Diagnostics;
 using Runtime.Wearables;
@@ -7,7 +8,7 @@ using Utility;
 
 namespace DCL.AvatarRendering.Export
 {
-    public class VRMaterialConverter
+    public class VRMMaterialConverter : IDisposable
     {
         private enum BlendModeType { Opaque, Cutout, Transparent }
         
@@ -58,7 +59,7 @@ namespace DCL.AvatarRendering.Export
         private readonly Dictionary<string, Texture> facialFeatureMaskTextures;
         
 
-        public VRMaterialConverter(
+        public VRMMaterialConverter(
             Color skinColor,
             Color hairColor,
             Color eyesColor,
@@ -434,13 +435,13 @@ namespace DCL.AvatarRendering.Export
             }
         }
 
-        public void Cleanup()
+        public void Dispose()
         {
             foreach (var mat in createdMaterials)
-                if (mat != null) UnityObjectUtils.SafeDestroy(mat);
+                UnityObjectUtils.SafeDestroy(mat);
             
             foreach (var tex in createdTextures)
-                if (tex != null) UnityObjectUtils.SafeDestroy(tex);
+                UnityObjectUtils.SafeDestroy(tex);
             
             createdMaterials.Clear();
             createdTextures.Clear();

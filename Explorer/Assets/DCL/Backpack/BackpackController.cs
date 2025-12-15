@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Crosstales.FB;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Export;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -27,6 +28,7 @@ using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
@@ -267,8 +269,36 @@ namespace DCL.Backpack
 
         private void OnVRMExportClicked()
         {
-            var exportIntention = new ExportAvatarIntention();
-            world.Add(playerEntity, exportIntention);
+            if (!world.TryGet(playerEntity, out Profile? profile) || profile == null)
+            {
+                ReportHub.LogError(ReportCategory.AVATAR_EXPORT, "Cannot export: No profile found");
+                return;
+            }
+
+            string savePath = TryGetExportPath(profile.Name);
+            if (string.IsNullOrEmpty(savePath))
+                return;
+    
+            VRMExportRequestBuilder.CreateExportRequest(
+                world, 
+                profile,
+                savePath,
+                () =>
+                {
+                    if (view.gameObject.activeInHierarchy)
+                    {
+                        view.ToastMessage.ShowToastMessage(ToastMessageType.SUCCESS, "VRM avatar successfully exported.");
+                    }
+                });
+    
+            ReportHub.Log(ReportCategory.AVATAR_EXPORT, "VRM Export requested...");
+        }
+
+        private string TryGetExportPath(string name)
+        {
+            string fileName = $"{name} avatar";
+            string savePath = FileBrowser.Instance.SaveFile("Save avatar VRM", Application.persistentDataPath, fileName, new ExtensionFilter("vrm", "vrm"));
+            return savePath;
         }
 
         private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)

@@ -30,6 +30,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         bool IsOutlineCompatible();
 
+        string GetMarketplaceLink();
+
         public static IWearable NewEmpty() =>
             new Wearable();
     }

@@ -138,10 +138,6 @@ namespace DCL.CharacterPreview
                 avatarBase.HeadIKRig.weight = 1f;
             }
 
-            // Triggering export for test purposes
-            var exportIntention = new ExportAvatarIntention();
-            world.Add(avatarEntity, exportIntention);
-
             return;
 
             bool IsEmoteLoaded() =>

@@ -590,6 +590,16 @@ MonoBehaviour:
       Severity: 4
     - Category: SOCIAL
       Severity: 1
+    - Category: AVATAR_EXPORT
+      Severity: 3
+    - Category: AVATAR_EXPORT
+      Severity: 2
+    - Category: AVATAR_EXPORT
+      Severity: 0
+    - Category: AVATAR_EXPORT
+      Severity: 4
+    - Category: AVATAR_EXPORT
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

@@ -1,12 +1,14 @@
+using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Export
 {
-    public class WearableMeshCollector
+    public class WearableMeshCollector : IDisposable
     {
         private readonly List<GameObject> instantiatedObjects = new();
 
@@ -27,7 +29,7 @@ namespace DCL.AvatarRendering.Export
                 
                 if (enabledPaths.Count == 0)
                 {
-                    Debug.Log($"No enabled meshes found in wearable instance: {wearable.Instance.name}");
+                    ReportHub.Log(ReportCategory.AVATAR_EXPORT, $"No enabled meshes found in wearable instance: {wearable.Instance.name}");
                     continue;
                 }
 
@@ -59,7 +61,6 @@ namespace DCL.AvatarRendering.Export
                 {
                     string path = GetHierarchyPath(smr.transform, root);
                     enabledPaths.Add(path);
-                    Debug.Log($"Found enabled SMR at path: {path} ({smr.gameObject.name})");
                 }
             }
 
@@ -147,31 +148,25 @@ namespace DCL.AvatarRendering.Export
                     ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT,$"Could not find transform at path: {path} in original");
                     continue;
                 }
-
-                // Try to get SkinnedMeshRenderer (preferred - has bone data)
-                var smr = target.GetComponent<SkinnedMeshRenderer>();
-                if (smr != null && smr.sharedMesh != null)
+                
+                var skinnedMeshRenderer = target.GetComponent<SkinnedMeshRenderer>();
+                if (skinnedMeshRenderer != null && skinnedMeshRenderer.sharedMesh != null)
                 {
-                    var meshData = CollectSkinnedMeshData(smr);
+                    var meshData = CollectSkinnedMeshData(skinnedMeshRenderer);
                     if (meshData != null)
-                    {
                         collectedMeshes.Add(meshData);
-                        ReportHub.Log(ReportCategory.AVATAR_EXPORT, $"Collected SMR at path: {path} ({target.name})");
-                    }
+                    
                     continue;
                 }
 
-                // Fallback to MeshRenderer if no SkinnedMeshRenderer
-                var mr = target.GetComponent<MeshRenderer>();
+                var meshRenderer = target.GetComponent<MeshRenderer>();
                 var mf = target.GetComponent<MeshFilter>();
-                if (mr != null && mf != null && mf.sharedMesh != null)
+                if (meshRenderer != null && mf != null && mf.sharedMesh != null)
                 {
-                    var meshData = CollectStaticMeshData(mr, mf);
+                    var meshData = CollectStaticMeshData(meshRenderer, mf);
                     if (meshData != null)
-                    {
                         collectedMeshes.Add(meshData);
-                        ReportHub.Log(ReportCategory.AVATAR_EXPORT, $"Collected MR at path: {path} ({target.name})");
-                    }
+                    
                     continue;
                 }
 
@@ -179,10 +174,10 @@ namespace DCL.AvatarRendering.Export
             }
         }
 
-        private CollectedMeshData CollectSkinnedMeshData(SkinnedMeshRenderer smr)
+        private CollectedMeshData CollectSkinnedMeshData(SkinnedMeshRenderer skinnedMeshRenderer)
         {
-            var mesh = smr.sharedMesh;
-            var bones = smr.bones;
+            var mesh = skinnedMeshRenderer.sharedMesh;
+            var bones = skinnedMeshRenderer.bones;
 
             var boneNames = new string[bones.Length];
             for (int i = 0; i < bones.Length; i++)
@@ -196,41 +191,34 @@ namespace DCL.AvatarRendering.Export
                 blendShapeWeights = new float[mesh.blendShapeCount];
                 for (int i = 0; i < mesh.blendShapeCount; i++)
                 {
-                    blendShapeWeights[i] = smr.GetBlendShapeWeight(i);
+                    blendShapeWeights[i] = skinnedMeshRenderer.GetBlendShapeWeight(i);
                 }
             }
 
             return new CollectedMeshData
             {
-                Name = smr.name,
+                Name = skinnedMeshRenderer.name,
                 SharedMesh = mesh,
-                Materials = smr.sharedMaterials,
+                Materials = skinnedMeshRenderer.sharedMaterials,
                 IsSkinnedMesh = true,
                 SourceBones = bones,
                 SourceBoneNames = boneNames,
-                RootBoneName = smr.rootBone != null ? smr.rootBone.name : null,
-                Bounds = smr.localBounds,
-                BlendShapeWeights = blendShapeWeights,
-                SourceRenderer = smr
+                RootBoneName = skinnedMeshRenderer.rootBone != null ? skinnedMeshRenderer.rootBone.name : null,
+                BlendShapeWeights = blendShapeWeights
             };
         }
 
-        private CollectedMeshData CollectStaticMeshData(MeshRenderer mr, MeshFilter mf)
+        private CollectedMeshData CollectStaticMeshData(MeshRenderer meshRenderer, MeshFilter meshFilter)
         {
-            string parentPath = BuildParentPath(mr.transform);
+            string parentPath = BuildParentPath(meshRenderer.transform);
 
             return new CollectedMeshData
             {
-                Name = mr.name,
-                SharedMesh = mf.sharedMesh,
-                Materials = mr.sharedMaterials,
+                Name = meshRenderer.name,
+                SharedMesh = meshFilter.sharedMesh,
+                Materials = meshRenderer.sharedMaterials,
                 IsSkinnedMesh = false,
-                OriginalParentPath = parentPath,
-                LocalPosition = mr.transform.localPosition,
-                LocalRotation = mr.transform.localRotation,
-                LocalScale = mr.transform.localScale,
-                Bounds = mf.sharedMesh.bounds,
-                SourceRenderer = mr
+                OriginalParentPath = parentPath
             };
         }
 
@@ -248,14 +236,13 @@ namespace DCL.AvatarRendering.Export
             parts.Reverse();
             return string.Join("/", parts);
         }
-
-        public void Cleanup()
+        
+        public void Dispose()
         {
-            return;
             foreach (var obj in instantiatedObjects)
             {
                 if (obj != null)
-                    Object.Destroy(obj);
+                    UnityObjectUtils.SafeDestroy(obj);
             }
             instantiatedObjects.Clear();
         }

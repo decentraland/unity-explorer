@@ -178,6 +178,32 @@ namespace DCL.AvatarRendering.Wearables.Components
         private bool IsSkin() =>
             GetCategory() == WearableCategories.Categories.SKIN;
 
+        private bool IsCollectible()
+        {
+            string? id = Model.Asset!.metadata.id;
+            
+            return !string.IsNullOrEmpty(id) && !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+        }
+        
+        public string GetMarketplaceLink()
+        {
+            const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
+            
+            if (!IsCollectible())
+                return "";
+            
+            string? id = Model.Asset!.metadata.id;
+            string[]? split = id.Split(":");
+
+            if (split.Length < 2)
+                return "";
+
+            if (!split[^2].StartsWith("0x") || !int.TryParse(split[^1], out int _))
+                return "";
+
+            return string.Format(MARKETPLACE, split[^2], split[^1]);
+        }
+
         private bool IsFacialFeature() =>
             WearableCategories.FACIAL_FEATURES.Contains(GetCategory());
 

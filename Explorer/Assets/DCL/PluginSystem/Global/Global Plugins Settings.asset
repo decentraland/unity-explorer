@@ -56,7 +56,6 @@ MonoBehaviour:
   - rid: 6169970366055448665
   - rid: 2008243996523495520
   - rid: 3821626543930605662
-  - rid: 8541286177125695603
   references:
     version: 2
     RefIds:
@@ -1035,15 +1034,6 @@ MonoBehaviour:
       type: {class: AdaptivePerformanceSettings, ns: DCL.Optimization.AdaptivePerformance.Systems, asm: DCL.Plugins}
       data:
         <phyiscsSettings>k__BackingField: {fileID: 11400000, guid: b68ba436e63c39949b58b7aac96c291c, type: 2}
-    - rid: 8541286177125695603
-      type: {class: VRMPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <VRMBonesMappingAsset>k__BackingField:
-          m_AssetGUID: 85dd42f3fc0585346b241697901c4cb3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 8813103964372074592
       type: {class: MarketplaceCreditsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

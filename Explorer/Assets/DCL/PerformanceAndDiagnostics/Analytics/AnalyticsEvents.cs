@@ -27,6 +27,7 @@
         public static class Wearables
         {
             public const string USED_EMOTE = "used_emote";
+            public const string AVATAR_EXPORTED_TO_VRM = "avatar_exported_to_vrm";
         }
 
         public static class UI

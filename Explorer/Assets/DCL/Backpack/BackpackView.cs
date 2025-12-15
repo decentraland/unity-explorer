@@ -13,6 +13,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public BackpackSortDropdownView BackpackSortView { get; private set; }
+        
+        [field: SerializeField]
+        public GenericToastMessage ToastMessage { get; private set; }
 
         [field: SerializeField]
         public Button TipsButton { get; private set; }

@@ -12,11 +12,10 @@ namespace DCL.AvatarRendering.Export
     {
         public ExportSkeletonMapping BuildFromAvatarBase(AvatarBase avatarBase, IReadOnlyList<CachedAttachment> instantiatedWearables)
         {
-            var armature = avatarBase.Armature;
-            var armatureScale = armature.localScale; // Expected (0.01, 0.01, 0.01)
-
             if (instantiatedWearables.Count <= 0 || instantiatedWearables[0].OriginalAsset.MainAsset == null)
                 return null;
+            
+            var armature = avatarBase.Armature;
             
             var duplicateRoot = new GameObject("DCL_Avatar_Export").transform;
             duplicateRoot.position = armature.position;
@@ -25,41 +24,31 @@ namespace DCL.AvatarRendering.Export
             var bones = InstantiateBones(instantiatedWearables[0].OriginalAsset.MainAsset.transform, duplicateRoot).transform;
             bones.SetParent(duplicateRoot);
             
-            // Scale skeleton to uniform (1,1,1) scale.
+            // DCL skeleton is in 0.01 scale, we need to scale it to uniform (1,1,1) scale.
             duplicateRoot.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             ApplyParentScaleToChildren(duplicateRoot);
 
             duplicateRoot.gameObject.AddComponent<Animator>();
 
-            var mapping = new ExportSkeletonMapping(duplicateRoot.gameObject, armatureScale);
+            var mapping = new ExportSkeletonMapping(duplicateRoot.gameObject);
+            var dclToHumanBone = GetBoneDefinitions();
+            MapBonesRecursive(dclToHumanBone, mapping, bones);
 
-            var boneDefinitions = GetBoneDefinitions(avatarBase);
-
-            mapping.AddBone(new ExportBoneData(HumanBodyBones.Hips, null, bones, bones.name));
-            MapBonesRecursive(mapping, bones, boneDefinitions);
+           // mapping.AddBone(new ExportBoneData(HumanBodyBones.Hips, bones, bones.name));
+            
 
             var boneRenderer = duplicateRoot.gameObject.AddComponent<BoneRenderer>();
             boneRenderer.transforms = mapping.Bones.Select(x => x.TargetTransform).ToArray();
 
             return mapping;
 
-            void MapBonesRecursive(ExportSkeletonMapping mapping, Transform parent, List<BoneDefinition> boneDefinitions)
+            void MapBonesRecursive(Dictionary<string, HumanBodyBones> dclToHumanBone, ExportSkeletonMapping mapping, Transform bone)
             {
-                foreach (Transform bone in parent)
-                {
-                    if (!BoneDefinition.TryGetBoneDefByName(boneDefinitions, bone.name, out var boneDefinition))
-                        continue;
+                if (dclToHumanBone.TryGetValue(bone.name, out var humanBone))
+                    mapping.AddBone(new ExportBoneData(humanBone, bone, bone.name));
 
-                    mapping.AddBone(new ExportBoneData(
-                        boneDefinition.HumanBone, 
-                        boneDefinition.Parent, 
-                        bone, 
-                        bone.name
-                    ));
-
-                    // Recurse into this bone's children
-                    MapBonesRecursive(mapping, bone, boneDefinitions);
-                }
+                foreach (Transform child in bone)
+                    MapBonesRecursive(dclToHumanBone, mapping, child);
             }
         }
 
@@ -90,7 +79,7 @@ namespace DCL.AvatarRendering.Export
             }
         }
         
-        public static void ApplyParentScaleToChildren(Transform parent)
+        private static void ApplyParentScaleToChildren(Transform parent)
         {
             var childPositions = new List<(Transform child, Vector3 position)>();
             StoreChildPositionsRecursive(parent, childPositions);
@@ -104,9 +93,9 @@ namespace DCL.AvatarRendering.Export
 
             return;
             
-            void StoreChildPositionsRecursive(Transform parent, List<(Transform, Vector3)> list)
+            void StoreChildPositionsRecursive(Transform sourceParent, List<(Transform, Vector3)> list)
             {
-                foreach (Transform child in parent)
+                foreach (Transform child in sourceParent)
                 {
                     list.Add((child, child.position));
                     StoreChildPositionsRecursive(child, list);
@@ -114,110 +103,79 @@ namespace DCL.AvatarRendering.Export
             }
         }
 
-        private List<BoneDefinition> GetBoneDefinitions(AvatarBase avatarBase)
+        private Dictionary<string, HumanBodyBones> GetBoneDefinitions()
         {
-            return new List<BoneDefinition>
+            return new Dictionary<string, HumanBodyBones>
             {
-                new(HumanBodyBones.Hips, null, avatarBase.HipAnchorPoint, "Avatar_Hips"),
-                new(HumanBodyBones.Spine, HumanBodyBones.Hips, avatarBase.SpineAnchorPoint, "Avatar_Spine"),
-                new(HumanBodyBones.Chest, HumanBodyBones.Spine, avatarBase.Spine1AnchorPoint, "Avatar_Spine1"),
-                new(HumanBodyBones.UpperChest, HumanBodyBones.Chest, avatarBase.Spine2AnchorPoint, "Avatar_Spine2"),
-                new(HumanBodyBones.Neck, HumanBodyBones.UpperChest, avatarBase.NeckAnchorPoint, "Avatar_Neck"),
-                new(HumanBodyBones.Head, HumanBodyBones.Neck, avatarBase.HeadAnchorPoint, "Avatar_Head"),
+                ["Avatar_Hips"] = HumanBodyBones.Hips,
+                ["Avatar_Spine"] = HumanBodyBones.Spine,
+                ["Avatar_Spine1"] = HumanBodyBones.Chest,
+                ["Avatar_Spine2"] = HumanBodyBones.UpperChest,
+                ["Avatar_Neck"] = HumanBodyBones.Neck,
+                ["Avatar_Head"] = HumanBodyBones.Head,
 
-                new(HumanBodyBones.LeftShoulder, HumanBodyBones.UpperChest, avatarBase.LeftShoulderAnchorPoint, "Avatar_LeftShoulder"),
-                new(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftShoulder, avatarBase.LeftArmAnchorPoint, "Avatar_LeftArm"),
-                new(HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftUpperArm, avatarBase.LeftForearmAnchorPoint, "Avatar_LeftForeArm"),
-                new(HumanBodyBones.LeftHand, HumanBodyBones.LeftLowerArm, avatarBase.LeftHandAnchorPoint, "Avatar_LeftHand"),
+                ["Avatar_LeftShoulder"] = HumanBodyBones.LeftShoulder,
+                ["Avatar_LeftArm"] = HumanBodyBones.LeftUpperArm,
+                ["Avatar_LeftForeArm"] = HumanBodyBones.LeftLowerArm,
+                ["Avatar_LeftHand"] = HumanBodyBones.LeftHand,
 
-                new(HumanBodyBones.LeftThumbProximal, HumanBodyBones.LeftHand, avatarBase.LeftHandFingers.ThumbProximalAnchorPoint, "Avatar_LeftHandThumb1"),
-                new(HumanBodyBones.LeftThumbIntermediate, HumanBodyBones.LeftThumbProximal, avatarBase.LeftHandFingers.ThumbIntermediateAnchorPoint, "Avatar_LeftHandThumb2"),
-                new(HumanBodyBones.LeftThumbDistal, HumanBodyBones.LeftThumbIntermediate, avatarBase.LeftHandFingers.ThumbDistalAnchorPoint, "Avatar_LeftHandThumb3"),
-                new(HumanBodyBones.LeftThumbDistal, HumanBodyBones.LeftThumbDistal, null, "Avatar_LeftHandThumb4"),
-                new(HumanBodyBones.LeftIndexProximal, HumanBodyBones.LeftHand, avatarBase.LeftHandFingers.IndexProximalAnchorPoint, "Avatar_LeftHandIndex1"),
-                new(HumanBodyBones.LeftIndexIntermediate, HumanBodyBones.LeftIndexProximal, avatarBase.LeftHandFingers.IndexIntermediateAnchorPoint, "Avatar_LeftHandIndex2"),
-                new(HumanBodyBones.LeftIndexDistal, HumanBodyBones.LeftIndexIntermediate, avatarBase.LeftHandFingers.IndexDistalAnchorPoint, "Avatar_LeftHandIndex3"),
-                new(HumanBodyBones.LeftIndexDistal, HumanBodyBones.LeftIndexDistal, null, "Avatar_LeftHandIndex4"),
-                new(HumanBodyBones.LeftMiddleProximal, HumanBodyBones.LeftHand, avatarBase.LeftHandFingers.MiddleProximalAnchorPoint, "Avatar_LeftHandMiddle1"),
-                new(HumanBodyBones.LeftMiddleIntermediate, HumanBodyBones.LeftMiddleProximal, avatarBase.LeftHandFingers.MiddleIntermediateAnchorPoint, "Avatar_LeftHandMiddle2"),
-                new(HumanBodyBones.LeftMiddleDistal, HumanBodyBones.LeftMiddleIntermediate, avatarBase.LeftHandFingers.MiddleDistalAnchorPoint, "Avatar_LeftHandMiddle3"),
-                new(HumanBodyBones.LeftMiddleDistal, HumanBodyBones.LeftMiddleDistal, null, "Avatar_LeftHandMiddle4"),
-                new(HumanBodyBones.LeftRingProximal, HumanBodyBones.LeftHand, avatarBase.LeftHandFingers.RingProximalAnchorPoint, "Avatar_LeftHandRing1"),
-                new(HumanBodyBones.LeftRingIntermediate, HumanBodyBones.LeftRingProximal, avatarBase.LeftHandFingers.RingIntermediateAnchorPoint, "Avatar_LeftHandRing2"),
-                new(HumanBodyBones.LeftRingDistal, HumanBodyBones.LeftRingIntermediate, avatarBase.LeftHandFingers.RingDistalAnchorPoint, "Avatar_LeftHandRing3"),
-                new(HumanBodyBones.LeftRingDistal, HumanBodyBones.LeftRingDistal, null, "Avatar_LeftHandRing4"),
-                new(HumanBodyBones.LeftLittleProximal, HumanBodyBones.LeftHand, avatarBase.LeftHandFingers.LittleProximalAnchorPoint, "Avatar_LeftHandPinky1"),
-                new(HumanBodyBones.LeftLittleIntermediate, HumanBodyBones.LeftLittleProximal, avatarBase.LeftHandFingers.LittleIntermediateAnchorPoint, "Avatar_LeftHandPinky2"),
-                new(HumanBodyBones.LeftLittleDistal, HumanBodyBones.LeftLittleIntermediate, avatarBase.LeftHandFingers.LittleDistalAnchorPoint, "Avatar_LeftHandPinky3"),
-                new(HumanBodyBones.LeftLittleDistal, HumanBodyBones.LeftLittleDistal, null, "Avatar_LeftHandPinky4"),
+                ["Avatar_LeftHandThumb1"] = HumanBodyBones.LeftThumbProximal,
+                ["Avatar_LeftHandThumb2"] = HumanBodyBones.LeftThumbIntermediate,
+                ["Avatar_LeftHandThumb3"] = HumanBodyBones.LeftThumbDistal,
+                ["Avatar_LeftHandThumb4"] = HumanBodyBones.LeftThumbDistal,
+                ["Avatar_LeftHandIndex1"] = HumanBodyBones.LeftIndexProximal,
+                ["Avatar_LeftHandIndex2"] = HumanBodyBones.LeftIndexIntermediate,
+                ["Avatar_LeftHandIndex3"] = HumanBodyBones.LeftIndexDistal,
+                ["Avatar_LeftHandIndex4"] = HumanBodyBones.LeftIndexDistal,
+                ["Avatar_LeftHandMiddle1"] = HumanBodyBones.LeftMiddleProximal,
+                ["Avatar_LeftHandMiddle2"] = HumanBodyBones.LeftMiddleIntermediate,
+                ["Avatar_LeftHandMiddle3"] = HumanBodyBones.LeftMiddleDistal,
+                ["Avatar_LeftHandMiddle4"] = HumanBodyBones.LeftMiddleDistal,
+                ["Avatar_LeftHandRing1"] = HumanBodyBones.LeftRingProximal,
+                ["Avatar_LeftHandRing2"] = HumanBodyBones.LeftRingIntermediate,
+                ["Avatar_LeftHandRing3"] = HumanBodyBones.LeftRingDistal,
+                ["Avatar_LeftHandRing4"] = HumanBodyBones.LeftRingDistal,
+                ["Avatar_LeftHandPinky1"] = HumanBodyBones.LeftLittleProximal,
+                ["Avatar_LeftHandPinky2"] = HumanBodyBones.LeftLittleIntermediate,
+                ["Avatar_LeftHandPinky3"] = HumanBodyBones.LeftLittleDistal,
+                ["Avatar_LeftHandPinky4"] = HumanBodyBones.LeftLittleDistal,
 
-                new(HumanBodyBones.RightShoulder, HumanBodyBones.UpperChest, avatarBase.RightShoulderAnchorPoint, "Avatar_RightShoulder"),
-                new(HumanBodyBones.RightUpperArm, HumanBodyBones.RightShoulder, avatarBase.RightArmAnchorPoint, "Avatar_RightArm"),
-                new(HumanBodyBones.RightLowerArm, HumanBodyBones.RightUpperArm, avatarBase.RightForearmAnchorPoint, "Avatar_RightForeArm"),
-                new(HumanBodyBones.RightHand, HumanBodyBones.RightLowerArm, avatarBase.RightHandAnchorPoint, "Avatar_RightHand"),
+                ["Avatar_RightShoulder"] = HumanBodyBones.RightShoulder,
+                ["Avatar_RightArm"] = HumanBodyBones.RightUpperArm,
+                ["Avatar_RightForeArm"] = HumanBodyBones.RightLowerArm,
+                ["Avatar_RightHand"] = HumanBodyBones.RightHand,
 
-                new(HumanBodyBones.RightThumbProximal, HumanBodyBones.RightHand, avatarBase.RightHandFingers.ThumbProximalAnchorPoint, "Avatar_RightHandThumb1"),
-                new(HumanBodyBones.RightThumbIntermediate, HumanBodyBones.RightThumbProximal, avatarBase.RightHandFingers.ThumbIntermediateAnchorPoint, "Avatar_RightHandThumb2"),
-                new(HumanBodyBones.RightThumbDistal, HumanBodyBones.RightThumbIntermediate, avatarBase.RightHandFingers.ThumbDistalAnchorPoint, "Avatar_RightHandThumb3"),
-                new(HumanBodyBones.RightThumbDistal, HumanBodyBones.RightThumbDistal, null, "Avatar_RightHandThumb4"),
-                new(HumanBodyBones.RightIndexProximal, HumanBodyBones.RightHand, avatarBase.RightHandFingers.IndexProximalAnchorPoint, "Avatar_RightHandIndex1"),
-                new(HumanBodyBones.RightIndexIntermediate, HumanBodyBones.RightIndexProximal, avatarBase.RightHandFingers.IndexIntermediateAnchorPoint, "Avatar_RightHandIndex2"),
-                new(HumanBodyBones.RightIndexDistal, HumanBodyBones.RightIndexIntermediate, avatarBase.RightHandFingers.IndexDistalAnchorPoint, "Avatar_RightHandIndex3"),
-                new(HumanBodyBones.RightIndexDistal, HumanBodyBones.RightIndexDistal, null, "Avatar_RightHandIndex4"),
-                new(HumanBodyBones.RightMiddleProximal, HumanBodyBones.RightHand, avatarBase.RightHandFingers.MiddleProximalAnchorPoint, "Avatar_RightHandMiddle1"),
-                new(HumanBodyBones.RightMiddleIntermediate, HumanBodyBones.RightMiddleProximal, avatarBase.RightHandFingers.MiddleIntermediateAnchorPoint, "Avatar_RightHandMiddle2"),
-                new(HumanBodyBones.RightMiddleDistal, HumanBodyBones.RightMiddleIntermediate, avatarBase.RightHandFingers.MiddleDistalAnchorPoint, "Avatar_RightHandMiddle3"),
-                new(HumanBodyBones.RightMiddleDistal, HumanBodyBones.RightMiddleDistal, null, "Avatar_RightHandMiddle4"),
-                new(HumanBodyBones.RightRingProximal, HumanBodyBones.RightHand, avatarBase.RightHandFingers.RingProximalAnchorPoint, "Avatar_RightHandRing1"),
-                new(HumanBodyBones.RightRingIntermediate, HumanBodyBones.RightRingProximal, avatarBase.RightHandFingers.RingIntermediateAnchorPoint, "Avatar_RightHandRing2"),
-                new(HumanBodyBones.RightRingDistal, HumanBodyBones.RightRingIntermediate, avatarBase.RightHandFingers.RingDistalAnchorPoint, "Avatar_RightHandRing3"),
-                new(HumanBodyBones.RightRingDistal, HumanBodyBones.RightRingDistal, null, "Avatar_RightHandRing4"),
-                new(HumanBodyBones.RightLittleProximal, HumanBodyBones.RightHand, avatarBase.RightHandFingers.LittleProximalAnchorPoint, "Avatar_RightHandPinky1"),
-                new(HumanBodyBones.RightLittleIntermediate, HumanBodyBones.RightLittleProximal, avatarBase.RightHandFingers.LittleIntermediateAnchorPoint, "Avatar_RightHandPinky2"),
-                new(HumanBodyBones.RightLittleDistal, HumanBodyBones.RightLittleIntermediate, avatarBase.RightHandFingers.LittleDistalAnchorPoint, "Avatar_RightHandPinky3"),
-                new(HumanBodyBones.RightLittleDistal, HumanBodyBones.RightLittleDistal, null, "Avatar_RightHandPinky4"),
+                ["Avatar_RightHandThumb1"] = HumanBodyBones.RightThumbProximal,
+                ["Avatar_RightHandThumb2"] = HumanBodyBones.RightThumbIntermediate,
+                ["Avatar_RightHandThumb3"] = HumanBodyBones.RightThumbDistal,
+                ["Avatar_RightHandThumb4"] = HumanBodyBones.RightThumbDistal,
+                ["Avatar_RightHandIndex1"] = HumanBodyBones.RightIndexProximal,
+                ["Avatar_RightHandIndex2"] = HumanBodyBones.RightIndexIntermediate,
+                ["Avatar_RightHandIndex3"] = HumanBodyBones.RightIndexDistal,
+                ["Avatar_RightHandIndex4"] = HumanBodyBones.RightIndexDistal,
+                ["Avatar_RightHandMiddle1"] = HumanBodyBones.RightMiddleProximal,
+                ["Avatar_RightHandMiddle2"] = HumanBodyBones.RightMiddleIntermediate,
+                ["Avatar_RightHandMiddle3"] = HumanBodyBones.RightMiddleDistal,
+                ["Avatar_RightHandMiddle4"] = HumanBodyBones.RightMiddleDistal,
+                ["Avatar_RightHandRing1"] = HumanBodyBones.RightRingProximal,
+                ["Avatar_RightHandRing2"] = HumanBodyBones.RightRingIntermediate,
+                ["Avatar_RightHandRing3"] = HumanBodyBones.RightRingDistal,
+                ["Avatar_RightHandRing4"] = HumanBodyBones.RightRingDistal,
+                ["Avatar_RightHandPinky1"] = HumanBodyBones.RightLittleProximal,
+                ["Avatar_RightHandPinky2"] = HumanBodyBones.RightLittleIntermediate,
+                ["Avatar_RightHandPinky3"] = HumanBodyBones.RightLittleDistal,
+                ["Avatar_RightHandPinky4"] = HumanBodyBones.RightLittleDistal,
 
-                new(HumanBodyBones.LeftUpperLeg, HumanBodyBones.Hips, avatarBase.LeftUpLegAnchorPoint, "Avatar_LeftUpLeg"),
-                new(HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftUpperLeg, avatarBase.LeftLegAnchorPoint, "Avatar_LeftLeg"),
-                new(HumanBodyBones.LeftFoot, HumanBodyBones.LeftLowerLeg, avatarBase.LeftFootAnchorPoint, "Avatar_LeftFoot"),
-                new(HumanBodyBones.LeftToes, HumanBodyBones.LeftFoot, avatarBase.LeftToeBaseAnchorPoint, "Avatar_LeftToeBase"),
+                ["Avatar_LeftUpLeg"] = HumanBodyBones.LeftUpperLeg,
+                ["Avatar_LeftLeg"] = HumanBodyBones.LeftLowerLeg,
+                ["Avatar_LeftFoot"] = HumanBodyBones.LeftFoot,
+                ["Avatar_LeftToeBase"] = HumanBodyBones.LeftToes,
 
-                new(HumanBodyBones.RightUpperLeg, HumanBodyBones.Hips, avatarBase.RightUpLegAnchorPoint, "Avatar_RightUpLeg"),
-                new(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightUpperLeg, avatarBase.RightLegAnchorPoint, "Avatar_RightLeg"),
-                new(HumanBodyBones.RightFoot, HumanBodyBones.RightLowerLeg, avatarBase.RightFootAnchorPoint, "Avatar_RightFoot"),
-                new(HumanBodyBones.RightToes, HumanBodyBones.RightFoot, avatarBase.RightToeBaseAnchorPoint, "Avatar_RightToeBase"),
+                ["Avatar_RightUpLeg"] = HumanBodyBones.RightUpperLeg,
+                ["Avatar_RightLeg"] = HumanBodyBones.RightLowerLeg,
+                ["Avatar_RightFoot"] = HumanBodyBones.RightFoot,
+                ["Avatar_RightToeBase"] = HumanBodyBones.RightToes,
             };
-        }
-
-        private readonly struct BoneDefinition
-        {
-            public readonly HumanBodyBones HumanBone;
-            public readonly HumanBodyBones? Parent;
-            public readonly Transform Source;
-            public readonly string SourceBoneName;
-
-            public BoneDefinition(HumanBodyBones humanBone, HumanBodyBones? parent, Transform source, string sourceBoneName)
-            {
-                HumanBone = humanBone;
-                Parent = parent;
-                Source = source;
-                SourceBoneName = sourceBoneName;
-            }
-
-            public static bool TryGetBoneDefByName(List<BoneDefinition> boneDefinitions, string name, out BoneDefinition definition)
-            {
-                foreach (var boneDefinition in boneDefinitions)
-                {
-                    if (boneDefinition.SourceBoneName != name)
-                        continue;
-
-                    definition = boneDefinition;
-                    return true;
-                }
-
-                definition = default;
-                return false;
-            }
         }
     }
 }
