@@ -32,6 +32,7 @@ namespace DCL.Donations.UI
                 profilePictureView.SetBackgroundColor(NoProfileColor);
                 profilePictureView.SetDefaultThumbnail();
                 tipSentText.text = string.Format(NO_PROFILE_TEXT_FORMAT, $"{creatorAddress[..5]}...{creatorAddress[^5..]}");
+                profilePictureView.ConfigureThumbnailClickData(userAddress: creatorAddress);
             }
             else
             {

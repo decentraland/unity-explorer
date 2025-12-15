@@ -94,6 +94,7 @@ namespace DCL.Donations.UI
             {
                 profilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 userNameElement.Setup(profile);
+                profilePictureView.ConfigureThumbnailClickData(userAddress: sceneCreatorAddress);
             }
             else
             {
