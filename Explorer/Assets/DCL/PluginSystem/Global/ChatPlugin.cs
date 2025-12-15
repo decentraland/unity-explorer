@@ -364,8 +364,8 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 hyperlinkTextFormatter,
                 chatConfig,
-                settings.ChatSettingsAsset,
-                translationService);
+                translationService,
+                currentChannelService);
 
             pluginScope.Add(chatSharedAreaController);
             pluginScope.Add(chatWorldBubbleService);

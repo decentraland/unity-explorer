@@ -2,6 +2,7 @@ using DCL.Audio;
 using DCL.UI.Communities;
 using DCL.Utilities;
 using DG.Tweening;
+using System;
 using UnityEngine;
 
 namespace DCL.Chat.ChatConfig
@@ -99,8 +100,8 @@ namespace DCL.Chat.ChatConfig
         [field: SerializeField] public float TranslationTimeoutSeconds { get; set; } = 10.0f;
 
         [field: Header("Audio")]
-        [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
-        [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio { get; private set; }
+        [field: SerializeField] public ChannelAudioConfig FocusedChannelMessageAudioConfig { get; private set; }
+        [field: SerializeField] public ChannelAudioConfig UnfocusedChannelMessageAudioConfig { get; private set; }
 
         [field: Header("Chat Context Menu")]
         [field: SerializeField] public Vector2 ContextMenuOffset { get; private set; } = new (-220, 100);
@@ -113,6 +114,13 @@ namespace DCL.Chat.ChatConfig
         public string ChatContextMenuTranslateText = "Translate";
         public int TranslationMemoryCapacity = 200;
         public int TranslationCacheCapacity = 200;
+
+        [Serializable]
+        public struct ChannelAudioConfig
+        {
+            public AudioClipConfig receiveMessageAudio;
+            public  AudioClipConfig receiveMentionAudio;
+        }
 
     }
 }
