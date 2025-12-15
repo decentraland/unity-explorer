@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -46,6 +46,7 @@ namespace Global.Dynamic
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public IEthereumApi? EthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
+        public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -60,8 +61,10 @@ namespace Global.Dynamic
             base.Dispose();
 
             DiagnosticsContainer?.Dispose();
-            Web3Authenticator?.Dispose();
-            EthereumApi?.Dispose();
+
+            // CompositeWeb3Provider disposes both authenticators internally
+            // Don't dispose Web3Authenticator/EthereumApi separately as they reference the same composite
+            CompositeWeb3Provider?.Dispose();
             IdentityCache?.Dispose();
         }
 
@@ -107,7 +110,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.EthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
+                (container.EthereumApi, container.Web3Authenticator, container.CompositeWeb3Provider) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
                 if (container.EnableAnalytics)
                 {
@@ -198,7 +201,7 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (IEthereumApi ethereumApi, IWeb3VerifiedAuthenticator web3Authenticator)
+        private static (IEthereumApi ethereumApi, IWeb3VerifiedAuthenticator web3Authenticator, ICompositeWeb3Provider compositeProvider)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
@@ -209,35 +212,43 @@ namespace Global.Dynamic
                 DecentralandEnvironment dclEnvironment,
                 IAppArgs appArgs)
         {
-            var authenticatorAndEthApi =
+            int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
+                ? int.Parse(v!)
+                : null;
 
-                //         new ThirdWebAuthenticator(
-                //     dclEnvironment,
-            //     identityCache,
-                //     new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-            //     web3AccountFactory,
-            //     appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
-            // );
-                new DappWeb3Authenticator(
-                    webBrowser,
-                    URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                    URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
-                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
-                    identityCache,
-                    web3AccountFactory,
-                    new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-                    new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                    dclEnvironment,
-                    new AuthCodeVerificationFeatureFlag(),
-                    appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
-                );
+            // Create ThirdWeb authenticator (Email + OTP)
+            var thirdWebAuth = new ThirdWebAuthenticator(
+                dclEnvironment,
+                identityCache,
+                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                web3AccountFactory,
+                identityExpirationDuration
+            );
 
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(authenticatorAndEthApi, identityCache);
+            // Create Dapp authenticator (Browser wallet)
+            var dappAuth = new DappWeb3Authenticator(
+                webBrowser,
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
+                identityCache,
+                web3AccountFactory,
+                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+                dclEnvironment,
+                new AuthCodeVerificationFeatureFlag(),
+                identityExpirationDuration
+            );
+
+            // Create composite provider that wraps both
+            var compositeProvider = new CompositeWeb3Provider(thirdWebAuth, dappAuth);
+
+            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(compositeProvider, identityCache);
 
             if (container.EnableAnalytics)
                 coreWeb3Authenticator = new AnalyticsDecoratorVerifiedAuthenticator(coreWeb3Authenticator, container.Analytics!);
 
-            return (authenticatorAndEthApi, coreWeb3Authenticator);
+            return (compositeProvider, coreWeb3Authenticator, compositeProvider);
         }
 
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)

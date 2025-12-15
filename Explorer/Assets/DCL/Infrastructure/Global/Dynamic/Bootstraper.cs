@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
@@ -152,6 +152,7 @@ namespace Global.Dynamic
                 scenePluginSettingsContainer,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.IdentityCache,
                 splashScreen,
                 worldInfoTool

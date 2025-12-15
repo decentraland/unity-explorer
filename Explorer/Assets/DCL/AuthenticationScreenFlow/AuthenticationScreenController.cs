@@ -57,6 +57,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private enum ViewState
         {
+            MethodSelection,
             Login,
             LoginInProgress,
             Loading,
@@ -68,6 +69,7 @@ namespace DCL.AuthenticationScreenFlow
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
@@ -103,6 +105,7 @@ namespace DCL.AuthenticationScreenFlow
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
@@ -120,6 +123,7 @@ namespace DCL.AuthenticationScreenFlow
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
@@ -156,8 +160,7 @@ namespace DCL.AuthenticationScreenFlow
 
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
-            viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
-            viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
+            viewInstance.LoginButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
@@ -178,29 +181,12 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
-            viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
-        }
+            viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
 
-        private void SendRegistration()
-        {
-            // If we're waiting for OTP input, complete the task with the entered code
-            if (otpCompletionSource == null) return;
-            string otp = viewInstance!.PasswordInputField.text;
-            otpCompletionSource.TrySetResult(otp);
-        }
-
-        private UniTask<string> RequestOtpFromUserAsync(CancellationToken ct)
-        {
-            otpCompletionSource = new UniTaskCompletionSource<string>();
-
-            // Register cancellation to clean up if cancelled
-            ct.Register(() =>
-            {
-                otpCompletionSource?.TrySetCanceled(ct);
-                otpCompletionSource = null;
-            });
-
-            return otpCompletionSource.Task;
+            // // Method selection buttons
+            // viewInstance.LoginWithOtpButton.onClick.AddListener(SelectThirdWebOtpMethod);
+            // viewInstance.LoginWithWalletButton.onClick.AddListener(SelectDappWalletMethod);
+            // viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
         }
 
         protected override void OnBeforeViewShow()
@@ -244,7 +230,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
-            // AUTO-LOGIN DISABLED: Always show login screen
+            // AUTO-LOGIN DISABLED: Always show method selection screen
             /*
             if (storedIdentity is { IsExpired: false }
 
@@ -289,27 +275,27 @@ namespace DCL.AuthenticationScreenFlow
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
-                        SwitchState(ViewState.Login);
+                        SwitchState(ViewState.MethodSelection);
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
             }
             else
             */
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                SwitchState(ViewState.Login);
+                SwitchState(ViewState.MethodSelection);
             }
 
             if (splashScreen != null) // Splash screen is destroyed after first login
@@ -346,7 +332,392 @@ namespace DCL.AuthenticationScreenFlow
             await lifeCycleTask.Task;
         }
 
-        private void StartLoginFlowUntilEnd()
+        private void StartDappLoginFlowUntilEnd()
+        {
+            CancelLoginProcess();
+
+            // Checks the current screen mode because it could have been overridden with Alt+Enter
+            if (Screen.fullScreenMode != FullScreenMode.Windowed)
+                WindowModeUtils.ApplyWindowedMode();
+
+            loginCancellationToken = new CancellationTokenSource();
+            StartDappWalletLoginFlowAsync(loginCancellationToken.Token).Forget();
+
+            return;
+
+            async UniTaskVoid StartDappWalletLoginFlowAsync(CancellationToken ct)
+            {
+                try
+                {
+                    CurrentRequestID = string.Empty;
+
+                    viewInstance!.ErrorPopupRoot.SetActive(false);
+                    viewInstance!.LoadingSpinner.SetActive(true);
+
+                    var web3AuthSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "Web3Authentication",
+                        SpanOperation = "auth.web3_login",
+                        Depth = 1,
+                    };
+
+                    sentryTransactionManager.StartSpan(web3AuthSpan);
+
+                    web3Authenticator.SetVerificationListener(ShowVerification);
+
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync("", ct);
+
+                    web3Authenticator.SetVerificationListener(null);
+
+                    var identityValidationSpan = new SpanData
+                    {
+                        TransactionName = LOADING_TRANSACTION_NAME,
+                        SpanName = "IdentityValidation",
+                        SpanOperation = "auth.identity_validation",
+                        Depth = 1,
+                    };
+
+                    sentryTransactionManager.StartSpan(identityValidationSpan);
+
+                    if (IsUserAllowedToAccessToBeta(identity))
+                    {
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
+                        SwitchState(ViewState.Loading);
+
+                        var profileFetchSpan = new SpanData
+                        {
+                            TransactionName = LOADING_TRANSACTION_NAME,
+                            SpanName = "FetchProfile",
+                            SpanOperation = "auth.profile_fetch",
+                            Depth = 1,
+                        };
+
+                        sentryTransactionManager.StartSpan(profileFetchSpan);
+
+                        await FetchProfileAsync(ct);
+
+                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
+                        CurrentState.Value = AuthenticationStatus.LoggedIn;
+                        SwitchState(ViewState.Finalize);
+                    }
+                    else
+                    {
+                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
+                        SwitchState(ViewState.MethodSelection);
+                        ShowRestrictedUserPopup();
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                    SwitchState(ViewState.MethodSelection);
+                }
+                catch (SignatureExpiredException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.MethodSelection);
+                }
+                catch (Web3SignatureException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.MethodSelection);
+                }
+                catch (CodeVerificationException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.MethodSelection);
+                }
+                catch (ProfileNotFoundException e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.MethodSelection);
+                }
+                catch (Exception e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    SwitchState(ViewState.MethodSelection);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    ShowConnectionErrorPopup();
+                }
+                finally { RestoreResolutionAndScreenMode(); }
+            }
+        }
+
+        private void ShowVerification(int code, DateTime expiration, string requestID)
+        {
+            viewInstance!.VerificationCodeLabel.text = code.ToString();
+            CurrentRequestID = requestID;
+
+            var verificationSpan = new SpanData
+            {
+                TransactionName = LOADING_TRANSACTION_NAME,
+                SpanName = "CodeVerification",
+                SpanOperation = "auth.code_verification",
+                Depth = 1,
+            };
+
+            sentryTransactionManager.StartSpan(verificationSpan);
+
+            CancelVerificationCountdown();
+            verificationCountdownCancellationToken = new CancellationTokenSource();
+
+            viewInstance.StartVerificationCountdownAsync(expiration,
+                             verificationCountdownCancellationToken.Token)
+                        .Forget();
+
+            CurrentState.Value = AuthenticationStatus.VerificationInProgress;
+            SwitchState(ViewState.LoginInProgress);
+        }
+
+        private async UniTask FetchProfileAsync(CancellationToken ct)
+        {
+            Profile? profile = await selfProfile.ProfileAsync(ct);
+
+            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                profile = await CreateAndPublishDefaultProfileAsync(ct);
+
+            if (profile == null)
+                throw new ProfileNotFoundException();
+
+            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+            profile.IsDirty = true;
+
+            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
+            profile.HasConnectedWeb3 = true;
+
+            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
+            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+
+            return;
+
+            bool IsNewUser() =>
+                profile.Version == 1;
+        }
+
+        private void ChangeAccount()
+        {
+            async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
+            {
+                viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
+                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+                await web3Authenticator.LogoutAsync(ct);
+                SwitchState(ViewState.MethodSelection);
+            }
+
+            characterPreviewController?.OnHide();
+            CancelLoginProcess();
+            loginCancellationToken = new CancellationTokenSource();
+            ChangeAccountAsync(loginCancellationToken.Token).Forget();
+        }
+
+        private void JumpIntoWorld()
+        {
+            viewInstance!.JumpIntoWorldButton.interactable = false;
+            AnimateAndAwaitAsync().Forget();
+            return;
+
+            async UniTaskVoid AnimateAndAwaitAsync()
+            {
+                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+
+                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
+                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
+                await UniTask.Delay(ANIMATION_DELAY);
+                characterPreviewController?.OnHide();
+
+                // Restore inputs before transitioning to world
+                UnblockUnwantedInputs();
+
+                lifeCycleTask?.TrySetResult();
+                lifeCycleTask = null;
+            }
+        }
+
+        private void SwitchState(ViewState state)
+        {
+            viewInstance!.ErrorPopupRoot.SetActive(false);
+
+            switch (state)
+            {
+                case ViewState.MethodSelection:
+                    viewInstance.MethodSelectionContainer.SetActive(true);
+                    viewInstance.LoginContainer.SetActive(false);
+                    viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+
+                    CurrentState.Value = AuthenticationStatus.Login;
+                    break;
+
+                case ViewState.Login:
+                    ResetAnimator(viewInstance!.LoginAnimator);
+                    viewInstance.MethodSelectionContainer.SetActive(false);
+                    viewInstance.PendingAuthentication.SetActive(false);
+
+                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.LoginButton.interactable = true;
+
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+
+                    CurrentState.Value = AuthenticationStatus.Login;
+                    break;
+                case ViewState.Loading:
+                    viewInstance.MethodSelectionContainer.SetActive(false);
+                    viewInstance!.PendingAuthentication.SetActive(false);
+
+                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = true;
+
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    break;
+                case ViewState.LoginInProgress:
+                    ResetAnimator(viewInstance!.VerificationAnimator);
+
+                    viewInstance.MethodSelectionContainer.SetActive(false);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+
+                    viewInstance.PendingAuthentication.SetActive(true);
+                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    break;
+                case ViewState.Finalize:
+                    ResetAnimator(viewInstance!.FinalizeAnimator);
+                    viewInstance.MethodSelectionContainer.SetActive(false);
+                    viewInstance.PendingAuthentication.SetActive(false);
+
+                    viewInstance.LoginContainer.SetActive(false);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+
+                    viewInstance.FinalizeContainer.SetActive(true);
+                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
+                    characterPreviewController?.OnBeforeShow();
+                    characterPreviewController?.OnShow();
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
+            }
+        }
+
+        private static void ResetAnimator(Animator animator)
+        {
+            animator.Rebind();
+            animator.Update(0f);
+            animator.gameObject.SetActive(false);
+        }
+
+        private void RestoreResolutionAndScreenMode()
+        {
+            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
+            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
+        }
+
+        private void CancelLoginProcess()
+        {
+            loginCancellationToken?.SafeCancelAndDispose();
+            loginCancellationToken = null;
+
+            otpCompletionSource?.TrySetCanceled();
+            otpCompletionSource = null;
+            web3Authenticator.SetOtpRequestListener(null);
+        }
+
+        private void OpenOrCloseVerificationCodeHint()
+        {
+            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
+        }
+
+        private void OpenDiscord() =>
+            webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
+
+        private void ExitApplication()
+        {
+            CancelLoginProcess();
+            ExitUtils.Exit();
+        }
+
+        private void OnContinuousAudioStarted(AudioClipConfig audioClipConfig)
+        {
+            if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
+                return;
+
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
+            InitMusicMute();
+        }
+
+        private void InitMusicMute()
+        {
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED);
+
+            if (isMuted)
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
+
+            viewInstance?.MuteButton.SetIcon(isMuted);
+        }
+
+        private void OnMuteButtonClicked()
+        {
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED);
+
+            if (isMuted)
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
+            else
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
+
+            viewInstance?.MuteButton.SetIcon(!isMuted);
+
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
+        }
+
+        private void CancelVerificationCountdown()
+        {
+            verificationCountdownCancellationToken?.SafeCancelAndDispose();
+            verificationCountdownCancellationToken = null;
+        }
+
+        private void RequestAlphaAccess() =>
+            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
+
+        private void CloseErrorPopup() =>
+            viewInstance!.ErrorPopupRoot.SetActive(false);
+
+        private void ShowConnectionErrorPopup() =>
+            viewInstance!.ErrorPopupRoot.SetActive(true);
+
+        private void BlockUnwantedInputs() =>
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
+        private void UnblockUnwantedInputs() =>
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+
+#region OTP FLOW
+        private void StartOTPLoginFlowUntilEnd()
         {
             CancelLoginProcess();
 
@@ -421,43 +792,43 @@ namespace DCL.AuthenticationScreenFlow
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-                        SwitchState(ViewState.Login);
+                        SwitchState(ViewState.MethodSelection);
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
                 catch (SignatureExpiredException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
                 catch (Web3SignatureException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
                 catch (CodeVerificationException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
-                    SwitchState(ViewState.Login);
+                    SwitchState(ViewState.MethodSelection);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ShowConnectionErrorPopup();
                 }
@@ -465,174 +836,41 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void StartLoginFlowUntilEnd2()
+        private void SendRegistration()
         {
-            CancelLoginProcess();
+            // If we're waiting for OTP input, complete the task with the entered code
+            if (otpCompletionSource == null) return;
+            string otp = viewInstance!.PasswordInputField.text;
+            otpCompletionSource.TrySetResult(otp);
+        }
 
-            // Checks the current screen mode because it could have been overridden with Alt+Enter
-            if (Screen.fullScreenMode != FullScreenMode.Windowed)
-                WindowModeUtils.ApplyWindowedMode();
+        private UniTask<string> RequestOtpFromUserAsync(CancellationToken ct)
+        {
+            otpCompletionSource = new UniTaskCompletionSource<string>();
 
-            loginCancellationToken = new CancellationTokenSource();
-            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
-
-            return;
-
-            async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
+            // Register cancellation to clean up if cancelled
+            ct.Register(() =>
             {
-                try
-                {
-                    CurrentRequestID = string.Empty;
+                otpCompletionSource?.TrySetCanceled(ct);
+                otpCompletionSource = null;
+            });
 
-                    viewInstance!.ErrorPopupRoot.SetActive(false);
-                    viewInstance!.LoadingSpinner.SetActive(true);
-                    viewInstance.LoginButton.interactable = false;
-
-                    var web3AuthSpan = new SpanData
-                    {
-                        TransactionName = LOADING_TRANSACTION_NAME,
-                        SpanName = "Web3Authentication",
-                        SpanOperation = "auth.web3_login",
-                        Depth = 1
-                    };
-                    sentryTransactionManager.StartSpan(web3AuthSpan);
-
-                    web3Authenticator.SetVerificationListener(ShowVerification);
-
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync("", ct);
-
-                    web3Authenticator.SetVerificationListener(null);
-
-                    var identityValidationSpan = new SpanData
-                    {
-                        TransactionName = LOADING_TRANSACTION_NAME,
-                        SpanName = "IdentityValidation",
-                        SpanOperation = "auth.identity_validation",
-                        Depth = 1
-                    };
-                    sentryTransactionManager.StartSpan(identityValidationSpan);
-
-                    if (IsUserAllowedToAccessToBeta(identity))
-                    {
-                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
-                        SwitchState(ViewState.Loading);
-
-                        var profileFetchSpan = new SpanData
-                        {
-                            TransactionName = LOADING_TRANSACTION_NAME,
-                            SpanName = "FetchProfile",
-                            SpanOperation = "auth.profile_fetch",
-                            Depth = 1
-                        };
-                        sentryTransactionManager.StartSpan(profileFetchSpan);
-
-                        await FetchProfileAsync(ct);
-
-                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
-                        CurrentState.Value = AuthenticationStatus.LoggedIn;
-                        SwitchState(ViewState.Finalize);
-                    }
-                    else
-                    {
-                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-                        SwitchState(ViewState.Login);
-                        ShowRestrictedUserPopup();
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    SwitchState(ViewState.Login);
-                }
-                catch (SignatureExpiredException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
-                }
-                catch (Web3SignatureException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
-                }
-                catch (CodeVerificationException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
-                }
-                catch (ProfileNotFoundException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
-                }
-                catch (Exception e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
-                    SwitchState(ViewState.Login);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    ShowConnectionErrorPopup();
-                }
-                finally
-                {
-                    RestoreResolutionAndScreenMode();
-                }
-            }
+            return otpCompletionSource.Task;
         }
 
-        private void ShowVerification(int code, DateTime expiration, string requestID)
+        private void SelectThirdWebOtpMethod()
         {
-            viewInstance!.VerificationCodeLabel.text = code.ToString();
-            CurrentRequestID = requestID;
-
-            var verificationSpan = new SpanData
-            {
-                TransactionName = LOADING_TRANSACTION_NAME,
-                SpanName = "CodeVerification",
-                SpanOperation = "auth.code_verification",
-                Depth = 1
-            };
-            sentryTransactionManager.StartSpan(verificationSpan);
-
-            CancelVerificationCountdown();
-            verificationCountdownCancellationToken = new CancellationTokenSource();
-
-            viewInstance.StartVerificationCountdownAsync(expiration,
-                             verificationCountdownCancellationToken.Token)
-                        .Forget();
-
-            CurrentState.Value = AuthenticationStatus.VerificationInProgress;
-            SwitchState(ViewState.LoginInProgress);
+            compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
+            SwitchState(ViewState.Login);
         }
 
-        private async UniTask FetchProfileAsync(CancellationToken ct)
+        private void SelectDappWalletMethod()
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
-            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
-                profile = await CreateAndPublishDefaultProfileAsync(ct);
-
-            if (profile == null)
-                throw new ProfileNotFoundException();
-
-            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
-            profile.IsDirty = true;
-
-            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-            profile.HasConnectedWeb3 = true;
-
-            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-
-            return;
-
-            bool IsNewUser() =>
-                profile.Version == 1;
+            // For Dapp wallet, we skip email input and go directly to login flow
+            StartDappLoginFlowUntilEnd();
         }
-
         private async UniTask<Profile> CreateAndPublishDefaultProfileAsync(CancellationToken ct)
         {
             IWeb3Identity? identity = storedIdentityProvider.Identity;
@@ -648,7 +886,6 @@ namespace DCL.AuthenticationScreenFlow
 
             return publishedProfile;
         }
-
         private static Profile BuildDefaultProfile(string walletAddress, string? email)
         {
             // Randomize body shape between MALE and FEMALE
@@ -685,7 +922,6 @@ namespace DCL.AuthenticationScreenFlow
 
             return profile;
         }
-
         private static string ExtractNameFromEmail(string? email)
         {
             if (string.IsNullOrEmpty(email))
@@ -698,206 +934,7 @@ namespace DCL.AuthenticationScreenFlow
 
             return email[..atIndex];
         }
+#endregion
 
-        private void ChangeAccount()
-        {
-            async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
-            {
-                viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
-                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
-                await web3Authenticator.LogoutAsync(ct);
-                SwitchState(ViewState.Login);
-            }
-
-            characterPreviewController?.OnHide();
-            CancelLoginProcess();
-            loginCancellationToken = new CancellationTokenSource();
-            ChangeAccountAsync(loginCancellationToken.Token).Forget();
-        }
-
-        private void JumpIntoWorld()
-        {
-            viewInstance!.JumpIntoWorldButton.interactable = false;
-            AnimateAndAwaitAsync().Forget();
-            return;
-
-            async UniTaskVoid AnimateAndAwaitAsync()
-            {
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
-
-                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
-                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
-                await UniTask.Delay(ANIMATION_DELAY);
-                characterPreviewController?.OnHide();
-
-                // Restore inputs before transitioning to world
-                UnblockUnwantedInputs();
-
-                lifeCycleTask?.TrySetResult();
-                lifeCycleTask = null;
-            }
-        }
-
-        private void SwitchState(ViewState state)
-        {
-            viewInstance!.ErrorPopupRoot.SetActive(false);
-
-            switch (state)
-            {
-                case ViewState.Login:
-                    ResetAnimator(viewInstance!.LoginAnimator);
-                    viewInstance.PendingAuthentication.SetActive(false);
-
-                    viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.LoginButton.interactable = true;
-
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-
-                    CurrentState.Value = AuthenticationStatus.Login;
-                    break;
-                case ViewState.Loading:
-                    viewInstance!.PendingAuthentication.SetActive(false);
-
-                    viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.LoadingSpinner.SetActive(true);
-                    viewInstance.LoginButton.interactable = true;
-
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-                    break;
-                case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance!.VerificationAnimator);
-
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-
-                    viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-                    break;
-                case ViewState.Finalize:
-                    ResetAnimator(viewInstance!.FinalizeAnimator);
-                    viewInstance.PendingAuthentication.SetActive(false);
-
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-
-                    viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-                    viewInstance.JumpIntoWorldButton.interactable = true;
-                    characterPreviewController?.OnBeforeShow();
-                    characterPreviewController?.OnShow();
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
-            }
-        }
-
-        private static void ResetAnimator(Animator animator)
-        {
-            animator.Rebind();
-            animator.Update(0f);
-            animator.gameObject.SetActive(false);
-        }
-
-        private void RestoreResolutionAndScreenMode()
-        {
-            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
-            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
-        }
-
-        private void CancelLoginProcess()
-        {
-            loginCancellationToken?.SafeCancelAndDispose();
-            loginCancellationToken = null;
-
-            // Clean up OTP waiting state
-            otpCompletionSource?.TrySetCanceled();
-            otpCompletionSource = null;
-            web3Authenticator.SetOtpRequestListener(null);
-        }
-
-        private void OpenOrCloseVerificationCodeHint()
-        {
-            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
-        }
-
-        private void OpenDiscord() =>
-            webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
-
-        private void ExitApplication()
-        {
-            CancelLoginProcess();
-            ExitUtils.Exit();
-        }
-
-        private void OnContinuousAudioStarted(AudioClipConfig audioClipConfig)
-        {
-            if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
-                return;
-
-            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
-            InitMusicMute();
-        }
-
-        private void InitMusicMute()
-        {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
-
-            if (isMuted)
-                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-
-            viewInstance?.MuteButton.SetIcon(isMuted);
-        }
-
-        private void OnMuteButtonClicked()
-        {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
-
-            if (isMuted)
-                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
-            else
-                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-
-            viewInstance?.MuteButton.SetIcon(!isMuted);
-
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
-        }
-
-        private void CancelVerificationCountdown()
-        {
-            verificationCountdownCancellationToken?.SafeCancelAndDispose();
-            verificationCountdownCancellationToken = null;
-        }
-
-        private void RequestAlphaAccess() =>
-            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
-
-        private void CloseErrorPopup() =>
-            viewInstance!.ErrorPopupRoot.SetActive(false);
-
-        private void ShowConnectionErrorPopup() =>
-            viewInstance!.ErrorPopupRoot.SetActive(true);
-
-        private void BlockUnwantedInputs() =>
-            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-
-        private void UnblockUnwantedInputs() =>
-            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
     }
 }
