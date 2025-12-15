@@ -47,7 +47,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerEmote(string predefinedEmote)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RestrictedActionsAPIWrapper.TriggerEmote() <color=#D00>--- TRIGGERED SCENE EMOTE --- {predefinedEmote}</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RestrictedActionsAPIWrapper.TriggerEmote() <color=#D00>--- TRIGGER SCENE EMOTE --- {predefinedEmote}</color>");
 
             return TriggerEmoteAsync().ToDisconnectedPromise(this);
 
@@ -61,7 +61,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerSceneEmote(string src, bool loop)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RestrictedActionsAPIWrapper.TriggerSceneEmote() <color=#D00>--- TRIGGERED SCENE EMOTE --- src: {src} loop: {loop}</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RestrictedActionsAPIWrapper.TriggerSceneEmote() <color=#D00>--- TRIGGER SCENE EMOTE --- src: {src} loop: {loop}</color>");
 
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
