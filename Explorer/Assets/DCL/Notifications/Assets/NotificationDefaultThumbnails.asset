@@ -73,4 +73,8 @@ MonoBehaviour:
     value:
       Thumbnail: {fileID: 21300000, guid: 213a3ebe4dd144fc28653d71c424bbe7, type: 3}
       FitAndCenter: 1
+  - key: 52
+    value:
+      Thumbnail: {fileID: 21300000, guid: 213a3ebe4dd144fc28653d71c424bbe7, type: 3}
+      FitAndCenter: 1
   defaultIcon: {fileID: 0}
