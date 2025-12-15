@@ -6,12 +6,14 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using ECS;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -55,17 +57,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 jsOperations);
         }
 
+
         [Test]
         public void SendBinary([Range(0, 5)] int outerArraySize, [Range(1, 50)] int innerArrayMessagesCount)
         {
             // Generate random array of arrays
 
-            var outerArray = new PoolableByteArray[outerArraySize];
+            var outerArray = new List<TestArray>(outerArraySize);
 
             for (var i = 0; i < outerArraySize; i++)
             {
                 byte[] messages = GetRandomMessagesSequence(innerArrayMessagesCount);
-                outerArray[i] = new PoolableByteArray(messages, messages.Length, null);
+                outerArray.Add(new TestArray(messages));
             }
 
             api.SendBinary(outerArray);
@@ -163,10 +166,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             crdtBody.Write(contentLength); // content length
             crdtBody = crdtBody.Slice(contentLength);
 
-            var inputs = new PoolableByteArray[]
-            {
-                new PoolableByteArray(crdtMessage, crdtMessage.Length, null),
-            };
+            var inputs = new List<TestArray>();
+            var s = new TestArray(crdtMessage);
+            inputs.Add(s);
 
             api.SendBinary(inputs);
             api.GetResult();
@@ -255,10 +257,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             addressBytes.CopyTo(resSpan.Slice(2));
             crdtData.CopyTo(resSpan.Slice(2 + addressLength));
 
-            var inputs = new PoolableByteArray[]
-            {
-                new PoolableByteArray(resMessage, resMessage.Length, null),
-            };
+            var inputs = new List<TestArray>();
+            var s = new TestArray(resMessage);
+            inputs.Add(s);
+
 
             api.SendBinary(inputs);
             api.GetResult();
@@ -353,6 +355,183 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string specialRecipient = null)
             {
                 sendMessageCalls.Add(message.ToArray());
+            }
+        }
+
+        public class TestArray : ITypedArray<byte>, IEnumerable<byte>
+        {
+            private byte[] data;
+
+            public ulong Length => (ulong) data.Length;
+
+            public IArrayBuffer ArrayBuffer => throw new NotImplementedException();
+
+            public ulong Offset => throw new NotImplementedException();
+
+            public ulong Size => throw new NotImplementedException();
+
+            public JavaScriptObjectKind Kind => throw new NotImplementedException();
+
+            public JavaScriptObjectFlags Flags => throw new NotImplementedException();
+
+            public ScriptEngine Engine => throw new NotImplementedException();
+
+            public IEnumerable<int> PropertyIndices => throw new NotImplementedException();
+
+            public IEnumerable<string> PropertyNames => throw new NotImplementedException();
+
+            public TestArray(byte[] data)
+            {
+                this.data = data;
+            }
+
+            public void Dispose()
+            {
+                //Ignore
+            }
+
+            public object this[int index]
+            {
+                get => throw new NotImplementedException();
+                set => throw new NotImplementedException();
+            }
+
+            public object this[string name, params object[] o]
+            {
+                get => throw new NotImplementedException();
+                set => throw new NotImplementedException();
+            }
+
+            public byte[] ToArray()
+            {
+                return data;
+            }
+
+            public ulong Read(ulong _, ulong __, byte[] ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ulong Read(ulong _, ulong __, Span<byte> ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ulong Write(byte[] _, ulong __, ulong ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ulong Write(ReadOnlySpan<byte> _, ulong __, ulong ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public byte[] GetBytes()
+            {
+                return data;
+            }
+
+            public ulong ReadBytes(ulong _, ulong __, byte[] ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ulong ReadBytes(ulong _, ulong __, Span<byte> ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ulong WriteBytes(byte[] _, ulong __, ulong ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ulong WriteBytes(ReadOnlySpan<byte> _, ulong __, ulong ___, ulong ____)
+            {
+                throw new NotImplementedException();
+            }
+
+            public object GetProperty(int i)
+            {
+                throw new NotImplementedException();
+            }
+
+            public object GetProperty(string name, params object[] p)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetProperty(string name, params object[] p)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetProperty(int i, object o)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool DeleteProperty(string name)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool DeleteProperty(int i)
+            {
+                throw new NotImplementedException();
+            }
+
+            public object Invoke(bool b, params object[] o)
+            {
+                throw new NotImplementedException();
+            }
+
+            public object InvokeMethod(string s, params object[] o)
+            {
+                throw new NotImplementedException();
+            }
+
+            public object InvokeAsFunction(params object[] o)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void InvokeWithDirectAccess(Action<IntPtr> action)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void InvokeWithDirectAccess<TArgs>(Action<IntPtr, TArgs> action, in TArgs args)
+            {
+                unsafe
+                {
+                    fixed (byte* ptr = data)
+                    {
+                        IntPtr intPtr = new IntPtr(ptr);
+                        action(intPtr, args);
+                    }
+                }
+            }
+
+            public TResult InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func)
+            {
+                throw new NotImplementedException();
+            }
+
+            public TResult InvokeWithDirectAccess<TArgs, TResult>(Func<IntPtr, TArgs, TResult> func, in TArgs args)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IEnumerator<byte> GetEnumerator()
+            {
+                return ((IEnumerable<byte>)data).GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return data.GetEnumerator();
             }
         }
     }
