@@ -633,13 +633,6 @@ namespace Global.Dynamic
 
             NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
 
-            // Local scene development scenes are excluded from deeplink runtime handling logic
-            if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
-            {
-                DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct);
-                deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
-            }
-
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<FriendsConnectivityStatusTracker>();
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
@@ -668,6 +661,13 @@ namespace Global.Dynamic
                 communitiesEventBus,
                 communitiesDataProvider,
                 identityCache);
+
+            // Local scene development scenes are excluded from deeplink runtime handling logic
+            if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
+            {
+                DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct, communitiesDataService);
+                deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
+            }
 
             var passportBridge = new MVCPassportBridge(mvcManager);
 
@@ -882,7 +882,9 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     homePlaceEventBus,
-                    staticContainer.SmartWearableCache
+                    staticContainer.SmartWearableCache,
+                    communitiesDataService,
+                    staticContainer.LoadingStatus
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,

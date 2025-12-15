@@ -1,9 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.Optimization.Hashing;
+using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
+using ECS.StreamableLoading.Cache.Generic;
+using ECS.StreamableLoading.Cache.InMemory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Threading;
@@ -13,53 +15,40 @@ namespace SceneRuntime.Factory.JsSource
     public class CachedWebJsSources : IWebJsSources
     {
         private readonly IWebJsSources origin;
-        private readonly IDiskCache diskCache;
+        private readonly IGenericCache<string, string> cache;
         private const string EXTENSION = "js";
 
-        public CachedWebJsSources(IWebJsSources origin, IDiskCache diskCache)
+        public CachedWebJsSources(IWebJsSources origin, IMemoryCache<string, string> cache, IDiskCache<string> diskCache)
         {
             this.origin = origin;
-            this.diskCache = diskCache;
+            this.cache = new GenericCache<string, string>(cache, diskCache, DiskHashCompute.INSTANCE, EXTENSION);
         }
 
-        public async UniTask<Result<SlicedOwnedMemory<byte>>>
-            SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
+        public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
-            if (path.Value.StartsWith("file://", StringComparison.Ordinal))
+            string key = path.Value;
+
+            if (key.StartsWith("file://", StringComparison.Ordinal))
                 return await origin.SceneSourceCodeAsync(path, ct);
 
-            using var key = HashKey.FromString(path.Value);
-            var getResult = await diskCache.ContentAsync(key, EXTENSION, ct);
+            EnumResult<Option<string>, TaskError> result = await cache.ContentOrFetchAsync(key, origin, true, static v => SceneSourceCodeAsync(v), ct);
 
-            if (getResult is { Success: true, Value: not null })
-                return Result<SlicedOwnedMemory<byte>>.SuccessResult(
-                    getResult.Value.Value);
-            else
+            if (result.Success == false)
+                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path.Value}: {result.Error!.Value.State} {result.Error!.Value.Message}");
+
+            return result.Unwrap().Value.EnsureNotNull();
+        }
+
+        private static UniTask<string> SceneSourceCodeAsync((string key, IWebJsSources ctx, CancellationToken token) value) =>
+            value.ctx!.SceneSourceCodeAsync(URLAddress.FromString(value.key!), value.token);
+
+        private class DiskHashCompute : AbstractDiskHashCompute<string>
+        {
+            public static readonly DiskHashCompute INSTANCE = new ();
+
+            protected override void FillPayload(IHashKeyPayload keyPayload, in string asset)
             {
-                var sourceCodeResult
-                    = await origin.SceneSourceCodeAsync(path, ct);
-
-                if (sourceCodeResult.Success)
-                {
-                    var memoryIterator = SerializeMemoryIterator<
-                        SlicedOwnedMemory<byte>>.New(sourceCodeResult.Value,
-                        static (source, currentIndex, buffer) =>
-                            SerializeMemoryIterator.ReadNextData(currentIndex,
-                                source.Memory.Span, buffer),
-                        static (source, currentIndex, bufferSize) =>
-                            SerializeMemoryIterator.CanReadNextData(
-                                currentIndex, source.Memory.Length,
-                                bufferSize));
-
-                    var putResult = await diskCache.PutAsync(key, EXTENSION,
-                        memoryIterator, ct);
-
-                    if (!putResult.Success)
-                        ReportHub.LogWarning(ReportCategory.SCENE_LOADING,
-                            $"Could not write to the disk cache because {putResult.Error}");
-                }
-
-                return sourceCodeResult;
+                keyPayload.Put(asset);
             }
         }
     }
