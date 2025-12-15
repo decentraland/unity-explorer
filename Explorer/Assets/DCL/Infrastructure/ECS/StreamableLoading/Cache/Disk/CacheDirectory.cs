@@ -7,7 +7,7 @@ namespace ECS.StreamableLoading.Cache.Disk
     public readonly struct CacheDirectory
     {
         //Bump this version if there is the need to wipe out the old disk cache when introducing major changes to DiskCaching
-        private const string CACHE_VERSION = "V2";
+        private const string CACHE_VERSION = "V3";
         private static readonly string DISK_CACHE_FOLDER = $"DiskCache{CACHE_VERSION}";
         public readonly string Path;
 
