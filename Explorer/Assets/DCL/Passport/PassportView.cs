@@ -122,7 +122,7 @@ namespace DCL.Passport
         public Sprite GiftSprite { get; private set; }
 
         [field: SerializeField]
-        public string GiftText { get; private set; } = "Send Gift";
+        public string GiftText { get; private set; } = "Gift";
 
         [field: SerializeField]
         public Sprite InviteToCommunitySprite { get; private set; }

@@ -19,8 +19,8 @@ namespace DCL.Backpack.Gifting.Tests
             // "https://peer-ue-2.decentraland.zone/lambdas/collections/standard/erc721/137/0x4fcd400a147618a2184836927e0b458559a1ad16/0/1678",
             // "https://peer-ue-2.decentraland.zone/lambdas/collections/standard/erc721/137/0x3b5306be0da3202a5e7b00d1acc16a46cd88dfdc/9/1678",
         };
-        
-        [ContextMenu("Trigger Gift Notification (new payload")]
+
+        [ContextMenu("Trigger Gift Notification")]
         public void TriggerNotificationNewPayload()
         {
             string randomUri = validTokenUris[Random.Range(0, validTokenUris.Length)];

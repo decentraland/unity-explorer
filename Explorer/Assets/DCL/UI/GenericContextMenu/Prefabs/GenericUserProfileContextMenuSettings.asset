@@ -20,7 +20,7 @@ MonoBehaviour:
     Text: Jump to Location
   <GiftInButtonConfig>k__BackingField:
     Sprite: {fileID: 21300000, guid: 5e94cf755de954ea889213667ad9d540, type: 3}
-    Text: Send Gift
+    Text: Gift
   <MentionButtonConfig>k__BackingField:
     Sprite: {fileID: 21300000, guid: f2d19b4801b89445ab90e2f33049b326, type: 3}
     Text: Mention

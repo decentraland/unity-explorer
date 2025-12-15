@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         [field: Header("Gifting")]
         [field: SerializeField]
-        public string GiftUserText { get; private set; } = "Send Gift";
+        public string GiftUserText { get; private set; } = "Gift";
 
         [field: SerializeField]
         public Sprite GiftUserSprite { get; private set; }
