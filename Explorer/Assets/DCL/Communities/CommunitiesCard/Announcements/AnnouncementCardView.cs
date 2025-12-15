@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Threading;
@@ -31,16 +32,24 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private GameObject verifiedMark = null!;
         [SerializeField] private GameObject officialMark = null!;
         [SerializeField] private TMP_Text postDate = null!;
-        [SerializeField] private Button likeAnnouncementButton = null!;
-        [SerializeField] private Button unlikeAnnouncementButton = null!;
-        [SerializeField] private TMP_Text likesCounter = null!;
         [SerializeField] private Button deleteAnnouncementButton = null!;
         [SerializeField] private ProfilePictureView profilePicture = null!;
         [SerializeField] private Sprite deleteSprite = null!;
         [SerializeField] private ContentSizeFitter messageContentSizeFitter = null!;
 
+        [Header("Like/Unlike Settings")]
+        [SerializeField] private Button likeAnnouncementButton = null!;
+        [SerializeField] private Button unlikeAnnouncementButton = null!;
+        [SerializeField] private TMP_Text likesCounter = null!;
+        [SerializeField] private Image likeAnimatedMarkImage = null!;
+        [SerializeField] private float likeAnimatedMarkScaleMultiplier = 2f;
+        [SerializeField] private float likeAnimatedMarkAnimationDuration = 0.8f;
+        [SerializeField] private Color likeColor = Color.red;
+        [SerializeField] private Color unlikeColor = Color.white;
+
         private string currentAnnouncementId = null!;
         private string currentProfileThumbnailUrl = null!;
+        private Sequence likeMarkAnimationSequence = null!;
 
         private CancellationTokenSource confirmationDialogCts = null!;
 
@@ -55,8 +64,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             deleteAnnouncementButton.onClick.AddListener(OnDeleteAnnouncementButtonClicked);
         }
 
-        private void OnDisable() =>
+        private void OnDisable()
+        {
             confirmationDialogCts.SafeCancelAndDispose();
+            likeMarkAnimationSequence.Kill(true);
+            likeMarkAnimationSequence = null!;
+        }
 
         private void OnDestroy()
         {
@@ -86,6 +99,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             likeAnnouncementButton.gameObject.SetActive(!announcementInfo.isLikedByUser);
             unlikeAnnouncementButton.gameObject.SetActive(announcementInfo.isLikedByUser);
             likesCounter.text = announcementInfo.likesCount.ToString();
+            likesCounter.color = announcementInfo.isLikedByUser ? likeColor : unlikeColor;
             deleteAnnouncementButton.gameObject.SetActive(allowDeletion);
 
             RefreshCardHeight();
@@ -100,8 +114,21 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 MIN_CARD_HEIGHT + ((RectTransform) announcementContent.transform).sizeDelta.y);
         }
 
-        private void OnLikeAnnouncementButtonClicked() =>
+        private void OnLikeAnnouncementButtonClicked()
+        {
             LikeAnnouncementButtonClicked?.Invoke(currentAnnouncementId);
+            PlayLikeMarkAnimation();
+        }
+
+        private void PlayLikeMarkAnimation()
+        {
+            likeAnimatedMarkImage.rectTransform.localScale = Vector3.one;
+            likeAnimatedMarkImage.color = likeColor;
+
+            likeMarkAnimationSequence = DOTween.Sequence();
+            likeMarkAnimationSequence.Join(likeAnimatedMarkImage.rectTransform.DOScale(Vector3.one * likeAnimatedMarkScaleMultiplier, likeAnimatedMarkAnimationDuration).SetEase(Ease.OutQuad));
+            likeMarkAnimationSequence.Join(likeAnimatedMarkImage.DOFade(0f, likeAnimatedMarkAnimationDuration));
+        }
 
         private void OnUnlikeAnnouncementButtonClicked() =>
             UnlikeAnnouncementButtonClicked?.Invoke(currentAnnouncementId);
