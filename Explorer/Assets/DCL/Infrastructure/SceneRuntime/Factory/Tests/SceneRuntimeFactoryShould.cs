@@ -88,7 +88,7 @@ namespace SceneRuntime.Factory.Tests
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
                     new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert

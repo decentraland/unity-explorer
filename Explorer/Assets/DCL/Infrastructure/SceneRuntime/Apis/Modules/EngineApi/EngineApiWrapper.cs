@@ -5,6 +5,7 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
+using System.Buffers;
 using System.Threading;
 using UnityEngine.Profiling;
 
@@ -12,11 +13,10 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 {
     public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8FastHostObject
     {
-        private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
 
-        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
         private readonly string threadName;
+        private readonly SingleUnmanagedMemoryManager<byte> singleMemoryManager = new ();
 
         private static readonly V8FastHostObjectOperations<EngineApiWrapper> OPERATIONS = new();
         protected virtual IV8FastHostObjectOperations operations => OPERATIONS;
@@ -27,18 +27,15 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             OPERATIONS.Configure(static configuration => Configure(configuration));
         }
 
-        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
-            : base(api, disposeCts)
+        public EngineApiWrapper(
+            IEngineApi api, 
+            ISceneData sceneData, 
+            ISceneExceptionsHandler exceptionsHandler, 
+            CancellationTokenSource disposeCts
+        ): base(api, disposeCts)
         {
-            this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
             threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
-        }
-
-        protected override void DisposeInternal()
-        {
-            // Dispose the last input buffer
-            lastInput.ReleaseAndDispose();
         }
 
         private ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
@@ -46,13 +43,23 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             if (disposeCts.IsCancellationRequested)
                 return ScriptableByteArray.EMPTY;
 
+            // V8ScriptItem does not support zero length
+            ulong length = data.Length;
+            if (length == 0)
+                return ScriptableByteArray.EMPTY;
+
             try
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
-
-                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
+                // InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg)
+                PoolableByteArray result = data.InvokeWithDirectAccess(
+                    static (ptr, args) => {
+                        args.singleMemoryManager.Assign(ptr, (int) args.length);
+                        return args.api.CrdtSendToRenderer(args.singleMemoryManager.Memory);
+                    }, 
+                    (api, length, singleMemoryManager)
+                );
 
                 Profiler.EndThreadProfiling();
 
@@ -103,6 +110,40 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             configuration.AddMethodGetter(nameof(SendBatch),
                 static (T self, in V8FastArgs _, in V8FastResult result) =>
                     result.Set(self.SendBatch()));
+        }
+
+        // Doesn't own the memory, just a view to hack some APIs when lifetime is explicitly controlled, but Span is not acceptable
+        // It's guranteed that Js has one thread and the memory cannot be reassigned from multiple threads at the time
+        public class SingleUnmanagedMemoryManager<T> : MemoryManager<T> where T: unmanaged
+        {
+            private IntPtr ptr;
+            private int length;
+
+            public void Assign(IntPtr ptr, int length)
+            {
+                this.ptr = ptr;
+                this.length = length;
+            }
+
+            public override Span<T> GetSpan()
+            {
+                unsafe 
+                {
+                    return new ((void*) ptr, length);
+                }
+            }
+
+            public override MemoryHandle Pin(int elementIndex = 0)
+            {
+                unsafe 
+                {
+                    return new ((byte*)ptr + (elementIndex * sizeof(T)));
+                }
+            }
+
+            public override void Unpin() { }
+
+            protected override void Dispose(bool disposing) { }
         }
     }
 }
