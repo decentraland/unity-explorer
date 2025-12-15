@@ -56,7 +56,7 @@ MonoBehaviour:
   - rid: 6169970366055448665
   - rid: 2008243996523495520
   - rid: 3821626543930605662
-  - rid: 3821626840059215872
+  - rid: 5190442831932031144
   references:
     version: 2
     RefIds:
@@ -168,6 +168,9 @@ MonoBehaviour:
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
             IconClass: sprite-interaction__icon-mouse-right
+        <socialEmoteOutcomesContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 79f752bc43a65384bab431cb6a44d8bd, type: 2}
+        <socialEmoteSettings>k__BackingField: {fileID: 11400000, guid: 000895e935900fa43b53faf506ee15fa, type: 2}
+        <interactionSettings>k__BackingField: {fileID: 11400000, guid: ea1f7da7c78c3d74bac70064dcc265a7, type: 2}
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -589,11 +592,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 3821626840059215872
-      type: {class: AvatarLocomotionOverridesGlobalPlugin/Settings, ns: DCL.SDKComponents.AvatarLocomotion, asm: DCL.Plugins}
-      data:
-        MaxMovementSpeed: 500
-        MaxJumpHeight: 200
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -741,6 +739,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 5190442831932031144
+      type: {class: AvatarLocomotionOverridesGlobalPlugin/Settings, ns: DCL.SDKComponents.AvatarLocomotion, asm: DCL.Plugins}
+      data:
+        MaxMovementSpeed: 500
+        MaxJumpHeight: 200
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -874,6 +877,18 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmoteWheelRarityBackgrounds>k__BackingField:
           m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <SocialEmotePinPrefab>k__BackingField:
+          m_AssetGUID: a0f8bf40b1a14c54384029def9ea0582
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <SocialEmotesSettings>k__BackingField:
+          m_AssetGUID: 000895e935900fa43b53faf506ee15fa
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
