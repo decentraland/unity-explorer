@@ -4,6 +4,26 @@ using System.Collections.Generic;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
+    /// <summary>
+    /// MUST be used only when direct access to ITypedArray (a.k. IArrayBuffer) is not feasiable due async/await
+    /// Example
+    /// 
+    /// <example>
+    /// Example of usage: InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg) 
+    ///
+    /// <code>
+    ///    PoolableByteArray result = data.InvokeWithDirectAccess(
+    ///        static (ptr, args) => {
+    ///            args.singleMemoryManager.Assign(ptr, (int) args.length);
+    ///            return args.api.CrdtSendToRenderer(args.singleMemoryManager.Memory);
+    ///        }, 
+    ///        (api, length, singleMemoryManager)
+    ///    );
+    /// </code>
+    ///
+    /// </example>
+    ///
+    /// </summary>
     public struct PoolableByteArray : IDisposable, IEnumerable<byte>
     {
         public static readonly PoolableByteArray EMPTY = new (System.Array.Empty<byte>(), 0, null);
