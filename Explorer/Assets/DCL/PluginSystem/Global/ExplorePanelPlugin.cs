@@ -41,6 +41,7 @@ using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
@@ -56,6 +57,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
@@ -156,6 +158,8 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IAnalyticsController analytics;
+        private readonly CommunityDataService communityDataService;
+        private readonly ILoadingStatus loadingStatus;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -217,7 +221,9 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            CommunityDataService communityDataService,
+            ILoadingStatus loadingStatus)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -280,6 +286,8 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
             this.analytics = analytics;
+            this.communityDataService = communityDataService;
+            this.loadingStatus = loadingStatus;
         }
 
         public void Dispose()
@@ -472,7 +480,9 @@ namespace DCL.PluginSystem.Global
                 communityCallOrchestrator,
                 sharedSpaceManager,
                 chatEventBus,
-                analytics);
+                analytics,
+                communityDataService,
+                loadingStatus);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
