@@ -5,6 +5,7 @@ namespace DCL.SDKComponents.Tween.Components
     public struct SDKTweenSequenceComponent
     {
         public bool IsDirty { get; set; }
+        public bool HasTransformTweens { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
         public ITweener SequenceTweener { get; set; }
 

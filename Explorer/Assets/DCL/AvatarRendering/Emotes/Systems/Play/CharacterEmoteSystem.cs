@@ -117,7 +117,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             AfterPlayingUpdateSocialEmoteInteractionsQuery(World);
             RotateReceiverAvatarToCoincideWithInitiatorAvatarQuery(World); // This must occur after ConsumeEmoteIntentQuery, because it has to rotate the avatar one frame after the emote plays, at least
             ConsumeStopEmoteIntentQuery(World); // Repeated on purpose, if the state of both participants in a social emote interaction must be consistent all the time
-            CancelEmotesByDeletionQuery(World);
+            CancelEmotesByDeletionWhenProfileIsNotPresentQuery(World);
+            CancelEmotesByDeletionWhenProfileIsPresentQuery(World);
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
             DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
@@ -134,7 +135,15 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        [None(typeof(Profile))]
+        private void CancelEmotesByDeletionWhenProfileIsNotPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            StopEmote(entity, ref emoteComponent, avatarView, string.Empty);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention), typeof(Profile))]
+        private void CancelEmotesByDeletionWhenProfileIsPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
             StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
         }
@@ -343,8 +352,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             if(emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
                 return;
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingCheckEmoteAsset()");
-
             URN emoteId = emoteIntent.EmoteId;
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
@@ -352,6 +359,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingCheckEmoteAsset() " + emoteId);
+
                     if (emote.IsLoading)
                         return;
 
@@ -542,11 +551,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emoteComponent.Metadata.IsSocialEmote &&
                     emoteIntent.TriggerSource != TriggerSource.PREVIEW &&
                     emoteComponent.SocialEmote.IsPlayingOutcome &&
-                    emoteComponent.SocialEmote.CurrentOutcome < emote.SocialEmoteOutcomeAudioAssetResults.Count) // TODO: This IF step should never be true
+                    emote.SocialEmoteOutcomeAudioAssetResults != null && emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].HasValue)
                 {
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayNewEmote() AUDIO for outcome " + emoteComponent.SocialEmote.CurrentOutcome);
 
-                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].Asset;
+                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome]!.Value.Asset;
                 }
 
                 bool playedSuccessfully = emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent);
@@ -577,7 +586,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if(emoteIntent.EmoteAsset == null || !emoteIntent.HasPlayedEmote)
                 return;
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions()");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " emote: " + emoteIntent.EmoteId);
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try

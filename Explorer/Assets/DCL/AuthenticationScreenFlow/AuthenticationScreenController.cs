@@ -160,6 +160,7 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
+            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
@@ -274,20 +275,20 @@ namespace DCL.AuthenticationScreenFlow
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
-                        SwitchState(ViewState.MethodSelection);
+                        SwitchState(ViewState.Login);
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
-                    SwitchState(ViewState.MethodSelection);
+                    SwitchState(ViewState.Login);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.MethodSelection);
+                    SwitchState(ViewState.Login);
                 }
             }
             else
@@ -352,6 +353,8 @@ namespace DCL.AuthenticationScreenFlow
 
                     viewInstance!.ErrorPopupRoot.SetActive(false);
                     viewInstance!.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(false);
 
                     var web3AuthSpan = new SpanData
                     {
@@ -444,8 +447,17 @@ namespace DCL.AuthenticationScreenFlow
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ShowConnectionErrorPopup();
                 }
-                finally { RestoreResolutionAndScreenMode(); }
+                finally
+                {
+                    RestoreResolutionAndScreenMode();
+                }
             }
+        }
+
+        private void CancelLoginAndRestartFromBeginning()
+        {
+            CancelLoginProcess();
+            SwitchState(ViewState.Login);
         }
 
         private void ShowVerification(int code, DateTime expiration, string requestID)
@@ -458,7 +470,7 @@ namespace DCL.AuthenticationScreenFlow
                 TransactionName = LOADING_TRANSACTION_NAME,
                 SpanName = "CodeVerification",
                 SpanOperation = "auth.code_verification",
-                Depth = 1,
+                Depth = 1
             };
 
             sentryTransactionManager.StartSpan(verificationSpan);
@@ -553,24 +565,21 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.LoginButton.interactable = true;
-
+                    viewInstance.LoginButton.gameObject.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
-
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.Loading:
                     viewInstance!.PendingAuthentication.SetActive(false);
-
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.LoadingSpinner.SetActive(true);
-                    viewInstance.LoginButton.interactable = true;
-
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
@@ -579,7 +588,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
-
+                    viewInstance.LoginButton.gameObject.SetActive(true);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.FinalizeContainer.SetActive(false);
@@ -593,6 +602,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
 
                     viewInstance.FinalizeContainer.SetActive(true);
                     viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
@@ -657,7 +667,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void InitMusicMute()
         {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED);
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
 
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
@@ -667,7 +677,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnMuteButtonClicked()
         {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED);
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
 
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
