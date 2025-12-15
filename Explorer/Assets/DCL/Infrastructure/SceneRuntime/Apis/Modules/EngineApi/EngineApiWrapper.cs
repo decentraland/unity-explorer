@@ -52,6 +52,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
+                // Avoid copying of the buffer
                 // InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg)
                 PoolableByteArray result = data.InvokeWithDirectAccess(
                     static (ptr, args) => {
