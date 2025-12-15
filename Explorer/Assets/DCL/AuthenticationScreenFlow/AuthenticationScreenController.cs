@@ -183,12 +183,13 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
 
-            // // Method selection buttons
-            // viewInstance.LoginWithOtpButton.onClick.AddListener(SelectThirdWebOtpMethod);
+            // Method selection buttons
+            viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
             // viewInstance.LoginWithWalletButton.onClick.AddListener(SelectDappWalletMethod);
             // viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
         }
 
+#region MainFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
@@ -335,6 +336,7 @@ namespace DCL.AuthenticationScreenFlow
         private void StartDappLoginFlowUntilEnd()
         {
             CancelLoginProcess();
+            compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
@@ -554,12 +556,12 @@ namespace DCL.AuthenticationScreenFlow
         {
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"[STATUS{CurrentState}]: Changing Auth screen state to {state.ToString()}...");
             switch (state)
             {
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
-                    compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
@@ -616,6 +618,8 @@ namespace DCL.AuthenticationScreenFlow
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
+
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Changed screen to {state.ToString()} ✅ ");
         }
 
         private static void ResetAnimator(Animator animator)
@@ -709,11 +713,13 @@ namespace DCL.AuthenticationScreenFlow
 
         private void UnblockUnwantedInputs() =>
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+#endregion
 
 #region OTP FLOW
         private void StartOTPLoginFlowUntilEnd()
         {
             CancelLoginProcess();
+            compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
 
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
@@ -852,19 +858,6 @@ namespace DCL.AuthenticationScreenFlow
             return otpCompletionSource.Task;
         }
 
-        private void SelectThirdWebOtpMethod()
-        {
-            compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
-            SwitchState(ViewState.Login);
-        }
-
-        private void SelectDappWalletMethod()
-        {
-            compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
-
-            // For Dapp wallet, we skip email input and go directly to login flow
-            StartDappLoginFlowUntilEnd();
-        }
         private async UniTask<Profile> CreateAndPublishDefaultProfileAsync(CancellationToken ct)
         {
             IWeb3Identity? identity = storedIdentityProvider.Identity;

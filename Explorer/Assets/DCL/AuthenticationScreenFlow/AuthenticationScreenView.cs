@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
+using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
@@ -14,13 +15,14 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenView : ViewBase, IView, IPointerClickHandler
     {
-        [SerializeField] private LocalizeStringEvent countdownLabel = null!;
-
         private StringVariable? countdownLabelParameter;
 
-        [field: Header("Login")]
+        [field: Header("LOGIN")]
         [field: SerializeField]
         public GameObject LoginContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Animator LoginAnimator { get; private set; } = null!;
 
         [field: SerializeField]
         public Button LoginButton { get; private set; } = null!;
@@ -34,32 +36,15 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button LoginWithOtpButton { get; private set; } = null!;
 
-        // [field: SerializeField]
-        // public TMP_InputField PasswordInputField { get; private set; } = null!;
-        //
-        // [field: SerializeField]
-        // public Button RegisterButton { get; private set; } = null!;
-
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; } = null!;
 
+        [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CancelAuthenticationProcess { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject FinalizeContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button JumpIntoWorldButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button[] UseAnotherAccountButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
+        public Animator VerificationAnimator { get; private set; } = null!;
 
         [field: SerializeField]
         public TMP_Text VerificationCodeLabel { get; private set; } = null!;
@@ -71,35 +56,34 @@ namespace DCL.AuthenticationScreenFlow
         public GameObject VerificationCodeHintContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button DiscordButton { get; private set; } = null!;
+        public TMP_InputField PasswordInputField { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button ExitButton { get; private set; } = null!;
+        public Button RegisterButton { get; private set; } = null!;
+
+        [SerializeField]
+        private LocalizeStringEvent countdownLabel = null!;
 
         [field: SerializeField]
-        public MuteButtonView MuteButton { get; private set; } = null!;
+        public Button CancelAuthenticationProcess { get; private set; } = null!;
 
+        [field: Header("FINALIZE")]
         [field: SerializeField]
-        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Animator LoginAnimator { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Animator VerificationAnimator { get; private set; } = null!;
+        public GameObject FinalizeContainer { get; private set; } = null!;
 
         [field: SerializeField]
         public Animator FinalizeAnimator { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text VersionText { get; private set; } = null!;
+        public Button JumpIntoWorldButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject RestrictedUserContainer { get; private set; } = null!;
+        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button RequestAlphaAccessButton { get; private set; } = null!;
+        public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
 
+        [field: Header("ERROR POPUP")]
         [field: SerializeField]
         public GameObject ErrorPopupRoot { get; private set; } = null!;
 
@@ -112,6 +96,28 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button ErrorPopupCloseButton { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Button[] UseAnotherAccountButton { get; private set; } = null!;
+
+        [field: Header("OTHER")]
+        [field: SerializeField]
+        public Button DiscordButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ExitButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public MuteButtonView MuteButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text VersionText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject RestrictedUserContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button RequestAlphaAccessButton { get; private set; } = null!;
+
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do
@@ -122,6 +128,11 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(1000, cancellationToken: ct);
             }
             while (expiration > DateTime.UtcNow);
+        }
+
+        public void ShowVerificationContainer(AuthMethod authMethod)
+        {
+            if (authMethod == AuthMethod.DappWallet) { }
         }
 
         public void OnPointerClick(PointerEventData eventData)
