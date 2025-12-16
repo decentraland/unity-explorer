@@ -340,6 +340,153 @@ namespace ECS.Unity.Visibility.Tests
             Assert.That(childResolvedAfter.ShouldPropagate, Is.True, "ShouldPropagate should be true");
         }
 
+        [Test]
+        public void ReparentedToPropagatingHierarchy_FirstTimeWithoutResolvedVisibility()
+        {
+            // This tests the case where an entity that NEVER had ResolvedVisibilityComponent
+            // (because it was never under a propagating parent) gets reparented under a
+            // parent that has propagating visibility.
+
+            // Arrange
+            var oldParentTransform = CreateTransformComponent("OldParent");
+            var newParentTransform = CreateTransformComponent("NewParent");
+            var childTransform = CreateTransformComponent("Child");
+
+            Entity oldParent = world.Create(
+                oldParentTransform, // No visibility component at all
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity newParent = world.Create(
+                new PBVisibilityComponent { Visible = false, PropagateToChildren = true, IsDirty = true },
+                newParentTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity child = world.Create(
+                childTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            SetupParentChild(oldParent, child, oldParentTransform, childTransform);
+            world.Set(child, childTransform);
+            world.Set(oldParent, oldParentTransform);
+
+            // First update - new parent gets its ResolvedVisibility, but child has none
+            system!.Update(0f);
+
+            // Verify child has NO ResolvedVisibilityComponent yet
+            Assert.That(world.Has<ResolvedVisibilityComponent>(child), Is.False,
+                "Child should NOT have ResolvedVisibilityComponent before reparenting");
+
+            // Reparent child to new parent (which has propagating visibility)
+            oldParentTransform.Children.Remove(child);
+            childTransform.Transform.SetParent(newParentTransform.Transform, true);
+            childTransform.Parent = newParent;
+            newParentTransform.Children.Add(child);
+
+            world.Set(child, childTransform);
+            world.Set(oldParent, oldParentTransform);
+            world.Set(newParent, newParentTransform);
+
+            // Mark transform as dirty to trigger reparenting detection
+            ref var childSdkTransform = ref world.Get<SDKTransform>(child);
+            childSdkTransform.IsDirty = true;
+
+            // Act
+            system.Update(0f);
+
+            // Assert - child should now have ResolvedVisibilityComponent inheriting from new parent
+            Assert.That(world.Has<ResolvedVisibilityComponent>(child), Is.True,
+                "Child should have ResolvedVisibilityComponent after reparenting to propagating parent");
+
+            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            Assert.That(childResolved.IsVisible, Is.False, "Child should inherit new parent's visibility (false)");
+            Assert.That(childResolved.SourceEntity, Is.EqualTo(newParent), "Source should be new parent");
+            Assert.That(childResolved.ShouldPropagate, Is.True, "ShouldPropagate should be true");
+        }
+
+        [Test]
+        public void ReparentedToPropagatingHierarchy_CascadesToGrandchildren()
+        {
+            // This tests that when an entity is reparented under a propagating parent,
+            // the visibility also propagates to all descendants (children of the reparented entity).
+
+            // Arrange
+            var oldParentTransform = CreateTransformComponent("OldParent");
+            var newParentTransform = CreateTransformComponent("NewParent");
+            var childTransform = CreateTransformComponent("Child");
+            var grandchildTransform = CreateTransformComponent("Grandchild");
+
+            Entity oldParent = world.Create(
+                oldParentTransform, // No visibility component
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity newParent = world.Create(
+                new PBVisibilityComponent { Visible = false, PropagateToChildren = true, IsDirty = true },
+                newParentTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity child = world.Create(
+                childTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity grandchild = world.Create(
+                grandchildTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            // Set up hierarchy: oldParent -> child -> grandchild
+            SetupParentChild(oldParent, child, oldParentTransform, childTransform);
+            SetupParentChild(child, grandchild, childTransform, grandchildTransform);
+            world.Set(child, childTransform);
+            world.Set(oldParent, oldParentTransform);
+            world.Set(grandchild, grandchildTransform);
+
+            // First update - newParent gets its ResolvedVisibility
+            system!.Update(0f);
+
+            // Verify neither child nor grandchild have ResolvedVisibilityComponent
+            Assert.That(world.Has<ResolvedVisibilityComponent>(child), Is.False);
+            Assert.That(world.Has<ResolvedVisibilityComponent>(grandchild), Is.False);
+
+            // Reparent child (and its descendants) to new parent
+            oldParentTransform.Children.Remove(child);
+            childTransform.Transform.SetParent(newParentTransform.Transform, true);
+            childTransform.Parent = newParent;
+            newParentTransform.Children.Add(child);
+
+            world.Set(child, childTransform);
+            world.Set(oldParent, oldParentTransform);
+            world.Set(newParent, newParentTransform);
+
+            // Mark child's transform as dirty to trigger reparenting detection
+            ref var childSdkTransform = ref world.Get<SDKTransform>(child);
+            childSdkTransform.IsDirty = true;
+
+            // Act
+            system.Update(0f);
+
+            // Assert - both child AND grandchild should have inherited visibility
+            Assert.That(world.Has<ResolvedVisibilityComponent>(child), Is.True,
+                "Child should have ResolvedVisibilityComponent");
+            Assert.That(world.Has<ResolvedVisibilityComponent>(grandchild), Is.True,
+                "Grandchild should also have ResolvedVisibilityComponent (propagated through reparenting)");
+
+            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+
+            Assert.That(childResolved.IsVisible, Is.False, "Child should inherit visibility (false)");
+            Assert.That(grandchildResolved.IsVisible, Is.False, "Grandchild should inherit visibility (false)");
+
+            // Both should have the same source (newParent, which has the PBVisibilityComponent)
+            Assert.That(childResolved.SourceEntity, Is.EqualTo(newParent), "Child source should be newParent");
+            Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(newParent), "Grandchild source should be newParent");
+        }
+
         #endregion
 
         #region Scenario 5: Parent's PBVisibilityComponent removed
