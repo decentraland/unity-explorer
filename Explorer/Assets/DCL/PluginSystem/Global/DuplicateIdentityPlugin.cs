@@ -4,8 +4,6 @@ using DCL.AssetsProvision;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.DuplicateIdentityPopup;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Authenticators;
-using DCL.Web3.Identities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
@@ -20,21 +18,17 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWeb3Authenticator web3Authenticator;
-        private readonly IWeb3IdentityCache web3IdentityCache;
+
+        private DuplicateIdentityWindowController? duplicateIdentityController;
 
         public DuplicateIdentityPlugin(
             IRoomHub roomHub,
             IMVCManager mvcManager,
-            IAssetsProvisioner assetsProvisioner,
-            IWeb3Authenticator web3Authenticator,
-            IWeb3IdentityCache web3IdentityCache)
+            IAssetsProvisioner assetsProvisioner)
         {
             this.roomHub = roomHub;
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
-            this.web3Authenticator = web3Authenticator;
-            this.web3IdentityCache = web3IdentityCache;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -45,7 +39,7 @@ namespace DCL.PluginSystem.Global
 
             var prefab = (await assetsProvisioner.ProvideMainAssetAsync(reference, ct)).Value;
             var duplicateIdentityViewFactory = DuplicateIdentityWindowController.CreateLazily(prefab);
-            var duplicateIdentityController = new DuplicateIdentityWindowController(duplicateIdentityViewFactory, web3Authenticator, web3IdentityCache);
+            duplicateIdentityController = new DuplicateIdentityWindowController(duplicateIdentityViewFactory);
             mvcManager.RegisterController(duplicateIdentityController);
 
             roomHub.IslandRoom().ConnectionUpdated += OnConnectionUpdated;
@@ -60,12 +54,15 @@ namespace DCL.PluginSystem.Global
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity && duplicateIdentityController?.State != ControllerState.ViewShowing)
+                ShowDuplicateIdentityWindowAsync().Forget();
+
+            return;
+
+            async UniTaskVoid ShowDuplicateIdentityWindowAsync()
             {
-                mvcManager.ShowAndForget(
-                    DuplicateIdentityWindowController.IssueCommand(),
-                    ct: CancellationToken.None
-                );
+                await UniTask.SwitchToMainThread();
+                await mvcManager.ShowAsync(DuplicateIdentityWindowController.IssueCommand(), ct: CancellationToken.None);
             }
         }
 

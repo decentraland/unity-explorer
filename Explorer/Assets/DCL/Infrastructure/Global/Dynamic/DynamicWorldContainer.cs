@@ -971,7 +971,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider),
-                new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, identityCache),
+                new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
