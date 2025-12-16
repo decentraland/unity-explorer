@@ -22,7 +22,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             ISceneData sceneData,
             ISceneExceptionsHandler exceptionsHandler,
             CancellationTokenSource disposeCts
-        ): base(api, disposeCts)
+        ) : base(api, disposeCts)
         {
             this.exceptionsHandler = exceptionsHandler;
             threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
@@ -36,6 +36,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
             // V8ScriptItem does not support zero length
             ulong length = data.Length;
+
             if (length == 0)
                 return PoolableByteArray.EMPTY;
 
@@ -46,8 +47,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                 // Avoid copying of the buffer
                 // InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg)
                 PoolableByteArray result = data.InvokeWithDirectAccess(
-                    static (ptr, args) => {
-                        args.singleMemoryManager.Assign(ptr, (int) args.length);
+                    static (ptr, args) =>
+                    {
+                        args.singleMemoryManager.Assign(ptr, (int)args.length);
                         return args.api.CrdtSendToRenderer(args.singleMemoryManager.Memory);
                     },
                     (api, length, singleMemoryManager)
@@ -88,6 +90,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public virtual PoolableSDKObservableEventArray? SendBatch() => null;
+        public virtual PoolableSDKObservableEventArray? SendBatch() =>
+            null;
     }
 }
