@@ -14,6 +14,7 @@ using DCL.CharacterPreview.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.InWorldCamera;
 using DCL.Multiplayer.Movement;
 using ECS.Abstract;
@@ -79,7 +80,7 @@ namespace DCL.CharacterMotion.Systems
 
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
 
-            if (playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) && playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
                 UpdateRemoteIKQuery(World, t, playerTransform.Position);
         }
 
