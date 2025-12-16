@@ -1,13 +1,19 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -19,16 +25,19 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
-        
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly CancellationTokenSource fetchWearableCts = new ();
+
         private int currentEmoteSlot = -1;
-        
+
         public BackpackBusController(
             IWearableStorage wearableStorage,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
-            IEmoteStorage emoteStorage)
+            IEmoteStorage emoteStorage,
+            IWearablesProvider wearablesProvider)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
@@ -36,6 +45,7 @@ namespace DCL.Backpack.BackpackBus
             this.equippedEmotes = equippedEmotes;
             this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
+            this.wearablesProvider = wearablesProvider;
 
             this.backpackCommandBus.EquipWearableMessageReceived += HandleEquipWearableCommand;
             this.backpackCommandBus.UnEquipWearableMessageReceived += HandleUnEquipWearableCommand;
@@ -67,6 +77,7 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
             backpackCommandBus.UnEquipAllWearablesMessageReceived -= HandleUnEquipAllWearables;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
+            fetchWearableCts.SafeCancelAndDispose();
         }
 
         private void HandlePublishProfile(BackpackPublishProfileCommand command) =>
@@ -89,17 +100,24 @@ namespace DCL.Backpack.BackpackBus
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
             if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
-                backpackEventBus.SendWearableSelect(wearable);
+                SelectWearable(wearable);
+            else
+                WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, equippedWearables, SelectWearable, fetchWearableCts.Token).Forget();
         }
+
+        private void SelectWearable(IWearable wearable) =>
+            backpackEventBus.SendWearableSelect(wearable);
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
-            if (!wearableStorage.TryGetElement(command.Id, out IWearable wearable))
-            {
-                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, not found: {command.Id}");
-                return;
-            }
+            if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
+                EquipWearable(wearable, command);
+            else
+                WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token).Forget();
+        }
 
+        private void EquipWearable(IWearable wearable, BackpackEquipWearableCommand command)
+        {
             string? category = null;
 
             try
@@ -113,7 +131,7 @@ namespace DCL.Backpack.BackpackBus
 
             if (category == null)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {command.Id}");
+                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {wearable.GetUrn()}");
                 return;
             }
 

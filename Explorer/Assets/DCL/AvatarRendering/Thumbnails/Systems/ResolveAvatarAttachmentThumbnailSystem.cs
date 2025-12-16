@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
+using DCL.AvatarRendering.Wearables;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
@@ -29,7 +30,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         }
 
         [Query]
-        private void CompleteWearableABThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref AssetBundlePromise promise)
+        private void CompleteWearableABThumbnailDownload(Entity entity, ref IThumbnailAttachment wearable, ref AssetBundlePromise promise)
         {
             if (promise.IsCancellationRequested(World))
             {
@@ -46,7 +47,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         }
 
         [Query]
-        private void CompleteWearableThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
+        private void CompleteWearableThumbnailDownload(Entity entity, ref IThumbnailAttachment wearable, ref Promise promise)
         {
             if (promise.IsCancellationRequested(World))
             {

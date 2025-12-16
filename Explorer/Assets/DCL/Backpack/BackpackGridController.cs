@@ -49,7 +49,7 @@ namespace DCL.Backpack
         private readonly PageSelectorController pageSelectorController;
         private readonly BackpackBreadCrumbController breadcrumbController;
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems = new ();
-        private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
+        private readonly List<ITrimmedWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
 
         private CancellationTokenSource? pageFetchCancellationToken;
@@ -59,7 +59,7 @@ namespace DCL.Backpack
         private string currentSearch = "";
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
         private IWearable? currentBodyShape;
-        private IReadOnlyList<IWearable>? currentPageWearables;
+        private IReadOnlyList<ITrimmedWearable>? currentPageWearables;
 
         public BackpackGridController(BackpackGridView view,
             BackpackCommandBus commandBus,
@@ -164,7 +164,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void SetGridElements(IReadOnlyList<IWearable> gridWearables)
+        private void SetGridElements(IReadOnlyList<ITrimmedWearable> gridWearables)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = gridWearables.Count; j < CURRENT_PAGE_SIZE; j++)
@@ -178,7 +178,7 @@ namespace DCL.Backpack
 
             for (int i = Math.Min(gridWearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
-                IWearable wearable = gridWearables[i];
+                ITrimmedWearable wearable = gridWearables[i];
 
                 //This only happens in last page of results, when gridWearables returned twice the amount of wearables
                 //caused by clicking repeatedly on the same number on the backpack
@@ -198,7 +198,7 @@ namespace DCL.Backpack
                 {
                     backpackItemView.NewTag.SetActive(false);
                 }
-                
+
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnEquip += EquipItem;
                 backpackItemView.OnSelectItem += SelectItem;
@@ -227,11 +227,10 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(int slot, string itemId)
-        {
-            IWearable wearable = currentPageWearables![slot];
-            TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget();
-        }
+        private void EquipItem(int slot, string itemId) =>
+            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, equippedWearables,
+                wearable => TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget(),
+                CancellationToken.None).Forget();
 
         private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, CancellationToken ct)
         {
@@ -310,7 +309,7 @@ namespace DCL.Backpack
 
             try
             {
-                (IReadOnlyList<IWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
+                (IReadOnlyList<ITrimmedWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
                     pageNumber,
                     ct,
                     currentSort.OrderByOperation.ToSortingField(),
@@ -345,7 +344,7 @@ namespace DCL.Backpack
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
         }
 
-        private async UniTaskVoid InitializeItemViewAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
+        private async UniTaskVoid InitializeItemViewAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
             Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
             if (ct.IsCancellationRequested) return;
@@ -353,10 +352,7 @@ namespace DCL.Backpack
             itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
 
-            bool isSmart = await smartWearableCache.IsSmartAsync(itemWearable, ct);
-            if (ct.IsCancellationRequested) return;
-
-            itemView.SmartWearableBadgeContainer.SetActive(isSmart);
+            itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
         }
 
         private void ClearPoolElements()
@@ -410,11 +406,11 @@ namespace DCL.Backpack
             }
         }
 
-        private void UpdateBodyShapeCompatibility(IReadOnlyList<IWearable> wearables, IAvatarAttachment bodyShape)
+        private void UpdateBodyShapeCompatibility(IReadOnlyList<ITrimmedWearable> wearables, IAvatarAttachment bodyShape)
         {
             for (int i = Math.Min(wearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
-                IWearable wearable = wearables[i];
+                ITrimmedWearable wearable = wearables[i];
                 BackpackItemView? itemView = loadingResults[i];
 
                 if (itemView == null) continue;

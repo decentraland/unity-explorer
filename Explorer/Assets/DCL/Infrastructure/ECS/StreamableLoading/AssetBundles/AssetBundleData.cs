@@ -36,7 +36,9 @@ namespace ECS.StreamableLoading.AssetBundles
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
 
-            UnloadAB();
+            //We cannot unload an AB if its an ISS (Initial Scene State AB). It may be a dependency for dynamically isntanced AB
+            if (!InitialSceneStateMetadata.HasValue)
+                UnloadAB();
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
