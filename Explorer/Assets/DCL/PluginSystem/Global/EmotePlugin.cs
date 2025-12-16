@@ -152,7 +152,11 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
+#if !ENABLE_SOCIAL_EMOTES
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);
+#else
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController, socialEmotesSettings);
+#endif
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -160,9 +164,11 @@ namespace DCL.PluginSystem.Global
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
 
+#if ENABLE_SOCIAL_EMOTES
             SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus, socialEmotesSettings, playerEntity);
 
             SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
+#endif
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

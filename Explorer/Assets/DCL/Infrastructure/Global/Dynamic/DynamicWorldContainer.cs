@@ -690,6 +690,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData);
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
+
+#if ENABLE_SOCIAL_EMOTES
             SocialEmoteInteractionsManager.Initialize(new SocialEmoteInteractionsManager());
             DebugSocialEmoteInteractionsView? debugSocialEmotesView = GameObject.FindWithTag("DebugSocialEmoteInteractionsView")?.GetComponent<DebugSocialEmoteInteractionsView>();
 
@@ -699,6 +701,7 @@ namespace Global.Dynamic
                 SocialEmoteInteractionsManager.Instance.InteractionStopped += debugSocialEmotesView.OnInteractionStopped;
                 SocialEmoteInteractionsManager.Instance.ParticipantAdded += debugSocialEmotesView.OnParticipantAdded;
             }
+#endif
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
@@ -736,7 +739,7 @@ namespace Global.Dynamic
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
-                new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, menusAccessFacade, identityCache, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, staticContainer.PlayerEntity),
+                new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, menusAccessFacade, identityCache, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, staticContainer.PlayerEntity, mvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,

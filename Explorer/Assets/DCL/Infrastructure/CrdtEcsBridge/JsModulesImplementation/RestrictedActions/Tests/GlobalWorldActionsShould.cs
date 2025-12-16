@@ -240,6 +240,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
                 throw new NotImplementedException();
 
+            public void Send(URN urn, bool loopCyclePassed) // Parameter name from interface
+            {
+                SentEmotes.Add((urn, loopCyclePassed));
+            }
+
             public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId) // Parameter name from interface
             {
                 SentEmotes.Add((urn, loopCyclePassed));

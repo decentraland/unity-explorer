@@ -84,7 +84,11 @@ namespace CrdtEcsBridge.RestrictedActions
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
             world.AddOrSet(playerEntity, new CharacterEmoteIntent (urn, triggerSource: TriggerSource.SCENE, spatial: true ));
 
+#if !ENABLE_SOCIAL_EMOTES
+            messageBus.Send(urn, isLooping);
+#else
             messageBus.Send(urn, isLooping, false, -1, false, string.Empty, string.Empty, false, 0);
+#endif
         }
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)

@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if ENABLE_SOCIAL_EMOTES
+
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -136,3 +138,5 @@ namespace DCL.SocialEmotes.UI
         }
     }
 }
+
+#endif

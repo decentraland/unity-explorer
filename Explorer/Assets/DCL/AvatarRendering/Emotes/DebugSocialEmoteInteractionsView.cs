@@ -1,3 +1,5 @@
+#if ENABLE_SOCIAL_EMOTES
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -81,3 +83,5 @@ namespace DCL.SocialEmotes
         }
     }
 }
+
+#endif

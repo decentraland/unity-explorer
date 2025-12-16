@@ -1,3 +1,5 @@
+#if ENABLE_SOCIAL_EMOTES
+
 using Arch.Core;
 using CodeLess.Attributes;
 using DCL.Diagnostics;
@@ -198,3 +200,5 @@ namespace DCL.SocialEmotes
             everExistingInteractions.Contains(interactionId);
     }
 }
+
+#endif

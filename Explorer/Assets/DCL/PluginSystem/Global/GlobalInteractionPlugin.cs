@@ -39,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache identityCache;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly Entity playerEntity;
+        private readonly IMVCManager mvcManager;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -53,7 +54,8 @@ namespace DCL.PluginSystem.Global
             IMVCManagerMenusAccessFacade menusAccessFacade,
             IWeb3IdentityCache identityCache,
             ObjectProxy<Entity> cameraEntityProxy,
-            Entity playerEntity)
+            Entity playerEntity,
+            IMVCManager mvcManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
@@ -63,6 +65,7 @@ namespace DCL.PluginSystem.Global
             this.identityCache = identityCache;
             this.cameraEntityProxy = cameraEntityProxy;
             this.playerEntity = playerEntity;
+            this.mvcManager = mvcManager;
         }
 
         public void Dispose() { }
@@ -107,7 +110,11 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
+#if !ENABLE_SOCIAL_EMOTES
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager);
+#else
             ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, identityCache, cameraEntityProxy, playerEntity, settings.socialEmoteOutcomesContextMenuSettings, settings.socialEmoteSettings);
+#endif
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
             AvatarHighlightSystem.InjectToWorld(ref builder, settings.interactionSettings);
