@@ -33,10 +33,7 @@ namespace DCL.Profiles
             profilesDebug = new ProfilesAnalytics(ProfilesDebug.Create(debugContainerBuilder), analyticsController);
 
             Repository = new LogProfileRepository(
-                repository = new RealmProfileRepository(webRequestController, realmData, urlsSource, Cache, profilesDebug,
-
-                    // TODO remove hardcode
-                    true || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
+                repository = new RealmProfileRepository(webRequestController, realmData, urlsSource, Cache, profilesDebug, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
             );
         }
 
