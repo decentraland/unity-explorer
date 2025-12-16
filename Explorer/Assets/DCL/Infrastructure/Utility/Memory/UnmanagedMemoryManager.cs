@@ -1,6 +1,6 @@
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Buffers;
-using DCL.Optimization.ThreadSafePool;
 
 namespace Utility.Memory
 {
@@ -13,7 +13,7 @@ namespace Utility.Memory
 
         public static UnmanagedMemoryManager<T> New(void* ptr, int length)
         {
-            var instance = POOL.Get();
+            UnmanagedMemoryManager<T> instance = POOL.Get();
             instance.ptr = ptr;
             instance.length = length;
             return instance;
