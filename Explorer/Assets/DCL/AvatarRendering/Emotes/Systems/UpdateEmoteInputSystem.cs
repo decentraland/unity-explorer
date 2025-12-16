@@ -92,7 +92,7 @@ namespace DCL.AvatarRendering.Emotes
             }
             else // Normal emotes, or social emote start animation
             {
-                if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible)
+                if (inputModifier.DisableEmote)
                     return;
 
                 IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
@@ -123,21 +123,18 @@ namespace DCL.AvatarRendering.Emotes
                 return;
 
             var newEmoteIntent = new CharacterEmoteIntent
-            {
-                EmoteId = emoteId,
-                Spatial = true,
-                TriggerSource = TriggerSource.SELF,
-                WalletAddress = walletAddress,
-                SocialEmote = new CharacterEmoteIntent.SocialEmoteData()
-                {
-                    OutcomeIndex = socialEmoteOutcomeIndex,
-                    UseOutcomeReactionAnimation = useOutcomeReactionAnimation,
-                    UseOutcomeAnimation = useSocialEmoteOutcomeAnimation,
-                    InitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
-                    TargetAvatarWalletAddress = targetAvatarWalletAddress,
-                    InteractionId = socialEmoteInteractionId
-                }
-            };
+            (
+                emoteId,
+                triggerSource: TriggerSource.SELF,
+                spatial: true,
+                walletAddress : walletAddress,
+                outcomeIndex : socialEmoteOutcomeIndex,
+                useOutcomeReactionAnimation : useOutcomeReactionAnimation,
+                useOutcomeAnimation : useSocialEmoteOutcomeAnimation,
+                initiatorWalletAddress : socialEmoteInitiatorWalletAddress,
+                targetAvatarWalletAddress : targetAvatarWalletAddress,
+                interactionId : socialEmoteInteractionId
+            );
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
