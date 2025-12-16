@@ -5,7 +5,7 @@ namespace Utility.Memory
 {
     /// <summary>
     /// Doesn't own the memory, just a view to hack some APIs when lifetime is explicitly controlled, but Span is not acceptable.
-    /// It's guranteed that Js has one thread and the memory cannot be reassigned from multiple threads at the time.
+    /// It's guaranteed that Js has one thread and the memory cannot be reassigned from multiple threads at the time.
     /// Supposed to be used for Js Wrappers.
     /// </summary>
     public class SingleUnmanagedMemoryManager<T> : MemoryManager<T> where T: unmanaged
