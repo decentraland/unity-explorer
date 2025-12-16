@@ -1,5 +1,3 @@
-#if !ENABLE_SOCIAL_EMOTES
-
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Optimization.Pools;
 using System;
@@ -303,5 +301,3 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
     }
 }
-
-#endif

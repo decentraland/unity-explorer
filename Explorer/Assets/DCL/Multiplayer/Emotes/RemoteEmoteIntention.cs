@@ -1,6 +1,4 @@
-﻿#if !ENABLE_SOCIAL_EMOTES
-
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using System;
 using UnityEngine;
 
@@ -32,5 +30,3 @@ namespace DCL.Multiplayer.Emotes
             HashCode.Combine(EmoteId, WalletId, Timestamp);
     }
 }
-
-#endif

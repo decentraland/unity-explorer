@@ -691,18 +691,6 @@ namespace Global.Dynamic
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
-#if ENABLE_SOCIAL_EMOTES
-            SocialEmoteInteractionsManager.Initialize(new SocialEmoteInteractionsManager());
-            DebugSocialEmoteInteractionsView? debugSocialEmotesView = GameObject.FindWithTag("DebugSocialEmoteInteractionsView")?.GetComponent<DebugSocialEmoteInteractionsView>();
-
-            if (debugSocialEmotesView != null)
-            {
-                SocialEmoteInteractionsManager.Instance.InteractionStarted += debugSocialEmotesView.OnInteractionStarted;
-                SocialEmoteInteractionsManager.Instance.InteractionStopped += debugSocialEmotesView.OnInteractionStopped;
-                SocialEmoteInteractionsManager.Instance.ParticipantAdded += debugSocialEmotesView.OnParticipantAdded;
-            }
-#endif
-
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
             var globalPlugins = new List<IDCLGlobalPlugin>

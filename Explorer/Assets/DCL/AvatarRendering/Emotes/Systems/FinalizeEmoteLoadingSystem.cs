@@ -1,5 +1,3 @@
-#if !ENABLE_SOCIAL_EMOTES
-
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -186,5 +184,3 @@ namespace DCL.AvatarRendering.Emotes
         }
     }
 }
-
-#endif

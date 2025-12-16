@@ -4,7 +4,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -17,7 +16,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
-using DCL.SocialEmotes.UI;
 using DCL.UI.EphemeralNotifications;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
@@ -152,23 +150,13 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-#if !ENABLE_SOCIAL_EMOTES
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);
-#else
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache, identityCache, ephemeralNotificationsController, socialEmotesSettings);
-#endif
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
-
-#if ENABLE_SOCIAL_EMOTES
-            SocialEmoteInteractionSystem.InjectToWorld(ref builder, messageBus, socialEmotesSettings, playerEntity);
-
-            SocialEmotePinsSystem.InjectToWorld(ref builder, socialEmotePinsPool, identityCache);
-#endif
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

@@ -1,6 +1,4 @@
-﻿#if !ENABLE_SOCIAL_EMOTES
-
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Emotes;
@@ -71,5 +69,3 @@ namespace DCL.AvatarRendering.Emotes
         }
     }
 }
-
-#endif

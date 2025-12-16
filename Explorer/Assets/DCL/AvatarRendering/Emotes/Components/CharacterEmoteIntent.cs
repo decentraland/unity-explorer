@@ -1,5 +1,3 @@
-#if !ENABLE_SOCIAL_EMOTES
-
 using CommunicationData.URLHelpers;
 
 namespace DCL.AvatarRendering.Emotes
@@ -35,5 +33,3 @@ namespace DCL.AvatarRendering.Emotes
         }
     }
 }
-
-#endif

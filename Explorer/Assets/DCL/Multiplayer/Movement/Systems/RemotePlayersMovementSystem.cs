@@ -55,21 +55,6 @@ namespace DCL.Multiplayer.Movement.Systems
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
-#if ENABLE_SOCIAL_EMOTES
-            // Remote characters ignore any movement message while playing an outcome animation
-            // This way the avatar does not move due to the other client (owner) has already finished the animation, unless the emote is cancelled
-            if (emoteComponent.SocialEmote.IsPlayingOutcome && playerInbox.Count > 0)
-            {
-                if (!playerInbox.First.isInstant)
-                {
-                    // Filter out non instant
-                    while (playerInbox.Count > 0 && !playerInbox.First.isInstant)
-                        playerInbox.Dequeue();
-                }
-                else // Keeps the instantaneous message in the queue to be processed once the animation finishes
-                    return;
-            }
-#endif
             settings.InboxCount = playerInbox.Count;
 
             // First message

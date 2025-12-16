@@ -1,5 +1,3 @@
-#if !ENABLE_SOCIAL_EMOTES
-
 using CommunicationData.URLHelpers;
 using DCL.Multiplayer.Profiles.Bunches;
 
@@ -16,5 +14,3 @@ namespace DCL.Multiplayer.Emotes
         void SaveForRetry(RemoteEmoteIntention intention);
     }
 }
-
-#endif
