@@ -1,6 +1,6 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
-using Microsoft.ClearScript.V8.FastProxy;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
@@ -10,22 +10,12 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : JsApiWrapper<IEngineApi>, IV8FastHostObject
+    public class EngineApiWrapper : JsApiWrapper<IEngineApi>
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
-
-        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
         private readonly string threadName;
-
-        private static readonly V8FastHostObjectOperations<EngineApiWrapper> OPERATIONS = new();
-        protected virtual IV8FastHostObjectOperations operations => OPERATIONS;
-        IV8FastHostObjectOperations IV8FastHostObject.Operations => operations;
-
-        static EngineApiWrapper()
-        {
-            OPERATIONS.Configure(static configuration => Configure(configuration));
-        }
+        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
         public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
@@ -41,10 +31,11 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             lastInput.ReleaseAndDispose();
         }
 
-        private ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
+        [UsedImplicitly]
+        public PoolableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
             if (disposeCts.IsCancellationRequested)
-                return ScriptableByteArray.EMPTY;
+                return PoolableByteArray.EMPTY;
 
             try
             {
@@ -56,7 +47,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
                 Profiler.EndThreadProfiling();
 
-                return result.IsEmpty ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
+                return result.IsEmpty ? PoolableByteArray.EMPTY : result;
             }
             catch (Exception e)
             {
@@ -65,44 +56,30 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                     // Report an uncategorized MANAGED exception (don't propagate it further)
                     exceptionsHandler.OnEngineException(e);
 
-                return ScriptableByteArray.EMPTY;
+                return PoolableByteArray.EMPTY;
             }
         }
 
-        private ScriptableByteArray CrdtGetState()
+        [UsedImplicitly]
+        public PoolableByteArray CrdtGetState()
         {
             if (disposeCts.IsCancellationRequested)
-                return ScriptableByteArray.EMPTY;
+                return PoolableByteArray.EMPTY;
 
             try
             {
                 PoolableByteArray result = api.CrdtGetState();
-                return result.IsEmpty ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
+                return result.IsEmpty ? PoolableByteArray.EMPTY : result;
             }
             catch (Exception e)
             {
                 // Report an uncategorized MANAGED exception (don't propagate it further)
                 exceptionsHandler.OnEngineException(e);
-                return ScriptableByteArray.EMPTY;
+                return PoolableByteArray.EMPTY;
             }
         }
 
-        protected virtual ScriptableSDKObservableEventArray? SendBatch() => null;
-
-        protected static void Configure<T>(V8FastHostObjectConfiguration<T> configuration)
-            where T: EngineApiWrapper
-        {
-            configuration.AddMethodGetter(nameof(CrdtGetState),
-                static (T self, in V8FastArgs _, in V8FastResult result) =>
-                    result.Set(self.CrdtGetState()));
-
-            configuration.AddMethodGetter(nameof(CrdtSendToRenderer),
-                static (T self, in V8FastArgs args, in V8FastResult result) =>
-                    result.Set(self.CrdtSendToRenderer(args.Get<ITypedArray<byte>>(0))));
-
-            configuration.AddMethodGetter(nameof(SendBatch),
-                static (T self, in V8FastArgs _, in V8FastResult result) =>
-                    result.Set(self.SendBatch()));
-        }
+        [UsedImplicitly]
+        public virtual PoolableSDKObservableEventArray? SendBatch() => null;
     }
 }
