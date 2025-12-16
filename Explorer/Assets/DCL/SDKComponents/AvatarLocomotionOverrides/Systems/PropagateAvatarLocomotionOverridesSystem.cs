@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
             globalWorld.Set(globalPlayerEntity, locomotionOverrides);
 
             pbSettings.IsDirty = false;
-            World.Add<AvatarLocomotionOverridesApplied>(entity);
+            World.AddOrGet<AvatarLocomotionOverridesApplied>(entity);
         }
 
         private static void GetLocomotionOverrides(PBAvatarLocomotionSettings pbSettings, out AvatarLocomotionOverrides locomotionOverrides)
