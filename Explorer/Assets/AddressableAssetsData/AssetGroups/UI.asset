@@ -590,6 +590,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9b1068498c63904cb1ff1958d25fb63
+    m_Address: Assets/DCL/UI/DuplicateIdentityPopup/DuplicateIdentityWindow.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aabac5666448b4345a76347f94ea32a4
     m_Address: BackpackItem
     m_ReadOnly: 0

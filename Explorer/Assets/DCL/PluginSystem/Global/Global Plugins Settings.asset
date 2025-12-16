@@ -56,6 +56,7 @@ MonoBehaviour:
   - rid: 6169970366055448665
   - rid: 2008243996523495520
   - rid: 3821626543930605662
+  - rid: 1154744868092248158
   references:
     version: 2
     RefIds:
@@ -111,6 +112,15 @@ MonoBehaviour:
         <EmotesSettings>k__BackingField:
           <IntroEmoteURN>k__BackingField: raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
+    - rid: 1154744868092248158
+      type: {class: DuplicateIdentityPlugin/DuplicateIdentitySettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <DuplicateIdentityWindow>k__BackingField:
+          m_AssetGUID: a9b1068498c63904cb1ff1958d25fb63
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
