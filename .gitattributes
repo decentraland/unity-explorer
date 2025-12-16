@@ -28,3 +28,4 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 *.physicMaterial binary
 *.asset binary
 *.controller binary
+*.asset text diff=yaml merge=yaml

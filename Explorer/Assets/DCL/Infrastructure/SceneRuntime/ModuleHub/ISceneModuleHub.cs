@@ -1,11 +1,11 @@
 using Microsoft.ClearScript.V8;
-using System;
+using System.Collections.Generic;
 
 namespace SceneRuntime.ModuleHub
 {
     public interface ISceneModuleHub
     {
-        void LoadAndCompileJsModule(string moduleName, ReadOnlySpan<byte> code);
+        void LoadAndCompileJsModules(IReadOnlyDictionary<string, string> sources);
 
         V8Script ModuleScript(string moduleName);
     }
