@@ -119,7 +119,7 @@ namespace DCL.Chat.ChatConfig
         public struct ChannelAudioConfig
         {
             public AudioClipConfig receiveMessageAudio;
-            public  AudioClipConfig receiveMentionAudio;
+            public AudioClipConfig receiveMentionAudio;
         }
 
     }
