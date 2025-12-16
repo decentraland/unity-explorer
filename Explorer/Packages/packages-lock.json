@@ -88,7 +88,7 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#fix/GRD_Mac_Bug",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
