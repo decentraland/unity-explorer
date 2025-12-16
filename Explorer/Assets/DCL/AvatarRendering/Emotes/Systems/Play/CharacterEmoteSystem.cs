@@ -334,7 +334,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void ConsumeStopEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile,
             in StopEmoteIntent stopEmoteIntent)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ConsumeStopEmoteIntent() urn: {emoteComponent.EmoteUrn} wallet: {profile.UserId}");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ConsumeStopEmoteIntent() urn: {emoteComponent.EmoteUrn} wallet: {profile.UserId} stopURN: {stopEmoteIntent.EmoteUrn}");
 
             if (emoteComponent.EmoteUrn == default || emoteComponent.EmoteUrn.IsNullOrEmpty())
             {
@@ -342,7 +342,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 World.Remove<StopEmoteIntent>(entity);
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ConsumeStopEmoteIntent() already canceled");
             }
-            else if (emoteComponent.IsPlayingEmote && emoteComponent.EmoteUrn == stopEmoteIntent.EmoteUrn)
+            else if (emoteComponent.IsPlayingEmote && emoteComponent.EmoteUrn.Shorten() == stopEmoteIntent.EmoteUrn.Shorten())
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ConsumeStopEmoteIntent() stopping");
                 StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
@@ -648,6 +648,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emoteComponent.Metadata!.IsSocialEmote)
                     avatarStateMachineEventHandler.EmoteStateExiting = OnEmoteStateExiting; // Setting and not subscribing because it could play the emote more than once and we can't know if it is the first for this client
 
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " INTENT REMOVED");
+
                 World.Remove<CharacterEmoteIntent>(entity);
             }
             catch (Exception e)
@@ -828,10 +830,12 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"PrepareToAdjustReceiverBeforeOutcomeAnimation() " + initiatorWalletAddress);
 
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress)!;
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress);
+
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"PrepareToAdjustReceiverBeforeOutcomeAnimation() interaction? " + interaction!.Id);
 
             // Note: Since the avatar is reacting, the emote is already available
-            AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
+            AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction!.ReceiverEntity, out bool _);
             AvatarBase initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
 
             // Adjustment interpolation

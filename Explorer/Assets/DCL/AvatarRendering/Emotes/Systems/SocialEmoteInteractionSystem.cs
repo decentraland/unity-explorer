@@ -90,7 +90,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 return;
             }
 
-            float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / socialEmotesSettings.OutcomeStartInterpolationDuration;
+            float interpolation = Mathf.Clamp01((UnityEngine.Time.time - moveIntent.MovementStartTime) / socialEmotesSettings.OutcomeStartInterpolationDuration);
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() <color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Wallet: {((AvatarBase)avatarView).name}</color>");
 
@@ -99,13 +99,6 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             Vector3 originalPositionWithCurrentOffset = avatarView.GetTransform().position + new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
             originalPositionWithCurrentOffset.y = moveIntent.InitiatorWorldPosition.y; // In order to avoid the avatar from leaning, due to the other avatar being at a different height, we move the reacting avatar to the initiator's height
             avatarView.GetTransform().position = Vector3.Lerp(originalPositionWithCurrentOffset, moveIntent.InitiatorWorldPosition, interpolation);
-
-            Debug.DrawRay(avatarView.GetTransform().position, UnityEngine.Vector3.up, Color.yellow, 3.0f);
-            GizmoDrawer.Instance.DrawWireSphere(5, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
-            Debug.DrawRay(moveIntent.OriginalAvatarPosition, UnityEngine.Vector3.up, Color.red, 3.0f);
-            GizmoDrawer.Instance.DrawWireSphere(0, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
-            Debug.DrawRay(moveIntent.InitiatorWorldPosition, UnityEngine.Vector3.up, Color.cyan, 3.0f);
-            GizmoDrawer.Instance.DrawWireSphere(2, moveIntent.InitiatorWorldPosition, 0.2f, Color.cyan);
 
             if (interpolation >= 1.0f)
             {
