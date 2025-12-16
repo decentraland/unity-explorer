@@ -45,15 +45,17 @@ namespace DCL.Profiles
                 if (repeatValues.delay > TimeSpan.Zero)
                     await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
 
+                RetryPolicy retryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
+
                 // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, CatalystRetryPolicy.VALUE), ct, ReportCategory.PROFILE, suppressErrors: true);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
 
                 profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
                     serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
 
-                repeatValues = (profile == null || profile.Version < version) && retryUntilResolved
-                    ? WebRequestUtils.CanBeRepeated(attemptNumber, CatalystRetryPolicy.VALUE, true, null)
+                repeatValues = profile == null || profile.Version < version
+                    ? WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, true, null)
                     : (false, TimeSpan.Zero);
             }
 
