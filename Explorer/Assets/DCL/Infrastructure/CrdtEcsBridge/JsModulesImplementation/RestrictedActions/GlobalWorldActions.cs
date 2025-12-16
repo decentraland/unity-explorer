@@ -78,11 +78,13 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn, bool isLooping)
         {
-            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
+            //TODO (Juani Emotes Refactor): Re-analyze this if, probably remove it
+            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape)) return;
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
-            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
-            messageBus.Send(urn, isLooping);
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent (urn, triggerSource: TriggerSource.SCENE, spatial: true ));
+
+            messageBus.Send(urn, isLooping, false, -1, false, string.Empty, string.Empty, false, 0);
         }
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
@@ -114,8 +116,12 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
         {
-            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
-                throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
+            //TODO (Juani Emotes Refactor): Re-analyze this if, probably remove it.
+            // I left the previous behaviour here, just in case we want to consider it
+            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape)) return;
+
+            //if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
+            //    throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
             if (!avatarShape.IsVisible) return;
 

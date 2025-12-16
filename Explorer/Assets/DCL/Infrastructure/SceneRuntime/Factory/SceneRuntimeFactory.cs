@@ -91,7 +91,7 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            
+
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
                 engineFactory);
         }
@@ -120,20 +120,10 @@ namespace SceneRuntime.Factory
             }
         }
 
-        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
-        {
-            string validateCode = await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
-                ct
-            );
-
-            string initCode = await webJsSources.SceneSourceCodeAsync(
+        private async UniTask<string> GetJsInitSourceCodeAsync(CancellationToken ct) =>
+            await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
-                ct
-            );
-
-            return (validateCode, initCode);
-        }
+                ct);
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
