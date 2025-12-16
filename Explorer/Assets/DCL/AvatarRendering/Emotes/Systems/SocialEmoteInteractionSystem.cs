@@ -194,7 +194,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         [None(typeof(PlayerComponent))]
         private void InitiatorLooksAtSocialEmoteTarget([Data] string targetWalletAddress, [Data] bool isInitiatorPlayingEmote, in CharacterTransform targetTransform, Profile targetProfile)
         {
-            if (targetWalletAddress == targetProfile.UserId && isInitiatorPlayingEmote)
+            // A remote initiator looks at the target of a directed social emote it sent
+            if (!string.IsNullOrEmpty(targetProfile.UserId) && targetWalletAddress == targetProfile.UserId && isInitiatorPlayingEmote)
                 World.Add(playerEntity, new PlayerLookAtIntent(targetTransform.Position));
         }
 
