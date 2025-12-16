@@ -33,6 +33,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             Bounds totalBounds =  CalculateLocalBoundsFromMeshes(meshesData);
 
+            // Remove unused bone GameObjects from the wearable hierarchies as we don't need them anymore
+            RemoveBonesGameObjectsFromWearables(gameObjects);
+
             ListPool<MeshData>.Release(meshesData);
 
             return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader, totalBounds);
@@ -272,6 +275,52 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             Vector3 size = maxCorner - minCorner;
             return new Bounds(minCorner + size * 0.5f, size);
+        }
+
+        private static void RemoveBonesGameObjectsFromWearables(IList<CachedAttachment> wearables)
+        {
+            for (var i = 0; i < wearables.Count; i++)
+                RemoveBonesGameObjects(wearables[i].Instance.transform);
+        }
+
+        private static void RemoveBonesGameObjects(Transform wearableRoot)
+        {
+            using PoolExtensions.Scope<List<Renderer>> pooledList =
+                wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<Renderer>(true);
+
+            if (pooledList.Value.Count == 0)
+                return;
+
+            // Re-parent all renderer GameObjects directly to the wearable root to reduce the hierarchy clutter
+            foreach (Renderer renderer in pooledList.Value)
+            {
+                Transform transform = renderer.transform;
+
+                if (transform != wearableRoot && transform.parent != wearableRoot)
+                    transform.SetParent(wearableRoot, true);
+            }
+
+            for (int i = wearableRoot.childCount - 1; i >= 0; i--)
+            {
+                Transform child = wearableRoot.GetChild(i);
+
+                if (!HasRendererInHierarchy(child))
+                    Object.Destroy(child.gameObject);
+            }
+        }
+
+        private static bool HasRendererInHierarchy(Transform transform)
+        {
+            if (transform.GetComponent<Renderer>() != null)
+                return true;
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                if (HasRendererInHierarchy(transform.GetChild(i)))
+                    return true;
+            }
+
+            return false;
         }
     }
 }
