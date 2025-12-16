@@ -47,9 +47,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         DAO,
 
-        Notification,
-        NotificationRead,
-
         Help,
         MinimumSpecs,
 
@@ -69,6 +66,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ApiFriends,
         AssetBundleRegistry,
+        AssetBundleRegistryVersion,
 
         BuilderApiDtos,
         BuilderApiContent,
@@ -83,7 +81,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         MarketplaceCredits,
         GoShoppingWithMarketplaceCredits,
-        EmailSubscriptions,
+        Notifications,
 
         Communities,
         CommunityThumbnail,

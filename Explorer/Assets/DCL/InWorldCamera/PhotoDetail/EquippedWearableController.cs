@@ -55,7 +55,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.flapBackground.color = rarityColors.GetColor(wearable.GetRarity());
             view.categoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
 
-            view.wearableIcon.sprite = await thumbnailProvider.GetAsync(wearable, ct);
+            view.wearableIcon.sprite = await thumbnailProvider.GetAsync((IAvatarAttachment)wearable, ct);
         }
 
         private void BuyWearableButtonClicked()
