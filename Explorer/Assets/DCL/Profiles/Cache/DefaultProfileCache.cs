@@ -40,11 +40,14 @@ namespace DCL.Profiles
                 Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
 
                 if (existingProfile != profile)
-                    existingProfile.Match(
-                        _ => { },
-                        full => full.Dispose());
+                {
+                    // Inherit ProfilePicture (as it's dynamically resolved)
+                    if (existingProfile.GetKind() < profile.GetKind() && existingProfile.FaceSnapshotUrl == profile.FaceSnapshotUrl)
+                        profile.ProfilePicture = existingProfile.ProfilePicture;
+                    else
+                        existingProfile.Dispose();
+                }
             }
-
 
             profiles[id] = profile;
             userNameToIdMap[profile.DisplayName] = id;

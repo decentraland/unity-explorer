@@ -21,8 +21,11 @@ namespace DCL.Profiles
         internal List<string>? interests;
         internal List<LinkJsonDto>? links;
 
-        // TODO it's not unified with SpriteCache from where UI requests profile thumbnails
-        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
+        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture
+        {
+            get => compact.ProfilePicture;
+            set => GetCompact().ProfilePicture = value;
+        }
 
         public bool HasConnectedWeb3 { get; set; }
         public string? Description { get; set; }
@@ -73,7 +76,7 @@ namespace DCL.Profiles
 
         public void Dispose()
         {
-            ProfilePicture.TryDereference();
+            GetCompact().Dispose();
             POOL.Release(this);
         }
 

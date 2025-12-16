@@ -44,19 +44,17 @@ namespace DCL.Profiles
 
         public string MentionName => compact.MentionName;
 
-        // public static implicit operator CompactInfo(Profile profile) =>
-        //     profile.compact;
-
         /// <summary>
         ///     A small slice of the profile info used when the full information is not required <br />
         ///     CompactInfo is never requested with a specific version/timestamp
         /// </summary>
-        public struct CompactInfo : IEquatable<CompactInfo>
+        public struct CompactInfo : IEquatable<CompactInfo>, IDisposable
         {
             private string name;
             private string userId;
             private bool hasClaimedName;
 
+            // TODO it's not unified with SpriteCache from where UI requests profile thumbnails
             public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
             public CompactInfo(string userId) : this()
@@ -249,6 +247,9 @@ namespace DCL.Profiles
 
             public override int GetHashCode() =>
                 HashCode.Combine(name, userId, hasClaimedName);
+
+            public void Dispose() =>
+                ProfilePicture.TryDereference();
         }
     }
 }

@@ -1,6 +1,8 @@
+using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.EphemeralNotifications;
 using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using UnityEngine;
 
 namespace DCL.SocialEmotes.UI
@@ -10,14 +12,14 @@ namespace DCL.SocialEmotes.UI
         [SerializeField]
         private ProfilePictureView profilePictureView;
 
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnailViewModel = new (ProfileThumbnailViewModel.Default());
+
         public override void SetData(Profile.CompactInfo sender, string[] textValues)
         {
             base.SetData(sender, textValues);
 
-            if(sender.ProfilePicture != null)
-                profilePictureView.SetImage(sender.ProfilePicture.Value.Asset.Sprite);
-
-            profilePictureView.SetBackgroundColor(sender.UserNameColor);
+            profilePictureView.Bind(profileThumbnailViewModel, sender.UserNameColor);
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(profileThumbnailViewModel, null, sender.UserId, sender.FaceSnapshotUrl, destroyCancellationToken).Forget();
         }
     }
 }

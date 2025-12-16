@@ -1,4 +1,7 @@
-﻿using REnum;
+﻿using CommunicationData.URLHelpers;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
+using REnum;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -11,8 +14,13 @@ namespace DCL.Profiles
     {
         public string UserId => Match(c => c.UserId, f => f.UserId);
         public string DisplayName => Match(c => c.DisplayName, f => f.DisplayName);
+        public URLAddress FaceSnapshotUrl => Match(c => c.FaceSnapshotUrl, f => f.Compact.FaceSnapshotUrl);
 
-        public string ValidatedName => Match(c => c.ValidatedName, f => f.ValidatedName);
+        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture
+        {
+            get => Match(c => c.ProfilePicture, f => f.ProfilePicture);
+            set => Match(value, static (pic, c) => c.ProfilePicture = pic, static (pic, f) => f.ProfilePicture = pic);
+        }
 
         public int Version => Match(c => 0, f => f.Version);
 
