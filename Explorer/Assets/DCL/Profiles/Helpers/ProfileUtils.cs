@@ -15,7 +15,7 @@ namespace DCL.Profiles.Helpers
 
         public static void CreateProfilePicturePromise(Profile profile, World world, IPartitionComponent partitionComponent)
         {
-            if (!profile.Avatar.FaceSnapshotUrl.Value.IsValidUrl())
+            if (!profile.Compact.FaceSnapshotUrl.Value.IsValidUrl())
             {
                 profile.ProfilePicture = new StreamableLoadingResult<SpriteData>.WithFallback(DEFAULT_PROFILE_PIC);
                 return;

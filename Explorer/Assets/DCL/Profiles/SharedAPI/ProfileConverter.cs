@@ -100,7 +100,6 @@ namespace DCL.Profiles
             profile.HasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
 
             DeserializeAvatar(jObject["avatar"]!, ref profile);
-            profile.GetCompact().FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
 
             profile.Country = jObject["country"]?.Value<string>() ?? "";
             profile.Gender = jObject["gender"]?.Value<string>() ?? "";
@@ -157,7 +156,9 @@ namespace DCL.Profiles
 
             DeserializeEmoteList(jObject["emotes"], avatar.emotes);
 
-            avatar.FaceSnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["face256"]?.Value<string>() ?? "");
+            ref Profile.CompactInfo compactInfo = ref profile.GetCompact();
+
+            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["face256"]?.Value<string>() ?? "");
             avatar.BodySnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["body"]?.Value<string>() ?? "");
         }
 
@@ -328,7 +329,7 @@ namespace DCL.Profiles
             writer.WriteStartObject();
 
             writer.WritePropertyName("face256");
-            writer.WriteValue(context?.FaceHash ?? profile.Avatar.FaceSnapshotUrl.Value);
+            writer.WriteValue(context?.FaceHash ?? profile.GetCompact().FaceSnapshotUrl.Value);
             writer.WritePropertyName("body");
             writer.WriteValue(context?.BodyHash ?? profile.Avatar.BodySnapshotUrl.Value);
             writer.WriteEndObject();

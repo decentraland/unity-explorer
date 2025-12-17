@@ -70,10 +70,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             UpdateCreateButtonState();
             UpdateCharacterCounter();
 
-            if (profile != null && currentProfileThumbnailUrl != profile.Avatar.FaceSnapshotUrl)
+            if (profile != null && currentProfileThumbnailUrl != profile.Compact.FaceSnapshotUrl)
             {
-                profilePicture.Setup(profileDataProvider, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
-                currentProfileThumbnailUrl = profile.Avatar.FaceSnapshotUrl;
+                profilePicture.Setup(profileDataProvider, profile.UserNameColor, profile.Compact.FaceSnapshotUrl);
+                currentProfileThumbnailUrl = profile.Compact.FaceSnapshotUrl;
             }
 
             announcementEmojiController ??= new AnnouncementEmojiController(

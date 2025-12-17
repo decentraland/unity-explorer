@@ -53,7 +53,7 @@ namespace DCL.Profiles
             emotes = profile.Avatar.emotes;
             forceRender = profile.Avatar.forceRender.ToHashSet();
             bodySnapshotUrl = profile.Avatar.BodySnapshotUrl;
-            faceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
+            faceSnapshotUrl = profile.Compact.FaceSnapshotUrl;
             blocked = profile.blocked?.ToHashSet();
             interests = profile.interests?.ToList();
             links = profile.links?.ToList();
@@ -191,7 +191,7 @@ namespace DCL.Profiles
             avatar.SkinColor = skinColor;
             avatar.EyesColor = eyesColor;
             avatar.BodySnapshotUrl = bodySnapshotUrl ?? URLAddress.EMPTY;
-            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
+            profile.GetCompact().FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
 
             return profile;
         }

@@ -397,7 +397,7 @@ namespace DCL.Friends.UI.Requests
                 Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                 if (myProfile != null)
-                    config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
+                    config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Compact.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
             }
 
             Toggle(state);
