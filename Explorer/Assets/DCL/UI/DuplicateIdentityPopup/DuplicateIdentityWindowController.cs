@@ -2,8 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Utility;
 using MVC;
 using System.Threading;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DCL.UI.DuplicateIdentityPopup
 {
@@ -23,9 +21,6 @@ namespace DCL.UI.DuplicateIdentityPopup
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
-
-        public static ViewFactoryMethod CreateLazily(DuplicateIdentityWindowView prefab) =>
-            () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
     }

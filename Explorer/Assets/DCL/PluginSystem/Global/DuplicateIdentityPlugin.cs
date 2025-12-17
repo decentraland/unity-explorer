@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
             var reference = settings.DuplicateIdentityWindow.EnsureNotNull("DuplicateIdentityWindow is null in settings");
 
             var prefab = (await assetsProvisioner.ProvideMainAssetAsync(reference, ct)).Value;
-            var duplicateIdentityViewFactory = DuplicateIdentityWindowController.CreateLazily(prefab);
+            var duplicateIdentityViewFactory = DuplicateIdentityWindowController.CreateLazily(prefab, null);
             duplicateIdentityController = new DuplicateIdentityWindowController(duplicateIdentityViewFactory);
             mvcManager.RegisterController(duplicateIdentityController);
 
