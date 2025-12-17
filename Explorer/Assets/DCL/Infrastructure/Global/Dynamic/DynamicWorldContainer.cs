@@ -537,6 +537,7 @@ namespace Global.Dynamic
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, bootstrapContainer.Environment)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
+                                                 .WithRateLimit(10)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
                                                  .WithDebugPanel(debugBuilder);
