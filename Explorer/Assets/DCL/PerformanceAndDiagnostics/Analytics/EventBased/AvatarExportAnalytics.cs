@@ -1,6 +1,6 @@
 using System;
 using DCL.AvatarRendering.Export;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -9,7 +9,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 	{
 		private readonly IAnalyticsController analytics;
 		private readonly EventSubscriptionScope scope;
-		
+
 		public AvatarExportAnalytics(IAnalyticsController analytics, IEventBus eventBus)
 		{
 			this.analytics = analytics;
@@ -22,11 +22,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
 		private void OnHomeChanged(AvatarExportEvents avatarExportEvents)
 		{
-			analytics.Track(AnalyticsEvents.Wearables.AVATAR_EXPORTED_TO_VRM, new JsonObject
+			analytics.Track(AnalyticsEvents.Wearables.AVATAR_EXPORTED_TO_VRM, new JObject
 			{
 				{ "succeed", avatarExportEvents.Succeeded },
 			});
 		}
 	}
 }
-

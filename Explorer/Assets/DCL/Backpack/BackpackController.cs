@@ -1,7 +1,9 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Export;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -16,6 +18,7 @@ using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;

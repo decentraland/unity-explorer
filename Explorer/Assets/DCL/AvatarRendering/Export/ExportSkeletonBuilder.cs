@@ -14,16 +14,16 @@ namespace DCL.AvatarRendering.Export
         {
             if (instantiatedWearables.Count <= 0 || instantiatedWearables[0].OriginalAsset.MainAsset == null)
                 return null;
-            
-            var armature = avatarBase.Armature;
-            
+
+            var armature = avatarBase.ArmatureObject;
+
             var duplicateRoot = new GameObject("DCL_Avatar_Export").transform;
             duplicateRoot.position = armature.position;
             duplicateRoot.rotation = armature.rotation;
-            
+
             var bones = InstantiateBones(instantiatedWearables[0].OriginalAsset.MainAsset.transform, duplicateRoot).transform;
             bones.SetParent(duplicateRoot);
-            
+
             // DCL skeleton is in 0.01 scale, we need to scale it to uniform (1,1,1) scale.
             duplicateRoot.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             ApplyParentScaleToChildren(duplicateRoot);
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Export
             MapBonesRecursive(dclToHumanBone, mapping, bones);
 
            // mapping.AddBone(new ExportBoneData(HumanBodyBones.Hips, bones, bones.name));
-            
+
 
             var boneRenderer = duplicateRoot.gameObject.AddComponent<BoneRenderer>();
             boneRenderer.transforms = mapping.Bones.Select(x => x.TargetTransform).ToArray();
@@ -55,14 +55,14 @@ namespace DCL.AvatarRendering.Export
         private GameObject InstantiateBones(Transform sourceRoot, Transform parent)
         {
             const string HIPS_NAME = "Avatar_Hips";
-            
+
             var hipsTransform = FindChildRecursive(sourceRoot, HIPS_NAME);
             var hipsInstance = Object.Instantiate(hipsTransform.gameObject, parent);
             hipsInstance.transform.localPosition = hipsTransform.localPosition;
             hipsInstance.name = hipsTransform.name;
-            
+
             return hipsInstance;
-            
+
             Transform FindChildRecursive(Transform parent, string name)
             {
                 if (parent.name == name)
@@ -78,7 +78,7 @@ namespace DCL.AvatarRendering.Export
                 return null;
             }
         }
-        
+
         private static void ApplyParentScaleToChildren(Transform parent)
         {
             var childPositions = new List<(Transform child, Vector3 position)>();
@@ -92,7 +92,7 @@ namespace DCL.AvatarRendering.Export
             }
 
             return;
-            
+
             void StoreChildPositionsRecursive(Transform sourceParent, List<(Transform, Vector3)> list)
             {
                 foreach (Transform child in sourceParent)
