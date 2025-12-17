@@ -10,19 +10,15 @@
         public override void Exit() { }
 
         public override void OnToggleMembers() =>
-            ChangeState<FocusedChatState>();
+            machine.Enter<FocusedChatState>();
 
-        public override void OnFocusRequested()
-        {
-            ChangeState<FocusedChatState>();
-        }
+        public override void OnFocusRequested() =>
+            machine.Enter<FocusedChatState>();
 
         public override void OnCloseRequested() =>
-            ChangeState<FocusedChatState>();
+            machine.Enter<FocusedChatState>();
 
-        public override void OnClickOutside()
-        {
-            ChangeState<DefaultChatState>();
-        }
+        public override void OnClickOutside() =>
+            machine.Enter<DefaultChatState>();
     }
 }
