@@ -4,10 +4,12 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using Unity.Collections;
 using Unity.Mathematics;
+using System;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
@@ -38,7 +40,10 @@ namespace DCL.AvatarRendering.AvatarShape
         private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning)
         {
-            skinningStrategy.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, ref computeShaderSkinning);
+            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.IsValid())
+                skinningStrategy.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray.Value(), ref computeShaderSkinning);
+            else
+                ReportHub.LogException(new Exception("Attempt to process an invalid avatar"), ReportCategory.AVATAR);
         }
     }
 }

@@ -2,18 +2,20 @@
 using DCL.Diagnostics;
 using DCL.Utility.Types;
 using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public struct AvatarTransformMatrixComponent
     {
-        public int IndexInGlobalJobArray;
+        public GlobalJobArrayIndex IndexInGlobalJobArray;
         public BoneArray bones;
 
         public static AvatarTransformMatrixComponent Create(BoneArray bones) =>
             new ()
             {
-                IndexInGlobalJobArray = -1,
+                IndexInGlobalJobArray = GlobalJobArrayIndex.Uninitialized(),
                 bones = bones,
             };
 
@@ -21,6 +23,51 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public static AvatarTransformMatrixComponent NewDefault() =>
             Create(BoneArray.NewDefault());
 #endif
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public readonly struct GlobalJobArrayIndex
+    {
+        private const int UNINITIALIZED = -100;
+        private const int NOT_ASSIGNED = -1;
+
+        private readonly int index;
+
+        private GlobalJobArrayIndex(int index)
+        {
+            this.index = index;
+        }
+
+        public static GlobalJobArrayIndex Uninitialized()
+        {
+            return new (UNINITIALIZED);
+        }
+
+        public static GlobalJobArrayIndex Unassign()
+        {
+            return new (NOT_ASSIGNED);
+        }
+
+        public static GlobalJobArrayIndex Valid(int value)
+        {
+            if (value < 0)
+                throw new Exception($"Value is invalid: {value}");
+
+            return new GlobalJobArrayIndex(value);
+        }
+
+        public bool IsValid()
+        {
+            return index >= 0;
+        }
+
+        public int Value()
+        {
+            if (index < 0)
+                throw new Exception($"Value is not set on request: {index}");
+
+            return index;
+        }
     }
 
     /// <summary>
