@@ -10,6 +10,8 @@ using DCL.Friends.UI.Requests;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -81,7 +83,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
+            IWeb3IdentityCache web3IdentityCache,
+            ISelfProfile selfProfile) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -111,6 +114,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             this.view.SetProfileDataProvider(profileDataProvider);
             this.view.SetCommunitiesDataProvider(communitiesDataProvider);
+            this.view.SetSelfProfile(selfProfile);
 
             foreach (MembersListView.MemberListSections section in EnumUtils.Values<MembersListView.MemberListSections>())
                 sectionsFetchData[section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);
