@@ -535,7 +535,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 GameObject mainAsset = emote.AssetResults[bodyShape]!.Value.Asset!.MainAsset;
 
                 // Existing emoteComponent is overwritten with new emote info
-                emoteComponent.Reset();
                 emoteComponent.EmoteUrn = emoteIntent.EmoteId;
                 emoteComponent.Metadata = (EmoteDTO.EmoteMetadataDto)emote.DTO.Metadata;
                 StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
