@@ -40,6 +40,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public override void ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray, ref AvatarCustomSkinningComponent skinning)
         {
+            if (indexInGlobalResultArray < 0)
+            {
+                // Last resort check, the system should be redesigned to DON'T use sentinel values and to enforce invariants:
+                // for example like BoneArray
+                //
+                // Current fix; Specified argument was out of the range of valid values.
+                // Parameter name: Bad indices/count arguments (nativeBufferStartIndex:-62 computeBufferStartIndex:0 count:62)
+                ReportHub.LogError(ReportCategory.AVATAR, $"Negative index is not acceptable, skipping the compute: {indexInGlobalResultArray}");
+                return;
+            }
+
             skinning.buffers.bones.SetData(bonesResult, indexInGlobalResultArray * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
             skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.VertCount / 64) + 1, 1, 1);
 
