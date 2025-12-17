@@ -46,7 +46,7 @@ namespace DCL.Chat.ChatInput
             inputField = context.ChatInputView.inputField;
         }
 
-        public override void Begin()
+        public override void Enter()
         {
             LockInputField(true);
             context.ChatInputView.Show();
@@ -68,7 +68,7 @@ namespace DCL.Chat.ChatInput
             context.ChatInputView.UpdateCharacterCount();
         }
 
-        public override void End()
+        public override void Exit()
         {
             LockInputField(false);
             chatEventBus.InsertTextInChatRequested -= InsertText;

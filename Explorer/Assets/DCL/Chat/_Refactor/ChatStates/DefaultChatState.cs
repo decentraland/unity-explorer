@@ -5,7 +5,7 @@
     /// </summary>
     public class DefaultChatState : ChatState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.UIMediator.SetupForDefaultState(animate: true);
             context.UIMediator.chatInputPresenter.OnBlur();

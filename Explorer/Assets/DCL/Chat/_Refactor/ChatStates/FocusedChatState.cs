@@ -2,14 +2,14 @@
 {
     public class FocusedChatState : ChatState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.UIMediator.SetupForFocusedState();
 
             context.InputBlocker.Block();
         }
 
-        public override void End()
+        public override void Exit()
         {
             context.InputBlocker.Unblock();
         }

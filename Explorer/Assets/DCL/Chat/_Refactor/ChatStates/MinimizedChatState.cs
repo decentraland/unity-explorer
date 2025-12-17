@@ -2,14 +2,14 @@
 {
     public class MinimizedChatState : ChatState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.UIMediator.SetupForMinimizedState();
 
             context.UIMediator.chatInputPresenter.OnMinimize();
         }
 
-        public override void End()
+        public override void Exit()
         {
 
         }
