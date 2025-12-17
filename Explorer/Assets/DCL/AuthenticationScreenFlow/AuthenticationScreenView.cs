@@ -86,6 +86,9 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
 
+        [field: SerializeField]
+        public TMP_InputField ProfileNameInputField { get; private set; } = null!;
+
         [field: Header("ERROR POPUP")]
         [field: SerializeField]
         public GameObject ErrorPopupRoot { get; private set; } = null!;

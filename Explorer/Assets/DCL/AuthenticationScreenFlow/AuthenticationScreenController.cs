@@ -496,8 +496,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
-                profile = await CreateAndPublishDefaultProfileAsync(ct);
+            // if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+            //     profile = await CreateAndPublishDefaultProfileAsync(ct);
 
             if (profile == null)
                 throw new ProfileNotFoundException();
@@ -564,6 +564,8 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
+                    isNewUser = false;
+
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -615,6 +617,9 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     viewInstance.JumpIntoWorldButton.interactable = true;
+
+                    viewInstance.ProfileNameInputField.gameObject.SetActive(isNewUser);
+
                     characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
 
@@ -810,7 +815,27 @@ namespace DCL.AuthenticationScreenFlow
 
                         sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                        await FetchProfileAsync(ct);
+                        Profile? profile = await selfProfile.ProfileAsync(ct);
+
+                        if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                        {
+                            IWeb3Identity? identity1 = storedIdentityProvider.Identity;
+
+                            if (identity1 == null)
+                                throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
+
+                            profile = BuildDefaultProfile(identity1.Address.ToString(), currentEmail);
+                            isNewUser = true;
+
+                            // Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
+                            // profile = publishedProfile ?? throw new ProfileNotFoundException();
+                            // profileNameLabel!.Value = profile.Version == 1 ? profile.Name : "back " + profile.Name;
+                        }
+
+                        profile.IsDirty = true;
+                        profile.HasConnectedWeb3 = true;
+
+                        characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
 
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
@@ -864,6 +889,8 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
+        private bool isNewUser;
+
         private void SendRegistration()
         {
             // If we're waiting for OTP input, complete the task with the entered code
@@ -886,21 +913,6 @@ namespace DCL.AuthenticationScreenFlow
             return otpCompletionSource.Task;
         }
 
-        private async UniTask<Profile> CreateAndPublishDefaultProfileAsync(CancellationToken ct)
-        {
-            IWeb3Identity? identity = storedIdentityProvider.Identity;
-
-            if (identity == null)
-                throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
-
-            Profile defaultProfile = BuildDefaultProfile(identity.Address.ToString(), currentEmail);
-            Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
-
-            if (publishedProfile == null)
-                throw new ProfileNotFoundException();
-
-            return publishedProfile;
-        }
         private static Profile BuildDefaultProfile(string walletAddress, string? email)
         {
             // Randomize body shape between MALE and FEMALE
