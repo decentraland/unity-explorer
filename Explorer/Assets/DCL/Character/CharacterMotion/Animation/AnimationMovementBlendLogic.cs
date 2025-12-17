@@ -35,7 +35,7 @@ namespace DCL.CharacterMotion.Animation
             float targetBlend = 0f;
 
             if (animationBlendingSpeedLimit > 0)
-                targetBlend = Mathf.Sqrt(velocitySqrMagnitude) / animationBlendingSpeedLimit * (int)movementKind;
+                targetBlend = Mathf.Clamp01(Mathf.Sqrt(velocitySqrMagnitude) / animationBlendingSpeedLimit) * (int)movementKind;
 
             // Make blend speed proportional to current delta, similar to a lerp
             // We do this because scenes can override the movement speed and blend speed must react to that
