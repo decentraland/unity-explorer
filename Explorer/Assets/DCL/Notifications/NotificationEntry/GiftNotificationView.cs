@@ -54,7 +54,6 @@ namespace DCL.Notifications.NotificationEntry
                 : notification.Metadata.SenderAddress;
 
             HeaderText.text = $"{shortAddr} sent you a something!";
-            TimeText.text = GiftingTextIds.JustNowMessage;
         }
         
         public void UpdateSenderName(string playerName, Color nameColor)

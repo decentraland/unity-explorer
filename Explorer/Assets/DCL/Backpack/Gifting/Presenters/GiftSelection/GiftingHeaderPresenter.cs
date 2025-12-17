@@ -80,6 +80,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 if (profile == null || ct.IsCancellationRequested)
                     return;
 
+                walletAddressController.Setup(profile);
                 var userNameColor = profile.UserNameColor;
                 string userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
 
