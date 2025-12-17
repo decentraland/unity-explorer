@@ -8,9 +8,12 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Prioritization.Components;
+using SceneRunner.Scene;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CRDT;
 using Plugins.NativeAudioAnalysis;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -26,7 +29,7 @@ namespace DCL.SDKComponents.AudioSources
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         internal AudioAnalysisSystem(
-            World world,
+            World world, 
             IPerformanceBudget frameTimeBudgetProvider,
             IECSToCRDTWriter ecsToCRDTWriter
         ) : base(world)
@@ -44,7 +47,7 @@ namespace DCL.SDKComponents.AudioSources
         [Query]
         private void HandleMediaPlayerComponent(
             CRDTEntity entity,
-            ref MediaPlayerComponent mediaPlayerComponent,
+            ref MediaPlayerComponent mediaPlayerComponent, 
             ref PBAudioAnalysis sdkComponent
         )
         {
@@ -54,7 +57,7 @@ namespace DCL.SDKComponents.AudioSources
         [Query]
         private void HandleAudioSourceComponent(
             CRDTEntity entity,
-            ref AudioSourceComponent audioSourceComponent,
+            ref AudioSourceComponent audioSourceComponent, 
             ref PBAudioAnalysis sdkComponent
         )
         {
@@ -63,30 +66,30 @@ namespace DCL.SDKComponents.AudioSources
 
         private void HandleComponent<TComponent>(
             CRDTEntity entity,
-            ref TComponent component,
+            ref TComponent component, 
             ref PBAudioAnalysis sdkComponent
         ) where TComponent : IComponentWithAudioFrameBuffer
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             ThreadSafeLastAudioFrameReadFilter output = null!;
-            if (component.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false)
+            if (component.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false) 
             {
                 ReportHub.LogError(GetReportCategory(), "Cannot attach LastAudioFrameReadFilter");
                 return;
             }
 
-            if (output!.TryConsume(out float[]? data, out int outChannels, out int outSampleRate))
+            if (output!.TryConsume(out float[]? data, out int outChannels, out int outSampleRate)) 
             {
                 AnalysisResultMode mode = sdkComponent.Mode switch
                 {
                     PBAudioAnalysisMode.ModeRaw => AnalysisResultMode.Raw,
                     PBAudioAnalysisMode.ModeLogarithmic => AnalysisResultMode.Logarithmic,
                 };
-                float amplitudeGain = sdkComponent.HasAmplitudeGain ? sdkComponent.AmplitudeGain : DEFAULT_AMPLITUDE_GAIN;
-                float bandsGain = sdkComponent.HasBandsGain ? sdkComponent.BandsGain : DEFAULT_BANDS_GAIN;
+                float amplitudeGain = sdkComponent.HasAmplitudeGain ? sdkComponent.AmplitudeGain : DEFAULT_AMPLITUDE_GAIN; 
+                float bandsGain = sdkComponent.HasBandsGain ? sdkComponent.BandsGain : DEFAULT_BANDS_GAIN; 
 
-                unsafe
+                unsafe 
                 {
                     AudioAnalysis result = NativeMethods.AnalyzeAudioBuffer(data!, outSampleRate, mode, amplitudeGain, bandsGain);
 
