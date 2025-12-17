@@ -43,10 +43,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             if (indexInGlobalResultArray < 0)
             {
                 // Last resort check, the system should be redesigned to DON'T use sentinel values and to enforce invariants:
-                // for example like BoneArray
+                // for example like BoneArray.
                 //
-                // Current fix; Specified argument was out of the range of valid values.
+                // fix for Exception; Specified argument was out of the range of valid values.
                 // Parameter name: Bad indices/count arguments (nativeBufferStartIndex:-62 computeBufferStartIndex:0 count:62)
+                //
+                // Also potential fixes https://github.com/decentraland/unity-explorer/issues/6469.
+                // (System.NullReferenceException: Object reference not set to an instance of an object.)
+                // Because if indexInGlobalResultArray is already invalid it also means ComputeBuffer (skinning.buffers.bones) is invalid too.
+                // It was only question of probability what would crash first.
                 ReportHub.LogError(ReportCategory.AVATAR, $"Negative index is not acceptable, skipping the compute: {indexInGlobalResultArray}");
                 return;
             }
