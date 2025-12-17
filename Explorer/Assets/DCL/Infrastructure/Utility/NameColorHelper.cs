@@ -20,17 +20,7 @@ namespace DCL.Utilities
         {
             if (nameColors.Count == 0 || string.IsNullOrEmpty(username)) return DEFAULT_COLOR;
 
-            uint seed = 0;
-
-            int size = Encoding.ASCII.GetByteCount(username);
-            Span<byte> bytes = stackalloc byte[size];
-
-            Encoding.ASCII.GetBytes(username, bytes);
-
-            foreach (byte value in bytes)
-                seed += value;
-
-            var rand1 = new Unity.Mathematics.Random(seed);
+            var rand1 = new Unity.Mathematics.Random((uint)username.GetHashCode());
             return nameColors[rand1.NextInt(nameColors.Count)];
         }
     }
