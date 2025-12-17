@@ -189,7 +189,7 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputBlocked()
         {
-            ChangeState<BlockedChatInputState>();
+            machine.Enter<BlockedChatInputState>();
         }
 
         protected override void OnInputUnblocked()

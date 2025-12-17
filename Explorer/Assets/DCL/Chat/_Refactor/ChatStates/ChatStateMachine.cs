@@ -31,18 +31,20 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            var context = new ChatStateContext(mediator, inputBlocker);
-
             fsm = new MVCStateMachine<ChatState, ChatStateContext>(
-                context,
-                new InitChatState(),
-                new DefaultChatState(),
-                new FocusedChatState(),
-                new MembersChatState(),
-                new MinimizedChatState(),
-                new HiddenChatState()
+                context: new ChatStateContext(mediator, inputBlocker),
+                states: new ChatState[]
+                {
+                    new InitChatState(),
+                    new DefaultChatState(),
+                    new FocusedChatState(),
+                    new MembersChatState(),
+                    new MinimizedChatState(),
+                    new HiddenChatState(),
+                }
             );
 
+            fsm.Enter<InitChatState>();
             fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));

@@ -15,15 +15,15 @@
         }
 
         public override void OnClickOutside() =>
-            ChangeState<DefaultChatState>();
+            machine.Enter<DefaultChatState>();
 
         public override void OnCloseRequested() =>
-            ChangeState<MinimizedChatState>();
+            machine.Enter<MinimizedChatState>();
 
         public override void OnMinimizeRequested() =>
-            ChangeState<MinimizedChatState>();
+            machine.Enter<MinimizedChatState>();
 
         public override void OnToggleMembers() =>
-            ChangeState<MembersChatState>();
+            machine.Enter<MembersChatState>();
     }
 }

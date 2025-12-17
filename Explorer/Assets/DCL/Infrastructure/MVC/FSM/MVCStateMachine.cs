@@ -14,27 +14,17 @@ namespace MVC
 
         private readonly CancellationTokenSource disposalCts = new ();
 
-        /// <param name="states"> Initial state is the first state in the params array </param>
         public MVCStateMachine(TContext context, params TBaseState[] states)
         {
-            if (states.Length == 0)
-                throw new ArgumentException("At least one state required", nameof(states));
-
             this.context = context;
-
-            foreach (TBaseState state in states)
-                AddState(state);
-
-            // Take first state as initial
-            CurrentState = states[0];
-            CurrentState.Enter();
+            foreach (TBaseState state in states) AddState(state);
         }
 
         protected TContext context { get; }
 
         public float ElapsedTimeInState { get; private set; }
         public TBaseState? PreviousState { get; private set; }
-        public TBaseState CurrentState { get; private set; }
+        public TBaseState? CurrentState { get; private set; }
 
         /// <summary>
         ///     adds the state to the machine
@@ -63,32 +53,21 @@ namespace MVC
             CurrentState.LateUpdate(deltaTime);
         }
 
-        public TState Enter<TState>(TState state) where TState: TBaseState
-        {
-            // Make sure that this state is registered in the state machine
-            if (!states.TryGetValue(typeof(TState), out TBaseState? registeredState) || registeredState != state)
-            {
-                var error = $"{GetType()}: state \"{typeof(TState)}\" {state} is not registered";
-                ReportHub.LogError(ReportCategory.MVC, error);
-                throw new Exception(error);
-            }
-
-            return Enter<TState>();
-        }
-
         /// <summary>
         ///     changes the current state
         /// </summary>
-        public TState Enter<TState>() where TState: TBaseState
+        public void Enter<TState>() where TState: TBaseState
         {
             // avoid changing to the same state
             Type newType = typeof(TState);
 
-            if (CurrentState.GetType() == newType)
-                return (TState)CurrentState;
+            if (CurrentState != null)
+            {
+                if (CurrentState.GetType() == newType)
+                    return;
 
-            // only call end if we have a currentState
-            CurrentState.Exit();
+                CurrentState.Exit();
+            }
 
             // do a sanity check while in the editor to ensure we have the given state in our state list
             if (!states.ContainsKey(newType))
@@ -106,8 +85,6 @@ namespace MVC
 
             // fire the changed event if we have a listener
             OnStateChanged?.Invoke();
-
-            return (TState)CurrentState;
         }
 
         /// <summary>

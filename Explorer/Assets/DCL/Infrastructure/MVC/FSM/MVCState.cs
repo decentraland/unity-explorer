@@ -4,7 +4,7 @@ namespace MVC
 {
     public abstract class MVCState<TBaseState, TContext> where TBaseState: MVCState<TBaseState, TContext>
     {
-        private MVCStateMachine<TBaseState, TContext> machine;
+        protected MVCStateMachine<TBaseState, TContext> machine;
 
         protected TContext context { get; private set; }
 
@@ -30,8 +30,5 @@ namespace MVC
         public virtual void LateUpdate(float deltaTime) { }
 
         public virtual void Exit() { }
-
-        protected R ChangeState<R>() where R: TBaseState =>
-            machine.Enter<R>();
     }
 }

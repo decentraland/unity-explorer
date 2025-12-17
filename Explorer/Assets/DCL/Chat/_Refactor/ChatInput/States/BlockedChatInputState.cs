@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputUnblocked()
         {
-            ChangeState<TypingEnabledChatInputState>();
+            machine.Enter<TypingEnabledChatInputState>();
         }
 
         private void BlockedInputClicked() =>
