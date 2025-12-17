@@ -1,5 +1,4 @@
 using Arch.Core;
-using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using ECS.LifeCycle.Components;

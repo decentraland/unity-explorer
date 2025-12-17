@@ -13,10 +13,7 @@ namespace DCL.PluginSystem.World
     {
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            // Inject propagation system (runs first to resolve visibility before render systems)
             VisibilityPropagationSystem.InjectToWorld(ref builder);
-
-            // Reset dirty flags at end of frame
             ResetDirtyFlagSystem<PBVisibilityComponent>.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<ResolvedVisibilityComponent>.InjectToWorld(ref builder);
         }

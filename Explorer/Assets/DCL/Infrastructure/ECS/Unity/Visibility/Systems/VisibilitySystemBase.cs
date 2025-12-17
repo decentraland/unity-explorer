@@ -22,16 +22,15 @@ namespace ECS.Unity.Visibility.Systems
         protected override void Update(float t)
         {
             // Primary: use ResolvedVisibilityComponent (handles propagation)
-            UpdateVisibilityFromResolvedQuery(World!);
+            UpdateVisibilityFromResolvedVisibilityQuery(World!);
 
             // Fallback: direct PBVisibilityComponent for entities without resolved visibility
             // (backwards compatibility for entities not yet processed by propagation system)
-            UpdateVisibilityFromDirectQuery(World);
+            UpdateVisibilityFromPBComponentQuery(World);
 
             // Handle newly created renderable components
             eventsBuffer.ForEach(forEachEvent);
 
-            // Handle removal
             HandleComponentRemovalQuery(World);
         }
 
@@ -57,7 +56,7 @@ namespace ECS.Unity.Visibility.Systems
         /// Updates visibility based on ResolvedVisibilityComponent (supports propagation).
         /// </summary>
         [Query]
-        private void UpdateVisibilityFromResolved(in TComponent component, ref ResolvedVisibilityComponent resolved)
+        private void UpdateVisibilityFromResolvedVisibility(in TComponent component, ref ResolvedVisibilityComponent resolved)
         {
             if (resolved.IsDirty)
                 UpdateVisibilityInternal(in component, resolved.IsVisible);
@@ -69,7 +68,7 @@ namespace ECS.Unity.Visibility.Systems
         /// </summary>
         [Query]
         [None(typeof(ResolvedVisibilityComponent))]
-        private void UpdateVisibilityFromDirect(in TComponent component, in PBVisibilityComponent visibility)
+        private void UpdateVisibilityFromPBComponent(in TComponent component, in PBVisibilityComponent visibility)
         {
             if (visibility.IsDirty)
                 UpdateVisibilityInternal(in component, visibility.GetVisible());
