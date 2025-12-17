@@ -108,14 +108,25 @@ namespace DCL.Chat.ChatServices
         {
             lock (onlineParticipants)
             {
-                if (update == UpdateFromParticipant.Connected) { SetOnline(participant.Identity); }
+                bool participantIsBlocked = userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(participant.Identity);
+
+                if (update == UpdateFromParticipant.Connected)
+                {
+                    if (participantIsBlocked)
+                        blockedOnlineParticipants.Add(participant.Identity);
+                    else
+                        SetOnline(participant.Identity);
+                }
                 else if (update == UpdateFromParticipant.Disconnected)
                 {
                     // User is not disconnected if they are still in another room
                     if (otherRoom.Participants.RemoteParticipant(participant.Identity) != null)
                         return;
 
-                    SetOffline(participant.Identity);
+                    if (participantIsBlocked)
+                        blockedOnlineParticipants.Remove(participant.Identity);
+                    else
+                        SetOffline(participant.Identity);
                 }
             }
         }
