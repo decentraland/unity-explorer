@@ -56,6 +56,7 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -156,6 +157,7 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
 
@@ -219,6 +221,7 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache,
+            IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus)
         {
@@ -282,6 +285,7 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
         }
@@ -476,6 +480,7 @@ namespace DCL.PluginSystem.Global
                 communityCallOrchestrator,
                 sharedSpaceManager,
                 chatEventBus,
+                analytics,
                 communityDataService,
                 loadingStatus);
 

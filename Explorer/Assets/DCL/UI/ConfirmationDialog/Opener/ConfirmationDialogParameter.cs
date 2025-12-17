@@ -27,8 +27,9 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public readonly Sprite? Image;
         public readonly bool ShowImageRim;
         public readonly bool ShowQuitImage;
-        public readonly bool PreserveAspect; 
+        public readonly bool PreserveAspect;
         public readonly UserData UserInfo;
+        public readonly UserData FromUserInfo;
         public Action<ConfirmationResult>? ResultCallback;
         public readonly string LinkText;
         public readonly Action<string>? OnLinkClickCallback;
@@ -37,7 +38,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
             Sprite? image, bool showImageRim, bool showQuitImage,
             Action<ConfirmationResult>? resultCallback = null,
             string subText = "", UserData userInfo = default, string linkText = "", Action<string>? onLinkClickCallback = null,
-            bool preserveAspect = false)
+            bool preserveAspect = false, UserData fromUserInfo = default)
         {
             Text = text;
             CancelButtonText = cancelButtonText;
@@ -51,6 +52,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
             LinkText = linkText;
             OnLinkClickCallback = onLinkClickCallback;
             PreserveAspect = preserveAspect;
+            FromUserInfo = fromUserInfo;
         }
     }
 

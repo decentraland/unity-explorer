@@ -11,6 +11,7 @@ using DCL.Input.Component;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -24,6 +25,7 @@ using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -59,6 +61,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
+        private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
 
@@ -95,6 +98,7 @@ namespace DCL.Communities.CommunitiesBrowser
             ICommunityCallOrchestrator orchestrator,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
+            IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus)
         {
@@ -108,6 +112,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.orchestrator = orchestrator;
+            this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
 
@@ -215,6 +220,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ReloadBrowser();
 
             SubscribeDataProviderEvents();
+
+            analytics.Track(AnalyticsEvents.Communities.OPEN_COMMUNITY_BROWSERS);
         }
 
         public void Deactivate()

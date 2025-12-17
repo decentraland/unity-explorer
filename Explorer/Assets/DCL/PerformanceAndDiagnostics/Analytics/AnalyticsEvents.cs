@@ -144,5 +144,11 @@
             public const string FAILED_GIFT = "failed_gift";
             public const string CANCELED_GIFT = "canceled_gift";
         }
+
+        public static class Communities
+        {
+            public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
+            public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
+        }
     }
 }
