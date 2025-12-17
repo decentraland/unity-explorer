@@ -396,8 +396,7 @@ namespace DCL.Profiles
         {
             urlBuilder.Clear();
 
-            // TODO remove hardcoded URL
-            urlBuilder.AppendDomain(useCentralizedProfiles ? URLDomain.FromString("https://asset-bundle-registry.decentraland.today") /*URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))*/ : fromCatalyst ?? realm.Ipfs.LambdasBaseUrl);
+            urlBuilder.AppendDomain(useCentralizedProfiles ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)) : fromCatalyst ?? realm.Ipfs.LambdasBaseUrl);
 
             urlBuilder.AppendSubDirectory(URLSubdirectory.FromString("profiles"));
 
