@@ -874,6 +874,7 @@ namespace Global.Dynamic
                     chatEventBus,
                     homePlaceEventBus,
                     staticContainer.SmartWearableCache,
+                    bootstrapContainer.Analytics!,
                     communitiesDataService,
                     staticContainer.LoadingStatus
                 ),
@@ -1119,7 +1120,8 @@ namespace Global.Dynamic
                     profilesRepository,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
-                    voiceChatContainer.VoiceChatOrchestrator));
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.Analytics!));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
