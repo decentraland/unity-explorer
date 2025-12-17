@@ -508,7 +508,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void PlayNewEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent,
             in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(emoteIntent.EmoteAsset == null || emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
+            BodyShape bodyShape = avatarShapeComponent.BodyShape;
+            GameObject? mainAsset = emoteIntent.EmoteAsset?.AssetResults[bodyShape]?.Asset?.MainAsset;
+
+            if (mainAsset is null
+                    || emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
                 return;
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayNewEmote()");
@@ -530,9 +534,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
                     (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.SocialEmote.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
                     return;
-
-                BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                GameObject mainAsset = emote.AssetResults[bodyShape]!.Value.Asset!.MainAsset;
 
                 // Existing emoteComponent is overwritten with new emote info
                 emoteComponent.Reset();
