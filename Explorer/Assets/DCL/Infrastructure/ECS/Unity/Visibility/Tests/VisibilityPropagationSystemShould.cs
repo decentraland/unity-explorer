@@ -84,8 +84,16 @@ namespace ECS.Unity.Visibility.Tests
         }
 
         [Test]
-        public void PropagationSkipsChildWithOwnVisibilityComponent()
+        public void PropagationPassesThroughChildWithNonPropagatingVisibility()
         {
+            // Scenario: Parent propagates visibility, but intermediate child has its own visibility
+            // with propagateToChildren=FALSE. The grandchild should inherit from the grandparent
+            // (passing through the intermediate child).
+            //
+            // EntityA (parent): visible=FALSE, propagateToChildren=TRUE
+            // EntityB (child): visible=TRUE, propagateToChildren=FALSE → B is visible, but doesn't propagate its own
+            // EntityC (grandchild): should inherit from EntityA (visible=FALSE)
+
             // Arrange
             var parentTransform = CreateTransformComponent("Parent");
             var childTransform = CreateTransformComponent("Child");
@@ -117,9 +125,64 @@ namespace ECS.Unity.Visibility.Tests
             // Act
             system!.Update(0f);
 
-            // Assert - grandchild should NOT have inherited visibility because child has own component (without propagate)
-            bool hasGrandchildResolved = world.Has<ResolvedVisibilityComponent>(grandchild);
-            Assert.That(hasGrandchildResolved, Is.False, "Grandchild should not inherit when intermediate child has own visibility without propagation");
+            // Assert - child uses its own visibility (true), but grandchild inherits from grandparent (false)
+            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            Assert.That(childResolved.IsVisible, Is.True, "Child should use its own visibility (true)");
+            Assert.That(childResolved.SourceEntity, Is.EqualTo(child), "Child's source should be itself");
+
+            Assert.That(world.Has<ResolvedVisibilityComponent>(grandchild), Is.True,
+                "Grandchild should have ResolvedVisibilityComponent (pass-through from grandparent)");
+            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+            Assert.That(grandchildResolved.IsVisible, Is.False, "Grandchild should inherit grandparent's visibility (false)");
+            Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(parent), "Grandchild's source should be grandparent");
+        }
+
+        [Test]
+        public void PropagationBlockedByChildWithPropagatingVisibility()
+        {
+            // Contrast test to PropagationPassesThroughChildWithNonPropagatingVisibility:
+            // When intermediate child has propagateToChildren=TRUE, its visibility takes over
+            // for grandchildren, blocking the grandparent's propagation.
+            //
+            // EntityA (parent): visible=FALSE, propagateToChildren=TRUE
+            // EntityB (child): visible=TRUE, propagateToChildren=TRUE → B propagates its own visibility
+            // EntityC (grandchild): should inherit from EntityB (visible=TRUE), NOT from EntityA
+
+            // Arrange
+            var parentTransform = CreateTransformComponent("Parent");
+            var childTransform = CreateTransformComponent("Child");
+            var grandchildTransform = CreateTransformComponent("Grandchild");
+
+            Entity parent = world.Create(
+                new PBVisibilityComponent { Visible = false, PropagateToChildren = true, IsDirty = true },
+                parentTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity child = world.Create(
+                new PBVisibilityComponent { Visible = true, PropagateToChildren = true, IsDirty = true },
+                childTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity grandchild = world.Create(
+                grandchildTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            SetupParentChild(parent, child, parentTransform, childTransform);
+            SetupParentChild(child, grandchild, childTransform, grandchildTransform);
+            world.Set(child, childTransform);
+            world.Set(parent, parentTransform);
+            world.Set(grandchild, grandchildTransform);
+
+            // Act
+            system!.Update(0f);
+
+            // Assert - grandchild should inherit from child (visible=TRUE), not grandparent (visible=FALSE)
+            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+            Assert.That(grandchildResolved.IsVisible, Is.True, "Grandchild should inherit child's visibility (true)");
+            Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(child), "Grandchild's source should be child (which propagates)");
         }
 
         #endregion
@@ -485,6 +548,92 @@ namespace ECS.Unity.Visibility.Tests
             // Both should have the same source (newParent, which has the PBVisibilityComponent)
             Assert.That(childResolved.SourceEntity, Is.EqualTo(newParent), "Child source should be newParent");
             Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(newParent), "Grandchild source should be newParent");
+        }
+
+        [Test]
+        public void ReparentedUnderPassThroughParent_InheritsFromGrandparent()
+        {
+            // This tests the pass-through reparenting case:
+            // - GrandparentEntity: visible=FALSE, propagate=TRUE
+            // - ParentEntity (pass-through): visible=TRUE, propagate=FALSE
+            // - ReparentedEntity: reparented under ParentEntity, should inherit from GrandparentEntity (invisible)
+
+            // Arrange
+            var grandparentTransform = CreateTransformComponent("Grandparent");
+            var parentTransform = CreateTransformComponent("Parent");
+            var oldParentTransform = CreateTransformComponent("OldParent");
+            var reparentedTransform = CreateTransformComponent("Reparented");
+
+            Entity grandparent = world.Create(
+                new PBVisibilityComponent { Visible = false, PropagateToChildren = true, IsDirty = true },
+                grandparentTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity parent = world.Create(
+                new PBVisibilityComponent { Visible = true, PropagateToChildren = false, IsDirty = true },
+                parentTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity oldParent = world.Create(
+                oldParentTransform, // No visibility component
+                new SDKTransform { IsDirty = false }
+            );
+
+            Entity reparented = world.Create(
+                reparentedTransform,
+                new SDKTransform { IsDirty = false }
+            );
+
+            // Set up hierarchy: grandparent -> parent (pass-through), oldParent -> reparented
+            SetupParentChild(grandparent, parent, grandparentTransform, parentTransform);
+            SetupParentChild(oldParent, reparented, oldParentTransform, reparentedTransform);
+            world.Set(grandparent, grandparentTransform);
+            world.Set(parent, parentTransform);
+            world.Set(oldParent, oldParentTransform);
+            world.Set(reparented, reparentedTransform);
+
+            // First update - process visibility hierarchy
+            system!.Update(0f);
+
+            // Verify parent is visible (has its own visibility)
+            ref var parentResolved = ref world.Get<ResolvedVisibilityComponent>(parent);
+            Assert.That(parentResolved.IsVisible, Is.True, "Parent should be visible (own visibility)");
+            Assert.That(parentResolved.ShouldPropagate, Is.False, "Parent should NOT propagate (propagate=false)");
+
+            // Verify reparented entity has no ResolvedVisibilityComponent yet
+            Assert.That(world.Has<ResolvedVisibilityComponent>(reparented), Is.False,
+                "Reparented entity should not have ResolvedVisibilityComponent before reparenting");
+
+            // Now reparent the entity under the pass-through parent
+            oldParentTransform.Children.Remove(reparented);
+            reparentedTransform.Transform.SetParent(parentTransform.Transform, true);
+            reparentedTransform.Parent = parent;
+            parentTransform.Children.Add(reparented);
+
+            world.Set(reparented, reparentedTransform);
+            world.Set(oldParent, oldParentTransform);
+            world.Set(parent, parentTransform);
+
+            // Mark transform as dirty to trigger reparenting detection
+            ref var reparentedSdkTransform = ref world.Get<SDKTransform>(reparented);
+            reparentedSdkTransform.IsDirty = true;
+
+            // Act
+            system.Update(0f);
+
+            // Assert - reparented entity should inherit from GRANDPARENT (via pass-through)
+            Assert.That(world.Has<ResolvedVisibilityComponent>(reparented), Is.True,
+                "Reparented entity should have ResolvedVisibilityComponent");
+
+            ref var reparentedResolved = ref world.Get<ResolvedVisibilityComponent>(reparented);
+            Assert.That(reparentedResolved.IsVisible, Is.False,
+                "Reparented entity should inherit grandparent's visibility (false), not parent's (true)");
+            Assert.That(reparentedResolved.SourceEntity, Is.EqualTo(grandparent),
+                "Reparented entity's source should be grandparent (the propagating ancestor)");
+            Assert.That(reparentedResolved.ShouldPropagate, Is.True,
+                "Reparented entity should propagate (inheriting the propagation chain)");
         }
 
         #endregion

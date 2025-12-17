@@ -133,13 +133,15 @@ namespace ECS.Unity.Visibility.Systems
             Entity oldParent = resolved.LastKnownParent;
             resolved.LastKnownParent = transformComponent.Parent;
 
-            // Check new parent's ResolvedVisibility
-            if (World!.TryGet(transformComponent.Parent, out ResolvedVisibilityComponent parentResolved)
-                && parentResolved.ShouldPropagate)
+            // Find propagating ancestor (handles pass-through case where immediate parent
+            // has own visibility with propagateToChildren=FALSE but is inside a propagating hierarchy)
+            (Entity visibilitySource, bool visibility, bool found) = FindPropagatingAncestor(transformComponent.Parent);
+
+            if (found)
             {
-                // Inherit from new parent
-                resolved.IsVisible = parentResolved.IsVisible;
-                resolved.SourceEntity = parentResolved.SourceEntity;
+                // Inherit from propagating ancestor
+                resolved.IsVisible = visibility;
+                resolved.SourceEntity = visibilitySource;
                 resolved.ShouldPropagate = true;
             }
             else
@@ -172,22 +174,22 @@ namespace ECS.Unity.Visibility.Systems
             // Only check when transform changed
             if (!sdkTransform.IsDirty) return;
 
-            // Check if new parent has propagating visibility
-            if (!World!.TryGet(transformComponent.Parent, out ResolvedVisibilityComponent parentResolved))
-                return;
+            // Find propagating ancestor (handles pass-through case where immediate parent
+            // has own visibility with propagateToChildren=FALSE but is inside a propagating hierarchy)
+            (Entity visibilitySource, bool visibility, bool found) = FindPropagatingAncestor(transformComponent.Parent);
 
-            if (!parentResolved.ShouldPropagate)
+            if (!found)
                 return;
 
             // IMPORTANT: Capture children BEFORE adding component, as adding component changes archetype
             // and the transformComponent reference might become stale
             HashSet<Entity> children = transformComponent.Children;
 
-            // Create ResolvedVisibilityComponent inheriting from parent
-            World.Add(entity, new ResolvedVisibilityComponent
+            // Create ResolvedVisibilityComponent inheriting from propagating ancestor
+            World!.Add(entity, new ResolvedVisibilityComponent
             {
-                IsVisible = parentResolved.IsVisible,
-                SourceEntity = parentResolved.SourceEntity,
+                IsVisible = visibility,
+                SourceEntity = visibilitySource,
                 ShouldPropagate = true,
                 LastKnownParent = transformComponent.Parent,
                 IsDirty = true
@@ -195,7 +197,7 @@ namespace ECS.Unity.Visibility.Systems
 
             // Cascade to descendants that don't have their own visibility
             // Pass children directly to avoid issues with archetype changes
-            PropagateToDescendantsFromChildren(children, visibilitySource: parentResolved.SourceEntity, parentResolved.IsVisible, shouldPropagate: true);
+            PropagateToDescendantsFromChildren(children, visibilitySource: visibilitySource, visibility, shouldPropagate: true);
         }
 
         /// <summary>
@@ -212,15 +214,17 @@ namespace ECS.Unity.Visibility.Systems
         {
             if (!removedComponents.Remove<PBVisibilityComponent>()) return;
 
-            // Entity lost its own visibility component - recompute from parent
+            // Entity lost its own visibility component - recompute from parent hierarchy
             resolved.LastKnownParent = transformComponent.Parent;
 
-            if (World!.TryGet(transformComponent.Parent, out ResolvedVisibilityComponent parentResolved)
-                && parentResolved.ShouldPropagate)
+            // Find propagating ancestor (handles pass-through case)
+            (Entity visibilitySource, bool visibility, bool found) = FindPropagatingAncestor(transformComponent.Parent);
+
+            if (found)
             {
-                // Inherit from parent
-                resolved.IsVisible = parentResolved.IsVisible;
-                resolved.SourceEntity = parentResolved.SourceEntity;
+                // Inherit from propagating ancestor
+                resolved.IsVisible = visibility;
+                resolved.SourceEntity = visibilitySource;
                 resolved.ShouldPropagate = true;
             }
             else
@@ -290,10 +294,6 @@ namespace ECS.Unity.Visibility.Systems
 
                 if (!World!.IsAlive(childEntity)) continue;
 
-                // If child has its own PBVisibilityComponent, it takes priority - skip propagation
-                if (World.Has<PBVisibilityComponent>(childEntity))
-                    continue;
-
                 // Get child's transform for parent tracking
                 if (!World.TryGet(childEntity, out TransformComponent childTransform))
                     continue;
@@ -301,6 +301,21 @@ namespace ECS.Unity.Visibility.Systems
                 // Capture children before potentially adding component (archetype change)
                 HashSet<Entity> grandchildren = childTransform.Children;
                 Entity childParent = childTransform.Parent;
+
+                // If child has its own PBVisibilityComponent, check its propagation behavior
+                if (World.TryGet(childEntity, out PBVisibilityComponent? childVisibility))
+                {
+                    // If child propagates its own visibility, it takes over - don't continue to grandchildren
+                    // If child does NOT propagate, we "pass through" to grandchildren with ancestor's visibility
+                    if (!childVisibility!.GetPropagateToChildren())
+                    {
+                        // Pass-through: continue to grandchildren with the original visibility source
+                        foreach (Entity grandchild in grandchildren)
+                            childrenStack.Push(grandchild);
+                    }
+                    // Either way, don't update this child's visibility - it has its own
+                    continue;
+                }
 
                 // Update or create ResolvedVisibilityComponent for this child
                 ref ResolvedVisibilityComponent resolved = ref World.TryGetRef<ResolvedVisibilityComponent>(childEntity, out bool hasResolved);
@@ -348,9 +363,24 @@ namespace ECS.Unity.Visibility.Systems
 
                 if (!World!.IsAlive(childEntity)) continue;
 
-                // If child has its own PBVisibilityComponent, it takes priority - skip
-                if (World.Has<PBVisibilityComponent>(childEntity))
+                // Get child's transform for parent tracking and further iteration
+                if (!World.TryGet(childEntity, out TransformComponent childTransform))
                     continue;
+
+                // If child has its own PBVisibilityComponent, check its propagation behavior
+                if (World.TryGet(childEntity, out PBVisibilityComponent? childVisibility))
+                {
+                    // If child propagates its own visibility, it handles its descendants - skip
+                    // If child does NOT propagate, we need to "pass through" to reset grandchildren
+                    if (!childVisibility!.GetPropagateToChildren())
+                    {
+                        // Pass-through: continue to grandchildren
+                        foreach (Entity grandchild in childTransform.Children)
+                            childrenStack.Push(grandchild);
+                    }
+                    // Either way, don't reset this child's visibility - it has its own
+                    continue;
+                }
 
                 // Only reset if this child was sourced from the removed entity
                 ref ResolvedVisibilityComponent resolved = ref World.TryGetRef<ResolvedVisibilityComponent>(childEntity, out bool hasResolved);
@@ -359,17 +389,14 @@ namespace ECS.Unity.Visibility.Systems
 
                 if (resolved.SourceEntity != removedSourceEntity) continue;
 
-                // Get child's transform for parent tracking and further iteration
-                if (!World.TryGet(childEntity, out TransformComponent childTransform))
-                    continue;
+                // Find propagating ancestor (handles pass-through case)
+                (Entity visibilitySource, bool visibility, bool found) = FindPropagatingAncestor(childTransform.Parent);
 
-                // Check if there's a new parent with propagation
-                if (World.TryGet(childTransform.Parent, out ResolvedVisibilityComponent parentResolved)
-                    && parentResolved.ShouldPropagate)
+                if (found)
                 {
-                    // Inherit from new parent in hierarchy
-                    resolved.IsVisible = parentResolved.IsVisible;
-                    resolved.SourceEntity = parentResolved.SourceEntity;
+                    // Inherit from propagating ancestor in hierarchy
+                    resolved.IsVisible = visibility;
+                    resolved.SourceEntity = visibilitySource;
                     resolved.ShouldPropagate = true;
                 }
                 else
@@ -386,6 +413,60 @@ namespace ECS.Unity.Visibility.Systems
                 foreach (Entity grandchild in childTransform.Children)
                     childrenStack.Push(grandchild);
             }
+        }
+
+        /// <summary>
+        /// Walks up the hierarchy from startParent to find the nearest propagating ancestor.
+        /// Handles the "pass-through" case where an intermediate ancestor has its own visibility
+        /// with propagateToChildren=FALSE but is inside a propagating hierarchy.
+        /// </summary>
+        /// <param name="startParent">The parent entity to start searching from</param>
+        /// <returns>
+        /// A tuple containing:
+        /// - source: The entity that is the source of the propagated visibility
+        /// - visibility: The visibility value to inherit
+        /// - found: Whether a propagating ancestor was found
+        /// </returns>
+        private (Entity source, bool visibility, bool found) FindPropagatingAncestor(Entity startParent)
+        {
+            Entity current = startParent;
+
+            while (World!.IsAlive(current))
+            {
+                // Check if current entity has ResolvedVisibilityComponent
+                if (!World.TryGet(current, out ResolvedVisibilityComponent resolved))
+                    return (Entity.Null, true, false);
+
+                // If current entity propagates, we found our source
+                if (resolved.ShouldPropagate)
+                    return (resolved.SourceEntity, resolved.IsVisible, true);
+
+                // Current doesn't propagate - check if it's a "pass-through" case
+                // (has own visibility with propagateToChildren=FALSE)
+                if (World.TryGet(current, out PBVisibilityComponent? visibility))
+                {
+                    if (visibility!.GetPropagateToChildren())
+                    {
+                        // This entity propagates its own visibility - use it
+                        return (current, resolved.IsVisible, true);
+                    }
+                    // else: Has own visibility but doesn't propagate - continue up the hierarchy
+                }
+                else
+                {
+                    // Has ResolvedVisibility but no PBVisibility and doesn't propagate
+                    // This shouldn't happen in normal cases, stop searching
+                    return (Entity.Null, true, false);
+                }
+
+                // Move to parent
+                if (!World.TryGet(current, out TransformComponent transform))
+                    return (Entity.Null, true, false);
+
+                current = transform.Parent;
+            }
+
+            return (Entity.Null, true, false);
         }
     }
 }
