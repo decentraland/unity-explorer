@@ -2,12 +2,12 @@
 {
     public class MembersChatState : ChatState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.UIMediator.SetupForMembersState();
         }
 
-        public override void End() { }
+        public override void Exit() { }
 
         public override void OnToggleMembers() =>
             ChangeState<FocusedChatState>();

@@ -14,14 +14,20 @@ namespace MVC
 
         private readonly CancellationTokenSource disposalCts = new ();
 
-        public MVCStateMachine(TContext context, TBaseState initialState)
+        /// <param name="states"> Initial state is the first state in the params array </param>
+        public MVCStateMachine(TContext context, params TBaseState[] states)
         {
+            if (states.Length == 0)
+                throw new ArgumentException("At least one state required", nameof(states));
+
             this.context = context;
 
-            // setup our initial state
-            AddState(initialState);
-            CurrentState = initialState;
-            CurrentState.Begin();
+            foreach (TBaseState state in states)
+                AddState(state);
+
+            // Take first state as initial
+            CurrentState = states[0];
+            CurrentState.Enter();
         }
 
         protected TContext context { get; }
@@ -57,32 +63,32 @@ namespace MVC
             CurrentState.LateUpdate(deltaTime);
         }
 
-        public R ChangeState<R>(R state) where R: TBaseState
+        public TState Enter<TState>(TState state) where TState: TBaseState
         {
             // Make sure that this state is registered in the state machine
-            if (!states.TryGetValue(typeof(R), out TBaseState? registeredState) || registeredState != state)
+            if (!states.TryGetValue(typeof(TState), out TBaseState? registeredState) || registeredState != state)
             {
-                var error = $"{GetType()}: state \"{typeof(R)}\" {state} is not registered";
+                var error = $"{GetType()}: state \"{typeof(TState)}\" {state} is not registered";
                 ReportHub.LogError(ReportCategory.MVC, error);
                 throw new Exception(error);
             }
 
-            return ChangeState<R>();
+            return Enter<TState>();
         }
 
         /// <summary>
         ///     changes the current state
         /// </summary>
-        public R ChangeState<R>() where R: TBaseState
+        public TState Enter<TState>() where TState: TBaseState
         {
             // avoid changing to the same state
-            Type newType = typeof(R);
+            Type newType = typeof(TState);
 
             if (CurrentState.GetType() == newType)
-                return (R)CurrentState;
+                return (TState)CurrentState;
 
             // only call end if we have a currentState
-            CurrentState.End();
+            CurrentState.Exit();
 
             // do a sanity check while in the editor to ensure we have the given state in our state list
             if (!states.ContainsKey(newType))
@@ -95,13 +101,13 @@ namespace MVC
             // swap states and call begin
             PreviousState = CurrentState;
             CurrentState = states[newType];
-            CurrentState.Begin();
+            CurrentState.Enter();
             ElapsedTimeInState = 0f;
 
             // fire the changed event if we have a listener
             OnStateChanged?.Invoke();
 
-            return (R)CurrentState;
+            return (TState)CurrentState;
         }
 
         /// <summary>
@@ -116,7 +122,7 @@ namespace MVC
             }
 
             // End the current, swap to the previous.
-            CurrentState.End();
+            CurrentState.Exit();
 
             CurrentState = PreviousState;
 
@@ -125,7 +131,7 @@ namespace MVC
             PreviousState = null;
 
             // Begin the new (old) state.
-            CurrentState.Begin();
+            CurrentState.Enter();
             ElapsedTimeInState = 0f;
 
             OnStateChanged?.Invoke();

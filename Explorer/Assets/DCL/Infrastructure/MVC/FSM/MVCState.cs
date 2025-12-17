@@ -23,15 +23,15 @@ namespace MVC
         /// </summary>
         public virtual void OnInitialized() { }
 
-        public virtual void Begin() { }
+        public virtual void Enter() { }
 
         public virtual void Update(float deltaTime) { }
 
         public virtual void LateUpdate(float deltaTime) { }
 
-        public virtual void End() { }
+        public virtual void Exit() { }
 
         protected R ChangeState<R>() where R: TBaseState =>
-            machine.ChangeState<R>();
+            machine.Enter<R>();
     }
 }
