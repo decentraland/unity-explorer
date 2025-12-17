@@ -20,6 +20,13 @@ namespace Utility
             t.localScale = Vector3.one;
         }
 
+        public static void ResetAnimator(this Animator animator)
+        {
+            animator.Rebind();
+            animator.Update(0f);
+            animator.gameObject.SetActive(false);
+        }
+
         /// <summary>
         ///     Sets the Component's GameObject active state, ensuring it happens on the main thread.
         ///     If called from a non-main thread, it will switch to the main thread asynchronously.

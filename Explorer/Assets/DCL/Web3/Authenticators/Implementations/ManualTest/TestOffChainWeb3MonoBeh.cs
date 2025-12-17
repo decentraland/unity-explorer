@@ -1,5 +1,4 @@
-﻿using DCL.Web3.Abstract;
-using System.Numerics;
+﻿using System.Numerics;
 using Thirdweb;
 using ThirdWebUnity;
 using UnityEngine;

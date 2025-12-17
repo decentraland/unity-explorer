@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
@@ -41,7 +42,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
-        public GameObject PendingAuthentication { get; private set; } = null!;
+        public GameObject VerificationContainer { get; private set; } = null!;
 
         [field: SerializeField]
         public Animator VerificationAnimator { get; private set; } = null!;

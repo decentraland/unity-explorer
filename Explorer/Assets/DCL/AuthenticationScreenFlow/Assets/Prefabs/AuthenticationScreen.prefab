@@ -3756,7 +3756,7 @@ MonoBehaviour:
   <EmailInputField>k__BackingField: {fileID: 6109130198185465119}
   <LoginWithOtpButton>k__BackingField: {fileID: 1553421061352340541}
   <LoadingSpinner>k__BackingField: {fileID: 101159986873043013}
-  <PendingAuthentication>k__BackingField: {fileID: 9139651224223642632}
+  <VerificationContainer>k__BackingField: {fileID: 9139651224223642632}
   <VerificationAnimator>k__BackingField: {fileID: 7608642574103559770}
   <VerificationDescriptionsLabel>k__BackingField: {fileID: 8625223423445902929}
   <VerificationCodeLabel>k__BackingField: {fileID: 7480875149420460394}
@@ -7120,7 +7120,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1109646576465514645, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3551910338184537301, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Name

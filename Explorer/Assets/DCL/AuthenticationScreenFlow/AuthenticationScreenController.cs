@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Audio;
+using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -92,14 +93,16 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private UniTaskCompletionSource<string>? otpCompletionSource;
         private StringVariable? profileNameLabel;
-        private IInputBlock inputBlock;
+        private readonly IInputBlock inputBlock;
         private float originalWorldAudioVolume;
         private string? currentEmail;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
+        public ReactiveProperty<AuthenticationStatus> CurrentState { get; set; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; private set; } = string.Empty;
+
+        private MVCStateMachine<AuthStateBase, AuthStateContext> fsm;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -159,9 +162,14 @@ namespace DCL.AuthenticationScreenFlow
 
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
+            // Login
             viewInstance.LoginButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
+
+            // Verification
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
+
+            // Lobby
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
             foreach (Button button in viewInstance.UseAnotherAccountButton)
@@ -186,6 +194,18 @@ namespace DCL.AuthenticationScreenFlow
             // ThirdWeb buttons
             viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
             viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
+
+            fsm = new MVCStateMachine<AuthStateBase, AuthStateContext>(
+                context: new AuthStateContext(),
+                states: new AuthStateBase[]
+                {
+                    new AutoLoginAuthState(viewInstance),
+                    new LoginMethodSelectionAuthState(viewInstance, CurrentState),
+                    new LoadingAuthState(viewInstance),
+                    new VerificationAuthState(viewInstance),
+                    new LobbyAuthState(viewInstance, characterPreviewController),
+                }
+            );
         }
 
 #region MainFlow
@@ -558,84 +578,27 @@ namespace DCL.AuthenticationScreenFlow
 
         private void SwitchState(ViewState state)
         {
-            viewInstance!.ErrorPopupRoot.SetActive(false);
-
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"[STATUS{CurrentState}]: Changing Auth screen state to {state.ToString()}...");
+
             switch (state)
             {
                 case ViewState.Login:
-                    isNewUser = false;
-
-                    ResetAnimator(viewInstance!.LoginAnimator);
-                    viewInstance.PendingAuthentication.SetActive(false);
-
-                    viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.LoginButton.interactable = true;
-                    viewInstance.LoginButton.gameObject.SetActive(true);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-                    CurrentState.Value = AuthenticationStatus.Login;
+                    fsm.Enter<LoginMethodSelectionAuthState>();
                     break;
                 case ViewState.Loading:
-                    viewInstance!.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.LoadingSpinner.SetActive(true);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    fsm.Enter<LoadingAuthState>();
                     break;
                 case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance!.VerificationAnimator);
-
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(true);
-                    viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    fsm.Enter<VerificationAuthState>();
                     break;
                 case ViewState.Finalize:
-                    ResetAnimator(viewInstance!.FinalizeAnimator);
-                    viewInstance.PendingAuthentication.SetActive(false);
-
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(true);
-
-                    viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-                    viewInstance.JumpIntoWorldButton.interactable = true;
-
-                    viewInstance.ProfileNameInputField.gameObject.SetActive(isNewUser);
-
-                    characterPreviewController?.OnBeforeShow();
-                    characterPreviewController?.OnShow();
-
+                    fsm.Enter<LobbyAuthState>();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Changed screen to {state.ToString()} ✅ ");
-        }
-
-        private static void ResetAnimator(Animator animator)
-        {
-            animator.Rebind();
-            animator.Update(0f);
-            animator.gameObject.SetActive(false);
         }
 
         private void RestoreResolutionAndScreenMode()
