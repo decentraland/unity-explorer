@@ -65,26 +65,26 @@ namespace DCL.Friends
 
         private void UserBlockedByYou(BlockedProfile user)
         {
-            UserBlocked?.Invoke(user.Address);
             blockedUsers.Add(user.Address);
+            UserBlocked?.Invoke(user.Address);
         }
 
         private void UserUnblockedByYou(BlockedProfile user)
         {
-            UserUnblocked?.Invoke(user.Address);
             blockedUsers.Remove(user.Address);
+            UserUnblocked?.Invoke(user.Address);
         }
 
         private void YouBlockedByUser(string userAddress)
         {
-            UserBlocksYou?.Invoke(userAddress);
             blockedByUsers.Add(userAddress);
+            UserBlocksYou?.Invoke(userAddress);
         }
 
         private void YouUnblockedByUser(string userAddress)
         {
-            UserUnblocksYou?.Invoke(userAddress);
             blockedByUsers.Remove(userAddress);
+            UserUnblocksYou?.Invoke(userAddress);
         }
     }
 }
