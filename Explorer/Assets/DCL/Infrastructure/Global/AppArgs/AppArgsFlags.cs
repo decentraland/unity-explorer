@@ -50,6 +50,8 @@
 
         public const string COMMUNITIES_ANNOUNCEMENTS = "include-communities-announcements";
 
+        public const string HEAD_SYNC = "head-sync";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
