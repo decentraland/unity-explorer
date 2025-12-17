@@ -105,14 +105,14 @@ namespace MVC
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action onShow = null)
+            Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action onShow = null, bool isOpenedOnWorldAvatar = false)
         {
             Profile? profile = await profileRepository.GetAsync(walletId, ct);
 
             if (profile == null)
                 return;
 
-            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint);
+            await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint, isOpenedOnWorldAvatar);
         }
 
         public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
@@ -142,10 +142,10 @@ namespace MVC
         }
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider);
-            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 
         private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,

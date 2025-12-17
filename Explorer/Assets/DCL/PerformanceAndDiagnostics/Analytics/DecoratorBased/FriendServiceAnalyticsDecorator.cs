@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Friends;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System.Threading;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -35,7 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             await core.RejectFriendshipAsync(friendId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.REQUEST_REJECTED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.REQUEST_REJECTED, new JObject
             {
                 {"receiver_id", friendId}
             });
@@ -45,7 +45,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             await core.CancelFriendshipAsync(friendId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.REQUEST_CANCELED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.REQUEST_CANCELED, new JObject
             {
                 {"receiver_id", friendId}
             });
@@ -55,7 +55,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             await core.AcceptFriendshipAsync(friendId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.REQUEST_ACCEPTED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.REQUEST_ACCEPTED, new JObject
             {
                 {"receiver_id", friendId}
             });
@@ -65,7 +65,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             await core.DeleteFriendshipAsync(friendId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_DELETED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_DELETED, new JObject
             {
                 {"receiver_id", friendId}
             });
@@ -75,7 +75,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             FriendRequest result = await core.RequestFriendshipAsync(friendId, messageBody, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.REQUEST_SENT, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.REQUEST_SENT, new JObject
             {
                 {"receiver_id", friendId}
             });
@@ -90,7 +90,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             await core.BlockUserAsync(userId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.BLOCK_USER, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.BLOCK_USER, new JObject
             {
                 {"receiver_id", userId}
             });
@@ -100,7 +100,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             await core.UnblockUserAsync(userId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.UNBLOCK_USER, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.UNBLOCK_USER, new JObject
             {
                 {"receiver_id", userId}
             });

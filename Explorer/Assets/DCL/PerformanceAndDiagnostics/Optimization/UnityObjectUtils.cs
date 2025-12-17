@@ -23,6 +23,22 @@ namespace Utility
             Application.quitting += SetQuitting;
         }
 
+        // This code fixes the following situation: enter play mode, exit play
+        // mode, run edit mode tests.
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void ResetIsQuittingOnEnteredEditMode()
+        {
+            UnityEditor.EditorApplication.playModeStateChanged +=
+                static stateChange =>
+            {
+                if (stateChange ==
+                    UnityEditor.PlayModeStateChange.EnteredEditMode)
+                    IsQuitting = false;
+            };
+        }
+#endif
+
         /// <summary>
         ///     Tries to destroy Game Object based on the current state of the Application
         /// </summary>

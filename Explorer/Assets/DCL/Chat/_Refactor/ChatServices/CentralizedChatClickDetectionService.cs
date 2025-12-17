@@ -1,7 +1,7 @@
 using CodeLess.Attributes;
+using DCL.Input.Utils;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
@@ -43,7 +43,7 @@ namespace DCL.Chat.ChatServices
             if (isPaused) return;
             if (OnClickDetected == null) return;
 
-            var clickPosition = GetPointerPosition(context);
+            var clickPosition = DCLInputUtilities.GetPointerPosition(context);
 
             using PooledObject<PointerEventData> pooledEventData = POINTER_EVENT_DATA_POOL.Get(out PointerEventData eventData);
             eventData.position = clickPosition;
@@ -53,16 +53,6 @@ namespace DCL.Chat.ChatServices
 
             RaycastResult? result = results.Count > 0 ? results[0] : null;
             OnClickDetected?.Invoke(result);
-        }
-
-        private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
-        {
-            if (ctx.control is Pointer pCtrl) return pCtrl.position.ReadValue();
-            if (Pointer.current != null) return Pointer.current.position.ReadValue();
-            if (Mouse.current != null) return Mouse.current.position.ReadValue();
-            if (Touchscreen.current?.primaryTouch != null)
-                return Touchscreen.current.primaryTouch.position.ReadValue();
-            return Vector2.zero;
         }
     }
 

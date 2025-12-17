@@ -4,6 +4,7 @@ using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Cluster;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
@@ -32,6 +33,8 @@ namespace DCL.MapRenderer
         ParcelHighlightMarkerObjectRef ParcelHighlight { get; }
 
         PlayerMarkerObjectRef PlayerMarker { get; }
+        
+        HomeMarkerObjectRef HomeMarker { get; }
 
         PinMarkerRef PinMarker { get; }
 
@@ -87,6 +90,12 @@ namespace DCL.MapRenderer
         public class PlayerMarkerObjectRef : ComponentReference<PlayerMarkerObject>
         {
             public PlayerMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class HomeMarkerObjectRef : ComponentReference<HomeMarkerObject>
+        {
+            public HomeMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]

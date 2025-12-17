@@ -167,6 +167,9 @@ MonoBehaviour:
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
             IconClass: sprite-interaction__icon-mouse-right
+        <socialEmoteOutcomesContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 79f752bc43a65384bab431cb6a44d8bd, type: 2}
+        <socialEmoteSettings>k__BackingField: {fileID: 11400000, guid: 000895e935900fa43b53faf506ee15fa, type: 2}
+        <interactionSettings>k__BackingField: {fileID: 11400000, guid: ea1f7da7c78c3d74bac70064dcc265a7, type: 2}
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -868,6 +871,18 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmoteWheelRarityBackgrounds>k__BackingField:
           m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <SocialEmotePinPrefab>k__BackingField:
+          m_AssetGUID: a0f8bf40b1a14c54384029def9ea0582
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <SocialEmotesSettings>k__BackingField:
+          m_AssetGUID: 000895e935900fa43b53faf506ee15fa
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

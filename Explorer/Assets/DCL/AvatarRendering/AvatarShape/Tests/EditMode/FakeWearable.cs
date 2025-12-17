@@ -25,6 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
+        public TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
         public AvatarAttachmentDTO DTO { get; }
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
 
@@ -43,9 +44,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
             DTO = dto;
             Model = model;
             WearableAssetResults = wearableAssetResults ?? Array.Empty<WearableAssets>();
+            TrimmedDTO = dto.Convert(this.GetThumbnail().Value);
             this.mainHash = mainHash;
             this.expectedUpperWearableHide = expectedUpperWearableHide ?? new HashSet<string>();
         }
+
+        public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public bool IsOnChain() =>
             true;

@@ -92,6 +92,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private static void ResetOriginalMaterials(Components.GltfNodeModifiers nodeModifiers)
         {
+            //No need to dispose if we are quitting. Pools and assets may be destroyed by Unity, creating unnecessarily null-refs on exit
+            if (UnityObjectUtils.IsQuitting)
+                return;
+
             foreach (var rendererMaterialKeyValuePair in nodeModifiers.OriginalMaterials)
             {
                 rendererMaterialKeyValuePair.Key.sharedMaterial = rendererMaterialKeyValuePair.Value;

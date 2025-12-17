@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using Segment.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -10,13 +9,6 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 {
     public class RustSegmentPerformancePlayground : MonoBehaviour
     {
-        private enum Mode
-        {
-            Net,
-            Rust
-        }
-
-        [SerializeField] private Mode mode;
         [SerializeField] private float delayBetweenRequests = 0.1f;
         [SerializeField] private float delayBetweenFlushes = 5f;
         [SerializeField] private int brakesMilliseconds = 100;
@@ -36,15 +28,12 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 
         private void SetUp(string key)
         {
-            if (mode is Mode.Net)
-#pragma warning restore CS0618
-            if (mode is Mode.Rust)
                 rust = new RustSegmentAnalyticsService(key, null);
         }
 
         private async UniTaskVoid TrackAsync(CancellationToken token)
         {
-            var message = new JsonObject { { "mode", mode.ToString() } };
+            var message = new JObject { { "mode", "rust" } };
 
             while (token.IsCancellationRequested == false)
             {
@@ -63,11 +52,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         }
 
         private IAnalyticsService CurrentService() =>
-            mode switch
-            {
-                Mode.Rust => rust,
-                _ => throw new ArgumentOutOfRangeException()
-            };
+            rust;
 
         [ContextMenu(nameof(LaunchLoop))]
         public void LaunchLoop()
@@ -83,7 +68,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             const int COUNT = 15;
 
             for (var i = 0; i < COUNT; i++)
-                CurrentService().Track("FLUSH_TEST", new JsonObject { { "mode", mode.ToString() } });
+                CurrentService().Track("FLUSH_TEST", new JObject { { "mode", "rust" } });
         }
 
         [ContextMenu(nameof(MeasureFlush))]

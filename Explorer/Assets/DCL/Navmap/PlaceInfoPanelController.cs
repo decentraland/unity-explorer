@@ -10,6 +10,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -42,10 +43,11 @@ namespace DCL.Navmap
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
-        private readonly MultiStateButtonController favoriteButton;
+        private readonly MultiStateButtonController homeButton;
         private readonly List<EventElementView> eventElements = new ();
         private readonly CameraReelGalleryController cameraReelGalleryController;
         private PlacesData.PlaceInfo? place;
@@ -71,6 +73,7 @@ namespace DCL.Navmap
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
+            HomePlaceEventBus homePlaceEventBus,
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
@@ -89,6 +92,7 @@ namespace DCL.Navmap
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.galleryEventBus = galleryEventBus;
+            this.homePlaceEventBus = homePlaceEventBus;
 
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
@@ -128,11 +132,15 @@ namespace DCL.Navmap
             likeButton = new MultiStateButtonController(view.LikeButton, true);
             likeButton.OnButtonClicked += OnLikeButtonClick;
 
-            favoriteButton = new MultiStateButtonController(view.FavoriteButton, true);
-            favoriteButton.OnButtonClicked += SetAsFavorite;
+            view.FavoriteButton.OnButtonClicked += SetAsFavorite;
+            
+            if(view.HomeButton != null)
+            {
+                homeButton = new MultiStateButtonController(view.HomeButton, true);
+                homeButton.OnButtonClicked += SetAsHome;
+            }
 
             view.ShareButton.onClick.AddListener(Share);
-            view.SetAsHomeButton.onClick.AddListener(SetAsHome);
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
@@ -181,7 +189,18 @@ namespace DCL.Navmap
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
-            favoriteButton.SetButtonState(place.user_favorite);
+            
+            if(place.IsEmptyPlace) 
+                view.FavoriteButton.SetButtonState(false, false);
+            else
+                view.FavoriteButton.SetButtonState(place.user_favorite);
+            
+            if (view.HomeButton != null)
+            {
+                VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
+                bool isHome = homePlaceEventBus.CurrentHomeCoordinates == coordinates;
+                homeButton.SetButtonState(isHome);
+            }
 
             SetCategories(place);
 
@@ -194,9 +213,12 @@ namespace DCL.Navmap
 
             if (originParcel == null) return;
             if (place == null) return;
-
-            if (TeleportUtils.IsRoad(place.title))
-                view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
+            if (!TeleportUtils.IsRoad(place.title)) return;
+            
+            view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
+            
+            if(!homeButton.IsButtonOn)
+                homeButton.SetButtonState(homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -261,9 +283,27 @@ namespace DCL.Navmap
 
             async UniTaskVoid SetAsFavoriteAsync(CancellationToken ct)
             {
+                view.FavoriteButton.SetButtonState(isFavorite);
                 await placesAPIService.SetPlaceFavoriteAsync(place!.id, isFavorite, ct);
-                favoriteButton.SetButtonState(isFavorite);
             }
+        }
+
+        private void SetAsHome(bool isHome)
+        {
+            if (place == null) 
+                return;
+
+            Vector2Int positionReference;
+            if(TeleportUtils.IsRoad(place.title) && originParcel.HasValue)
+                positionReference = originParcel.Value;
+            else if (VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates))
+                positionReference = coordinates;
+            else return;
+            
+            if(isHome)
+                homePlaceEventBus.SetAsHome(positionReference);
+            else
+                homePlaceEventBus.UnsetHome();
         }
 
         private void StartNavigation()
@@ -291,11 +331,6 @@ namespace DCL.Navmap
             destination = parcel;
         }
 
-        private void SetAsHome()
-        {
-            // TODO
-        }
-
         private void JumpIn()
         {
             if (destination == currentBaseParcel)
@@ -303,7 +338,7 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) ? originParcel : currentBaseParcel;
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
 
             chatMessagesBus
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,

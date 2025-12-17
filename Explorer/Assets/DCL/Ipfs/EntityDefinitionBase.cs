@@ -8,21 +8,13 @@ namespace DCL.Ipfs
     /// Base class for entity definitions that provides common properties and asset bundle manifest functionality
     /// </summary>
     [Serializable]
-    public abstract class EntityDefinitionBase
+    public abstract class EntityDefinitionBase : TrimmedEntityDefinitionBase
     {
-        public string? id;
         public string type;
         public long timestamp;
         public string version;
-        public ContentDefinition[] content;
         public string[] pointers;
-
-        // Asset bundle manifest properties
-        [JsonProperty("versions")]
-        public AssetBundleManifestVersion? assetBundleManifestVersion;
-
-        [JsonProperty("status")]
-        public AssetBundleRegistryEnum assetBundleRegistryEnum;
+        public ContentDefinition[] content;
 
         protected EntityDefinitionBase() { }
 
@@ -32,5 +24,19 @@ namespace DCL.Ipfs
         }
 
         public override string ToString() => id ?? string.Empty;
+    }
+
+    [Serializable]
+    public class TrimmedEntityDefinitionBase
+    {
+        public string? id;
+        public string thumbnail;
+
+        // Asset bundle manifest properties
+        [JsonProperty("versions")]
+        public AssetBundleManifestVersion? assetBundleManifestVersion;
+
+        [JsonProperty("status")]
+        public AssetBundleRegistryEnum assetBundleRegistryEnum;
     }
 }

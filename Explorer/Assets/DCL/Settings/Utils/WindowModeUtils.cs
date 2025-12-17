@@ -29,31 +29,31 @@ namespace DCL.Settings.Utils
         {
             return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION)
                 ? GetSavedResolution()
-                : GetDefaultResolution();
+                : GetDefaultResolution(possibleResolutions);
 
             Resolution GetSavedResolution()
             {
                 int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
-                return index < 0 || index >= possibleResolutions.Count ? GetDefaultResolution() : possibleResolutions[index];
+                return index < 0 || index >= possibleResolutions.Count ? GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
             }
+        }
 
-            Resolution GetDefaultResolution()
+        public static Resolution GetDefaultResolution(List<Resolution> possibleResolutions)
+        {
+            int defaultIndex = 0;
+
+            for (var index = 0; index < possibleResolutions.Count; index++)
             {
-                int defaultIndex = 0;
+                Resolution resolution = possibleResolutions[index];
 
-                for (var index = 0; index < possibleResolutions.Count; index++)
-                {
-                    Resolution resolution = possibleResolutions[index];
+                if (!ResolutionUtils.IsDefaultResolution(resolution))
+                    continue;
 
-                    if (!ResolutionUtils.IsDefaultResolution(resolution))
-                        continue;
-
-                    defaultIndex = index;
-                    break;
-                }
-
-                return possibleResolutions[defaultIndex];
+                defaultIndex = index;
+                break;
             }
+
+            return possibleResolutions[defaultIndex];
         }
 
         public static FullScreenMode GetTargetScreenMode(bool isAppArgWindowedMode)

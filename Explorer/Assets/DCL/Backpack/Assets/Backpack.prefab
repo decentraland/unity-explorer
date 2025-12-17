@@ -3539,8 +3539,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'There are no items in this category.
 
-    If you want you can find the
-    ideal one for you in the <color=#FF2D55><link="https://decentraland.org/marketplace">Marketplace</link></color>.'
+    If you want you can find the ideal one for you in the <color=#FF2D55><link="https://decentraland.org/marketplace">Marketplace</link></color>.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -3829,8 +3828,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'There are no items in this category.
 
-    If you want you can find the
-    ideal one for you in the <color=#FF2D55><link="https://decentraland.org/marketplace">Marketplace</link></color>.'
+    If you want you can find the ideal one for you in the <color=#FF2D55><link="https://decentraland.org/marketplace">Marketplace</link></color>.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -5195,8 +5193,7 @@ MonoBehaviour:
   m_text: 'NAMEs are unique Decentraland usernames that come with a <color=#FF2D55><link="https://decentraland.org/marketplace">World</link></color>,
     the ability to
 
-    create Communities, 5 more Outfits slots, and 100 Voting
-    Power in the DAO.'
+    create Communities, 5 more Outfits slots, and 100 Voting Power in the DAO.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -11313,7 +11310,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4581084684168573179, guid: 1059933b1543f4e4c949327e8711addb, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 7034571882556146322, guid: 1059933b1543f4e4c949327e8711addb, type: 3}
@@ -12706,7 +12703,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5288072022237423886, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 5294738254589804664, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
@@ -12774,7 +12771,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 7145261904875040787, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
@@ -15317,7 +15314,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3220712856232064781, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 3490696017552377410, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
@@ -15353,15 +15350,15 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3796563865791146493, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 4473795841780518029, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 4723781545377603781, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 5583395488263945621, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
@@ -15461,11 +15458,11 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5994850266304929904, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 5998386397524437737, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 6211812080466499258, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
@@ -15501,11 +15498,11 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7533528785240254314, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 7747906623710666587, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 7958055780637685757, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
@@ -15529,7 +15526,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7962266346378907697, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 8047893772912595873, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
@@ -15537,7 +15534,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 1f73c26d770f4214f8cbe56fd6930df9, type: 2}
     - target: {fileID: 8110157067893375718, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 8287948132522725094, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
@@ -16055,7 +16052,7 @@ PrefabInstance:
       value: 4279768342
       objectReference: {fileID: 0}
     - target: {fileID: 6621184117612612319, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 6847896572102695487, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
@@ -16091,7 +16088,7 @@ PrefabInstance:
       value: 4286344049
       objectReference: {fileID: 0}
     - target: {fileID: 6847896572102695487, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 7152686171439982118, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
@@ -16408,7 +16405,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2273769552198993812, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 2403990556892750683, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
@@ -20064,7 +20061,7 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5288072022237423886, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 5294738254589804664, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
@@ -20136,7 +20133,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 7145261904875040787, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
@@ -21317,7 +21314,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4581084684168573179, guid: 1059933b1543f4e4c949327e8711addb, type: 3}
-      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 4799132249856262556, guid: 1059933b1543f4e4c949327e8711addb, type: 3}

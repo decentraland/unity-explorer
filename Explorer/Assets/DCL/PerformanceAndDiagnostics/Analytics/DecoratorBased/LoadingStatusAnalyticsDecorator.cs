@@ -1,9 +1,7 @@
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.Web3.Identities;
-using Segment.Serialization;
-using Sentry;
-using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -36,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
         {
-            analytics.Track(AnalyticsEvents.General.INITIAL_LOADING, new JsonObject
+            analytics.Track(AnalyticsEvents.General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, $"7.{(byte)stage} - loading screen: {stage.ToString()}" },
             });

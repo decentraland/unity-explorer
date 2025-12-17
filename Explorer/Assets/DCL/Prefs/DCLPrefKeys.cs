@@ -12,6 +12,7 @@ namespace DCL.Prefs
         public const string PREVIOUS_SEARCHES = "previous_searches";
 
         public const string WEB3_IDENTITY = "Web3Authentication.Identity";
+        public const string WEB3_IDENTITY_ZONE = "Web3Authentication.Identity.zone";
 
         public const string DONT_SHOW_MIN_SPECS_SCREEN = "dontShowMinSpecsScreen";
 
@@ -66,5 +67,7 @@ namespace DCL.Prefs
         public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
 
         public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
+
+        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
     }
 }

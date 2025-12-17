@@ -170,6 +170,9 @@ namespace DCL.Profiles.Self
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                // If we cleared the identity while waiting for the profile to be saved, we just propagate the exception without overwriting the own profile with the old session one
+                if (OwnProfile == null) throw;
+
                 // Revert to the old profile so we are aligned to the catalyst's version
                 // copyOfOwnProfile should never be null at this point
                 Profile oldProfile = profileBuilder.From(copyOfOwnProfile!).Build();
@@ -194,6 +197,9 @@ namespace DCL.Profiles.Self
             // We also need to clear the owned nfts since they need to be re-initialized, otherwise we might end up with wrong nftIds (last part of the urn chunks)
             wearableStorage.ClearOwnedNftRegistry();
             emoteStorage.ClearOwnedNftRegistry();
+
+            equippedWearables.Clear();
+            equippedEmotes.UnEquipAll();
         }
     }
 }

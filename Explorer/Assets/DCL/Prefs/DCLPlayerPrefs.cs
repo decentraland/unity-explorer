@@ -10,6 +10,7 @@ namespace DCL.Prefs
     /// </summary>
     public static class DCLPlayerPrefs
     {
+        private static string VECTOR2_KEY_FORMAT = "{0}_{1}";
         private static IDCLPrefs dclPrefs;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -30,6 +31,15 @@ namespace DCL.Prefs
                 Save();
         }
 
+        public static void SetVector2Int(string key, Vector2Int value, bool save = false)
+        {
+            dclPrefs.SetInt(string.Format(VECTOR2_KEY_FORMAT, "X", key), value.x);
+            dclPrefs.SetInt(string.Format(VECTOR2_KEY_FORMAT, "Y", key), value.y);
+            
+            if(save)
+                Save();
+        }
+
         public static void SetFloat(string key, float value, bool save = false)
         {
             dclPrefs.SetFloat(key, value);
@@ -47,11 +57,27 @@ namespace DCL.Prefs
         public static float GetFloat(string key, float defaultValue = 0f) =>
             dclPrefs.GetFloat(key, defaultValue);
 
+        public static Vector2Int GetVector2Int(string key, Vector2Int defaultValue)
+        {
+            int x = dclPrefs.GetInt(string.Format(VECTOR2_KEY_FORMAT, "X", key), defaultValue.x);
+            int y = dclPrefs.GetInt(string.Format(VECTOR2_KEY_FORMAT, "Y", key), defaultValue.y);
+            return new Vector2Int(x, y);
+        }
+
         public static bool HasKey(string key) =>
             dclPrefs.HasKey(key);
 
+        public static bool HasVectorKey(string key) =>
+            dclPrefs.HasKey(string.Format(VECTOR2_KEY_FORMAT, "X", key));
+
         public static void DeleteKey(string key) =>
             dclPrefs.DeleteKey(key);
+
+        public static void DeleteVector2Key(string key)
+        {
+            dclPrefs.DeleteKey(string.Format(VECTOR2_KEY_FORMAT, "X", key));
+            dclPrefs.DeleteKey(string.Format(VECTOR2_KEY_FORMAT, "Y", key));
+        }
 
         public static void SetBool(string key, bool value, bool save = false)
         {

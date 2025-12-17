@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using UnityEngine;
@@ -11,13 +12,13 @@ namespace DCL.Character.Components
     public struct CharacterTransform : IPoolableComponentProvider<Transform>
     {
         private const float MINIMAL_DISTANCE_DIFFERENCE = 0.01f;
-        
+
         public readonly Transform Transform;
-        
+
         public bool IsDirty { get; private set; }
-        
+
         private Vector3 oldPosition;
-        
+
         public CharacterTransform(Transform transform)
         {
             Transform = transform;
@@ -47,15 +48,15 @@ namespace DCL.Character.Components
         {
             IsDirty = false;
         }
-        
+
         private void TrySetDirty(Vector3 newPosition)
         {
             if (IsDirty) return;
-            
+
             float distance = CheapDistance(oldPosition, newPosition);
 
             if (distance < MINIMAL_DISTANCE_DIFFERENCE) return;
-            
+
             oldPosition = newPosition;
             IsDirty = true;
         }

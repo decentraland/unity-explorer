@@ -16,5 +16,6 @@ namespace DCL.Communities.CommunitiesCard
 
         void SetEmptyStateActive(bool active);
         void SetLoadingStateActive(bool active);
+        void SetLoadingMoreBadgeActive(bool isActive);
     }
 }

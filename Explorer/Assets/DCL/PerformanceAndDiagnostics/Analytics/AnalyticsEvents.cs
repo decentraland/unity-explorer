@@ -39,6 +39,7 @@
             public const string OPEN_SUPPORT = "open_support";
             public const string SKIP_MINIMUM_REQUIREMENTS_SCREEN = "skip_minimum_requirements_screen";
             public const string EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN = "exit_app_from_minimum_requirements_screen";
+            public const string HOME_POSITION_SET = "home_position_set";
         }
 
         public static class Profile
@@ -135,6 +136,12 @@
             public const string SAVE_OUTFIT = "save_outfit";
             public const string EQUIP_OUTFIT = "equip_outfit";
             public const string OUTFIT_CLICK_NAME = "outfit_click_name";
+        }
+
+        public static class Communities
+        {
+            public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
+            public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
         }
     }
 }
