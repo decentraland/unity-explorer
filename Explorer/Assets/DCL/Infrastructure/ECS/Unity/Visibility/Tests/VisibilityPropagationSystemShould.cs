@@ -26,7 +26,6 @@ namespace ECS.Unity.Visibility.Tests
 
         protected override void OnTearDown()
         {
-            // Clean up created GameObjects [[memory:3702833]]
             foreach (GameObject go in createdGameObjects)
             {
                 if (go != null)
@@ -71,14 +70,12 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(parent, child, parentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
 
             // Act
             system!.Update(0f);
 
             // Assert
-            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolved = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolved.IsVisible, Is.True, "Child's own visibility should take priority");
             Assert.That(childResolved.SourceEntity, Is.EqualTo(child), "Source should be child itself");
         }
@@ -86,12 +83,12 @@ namespace ECS.Unity.Visibility.Tests
         [Test]
         public void PropagationPassesThroughChildWithNonPropagatingVisibility()
         {
-            // Scenario: Parent propagates visibility, but intermediate child has its own visibility
+            // Scenario: Parent propagates visibility, but intermediate child has its own visibility state
             // with propagateToChildren=FALSE. The grandchild should inherit from the grandparent
             // (passing through the intermediate child).
             //
             // EntityA (parent): visible=FALSE, propagateToChildren=TRUE
-            // EntityB (child): visible=TRUE, propagateToChildren=FALSE → B is visible, but doesn't propagate its own
+            // EntityB (child): visible=TRUE, propagateToChildren=FALSE → B is visible, but doesn't propagate its own visibility state
             // EntityC (grandchild): should inherit from EntityA (visible=FALSE)
 
             // Arrange
@@ -118,21 +115,18 @@ namespace ECS.Unity.Visibility.Tests
 
             SetupParentChild(parent, child, parentTransform, childTransform);
             SetupParentChild(child, grandchild, childTransform, grandchildTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
-            world.Set(grandchild, grandchildTransform);
 
             // Act
             system!.Update(0f);
 
-            // Assert - child uses its own visibility (true), but grandchild inherits from grandparent (false)
-            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            // Assert - child uses its own visibility state (true), but grandchild inherits from grandparent (false)
+            var childResolved = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolved.IsVisible, Is.True, "Child should use its own visibility (true)");
             Assert.That(childResolved.SourceEntity, Is.EqualTo(child), "Child's source should be itself");
 
             Assert.That(world.Has<ResolvedVisibilityComponent>(grandchild), Is.True,
                 "Grandchild should have ResolvedVisibilityComponent (pass-through from grandparent)");
-            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+            var grandchildResolved = world.Get<ResolvedVisibilityComponent>(grandchild);
             Assert.That(grandchildResolved.IsVisible, Is.False, "Grandchild should inherit grandparent's visibility (false)");
             Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(parent), "Grandchild's source should be grandparent");
         }
@@ -145,7 +139,7 @@ namespace ECS.Unity.Visibility.Tests
             // for grandchildren, blocking the grandparent's propagation.
             //
             // EntityA (parent): visible=FALSE, propagateToChildren=TRUE
-            // EntityB (child): visible=TRUE, propagateToChildren=TRUE → B propagates its own visibility
+            // EntityB (child): visible=TRUE, propagateToChildren=TRUE → B propagates its own visibility state
             // EntityC (grandchild): should inherit from EntityB (visible=TRUE), NOT from EntityA
 
             // Arrange
@@ -172,15 +166,12 @@ namespace ECS.Unity.Visibility.Tests
 
             SetupParentChild(parent, child, parentTransform, childTransform);
             SetupParentChild(child, grandchild, childTransform, grandchildTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
-            world.Set(grandchild, grandchildTransform);
 
             // Act
             system!.Update(0f);
 
             // Assert - grandchild should inherit from child (visible=TRUE), not grandparent (visible=FALSE)
-            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+            var grandchildResolved = world.Get<ResolvedVisibilityComponent>(grandchild);
             Assert.That(grandchildResolved.IsVisible, Is.True, "Grandchild should inherit child's visibility (true)");
             Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(child), "Grandchild's source should be child (which propagates)");
         }
@@ -210,25 +201,23 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(parent, child, parentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
 
             // First update - both have their own visibility
             system!.Update(0f);
 
-            ref var childResolvedBefore = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedBefore = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedBefore.IsVisible, Is.True, "Child should be visible before removal");
 
             // Remove child's visibility component
             world.Remove<PBVisibilityComponent>(child);
             ref var removedComponents = ref world.Get<RemovedComponents>(child);
-            removedComponents.Set.Add(typeof(PBVisibilityComponent));
+            removedComponents.Remove<PBVisibilityComponent>();
 
             // Act
             system.Update(0f);
 
             // Assert
-            ref var childResolvedAfter = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedAfter = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedAfter.IsVisible, Is.False, "Child should inherit parent's visibility (false) after removal");
             Assert.That(childResolvedAfter.SourceEntity, Is.EqualTo(parent), "Source should be parent after removal");
         }
@@ -264,15 +253,12 @@ namespace ECS.Unity.Visibility.Tests
 
             SetupParentChild(parent, child, parentTransform, childTransform);
             SetupParentChild(child, grandchild, childTransform, grandchildTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
-            world.Set(grandchild, grandchildTransform);
 
             // Act
             system!.Update(0f);
 
             // Assert
-            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+            var grandchildResolved = world.Get<ResolvedVisibilityComponent>(grandchild);
             Assert.That(grandchildResolved.IsVisible, Is.True, "Grandchild should inherit child's visibility (true), not parent's (false)");
             Assert.That(grandchildResolved.SourceEntity, Is.EqualTo(child), "Source should be child, not parent");
         }
@@ -306,13 +292,11 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(oldParent, child, oldParentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
 
             // First update - child inherits old parent's visibility
             system!.Update(0f);
 
-            ref var childResolvedBefore = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedBefore = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedBefore.IsVisible, Is.False, "Child should inherit old parent's visibility");
 
             // Reparent child to new parent
@@ -320,10 +304,6 @@ namespace ECS.Unity.Visibility.Tests
             childTransform.Transform.SetParent(newParentTransform.Transform, true);
             childTransform.Parent = newParent;
             newParentTransform.Children.Add(child);
-
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(newParent, newParentTransform);
 
             // Mark transform as dirty to trigger reparenting detection
             ref var childSdkTransform = ref world.Get<SDKTransform>(child);
@@ -333,7 +313,7 @@ namespace ECS.Unity.Visibility.Tests
             system.Update(0f);
 
             // Assert
-            ref var childResolvedAfter = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedAfter = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedAfter.IsVisible, Is.True, "Child should reset to visible after reparenting to non-propagating hierarchy");
             Assert.That(childResolvedAfter.ShouldPropagate, Is.False, "ShouldPropagate should be false");
         }
@@ -363,8 +343,6 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(oldParent, child, oldParentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
 
             // First update - process new parent's visibility
             system!.Update(0f);
@@ -385,10 +363,6 @@ namespace ECS.Unity.Visibility.Tests
                 IsDirty = false
             });
 
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(newParent, newParentTransform);
-
             // Mark transform as dirty to trigger reparenting detection
             ref var childSdkTransform = ref world.Get<SDKTransform>(child);
             childSdkTransform.IsDirty = true;
@@ -397,7 +371,7 @@ namespace ECS.Unity.Visibility.Tests
             system.Update(0f);
 
             // Assert
-            ref var childResolvedAfter = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedAfter = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedAfter.IsVisible, Is.False, "Child should inherit new parent's visibility (false)");
             Assert.That(childResolvedAfter.SourceEntity, Is.EqualTo(newParent), "Source should be new parent");
             Assert.That(childResolvedAfter.ShouldPropagate, Is.True, "ShouldPropagate should be true");
@@ -432,8 +406,6 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(oldParent, child, oldParentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
 
             // First update - new parent gets its ResolvedVisibility, but child has none
             system!.Update(0f);
@@ -448,10 +420,6 @@ namespace ECS.Unity.Visibility.Tests
             childTransform.Parent = newParent;
             newParentTransform.Children.Add(child);
 
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(newParent, newParentTransform);
-
             // Mark transform as dirty to trigger reparenting detection
             ref var childSdkTransform = ref world.Get<SDKTransform>(child);
             childSdkTransform.IsDirty = true;
@@ -463,7 +431,7 @@ namespace ECS.Unity.Visibility.Tests
             Assert.That(world.Has<ResolvedVisibilityComponent>(child), Is.True,
                 "Child should have ResolvedVisibilityComponent after reparenting to propagating parent");
 
-            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolved = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolved.IsVisible, Is.False, "Child should inherit new parent's visibility (false)");
             Assert.That(childResolved.SourceEntity, Is.EqualTo(newParent), "Source should be new parent");
             Assert.That(childResolved.ShouldPropagate, Is.True, "ShouldPropagate should be true");
@@ -505,9 +473,6 @@ namespace ECS.Unity.Visibility.Tests
             // Set up hierarchy: oldParent -> child -> grandchild
             SetupParentChild(oldParent, child, oldParentTransform, childTransform);
             SetupParentChild(child, grandchild, childTransform, grandchildTransform);
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(grandchild, grandchildTransform);
 
             // First update - newParent gets its ResolvedVisibility
             system!.Update(0f);
@@ -522,10 +487,6 @@ namespace ECS.Unity.Visibility.Tests
             childTransform.Parent = newParent;
             newParentTransform.Children.Add(child);
 
-            world.Set(child, childTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(newParent, newParentTransform);
-
             // Mark child's transform as dirty to trigger reparenting detection
             ref var childSdkTransform = ref world.Get<SDKTransform>(child);
             childSdkTransform.IsDirty = true;
@@ -539,8 +500,8 @@ namespace ECS.Unity.Visibility.Tests
             Assert.That(world.Has<ResolvedVisibilityComponent>(grandchild), Is.True,
                 "Grandchild should also have ResolvedVisibilityComponent (propagated through reparenting)");
 
-            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
-            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
+            var childResolved = world.Get<ResolvedVisibilityComponent>(child);
+            var grandchildResolved = world.Get<ResolvedVisibilityComponent>(grandchild);
 
             Assert.That(childResolved.IsVisible, Is.False, "Child should inherit visibility (false)");
             Assert.That(grandchildResolved.IsVisible, Is.False, "Grandchild should inherit visibility (false)");
@@ -589,16 +550,12 @@ namespace ECS.Unity.Visibility.Tests
             // Set up hierarchy: grandparent -> parent (pass-through), oldParent -> reparented
             SetupParentChild(grandparent, parent, grandparentTransform, parentTransform);
             SetupParentChild(oldParent, reparented, oldParentTransform, reparentedTransform);
-            world.Set(grandparent, grandparentTransform);
-            world.Set(parent, parentTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(reparented, reparentedTransform);
 
             // First update - process visibility hierarchy
             system!.Update(0f);
 
-            // Verify parent is visible (has its own visibility)
-            ref var parentResolved = ref world.Get<ResolvedVisibilityComponent>(parent);
+            // Verify parent is visible (has its own visibility state)
+            var parentResolved = world.Get<ResolvedVisibilityComponent>(parent);
             Assert.That(parentResolved.IsVisible, Is.True, "Parent should be visible (own visibility)");
             Assert.That(parentResolved.ShouldPropagate, Is.False, "Parent should NOT propagate (propagate=false)");
 
@@ -612,10 +569,6 @@ namespace ECS.Unity.Visibility.Tests
             reparentedTransform.Parent = parent;
             parentTransform.Children.Add(reparented);
 
-            world.Set(reparented, reparentedTransform);
-            world.Set(oldParent, oldParentTransform);
-            world.Set(parent, parentTransform);
-
             // Mark transform as dirty to trigger reparenting detection
             ref var reparentedSdkTransform = ref world.Get<SDKTransform>(reparented);
             reparentedSdkTransform.IsDirty = true;
@@ -627,7 +580,7 @@ namespace ECS.Unity.Visibility.Tests
             Assert.That(world.Has<ResolvedVisibilityComponent>(reparented), Is.True,
                 "Reparented entity should have ResolvedVisibilityComponent");
 
-            ref var reparentedResolved = ref world.Get<ResolvedVisibilityComponent>(reparented);
+            var reparentedResolved = world.Get<ResolvedVisibilityComponent>(reparented);
             Assert.That(reparentedResolved.IsVisible, Is.False,
                 "Reparented entity should inherit grandparent's visibility (false), not parent's (true)");
             Assert.That(reparentedResolved.SourceEntity, Is.EqualTo(grandparent),
@@ -660,26 +613,24 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(parent, child, parentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
 
             // First update - child inherits parent's visibility
             system!.Update(0f);
 
-            ref var childResolvedBefore = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedBefore = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedBefore.IsVisible, Is.False, "Child should inherit parent's visibility (false)");
             Assert.That(childResolvedBefore.SourceEntity, Is.EqualTo(parent), "Source should be parent");
 
             // Remove parent's visibility component
             world.Remove<PBVisibilityComponent>(parent);
             ref var removedComponents = ref world.Get<RemovedComponents>(parent);
-            removedComponents.Set.Add(typeof(PBVisibilityComponent));
+            removedComponents.Remove<PBVisibilityComponent>();
 
             // Act
             system.Update(0f);
 
             // Assert
-            ref var childResolvedAfter = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolvedAfter = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolvedAfter.IsVisible, Is.True, "Child should reset to visible after parent loses visibility");
         }
 
@@ -706,15 +657,13 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(parent, child, parentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
 
             // Act
             system!.Update(0f);
 
             // Assert
             Assert.That(world.Has<ResolvedVisibilityComponent>(child), Is.True, "Child should have ResolvedVisibilityComponent");
-            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
+            var childResolved = world.Get<ResolvedVisibilityComponent>(child);
             Assert.That(childResolved.IsVisible, Is.False, "Child should inherit parent's visibility");
             Assert.That(childResolved.SourceEntity, Is.EqualTo(parent), "Source should be parent");
             Assert.That(childResolved.ShouldPropagate, Is.True, "ShouldPropagate should be true");
@@ -739,8 +688,6 @@ namespace ECS.Unity.Visibility.Tests
             );
 
             SetupParentChild(parent, child, parentTransform, childTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
 
             // Act
             system!.Update(0f);
@@ -782,18 +729,14 @@ namespace ECS.Unity.Visibility.Tests
             SetupParentChild(parent, child, parentTransform, childTransform);
             SetupParentChild(child, grandchild, childTransform, grandchildTransform);
             SetupParentChild(grandchild, greatGrandchild, grandchildTransform, greatGrandchildTransform);
-            world.Set(child, childTransform);
-            world.Set(parent, parentTransform);
-            world.Set(grandchild, grandchildTransform);
-            world.Set(greatGrandchild, greatGrandchildTransform);
 
             // Act
             system!.Update(0f);
 
             // Assert
-            ref var childResolved = ref world.Get<ResolvedVisibilityComponent>(child);
-            ref var grandchildResolved = ref world.Get<ResolvedVisibilityComponent>(grandchild);
-            ref var greatGrandchildResolved = ref world.Get<ResolvedVisibilityComponent>(greatGrandchild);
+            var childResolved = world.Get<ResolvedVisibilityComponent>(child);
+            var grandchildResolved = world.Get<ResolvedVisibilityComponent>(grandchild);
+            var greatGrandchildResolved = world.Get<ResolvedVisibilityComponent>(greatGrandchild);
 
             Assert.That(childResolved.IsVisible, Is.False);
             Assert.That(grandchildResolved.IsVisible, Is.False);

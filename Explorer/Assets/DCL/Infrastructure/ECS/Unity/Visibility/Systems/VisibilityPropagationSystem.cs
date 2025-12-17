@@ -209,10 +209,10 @@ namespace ECS.Unity.Visibility.Systems
         private void HandleOwnVisibilityRemoval(
             in Entity entity,
             ref ResolvedVisibilityComponent resolved,
-            ref RemovedComponents removedComponents,
+            in RemovedComponents removedComponents,
             in TransformComponent transformComponent)
         {
-            if (!removedComponents.Remove<PBVisibilityComponent>()) return;
+            if (!removedComponents.Set.Contains(typeof(PBVisibilityComponent))) return;
 
             // Entity lost its own visibility component - recompute from parent hierarchy
             resolved.LastKnownParent = transformComponent.Parent;
@@ -251,10 +251,10 @@ namespace ECS.Unity.Visibility.Systems
         [None(typeof(PBVisibilityComponent))]
         private void HandleAncestorVisibilityRemoval(
             in Entity entity,
-            ref RemovedComponents removedComponents,
+            in RemovedComponents removedComponents,
             in TransformComponent transformComponent)
         {
-            if (!removedComponents.Remove<PBVisibilityComponent>()) return;
+            if (!removedComponents.Set.Contains(typeof(PBVisibilityComponent))) return;
 
             // This entity just lost its PBVisibilityComponent
             // Reset all descendants that were sourced from this entity to visible
