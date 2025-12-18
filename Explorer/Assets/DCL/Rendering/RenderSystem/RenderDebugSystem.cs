@@ -37,6 +37,9 @@ namespace DCL.Rendering.RenderSystem
                          );
 
             // Apply initial state (off) to current asset
+            gpuOcclusionBinding.SetAndUpdate(false);
+            residentDrawerBinding.SetAndUpdate(false);
+
             lastUrpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             ApplyCurrentStateToAsset(lastUrpAsset);
         }
@@ -96,12 +99,8 @@ namespace DCL.Rendering.RenderSystem
             if (urpAsset == null)
                 return;
 
-            urpAsset.gpuResidentDrawerMode = residentDrawerBinding.Value
-                ? GPUResidentDrawerMode.InstancedDrawing
-                : GPUResidentDrawerMode.Disabled;
-
-            urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras =
-                residentDrawerBinding.Value && gpuOcclusionBinding.Value;
+            urpAsset.gpuResidentDrawerMode = GPUResidentDrawerMode.Disabled;
+            urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = false;
         }
     }
 }
