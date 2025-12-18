@@ -250,7 +250,7 @@ namespace DCL.Backpack
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: ct);
+                await avatarShapeComponent.WearablePromise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: ct);
 
             if (ct.IsCancellationRequested) return;
 
