@@ -109,7 +109,7 @@ namespace DCL.Profiles
         public string? Hobbies { get; set; }
         public DateTime? Birthdate { get; set; }
         public int Version { get; set; }
-        public Avatar Avatar { get; internal set; }
+        public Avatar Avatar { get; set; }
 
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established

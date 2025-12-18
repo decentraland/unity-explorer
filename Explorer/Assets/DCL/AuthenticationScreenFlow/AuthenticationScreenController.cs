@@ -34,6 +34,7 @@ using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -188,6 +189,10 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
             viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
             viewInstance.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
+            viewInstance.RandomizeButton.onClick.AddListener(RandomizeAvatar);
+
+            // viewInstance.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
+            // viewInstance.NextRandomButton.onClick.AddListener(NextRandomAvatar);
         }
 
 #region MainFlow
@@ -937,22 +942,13 @@ namespace DCL.AuthenticationScreenFlow
             return otpCompletionSource.Task;
         }
 
-        private static Profile BuildDefaultProfile(string walletAddress, string? email)
+        private static Profile BuildDefaultProfile(string walletAddress, string name = "")
         {
             // Randomize body shape between MALE and FEMALE
-            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
-
-            var avatar = new Profiles.Avatar(
-                bodyShape,
-                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
-                WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor());
+            Avatar avatar = CreateDefaultAvatar();
 
             // Extract name from email (everything before @) or use default
-            string profileName = ExtractNameFromEmail(email);
-
-            var profile = Profile.Create(walletAddress, profileName, avatar);
+            var profile = Profile.Create(walletAddress, name, avatar);
             profile.HasClaimedName = false;
             profile.HasConnectedWeb3 = true;
             profile.Description = string.Empty;
@@ -972,6 +968,27 @@ namespace DCL.AuthenticationScreenFlow
             profile.IsDirty = true;
 
             return profile;
+        }
+
+        private static Avatar CreateDefaultAvatar()
+        {
+            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+
+            var avatar = new Avatar(
+                bodyShape,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
+
+            return avatar;
+        }
+
+        private void RandomizeAvatar()
+        {
+            newUserProfile.Avatar = CreateDefaultAvatar();
+            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController?.OnShow();
         }
 
         private void FinalizeNewUser()
