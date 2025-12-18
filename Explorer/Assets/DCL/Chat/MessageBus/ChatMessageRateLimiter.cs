@@ -1,7 +1,8 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Chat.MessageBus.RateLimiting
+namespace DCL.Chat.MessageBus
 {
     public class ChatMessageRateLimiter
     {
@@ -33,9 +34,14 @@ namespace DCL.Chat.MessageBus.RateLimiting
             }
 
             if (data.Count >= messagesPerSecond)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Rate limit exceeded for sender {walletId}");
                 return false;
+            }
 
             data.Count++;
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Rate limit allowed for sender {walletId} with current second {currentSecond} and count {data.Count}");
+
             return true;
         }
 

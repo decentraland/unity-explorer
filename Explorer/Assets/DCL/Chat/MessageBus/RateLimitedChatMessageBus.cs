@@ -1,5 +1,6 @@
 using DCL.Chat.History;
-using DCL.Chat.MessageBus.RateLimiting;
+using DCL.Chat.MessageBus;
+using DCL.Diagnostics;
 using System;
 
 namespace DCL.Chat.MessageBus
@@ -26,6 +27,8 @@ namespace DCL.Chat.MessageBus
 
         private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage message)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"RateLimitedChatMessageBus received message from {message.SenderWalletId}, IsSystem: {message.IsSystemMessage}, IsOwnUser: {message.IsSentByOwnUser}");
+
             if (message.IsSystemMessage || message.IsSentByOwnUser)
             {
                 MessageAdded?.Invoke(channelId, channelType, message);
@@ -34,6 +37,7 @@ namespace DCL.Chat.MessageBus
 
             if (rateLimiter.TryAllow(message.SenderWalletId))
                 MessageAdded?.Invoke(channelId, channelType, message);
+
         }
 
         public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
