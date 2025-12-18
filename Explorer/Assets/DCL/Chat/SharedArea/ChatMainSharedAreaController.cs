@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ControllerShowParams;
@@ -12,6 +13,7 @@ namespace DCL.ChatArea
     {
         private readonly IMVCManager mvcManager;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private readonly IEventBus chatEventBus;
 
         //private readonly HashSet<IBlocksChat> chatBlockers = new ();
         private readonly EventSubscriptionScope eventScope = new ();
@@ -23,11 +25,13 @@ namespace DCL.ChatArea
         public ChatMainSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            CommandRegistry commandRegistry) : base(viewFactory)
+            CommandRegistry commandRegistry,
+            IEventBus chatEventBus) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.CommandRegistry = commandRegistry;
+            this.chatEventBus = chatEventBus;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -40,7 +44,7 @@ namespace DCL.ChatArea
             mvcManager.OnViewClosed += OnMvcViewClosed;
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
-
+            eventScope.Add(chatEventBus.Subscribe<ChatEvents.ToggleChatEvent>(ToggleState));
             // Subscribe to visibility state changes
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
             CentralizedChatClickDetectionService.Instance.Resume();
@@ -67,7 +71,7 @@ namespace DCL.ChatArea
             chatSharedAreaEventBus.RaiseFocusEvent();
         }
 
-        public void ToggleState()
+        public void ToggleState(ChatEvents.ToggleChatEvent _)
         {
             chatSharedAreaEventBus.RaiseToggleEvent();
         }

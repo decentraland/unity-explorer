@@ -207,7 +207,7 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
-            if (!IsRegistered(panel) || isTransitioning)
+            /*if (!IsRegistered(panel) || isTransitioning)
                 return;
 
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
@@ -223,14 +223,14 @@ namespace DCL.UI.SharedSpaceManager
                     if (ctr != null)
                     {
                         if (parameters is ChatMainSharedAreaControllerShowParams { ForceFocusFromShortcut: true }) { ctr.SetFocusState(); }
-                        else { ctr.ToggleState(); }
+                        //else { ctr.ToggleState(); }
                     }
 
                     return;
                 }
 
                 await HideAsync(panel);
-            }
+            }*/
         }
 
         private bool IsRegistered(PanelsSharingSpace panel) =>
