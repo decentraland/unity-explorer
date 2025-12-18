@@ -7,7 +7,6 @@ using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 {
@@ -77,10 +76,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public bool IsOutlineCompatible() =>
             Model.Asset!.metadata.data.outlineCompatible;
-        
+
         private bool IsCollectible() =>
             false;
-        
+
         public string GetMarketplaceLink() => "https://www.decentraland.com/fake_url";
     }
 }

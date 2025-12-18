@@ -252,7 +252,7 @@ namespace DCL.Backpack
             if (string.IsNullOrEmpty(savePath))
                 return;
 
-            VRMExportRequestBuilder.CreateExportRequest(
+            VrmExportRequestBuilder.CreateExportRequest(
                 world,
                 profile,
                 savePath,

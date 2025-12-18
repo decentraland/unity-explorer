@@ -213,17 +213,17 @@ namespace DCL.AvatarRendering.AvatarShape
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
             }
-            
+
             avatarShapeComponent.FacialFeatureMainTexturesForExport = new Dictionary<string, Texture>();
             avatarShapeComponent.FacialFeatureMaskTexturesForExport = new Dictionary<string, Texture>();
 
             foreach (var category in facialFeatureTextures.Value.Keys)
             {
                 var textureDict = facialFeatureTextures.Value[category];
-    
+
                 if (textureDict.TryGetValue(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE, out var mainTex) && mainTex != null)
                     avatarShapeComponent.FacialFeatureMainTexturesForExport[category] = mainTex;
-    
+
                 if (textureDict.TryGetValue(TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID, out var maskTex) && maskTex != null)
                     avatarShapeComponent.FacialFeatureMaskTexturesForExport[category] = maskTex;
             }
@@ -258,12 +258,12 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
 
         [Query]
-        [All(typeof(VRMExportIntention))]
-        [None(typeof(VRMExportDataComponent))]
+        [All(typeof(VrmExportIntention))]
+        [None(typeof(VrmExportDataComponent))]
         private void InstantiateExportAvatar(
             in Entity entity,
             ref AvatarShapeComponent avatarShapeComponent,
-            ref VRMExportIntention exportIntent)
+            ref VrmExportIntention exportIntent)
         {
             ref readonly var wearablePromise = ref avatarShapeComponent.WearablePromise;
 
@@ -291,7 +291,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void InstantiateExportAvatarInternal(
             Entity entity,
             ref AvatarShapeComponent avatarShapeComponent,
-            ref VRMExportIntention exportIntent,
+            ref VrmExportIntention exportIntent,
             StreamableLoadingResult<WearablesResolution> wearablesResult)
         {
             // Create temporary avatar base for export
@@ -318,7 +318,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 IWearable resultWearable = visibleWearables[i];
 
                 wearableInfos.Add(CreateWearableInfo(resultWearable));
-                
+
                 // Handle facial features, just populate textures, don't instantiate
                 if (resultWearable.Type == WearableType.FacialFeature)
                 {
@@ -372,7 +372,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             var instantiatedWearables = avatarShapeComponent.InstantiatedWearables;
 
-            var exportData = new VRMExportDataComponent()
+            var exportData = new VrmExportDataComponent()
             {
                 AvatarBase = exportAvatarBase,
                 InstantiatedWearables = instantiatedWearables,
@@ -385,7 +385,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 AuthorName = exportIntent.AuthorName,
                 SavePath = exportIntent.SavePath,
                 OnFinishedAction = exportIntent.OnFinishedAction,
-                
+
                 CleanupAction = () =>
                 {
                     // Release avatar back to pool
@@ -394,18 +394,18 @@ namespace DCL.AvatarRendering.AvatarShape
                         exportAvatarBase.gameObject.SetActive(false);
                         avatarPoolRegistry.Release(exportAvatarBase);
                     }
-                
+
                     // Dispose wearables
                     foreach (var attachment in instantiatedWearables)
                         if(attachment.Instance != null)
                             attachment.Dispose();
-                
+
                     instantiatedWearables.Clear();
                 }
             };
 
             // Replace intent with export data component
-            World.Remove<VRMExportIntention>(entity);
+            World.Remove<VrmExportIntention>(entity);
             World.Add(entity, exportData);
 
             // Dispose wearables result
@@ -414,7 +414,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             ReportHub.Log(GetReportCategory(), $"VRM Export: Avatar instantiated with {avatarShapeComponent.InstantiatedWearables.Count} wearables");
         }
-        
+
         private static WearableExportInfo CreateWearableInfo(IWearable wearable)
         {
             var dto = wearable.DTO;

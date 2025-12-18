@@ -11,7 +11,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -20,7 +19,6 @@ using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.AvatarRendering.Export;
 using UnityEngine;
 using Utility;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,

@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Export
 {
-    public class ExportSkeletonBoneRemapper
+    public sealed class ExportSkeletonBoneRemapper
     {
         private readonly ExportSkeletonMapping targetSkeleton;
-        private readonly Dictionary<string, Transform> cachedMappings = new();
+        private readonly Dictionary<string, Transform> cachedMappings = new ();
 
         public ExportSkeletonBoneRemapper(ExportSkeletonMapping targetSkeleton)
         {
@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.Export
             var targetBones = new Transform[sourceBones.Length];
             var defaultBone = targetSkeleton.GetByHumanBone(HumanBodyBones.Hips);
 
-            for (int i = 0; i < sourceBones.Length; i++)
+            for (var i = 0; i < sourceBones.Length; i++)
             {
                 string boneName = sourceBoneNames[i];
 

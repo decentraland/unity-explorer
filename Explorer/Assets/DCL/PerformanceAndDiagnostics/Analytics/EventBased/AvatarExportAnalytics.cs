@@ -5,27 +5,28 @@ using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
-	public class AvatarExportAnalytics : IDisposable
-	{
-		private readonly IAnalyticsController analytics;
-		private readonly EventSubscriptionScope scope;
+    public class AvatarExportAnalytics : IDisposable
+    {
+        private readonly IAnalyticsController analytics;
+        private readonly EventSubscriptionScope scope;
 
-		public AvatarExportAnalytics(IAnalyticsController analytics, IEventBus eventBus)
-		{
-			this.analytics = analytics;
-			scope = new EventSubscriptionScope();
+        public AvatarExportAnalytics(IAnalyticsController analytics, IEventBus eventBus)
+        {
+            this.analytics = analytics;
+            scope = new EventSubscriptionScope();
 
-			scope.Add(eventBus.Subscribe<AvatarExportEvents>(OnHomeChanged));
-		}
+            scope.Add(eventBus.Subscribe<AvatarExportEvents>(OnHomeChanged));
+        }
 
-		public void Dispose() => scope.Dispose();
+        public void Dispose() =>
+            scope.Dispose();
 
-		private void OnHomeChanged(AvatarExportEvents avatarExportEvents)
-		{
-			analytics.Track(AnalyticsEvents.Wearables.AVATAR_EXPORTED_TO_VRM, new JObject
-			{
-				{ "succeed", avatarExportEvents.Succeeded },
-			});
-		}
-	}
+        private void OnHomeChanged(AvatarExportEvents avatarExportEvents)
+        {
+            analytics.Track(AnalyticsEvents.Wearables.AVATAR_EXPORTED_TO_VRM, new JObject
+            {
+                { "succeed", avatarExportEvents.Succeeded },
+            });
+        }
+    }
 }

@@ -4,11 +4,11 @@ using Utility;
 
 namespace DCL.PluginSystem.Global
 {
-    public class VRMExportPlugin : IDCLGlobalPlugin
+    public class VrmExportPlugin : IDCLGlobalPlugin
     {
         private readonly IEventBus eventBus;
 
-        public VRMExportPlugin(IEventBus eventBus)
+        public VrmExportPlugin(IEventBus eventBus)
         {
             this.eventBus = eventBus;
         }

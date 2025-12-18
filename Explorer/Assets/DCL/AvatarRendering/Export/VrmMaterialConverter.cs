@@ -8,31 +8,31 @@ using Utility;
 
 namespace DCL.AvatarRendering.Export
 {
-    public class VRMMaterialConverter : IDisposable
+    public sealed class VrmMaterialConverter : IDisposable
     {
-        private enum BlendModeType { Opaque, Cutout, Transparent }
-        
+        private enum BlendModeType { OPAQUE, CUTOUT, TRANSPARENT }
+
         // DCL/Scene shader properties
-        private static readonly int _BaseMap = Shader.PropertyToID("_BaseMap");
-        private static readonly int _BaseColor = Shader.PropertyToID("_BaseColor");
-        private static readonly int _EmissionColor = Shader.PropertyToID("_EmissionColor");
-        private static readonly int _EmissionMap = Shader.PropertyToID("_EmissionMap");
-        private static readonly int _Cull = Shader.PropertyToID("_Cull");
-        private static readonly int _AlphaClip = Shader.PropertyToID("_AlphaClip");
-        private static readonly int _Surface = Shader.PropertyToID("_Surface");
-        private static readonly int _Cutoff = Shader.PropertyToID("_Cutoff");
+        private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
+        private static readonly int BASE_COLOR = Shader.PropertyToID("_BaseColor");
+        private static readonly int EMISSION_COLOR = Shader.PropertyToID("_EmissionColor");
+        private static readonly int EMISSION_MAP = Shader.PropertyToID("_EmissionMap");
+        private static readonly int CULL = Shader.PropertyToID("_Cull");
+        private static readonly int ALPHA_CLIP = Shader.PropertyToID("_AlphaClip");
+        private static readonly int SURFACE = Shader.PropertyToID("_Surface");
+        private static readonly int CUTOFF = Shader.PropertyToID("_Cutoff");
 
         // MToon shader properties
-        private static readonly int _Color = Shader.PropertyToID("_Color");
-        private static readonly int _MainTex = Shader.PropertyToID("_MainTex");
-        private static readonly int _ShadeTexture = Shader.PropertyToID("_ShadeTexture");
-        private static readonly int _ShadeColor = Shader.PropertyToID("_ShadeColor");
-        private static readonly int _CullMode = Shader.PropertyToID("_CullMode");
-        private static readonly int _BlendMode = Shader.PropertyToID("_BlendMode");
-        private static readonly int _SrcBlend = Shader.PropertyToID("_SrcBlend");
-        private static readonly int _DstBlend = Shader.PropertyToID("_DstBlend");
-        private static readonly int _ZWrite = Shader.PropertyToID("_ZWrite");
-        private static readonly int _AlphaToMask = Shader.PropertyToID("_AlphaToMask");
+        private static readonly int COLOR = Shader.PropertyToID("_Color");
+        private static readonly int MAIN_TEX = Shader.PropertyToID("_MainTex");
+        private static readonly int SHADE_TEXTURE = Shader.PropertyToID("_ShadeTexture");
+        private static readonly int SHADE_COLOR = Shader.PropertyToID("_ShadeColor");
+        private static readonly int CULL_MODE = Shader.PropertyToID("_CullMode");
+        private static readonly int BLEND_MODE = Shader.PropertyToID("_BlendMode");
+        private static readonly int SRC_BLEND = Shader.PropertyToID("_SrcBlend");
+        private static readonly int DST_BLEND = Shader.PropertyToID("_DstBlend");
+        private static readonly int Z_WRITE = Shader.PropertyToID("_ZWrite");
+        private static readonly int ALPHA_TO_MASK = Shader.PropertyToID("_AlphaToMask");
 
         private const string ALPHATEST_ON = "_ALPHATEST_ON";
         private const string ALPHABLEND_ON = "_ALPHABLEND_ON";
@@ -48,18 +48,17 @@ namespace DCL.AvatarRendering.Export
         private const string HAIR_MATERIAL_NAME = "hair";
 
         private readonly Shader mtoonShader;
-        private readonly List<Material> createdMaterials = new();
-        private readonly List<Texture2D> createdTextures = new();
+        private readonly List<Material> createdMaterials = new ();
+        private readonly List<Texture2D> createdTextures = new ();
 
         private readonly Color skinColor;
         private readonly Color hairColor;
         private readonly Color eyesColor;
-        
+
         private readonly Dictionary<string, Texture> facialFeatureMainTextures;
         private readonly Dictionary<string, Texture> facialFeatureMaskTextures;
-        
 
-        public VRMMaterialConverter(
+        public VrmMaterialConverter(
             Color skinColor,
             Color hairColor,
             Color eyesColor,
@@ -82,7 +81,7 @@ namespace DCL.AvatarRendering.Export
         {
             var result = new Material[sourceMaterials.Length];
 
-            for (int i = 0; i < sourceMaterials.Length; i++)
+            for (var i = 0; i < sourceMaterials.Length; i++)
             {
                 if (meshName.EndsWith(EYES_SUFFIX))
                     result[i] = ConvertFacialFeatureMaterial(WearableCategories.Categories.EYES, eyesColor);
@@ -106,14 +105,16 @@ namespace DCL.AvatarRendering.Export
         /// </summary>
         private Material ConvertFacialFeatureMaterial(string category, Color tintColor)
         {
-            var mtoon = new Material(mtoonShader);
-            mtoon.name = category + "_MToon";
+            var mtoon = new Material(mtoonShader)
+            {
+                name = category + "_MToon",
+            };
 
             facialFeatureMainTextures.TryGetValue(category, out var mainTex);
             facialFeatureMaskTextures.TryGetValue(category, out var maskTex);
 
             Texture resultTexture;
-            
+
             if (mainTex != null && maskTex != null)
             {
                 // Bake the shader logic into the texture
@@ -124,24 +125,21 @@ namespace DCL.AvatarRendering.Export
                 // No mask - just tint the whole texture
                 resultTexture = BakeSimpleTintedTexture(mainTex, tintColor);
             }
-            else
-            {
-                resultTexture = null;
-            }
+            else { resultTexture = null; }
 
-            mtoon.SetTexture(_MainTex, resultTexture);
-            mtoon.SetTexture(_ShadeTexture, resultTexture);
+            mtoon.SetTexture(MAIN_TEX, resultTexture);
+            mtoon.SetTexture(SHADE_TEXTURE, resultTexture);
 
             // Color is baked into texture, so use white
-            mtoon.SetColor(_Color, Color.white);
-            mtoon.SetColor(_ShadeColor, Color.white);
+            mtoon.SetColor(COLOR, Color.white);
+            mtoon.SetColor(SHADE_COLOR, Color.white);
 
             // Cutout blending for alpha
-            SetMToonBlendMode(mtoon, BlendModeType.Cutout);
-            mtoon.SetFloat(_Cutoff, 0.5f);
+            SetMToonBlendMode(mtoon, BlendModeType.CUTOUT);
+            mtoon.SetFloat(CUTOFF, 0.5f);
 
             // Double-sided rendering
-            mtoon.SetFloat(_CullMode, 0);
+            mtoon.SetFloat(CULL_MODE, 0);
 
             return mtoon;
         }
@@ -166,7 +164,7 @@ namespace DCL.AvatarRendering.Export
             var maskPixels = maskReadable.GetPixels();
             var resultPixels = new Color[mainPixels.Length];
 
-            for (int i = 0; i < mainPixels.Length; i++)
+            for (var i = 0; i < mainPixels.Length; i++)
             {
                 Color main = mainPixels[i];
                 Color mask = maskPixels[i];
@@ -176,7 +174,7 @@ namespace DCL.AvatarRendering.Export
                     1f - mask.r,
                     1f - mask.g,
                     1f - mask.b,
-                    1f - mask.r  // Alpha uses red channel
+                    1f - mask.r // Alpha uses red channel
                 );
 
                 // Apply shader formula: main * lerp(white, invertedMask.rgb * tintColor, invertedMask.a)
@@ -204,7 +202,7 @@ namespace DCL.AvatarRendering.Export
             UnityObjectUtils.SafeDestroy(maskReadable);
 
             createdTextures.Add(bakedTex);
-            
+
             return bakedTex;
         }
 
@@ -222,9 +220,10 @@ namespace DCL.AvatarRendering.Export
             var mainPixels = mainReadable.GetPixels();
             var resultPixels = new Color[mainPixels.Length];
 
-            for (int i = 0; i < mainPixels.Length; i++)
+            for (var i = 0; i < mainPixels.Length; i++)
             {
                 Color main = mainPixels[i];
+
                 resultPixels[i] = new Color(
                     main.r * tintColor.r,
                     main.g * tintColor.g,
@@ -239,7 +238,7 @@ namespace DCL.AvatarRendering.Export
             UnityObjectUtils.SafeDestroy(mainReadable);
 
             createdTextures.Add(bakedTex);
-            
+
             return bakedTex;
         }
 
@@ -272,46 +271,50 @@ namespace DCL.AvatarRendering.Export
             if (source == null)
                 return CreateDefaultMToon();
 
-            var mtoon = new Material(mtoonShader);
-            mtoon.name = source.name + "_MToon";
+            var mtoon = new Material(mtoonShader)
+            {
+                name = source.name + "_MToon",
+            };
 
             Texture mainTex = GetMainTexture(source);
             Color baseColor = GetBaseColor(source);
 
             baseColor = ApplyAvatarColor(source.name, baseColor);
 
-            mtoon.SetTexture(_MainTex, mainTex);
-            mtoon.SetTexture(_ShadeTexture, mainTex);
+            mtoon.SetTexture(MAIN_TEX, mainTex);
+            mtoon.SetTexture(SHADE_TEXTURE, mainTex);
 
-            mtoon.SetColor(_Color, baseColor);
-            mtoon.SetColor(_ShadeColor, baseColor * 0.85f);
+            mtoon.SetColor(COLOR, baseColor);
+            mtoon.SetColor(SHADE_COLOR, baseColor * 0.85f);
 
             // Handle emission
-            if (source.HasProperty(_EmissionColor))
+            if (source.HasProperty(EMISSION_COLOR))
             {
-                Color emissionColor = source.GetColor(_EmissionColor);
+                Color emissionColor = source.GetColor(EMISSION_COLOR);
+
                 if (emissionColor.maxColorComponent > 0.01f)
                 {
-                    mtoon.SetColor(_EmissionColor, emissionColor);
+                    mtoon.SetColor(EMISSION_COLOR, emissionColor);
                     mtoon.EnableKeyword("_EMISSION");
 
-                    if (source.HasProperty(_EmissionMap))
+                    if (source.HasProperty(EMISSION_MAP))
                     {
-                        var emissionTex = source.GetTexture(_EmissionMap);
+                        var emissionTex = source.GetTexture(EMISSION_MAP);
+
                         if (emissionTex != null)
-                            mtoon.SetTexture(_EmissionMap, emissionTex);
+                            mtoon.SetTexture(EMISSION_MAP, emissionTex);
                     }
                 }
             }
 
-            float cullMode = source.HasProperty(_Cull) ? source.GetFloat(_Cull) : 2f;
-            mtoon.SetFloat(_CullMode, cullMode);
+            float cullMode = source.HasProperty(CULL) ? source.GetFloat(CULL) : 2f;
+            mtoon.SetFloat(CULL_MODE, cullMode);
 
             BlendModeType blendMode = DetermineBlendMode(source);
             SetMToonBlendMode(mtoon, blendMode);
 
-            if (source.HasProperty(_Cutoff))
-                mtoon.SetFloat(_Cutoff, source.GetFloat(_Cutoff));
+            if (source.HasProperty(CUTOFF))
+                mtoon.SetFloat(CUTOFF, source.GetFloat(CUTOFF));
 
             return mtoon;
         }
@@ -334,22 +337,25 @@ namespace DCL.AvatarRendering.Export
 
         private Material CreateDefaultMToon()
         {
-            var mtoon = new Material(mtoonShader);
-            mtoon.name = "Default_MToon";
-            mtoon.SetColor(_Color, Color.white);
-            mtoon.SetColor(_ShadeColor, Color.gray);
-            SetMToonBlendMode(mtoon, BlendModeType.Opaque);
-            
+            var mtoon = new Material(mtoonShader)
+            {
+                name = "Default_MToon",
+            };
+
+            mtoon.SetColor(COLOR, Color.white);
+            mtoon.SetColor(SHADE_COLOR, Color.gray);
+            SetMToonBlendMode(mtoon, BlendModeType.OPAQUE);
+
             return mtoon;
         }
 
         private Texture GetMainTexture(Material source)
         {
-            if (source.HasProperty(_BaseMap))
+            if (source.HasProperty(BASE_MAP))
             {
-                var tex = source.GetTexture(_BaseMap);
-                
-                if (tex != null) 
+                var tex = source.GetTexture(BASE_MAP);
+
+                if (tex != null)
                     return tex;
             }
 
@@ -358,11 +364,11 @@ namespace DCL.AvatarRendering.Export
 
         private Color GetBaseColor(Material source)
         {
-            if (source.HasProperty(_BaseColor))
-                return source.GetColor(_BaseColor);
+            if (source.HasProperty(BASE_COLOR))
+                return source.GetColor(BASE_COLOR);
 
-            if (source.HasProperty(_Color))
-                return source.GetColor(_Color);
+            if (source.HasProperty(COLOR))
+                return source.GetColor(COLOR);
 
             return Color.white;
         }
@@ -370,63 +376,63 @@ namespace DCL.AvatarRendering.Export
         private BlendModeType DetermineBlendMode(Material source)
         {
             if (source.IsKeywordEnabled("_ALPHATEST_ON"))
-                return BlendModeType.Cutout;
+                return BlendModeType.CUTOUT;
 
-            if (source.HasProperty(_AlphaClip) && source.GetFloat(_AlphaClip) > 0)
-                return BlendModeType.Cutout;
+            if (source.HasProperty(ALPHA_CLIP) && source.GetFloat(ALPHA_CLIP) > 0)
+                return BlendModeType.CUTOUT;
 
-            if (source.HasProperty(_Surface) && source.GetFloat(_Surface) > 0)
-                return BlendModeType.Transparent;
+            if (source.HasProperty(SURFACE) && source.GetFloat(SURFACE) > 0)
+                return BlendModeType.TRANSPARENT;
 
             if (source.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"))
-                return BlendModeType.Transparent;
+                return BlendModeType.TRANSPARENT;
 
             if (source.renderQueue >= (int)RenderQueue.Transparent)
-                return BlendModeType.Transparent;
+                return BlendModeType.TRANSPARENT;
 
             if (source.renderQueue >= (int)RenderQueue.AlphaTest)
-                return BlendModeType.Cutout;
+                return BlendModeType.CUTOUT;
 
-            return BlendModeType.Opaque;
+            return BlendModeType.OPAQUE;
         }
 
         private void SetMToonBlendMode(Material material, BlendModeType mode)
         {
             switch (mode)
             {
-                case BlendModeType.Opaque:
-                    material.SetFloat(_BlendMode, 0);
+                case BlendModeType.OPAQUE:
+                    material.SetFloat(BLEND_MODE, 0);
                     material.SetOverrideTag("RenderType", "Opaque");
-                    material.SetInt(_SrcBlend, (int)BlendMode.One);
-                    material.SetInt(_DstBlend, (int)BlendMode.Zero);
-                    material.SetInt(_ZWrite, 1);
-                    material.SetInt(_AlphaToMask, 0);
+                    material.SetInt(SRC_BLEND, (int)BlendMode.One);
+                    material.SetInt(DST_BLEND, (int)BlendMode.Zero);
+                    material.SetInt(Z_WRITE, 1);
+                    material.SetInt(ALPHA_TO_MASK, 0);
                     material.DisableKeyword(ALPHATEST_ON);
                     material.DisableKeyword(ALPHABLEND_ON);
                     material.DisableKeyword(ALPHAPREMULTIPLY_ON);
                     material.renderQueue = (int)RenderQueue.Geometry;
                     break;
 
-                case BlendModeType.Cutout:
-                    material.SetFloat(_BlendMode, 1);
+                case BlendModeType.CUTOUT:
+                    material.SetFloat(BLEND_MODE, 1);
                     material.SetOverrideTag("RenderType", "TransparentCutout");
-                    material.SetInt(_SrcBlend, (int)BlendMode.One);
-                    material.SetInt(_DstBlend, (int)BlendMode.Zero);
-                    material.SetInt(_ZWrite, 1);
-                    material.SetInt(_AlphaToMask, 1);
+                    material.SetInt(SRC_BLEND, (int)BlendMode.One);
+                    material.SetInt(DST_BLEND, (int)BlendMode.Zero);
+                    material.SetInt(Z_WRITE, 1);
+                    material.SetInt(ALPHA_TO_MASK, 1);
                     material.EnableKeyword(ALPHATEST_ON);
                     material.DisableKeyword(ALPHABLEND_ON);
                     material.DisableKeyword(ALPHAPREMULTIPLY_ON);
                     material.renderQueue = (int)RenderQueue.AlphaTest;
                     break;
 
-                case BlendModeType.Transparent:
-                    material.SetFloat(_BlendMode, 2);
+                case BlendModeType.TRANSPARENT:
+                    material.SetFloat(BLEND_MODE, 2);
                     material.SetOverrideTag("RenderType", "Transparent");
-                    material.SetInt(_SrcBlend, (int)BlendMode.SrcAlpha);
-                    material.SetInt(_DstBlend, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(_ZWrite, 0);
-                    material.SetInt(_AlphaToMask, 0);
+                    material.SetInt(SRC_BLEND, (int)BlendMode.SrcAlpha);
+                    material.SetInt(DST_BLEND, (int)BlendMode.OneMinusSrcAlpha);
+                    material.SetInt(Z_WRITE, 0);
+                    material.SetInt(ALPHA_TO_MASK, 0);
                     material.DisableKeyword(ALPHATEST_ON);
                     material.EnableKeyword(ALPHABLEND_ON);
                     material.DisableKeyword(ALPHAPREMULTIPLY_ON);
@@ -439,10 +445,10 @@ namespace DCL.AvatarRendering.Export
         {
             foreach (var mat in createdMaterials)
                 UnityObjectUtils.SafeDestroy(mat);
-            
+
             foreach (var tex in createdTextures)
                 UnityObjectUtils.SafeDestroy(tex);
-            
+
             createdMaterials.Clear();
             createdTextures.Clear();
         }

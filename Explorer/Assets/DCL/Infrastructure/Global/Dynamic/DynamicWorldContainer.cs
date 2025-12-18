@@ -60,7 +60,6 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
-using DCL.Nametags;
 using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
@@ -114,9 +113,7 @@ using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
-using DCL.PerformanceAndDiagnostics;
 using DCL.SocialEmotes;
-using DCL.SocialEmotes.UI;
 using DCL.Translation;
 using DCL.UI.EphemeralNotifications;
 using UnityEngine;
@@ -975,7 +972,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider),
-                new VRMExportPlugin(eventBus),
+                new VrmExportPlugin(eventBus),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

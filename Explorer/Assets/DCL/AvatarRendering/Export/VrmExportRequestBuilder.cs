@@ -12,8 +12,8 @@ using ECS.StreamableLoading.Common;
 namespace DCL.AvatarRendering.Export
 {
     using WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>;
-    
-    public static class VRMExportRequestBuilder
+
+    public static class VrmExportRequestBuilder
     {
         /// <summary>
         /// Creates a new entity dedicated to VRM export with its own wearable promise.
@@ -22,14 +22,14 @@ namespace DCL.AvatarRendering.Export
         {
             var avatar = profile.Avatar;
             BodyShape bodyShape = avatar.BodyShape;
-            
+
             var intention = WearableComponentsUtils.CreateGetWearablesByPointersIntention(
-                bodyShape, 
-                avatar.Wearables, 
+                bodyShape,
+                avatar.Wearables,
                 avatar.ForceRender);
-            
+
             var promise = WearablePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-            
+
             var avatarShape = new AvatarShapeComponent(
                 name: "VRM_Export",
                 id: "VRM_Export",
@@ -38,14 +38,14 @@ namespace DCL.AvatarRendering.Export
                 skinColor: avatar.SkinColor,
                 hairColor: avatar.HairColor,
                 eyesColor: avatar.EyesColor);
-            
-            var exportIntent = new VRMExportIntention()
+
+            var exportIntent = new VrmExportIntention()
             {
                 AuthorName = profile.Name,
                 SavePath = savePath,
                 OnFinishedAction = onSuccessAction
             };
-            
+
             world.Create(avatarShape, exportIntent, PartitionComponent.TOP_PRIORITY);
         }
     }

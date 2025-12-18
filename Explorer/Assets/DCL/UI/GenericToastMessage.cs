@@ -11,12 +11,12 @@ namespace DCL.UI
         SUCCESS,
         FAILURE
     }
-    
+
     public class GenericToastMessage : MonoBehaviour
     {
-        [SerializeField] private WarningNotificationView toastView;
-        [SerializeField] private GameObject successToastIcon;
-        [SerializeField] private GameObject failureToastIcon;
+        [SerializeField] private WarningNotificationView toastView = null!;
+        [SerializeField] private GameObject successToastIcon = null!;
+        [SerializeField] private GameObject failureToastIcon = null!;
         [SerializeField] private float toastDuration = 3f;
         [SerializeField] private string successToastDefaultMessage = "Success!";
         [SerializeField] private string failureToastDefaultMessage = "Failure!";
@@ -26,10 +26,10 @@ namespace DCL.UI
         public void ShowToastMessage(ToastMessageType type, string? message)
         {
             HideToast();
-            
-            if(string.IsNullOrEmpty(message))
+
+            if (string.IsNullOrEmpty(message))
                 message = type == ToastMessageType.SUCCESS ? successToastDefaultMessage : failureToastDefaultMessage;
-            
+
             successToastIcon.SetActive(type == ToastMessageType.SUCCESS);
             failureToastIcon.SetActive(type == ToastMessageType.FAILURE);
 
@@ -40,7 +40,7 @@ namespace DCL.UI
         {
             toastView.SetText(message);
             toastView.Show(ct);
-            await UniTask.Delay((int) toastDuration * 1000, cancellationToken: ct);
+            await UniTask.Delay((int)toastDuration * 1000, cancellationToken: ct);
             toastView.Hide(false, ct);
         }
 

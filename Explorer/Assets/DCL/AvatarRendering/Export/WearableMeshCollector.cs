@@ -8,9 +8,9 @@ using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Export
 {
-    public class WearableMeshCollector : IDisposable
+    public sealed class WearableMeshCollector : IDisposable
     {
-        private readonly List<GameObject> instantiatedObjects = new();
+        private readonly List<GameObject> instantiatedObjects = new ();
 
         /// <summary>
         /// Collects mesh data from wearables by checking which meshes are enabled in the scene instance,
@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.Export
                     continue;
 
                 var enabledPaths = GetEnabledMeshHierarchyPaths(wearable.Instance);
-                
+
                 if (enabledPaths.Count == 0)
                 {
                     ReportHub.Log(ReportCategory.AVATAR_EXPORT, $"No enabled meshes found in wearable instance: {wearable.Instance.name}");
@@ -49,12 +49,13 @@ namespace DCL.AvatarRendering.Export
         /// Gets hierarchy paths (using sibling indices) of all enabled mesh renderers in the scene instance.
         /// Path format: "0/2/1" where each number is the sibling index at that level.
         /// </summary>
-        private List<string> GetEnabledMeshHierarchyPaths(GameObject instance)
+        private static List<string> GetEnabledMeshHierarchyPaths(GameObject instance)
         {
             var enabledPaths = new List<string>();
             Transform root = instance.transform;
 
             var skinnedRenderers = instance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
             foreach (var smr in skinnedRenderers)
             {
                 if (smr.enabled && smr.gameObject.activeInHierarchy && smr.sharedMesh != null)
@@ -65,16 +66,17 @@ namespace DCL.AvatarRendering.Export
             }
 
             var meshRenderers = instance.GetComponentsInChildren<MeshRenderer>(true);
+
             foreach (var renderer in meshRenderers)
             {
-                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) 
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy)
                     continue;
-                
+
                 var filter = renderer.GetComponent<MeshFilter>();
-                
-                if (filter == null || filter.sharedMesh == null) 
+
+                if (filter == null || filter.sharedMesh == null)
                     continue;
-                
+
                 string path = GetHierarchyPath(renderer.transform, root);
                 enabledPaths.Add(path);
             }
@@ -86,7 +88,7 @@ namespace DCL.AvatarRendering.Export
         /// Gets the hierarchy path from root to target using sibling indices.
         /// Returns path like "0/2/1" where each number is the sibling index at that level.
         /// </summary>
-        private string GetHierarchyPath(Transform target, Transform root)
+        private static string GetHierarchyPath(Transform target, Transform root)
         {
             var indices = new List<int>();
             var current = target;
@@ -104,15 +106,15 @@ namespace DCL.AvatarRendering.Export
         /// <summary>
         /// Finds a transform in the hierarchy using a path of sibling indices.
         /// </summary>
-        private Transform FindTransformAtPath(Transform root, string path)
+        private static Transform FindTransformAtPath(Transform root, string path)
         {
             if (string.IsNullOrEmpty(path))
                 return root;
 
-            var splitPaths = path.Split('/');
+            string[] splitPaths = path.Split('/');
             var current = root;
 
-            foreach (var part in splitPaths)
+            foreach (string part in splitPaths)
             {
                 if (!int.TryParse(part, out int index))
                 {
@@ -139,60 +141,62 @@ namespace DCL.AvatarRendering.Export
         {
             Transform root = originalInstance.transform;
 
-            foreach (var path in paths)
+            foreach (string path in paths)
             {
                 Transform target = FindTransformAtPath(root, path);
-                
+
                 if (target == null)
                 {
-                    ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT,$"Could not find transform at path: {path} in original");
+                    ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT, $"Could not find transform at path: {path} in original");
                     continue;
                 }
-                
+
                 var skinnedMeshRenderer = target.GetComponent<SkinnedMeshRenderer>();
+
                 if (skinnedMeshRenderer != null && skinnedMeshRenderer.sharedMesh != null)
                 {
                     var meshData = CollectSkinnedMeshData(skinnedMeshRenderer);
+
                     if (meshData != null)
                         collectedMeshes.Add(meshData);
-                    
+
                     continue;
                 }
 
                 var meshRenderer = target.GetComponent<MeshRenderer>();
                 var mf = target.GetComponent<MeshFilter>();
+
                 if (meshRenderer != null && mf != null && mf.sharedMesh != null)
                 {
                     var meshData = CollectStaticMeshData(meshRenderer, mf);
+
                     if (meshData != null)
                         collectedMeshes.Add(meshData);
-                    
+
                     continue;
                 }
 
-                ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT,$"No valid renderer found at path: {path} ({target.name})");
+                ReportHub.LogWarning(ReportCategory.AVATAR_EXPORT, $"No valid renderer found at path: {path} ({target.name})");
             }
         }
 
-        private CollectedMeshData CollectSkinnedMeshData(SkinnedMeshRenderer skinnedMeshRenderer)
+        private static CollectedMeshData CollectSkinnedMeshData(SkinnedMeshRenderer skinnedMeshRenderer)
         {
             var mesh = skinnedMeshRenderer.sharedMesh;
             var bones = skinnedMeshRenderer.bones;
 
             var boneNames = new string[bones.Length];
-            for (int i = 0; i < bones.Length; i++)
-            {
-                boneNames[i] = bones[i] != null ? bones[i].name : null;
-            }
+
+            for (var i = 0; i < bones.Length; i++) { boneNames[i] = bones[i] != null ? bones[i].name : null; }
 
             float[] blendShapeWeights = null;
+
             if (mesh.blendShapeCount > 0)
             {
                 blendShapeWeights = new float[mesh.blendShapeCount];
-                for (int i = 0; i < mesh.blendShapeCount; i++)
-                {
+
+                for (var i = 0; i < mesh.blendShapeCount; i++)
                     blendShapeWeights[i] = skinnedMeshRenderer.GetBlendShapeWeight(i);
-                }
             }
 
             return new CollectedMeshData
@@ -208,7 +212,7 @@ namespace DCL.AvatarRendering.Export
             };
         }
 
-        private CollectedMeshData CollectStaticMeshData(MeshRenderer meshRenderer, MeshFilter meshFilter)
+        private static CollectedMeshData CollectStaticMeshData(MeshRenderer meshRenderer, MeshFilter meshFilter)
         {
             string parentPath = BuildParentPath(meshRenderer.transform);
 
@@ -222,7 +226,7 @@ namespace DCL.AvatarRendering.Export
             };
         }
 
-        private string BuildParentPath(Transform t)
+        private static string BuildParentPath(Transform t)
         {
             var parts = new List<string>();
             var current = t.parent;
@@ -236,7 +240,7 @@ namespace DCL.AvatarRendering.Export
             parts.Reverse();
             return string.Join("/", parts);
         }
-        
+
         public void Dispose()
         {
             foreach (var obj in instantiatedObjects)
@@ -244,6 +248,7 @@ namespace DCL.AvatarRendering.Export
                 if (obj != null)
                     UnityObjectUtils.SafeDestroy(obj);
             }
+
             instantiatedObjects.Clear();
         }
     }

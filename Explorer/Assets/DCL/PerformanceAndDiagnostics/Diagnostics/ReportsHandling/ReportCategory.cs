@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace DCL.Diagnostics
+﻿namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Contains names of report categories, IDs must be constant so they can be specified in the attribute
