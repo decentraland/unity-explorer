@@ -15,6 +15,7 @@ namespace DCL.Ipfs
 {
     public class IpfsRealm : IIpfsRealm, IEquatable<IpfsRealm>
     {
+        private static readonly URLSubdirectory ENTITIES_ACTIVE_DIR = URLSubdirectory.FromString("entities/active");
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly List<string> sceneUrns;
@@ -32,8 +33,6 @@ namespace DCL.Ipfs
         public URLDomain AssetBundleRegistryEntitiesActive { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;
-
-        private static readonly URLSubdirectory ENTITIES_ACTIVE_DIR = URLSubdirectory.FromString("entities/active");
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
@@ -87,13 +86,23 @@ namespace DCL.Ipfs
         public override int GetHashCode() =>
             ContentBaseUrl.GetHashCode();
 
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
-            WWWForm form = NewForm(entity, serializerSettings, contentFiles);
-            return SendFormAsync(form, ct);
+            (WWWForm form, string entityJson) data = default;
+
+            try
+            {
+                data = NewForm(entity, serializerSettings, contentFiles);
+                await SendFormAsync(data.form, ct);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"Entity {typeof(T).Name} publishing failed:\n{entitiesBaseUrl}\n{e.Message}\n{data.entityJson}");
+                throw;
+            }
         }
 
-        private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, JsonSerializerSettings? serializerSettings, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        private (WWWForm form, string entityJson) NewForm<T>(EntityDefinitionGeneric<T> entity, JsonSerializerSettings? serializerSettings, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             string entityJson = JsonConvert.SerializeObject(entity, Formatting.None, serializerSettings);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
@@ -104,7 +113,7 @@ namespace DCL.Ipfs
 
             form.AddField("entityId", entityId);
 
-            var i = 0;
+            int i = 0;
 
             foreach (AuthLink link in authChain)
             {
@@ -125,20 +134,22 @@ namespace DCL.Ipfs
             foreach ((string hash, byte[] data) in files)
                 form.AddBinaryData(hash, data);
 
-            return form;
+            return (form, entityJson);
         }
 
         private UniTask SendFormAsync(WWWForm form, CancellationToken ct)
         {
             URLAddress url = GetEntitiesUrl();
+
             //Added an attempts delay to allow a retry after 2 seconds in order
             //to reduce the chances of parallel profiles deployments
             return webRequestController.PostAsync(
-                new CommonArguments(url, RetryPolicy.Enforce()),
-                GenericPostArguments.CreateWWWForm(form),
-                ct,
-                ReportCategory.REALM
-            ).WithNoOpAsync();
+                                            new CommonArguments(url, RetryPolicy.Enforce()),
+                                            GenericPostArguments.CreateWWWForm(form),
+                                            ct,
+                                            ReportCategory.REALM
+                                        )
+                                       .WithNoOpAsync();
         }
 
         private URLAddress GetEntitiesUrl()

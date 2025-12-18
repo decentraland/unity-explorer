@@ -420,6 +420,8 @@ MonoBehaviour:
       Severity: 1
     - Category: SOCIAL_EMOTE
       Severity: 4
+    - Category: REALM
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
