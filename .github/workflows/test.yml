@@ -35,18 +35,21 @@ concurrency:
 jobs:
   test:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
-    name: Test
+    name: Test (${{ matrix.testMode }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # This splits the job into two parallel runs
+        testMode: [playmode, editmode]
+    
     steps:
-
       - name: Move Docker data-root to /mnt/docker
         run: |
           sudo systemctl stop docker
           sudo mkdir -p /mnt/docker
           echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
           sudo systemctl start docker
-          docker info | sed -n '1,40p'
-          df -h /mnt /mnt/docker
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -87,43 +90,22 @@ jobs:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
       
-      # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
         run: |
           verFile="Explorer/ProjectSettings/ProjectVersion.txt"
-          if [ ! -f "$verFile" ]; then
-            echo "File not found: $verFile"
-            exit 1
-          fi
           ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
-          if [ -z "$ver" ]; then
-            echo "Could not parse Unity version from $verFile"
-            exit 1
-          fi
           echo "version=$ver" >> $GITHUB_OUTPUT
-          echo "Detected Unity version: $ver"
 
-      # --- Build image references (GHCR + upstream) ---
       - name: Set image names
         id: img
         run: |
           version="${{ steps.unity-version.outputs.version }}"
-          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
-          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
-
-          # ubuntu-<unityVersion>-<flavor>-<gameciVersion>
-          tag="ubuntu-$version-$flavor-$imgVer"
+          tag="ubuntu-$version-${{ env.UNITY_IMAGE_FLAVOR }}-${{ env.UNITY_IMAGE_VERSION }}"
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          upstream="unityci/editor:$tag"
-          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-          echo "upstream=$upstream" >> $GITHUB_OUTPUT
-          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
-          echo "Upstream image: $upstream"
-          echo "GHCR image:     $ghcr"
+          echo "ghcr=ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag" >> $GITHUB_OUTPUT
+          echo "upstream=unityci/editor:$tag" >> $GITHUB_OUTPUT
 
-      # --- Log into GHCR ---
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -131,26 +113,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      # --- Restore Unity image from GHCR (fast path) ---
       - name: Restore Unity image from GHCR
         id: restore-image
         continue-on-error: true
-        run: |
-          docker pull "${{ steps.img.outputs.ghcr }}"
+        run: docker pull "${{ steps.img.outputs.ghcr }}"
 
-      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
-      - name: Download from Docker Hub and upload to GHCR (if missing)
+      - name: Seed GHCR from Docker Hub if missing
         if: steps.restore-image.outcome == 'failure'
         run: |
-          upstream="${{ steps.img.outputs.upstream }}"
-          ghcr="${{ steps.img.outputs.ghcr }}"
-          echo "GHCR miss. Pulling upstream: $upstream"
-          docker pull $upstream
-          docker tag  $upstream $ghcr
-          docker push $ghcr
-          echo "Seeded GHCR: $ghcr"
+          docker pull ${{ steps.img.outputs.upstream }}
+          docker tag ${{ steps.img.outputs.upstream }} ${{ steps.img.outputs.ghcr }}
+          docker push ${{ steps.img.outputs.ghcr }}
 
-      # Configure test runner
+      # --- Actual Test Run using Matrix ---
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
         timeout-minutes: 80
@@ -159,7 +134,7 @@ jobs:
           SHELL: /bin/bash
         with:
           projectPath: Explorer
-          testMode: all
+          testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
@@ -169,17 +144,15 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v2.1.1
         with:
-          name: Unity Tests
+          name: Unity Tests (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
           reporter: dotnet-nunit
           fail-on-error: true
-          fail-on-empty: true
           use-actions-summary: true
 
-      # Upload artifact
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Test results (play mode & edit mode)
+          name: Test-results-${{ matrix.testMode }}
           path: ${{ steps.testRunner.outputs.artifactsPath }}
-          if-no-files-found: error
