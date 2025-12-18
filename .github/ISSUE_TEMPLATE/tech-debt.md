@@ -5,6 +5,9 @@ title: '[PERF] Component | Brief Description'
 labels: 'performance, tech debt'
 assignees: ''
 ---
+### 📊 **Version & Environment**
+<!-- What version was this tested on? Commit hash, build & platform/editor -->
+
 ### 📊 **Impact Level:**
 <!-- Select one: Low | Medium | High | Critical -->
 
@@ -26,8 +29,6 @@ assignees: ''
 2.
 3.
 
-### 🖥️ **Environment:**
-<!-- What did you test on? -->
 
 ### 🔗 **Related Issues:**
 <!-- Any related bugs, PRs, or technical debt items? -->
