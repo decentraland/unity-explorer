@@ -114,6 +114,7 @@ using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
+using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SocialEmotes;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.Translation;
@@ -983,6 +984,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider),
+                new AvatarLocomotionOverridesGlobalPlugin()
             };
 
             if (donationsService.DonationFeatureEnabled)

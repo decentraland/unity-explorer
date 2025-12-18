@@ -57,6 +57,7 @@ MonoBehaviour:
   - rid: 2008243996523495520
   - rid: 3821626543930605662
   - rid: 2563261270153757000
+  - rid: 5190442831932031144
   references:
     version: 2
     RefIds:
@@ -748,6 +749,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 5190442831932031144
+      type: {class: AvatarLocomotionOverridesGlobalPlugin/Settings, ns: DCL.SDKComponents.AvatarLocomotion, asm: DCL.Plugins}
+      data:
+        MaxMovementSpeed: 500
+        MaxJumpHeight: 200
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
