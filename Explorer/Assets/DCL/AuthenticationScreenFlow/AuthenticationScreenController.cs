@@ -61,6 +61,7 @@ namespace DCL.AuthenticationScreenFlow
             LoginInProgress,
             Loading,
             Finalize,
+            FinalizeNewUser,
         }
 
         private const int ANIMATION_DELAY = 300;
@@ -186,6 +187,7 @@ namespace DCL.AuthenticationScreenFlow
             // ThirdWeb buttons
             viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
             viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
+            viewInstance.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
         }
 
 #region MainFlow
@@ -496,9 +498,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
-            // if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
-            //     profile = await CreateAndPublishDefaultProfileAsync(ct);
-
             if (profile == null)
                 throw new ProfileNotFoundException();
 
@@ -564,8 +563,6 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    isNewUser = false;
-
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -618,7 +615,26 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     viewInstance.JumpIntoWorldButton.interactable = true;
 
-                    viewInstance.ProfileNameInputField.gameObject.SetActive(isNewUser);
+                    characterPreviewController?.OnBeforeShow();
+                    characterPreviewController?.OnShow();
+
+                    viewInstance.ProfileNameInputField.gameObject.SetActive(false);
+                    break;
+                case ViewState.FinalizeNewUser:
+                    ResetAnimator(viewInstance!.FinalizeAnimator);
+
+                    viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(false);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+
+                    viewInstance.ProfileNameInputField.gameObject.SetActive(true);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
+                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.FinalizeContainer.SetActive(true);
 
                     characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
@@ -725,6 +741,7 @@ namespace DCL.AuthenticationScreenFlow
 #endregion
 
 #region OTP FLOW
+        private Profile newUserProfile;
         private void StartOTPLoginFlowUntilEnd()
         {
             CancelLoginProcess();
@@ -817,30 +834,39 @@ namespace DCL.AuthenticationScreenFlow
 
                         Profile? profile = await selfProfile.ProfileAsync(ct);
 
-                        if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                        if (true) //(profile == null && ThirdWebManager.Instance.ActiveWallet != null)
                         {
                             IWeb3Identity? identity1 = storedIdentityProvider.Identity;
 
                             if (identity1 == null)
                                 throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
 
-                            profile = BuildDefaultProfile(identity1.Address.ToString(), currentEmail);
-                            isNewUser = true;
+                            newUserProfile = BuildDefaultProfile(identity1.Address.ToString(), currentEmail);
 
                             // Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
                             // profile = publishedProfile ?? throw new ProfileNotFoundException();
                             // profileNameLabel!.Value = profile.Version == 1 ? profile.Name : "back " + profile.Name;
+                            // newUserProfile.IsDirty = true;
+
+                            newUserProfile.HasConnectedWeb3 = true;
+
+                            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+                            sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
+                            CurrentState.Value = AuthenticationStatus.LoggedIn;
+                            SwitchState(ViewState.FinalizeNewUser);
                         }
+                        else
+                        {
+                            profile.IsDirty = true;
+                            profile.HasConnectedWeb3 = true;
 
-                        profile.IsDirty = true;
-                        profile.HasConnectedWeb3 = true;
+                            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+                            sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
-                        characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-
-                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
-                        CurrentState.Value = AuthenticationStatus.LoggedIn;
-                        SwitchState(ViewState.Finalize);
+                            CurrentState.Value = AuthenticationStatus.LoggedIn;
+                            SwitchState(ViewState.Finalize);
+                        }
                     }
                     else
                     {
@@ -888,8 +914,6 @@ namespace DCL.AuthenticationScreenFlow
                 finally { RestoreResolutionAndScreenMode(); }
             }
         }
-
-        private bool isNewUser;
 
         private void SendRegistration()
         {
@@ -949,6 +973,20 @@ namespace DCL.AuthenticationScreenFlow
 
             return profile;
         }
+
+        private void FinalizeNewUser()
+        {
+            PublishNewProfile(loginCancellationToken.Token).Forget();
+
+            async UniTaskVoid PublishNewProfile(CancellationToken ct)
+            {
+                newUserProfile.Name = viewInstance.ProfileNameInputField.text;
+                Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
+                newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+                JumpIntoWorld();
+            }
+        }
+
         private static string ExtractNameFromEmail(string? email)
         {
             if (string.IsNullOrEmpty(email))

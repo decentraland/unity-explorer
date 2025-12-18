@@ -86,9 +86,27 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
 
+        [field: Space]
         [field: SerializeField]
         public TMP_InputField ProfileNameInputField { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Button BackButton { get; private set; } = null!;
+        [field: SerializeField]
+        public Button FinalizeNewUserButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button PrevRandomButton { get; private set; } = null!;
+        [field: SerializeField]
+        public Button NextRandomButton { get; private set; } = null!;
+        [field: SerializeField]
+        public Button RandomizeButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button SubscribeToggle { get; private set; } = null!;
+        [field: SerializeField]
+        public Button AgreeLicenseToggle { get; private set; } = null!;
+        
         [field: Header("ERROR POPUP")]
         [field: SerializeField]
         public GameObject ErrorPopupRoot { get; private set; } = null!;
