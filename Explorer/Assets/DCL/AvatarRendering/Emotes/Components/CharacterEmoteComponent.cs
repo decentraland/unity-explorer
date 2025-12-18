@@ -93,8 +93,8 @@ namespace DCL.AvatarRendering.Emotes
             SocialEmote.HasOutcomeAnimationStarted = false;
             SocialEmote.TargetAvatarWalletAddress = string.Empty;
             SocialEmote.InteractionId = 0;
+            CurrentEmoteReference = null;
             // These fields are not reset, on purpose (old code depends on it)
-            //        CurrentEmoteReference = null;
             //        CurrentAnimationTag = 0;
         }
     }
