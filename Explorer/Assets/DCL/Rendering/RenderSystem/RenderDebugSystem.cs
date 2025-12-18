@@ -23,8 +23,8 @@ namespace DCL.Rendering.RenderSystem
             : base(world)
         {
             // UI drives the state, initially everything is off
-            residentDrawerBinding = new ElementBinding<bool>(false, OnResidentDrawerChanged);
-            gpuOcclusionBinding = new ElementBinding<bool>(false, OnGpuOcclusionChanged);
+            residentDrawerBinding = new ElementBinding<bool>(false);
+            gpuOcclusionBinding = new ElementBinding<bool>(false);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.RENDERING)
                        ?.AddControl(
@@ -35,81 +35,26 @@ namespace DCL.Rendering.RenderSystem
                              new DebugConstLabelDef("GPU Occlusion (requires GRD)"),
                              new DebugToggleDef(gpuOcclusionBinding)
                          );
-
-            // Apply initial state (off)
-            gpuOcclusionBinding.SetAndUpdate(false);
-            residentDrawerBinding.SetAndUpdate(false);
-
-            lastUrpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-
-            if (lastUrpAsset == null)
-                return;
-
-            lastUrpAsset.gpuResidentDrawerMode = GPUResidentDrawerMode.Disabled;
-            lastUrpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = false;
-        }
-
-        /// <summary>
-        ///     Reactive callback: UI -> Runtime for GPU Resident Drawer
-        /// </summary>
-        private void OnResidentDrawerChanged(ChangeEvent<bool> evt)
-        {
-            if (GraphicsSettings.currentRenderPipeline is not UniversalRenderPipelineAsset urpAsset)
-                return;
-
-            urpAsset.gpuResidentDrawerMode = evt.newValue
-                ? GPUResidentDrawerMode.InstancedDrawing
-                : GPUResidentDrawerMode.Disabled;
-
-            // If GRD is disabled, also disable GPU Occlusion
-            if (!evt.newValue && gpuOcclusionBinding.Value)
-            {
-                urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = false;
-                gpuOcclusionBinding.SetAndUpdate(false);
-            }
-        }
-
-        /// <summary>
-        ///     Reactive callback: UI -> Runtime for GPU Occlusion
-        /// </summary>
-        private void OnGpuOcclusionChanged(ChangeEvent<bool> evt)
-        {
-            if (GraphicsSettings.currentRenderPipeline is not UniversalRenderPipelineAsset urpAsset)
-                return;
-
-            // GPU Occlusion only works when GRD is enabled
-            if (urpAsset.gpuResidentDrawerMode == GPUResidentDrawerMode.InstancedDrawing)
-                urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = evt.newValue;
-            else if (evt.newValue)
-                gpuOcclusionBinding.SetAndUpdate(false); // Reject: GRD is off
         }
 
         protected override void Update(float t)
         {
-            // Check if URP asset changed
-            var currentAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            var urpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
 
-            if (currentAsset != lastUrpAsset)
-            {
-                lastUrpAsset = currentAsset;
-                ApplyCurrentStateToAsset(currentAsset);
-            }
-        }
-
-        /// <summary>
-        ///     Apply current UI state to the given URP asset
-        /// </summary>
-        private void ApplyCurrentStateToAsset(UniversalRenderPipelineAsset? urpAsset)
-        {
             if (urpAsset == null)
                 return;
 
-            urpAsset.gpuResidentDrawerMode = residentDrawerBinding.Value
+            GPUResidentDrawerMode currentGRDmode = residentDrawerBinding.Value
                 ? GPUResidentDrawerMode.InstancedDrawing
                 : GPUResidentDrawerMode.Disabled;
 
-            urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras =
-                residentDrawerBinding.Value && gpuOcclusionBinding.Value;
+            if (urpAsset.gpuResidentDrawerMode != currentGRDmode)
+                urpAsset.gpuResidentDrawerMode = currentGRDmode;
+
+            bool occlusionEnabled = residentDrawerBinding.Value && gpuOcclusionBinding.Value;
+
+            if (urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras != occlusionEnabled)
+                urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = occlusionEnabled;
         }
     }
 }
