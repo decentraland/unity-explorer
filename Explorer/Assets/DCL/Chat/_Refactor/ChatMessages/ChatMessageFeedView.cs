@@ -129,7 +129,9 @@ namespace DCL.Chat.ChatMessages
                 newEntries = 0;
 
             loopList.SetListItemCount(entriesCountWithPaddings, resetPosition);
-            loopList.RefreshAllShownItem();
+
+            // TODO: This seems to be not necessary, Im leaving it here just in case to make sure after testing thoroughly
+            //loopList.RefreshAllShownItem();
 
             // Scroll view adjustment
             if (IsAtBottom()) { loopList.MovePanelToItemIndex(0, 0); }

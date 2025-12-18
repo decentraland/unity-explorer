@@ -109,7 +109,7 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                if (!messageRateLimiter.TryAllow(receivedMessage.FromWalletId, messagesPerSecond: 1)) return;
+                if (!messageRateLimiter.TryAllow(receivedMessage.FromWalletId, messagesPerSecond: 10000)) return;
 
                 // If the Communities shape is disabled, ignores the community conversation messages
                 if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
@@ -147,7 +147,10 @@ namespace DCL.Chat.MessageBus
                 ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 
                 if (channelType == ChatChannel.ChatChannelType.NEARBY)
-                    nearbyChannelBuffer.TryEnqueue(newMessage);
+                {
+                    if (!nearbyChannelBuffer.TryEnqueue(newMessage))
+                        ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "Discarded message, queue full!");
+                }
                 else
                     MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
             }
@@ -160,15 +163,16 @@ namespace DCL.Chat.MessageBus
         {
             while (!ct.IsCancellationRequested)
             {
-                await UniTask.Yield(PlayerLoopTiming.Update);
+                await UniTask.Yield(PlayerLoopTiming.FixedUpdate);
 
                 var messagesReleasedThisFrame = 0;
 
                 while (messagesReleasedThisFrame < NearbyChannelMessageBuffer.MAX_MESSAGES_PER_FRAME && nearbyChannelBuffer.HasBufferedMessages)
                 {
-                    if (nearbyChannelBuffer.TryDequeue(out var bufferedMessage))
+                    if (!nearbyChannelBuffer.TryDequeue(out var bufferedMessage))
                         break;
 
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Dequeued Message! released {messagesReleasedThisFrame} messages this frame");
                     MessageAdded?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, bufferedMessage);
                     messagesReleasedThisFrame++;
                 }

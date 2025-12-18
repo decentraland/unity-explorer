@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 
@@ -7,9 +8,9 @@ namespace DCL.Chat.MessageBus
     public class NearbyChannelMessageBuffer
     {
         private const int MAX_MESSAGES_PER_SECOND = 30;
-        public const int MAX_MESSAGES_PER_FRAME = 2;
+        public const int MAX_MESSAGES_PER_FRAME = 1;
         private const int MAX_BUFFER_SIZE = 1000;
-        private readonly Queue<ChatMessage> messageQueue = new ();
+        private readonly Queue<ChatMessage> messageQueue = new (1000);
         private long currentSecond;
         private int messageCount;
 
@@ -39,6 +40,7 @@ namespace DCL.Chat.MessageBus
         {
             if (messageQueue.Count == 0 || !HasCapacity())
             {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Cant Dequeue - queue has {messageQueue.Count} - sent messages this second {messageCount} ");
                 message = default(ChatMessage);
                 return false;
             }
