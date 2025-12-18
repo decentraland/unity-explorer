@@ -1,8 +1,11 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Audio;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -25,6 +28,7 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
@@ -85,6 +89,12 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
+        private readonly IWearablesProvider wearablesProvider;
+
+        // Base wearables randomization - Dictionary<category, List<URN>>
+        private Dictionary<string, List<URN>>? maleWearablesByCategory;
+        private Dictionary<string, List<URN>>? femaleWearablesByCategory;
+        private bool baseWearablesLoaded;
 
         private const string LOADING_TRANSACTION_NAME = "loading_process";
 
@@ -120,7 +130,8 @@ namespace DCL.AuthenticationScreenFlow
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
             SentryTransactionManager sentryTransactionManager,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IWearablesProvider wearablesProvider)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -139,6 +150,7 @@ namespace DCL.AuthenticationScreenFlow
             this.backgroundMusic = backgroundMusic;
             this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
+            this.wearablesProvider = wearablesProvider;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -846,6 +858,9 @@ namespace DCL.AuthenticationScreenFlow
                             if (identity1 == null)
                                 throw new Web3IdentityMissingException("Web3 identity is not available when creating a default profile");
 
+                            // Load base wearables catalog for randomization
+                            await LoadBaseWearablesAsync(ct);
+
                             newUserProfile = BuildDefaultProfile(identity1.Address.ToString(), currentEmail);
 
                             // Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
@@ -943,7 +958,7 @@ namespace DCL.AuthenticationScreenFlow
             return otpCompletionSource.Task;
         }
 
-        private static Profile BuildDefaultProfile(string walletAddress, string name = "")
+        private Profile BuildDefaultProfile(string walletAddress, string name = "")
         {
             // Randomize body shape between MALE and FEMALE
             Avatar avatar = CreateDefaultAvatar();
@@ -971,18 +986,100 @@ namespace DCL.AuthenticationScreenFlow
             return profile;
         }
 
-        private static Avatar CreateDefaultAvatar()
+        private Avatar CreateDefaultAvatar()
         {
             BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
-            var avatar = new Avatar(
+            // If base wearables loaded from backend - use randomizer
+            if (baseWearablesLoaded && maleWearablesByCategory != null && femaleWearablesByCategory != null)
+            {
+                Dictionary<string, List<URN>>? wearablesByCategory = bodyShape.Equals(BodyShape.MALE) ? maleWearablesByCategory : femaleWearablesByCategory;
+                HashSet<URN> wearablesSet = GetRandomWearablesFromCategories(wearablesByCategory);
+
+                return new Avatar(
+                    bodyShape,
+                    wearablesSet,
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor());
+            }
+
+            // Fallback to hardcoded defaults
+            return new Avatar(
                 bodyShape,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
                 WearablesConstants.DefaultColors.GetRandomSkinColor());
+        }
 
-            return avatar;
+        private static HashSet<URN> GetRandomWearablesFromCategories(Dictionary<string, List<URN>> wearablesByCategory)
+        {
+            var result = new HashSet<URN>();
+
+            foreach (List<URN>? categoryWearables in wearablesByCategory.Values)
+            {
+                if (categoryWearables.Count > 0)
+                    result.Add(categoryWearables[UnityEngine.Random.Range(0, categoryWearables.Count)]);
+            }
+
+            return result;
+        }
+
+        private async UniTask LoadBaseWearablesAsync(CancellationToken ct)
+        {
+            if (baseWearablesLoaded)
+                return;
+
+            try
+            {
+                // Load base wearables catalog from backend (pageSize 300 to get all)
+                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetAsync(
+                    pageSize: 300,
+                    pageNumber: 1,
+                    ct,
+                    collectionType: IWearablesProvider.CollectionType.Base);
+
+                maleWearablesByCategory = new Dictionary<string, List<URN>>();
+                femaleWearablesByCategory = new Dictionary<string, List<URN>>();
+
+                foreach (ITrimmedWearable? wearable in wearables)
+                {
+                    string category = wearable.GetCategory();
+
+                    // Skip body shapes
+                    if (category == "body_shape")
+                        continue;
+
+                    // Add to male dictionary if compatible
+                    if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
+                    {
+                        if (!maleWearablesByCategory.ContainsKey(category))
+                            maleWearablesByCategory[category] = new List<URN>();
+
+                        maleWearablesByCategory[category].Add(wearable.GetUrn());
+                    }
+
+                    // Add to female dictionary if compatible
+                    if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE))
+                    {
+                        if (!femaleWearablesByCategory.ContainsKey(category))
+                            femaleWearablesByCategory[category] = new List<URN>();
+
+                        femaleWearablesByCategory[category].Add(wearable.GetUrn());
+                    }
+                }
+
+                baseWearablesLoaded = true;
+                ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items, male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+
+                // Fallback to hardcoded defaults will be used
+                baseWearablesLoaded = false;
+            }
         }
 
         private void FinalizeNewUser()
