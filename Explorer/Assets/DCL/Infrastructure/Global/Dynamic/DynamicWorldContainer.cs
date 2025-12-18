@@ -115,6 +115,7 @@ using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
+using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SocialEmotes;
 using DCL.SocialEmotes.UI;
 using DCL.Translation;
@@ -975,7 +976,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
                     mvcManager,
-                    thumbnailProvider)
+                    thumbnailProvider),
+                new AvatarLocomotionOverridesGlobalPlugin()
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
