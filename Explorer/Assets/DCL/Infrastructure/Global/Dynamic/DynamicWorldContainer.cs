@@ -115,6 +115,7 @@ using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
+using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SocialEmotes;
 using DCL.SocialEmotes.UI;
 using DCL.Translation;
@@ -743,6 +744,7 @@ namespace Global.Dynamic
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, staticContainer.ComponentsContainer.ComponentPoolsRegistry, identityCache, ephemeralNotificationsController),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
+                new RenderingSystemPlugin(debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,
@@ -975,7 +977,8 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider,
-                    eventBus)
+                    eventBus),
+                new AvatarLocomotionOverridesGlobalPlugin()
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
