@@ -44,6 +44,10 @@ namespace DCL.Rendering.RenderSystem
             if (urpAsset == null)
                 return;
 
+            if (residentDrawerBinding.Value == false)
+                gpuOcclusionBinding.Value = false;
+
+            // Set GRD Mode
             GPUResidentDrawerMode currentGRDmode = residentDrawerBinding.Value
                 ? GPUResidentDrawerMode.InstancedDrawing
                 : GPUResidentDrawerMode.Disabled;
@@ -51,8 +55,8 @@ namespace DCL.Rendering.RenderSystem
             if (urpAsset.gpuResidentDrawerMode != currentGRDmode)
                 urpAsset.gpuResidentDrawerMode = currentGRDmode;
 
+            // Set Occlusion Culling (works only with GRD enabled)
             bool occlusionEnabled = residentDrawerBinding.Value && gpuOcclusionBinding.Value;
-
             if (urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras != occlusionEnabled)
                 urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = occlusionEnabled;
         }
