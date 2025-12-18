@@ -49,8 +49,5 @@ namespace DCL.Chat.MessageBus
 
         public static IChatMessagesBus WithIgnoreSymbols(this IChatMessagesBus messagesBus) =>
             new IgnoreWithSymbolsChatMessageBus(messagesBus);
-
-        public static IChatMessagesBus WithRateLimit(this IChatMessagesBus messagesBus, int messagesPerSecond) =>
-            new RateLimitedChatMessageBus(messagesBus, messagesPerSecond);
     }
 }

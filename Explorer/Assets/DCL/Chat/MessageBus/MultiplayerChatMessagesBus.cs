@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -11,6 +10,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.SceneBannedUsers;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
@@ -26,7 +26,9 @@ namespace DCL.Chat.MessageBus
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly ChatMessageFactory messageFactory;
+        private readonly ChatMessageRateLimiter messageRateLimiter;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
@@ -37,12 +39,15 @@ namespace DCL.Chat.MessageBus
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            DecentralandEnvironment decentralandEnvironment)
+            DecentralandEnvironment decentralandEnvironment,
+            IWeb3IdentityCache identityCache)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.identityCache = identityCache;
             this.messageFactory = messageFactory;
+            messageRateLimiter = new ChatMessageRateLimiter();
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandEnvironment switch
@@ -74,14 +79,17 @@ namespace DCL.Chat.MessageBus
 
         private void OnChatPipeMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Chat Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload} with topic: {receivedMessage.Topic}");
-
             ChatChannel.ChatChannelType channelType = ChatChannel.ChatChannelType.USER;
 
             if (!string.IsNullOrEmpty(receivedMessage.Topic))
             {
                 if (ChatChannel.IsCommunityChannelId(receivedMessage.Topic))
                     channelType = ChatChannel.ChatChannelType.COMMUNITY;
+                else if (receivedMessage.Topic != identityCache.Identity?.Address)
+                {
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Received a Private Message with incorrect Topic {receivedMessage.Topic}");
+                    return;
+                }
 
                 // groups in the future?
             }
@@ -98,6 +106,8 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
+                if (!messageRateLimiter.TryAllow(receivedMessage.FromWalletId, messagesPerSecond: 1)) return;
+
                 // If the Communities shape is disabled, ignores the community conversation messages
                 if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
                     return;
@@ -152,12 +162,10 @@ namespace DCL.Chat.MessageBus
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
                 case ChatChannel.ChatChannelType.USER:
-                    SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
+                    SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
                     SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), routingUser);
-                    break;
-                default:
                     break;
             }
 

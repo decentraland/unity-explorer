@@ -6,15 +6,11 @@ namespace DCL.Chat.MessageBus
 {
     public class ChatMessageRateLimiter
     {
-        private readonly int messagesPerSecond;
         private readonly Dictionary<string, UserRateLimitData> userRateLimitData = new ();
 
-        public ChatMessageRateLimiter(int messagesPerSecond)
-        {
-            this.messagesPerSecond = messagesPerSecond;
-        }
+        public ChatMessageRateLimiter() { }
 
-        public bool TryAllow(string walletId)
+        public bool TryAllow(string walletId, int messagesPerSecond)
         {
             if (string.IsNullOrEmpty(walletId))
                 return true;
