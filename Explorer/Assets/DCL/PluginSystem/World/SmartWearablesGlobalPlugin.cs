@@ -15,6 +15,7 @@ using Runtime.Wearables;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.PluginSystem.SmartWearables
 {
@@ -29,6 +30,7 @@ namespace DCL.PluginSystem.SmartWearables
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IEventBus eventBus;
 
         private SmartWearableAuthorizationPopupController? popupController;
 
@@ -40,7 +42,8 @@ namespace DCL.PluginSystem.SmartWearables
             IAssetsProvisioner assetsProvisioner,
             ILoadingStatus loadingStatus,
             IMVCManager mvcManager,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            IEventBus eventBus)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
@@ -51,6 +54,7 @@ namespace DCL.PluginSystem.SmartWearables
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.thumbnailProvider = thumbnailProvider;
+            this.eventBus = eventBus;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -87,7 +91,8 @@ namespace DCL.PluginSystem.SmartWearables
                 scenesCache,
                 loadingStatus,
                 mvcManager,
-                thumbnailProvider);
+                thumbnailProvider,
+                eventBus);
         }
 
         public class Settings : IDCLPluginSettings

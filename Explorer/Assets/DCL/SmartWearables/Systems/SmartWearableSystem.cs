@@ -13,6 +13,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.RealmNavigation;
+using DCL.UI.SystemMenu;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -27,6 +28,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
 
 namespace DCL.SmartWearables
@@ -46,6 +48,7 @@ namespace DCL.SmartWearables
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IEventBus eventBus;
 
         /// <summary>
         ///     Promises waiting on the loading flow of a smart wearable scene.
@@ -62,7 +65,8 @@ namespace DCL.SmartWearables
             IScenesCache scenesCache,
             ILoadingStatus loadingStatus,
             IMVCManager mvcManager,
-            IThumbnailProvider thumbnailProvider) : base(world)
+            IThumbnailProvider thumbnailProvider,
+            IEventBus eventBus) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.smartWearableCache = smartWearableCache;
@@ -72,6 +76,7 @@ namespace DCL.SmartWearables
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.thumbnailProvider = thumbnailProvider;
+            this.eventBus = eventBus;
         }
 
         public override void Initialize()
@@ -82,6 +87,7 @@ namespace DCL.SmartWearables
             backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
+            eventBus.Subscribe<LogoutEvent>(OnLogout);
         }
 
         private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
@@ -240,17 +246,20 @@ namespace DCL.SmartWearables
                 // TODO consider cancelling a previous running task
                 RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
             else
-            {
-                CancelLoadingAllScenes();
+                UnloadAllSmartWearableScenes();
+        }
 
-                if (smartWearableCache.RunningSmartWearables.Count > 0)
-                {
-                    // The reason for the copy is that unloading a PX will also trigger an event that alters the loaded scenes set
-                    using var tempScope = ListPool<string>.Get(out var temp);
-                    temp.AddRange(smartWearableCache.RunningSmartWearables);
-                    foreach (string id in temp) portableExperiencesController.UnloadPortableExperienceById(id);
-                }
-            }
+        private void UnloadAllSmartWearableScenes()
+        {
+            CancelLoadingAllScenes();
+
+            if (smartWearableCache.RunningSmartWearables.Count <= 0) return;
+
+            // The reason for this copy is that unloading a PX will also trigger an event that alters the running scenes set
+            using var tempScope = ListPool<string>.Get(out var temp);
+            temp.AddRange(smartWearableCache.RunningSmartWearables);
+
+            foreach (string id in temp) portableExperiencesController.UnloadPortableExperienceById(id);
         }
 
         private void OnLoadingStatusChanged(LoadingStatus.LoadingStage stage)
@@ -301,6 +310,21 @@ namespace DCL.SmartWearables
 
                 await TryRunSmartWearableSceneAsync(wearable);
             }
+        }
+
+        private void OnLogout(LogoutEvent e)
+        {
+            UnloadAllSmartWearableScenes();
+
+            // In addition to unloading the scenes also unload any cached info
+            // Needed for various reasons:
+            // - The cache remembers explicitly killed PX
+            // - The cache remembers authorized Smart Wearables
+            // - The cache stores some metadata associated with Smart Wearables that have been loaded during the session
+            smartWearableCache.Clear();
+
+            // Resume listening to loading status changes so we can reload Smart Wearables if we log in again
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
         }
 
         private enum AuthorizationAction

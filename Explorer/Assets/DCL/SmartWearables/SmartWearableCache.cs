@@ -105,6 +105,14 @@ namespace Runtime.Wearables
             return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
         }
 
+        public void Clear()
+        {
+            cache.Clear();
+            AuthorizedSmartWearables.Clear();
+            RunningSmartWearables.Clear();
+            KilledPortableExperiences.Clear();
+        }
+
         private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
         {
             string id = GetCacheId(wearable);

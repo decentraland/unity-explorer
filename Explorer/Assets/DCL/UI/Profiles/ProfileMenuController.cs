@@ -34,11 +34,12 @@ namespace DCL.UI.Profiles
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IPassportBridge passportBridge,
-            ProfileRepositoryWrapper profileDataProvider
+            ProfileRepositoryWrapper profileDataProvider,
+            IEventBus eventBus
         ) : base(viewFactory)
         {
             profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, profileDataProvider);
-            systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge);
+            systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge, eventBus);
             systemSectionController.OnClosed += OnClose;
         }
 

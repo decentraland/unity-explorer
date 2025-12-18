@@ -485,10 +485,31 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             ExplorePanelController explorePanelController = new
-                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                    communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager);
+                ExplorePanelController(viewFactoryMethod,
+                    navmapController,
+                    settingsController,
+                    backpackSubPlugin.backpackController!,
+                    cameraReelController,
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget,
+                        web3IdentityCache,
+                        profileRepository,
+                        profileChangesBus),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView,
+                        web3IdentityCache,
+                        profileRepository,
+                        world,
+                        playerEntity,
+                        webBrowser,
+                        web3Authenticator,
+                        userInAppInitializationFlow,
+                        profileCache,
+                        passportBridge,
+                        profileRepositoryWrapper,
+                        eventBus),
+                    communitiesBrowserController,
+                    inputBlock,
+                    includeCameraReel,
+                    sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

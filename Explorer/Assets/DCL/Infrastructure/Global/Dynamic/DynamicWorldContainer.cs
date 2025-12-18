@@ -974,7 +974,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
                     mvcManager,
-                    thumbnailProvider)
+                    thumbnailProvider,
+                    eventBus)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

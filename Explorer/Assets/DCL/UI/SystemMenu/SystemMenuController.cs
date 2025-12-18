@@ -31,13 +31,13 @@ namespace DCL.UI.SystemMenu
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly IPassportBridge passportBridge;
+        private readonly IEventBus eventBus;
 
         private CancellationTokenSource? logoutCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public SystemMenuController(
-            ViewFactoryMethod viewFactory,
+        public SystemMenuController(ViewFactoryMethod viewFactory,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -45,16 +45,18 @@ namespace DCL.UI.SystemMenu
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            IPassportBridge passportBridge) : base(viewFactory)
+            IPassportBridge passportBridge,
+            IEventBus eventBus) : base(viewFactory)
         {
+            this.world = world;
+            this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
             this.passportBridge = passportBridge;
-            this.playerEntity = playerEntity;
-            this.world = world;
+            this.eventBus = eventBus;
         }
 
         public override void Dispose()
@@ -129,6 +131,9 @@ namespace DCL.UI.SystemMenu
                 await web3Authenticator.LogoutAsync(ct);
 
                 profileCache.Remove(address);
+
+                // Notify logout happened so other systems can react
+                eventBus.Publish(new LogoutEvent());
 
                 await userInAppInitializationFlow.ExecuteAsync(
                     new UserInAppInitializationFlowParameters(
