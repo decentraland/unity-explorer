@@ -67,10 +67,9 @@ namespace DCL.Backpack.Gifting.Presenters
                 category: string.Empty,
                 collectionType: IWearablesProvider.CollectionType.OnChain,
                 name: search,
-                network: "MATIC"
+                results: resultsBuffer
             );
 
-            
             var giftables = new List<GiftableAvatarAttachment>(wearables.Count);
             foreach (var w in wearables)
             {
@@ -105,7 +104,7 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             style = default;
 
-            if (!viewModelsByUrn.TryGetValue(urn, out var vm)) 
+            if (!viewModelsByUrn.TryGetValue(urn, out var vm))
                 return false;
 
             style = stylingCatalog.GetStyleSnapshot(vm.RarityId, vm.CategoryId);
