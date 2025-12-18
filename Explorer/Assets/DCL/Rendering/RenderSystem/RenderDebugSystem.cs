@@ -96,12 +96,11 @@ namespace DCL.Rendering.RenderSystem
             if (urpAsset == null)
                 return;
 
-            urpAsset.gpuResidentDrawerMode = residentDrawerBinding.Value
-                ? GPUResidentDrawerMode.InstancedDrawing
-                : GPUResidentDrawerMode.Disabled;
+            urpAsset.gpuResidentDrawerMode = GPUResidentDrawerMode.Disabled;
+            urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras = false;
 
-            urpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras =
-                residentDrawerBinding.Value && gpuOcclusionBinding.Value;
+            gpuOcclusionBinding.SetAndUpdate(false);
+            residentDrawerBinding.SetAndUpdate(false);
         }
     }
 }
