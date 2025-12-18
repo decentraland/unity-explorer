@@ -20,7 +20,6 @@ using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.AvatarRendering.Export;
 using UnityEngine;
 using Utility;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
