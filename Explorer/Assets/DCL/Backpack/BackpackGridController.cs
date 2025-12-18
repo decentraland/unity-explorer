@@ -228,7 +228,7 @@ namespace DCL.Backpack
         }
 
         private void EquipItem(int slot, string itemId) =>
-            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, equippedWearables,
+            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
                 wearable => TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget(),
                 CancellationToken.None).Forget();
 

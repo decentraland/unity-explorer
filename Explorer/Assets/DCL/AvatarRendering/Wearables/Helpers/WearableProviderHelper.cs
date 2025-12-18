@@ -15,8 +15,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearableProviderHelper
     {
-        public static async UniTaskVoid FetchWearableByPointerAndExecuteAsync(string pointer, IWearablesProvider wearablesProvider, IReadOnlyEquippedWearables equippedWearables, Action<IWearable> onWearableFetched, CancellationToken ct)
+        public static async UniTaskVoid FetchWearableByPointerAndExecuteAsync(string pointer,
+            IWearablesProvider wearablesProvider,
+            IWearableStorage wearableStorage,
+            IReadOnlyEquippedWearables equippedWearables,
+            Action<IWearable> onWearableFetched,
+            CancellationToken ct)
         {
+            if (wearableStorage.TryGetElement(pointer, out var wearable))
+            {
+                onWearableFetched(wearable);
+                return;
+            }
+
             List<URN> urnRequest = ListPool<URN>.Get();
             try
             {
