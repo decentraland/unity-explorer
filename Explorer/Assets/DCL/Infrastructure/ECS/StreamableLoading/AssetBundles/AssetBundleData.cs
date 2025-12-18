@@ -13,6 +13,13 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
+        /// <summary>
+        /// Flag to enable/disable material sharing across instances.
+        /// When enabled, materials are cached on first instantiation and reused for subsequent instances.
+        /// Set to false to revert to the old behavior where each instance gets its own material copies.
+        /// </summary>
+        public static bool ENABLE_MATERIAL_SHARING = true;
+
         private readonly string AssetBundleName;
 
         public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
@@ -20,6 +27,12 @@ namespace ECS.StreamableLoading.AssetBundles
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
         private readonly AssetBundleData[] Dependencies;
+
+        /// <summary>
+        /// Cache for original shared materials per asset, keyed by asset name.
+        /// Used to restore shared materials after instantiation to avoid material duplication.
+        /// </summary>
+        private Dictionary<string, Material[][]>? cachedMaterials;
 
         public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -126,6 +139,32 @@ namespace ECS.StreamableLoading.AssetBundles
 
             asset = (T)assetInfo.Asset!;
             return true;
+        }
+
+        /// <summary>
+        /// Gets or caches the original shared materials from the prefab's renderers.
+        /// Materials are extracted once on first call and reused for subsequent instantiations.
+        /// This prevents Unity from cloning materials on each Object.Instantiate call.
+        /// </summary>
+        /// <param name="assetName">The asset name/hash used as cache key</param>
+        /// <param name="prefab">The original prefab GameObject from the asset bundle</param>
+        /// <returns>Array of material arrays, one per renderer in hierarchy order</returns>
+        public Material[][] GetOrCacheOriginalMaterials(string assetName, GameObject prefab)
+        {
+            cachedMaterials ??= new Dictionary<string, Material[][]>();
+
+            if (!cachedMaterials.TryGetValue(assetName, out Material[][] materials))
+            {
+                var renderers = prefab.GetComponentsInChildren<Renderer>(true);
+                materials = new Material[renderers.Length][];
+
+                for (int i = 0; i < renderers.Length; i++)
+                    materials[i] = renderers[i].sharedMaterials;
+
+                cachedMaterials[assetName] = materials;
+            }
+
+            return materials;
         }
 
     }

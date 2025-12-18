@@ -73,7 +73,15 @@ namespace Utility
             SafeDestroy(@object);
 
         /// <summary>
-        ///     Gets shared materials instead of materials if called when Application is not playing (from tests)
+        /// Flag to enable/disable using shared materials at runtime.
+        /// When enabled, GetSharedMaterials is used instead of GetMaterials to avoid creating material instances.
+        /// Set to false to revert to the old behavior where GetMaterials creates instance copies.
+        /// </summary>
+        public static bool USE_SHARED_MATERIALS_AT_RUNTIME = true;
+
+        /// <summary>
+        ///     Gets materials from the renderer. By default uses GetSharedMaterials to avoid creating material instances.
+        ///     When USE_SHARED_MATERIALS_AT_RUNTIME is false, uses GetMaterials which creates instance copies.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SafeGetMaterials(this Renderer renderer, List<Material> targetList)
@@ -85,7 +93,10 @@ namespace Utility
                 return;
             }
 #endif
-            renderer.GetMaterials(targetList);
+            if (USE_SHARED_MATERIALS_AT_RUNTIME)
+                renderer.GetSharedMaterials(targetList);
+            else
+                renderer.GetMaterials(targetList);
         }
     }
 }

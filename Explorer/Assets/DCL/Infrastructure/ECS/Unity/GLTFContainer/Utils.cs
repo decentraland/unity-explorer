@@ -11,6 +11,14 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
+        /// <summary>
+        /// Flag to enable/disable material sharing across instances.
+        /// When enabled, materials are restored from the original prefab after instantiation.
+        /// This flag works in conjunction with AssetBundleData.ENABLE_MATERIAL_SHARING.
+        /// Set to false to revert to the old behavior where each instance gets its own material copies.
+        /// </summary>
+        public static bool ENABLE_MATERIAL_SHARING = true;
+
         public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, out GltfContainerAsset gltfContainerAsset)
         {
             if (!assetBundleData.TryGetAsset(out GameObject asset, assetHash))
@@ -27,12 +35,27 @@ namespace ECS.Unity.GLTFContainer
 
             var result = GltfContainerAsset.Create(container, assetBundleData, assetBundleData.InitialSceneStateMetadata.HasValue);
 
+            // Get or cache original materials from the prefab before instantiation (only if material sharing is enabled)
+            Material[][] originalMaterials = null;
+            bool shouldRestoreMaterials = ENABLE_MATERIAL_SHARING && AssetBundleData.ENABLE_MATERIAL_SHARING;
+            if (shouldRestoreMaterials)
+                originalMaterials = assetBundleData.GetOrCacheOriginalMaterials(assetHash, asset);
+
             GameObject? instance = Object.Instantiate(asset, containerTransform);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
                 instance.GetComponentsInChildren(true, instanceRenderers.Value);
+
+                // Restore shared materials from cache to avoid material duplication
+                // (GetComponentsInChildren traverses in the same deterministic order for prefab and instance)
+                if (shouldRestoreMaterials && originalMaterials != null)
+                {
+                    for (int i = 0; i < instanceRenderers.Value.Count && i < originalMaterials.Length; i++)
+                        instanceRenderers.Value[i].sharedMaterials = originalMaterials[i];
+                }
+
                 result.Renderers.AddRange(instanceRenderers.Value);
             }
 
