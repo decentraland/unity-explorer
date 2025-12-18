@@ -191,8 +191,8 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
             viewInstance.RandomizeButton.onClick.AddListener(RandomizeAvatar);
 
-            // viewInstance.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
-            // viewInstance.NextRandomButton.onClick.AddListener(NextRandomAvatar);
+            viewInstance.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
+            viewInstance.NextRandomButton.onClick.AddListener(NextRandomAvatar);
         }
 
 #region MainFlow
@@ -856,6 +856,7 @@ namespace DCL.AuthenticationScreenFlow
                             newUserProfile.HasConnectedWeb3 = true;
 
                             characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+                            InitializeAvatarHistory(newUserProfile.Avatar);
                             sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                             CurrentState.Value = AuthenticationStatus.LoggedIn;
@@ -984,13 +985,6 @@ namespace DCL.AuthenticationScreenFlow
             return avatar;
         }
 
-        private void RandomizeAvatar()
-        {
-            newUserProfile.Avatar = CreateDefaultAvatar();
-            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnShow();
-        }
-
         private void FinalizeNewUser()
         {
             PublishNewProfile(loginCancellationToken.Token).Forget();
@@ -1015,6 +1009,75 @@ namespace DCL.AuthenticationScreenFlow
                 return IProfileRepository.PLAYER_RANDOM_ID;
 
             return email[..atIndex];
+        }
+#endregion
+
+#region AVATAR HISTORY NAVIGATION
+        private readonly List<Avatar> avatarHistory = new ();
+        private int currentAvatarIndex = -1;
+
+        private void InitializeAvatarHistory(Avatar initialAvatar)
+        {
+            avatarHistory.Clear();
+            avatarHistory.Add(initialAvatar);
+            currentAvatarIndex = 0;
+            UpdateAvatarNavigationButtons();
+        }
+
+        private void RandomizeAvatar()
+        {
+            // If we're not at the end of history, remove all avatars after current position
+            // if (currentAvatarIndex < avatarHistory.Count - 1)
+            //     avatarHistory.RemoveRange(currentAvatarIndex + 1, avatarHistory.Count - currentAvatarIndex - 1);
+
+            // Create and add new avatar to history
+            Avatar newAvatar = CreateDefaultAvatar();
+            avatarHistory.Add(newAvatar);
+            currentAvatarIndex = avatarHistory.Count - 1;
+
+            // Apply to profile and preview
+            newUserProfile.Avatar = newAvatar;
+            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController?.OnShow();
+
+            UpdateAvatarNavigationButtons();
+        }
+
+        private void PrevRandomAvatar()
+        {
+            if (currentAvatarIndex <= 0)
+                return;
+
+            currentAvatarIndex--;
+            ApplyAvatarFromHistory();
+            UpdateAvatarNavigationButtons();
+        }
+
+        private void NextRandomAvatar()
+        {
+            if (currentAvatarIndex >= avatarHistory.Count - 1)
+                return;
+
+            currentAvatarIndex++;
+            ApplyAvatarFromHistory();
+            UpdateAvatarNavigationButtons();
+        }
+
+        private void ApplyAvatarFromHistory()
+        {
+            Avatar avatar = avatarHistory[currentAvatarIndex];
+            newUserProfile.Avatar = avatar;
+            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController?.OnShow();
+        }
+
+        private void UpdateAvatarNavigationButtons()
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.PrevRandomButton.interactable = currentAvatarIndex > 0;
+            viewInstance.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
         }
 #endregion
 
