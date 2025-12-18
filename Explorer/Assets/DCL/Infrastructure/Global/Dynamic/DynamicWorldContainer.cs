@@ -118,6 +118,7 @@ using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
+using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.SocialEmotes;
 using DCL.SocialEmotes.UI;
@@ -250,7 +251,7 @@ namespace Global.Dynamic
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
             var screenModeController = new ScreenModeController(appArgs);
-            
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
@@ -347,7 +348,7 @@ namespace Global.Dynamic
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
-            
+
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
 
@@ -752,6 +753,7 @@ namespace Global.Dynamic
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, staticContainer.ComponentsContainer.ComponentPoolsRegistry, identityCache, ephemeralNotificationsController),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
+                new RenderingSystemPlugin(debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,
@@ -1004,7 +1006,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.LoadingStatus,
                     mvcManager,
-                    thumbnailProvider)
+                    thumbnailProvider),
+                new AvatarLocomotionOverridesGlobalPlugin()
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
