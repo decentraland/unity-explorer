@@ -29,6 +29,7 @@ namespace DCL.Chat.MessageBus
         private readonly IWeb3IdentityCache identityCache;
         private readonly ChatMessageFactory messageFactory;
         private readonly ChatMessageRateLimiter messageRateLimiter;
+        private readonly NearbyChannelMessageBuffer nearbyChannelBuffer;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
@@ -48,6 +49,7 @@ namespace DCL.Chat.MessageBus
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
             messageRateLimiter = new ChatMessageRateLimiter();
+            nearbyChannelBuffer = new NearbyChannelMessageBuffer();
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandEnvironment switch
@@ -69,6 +71,8 @@ namespace DCL.Chat.MessageBus
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
+
+            ReleaseBufferedMessagesAsync(cancellationTokenSource.Token).Forget();
         }
 
         public void Dispose()
@@ -90,7 +94,6 @@ namespace DCL.Chat.MessageBus
                     ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Received a Private Message with incorrect Topic {receivedMessage.Topic}");
                     return;
                 }
-
                 // groups in the future?
             }
 
@@ -143,12 +146,34 @@ namespace DCL.Chat.MessageBus
 
                 ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 
-                MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
+                if (channelType == ChatChannel.ChatChannelType.NEARBY)
+                    nearbyChannelBuffer.TryEnqueue(newMessage);
+                else
+                    MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
             }
         }
 
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
+
+        private async UniTaskVoid ReleaseBufferedMessagesAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update);
+
+                var messagesReleasedThisFrame = 0;
+
+                while (messagesReleasedThisFrame < NearbyChannelMessageBuffer.MAX_MESSAGES_PER_FRAME && nearbyChannelBuffer.HasBufferedMessages)
+                {
+                    if (nearbyChannelBuffer.TryDequeue(out var bufferedMessage))
+                        break;
+
+                    MessageAdded?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, bufferedMessage);
+                    messagesReleasedThisFrame++;
+                }
+            }
+        }
 
         public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
         {

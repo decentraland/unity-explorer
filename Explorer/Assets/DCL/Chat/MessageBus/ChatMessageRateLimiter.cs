@@ -8,19 +8,17 @@ namespace DCL.Chat.MessageBus
     {
         private readonly Dictionary<string, UserRateLimitData> userRateLimitData = new ();
 
-        public ChatMessageRateLimiter() { }
-
-        public bool TryAllow(string walletId, int messagesPerSecond)
+        public bool TryAllow(string sourceId, int messagesPerSecond)
         {
-            if (string.IsNullOrEmpty(walletId))
+            if (string.IsNullOrEmpty(sourceId))
                 return true;
 
             long currentSecond = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
 
-            if (!userRateLimitData.TryGetValue(walletId, out UserRateLimitData data))
+            if (!userRateLimitData.TryGetValue(sourceId, out UserRateLimitData data))
             {
                 data = new UserRateLimitData(currentSecond);
-                userRateLimitData[walletId] = data;
+                userRateLimitData[sourceId] = data;
             }
 
             if (data.CurrentSecond != currentSecond)
@@ -31,12 +29,12 @@ namespace DCL.Chat.MessageBus
 
             if (data.Count >= messagesPerSecond)
             {
-                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Rate limit exceeded for sender {walletId}");
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Rate limit exceeded for sender {sourceId}");
                 return false;
             }
 
             data.Count++;
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Rate limit allowed for sender {walletId} with current second {currentSecond} and count {data.Count}");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Rate limit allowed for sender {sourceId} with current second {currentSecond} and count {data.Count}");
 
             return true;
         }
