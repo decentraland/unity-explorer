@@ -24,6 +24,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (wearableStorage.TryGetElement(pointer, out var wearable))
             {
+                await UniTask.SwitchToMainThread();
                 onWearableFetched(wearable);
                 return;
             }
@@ -41,6 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     foreach (var result in results)
                         if (result.GetUrn() == pointer)
                         {
+                            await UniTask.SwitchToMainThread();
                             onWearableFetched(result);
                             return;
                         }
