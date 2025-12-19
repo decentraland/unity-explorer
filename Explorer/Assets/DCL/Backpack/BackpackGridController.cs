@@ -227,10 +227,14 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(int slot, string itemId) =>
+        private void EquipItem(int slot, string itemId)
+        {
+            view.SetLoading(true);
             WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
-                wearable => TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget(),
-                CancellationToken.None).Forget();
+                                       wearable => TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget(),
+                                       CancellationToken.None)
+                                  .Forget();
+        }
 
         private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, CancellationToken ct)
         {
@@ -249,8 +253,11 @@ namespace DCL.Backpack
 
             // NOTICE we allow equipping the wearable even if not authorized
             // Since we marked the PX as killed, the scene won't run anyway
-            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true, StopGridLoadingAnimation));
         }
+
+        private void StopGridLoadingAnimation() =>
+            view.SetLoading(false);
 
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
@@ -375,8 +382,11 @@ namespace DCL.Backpack
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
+        private void SelectItem(int slot, string itemId)
+        {
+            view.SetLoading(true);
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId, StopGridLoadingAnimation));
+        }
 
         private void OnUnequip(IWearable unequippedWearable)
         {
