@@ -49,7 +49,6 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IPendingTransferService pendingTransferService;
         private readonly IAvatarEquippedStatusProvider equippedStatusProvider;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IWearablesProvider wearablesProvider;
@@ -65,7 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
-        
+
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -77,7 +76,6 @@ namespace DCL.PluginSystem.Global
             IPendingTransferService pendingTransferService,
             IWebRequestController webRequestController,
             IAvatarEquippedStatusProvider equippedStatusProvider,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
             IWearablesProvider wearablesProvider,
@@ -98,7 +96,6 @@ namespace DCL.PluginSystem.Global
             this.pendingTransferService = pendingTransferService;
             this.webRequestController = webRequestController;
             this.equippedStatusProvider = equippedStatusProvider;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.wearablesProvider = wearablesProvider;
@@ -140,10 +137,10 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
-            
+
             var giftTransferService = new Web3GiftTransferService(ethereumApi);
             var giftItemLoaderService = new GiftItemLoaderService(webRequestController);
-            
+
             var giftInventoryService = new GiftInventoryService(wearableStorage,
                 emoteStorage,
                 equippedStatusProvider,
@@ -171,7 +168,7 @@ namespace DCL.PluginSystem.Global
             );
 
             giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
-            
+
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
                 emoteProvider,
@@ -184,7 +181,6 @@ namespace DCL.PluginSystem.Global
                 emoteStorage);
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
-                profileRepositoryWrapper,
                 inputBlock,
                 gridFactory);
 
@@ -249,7 +245,7 @@ namespace DCL.PluginSystem.Global
             [field: Header("Notifications")]
             [field: SerializeField]
             public AssetReferenceGameObject GiftReceivedPopupPrefab;
-            
+
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }
 

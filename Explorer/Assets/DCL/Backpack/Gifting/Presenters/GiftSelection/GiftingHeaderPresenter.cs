@@ -15,20 +15,27 @@ namespace DCL.Backpack.Gifting.Presenters
 {
     public class GiftingHeaderPresenter : IDisposable
     {
+        private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS =
+        {
+            InputMapComponent.Kind.PLAYER,
+            InputMapComponent.Kind.SHORTCUTS,
+            InputMapComponent.Kind.CAMERA,
+            InputMapComponent.Kind.IN_WORLD_CAMERA,
+        };
+
         private const string TITLE_FORMAT = "Send a Gift to <color=#{0}>{1}</color>";
         private const int SEARCH_DEBOUNCE_MS = 500;
 
         public event Action<string>? OnSearchChanged;
-        
+
         private readonly GiftingHeaderView view;
         private readonly IProfileRepository profileRepository;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UserWalletAddressElementController walletAddressController;
         private readonly IInputBlock inputBlock;
 
         private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> profileThumbnail =
             new(new ProfileThumbnailViewModel.WithColor());
-        
+
         private CancellationTokenSource? searchCts;
 
         public Sprite? CurrentRecipientAvatarSprite
@@ -39,12 +46,10 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public GiftingHeaderPresenter(GiftingHeaderView view,
             IProfileRepository profileRepository,
-            ProfileRepositoryWrapper  profileRepositoryWrapper,
             IInputBlock inputBlock)
         {
             this.view = view;
             this.profileRepository = profileRepository;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.inputBlock = inputBlock;
 
             walletAddressController = new UserWalletAddressElementController(view.UserProfileWallet);
@@ -58,16 +63,12 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void OnSearchSelected(string text)
         {
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS,
-                InputMapComponent.Kind.IN_WORLD_CAMERA,
-                InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(BLOCKED_INPUTS);
         }
 
         private void OnSearchDeselected(string text)
         {
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS,
-                InputMapComponent.Kind.IN_WORLD_CAMERA,
-                InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(BLOCKED_INPUTS);
         }
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)

@@ -894,7 +894,6 @@ namespace Global.Dynamic
                     pendingTransferService,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     equippedStatusProvider,
-                    profileRepositoryWrapper,
                     profilesRepository,
                     staticContainer.InputBlock,
                     wearablesProvider,

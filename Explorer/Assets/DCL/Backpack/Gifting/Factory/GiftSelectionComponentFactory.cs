@@ -12,25 +12,22 @@ namespace DCL.Backpack.Gifting.Factory
     public class GiftSelectionComponentFactory
     {
         private readonly IProfileRepository profileRepository;
-        private readonly ProfileRepositoryWrapper profileWrapper;
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
 
         public GiftSelectionComponentFactory(
             IProfileRepository profileRepository,
-            ProfileRepositoryWrapper profileWrapper,
             IInputBlock inputBlock,
             IGiftingGridPresenterFactory gridFactory)
         {
             this.profileRepository = profileRepository;
-            this.profileWrapper = profileWrapper;
             this.inputBlock = inputBlock;
             this.gridFactory = gridFactory;
         }
 
         public GiftingHeaderPresenter CreateHeader(GiftingHeaderView view)
         {
-            return new GiftingHeaderPresenter(view, profileRepository, profileWrapper, inputBlock);
+            return new GiftingHeaderPresenter(view, profileRepository, inputBlock);
         }
 
         public GiftingFooterPresenter CreateFooter(GiftingFooterView view)
