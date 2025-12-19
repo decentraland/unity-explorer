@@ -87,14 +87,13 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
             urlBuilder.AppendDomain(attachment.GetContentDownloadUrl() != null ? URLDomain.FromString(attachment.GetContentDownloadUrl()!) : realmData.Ipfs.ContentBaseUrl)
-                      .AppendPath(thumbnailPath);
+                .AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {
                     // If cancellation token source was not provided a new one will be created
-                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build(), cancellationTokenSource: cancellationTokenSource),
-                    ReportSource = "AvatarRendering.LoadThumbnailsUtils",
+                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build(), cancellationTokenSource: cancellationTokenSource), ReportSource = "AvatarRendering.LoadThumbnailsUtils"
                 },
                 partitionComponent);
 

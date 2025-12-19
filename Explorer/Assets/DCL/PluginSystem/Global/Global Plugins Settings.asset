@@ -56,6 +56,7 @@ MonoBehaviour:
   - rid: 6169970366055448665
   - rid: 2008243996523495520
   - rid: 3821626543930605662
+  - rid: 745469515127586908
   - rid: 5190442831932031144
   references:
     version: 2
@@ -78,6 +79,125 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 745469515127586908
+      type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        GiftSelectionPopupPrefab:
+          m_AssetGUID: 91f584d6c05272842b8630c9c1bd041b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftTransferPopupPrefab:
+          m_AssetGUID: 09f9d810bdd59ba4996aa290a346561e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftTransferPopupSuccessPrefab:
+          m_AssetGUID: 2b7c17e39a8541341a73119ee9cb0093
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftReceivedPopupPrefab:
+          m_AssetGUID: f87c3e77ea2e0ec45b0ddef98bfeb066
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftTransferPopupStatusTitle: Preparing Gift for
+        GiftTransferPopupStatusWaitingMessage: A browser window should open for you
+          to confirm the transaction.
+        GiftTransferPopupStatusProcessingMessage: Processing...
+        GiftTransferErrorPopupTitle: Something went wrong
+        GiftTransferErrorPopupAdditionalUrlTitle: Your gift wasn't delivered. Please
+          try again of contact Support.
+        GiftTransferErrorPopupCloseButtonText: CLOSE
+        GiftTransferErrorPopupConfirmButtonText: TRY AGAIN
+        <BackpackSettings>k__BackingField:
+          <CategoryIconsMapping>k__BackingField:
+            m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <RarityBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <RarityInfoPanelBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <RarityColorMappings>k__BackingField:
+            m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <HairColors>k__BackingField:
+            m_AssetGUID: 2668240d360264034b2ee70e645aab92
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <EyesColors>k__BackingField:
+            m_AssetGUID: a00387527d7ddda41b9eb524b4a8662c
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <BodyshapeColors>k__BackingField:
+            m_AssetGUID: 5af318126b38647fea34ff22fba4ef17
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <PageButtonView>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <ColorToggle>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <DeleteOutfitIcon>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+        <EmbeddedEmotes>k__BackingField:
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

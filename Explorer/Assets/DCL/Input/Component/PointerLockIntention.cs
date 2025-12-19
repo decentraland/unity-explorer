@@ -5,12 +5,12 @@ namespace DCL.Input.Component
         public readonly bool Locked;
 
         /// <summary>
-        /// Whether an interactable menu was spawned while locked.
+        ///     Whether an interactable menu was spawned while locked.
         /// </summary>
         public readonly bool WithUI;
 
         /// <summary>
-        /// Default constructor.
+        ///     Default constructor.
         /// </summary>
         /// <param name="locked">Whether the cursor will be Locked.</param>
         /// <param name="withUI">Whether an interactable menu was spawned while locked.</param>

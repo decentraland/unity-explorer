@@ -168,14 +168,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void ResetArmatureInclination()
         {
-            Vector3 angles = ArmatureObject.eulerAngles;
+            var angles = ArmatureObject.eulerAngles;
             angles.x = 90;
             ArmatureObject.eulerAngles = angles;
         }
 
         /// <summary>
-        /// Replaces the name of the Armature object with the name it had originally.
-        /// The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
+        ///     Replaces the name of the Armature object with the name it had originally.
+        ///     The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
         /// </summary>
         public void RestoreArmatureName()
         {
@@ -203,16 +203,19 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.GetFloat(hash);
 
         /// <summary>
-        /// Replaces the animation clip of the emote state in the animator.
+        ///     Replaces the animation clip of the emote state in the animator.
         /// </summary>
         /// <param name="animationClip">The clip to be stored.</param>
-        /// <param name="armatureNameOverride">Optional. The name of the Armature object will be replaced with this. Call <see cref="RestoreArmatureName"/> to undo.</param>
+        /// <param name="armatureNameOverride">
+        ///     Optional. The name of the Armature object will be replaced with this. Call
+        ///     <see cref="RestoreArmatureName" /> to undo.
+        /// </param>
         public void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null)
         {
             if (overrideController["Emote"] == animationClip)
                 return;
 
-            if(!string.IsNullOrEmpty(armatureNameOverride))
+            if (!string.IsNullOrEmpty(armatureNameOverride))
                 ArmatureObject.name = armatureNameOverride;
 
             overrideController["Emote"] = animationClip;
@@ -283,10 +286,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         bool GetAnimatorBool(int hash);
 
         /// <summary>
-        /// Replaces the animation clip of the emote state in the animator.
+        ///     Replaces the animation clip of the emote state in the animator.
         /// </summary>
         /// <param name="animationClip">The clip to be stored.</param>
-        /// <param name="armatureNameOverride">Optional. The name of the Armature object will be replaced with this. Call <see cref="RestoreArmatureName"/> to undo.</param>
+        /// <param name="armatureNameOverride">
+        ///     Optional. The name of the Armature object will be replaced with this. Call
+        ///     <see cref="RestoreArmatureName" /> to undo.
+        /// </param>
         void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null);
 
         float GetAnimatorFloat(int hash);
@@ -300,8 +306,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void ResetArmatureInclination();
 
         /// <summary>
-        /// Replaces the name of the Armature object with the name it had originally.
-        /// The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
+        ///     Replaces the name of the Armature object with the name it had originally.
+        ///     The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
         /// </summary>
         void RestoreArmatureName();
     }

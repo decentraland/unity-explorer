@@ -222,7 +222,7 @@ namespace DCL.EmotesWheel
             else
             {
                 // Social and not directed, shows warning message
-                if(emote.IsSocial)
+                if (emote.IsSocial)
                     viewInstance.OpenInviteWarning.gameObject.SetActive(true);
 
                 viewInstance!.CurrentEmoteName.text = emote.GetName();
@@ -231,7 +231,7 @@ namespace DCL.EmotesWheel
 
         private void ClearCurrentEmote(int slot)
         {
-            if(inputData.IsDirectedEmote)
+            if (inputData.IsDirectedEmote)
                 viewInstance!.SocialEmoteNameWithUser.text = string.Empty;
             else
                 viewInstance!.CurrentEmoteName.text = string.Empty;
@@ -246,8 +246,7 @@ namespace DCL.EmotesWheel
 
             world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent
             {
-                Slot = slot,
-                TargetAvatarWalletAddress = inputData.IsDirectedEmote ? inputData.TargetWalletAddress : string.Empty
+                Slot = slot, TargetAvatarWalletAddress = inputData.IsDirectedEmote ? inputData.TargetWalletAddress : string.Empty
             });
 
             Close();

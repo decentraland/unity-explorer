@@ -21,6 +21,14 @@ namespace DCL.UI.ConfirmationDialog
         protected override void OnBeforeViewShow()
         {
             viewInstance!.Configure(inputData, profileRepositoryWrapper);
+
+            viewInstance.ActivateAdditionalUrl(!string.IsNullOrEmpty(inputData.LinkText));
+            
+            if (!string.IsNullOrEmpty(inputData.LinkText) && inputData.OnLinkClickCallback != null)
+            {
+                viewInstance.SetAdditionalUrlText(inputData.LinkText);
+                viewInstance.HookLinkClickEvent(inputData.OnLinkClickCallback);
+            }
         }
 
         protected override void OnViewClose()
