@@ -11,8 +11,10 @@ using DCL.Input.Component;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
@@ -23,6 +25,7 @@ using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -33,6 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunitiesBrowserController : ISection, IDisposable
     {
         private const int SEARCH_AWAIT_TIME = 1000;
+        private const int DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS = 2000;
 
         private const string INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading invites. Please try again.";
         private const string REQUESTS_RECEIVED_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading requests received. Please try again.";
@@ -57,6 +61,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
+        private readonly IAnalyticsController analytics;
+        private readonly CommunityDataService communityDataService;
+        private readonly ILoadingStatus loadingStatus;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
         private readonly CommunitiesBrowserStateService browserStateService;
@@ -90,7 +97,10 @@ namespace DCL.Communities.CommunitiesBrowser
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            IAnalyticsController analytics,
+            CommunityDataService communityDataService,
+            ILoadingStatus loadingStatus)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -102,6 +112,9 @@ namespace DCL.Communities.CommunitiesBrowser
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.orchestrator = orchestrator;
+            this.analytics = analytics;
+            this.communityDataService = communityDataService;
+            this.loadingStatus = loadingStatus;
 
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
@@ -147,6 +160,8 @@ namespace DCL.Communities.CommunitiesBrowser
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnCommunityTransferredToMe);
+
+            CheckCommunityAppArgAsync().Forget();
         }
 
         public void Dispose()
@@ -205,6 +220,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ReloadBrowser();
 
             SubscribeDataProviderEvents();
+
+            analytics.Track(AnalyticsEvents.Communities.OPEN_COMMUNITY_BROWSERS);
         }
 
         public void Deactivate()
@@ -905,6 +922,16 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!result.Success || !result.Value)
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MANAGE_REQUEST_RECEIVED_ERROR_TEXT));
             }
+        }
+
+        private async UniTaskVoid CheckCommunityAppArgAsync(CancellationToken ct = default)
+        {
+            if (!CommunitiesFeatureAccess.Instance.TryGetCommunityIdFromAppArgs(out string? communityId))
+                return;
+
+            await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+            await UniTask.Delay(DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS, cancellationToken: ct);
+            communityDataService.ShowCommunityDeepLinkNotification(communityId!);
         }
     }
 

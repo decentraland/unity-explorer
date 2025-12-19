@@ -1,7 +1,6 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
-using Microsoft.ClearScript.V8.FastProxy;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
@@ -11,27 +10,15 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
 {
-    public sealed class CommsApiWrap : JsApiWrapper, IV8FastHostObject
+    public sealed class CommsApiWrap : JsApiWrapper
     {
         private readonly IRoomHub roomHub;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
-        private static readonly V8FastHostObjectOperations<CommsApiWrap> OPERATIONS = new();
-        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
 
         private readonly StringBuilder stringBuilder;
         private readonly StringWriter stringWriter;
         private readonly JsonWriter writer;
-
-        static CommsApiWrap()
-        {
-            OPERATIONS.Configure(static configuration =>
-            {
-                configuration.AddMethodGetter(nameof(GetActiveVideoStreams),
-                    static (CommsApiWrap self, in V8FastArgs _, in V8FastResult result) =>
-                        result.Set(self.GetActiveVideoStreams()));
-            });
-        }
 
         public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(disposeCts)
         {
@@ -49,7 +36,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             writer.Close();
         }
 
-        private string GetActiveVideoStreams()
+        public string GetActiveVideoStreams()
         {
             try
             {

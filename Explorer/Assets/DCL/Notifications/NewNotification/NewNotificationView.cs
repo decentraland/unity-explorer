@@ -35,12 +35,23 @@ namespace DCL.Notifications.NewNotification
         [field: SerializeField]
         public CanvasGroup BadgeNotificationViewCanvasGroup { get; private set; }
 
+        [field: Header("Gift Toast")]
+        [field: SerializeField]
+        public GiftToastView GiftToastView { get; private set; }
+
+        [field: SerializeField]
+        public Animator GiftToastAnimator { get; private set; }
+
         [field: SerializeField]
         public FriendsNotificationView FriendsNotificationView { get; private set; }
 
         [field: SerializeField]
         public CanvasGroup FriendsNotificationViewCanvasGroup { get; private set; }
 
+        [field: SerializeField] public GiftNotificationView GiftNotificationView { get; private set; }
+
+        [field: SerializeField] public CanvasGroup GiftNotificationCanvasGroup { get; private set; }
+        
         [field: SerializeField]
         public MarketplaceCreditsNotificationView MarketplaceCreditsNotificationView { get; private set; }
 

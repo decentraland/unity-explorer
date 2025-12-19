@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Chat.ControllerShowParams;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
@@ -247,6 +248,12 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
+        public async UniTask OpenBackpackAsync()
+        {
+            await ShowAsync(PanelsSharingSpace.Explore,
+                new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar), PanelsSharingSpace.Chat);
+        }
+
         /// <summary>
         ///     Waits for the panel to finish its animation or cleaning process.
         /// </summary>
@@ -485,7 +492,7 @@ namespace DCL.UI.SharedSpaceManager
             }
 
             if (!isExplorePanelVisible)
-                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
+                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
 
         private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)

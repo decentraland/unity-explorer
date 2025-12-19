@@ -19,6 +19,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SocialService;
+using DCL.UI.EphemeralNotifications;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -54,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly EphemeralNotificationsController ephemeralNotificationsController;
 
         private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
@@ -67,6 +69,8 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsService friendsService;
         private readonly FriendsCache friendsCache;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+
+        private FriendPushNotificationController friendPushNotificationController;
 
         public FriendsContainer(
             MainUIView mainUIView,
@@ -94,7 +98,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            EphemeralNotificationsController ephemeralNotificationsController)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -110,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.ephemeralNotificationsController = ephemeralNotificationsController;
 
             friendsCache = new FriendsCache();
 
@@ -189,10 +195,8 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(friendRequestController);
 
-            var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
-                friendsConnectivityStatusTracker, profileRepositoryWrapper, loadingStatus);
-
-            mvcManager.RegisterController(friendPushNotificationController);
+            friendPushNotificationController = new FriendPushNotificationController(
+                friendsConnectivityStatusTracker, profileRepositoryWrapper, loadingStatus, ephemeralNotificationsController);
 
             UnfriendConfirmationPopupView unfriendConfirmationPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.UnfriendConfirmationPrefab, ct)).Value;
 

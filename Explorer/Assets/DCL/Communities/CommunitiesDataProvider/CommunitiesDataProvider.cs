@@ -34,8 +34,11 @@ namespace DCL.Communities.CommunitiesDataProvider
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
+        private const string CHECK_NOTIFICATIONS_OPT_OUT_URL = "{0}/subscription/opt-outs/community/{1}";
+
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
         private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
+        private string subscriptionsBaseUrl => urlsSource.Url(DecentralandUrl.Notifications);
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
@@ -458,6 +461,42 @@ namespace DCL.Communities.CommunitiesDataProvider
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<CheckCommunityNotificationOptOutResponse> CheckCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
+        {
+            string url = string.Format(CHECK_NOTIFICATIONS_OPT_OUT_URL, subscriptionsBaseUrl, communityId);
+
+            var response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                .CreateFromJson<CheckCommunityNotificationOptOutResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
+        }
+
+        public async UniTask<bool> DeleteCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
+        {
+            string url = string.Format(CHECK_NOTIFICATIONS_OPT_OUT_URL, subscriptionsBaseUrl, communityId);
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                .WithNoOpAsync()
+                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> CreateCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
+        {
+            string url = $"{subscriptionsBaseUrl}/subscription/opt-outs";
+            string jsonBody = JsonUtility.ToJson(new CreateCommunityNotificationOptOutPostBody
+            {
+                scope = "community", scopeId = communityId
+            });
+
+            var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                .WithNoOpAsync()
+                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }

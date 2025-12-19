@@ -26,6 +26,7 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using DCL.EmotesWheel.Params;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -315,7 +316,7 @@ namespace DCL.UI.Sidebar
 
         private async void OnEmotesWheelButtonClickedAsync()
         {
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
 
         private async void OnFriendsButtonClickedAsync()
@@ -390,10 +391,8 @@ namespace DCL.UI.Sidebar
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection), PanelsSharingSpace.Chat);
         }
 
-        private void OnSmartWearablesButtonHover()
-        {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
-        }
+        private void OnSmartWearablesButtonHover() =>
+            sharedSpaceManager.ShowAsync<ControllerNoData>(PanelsSharingSpace.SmartWearables, panelsToIgnore: PanelsSharingSpace.Chat).Forget();
 
         private void OnSmartWearablesButtonUnhover()
         {
