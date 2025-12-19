@@ -36,8 +36,10 @@ namespace DCL.AvatarRendering.Export
             // Ansis here. I don't know why this is commented out.
             // mapping.AddBone(new ExportBoneData(HumanBodyBones.Hips, bones, bones.name));
 
+#if UNITY_EDITOR
             var boneRenderer = duplicateRoot.gameObject.AddComponent<BoneRenderer>();
             boneRenderer.transforms = mapping.Bones.Select(x => x.TargetTransform).ToArray();
+#endif
 
             return mapping;
         }
