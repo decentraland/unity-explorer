@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -24,8 +23,6 @@ namespace DCL.CharacterMotion.Systems
     [LogCategory(ReportCategory.MOTION)]
     public partial class MovePlayerWithDurationSystem : BaseUnityLoopSystem
     {
-        private const float DOT_THRESHOLD = 0.999f;
-
         private MovePlayerWithDurationSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -49,70 +46,48 @@ namespace DCL.CharacterMotion.Systems
             [Data] float deltaTime,
             Entity entity,
             ref PlayerMoveToWithDurationIntent moveIntent,
-            ref CharacterController characterController,
             ref CharacterTransform characterTransform,
+            ref CharacterRigidTransform rigidTransform,
             ref CharacterAnimationComponent animationComponent,
             in IAvatarView avatarView)
         {
-            // Check if this is the first frame (before incrementing elapsed time)
-            bool isFirstFrame = moveIntent.ElapsedTime == 0f;
+            // Always enforce the movement direction rotation every frame
+            // This ensures consistent behavior even if the component is added mid-frame
+            ApplyMovementDirectionRotation(characterTransform, ref rigidTransform, in moveIntent);
 
             moveIntent.ElapsedTime += deltaTime;
 
             float progress = moveIntent.Progress;
 
-            // Use smooth step for easing
+            // Smooth step for easing
             float smoothProgress = SmoothStep(progress);
-
-            // Calculate new position
             Vector3 newPosition = Vector3.Lerp(moveIntent.StartPosition, moveIntent.TargetPosition, smoothProgress);
-
-            // Disable CharacterController to allow direct position modification
-            // TODO: is this needed??
-            bool wasEnabled = characterController.enabled;
-            characterController.enabled = false;
-
             characterTransform.Transform.position = newPosition;
-
-            // Re-enable CharacterController
-            characterController.enabled = wasEnabled;
-
-            // Handle rotation: immediately face movement direction on first frame, then maintain it
-            ApplyMovementDirectionRotation(characterTransform, in moveIntent, isFirstFrame);
 
             // Update animation based on movement speed
             UpdateAnimation(deltaTime, avatarView, ref animationComponent, ref moveIntent, newPosition);
 
-            // Check if movement is complete
             if (moveIntent.IsComplete)
             {
                 // Ensure final position is exact
-                characterController.enabled = false;
                 characterTransform.Transform.position = moveIntent.TargetPosition;
-                characterController.enabled = wasEnabled;
 
-                // Apply final rotation instantly if avatar target was specified
-                ApplyFinalRotation(characterTransform, in moveIntent);
-
-                // Reset animation to idle
+                ApplyFinalRotation(characterTransform, ref rigidTransform, in moveIntent);
                 ResetAnimationToIdle(avatarView, ref animationComponent);
 
-                // Remove the intent component
                 World.Remove<PlayerMoveToWithDurationIntent>(entity);
-
-                // Add MovePlayerToInfo to maintain compatibility with existing systems
                 World.AddOrSet(entity, new MovePlayerToInfo(UnityEngine.Time.frameCount));
             }
         }
 
         /// <summary>
         /// Immediately faces the movement direction (from start to target).
-        /// Applied instantly on first frame, maintained during movement.
+        /// Sets both the transform rotation and the LookDirection in CharacterRigidTransform.
         /// </summary>
         private static void ApplyMovementDirectionRotation(
             CharacterTransform characterTransform,
-            in PlayerMoveToWithDurationIntent moveIntent,
-            bool instant)
+            ref CharacterRigidTransform rigidTransform,
+            in PlayerMoveToWithDurationIntent moveIntent)
         {
             Vector3 movementDirection = moveIntent.TargetPosition - moveIntent.StartPosition;
             movementDirection.y = 0; // Keep rotation horizontal
@@ -120,26 +95,23 @@ namespace DCL.CharacterMotion.Systems
             if (movementDirection.sqrMagnitude < 0.0001f)
                 return;
 
-            Quaternion targetRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
+            Vector3 normalizedDirection = movementDirection.normalized;
 
-            if (instant)
-            {
-                // Instantly face movement direction on first frame
-                characterTransform.Transform.rotation = targetRotation;
-            }
-            else if (Quaternion.Dot(characterTransform.Transform.rotation, targetRotation) < DOT_THRESHOLD)
-            {
-                // Maintain facing movement direction (shouldn't need much correction after initial snap)
-                characterTransform.Transform.rotation = targetRotation;
-            }
+            // Set the LookDirection so RotateCharacterSystem maintains this rotation
+            rigidTransform.LookDirection = normalizedDirection;
+
+            // Also set the transform rotation immediately
+            characterTransform.Transform.rotation = Quaternion.LookRotation(normalizedDirection, Vector3.up);
         }
 
         /// <summary>
         /// Applies final rotation instantly when movement completes.
         /// If avatarTarget exists, faces that; otherwise no rotation change.
+        /// Sets both the transform rotation and the LookDirection in CharacterRigidTransform.
         /// </summary>
         private static void ApplyFinalRotation(
             CharacterTransform characterTransform,
+            ref CharacterRigidTransform rigidTransform,
             in PlayerMoveToWithDurationIntent moveIntent)
         {
             // Only apply final rotation if avatarTarget is specified
@@ -152,8 +124,13 @@ namespace DCL.CharacterMotion.Systems
             if (lookDirection.sqrMagnitude < 0.0001f)
                 return;
 
+            Vector3 normalizedDirection = lookDirection.normalized;
+
+            // Set the LookDirection so RotateCharacterSystem maintains this rotation
+            rigidTransform.LookDirection = normalizedDirection;
+
             // Instantly snap to face avatar target
-            characterTransform.Transform.rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
+            characterTransform.Transform.rotation = Quaternion.LookRotation(normalizedDirection, Vector3.up);
         }
 
         private static void UpdateAnimation(
