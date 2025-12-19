@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
+using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Profiling;
 
 namespace ECS.StreamableLoading.Cache.Disk.CleanUp
 {
@@ -14,9 +16,17 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
         private readonly long maxCacheSizeBytes;
 
         /// <summary>
-        /// Use file system enumerable because default DirectoryInfo API allocates a lot of memory per each call
+        /// Enumerable that converts each file to its size in bytes.
+        /// Used to compute total cache size without unnecessary string allocations.
         /// </summary>
-        private readonly FileSystemEnumerable<CacheFileInfo> files;
+        private FileSystemEnumerable<long> fileSizeEnumerable;
+
+        /// <summary>
+        /// Converts each file to a <see cref="CacheFileInfo"/>.
+        /// </summary>
+        private FileSystemEnumerable<CacheFileInfo> cacheFileInfoEnumerable;
+
+        private Dictionary<int, string> fullPathCache = new ();
 
         public LRUDiskCleanUp(CacheDirectory cacheDirectory, FilesLock filesLock, long maxCacheSizeBytes = 1024 * 1024 * 1024) //1GB
         {
@@ -24,80 +34,144 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
             this.filesLock = filesLock;
             this.maxCacheSizeBytes = maxCacheSizeBytes;
 
-            files = new FileSystemEnumerable<CacheFileInfo>(
-                cacheDirectory.Path,
-                (ref FileSystemEntry entry) => CacheFileInfo.FromFileSystemEntry(ref entry),
-                new EnumerationOptions
-                {
-                    IgnoreInaccessible = true,
-                    RecurseSubdirectories = false,
-                    AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
-                }
-            )
+            CreateFileSystemEnumerables();
+        }
+
+        private void CreateFileSystemEnumerables()
+        {
+            var enumerationOptions = new EnumerationOptions
             {
-                ShouldIncludePredicate = (ref FileSystemEntry entry) => entry.IsDirectory == false,
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = false,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
             };
+
+            fileSizeEnumerable = new FileSystemEnumerable<long>(cacheDirectory.Path, (ref FileSystemEntry entry) => entry.Length, enumerationOptions)
+            {
+                ShouldIncludePredicate = IgnoreDirectories,
+            };
+
+            cacheFileInfoEnumerable = new FileSystemEnumerable<CacheFileInfo>(
+                cacheDirectory.Path,
+                (ref FileSystemEntry entry) =>
+                {
+                    int fileId = GetFileId(entry.FileName);
+
+                    // We cache and reuse path strings to avoid allocating them more than once.
+                    if (!fullPathCache.TryGetValue(fileId, out string fullPath))
+                    {
+                        fullPath = entry.ToFullPath();
+                        fullPathCache.Add(fileId, fullPath);
+                    }
+
+                    return new CacheFileInfo(fileId, fullPath, entry.Length, entry.LastAccessTimeUtc.DateTime);
+                },
+                enumerationOptions)
+            {
+                ShouldIncludePredicate = IgnoreDirectories,
+            };
+
+            return;
+
+            bool IgnoreDirectories(ref FileSystemEntry entry) => !entry.IsDirectory;
+        }
+
+        /// <summary>
+        /// Computes an ID for each file by hashing its file name.
+        /// No need to hash the full path because all files are in the same directory and there is no recursion.
+        /// </summary>
+        private static int GetFileId(ReadOnlySpan<char> fileName)
+        {
+            unchecked
+            {
+                int hash = 17;
+                for (int i = 0; i < fileName.Length; i++)
+                {
+                    char c = fileName[i];
+                    hash = (hash * 31) + c;
+                }
+                return hash;
+            }
         }
 
         public void CleanUpIfNeeded()
         {
-            using var _ = CachedFiles(out var cachedFiles);
-            long directorySize = DirectorySize(cachedFiles);
+            Profiler.BeginSample("LRU Disk Clean Up - Clean Up If Needed");
 
-            if (directorySize > maxCacheSizeBytes)
+            long cacheSize = ComputeCacheSize();
+            if (cacheSize <= maxCacheSizeBytes)
             {
-                cachedFiles.Sort(LRUComparer.INSTANCE);
-
-                for (int i = 0; i < cachedFiles.Count; i++)
-                {
-                    var file = cachedFiles[i];
-                    using var lockScope = filesLock.TryLock(file.FullPath, out bool success);
-
-                    if (success == false)
-                        continue;
-
-                    File.Delete(file.FullPath);
-                    directorySize -= file.Size;
-                    if (directorySize < maxCacheSizeBytes) break;
-                }
+                Profiler.EndSample();
+                return;
             }
+
+            using var cachedFilesScope = CachedFiles(out var cachedFiles);
+            cachedFiles.Sort(LRUComparer.INSTANCE);
+
+            for (int i = 0; i < cachedFiles.Count; i++)
+            {
+                var file = cachedFiles[i];
+
+                using var lockScope = filesLock.TryLock(file.FullPath, out bool isLocked);
+                if (!isLocked) continue;
+
+                File.Delete(file.FullPath);
+                // Remove the entry from the lookup.
+                // Not strictly necessary and could avoid extra allocs if the same file is cached again.
+                // Still, we remove it to avoid the lookup growing indefinitely.
+                fullPathCache.Remove(file.FileId);
+
+                cacheSize -= file.Size;
+                if (cacheSize < maxCacheSizeBytes) break;
+            }
+
+            Profiler.EndSample();
         }
 
         public void NotifyUsed(string fileName)
         {
-            File.SetLastAccessTimeUtc(Path.Combine(cacheDirectory.Path, fileName), DateTime.UtcNow);
+            int fileId = GetFileId(fileName.AsSpan());
+
+            if (!fullPathCache.TryGetValue(fileId, out string fullPath))
+            {
+                fullPath = Path.Combine(cacheDirectory.Path, fileName);
+                fullPathCache.Add(fileId, fullPath);
+            }
+
+            File.SetLastAccessTimeUtc(fullPath, DateTime.UtcNow);
         }
 
-        private static long DirectorySize(IReadOnlyCollection<CacheFileInfo> files)
+        private long ComputeCacheSize()
         {
-            long size = 0;
-            foreach (CacheFileInfo fi in files) size += fi.Size;
-            return size;
+            long cacheSize = 0;
+            foreach (long fileSize in fileSizeEnumerable) cacheSize += fileSize;
+            return cacheSize;
         }
 
         private PooledObject<List<CacheFileInfo>> CachedFiles(out List<CacheFileInfo> list)
         {
             PooledObject<List<CacheFileInfo>> pooledObject = ListPool<CacheFileInfo>.Get(out list);
-            list!.Clear();
-            foreach (CacheFileInfo cacheFileInfo in files) list.Add(cacheFileInfo);
+            foreach (CacheFileInfo cacheFileInfo in cacheFileInfoEnumerable) list.Add(cacheFileInfo);
             return pooledObject;
         }
 
         private readonly struct CacheFileInfo
         {
+            public readonly int FileId;
             public readonly string FullPath;
             public readonly long Size;
             public readonly DateTime LastAccessTimeUtc;
 
-            public CacheFileInfo(string fullPath, long size, DateTime lastAccessTimeUtc)
+            public CacheFileInfo(int fileId, string fullPath, long size, DateTime lastAccessTimeUtc)
             {
+                FileId = fileId;
                 FullPath = fullPath;
                 Size = size;
                 LastAccessTimeUtc = lastAccessTimeUtc;
             }
 
-            public static CacheFileInfo FromFileSystemEntry(ref FileSystemEntry entry) =>
-                new (entry.ToFullPath()!, entry.Length, entry.LastAccessTimeUtc.DateTime);
+            public static CacheFileInfo FromFileSystemEntry(int fileId, ref FileSystemEntry entry) =>
+                new (fileId, entry.ToFullPath()!, entry.Length, entry.LastAccessTimeUtc.DateTime);
         }
 
         private class LRUComparer : IComparer<CacheFileInfo>
