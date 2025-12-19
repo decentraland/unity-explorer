@@ -6,10 +6,16 @@ labels: 'performance, tech debt'
 assignees: ''
 ---
 ### 📊 **Version & Environment**
-<!-- What version was this tested on? Commit hash, build & platform/editor -->
+<!-- What version was this tested on? Since which version did this start happening? Commit hash, build & platform/editor -->
 
 ### 📊 **Impact Level:**
 <!-- Select one: Low | Medium | High | Critical -->
+
+### 📋 **Affected metrics:**
+- [ ] Average FPS
+- [ ] Frame time spikes
+- [ ] Memory usage
+- [ ] Load time
 
 ### 📍 **Component/Feature:**
 <!-- Which part of the application does this affect? -->
@@ -22,7 +28,7 @@ assignees: ''
 
 ### 🔍 **Profiling Data:**
 #### Evidence:
-<!-- Screenshots, traces, logs, or links to profiling results -->
+<!-- Screenshots, traces, logs, or links to profiling results or memory dumps -->
 
 ### 👣 **Reproduction Steps:**
 1.
