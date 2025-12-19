@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 {
     public class EmotePlayer
     {
-        private static readonly List<AnimationClip> ANIMATION_CLIPS = new List<AnimationClip>(4);
+        private static readonly List<AnimationClip> ANIMATION_CLIPS = new (4);
 
         private readonly GameObjectPool<AudioSource> audioSourcePool;
         private readonly Action<EmoteReferences> releaseEmoteReferences;
@@ -57,12 +57,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return true;
             }
 
-            if(emoteComponent.SocialEmote.HasOutcomeAnimationStarted)
+            if (emoteComponent.SocialEmote.HasOutcomeAnimationStarted)
                 return true;
 
             if (emoteInUse != null)
             {
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() Stopping emoteInUse " + emoteInUse.avatarClip?.name?? string.Empty + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "EmotePlayer.Play() Stopping emoteInUse " + emoteInUse.avatarClip?.name ?? string.Empty + " BECAUSE PLAYING " + mainAsset.name + " user: " + ((AvatarBase)view).name);
                 Stop(emoteInUse);
             }
             else
@@ -72,7 +72,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
-                EmoteDTO.EmoteMetadataDto emoteMetadata = emoteComponent.Metadata;
+                var emoteMetadata = emoteComponent.Metadata;
 
                 if (IsValid(mainAsset))
                     pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, emoteMetadata), onRelease: releaseEmoteReferences));
@@ -178,7 +178,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
             EmoteReferences.EmoteOutcome[]? outcomes;
 
-            ExtractClips(ANIMATION_CLIPS, uniqueClips, emoteMetadata, out AnimationClip? avatarClip, out AnimationClip? propClip, out outcomes, out int propClipHash, out bool legacy);
+            ExtractClips(ANIMATION_CLIPS, uniqueClips, emoteMetadata, out var avatarClip, out var propClip, out outcomes, out int propClipHash, out bool legacy);
 
             if (uniqueClips.Count == 1)
             {
@@ -251,7 +251,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() " + emoteReferences.avatarClip?.name?? string.Empty + " " + ((AvatarBase)view).name);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() " + emoteReferences.avatarClip?.name ?? string.Empty + " " + ((AvatarBase)view).name);
 
             // Avatar
             AnimationClip? avatarClip;
@@ -295,7 +295,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (avatarClip != null)
             {
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() Replacing animation with " + avatarClip.name + " override armature: " + armatureNameOverride?? "");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayMecanimEmote() Replacing animation with " + avatarClip.name + " override armature: " + armatureNameOverride ?? "");
                 view.ReplaceEmoteAnimation(avatarClip, armatureNameOverride);
                 emoteComponent.EmoteLoop = isLooping;
 
@@ -395,7 +395,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 outcomeClips = new EmoteReferences.EmoteOutcome[emoteMetadata.data!.outcomes!.Length];
 
-                foreach (AnimationClip animationClip in uniqueClips)
+                foreach (var animationClip in uniqueClips)
                 {
                     if (emoteMetadata.data.startAnimation != null &&
                         emoteMetadata.data.startAnimation.Armature != null &&
@@ -440,7 +440,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     avatarClip = uniqueClips[0];
                 else if (uniqueClips.Count > 1)
                 {
-                    foreach (AnimationClip animationClip in uniqueClips)
+                    foreach (var animationClip in uniqueClips)
                     {
                         // Many 2.0 emotes are not following naming conventions: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
                         // Some examples:
