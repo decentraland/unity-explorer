@@ -1,6 +1,7 @@
 using System;
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
@@ -57,7 +58,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void ApplyTeleportIntent()
         {
             var newPosition = new Vector3(10, 0, 10);
-            globalWorldActions.MoveAndRotatePlayer(newPosition, null, null);
+            globalWorldActions.MoveAndRotatePlayerAsync(newPosition, null, null, 0f, CancellationToken.None).Forget();
 
             Assert.IsTrue(world.Has<PlayerTeleportIntent>(playerEntity));
             var intent = world.Get<PlayerTeleportIntent>(playerEntity);
@@ -73,7 +74,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var expectedLookAt = playerPos + (avatarTarget - playerPos).normalized;
             expectedLookAt.y = playerPos.y;
 
-            globalWorldActions.MoveAndRotatePlayer(playerPos, null, avatarTarget);
+            globalWorldActions.MoveAndRotatePlayerAsync(playerPos, null, avatarTarget, 0f, CancellationToken.None).Forget();
 
             Assert.IsTrue(world.Has<PlayerLookAtIntent>(playerEntity));
             var intent = world.Get<PlayerLookAtIntent>(playerEntity);
@@ -88,7 +89,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var playerPos = new Vector3(5, 0, 5);
             var cameraTarget = new Vector3(5, 0, 10);
 
-            globalWorldActions.MoveAndRotatePlayer(playerPos, cameraTarget, null);
+            globalWorldActions.MoveAndRotatePlayerAsync(playerPos, cameraTarget, null, 0f, CancellationToken.None).Forget();
 
             Assert.IsTrue(world.Has<PlayerLookAtIntent>(playerEntity));
             var intent = world.Get<PlayerLookAtIntent>(playerEntity);

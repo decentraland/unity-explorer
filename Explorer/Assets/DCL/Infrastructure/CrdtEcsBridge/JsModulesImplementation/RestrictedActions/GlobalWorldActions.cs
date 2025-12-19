@@ -47,7 +47,7 @@ namespace CrdtEcsBridge.RestrictedActions
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
-        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration = 0f)
+        public async UniTask<bool> MoveAndRotatePlayerAsync(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration, CancellationToken ct)
         {
             if (duration > 0f)
             {
@@ -59,6 +59,18 @@ namespace CrdtEcsBridge.RestrictedActions
                     newCameraTarget,
                     newAvatarTarget,
                     duration));
+
+                // Wait until the movement intent is removed (either completed or interrupted)
+                while (world.Has<PlayerMoveToWithDurationIntent>(playerEntity))
+                {
+                    ct.ThrowIfCancellationRequested();
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                }
+
+                // Check if we reached the target position (not interrupted)
+                Vector3 finalPosition = world.Get<CharacterTransform>(playerEntity).Transform.position;
+                const float COMPLETION_THRESHOLD = 0.1f;
+                return Vector3.Distance(finalPosition, newPlayerPosition) < COMPLETION_THRESHOLD;
             }
             else
             {
@@ -77,6 +89,9 @@ namespace CrdtEcsBridge.RestrictedActions
                 {
                     world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
                 }
+
+                // Instant teleport is always successful
+                return true;
             }
         }
 
