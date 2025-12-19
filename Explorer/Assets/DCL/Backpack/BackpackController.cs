@@ -201,7 +201,7 @@ namespace DCL.Backpack
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
-            view.vrmExportButton.onClick.AddListener(OnVRMExportClicked);
+            view.vrmExportButton.onClick.AddListener(OnVRMExportClickedAsync);
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
@@ -240,37 +240,54 @@ namespace DCL.Backpack
             view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
         }
 
-        private void OnVRMExportClicked()
+        private async void OnVRMExportClickedAsync()
         {
-            if (!world.TryGet(playerEntity, out Profile? profile) || profile == null)
+            try
             {
-                ReportHub.LogError(ReportCategory.AVATAR_EXPORT, "Cannot export: No profile found");
-                return;
-            }
-
-            string savePath = TryGetExportPath(profile.Name);
-            if (string.IsNullOrEmpty(savePath))
-                return;
-
-            VrmExportRequestBuilder.CreateExportRequest(
-                world,
-                profile,
-                savePath,
-                () =>
+                if (!world.TryGet(playerEntity, out Profile? profile)
+                    || profile == null)
                 {
-                    if (view.gameObject.activeInHierarchy)
-                    {
-                        view.ToastMessage.ShowToastMessage(ToastMessageType.SUCCESS, "VRM avatar successfully exported.");
-                    }
-                });
+                    ReportHub.LogError(ReportCategory.AVATAR_EXPORT,
+                        "Cannot export: No profile found");
 
-            ReportHub.Log(ReportCategory.AVATAR_EXPORT, "VRM Export requested...");
+                    return;
+                }
+
+                string savePath = await TryGetExportPathAsync(profile.Name);
+
+                if (string.IsNullOrEmpty(savePath))
+                    return;
+
+                VrmExportRequestBuilder.CreateExportRequest(world, profile,
+                    savePath, () =>
+                    {
+                        if (view.gameObject.activeInHierarchy)
+                            view.ToastMessage.ShowToastMessage(
+                                ToastMessageType.SUCCESS,
+                                "VRM avatar successfully exported.");
+                    });
+
+                ReportHub.Log(ReportCategory.AVATAR_EXPORT,
+                    "VRM Export requested...");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex,
+                    ReportCategory.AVATAR_EXPORT);
+            }
         }
 
-        private string TryGetExportPath(string name)
+        private async UniTask<string> TryGetExportPathAsync(string name)
         {
-            string fileName = $"{name} avatar";
-            string savePath = FileBrowser.Instance.SaveFile("Save avatar VRM", Application.persistentDataPath, fileName, new ExtensionFilter("vrm", "vrm"));
+            string? savePath = null;
+
+            FileBrowser.Instance.SaveFileAsync(cb => savePath = cb,
+                "Save avatar VRM", Application.persistentDataPath,
+                $"{name} avatar", new ExtensionFilter("vrm", "vrm"));
+
+            while (savePath == null)
+                await UniTask.Yield();
+
             return savePath;
         }
 
