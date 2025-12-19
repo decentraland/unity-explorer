@@ -8,10 +8,12 @@ namespace DCL.UI
     {
         [field: SerializeField] public GenericContextMenuControlConfig BlockButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig JumpInButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig GiftInButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig MentionButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig OpenUserProfileButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig OpenConversationButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig StartCallButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig InviteToCommunityConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig SocialEmoteButtonConfig { get; private set; }
     }
 }

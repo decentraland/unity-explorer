@@ -81,15 +81,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PUT:
                         string putContentType = webRequestHeaders.HeaderContentType();
-                        var putArguments = GenericPutArguments.Create(body, putContentType);
+                        var putArguments = GenericPostArguments.Create(body, putContentType);
                         return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.DELETE:
                         string deleteContentType = webRequestHeaders.HeaderContentType();
-                        var deleteArguments = GenericDeleteArguments.Create(body, deleteContentType);
+                        var deleteArguments = GenericPostArguments.Create(body, deleteContentType);
                         return await webController.DeleteAsync<GenerateResponseOp<GenericDeleteRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericDeleteRequest>(), deleteArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PATCH:
                         string patchContentType = webRequestHeaders.HeaderContentType();
-                        var patchArguments = GenericPatchArguments.Create(body, patchContentType);
+                        var patchArguments = GenericPostArguments.Create(body, patchContentType);
                         return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.HEAD: throw new NotImplementedException();
                     case RequestMethod.INVALID:

@@ -78,12 +78,14 @@ namespace DCL.UI
 
         public bool Enabled { get; set; }
         public bool Interactable { get; set; }
+        public string? NonInteractableFeedback { get; set; }
 
-        public GenericContextMenuElement(IContextMenuControlSettings setting, bool defaultEnabled, bool defaultInteractable = true)
+        public GenericContextMenuElement(IContextMenuControlSettings setting, bool defaultEnabled, bool defaultInteractable = true, string? defaultNonInteractableFeedback = null)
         {
             this.setting = setting;
             this.Enabled = defaultEnabled;
             this.Interactable = defaultInteractable;
+            this.NonInteractableFeedback = defaultInteractable ? null : defaultNonInteractableFeedback;
         }
 
         public GenericContextMenuElement(IContextMenuControlSettings setting)
@@ -91,6 +93,7 @@ namespace DCL.UI
             this.setting = setting;
             this.Enabled = true;
             this.Interactable = true;
+            this.NonInteractableFeedback = null;
         }
     }
 }

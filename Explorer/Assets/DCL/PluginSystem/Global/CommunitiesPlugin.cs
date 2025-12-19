@@ -15,6 +15,7 @@ using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -54,13 +55,14 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
-        private readonly IRPCCommunitiesService rpcCommunitiesService;
+        private readonly RPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
         private readonly IProfileRepository profileRepository;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly IAnalyticsController analytics;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -90,7 +92,8 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IAnalyticsController analytics)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -114,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
+            this.analytics = analytics;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(realmNavigator);
         }
@@ -157,7 +161,9 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 galleryEventBus,
                 voiceChatOrchestrator,
-                inputBlock);
+                inputBlock,
+                selfProfile,
+                analytics);
 
             mvcManager.RegisterController(communityCardController);
 
@@ -187,7 +193,7 @@ namespace DCL.PluginSystem.Global
                 realmNavigator);
             mvcManager.RegisterController(eventInfoController);
 
-            rpcCommunitiesService.SubscribeToConnectivityStatusAsync(ct).Forget();
+            rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
     }
 

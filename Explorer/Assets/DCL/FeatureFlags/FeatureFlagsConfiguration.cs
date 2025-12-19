@@ -19,8 +19,10 @@ namespace DCL.FeatureFlags
             this.result = result;
         }
 
-        public bool IsEnabled(string id) =>
-            result.flags.GetValueOrDefault(id, false);
+        public bool IsEnabled(string id)
+        {
+            return result.flags.GetValueOrDefault(id, false);
+        }
 
         public bool IsEnabled(string id, string variantId)
         {

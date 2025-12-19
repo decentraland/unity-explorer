@@ -41,7 +41,7 @@ namespace DCL.Communities.CommunitiesCard
             FetchNewDataAsync(cancellationToken).Forget();
         }
 
-        protected async UniTaskVoid FetchNewDataAsync(CancellationToken ct)
+        protected async UniTask FetchNewDataAsync(CancellationToken ct)
         {
             isFetching = true;
 

@@ -367,7 +367,7 @@ MonoBehaviour:
     lensFlareEnabled: 1
     lensFlareComponent: {fileID: 4642727729545981125, guid: 771c68288bf78564cb5301f95b69811d, type: 3}
     environmentSettings:
-      sceneLoadRadius: 50
+      sceneLoadRadius: 20
       lod1Threshold: 5
       terrainLODBias: 100
       detailDensity: 70
@@ -428,7 +428,7 @@ MonoBehaviour:
     lensFlareEnabled: 0
     lensFlareComponent: {fileID: 2726953631672280614, guid: 91fed6d77ceea8246b3d136a8e67a12c, type: 3}
     environmentSettings:
-      sceneLoadRadius: 80
+      sceneLoadRadius: 20
       lod1Threshold: 5
       terrainLODBias: 125
       detailDensity: 100
@@ -488,20 +488,20 @@ MonoBehaviour:
   - {fileID: 2915607160997281497, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: -1628976218549508611, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: 6840260418858268937, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
-  - {fileID: -4906195724866340262, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: -9034674521452425196, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
+  - {fileID: -9074318883601618405, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: 1798844783772877419, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: -2161158766388826272, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: -8887782192993502672, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: 6470208710530210403, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
-  - {fileID: -3253943072471734078, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: 8547050541902374763, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
+  - {fileID: 4851537350754814979, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: 1757973802043764545, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: 4908790961291395409, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -4982935907446270823, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: 5175788798212861771, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
-  - {fileID: -7326921190901022776, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -4991993260910906933, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
+  - {fileID: 8054367766033506950, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
 --- !u!114 &627882838885633079
 MonoBehaviour:
   m_ObjectHideFlags: 3

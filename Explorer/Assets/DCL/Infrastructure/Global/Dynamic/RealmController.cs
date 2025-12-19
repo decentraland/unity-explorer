@@ -25,11 +25,12 @@ using System.Threading;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
 using Utility;
 
- namespace Global.Dynamic
+namespace Global.Dynamic
 {
     public class RealmController : IGlobalRealmController
     {
@@ -43,7 +44,8 @@ using Utility;
                                                                          .WithNone<DeleteEntityIntention, ISceneFacade>();
 
         private static readonly QueryDescription INVALIDATE_PARTITIONS = new QueryDescription()
-           .WithAll<PartitionComponent, ISceneFacade>();
+                                                                        .WithAll<PartitionComponent, ISceneFacade>()
+                                                                        .WithNone<PortableExperienceComponent, SmartWearableId>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -231,16 +233,27 @@ using Utility;
         {
             if (staticLoadPositions.Count == 0) return null;
 
-            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
-                new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
-                    new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+            World world = GlobalWorld.EcsWorld;
 
-            promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
+            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
 
-            if (promise.TryGetResult(GlobalWorld.EcsWorld, out StreamableLoadingResult<SceneDefinitions> result) && result.Succeeded)
-                return result.Asset;
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            return null;
+            if (ct.IsCancellationRequested || !promise.TryGetResult(world, out var result) || !result.Succeeded) return null;
+
+            var sceneDefinitions = result.Asset;
+            if (world.TryGet(realmEntity, out SmartWearablePreviewScene smartWearablePreviewScene) && smartWearablePreviewScene.Value != Entity.Null)
+            {
+                // In local scene development we can be loading a Smart Wearable preview scene
+                // In that case the scene definition cannot be found at the standard active entities endpoint
+                // But, we can retrieve it from the Smart Wearable preview scene component that's already been created
+                var sceneDefinitionComponent = world.Get<SceneDefinitionComponent>(smartWearablePreviewScene.Value);
+                sceneDefinitions.Value.Add(sceneDefinitionComponent.Definition);
+            }
+
+            return sceneDefinitions;
+
         }
 
         public void DisposeGlobalWorld()
@@ -303,10 +316,7 @@ using Utility;
         private void InvalidateScenePartitions(World world)
         {
             world.Query(in INVALIDATE_PARTITIONS,
-                (ref PartitionComponent partitionComponent) =>
-                {
-                    partitionComponent.Bucket = byte.MaxValue;
-                });
+                (ref PartitionComponent partitionComponent) => { partitionComponent.Bucket = byte.MaxValue; });
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)

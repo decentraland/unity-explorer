@@ -10,10 +10,10 @@ namespace DCL.Navmap
         public Button FilterPanelButton { get; private set; }
 
         [field: SerializeField]
-        public Button CenterToPlayerButton { get; private set; }
+        public Button CenterToHomeButton { get; private set; }
 
         [field: SerializeField]
-        public Button CenterToHomeButton { get; private set; }
+        public Button CenterToPlayerButton { get; private set; }
 
         [field: SerializeField]
         public NavmapFilterPanelView FiltersPanel { get; private set; }

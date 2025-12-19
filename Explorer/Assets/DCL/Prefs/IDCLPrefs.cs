@@ -1,6 +1,6 @@
 namespace DCL.Prefs
 {
-    internal interface IDCLPrefs
+    public interface IDCLPrefs
     {
         void SetString(string key, string value);
         void SetInt(string key, int value);

@@ -25,7 +25,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CipkZWNlbnRyYWxhbmQva2VybmVsL2NvbW1zL3JmYzQvY29tbXMucHJvdG8S",
-            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCKVBgoGUGFja2V0EjwK",
+            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLhBgoGUGFja2V0EjwK",
             "CHBvc2l0aW9uGAEgASgLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
             "ZmM0LlBvc2l0aW9uSAASUQoPcHJvZmlsZV92ZXJzaW9uGAIgASgLMjYuZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LkFubm91bmNlUHJvZmlsZVZl",
@@ -42,43 +42,56 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "bW90ZUgAEkEKC3NjZW5lX2Vtb3RlGAogASgLMiouZGVjZW50cmFsYW5kLmtl",
             "cm5lbC5jb21tcy5yZmM0LlNjZW5lRW1vdGVIABJRChNtb3ZlbWVudF9jb21w",
             "cmVzc2VkGAwgASgLMjIuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0",
-            "Lk1vdmVtZW50Q29tcHJlc3NlZEgAEhgKEHByb3RvY29sX3ZlcnNpb24YCyAB",
-            "KA1CCQoHbWVzc2FnZSKlAQoIUG9zaXRpb24SDQoFaW5kZXgYASABKA0SEgoK",
-            "cG9zaXRpb25feBgDIAEoAhISCgpwb3NpdGlvbl95GAQgASgCEhIKCnBvc2l0",
-            "aW9uX3oYBSABKAISEgoKcm90YXRpb25feBgGIAEoAhISCgpyb3RhdGlvbl95",
-            "GAcgASgCEhIKCnJvdGF0aW9uX3oYCCABKAISEgoKcm90YXRpb25fdxgJIAEo",
-            "AiKHAwoITW92ZW1lbnQSEQoJdGltZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9u",
-            "X3gYAiABKAISEgoKcG9zaXRpb25feRgDIAEoAhISCgpwb3NpdGlvbl96GAQg",
-            "ASgCEhIKCnZlbG9jaXR5X3gYBSABKAISEgoKdmVsb2NpdHlfeRgGIAEoAhIS",
-            "Cgp2ZWxvY2l0eV96GAcgASgCEhwKFG1vdmVtZW50X2JsZW5kX3ZhbHVlGAgg",
-            "ASgCEhkKEXNsaWRlX2JsZW5kX3ZhbHVlGAkgASgCEhMKC2lzX2dyb3VuZGVk",
-            "GAogASgIEhIKCmlzX2p1bXBpbmcYCyABKAgSFAoMaXNfbG9uZ19qdW1wGAwg",
-            "ASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5nGA4gASgI",
-            "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhISCgpp",
-            "c19pbnN0YW50GBEgASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgiQgoSTW92ZW1l",
-            "bnRDb21wcmVzc2VkEhUKDXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1l",
-            "bnRfZGF0YRgCIAEoAyJFCgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9p",
-            "ZBgBIAEoDRILCgN1cm4YAiABKAkSEQoJdGltZXN0YW1wGAMgASgCIjUKClNj",
-            "ZW5lRW1vdGUSFwoPc2NlbmVfZW50aXR5X2lkGAEgASgJEg4KBnNvdXJjZRgC",
-            "IAEoCSIxChZBbm5vdW5jZVByb2ZpbGVWZXJzaW9uEhcKD3Byb2ZpbGVfdmVy",
-            "c2lvbhgBIAEoDSI6Cg5Qcm9maWxlUmVxdWVzdBIPCgdhZGRyZXNzGAQgASgJ",
-            "EhcKD3Byb2ZpbGVfdmVyc2lvbhgDIAEoDSI/Cg9Qcm9maWxlUmVzcG9uc2US",
-            "GgoSc2VyaWFsaXplZF9wcm9maWxlGAEgASgJEhAKCGJhc2VfdXJsGAIgASgJ",
-            "IloKBENoYXQSDwoHbWVzc2FnZRgBIAEoCRIRCgl0aW1lc3RhbXAYAiABKAES",
-            "GwoOZm9yd2FyZGVkX2Zyb20YAyABKAlIAIgBAUIRCg9fZm9yd2FyZGVkX2Zy",
-            "b20iJwoFU2NlbmUSEAoIc2NlbmVfaWQYASABKAkSDAoEZGF0YRgCIAEoDCKL",
-            "AQoFVm9pY2USFwoPZW5jb2RlZF9zYW1wbGVzGAEgASgMEg0KBWluZGV4GAIg",
-            "ASgNEj8KBWNvZGVjGAMgASgOMjAuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21t",
-            "cy5yZmM0LlZvaWNlLlZvaWNlQ29kZWMiGQoKVm9pY2VDb2RlYxILCgdWQ19P",
-            "UFVTEABiBnByb3RvMw=="));
+            "Lk1vdmVtZW50Q29tcHJlc3NlZEgAEkoKEGxvb2tfYXRfcG9zaXRpb24YDSAB",
+            "KAsyLi5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuTG9va0F0UG9z",
+            "aXRpb25IABIYChBwcm90b2NvbF92ZXJzaW9uGAsgASgNQgkKB21lc3NhZ2Ui",
+            "pQEKCFBvc2l0aW9uEg0KBWluZGV4GAEgASgNEhIKCnBvc2l0aW9uX3gYAyAB",
+            "KAISEgoKcG9zaXRpb25feRgEIAEoAhISCgpwb3NpdGlvbl96GAUgASgCEhIK",
+            "CnJvdGF0aW9uX3gYBiABKAISEgoKcm90YXRpb25feRgHIAEoAhISCgpyb3Rh",
+            "dGlvbl96GAggASgCEhIKCnJvdGF0aW9uX3cYCSABKAIihwMKCE1vdmVtZW50",
+            "EhEKCXRpbWVzdGFtcBgBIAEoAhISCgpwb3NpdGlvbl94GAIgASgCEhIKCnBv",
+            "c2l0aW9uX3kYAyABKAISEgoKcG9zaXRpb25fehgEIAEoAhISCgp2ZWxvY2l0",
+            "eV94GAUgASgCEhIKCnZlbG9jaXR5X3kYBiABKAISEgoKdmVsb2NpdHlfehgH",
+            "IAEoAhIcChRtb3ZlbWVudF9ibGVuZF92YWx1ZRgIIAEoAhIZChFzbGlkZV9i",
+            "bGVuZF92YWx1ZRgJIAEoAhITCgtpc19ncm91bmRlZBgKIAEoCBISCgppc19q",
+            "dW1waW5nGAsgASgIEhQKDGlzX2xvbmdfanVtcBgMIAEoCBIUCgxpc19sb25n",
+            "X2ZhbGwYDSABKAgSEgoKaXNfZmFsbGluZxgOIAEoCBISCgppc19zdHVubmVk",
+            "GA8gASgIEhIKCnJvdGF0aW9uX3kYECABKAISEgoKaXNfaW5zdGFudBgRIAEo",
+            "CBISCgppc19lbW90aW5nGBIgASgIIkIKEk1vdmVtZW50Q29tcHJlc3NlZBIV",
+            "Cg10ZW1wb3JhbF9kYXRhGAEgASgFEhUKDW1vdmVtZW50X2RhdGEYAiABKAMi",
+            "nwMKC1BsYXllckVtb3RlEhYKDmluY3JlbWVudGFsX2lkGAEgASgNEgsKA3Vy",
+            "bhgCIAEoCRIRCgl0aW1lc3RhbXAYAyABKAISGAoLaXNfc3RvcHBpbmcYBCAB",
+            "KAhIAIgBARIZCgxpc19yZXBlYXRpbmcYBSABKAhIAYgBARIbCg5pbnRlcmFj",
+            "dGlvbl9pZBgGIAEoBUgCiAEBEiEKFHNvY2lhbF9lbW90ZV9vdXRjb21lGAcg",
+            "ASgFSAOIAQESGAoLaXNfcmVhY3RpbmcYCCABKAhIBIgBARIjChZzb2NpYWxf",
+            "ZW1vdGVfaW5pdGlhdG9yGAkgASgJSAWIAQESGgoNdGFyZ2V0X2F2YXRhchgK",
+            "IAEoCUgGiAEBQg4KDF9pc19zdG9wcGluZ0IPCg1faXNfcmVwZWF0aW5nQhEK",
+            "D19pbnRlcmFjdGlvbl9pZEIXChVfc29jaWFsX2Vtb3RlX291dGNvbWVCDgoM",
+            "X2lzX3JlYWN0aW5nQhkKF19zb2NpYWxfZW1vdGVfaW5pdGlhdG9yQhAKDl90",
+            "YXJnZXRfYXZhdGFyIoUBCg5Mb29rQXRQb3NpdGlvbhIRCgl0aW1lc3RhbXAY",
+            "ASABKAISEgoKcG9zaXRpb25feBgCIAEoAhISCgpwb3NpdGlvbl95GAMgASgC",
+            "EhIKCnBvc2l0aW9uX3oYBCABKAISJAocdGFyZ2V0X2F2YXRhcl93YWxsZXRf",
+            "YWRkcmVzcxgFIAEoCSI1CgpTY2VuZUVtb3RlEhcKD3NjZW5lX2VudGl0eV9p",
+            "ZBgBIAEoCRIOCgZzb3VyY2UYAiABKAkiMQoWQW5ub3VuY2VQcm9maWxlVmVy",
+            "c2lvbhIXCg9wcm9maWxlX3ZlcnNpb24YASABKA0iOgoOUHJvZmlsZVJlcXVl",
+            "c3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9wcm9maWxlX3ZlcnNpb24YAyABKA0i",
+            "PwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNlcmlhbGl6ZWRfcHJvZmlsZRgBIAEo",
+            "CRIQCghiYXNlX3VybBgCIAEoCSJaCgRDaGF0Eg8KB21lc3NhZ2UYASABKAkS",
+            "EQoJdGltZXN0YW1wGAIgASgBEhsKDmZvcndhcmRlZF9mcm9tGAMgASgJSACI",
+            "AQFCEQoPX2ZvcndhcmRlZF9mcm9tIicKBVNjZW5lEhAKCHNjZW5lX2lkGAEg",
+            "ASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcKD2VuY29kZWRfc2FtcGxl",
+            "cxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2RlYxgDIAEoDjIwLmRlY2Vu",
+            "dHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2ljZS5Wb2ljZUNvZGVjIhkK",
+            "ClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, new[]{ "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition), global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "TargetAvatarWalletAddress" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest), global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest.Parser, new[]{ "Address", "ProfileVersion" }, null, null, null, null),
@@ -160,6 +173,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           break;
         case MessageOneofCase.MovementCompressed:
           MovementCompressed = other.MovementCompressed.Clone();
+          break;
+        case MessageOneofCase.LookAtPosition:
+          LookAtPosition = other.LookAtPosition.Clone();
           break;
       }
 
@@ -304,6 +320,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "look_at_position" field.</summary>
+    public const int LookAtPositionFieldNumber = 13;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition LookAtPosition {
+      get { return messageCase_ == MessageOneofCase.LookAtPosition ? (global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.LookAtPosition;
+      }
+    }
+
     /// <summary>Field number for the "protocol_version" field.</summary>
     public const int ProtocolVersionFieldNumber = 11;
     private uint protocolVersion_;
@@ -331,6 +359,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       PlayerEmote = 9,
       SceneEmote = 10,
       MovementCompressed = 12,
+      LookAtPosition = 13,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -372,6 +401,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!object.Equals(PlayerEmote, other.PlayerEmote)) return false;
       if (!object.Equals(SceneEmote, other.SceneEmote)) return false;
       if (!object.Equals(MovementCompressed, other.MovementCompressed)) return false;
+      if (!object.Equals(LookAtPosition, other.LookAtPosition)) return false;
       if (ProtocolVersion != other.ProtocolVersion) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
@@ -392,6 +422,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.PlayerEmote) hash ^= PlayerEmote.GetHashCode();
       if (messageCase_ == MessageOneofCase.SceneEmote) hash ^= SceneEmote.GetHashCode();
       if (messageCase_ == MessageOneofCase.MovementCompressed) hash ^= MovementCompressed.GetHashCode();
+      if (messageCase_ == MessageOneofCase.LookAtPosition) hash ^= LookAtPosition.GetHashCode();
       if (ProtocolVersion != 0) hash ^= ProtocolVersion.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
@@ -460,6 +491,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(98);
         output.WriteMessage(MovementCompressed);
       }
+      if (messageCase_ == MessageOneofCase.LookAtPosition) {
+        output.WriteRawTag(106);
+        output.WriteMessage(LookAtPosition);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -518,6 +553,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(98);
         output.WriteMessage(MovementCompressed);
       }
+      if (messageCase_ == MessageOneofCase.LookAtPosition) {
+        output.WriteRawTag(106);
+        output.WriteMessage(LookAtPosition);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -560,6 +599,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (messageCase_ == MessageOneofCase.MovementCompressed) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(MovementCompressed);
+      }
+      if (messageCase_ == MessageOneofCase.LookAtPosition) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(LookAtPosition);
       }
       if (ProtocolVersion != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ProtocolVersion);
@@ -645,6 +687,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             MovementCompressed = new global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed();
           }
           MovementCompressed.MergeFrom(other.MovementCompressed);
+          break;
+        case MessageOneofCase.LookAtPosition:
+          if (LookAtPosition == null) {
+            LookAtPosition = new global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition();
+          }
+          LookAtPosition.MergeFrom(other.LookAtPosition);
           break;
       }
 
@@ -766,6 +814,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             MovementCompressed = subBuilder;
             break;
           }
+          case 106: {
+            global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition();
+            if (messageCase_ == MessageOneofCase.LookAtPosition) {
+              subBuilder.MergeFrom(LookAtPosition);
+            }
+            input.ReadMessage(subBuilder);
+            LookAtPosition = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -882,6 +939,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             }
             input.ReadMessage(subBuilder);
             MovementCompressed = subBuilder;
+            break;
+          }
+          case 106: {
+            global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition();
+            if (messageCase_ == MessageOneofCase.LookAtPosition) {
+              subBuilder.MergeFrom(LookAtPosition);
+            }
+            input.ReadMessage(subBuilder);
+            LookAtPosition = subBuilder;
             break;
           }
         }
@@ -2420,6 +2486,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
   {
     private static readonly pb::MessageParser<PlayerEmote> _parser = new pb::MessageParser<PlayerEmote>(() => new PlayerEmote());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PlayerEmote> Parser { get { return _parser; } }
@@ -2447,9 +2514,17 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PlayerEmote(PlayerEmote other) : this() {
+      _hasBits0 = other._hasBits0;
       incrementalId_ = other.incrementalId_;
       urn_ = other.urn_;
       timestamp_ = other.timestamp_;
+      isStopping_ = other.isStopping_;
+      isRepeating_ = other.isRepeating_;
+      interactionId_ = other.interactionId_;
+      socialEmoteOutcome_ = other.socialEmoteOutcome_;
+      isReacting_ = other.isReacting_;
+      socialEmoteInitiator_ = other.socialEmoteInitiator_;
+      targetAvatar_ = other.targetAvatar_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2495,6 +2570,200 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "is_stopping" field.</summary>
+    public const int IsStoppingFieldNumber = 4;
+    private bool isStopping_;
+    /// <summary>
+    /// true means the emote has been stopped in the sender's client
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsStopping {
+      get { if ((_hasBits0 & 1) != 0) { return isStopping_; } else { return false; } }
+      set {
+        _hasBits0 |= 1;
+        isStopping_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_stopping" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsStopping {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "is_stopping" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsStopping() {
+      _hasBits0 &= ~1;
+    }
+
+    /// <summary>Field number for the "is_repeating" field.</summary>
+    public const int IsRepeatingFieldNumber = 5;
+    private bool isRepeating_;
+    /// <summary>
+    /// true when it is not the first time the looping animation plays
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsRepeating {
+      get { if ((_hasBits0 & 2) != 0) { return isRepeating_; } else { return false; } }
+      set {
+        _hasBits0 |= 2;
+        isRepeating_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_repeating" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsRepeating {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "is_repeating" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsRepeating() {
+      _hasBits0 &= ~2;
+    }
+
+    /// <summary>Field number for the "interaction_id" field.</summary>
+    public const int InteractionIdFieldNumber = 6;
+    private int interactionId_;
+    /// <summary>
+    /// identifies an interaction univocaly, established when the start animation is triggered
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int InteractionId {
+      get { if ((_hasBits0 & 4) != 0) { return interactionId_; } else { return 0; } }
+      set {
+        _hasBits0 |= 4;
+        interactionId_ = value;
+      }
+    }
+    /// <summary>Gets whether the "interaction_id" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasInteractionId {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "interaction_id" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearInteractionId() {
+      _hasBits0 &= ~4;
+    }
+
+    /// <summary>Field number for the "social_emote_outcome" field.</summary>
+    public const int SocialEmoteOutcomeFieldNumber = 7;
+    private int socialEmoteOutcome_;
+    /// <summary>
+    /// -1 means it does not use an outcome animation
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int SocialEmoteOutcome {
+      get { if ((_hasBits0 & 8) != 0) { return socialEmoteOutcome_; } else { return 0; } }
+      set {
+        _hasBits0 |= 8;
+        socialEmoteOutcome_ = value;
+      }
+    }
+    /// <summary>Gets whether the "social_emote_outcome" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSocialEmoteOutcome {
+      get { return (_hasBits0 & 8) != 0; }
+    }
+    /// <summary>Clears the value of the "social_emote_outcome" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSocialEmoteOutcome() {
+      _hasBits0 &= ~8;
+    }
+
+    /// <summary>Field number for the "is_reacting" field.</summary>
+    public const int IsReactingFieldNumber = 8;
+    private bool isReacting_;
+    /// <summary>
+    /// to a social emote started by other user
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsReacting {
+      get { if ((_hasBits0 & 16) != 0) { return isReacting_; } else { return false; } }
+      set {
+        _hasBits0 |= 16;
+        isReacting_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_reacting" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsReacting {
+      get { return (_hasBits0 & 16) != 0; }
+    }
+    /// <summary>Clears the value of the "is_reacting" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsReacting() {
+      _hasBits0 &= ~16;
+    }
+
+    /// <summary>Field number for the "social_emote_initiator" field.</summary>
+    public const int SocialEmoteInitiatorFieldNumber = 9;
+    private string socialEmoteInitiator_;
+    /// <summary>
+    /// wallet address of the user that initiated social emote
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SocialEmoteInitiator {
+      get { return socialEmoteInitiator_ ?? ""; }
+      set {
+        socialEmoteInitiator_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "social_emote_initiator" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSocialEmoteInitiator {
+      get { return socialEmoteInitiator_ != null; }
+    }
+    /// <summary>Clears the value of the "social_emote_initiator" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSocialEmoteInitiator() {
+      socialEmoteInitiator_ = null;
+    }
+
+    /// <summary>Field number for the "target_avatar" field.</summary>
+    public const int TargetAvatarFieldNumber = 10;
+    private string targetAvatar_;
+    /// <summary>
+    /// wallet address of the user whose avatar is the target of a directed emote
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string TargetAvatar {
+      get { return targetAvatar_ ?? ""; }
+      set {
+        targetAvatar_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "target_avatar" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTargetAvatar {
+      get { return targetAvatar_ != null; }
+    }
+    /// <summary>Clears the value of the "target_avatar" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTargetAvatar() {
+      targetAvatar_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2513,6 +2782,13 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IncrementalId != other.IncrementalId) return false;
       if (Urn != other.Urn) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (IsStopping != other.IsStopping) return false;
+      if (IsRepeating != other.IsRepeating) return false;
+      if (InteractionId != other.InteractionId) return false;
+      if (SocialEmoteOutcome != other.SocialEmoteOutcome) return false;
+      if (IsReacting != other.IsReacting) return false;
+      if (SocialEmoteInitiator != other.SocialEmoteInitiator) return false;
+      if (TargetAvatar != other.TargetAvatar) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2523,6 +2799,13 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IncrementalId != 0) hash ^= IncrementalId.GetHashCode();
       if (Urn.Length != 0) hash ^= Urn.GetHashCode();
       if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
+      if (HasIsStopping) hash ^= IsStopping.GetHashCode();
+      if (HasIsRepeating) hash ^= IsRepeating.GetHashCode();
+      if (HasInteractionId) hash ^= InteractionId.GetHashCode();
+      if (HasSocialEmoteOutcome) hash ^= SocialEmoteOutcome.GetHashCode();
+      if (HasIsReacting) hash ^= IsReacting.GetHashCode();
+      if (HasSocialEmoteInitiator) hash ^= SocialEmoteInitiator.GetHashCode();
+      if (HasTargetAvatar) hash ^= TargetAvatar.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2553,6 +2836,34 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(29);
         output.WriteFloat(Timestamp);
       }
+      if (HasIsStopping) {
+        output.WriteRawTag(32);
+        output.WriteBool(IsStopping);
+      }
+      if (HasIsRepeating) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsRepeating);
+      }
+      if (HasInteractionId) {
+        output.WriteRawTag(48);
+        output.WriteInt32(InteractionId);
+      }
+      if (HasSocialEmoteOutcome) {
+        output.WriteRawTag(56);
+        output.WriteInt32(SocialEmoteOutcome);
+      }
+      if (HasIsReacting) {
+        output.WriteRawTag(64);
+        output.WriteBool(IsReacting);
+      }
+      if (HasSocialEmoteInitiator) {
+        output.WriteRawTag(74);
+        output.WriteString(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        output.WriteRawTag(82);
+        output.WriteString(TargetAvatar);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2575,6 +2886,34 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(29);
         output.WriteFloat(Timestamp);
       }
+      if (HasIsStopping) {
+        output.WriteRawTag(32);
+        output.WriteBool(IsStopping);
+      }
+      if (HasIsRepeating) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsRepeating);
+      }
+      if (HasInteractionId) {
+        output.WriteRawTag(48);
+        output.WriteInt32(InteractionId);
+      }
+      if (HasSocialEmoteOutcome) {
+        output.WriteRawTag(56);
+        output.WriteInt32(SocialEmoteOutcome);
+      }
+      if (HasIsReacting) {
+        output.WriteRawTag(64);
+        output.WriteBool(IsReacting);
+      }
+      if (HasSocialEmoteInitiator) {
+        output.WriteRawTag(74);
+        output.WriteString(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        output.WriteRawTag(82);
+        output.WriteString(TargetAvatar);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2593,6 +2932,27 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (Timestamp != 0F) {
         size += 1 + 4;
+      }
+      if (HasIsStopping) {
+        size += 1 + 1;
+      }
+      if (HasIsRepeating) {
+        size += 1 + 1;
+      }
+      if (HasInteractionId) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(InteractionId);
+      }
+      if (HasSocialEmoteOutcome) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(SocialEmoteOutcome);
+      }
+      if (HasIsReacting) {
+        size += 1 + 1;
+      }
+      if (HasSocialEmoteInitiator) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SocialEmoteInitiator);
+      }
+      if (HasTargetAvatar) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(TargetAvatar);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2614,6 +2974,27 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.Timestamp != 0F) {
         Timestamp = other.Timestamp;
+      }
+      if (other.HasIsStopping) {
+        IsStopping = other.IsStopping;
+      }
+      if (other.HasIsRepeating) {
+        IsRepeating = other.IsRepeating;
+      }
+      if (other.HasInteractionId) {
+        InteractionId = other.InteractionId;
+      }
+      if (other.HasSocialEmoteOutcome) {
+        SocialEmoteOutcome = other.SocialEmoteOutcome;
+      }
+      if (other.HasIsReacting) {
+        IsReacting = other.IsReacting;
+      }
+      if (other.HasSocialEmoteInitiator) {
+        SocialEmoteInitiator = other.SocialEmoteInitiator;
+      }
+      if (other.HasTargetAvatar) {
+        TargetAvatar = other.TargetAvatar;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2640,6 +3021,34 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 29: {
             Timestamp = input.ReadFloat();
+            break;
+          }
+          case 32: {
+            IsStopping = input.ReadBool();
+            break;
+          }
+          case 40: {
+            IsRepeating = input.ReadBool();
+            break;
+          }
+          case 48: {
+            InteractionId = input.ReadInt32();
+            break;
+          }
+          case 56: {
+            SocialEmoteOutcome = input.ReadInt32();
+            break;
+          }
+          case 64: {
+            IsReacting = input.ReadBool();
+            break;
+          }
+          case 74: {
+            SocialEmoteInitiator = input.ReadString();
+            break;
+          }
+          case 82: {
+            TargetAvatar = input.ReadString();
             break;
           }
         }
@@ -2669,6 +3078,377 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             Timestamp = input.ReadFloat();
             break;
           }
+          case 32: {
+            IsStopping = input.ReadBool();
+            break;
+          }
+          case 40: {
+            IsRepeating = input.ReadBool();
+            break;
+          }
+          case 48: {
+            InteractionId = input.ReadInt32();
+            break;
+          }
+          case 56: {
+            SocialEmoteOutcome = input.ReadInt32();
+            break;
+          }
+          case 64: {
+            IsReacting = input.ReadBool();
+            break;
+          }
+          case 74: {
+            SocialEmoteInitiator = input.ReadString();
+            break;
+          }
+          case 82: {
+            TargetAvatar = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Message sent to force an avatar to look at a position
+  /// </summary>
+  public sealed partial class LookAtPosition : pb::IMessage<LookAtPosition>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<LookAtPosition> _parser = new pb::MessageParser<LookAtPosition>(() => new LookAtPosition());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<LookAtPosition> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[5]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public LookAtPosition() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public LookAtPosition(LookAtPosition other) : this() {
+      timestamp_ = other.timestamp_;
+      positionX_ = other.positionX_;
+      positionY_ = other.positionY_;
+      positionZ_ = other.positionZ_;
+      targetAvatarWalletAddress_ = other.targetAvatarWalletAddress_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public LookAtPosition Clone() {
+      return new LookAtPosition(this);
+    }
+
+    /// <summary>Field number for the "timestamp" field.</summary>
+    public const int TimestampFieldNumber = 1;
+    private float timestamp_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Timestamp {
+      get { return timestamp_; }
+      set {
+        timestamp_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_x" field.</summary>
+    public const int PositionXFieldNumber = 2;
+    private float positionX_;
+    /// <summary>
+    /// world position
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PositionX {
+      get { return positionX_; }
+      set {
+        positionX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_y" field.</summary>
+    public const int PositionYFieldNumber = 3;
+    private float positionY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PositionY {
+      get { return positionY_; }
+      set {
+        positionY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_z" field.</summary>
+    public const int PositionZFieldNumber = 4;
+    private float positionZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PositionZ {
+      get { return positionZ_; }
+      set {
+        positionZ_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "target_avatar_wallet_address" field.</summary>
+    public const int TargetAvatarWalletAddressFieldNumber = 5;
+    private string targetAvatarWalletAddress_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string TargetAvatarWalletAddress {
+      get { return targetAvatarWalletAddress_; }
+      set {
+        targetAvatarWalletAddress_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as LookAtPosition);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(LookAtPosition other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PositionX, other.PositionX)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PositionY, other.PositionY)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PositionZ, other.PositionZ)) return false;
+      if (TargetAvatarWalletAddress != other.TargetAvatarWalletAddress) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
+      if (PositionX != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PositionX);
+      if (PositionY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PositionY);
+      if (PositionZ != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PositionZ);
+      if (TargetAvatarWalletAddress.Length != 0) hash ^= TargetAvatarWalletAddress.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Timestamp != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Timestamp);
+      }
+      if (PositionX != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(PositionX);
+      }
+      if (PositionY != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(PositionY);
+      }
+      if (PositionZ != 0F) {
+        output.WriteRawTag(37);
+        output.WriteFloat(PositionZ);
+      }
+      if (TargetAvatarWalletAddress.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(TargetAvatarWalletAddress);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Timestamp != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Timestamp);
+      }
+      if (PositionX != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(PositionX);
+      }
+      if (PositionY != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(PositionY);
+      }
+      if (PositionZ != 0F) {
+        output.WriteRawTag(37);
+        output.WriteFloat(PositionZ);
+      }
+      if (TargetAvatarWalletAddress.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(TargetAvatarWalletAddress);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Timestamp != 0F) {
+        size += 1 + 4;
+      }
+      if (PositionX != 0F) {
+        size += 1 + 4;
+      }
+      if (PositionY != 0F) {
+        size += 1 + 4;
+      }
+      if (PositionZ != 0F) {
+        size += 1 + 4;
+      }
+      if (TargetAvatarWalletAddress.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(TargetAvatarWalletAddress);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(LookAtPosition other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Timestamp != 0F) {
+        Timestamp = other.Timestamp;
+      }
+      if (other.PositionX != 0F) {
+        PositionX = other.PositionX;
+      }
+      if (other.PositionY != 0F) {
+        PositionY = other.PositionY;
+      }
+      if (other.PositionZ != 0F) {
+        PositionZ = other.PositionZ;
+      }
+      if (other.TargetAvatarWalletAddress.Length != 0) {
+        TargetAvatarWalletAddress = other.TargetAvatarWalletAddress;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 13: {
+            Timestamp = input.ReadFloat();
+            break;
+          }
+          case 21: {
+            PositionX = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            PositionY = input.ReadFloat();
+            break;
+          }
+          case 37: {
+            PositionZ = input.ReadFloat();
+            break;
+          }
+          case 42: {
+            TargetAvatarWalletAddress = input.ReadString();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 13: {
+            Timestamp = input.ReadFloat();
+            break;
+          }
+          case 21: {
+            PositionX = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            PositionY = input.ReadFloat();
+            break;
+          }
+          case 37: {
+            PositionZ = input.ReadFloat();
+            break;
+          }
+          case 42: {
+            TargetAvatarWalletAddress = input.ReadString();
+            break;
+          }
         }
       }
     }
@@ -2690,7 +3470,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2916,7 +3696,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3105,7 +3885,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3331,7 +4111,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3557,7 +4337,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3836,7 +4616,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[10]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4062,7 +4842,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[11]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

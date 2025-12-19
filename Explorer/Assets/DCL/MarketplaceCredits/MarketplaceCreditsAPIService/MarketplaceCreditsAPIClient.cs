@@ -23,7 +23,7 @@ namespace DCL.MarketplaceCredits
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.MarketplaceCredits);
-        private string emailSubscriptionsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.EmailSubscriptions);
+        private string emailSubscriptionsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Notifications);
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -128,8 +128,8 @@ namespace DCL.MarketplaceCredits
 
             try
             {
-                await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
-                    .WithNoOpAsync();
+                await webRequestController.SignedFetchPutAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                          .WithNoOpAsync();
 
                 return EnumResult<EmailSubscriptionError>.SuccessResult();
             }

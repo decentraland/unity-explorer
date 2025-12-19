@@ -15,7 +15,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
-        private AnimationClip lastEmote;
 
         private AnimatorOverrideController overrideController;
 
@@ -95,7 +94,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
-        [field: SerializeField] public Transform Armature { get; private set; }
+        [field: SerializeField] public Transform ArmatureObject { get; private set; }
 
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
@@ -108,6 +107,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
+
+        // The name of the Armature object before it was renamed, used when restoring it
+        private string originalArmatureName;
 
         private void Awake()
         {
@@ -123,6 +125,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
             animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
             overrideController.ApplyOverrides(animationOverrides);
+            AvatarAnimator.runtimeAnimatorController = overrideController; // This fixes a problem when executing a social emote before the overrideController was set (the avatar got the T pose)
+
+            originalArmatureName = ArmatureObject.name;
         }
 
         public Transform GetTransform() =>
@@ -163,9 +168,24 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void ResetArmatureInclination()
         {
-            Vector3 angles = Armature.eulerAngles;
+            var angles = ArmatureObject.eulerAngles;
             angles.x = 90;
-            Armature.eulerAngles = angles;
+            ArmatureObject.eulerAngles = angles;
+        }
+
+        /// <summary>
+        ///     Replaces the name of the Armature object with the name it had originally.
+        ///     The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
+        /// </summary>
+        public void RestoreArmatureName()
+        {
+            if (ArmatureObject.name != originalArmatureName)
+            {
+                ArmatureObject.name = originalArmatureName;
+
+                // This is necessary for the animation to work after the name of the armature has been replaced
+                overrideController.ApplyOverrides(animationOverrides);
+            }
         }
 
         public bool GetAnimatorBool(int hash) =>
@@ -182,14 +202,25 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public float GetAnimatorFloat(int hash) =>
             AvatarAnimator.GetFloat(hash);
 
-        public void ReplaceEmoteAnimation(AnimationClip animationClip)
+        /// <summary>
+        ///     Replaces the animation clip of the emote state in the animator.
+        /// </summary>
+        /// <param name="animationClip">The clip to be stored.</param>
+        /// <param name="armatureNameOverride">
+        ///     Optional. The name of the Armature object will be replaced with this. Call
+        ///     <see cref="RestoreArmatureName" /> to undo.
+        /// </param>
+        public void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null)
         {
-            if (lastEmote == animationClip) return;
+            if (overrideController["Emote"] == animationClip)
+                return;
+
+            if (!string.IsNullOrEmpty(armatureNameOverride))
+                ArmatureObject.name = armatureNameOverride;
 
             overrideController["Emote"] = animationClip;
             AvatarAnimator.runtimeAnimatorController = overrideController;
 
-            lastEmote = animationClip;
             AvatarAnimator.enabled = true;
         }
 
@@ -254,7 +285,15 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         bool GetAnimatorBool(int hash);
 
-        void ReplaceEmoteAnimation(AnimationClip animationClip);
+        /// <summary>
+        ///     Replaces the animation clip of the emote state in the animator.
+        /// </summary>
+        /// <param name="animationClip">The clip to be stored.</param>
+        /// <param name="armatureNameOverride">
+        ///     Optional. The name of the Armature object will be replaced with this. Call
+        ///     <see cref="RestoreArmatureName" /> to undo.
+        /// </param>
+        void ReplaceEmoteAnimation(AnimationClip animationClip, string? armatureNameOverride = null);
 
         float GetAnimatorFloat(int hash);
 
@@ -265,5 +304,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void ResetAnimatorTrigger(int hash);
 
         void ResetArmatureInclination();
+
+        /// <summary>
+        ///     Replaces the name of the Armature object with the name it had originally.
+        ///     The name of the Armature has to be changed in order to make it work with social emote outcome reaction animations.
+        /// </summary>
+        void RestoreArmatureName();
     }
 }
