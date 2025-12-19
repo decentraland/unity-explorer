@@ -29,6 +29,7 @@ namespace CrdtEcsBridge.RestrictedActions
     public class GlobalWorldActions : IGlobalWorldActions
     {
         private const string SCENE_EMOTE_NAMING = "_emote.glb";
+        private const float MOVE_PLAYER_TO_COMPLETION_THRESHOLD = 0.1f;
 
         private readonly World world;
         private readonly Entity playerEntity;
@@ -67,32 +68,29 @@ namespace CrdtEcsBridge.RestrictedActions
                     await UniTask.Yield(PlayerLoopTiming.Update, ct);
                 }
 
-                // Check if we reached the target position (not interrupted)
+                // Check if we reached the target position (not interrupted by input or anything)
                 Vector3 finalPosition = world.Get<CharacterTransform>(playerEntity).Transform.position;
-                const float COMPLETION_THRESHOLD = 0.1f;
-                return Vector3.Distance(finalPosition, newPlayerPosition) < COMPLETION_THRESHOLD;
+                return Vector3.Distance(finalPosition, newPlayerPosition) < MOVE_PLAYER_TO_COMPLETION_THRESHOLD;
             }
-            else
+
+            // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
+            world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
+            world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
+
+            // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
+            if (newAvatarTarget != null)
             {
-                // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
-                world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
-                world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
-
-                // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
-                if (newAvatarTarget != null)
-                {
-                    Vector3 lookAtDirection = newAvatarTarget.Value - newPlayerPosition;
-                    lookAtDirection.y = 0;
-                    world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
-                }
-                else if (newCameraTarget != null)
-                {
-                    world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
-                }
-
-                // Instant teleport is always successful
-                return true;
+                Vector3 lookAtDirection = newAvatarTarget.Value - newPlayerPosition;
+                lookAtDirection.y = 0;
+                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
             }
+            else if (newCameraTarget != null)
+            {
+                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
+            }
+
+            // Instant teleport is always successful
+            return true;
         }
 
         public void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)
