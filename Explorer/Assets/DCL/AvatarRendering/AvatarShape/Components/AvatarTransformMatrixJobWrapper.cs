@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -76,14 +77,20 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                     transformMatrixComponent.IndexInGlobalJobArray = releasedIndexes.Pop();
                 else
                 {
-                    transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Valid(avatarIndex);
+                    transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.ValidUnsafe(avatarIndex);
                     avatarIndex++;
                 }
             }
 
+            if (transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, "Invalid index after direct assignment");
+                return;
+            }
+
             Profiler.BeginSample("Calculate localToWorldMatrix on MainThread");
 
-            int globalIndexOffset = transformMatrixComponent.IndexInGlobalJobArray.Value() * BONES_ARRAY_LENGTH;
+            int globalIndexOffset = validIndex * BONES_ARRAY_LENGTH;
 
             //Add all bones to the bonesCombined array with the current available index
             for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
@@ -92,8 +99,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Profiler.EndSample();
 
             //Setup of data
-            matrixFromAllAvatars[transformMatrixComponent.IndexInGlobalJobArray.Value()] = avatarBase.transform.worldToLocalMatrix;
-            updateAvatar[transformMatrixComponent.IndexInGlobalJobArray.Value()] = true;
+            matrixFromAllAvatars[validIndex] = avatarBase.transform.worldToLocalMatrix;
+            updateAvatar[validIndex] = true;
 
             if (avatarIndex >= currentAvatarAmountSupported - 1)
                 ResizeArrays();
@@ -128,11 +135,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             if (disposed) return;
 
-            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.IsValid() == false)
+            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
                 return;
 
             //Dont update this index anymore until reset
-            updateAvatar[avatarTransformMatrixComponent.IndexInGlobalJobArray.Value()] = false;
+            updateAvatar[validIndex] = false;
             releasedIndexes.Push(avatarTransformMatrixComponent.IndexInGlobalJobArray);
 
             avatarTransformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();

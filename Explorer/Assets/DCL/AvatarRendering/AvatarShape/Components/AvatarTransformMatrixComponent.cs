@@ -48,11 +48,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             return new (NOT_ASSIGNED);
         }
 
-        public static GlobalJobArrayIndex Valid(int value)
+        /// <summary>
+        /// Caller guarantees the int value is equal or greater than 0.
+        /// Otherwise use Uninitialized or Unassign consts
+        ///
+        ///    if (value < 0)
+        ///        throw new Exception($"Value is invalid: {value}");
+        /// </summary>
+        public static GlobalJobArrayIndex ValidUnsafe(int value)
         {
-            if (value < 0)
-                throw new Exception($"Value is invalid: {value}");
-
             return new GlobalJobArrayIndex(value);
         }
 
@@ -61,12 +65,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             return index >= 0;
         }
 
-        public int Value()
+        public bool TryGetValue(out int value)
         {
-            if (index < 0)
-                throw new Exception($"Value is not set on request: {index}");
-
-            return index;
+            value = index;
+            return index >= 0;
         }
     }
 

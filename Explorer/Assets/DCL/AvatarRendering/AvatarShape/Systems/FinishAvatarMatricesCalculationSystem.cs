@@ -40,8 +40,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning)
         {
-            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.IsValid())
-                skinningStrategy.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray.Value(), ref computeShaderSkinning);
+            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex))
+                skinningStrategy.ComputeSkinning(currentResult, validIndex, ref computeShaderSkinning);
             else
                 ReportHub.LogException(new Exception("Attempt to process an invalid avatar"), ReportCategory.AVATAR);
         }
