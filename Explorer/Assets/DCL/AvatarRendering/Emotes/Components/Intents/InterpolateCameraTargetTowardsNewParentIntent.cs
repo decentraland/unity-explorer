@@ -3,32 +3,33 @@ using UnityEngine;
 namespace DCL.AvatarRendering.Emotes
 {
     /// <summary>
-    /// Add this component to smoothly move the Camera Focus object of an avatar to the position of another parent, keeping the same relative height.
+    ///     Add this component to smoothly move the Camera Focus object of an avatar to the position of another parent, keeping
+    ///     the same relative height.
     /// </summary>
     public readonly struct InterpolateCameraTargetTowardsNewParentIntent
     {
         /// <summary>
-        /// The position of the object when the interpolation started.
+        ///     The position of the object when the interpolation started.
         /// </summary>
         public readonly Vector3 StartPosition;
 
         /// <summary>
-        /// The instant when the interpolation started.
+        ///     The instant when the interpolation started.
         /// </summary>
         public readonly float StartTime;
 
         /// <summary>
-        /// The position of the object will move towards this target.
+        ///     The position of the object will move towards this target.
         /// </summary>
         public readonly Transform Target;
 
         /// <summary>
-        /// The local height of the object with respect to the target.
+        ///     The local height of the object with respect to the target.
         /// </summary>
         public readonly float LocalHeight;
 
         /// <summary>
-        /// Default constructor.
+        ///     Default constructor.
         /// </summary>
         /// <param name="startPosition">The position of the object when the interpolation started.</param>
         /// <param name="target">The position of the object will move towards this target.</param>

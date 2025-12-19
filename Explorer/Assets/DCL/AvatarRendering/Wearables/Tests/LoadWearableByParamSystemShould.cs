@@ -1,10 +1,8 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Tests;
-using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Ipfs;
 using ECS;
 using ECS.StreamableLoading.Tests;
@@ -15,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using Utility.Multithreading;
 using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -57,7 +54,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            TrimmedWearableDTO wearableDTO = new TrimmedWearableDTO();
+            var wearableDTO = new TrimmedWearableDTO();
             wearableDTO.id = existingURN;
             wearableDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback("v18", "2024-05-01T05:41:08.138Z");
 
