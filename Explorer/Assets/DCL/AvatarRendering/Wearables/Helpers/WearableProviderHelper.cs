@@ -24,6 +24,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (wearableStorage.TryGetElement(pointer, out var wearable))
             {
+                await UniTask.WaitWhile(() => wearable.IsLoading, cancellationToken: ct);
+                
                 onWearableFetched(wearable);
                 return;
             }

@@ -37,21 +37,6 @@ namespace DCL.Backpack
         [field: SerializeField]
         public BackpackBreadCrumbView BreadCrumbView { get; private set; }
 
-        [field: SerializeField]
-        public CanvasGroup LoadingCanvasGroup { get; private set; }
-
-        [field: SerializeField]
-        public GameObject LoadingSpinner { get; private set; }
-
-        public void SetLoading(bool isLoading)
-        {
-            LoadingCanvasGroup.DOKill();
-            LoadingCanvasGroup.blocksRaycasts = !isLoading;
-            LoadingSpinner.SetActive(isLoading);
-
-            LoadingCanvasGroup.DOFade( isLoading ? 0.2f : 1f, 0.3f);
-        }
-
         [Serializable]
         public class BackpackItemRef : ComponentReference<BackpackItemView>
         {
