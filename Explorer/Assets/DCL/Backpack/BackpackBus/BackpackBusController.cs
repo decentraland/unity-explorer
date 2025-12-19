@@ -97,24 +97,14 @@ namespace DCL.Backpack.BackpackBus
         private void HandleFilterCommand(BackpackFilterCommand command) =>
             backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
-        private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
-        {
-            if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
-                SelectWearable(wearable);
-            else
-                WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, equippedWearables, SelectWearable, fetchWearableCts.Token).Forget();
-        }
+        private void HandleSelectWearableCommand(BackpackSelectWearableCommand command) =>
+            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, SelectWearable, fetchWearableCts.Token).Forget();
 
         private void SelectWearable(IWearable wearable) =>
             backpackEventBus.SendWearableSelect(wearable);
 
-        private void HandleEquipWearableCommand(BackpackEquipWearableCommand command)
-        {
-            if (wearableStorage.TryGetElement(command.Id, out IWearable wearable))
-                EquipWearable(wearable, command);
-            else
-                WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token).Forget();
-        }
+        private void HandleEquipWearableCommand(BackpackEquipWearableCommand command) =>
+            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token).Forget();
 
         private void EquipWearable(IWearable wearable, BackpackEquipWearableCommand command)
         {
