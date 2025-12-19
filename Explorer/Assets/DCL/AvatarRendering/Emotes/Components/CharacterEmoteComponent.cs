@@ -9,37 +9,38 @@ namespace DCL.AvatarRendering.Emotes
         public struct SocialEmoteData
         {
             /// <summary>
-            /// Whether the avatar is playing an outcome animation of the emote (the emote may not be playing yet).
+            ///     Whether the avatar is playing an outcome animation of the emote (the emote may not be playing yet).
             /// </summary>
             public bool IsPlayingOutcome;
 
             /// <summary>
-            /// The index of the outcome animation to be played. -1 means no outcome will play.
+            ///     The index of the outcome animation to be played. -1 means no outcome will play.
             /// </summary>
             public int CurrentOutcome;
 
             /// <summary>
-            /// Whether the avatar is reacting to the start animation of an initiator (the emote may not be playing yet).
+            ///     Whether the avatar is reacting to the start animation of an initiator (the emote may not be playing yet).
             /// </summary>
             public bool IsReacting;
 
             /// <summary>
-            /// The wallet address of the initiator's player.
+            ///     The wallet address of the initiator's player.
             /// </summary>
             public string InitiatorWalletAddress;
 
             /// <summary>
-            /// Whether the emote's outcome animation is already playing.
+            ///     Whether the emote's outcome animation is already playing.
             /// </summary>
             public bool HasOutcomeAnimationStarted;
 
             /// <summary>
-            /// When a directed emote is sent, it is the wallet address of the player whose avatar will be able to react to the emote.
+            ///     When a directed emote is sent, it is the wallet address of the player whose avatar will be able to react to the
+            ///     emote.
             /// </summary>
             public string TargetAvatarWalletAddress;
 
             /// <summary>
-            /// The ID of the current interaction, set when an avatar starts a social emote.
+            ///     The ID of the current interaction, set when an avatar starts a social emote.
             /// </summary>
             public int InteractionId;
         }
@@ -48,9 +49,12 @@ namespace DCL.AvatarRendering.Emotes
         public bool EmoteLoop;
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
+
         // TODO: Replace StopEmote with component StopEmoteIntent
         public bool StopEmote;
+
         public EmoteDTO.EmoteMetadataDto? Metadata;
+
         // TODO: Is it redundant to store this here when the interaction state can be checked from anywhere using the Profile.UserId?
         public SocialEmoteData SocialEmote;
 
