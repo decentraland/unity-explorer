@@ -62,6 +62,9 @@ namespace DCL.CharacterMotion.Systems
             // Smooth step for easing
             float smoothProgress = SmoothStep(progress);
             Vector3 newPosition = Vector3.Lerp(moveIntent.StartPosition, moveIntent.TargetPosition, smoothProgress);
+
+            // We intentionally bypass CharacterController.Move() to avoid physics/collision detection.
+            // This allows the player to move smoothly to the target position without being blocked by obstacles.
             characterTransform.Transform.position = newPosition;
 
             // Update animation based on movement speed
