@@ -1,6 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Unity.Multiplayer.Playmode;
+using Unity.Multiplayer.PlayMode;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace DCL.Prefs
@@ -10,13 +15,14 @@ namespace DCL.Prefs
     /// </summary>
     public static class DCLPlayerPrefs
     {
-        private static string VECTOR2_KEY_FORMAT = "{0}_{1}";
+        private const string VECTOR2_KEY_FORMAT = "{0}_{1}";
+
         private static IDCLPrefs dclPrefs;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
         {
-            string[] playmodeTags = CurrentPlayer.ReadOnlyTags();
+            IReadOnlyList<string> playmodeTags = CurrentPlayer.Tags;
             Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
@@ -35,7 +41,7 @@ namespace DCL.Prefs
         {
             dclPrefs.SetInt(string.Format(VECTOR2_KEY_FORMAT, "X", key), value.x);
             dclPrefs.SetInt(string.Format(VECTOR2_KEY_FORMAT, "Y", key), value.y);
-            
+
             if(save)
                 Save();
         }
@@ -105,16 +111,16 @@ namespace DCL.Prefs
         }
 
 #if UNITY_EDITOR
-        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        [MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
         private static void ClearDCLPlayerPrefs()
         {
-            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+            string[] files = Directory.GetFiles(Application.persistentDataPath, "userdata_*");
 
             foreach (string file in files)
-                System.IO.File.Delete(file);
+                File.Delete(file);
         }
 
-        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        [MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
         private static bool ValidateClearDCLPlayerPrefs() =>
             !Application.isPlaying;
 #endif
