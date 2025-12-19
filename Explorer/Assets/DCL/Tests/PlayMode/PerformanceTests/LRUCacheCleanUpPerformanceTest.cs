@@ -12,7 +12,7 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using Unity.PerformanceTesting;
 
-namespace ECS.StreamableLoading.Cache.Tests
+namespace DCL.Tests.PlayMode.PerformanceTests
 {
     public class LRUCacheCleanUpPerformanceTest
     {
@@ -26,10 +26,16 @@ namespace ECS.StreamableLoading.Cache.Tests
             cache = new LRUDiskCleanUp(directory, filesLock);
         }
 
-        [Test, Performance]
+        [Test]
+        [Performance]
         public void CleanUpIfNeeded()
         {
-            cache.CleanUpIfNeeded();
+            Measure
+                .Method(cache.CleanUpIfNeeded)
+                .WarmupCount(50)
+                .MeasurementCount(1000)
+                .GC()
+                .Run();
         }
     }
 }
